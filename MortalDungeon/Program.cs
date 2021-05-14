@@ -1,6 +1,7 @@
 ﻿using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using System;
+using System.Resources;
 
 namespace MortalDungeon
 {

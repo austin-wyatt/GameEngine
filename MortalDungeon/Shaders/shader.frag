@@ -2,7 +2,8 @@
 
 out vec4 outputColor; 
 
-//in vec4 vertexColor;
+in vec4 appliedColor;
+in float mixPercent;
 
 //uniform vec4 ourColor;
 in vec2 texCoord;
@@ -13,5 +14,11 @@ void main()
 {
 	//outputColor = vertexColor;
 	//outputColor = ourColor;
-	outputColor = texture(texture0, texCoord);
+	if(mixPercent > 0){
+		outputColor = mix(texture(texture0, texCoord), appliedColor, mixPercent);
+	}
+	else
+	{
+		outputColor = texture(texture0, texCoord);
+	}
 }

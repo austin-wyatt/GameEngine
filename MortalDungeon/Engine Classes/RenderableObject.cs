@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 
 namespace MortalDungeon
 {
     public enum ObjectRenderType 
     {
+        Unknown,
         Color,
         Texture
     }
@@ -22,19 +24,29 @@ namespace MortalDungeon
         public string Fragment;
     }
 
+    public struct RotationData
+    {
+        public float X;
+        public float Y;
+        public float Z;
+    }
+
+    
+
     public class RenderableObject
     {
         public float[] Vertices;
-        //when a renderable object is loaded into a scene it's texture needs to be added to the texture list
-        public string Texture = "";
-        public float[] Color;
         public ObjectRenderType RenderType = ObjectRenderType.Color;
         public uint[] VerticesDrawOrder;
         public int Points;
+        public Vector3 Center;
+
+        //when a renderable object is loaded into a scene it's texture needs to be added to the texture list
+        public string[] Textures = new string[] { "" };
+        public int currentTexture = 0;
 
         //Every renderable object begins at the origin and is placed from there.
-        public Vector4 LocalPosition = new Vector4(0, 0, 0, 1.0f);
-        public Vector4 GlobalPosition = new Vector4(0, 0, 0, 1.0f);
+        public Vector4 Position = new Vector4(0, 0, 0, 1.0f);
 
         public int Stride;
 
@@ -48,25 +60,69 @@ namespace MortalDungeon
         public Matrix4 Rotation = Matrix4.Identity;
         public Matrix4 Scale = Matrix4.Identity;
 
-        public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, string texture, float[] color, ObjectRenderType renderType, Shader shaderReference) 
+        public RotationData RotationInfo = new RotationData() { X = 0, Y = 0, Z = 0 };
+
+        public Vector4 Color = new Vector4();
+        public float ColorProportion = 0;
+
+        public bool CameraPerspective = false;
+
+        public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, string[] textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
         {
+            Center = center;
             Points = points;
             Vertices = CenterVertices(vertices);
-            Texture = texture;
-            Color = color;
+            Textures = textures;
             RenderType = renderType;
             VerticesDrawOrder = verticesDrawOrder;
             ShaderReference = shaderReference;
 
+            Color = color;
+
             Stride = GetVerticesSize(vertices) / Points;
         }
 
-        public int GetRenderDataOffset() 
+        public RenderableObject(ObjectDefinition def, string[] textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
         {
-            switch (RenderType) 
+            Center = def.Center;
+            Points = def.Points;
+            Vertices = CenterVertices(def.Vertices);
+            Textures = textures;
+            RenderType = renderType;
+            VerticesDrawOrder = def.Indices;
+            ShaderReference = shaderReference;
+
+            Color = color;
+
+            Stride = GetVerticesSize(def.Vertices) / Points;
+        }
+
+        public RenderableObject(ObjectDefinition def, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
+        {
+            Center = def.Center;
+            Points = def.Points;
+            Vertices = CenterVertices(def.Vertices);
+            Textures = def.Textures;
+            RenderType = renderType;
+            VerticesDrawOrder = def.Indices;
+            ShaderReference = shaderReference;
+
+            Color = color;
+
+            Stride = GetVerticesSize(def.Vertices) / Points;
+        }
+
+        public int GetRenderDataOffset(ObjectRenderType renderType = ObjectRenderType.Unknown) 
+        {
+            if(renderType == ObjectRenderType.Unknown)
+            {
+                renderType = RenderType;
+            }
+
+            switch (renderType) 
             {
                 case ObjectRenderType.Color:
-                    return 3 * sizeof(float);
+                    return 5 * sizeof(float);
                 case ObjectRenderType.Texture:
                     return 3 * sizeof(float);
                 default:
@@ -94,30 +150,35 @@ namespace MortalDungeon
         public void TranslateX(float f)
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
-            currentTranslation[0] += f;
+            currentTranslation.X += f;
+            Position.X = currentTranslation.X;
 
             SetTranslation(currentTranslation);
         }
         public void TranslateY(float f) 
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
-            currentTranslation[1] += f;
+            currentTranslation.Y += f;
+            Position.Y = currentTranslation.Y;
 
             SetTranslation(currentTranslation);
         }
         public void TranslateZ(float f)
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
-            currentTranslation[2] += f;
+            currentTranslation.Z += f;
+            Position.Z = currentTranslation.Z;
 
             SetTranslation(currentTranslation);
         }
         public void Translate(Vector3 translation)
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
-            currentTranslation[0] += translation[0];
-            currentTranslation[1] += translation[1];
-            currentTranslation[2] += translation[2];
+            currentTranslation.X += translation.X;
+            currentTranslation.Y += translation.Y;
+            currentTranslation.Z += translation.Z;
+
+            Position = new Vector4(currentTranslation, Position.W);
 
             SetTranslation(currentTranslation);
         }
@@ -126,9 +187,9 @@ namespace MortalDungeon
         public void ScaleAll (float f) 
         {
             Vector3 currentScale = Scale.ExtractScale();
-            currentScale[0] *= f;
-            currentScale[1] *= f;
-            currentScale[2] *= f;
+            currentScale.X *= f;
+            currentScale.Y *= f;
+            currentScale.Z *= f;
 
             SetScale(currentScale);
         }
@@ -155,7 +216,27 @@ namespace MortalDungeon
         }
 
         //ROTATE FUNCTIONS
+        public void RotateX(float degrees)
+        {
+            Matrix4 rotationMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(degrees));
+            RotationInfo.X += degrees;
 
+            Rotation *= rotationMatrix;
+        }
+        public void RotateY(float degrees)
+        {
+            Matrix4 rotationMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(degrees));
+            RotationInfo.Y += degrees;
+
+            Rotation *= rotationMatrix;
+        }
+        public void RotateZ(float degrees)
+        {
+            Matrix4 rotationMatrix = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(degrees));
+            RotationInfo.Z += degrees;
+
+            Rotation *= rotationMatrix;
+        }
 
         //TRANSFORMATION SETTERS
         public void SetRotation(Vector3 translations)
@@ -169,6 +250,7 @@ namespace MortalDungeon
         public void SetTranslation(Vector3 translations) 
         {
             Translation = Matrix4.CreateTranslation(translations);
+            Position = new Vector4(Translation.ExtractTranslation(), Position.W);
         }
         
 
@@ -184,6 +266,7 @@ namespace MortalDungeon
         public void ResetTranslation()
         {
             Translation = Matrix4.Identity;
+            Position = new Vector4(0, 0, 0, Position.W);
         }
         
         
@@ -193,9 +276,9 @@ namespace MortalDungeon
             //vertices will be stored in [x, y, z, textureX, textureY] format
             int stride = vertices.Length / Points;
 
-            float centerX = 0.0f;
-            float centerY = 0.0f;
-            float centerZ = 0.0f;
+            float centerX = Center.X;
+            float centerY = Center.Y;
+            float centerZ = Center.Z;
 
 
 
@@ -217,6 +300,6 @@ namespace MortalDungeon
             }
 
             return vertices;
-        } 
+        }
     }
 }
