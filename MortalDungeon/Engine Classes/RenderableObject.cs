@@ -13,16 +13,16 @@ namespace MortalDungeon
         Texture
     }
 
-    public struct ShaderInfo 
-    {
-        public ShaderInfo(string vertex, string fragment) 
-        {
-            Vertex = vertex;
-            Fragment = fragment;
-        }
-        public string Vertex;
-        public string Fragment;
-    }
+    //public struct ShaderInfo 
+    //{
+    //    public ShaderInfo(string vertex, string fragment) 
+    //    {
+    //        Vertex = vertex;
+    //        Fragment = fragment;
+    //    }
+    //    public string Vertex;
+    //    public string Fragment;
+    //}
 
     public struct RotationData
     {
@@ -30,8 +30,6 @@ namespace MortalDungeon
         public float Y;
         public float Z;
     }
-
-    
 
     public class RenderableObject
     {
@@ -42,8 +40,8 @@ namespace MortalDungeon
         public Vector3 Center;
 
         //when a renderable object is loaded into a scene it's texture needs to be added to the texture list
-        public string[] Textures = new string[] { "" };
-        public int currentTexture = 0;
+        public TextureInfo Textures;
+        public int animationFrame = 0;
 
         //Every renderable object begins at the origin and is placed from there.
         public Vector4 Position = new Vector4(0, 0, 0, 1.0f);
@@ -67,7 +65,9 @@ namespace MortalDungeon
 
         public bool CameraPerspective = false;
 
-        public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, string[] textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
+        public ObjectIDs ObjectID = ObjectIDs.Unknown;
+
+        public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
         {
             Center = center;
             Points = points;
@@ -82,15 +82,23 @@ namespace MortalDungeon
             Stride = GetVerticesSize(vertices) / Points;
         }
 
-        public RenderableObject(ObjectDefinition def, string[] textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
+        public RenderableObject(ObjectDefinition def, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
         {
             Center = def.Center;
             Points = def.Points;
-            Vertices = CenterVertices(def.Vertices);
             Textures = textures;
             RenderType = renderType;
             VerticesDrawOrder = def.Indices;
             ShaderReference = shaderReference;
+            ObjectID = def.ID;
+            if (def.ShouldCenter())
+            {
+                Vertices = CenterVertices(def.Vertices);
+            }
+            else
+            {
+                Vertices = def.Vertices;
+            }
 
             Color = color;
 
@@ -101,16 +109,57 @@ namespace MortalDungeon
         {
             Center = def.Center;
             Points = def.Points;
-            Vertices = CenterVertices(def.Vertices);
             Textures = def.Textures;
             RenderType = renderType;
             VerticesDrawOrder = def.Indices;
             ShaderReference = shaderReference;
+            ObjectID = def.ID;
+            if (def.ShouldCenter())
+            {
+                Vertices = CenterVertices(def.Vertices);
+            }
+            else
+            {
+                Vertices = def.Vertices;
+            }
 
             Color = color;
 
             Stride = GetVerticesSize(def.Vertices) / Points;
         }
+
+        public RenderableObject(ObjectDefinition def, Vector4 color, ObjectRenderType renderType, Shader shaderReference, RenderableObject prevObject)
+        {
+            Center = def.Center;
+            Points = def.Points;
+            Textures = def.Textures;
+            RenderType = renderType;
+            VerticesDrawOrder = def.Indices;
+            ShaderReference = shaderReference;
+            ObjectID = def.ID;
+            if (def.ShouldCenter())
+            {
+                Vertices = CenterVertices(def.Vertices);
+            }
+            else
+            {
+                Vertices = def.Vertices;
+            }
+
+            Color = color;
+
+            Stride = GetVerticesSize(def.Vertices) / Points;
+
+            Translation = prevObject.Translation;
+            Scale = prevObject.Scale;
+            Rotation = prevObject.Rotation;
+
+            RotationInfo = prevObject.RotationInfo;
+
+            TextureReference = prevObject.TextureReference;
+        }
+
+        //TODO, add a change texture option
 
         public int GetRenderDataOffset(ObjectRenderType renderType = ObjectRenderType.Unknown) 
         {
@@ -143,6 +192,22 @@ namespace MortalDungeon
         public int GetVerticesDrawOrderSize()
         {
             return VerticesDrawOrder.Length * sizeof(uint);
+        }
+
+        public float[] GetPureVertexData()
+        {
+            int stride = Vertices.Length / Points;
+            float[] vertexData = new float[Vertices.Length - 2 * Points];
+            int vertexDataStride = (Vertices.Length - 2 * Points) / Points;
+
+            for (int i = 0; i < Points; i++)
+            {
+                vertexData[i * vertexDataStride] = Vertices[i * stride];
+                vertexData[i * vertexDataStride + 1] = Vertices[i * stride + 1];
+                vertexData[i * vertexDataStride + 2] = Vertices[i * stride + 2];
+            }
+
+            return vertexData;
         }
 
 
@@ -270,7 +335,7 @@ namespace MortalDungeon
         }
         
         
-        //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point)
+        //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point) TODO, definitely move this into the texture tool
         private float[] CenterVertices(float[] vertices) 
         {
             //vertices will be stored in [x, y, z, textureX, textureY] format

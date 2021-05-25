@@ -3,24 +3,82 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Objects
 {
+    public enum ObjectIDs 
+    {
+        Unknown = -1,
+        CURSOR = 0,
+        HEXAGON_TILE = 1
+    }
+
+    public class TextureInfo
+    {
+        public string[] Textures; //filename of texture/spritesheet
+        public int[] TexturePositions; //which index of the spritesheet a texture resides in
+
+        public Spritesheet Spritesheet;
+
+        public TextureInfo(string texture, Spritesheet spritesheet = null) 
+        {
+            Textures = new string[] { texture };
+            TexturePositions = new int[] { 0 };
+
+            Spritesheet = spritesheet;
+        }
+        public TextureInfo(string[] textures, int[] positions, Spritesheet spritesheet = null)
+        {
+            Textures = textures;
+            TexturePositions = positions;
+
+            Spritesheet = spritesheet;
+        }
+
+        public TextureInfo(string texture, int position, Spritesheet spritesheet = null)
+        {
+            Textures = new string[] { texture };
+            TexturePositions = new int[] { position };
+
+            Spritesheet = spritesheet;
+        }
+
+        public TextureInfo(Spritesheet spritesheet, int[] positions )
+        {
+            string[] textures = new string[positions.Length];
+            for(int i = 0; i < textures.Length; i++)
+            {
+                textures[i] = spritesheet.File;
+            }
+            Textures = textures;
+            TexturePositions = positions;
+
+            Spritesheet = spritesheet;
+        }
+    }
 
     public class ObjectDefinition
     {
         public float[] Vertices;
         public uint[] Indices;
         public int Points;
-        public string[] Textures;
+        public TextureInfo Textures;
         public Vector3 Center;
         public float[] Bounds;
 
-        public ObjectDefinition(float[] vertices, uint[] indexes, int points, string[] textures, Vector3 center = new Vector3(), float[] bounds = null)
+        private bool _centerVertices;
+
+        public ObjectIDs ID = ObjectIDs.Unknown;
+
+        public ObjectDefinition(float[] vertices, uint[] indexes, int points, TextureInfo textures, Vector3 center = new Vector3(), float[] bounds = null, bool centerVertices = true)
         {
             Indices = indexes;
             Points = points;
             Textures = textures;
             Center = center;
-            Vertices = CenterVertices(vertices);
+            if(centerVertices)
+                Vertices = CenterVertices(vertices);
+            else
+                Vertices = vertices;
 
+            _centerVertices = centerVertices;
 
             if (bounds == null) 
             {
@@ -74,6 +132,11 @@ namespace MortalDungeon.Objects
 
             return vertices;
         }
+
+        public bool ShouldCenter() 
+        {
+            return _centerVertices;
+        }
     }
     public static class CursorObjects
     {
@@ -84,14 +147,15 @@ namespace MortalDungeon.Objects
                 -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // bottom left
                 -0.5f, 0.5f, 0.0f, 0.0f, 0.0f // top left
             },
-            new uint[]{ 
+            new uint[]{
                 0, 1, 3,
                 1, 2, 3
-            }, 
+            },
             4,
-            "Resources/Cursor.png", 
+            new TextureInfo("Resources/Cursor.png"),
             new Vector3(-1.5f, 1f, 0)
-        );
+        )
+        { ID = ObjectIDs.CURSOR };
     }
 
     public static class TestObjects
@@ -108,7 +172,7 @@ namespace MortalDungeon.Objects
             1, 2, 3
             },
             4, 
-            "Resources/container.png"
+            new TextureInfo("Resources/container.png")
         );
 
         public static readonly ObjectDefinition TEST_OBJECT = new ObjectDefinition(
@@ -123,7 +187,31 @@ namespace MortalDungeon.Objects
             1, 2, 3
             },
             4,
-            "Resources/container.png"
+            new TextureInfo("Resources/container.png")
+        );
+
+        public static readonly ObjectDefinition TEST_SPRITESHEET = new ObjectDefinition(
+            new float[]{
+            0.5f, 0.5f, 0.0f, 0.2f, 0.0f,
+            0.5f, -0.5f, 0.0f, 0.2f, 0.1f,
+            -0.5f, -0.5f, 0.0f, 0.1f, 0.1f,
+            -0.5f, 0.5f, 0.0f, 0.1f, 0.0f,
+            0f, 0f, 0f, 0.15f, 0.05f
+            },
+            new uint[]{
+            0, 1, 3,
+            1, 2, 3
+            },
+            5,
+            new TextureInfo(Spritesheets.TestSheet, new int[] { 1 }),
+            new Vector3(),
+            new float[]{
+            0.5f, 0.5f, 0.0f, 
+            0.5f, -0.5f, 0.0f, 
+            -0.5f, -0.5f, 0.0f,
+            -0.5f, 0.5f, 0.0f,
+            0f, 0f, 0f,
+            }
         );
     }
 
@@ -141,7 +229,7 @@ namespace MortalDungeon.Objects
             1, 2, 3
             },
             4,
-            "Resources/Button.png"
+            new TextureInfo("Resources/Button.png")
         );
     }
 
@@ -159,7 +247,7 @@ namespace MortalDungeon.Objects
             1, 2, 3
             },
             4,
-            "Resources/Tree.png",
+            new TextureInfo("Resources/Tree.png"),
             new Vector3(),
             new float[]{
                 -0.12187499f, -0.9694444f, 0.0f,
@@ -204,32 +292,46 @@ namespace MortalDungeon.Objects
                 }
         );
 
+        //maps the octagon from a spritesheet to an arbitrary polygon (in this case the octagon)
         public static readonly ObjectDefinition HEXAGON_TILE = new ObjectDefinition(
             new float[]{
-            0.5f, 0.5f, 0.0f, 1.0f, 1.0f, // top right
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
-            -0.5f, 0.5f, 0.0f, 0.0f, 1.0f // top left
+            -0.1796875f, -0.49166667f, 0.0f, 0.03239436781943626f, 0.09863014267442344f,
+            -0.503125f, -0.18333328f, 0.0f, 0.0f, 0.0682191755151058f,
+            -0.5015625f, 0.19999999f, 0.0f, 0.0001564945305286798f, 0.030410959268906013f,
+            -0.18906248f, 0.5083333f, 0.0f, 0.031455402639394184f, 0.0f,
+            0.22500002f, 0.49166667f, 0.0f, 0.07292645322949375f, 0.001643832144116792f,
+            0.49531245f, 0.17500001f, 0.0f, 0.1f, 0.0328767109371363f,
+            0.49374998f, -0.13888884f, 0.0f, 0.0998435084741663f, 0.06383561392531409f,
+            0.20624995f, -0.5055555f, 0.0f, 0.07104851185219463f, 0.1f,
+            0f, 0f, 0f, 0.05f, 0.05f
             },
             new uint[]{
-            0, 1, 3,
-            1, 2, 3
+            0, 1, 8,
+            1, 2, 8,
+            2, 3, 8,
+            3, 4, 8,
+            4, 5, 8,
+            5, 6, 8,
+            6, 7, 8,
+            7, 0, 8,
             },
-            4,
-            "Resources/HexagonTile.png",
+            9,
+            new TextureInfo(Spritesheets.TestSheet, new int[] { 0 }),
             new Vector3(),
             new float[]{
-            -0.20468748f, -0.5055555f, 0.0f,
-            -0.4875f, -0.26388884f, 0.0f,
-            -0.49374998f, 0.16388887f, 0.0f,
-            -0.17343748f, 0.48888886f, 0.0f,
-            0.26718748f, 0.4861111f, 0.0f,
-            0.50468755f, 0.14999998f, 0.0f,
-            0.51093745f, -0.2527778f, 0.0f,
-            0.21875f, -0.51388884f, 0.0f,
+            -0.1796875f, -0.49166667f, 0.0f,
+            -0.503125f, -0.18333328f, 0.0f,
+            -0.5015625f, 0.19999999f, 0.0f,
+            -0.18906248f, 0.5083333f, 0.0f,
+            0.22500002f, 0.49166667f, 0.0f,
+            0.49531245f, 0.17500001f, 0.0f,
+            0.49374998f, -0.13888884f, 0.0f,
+            0.20624995f, -0.5055555f, 0.0f,
             }
-        );
+        )
+        { ID = ObjectIDs.HEXAGON_TILE };
 
+        //maps the octagon from the supplied file to an arbitrary polygon (in this case the octagon)
         public static readonly ObjectDefinition OCTAGON_TILE_TEST = new ObjectDefinition(
             new float[]{
                 -0.1796875f, -0.49166667f, 0.0f, 0.3239436781943626f, 0.9863014267442344f,
@@ -253,7 +355,7 @@ namespace MortalDungeon.Objects
             7, 0, 8,
             },
             9,
-            "Resources/OctagonT.png",
+            new TextureInfo("Resources/OctagonT.png"),
             new Vector3(),
             new float[]{
                 -0.1796875f, -0.49166667f, 0.0f,
@@ -266,5 +368,67 @@ namespace MortalDungeon.Objects
                 0.20624995f, -0.5055555f, 0.0f,
             }
         );
+
+        //uses a quad for texture but has arbitrary bounds
+        public static readonly ObjectDefinition OCTAGON_TILE_TEST_SQUARE = new ObjectDefinition(
+            new float[]{
+                -0.23124999f, 0.79444444f, 0.0f, 0.0f, 0.0f,
+                0.7953125f, 0.7861111f, 0.0f, 0.1f, 0.0f,
+                0.78437495f, -0.30277777f, 0.0f, 0.1f, 0.1f,
+                -0.253125f, -0.3111111f, 0.0f, 0.0f, 0.1f,
+            },
+            new uint[]{
+            0, 1, 3,
+            1, 2, 3
+            },
+            4,
+           new TextureInfo(Spritesheets.TestSheet, new int[] { 0 }),
+            new Vector3(),
+            new float[]{
+                -0.1796875f, -0.49166667f, 0.0f,
+                -0.503125f, -0.18333328f, 0.0f,
+                -0.5015625f, 0.19999999f, 0.0f,
+                -0.18906248f, 0.5083333f, 0.0f,
+                0.22500002f, 0.49166667f, 0.0f,
+                0.49531245f, 0.17500001f, 0.0f,
+                0.49374998f, -0.13888884f, 0.0f,
+                0.20624995f, -0.5055555f, 0.0f,
+            }
+        );
+    }
+
+
+    public class LineObject 
+    {
+        Vector3 Point1;
+        Vector3 Point2;
+        float Thickness;
+        public LineObject(Vector3 point1, Vector3 point2, float thickness = 0.01f) 
+        {
+            Point1 = point1;
+            Point2 = point2;
+            Thickness = thickness;
+        }
+
+        public ObjectDefinition CreateLineDefinition() 
+        {
+            return new ObjectDefinition(
+            new float[] {
+            Point1.X, Point1.Y, Point1.Z, 0.2f, 0.0f,
+            Point1.X + Thickness, Point1.Y, Point1.Z, 0.1f, 1.0f,
+            Point2.X, Point2.Y, Point2.Z, 0.2f, 0.1f,
+            Point2.X + Thickness, Point2.Y, Point2.Z, 0.1f, 0.1f,
+            },
+            new uint[]{
+            0, 1, 2,
+            2, 1, 3
+            },
+            4,
+            new TextureInfo(Spritesheets.TestSheet, new int[] { 0 }),
+            default,
+            null,
+            false
+            );
+        }
     }
 }

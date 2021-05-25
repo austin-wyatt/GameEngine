@@ -12,6 +12,7 @@ namespace MortalDungeon
             var nativeWindowSettings = new NativeWindowSettings()
             {
                 Size = new Vector2i(1280, 720),
+                //Size = new Vector2i(400, 200),
                 Title = "Test Window",
                 WindowBorder = OpenTK.Windowing.Common.WindowBorder.Fixed
             };

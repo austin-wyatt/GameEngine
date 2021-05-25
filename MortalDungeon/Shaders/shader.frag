@@ -14,7 +14,11 @@ void main()
 {
 	//outputColor = vertexColor;
 	//outputColor = ourColor;
-	if(mixPercent > 0){
+	if(mixPercent == 1)
+	{
+		outputColor = appliedColor;
+	}
+	else if(mixPercent > 0){
 		outputColor = mix(texture(texture0, texCoord), appliedColor, mixPercent);
 	}
 	else

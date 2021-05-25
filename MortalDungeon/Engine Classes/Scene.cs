@@ -8,24 +8,27 @@ namespace MortalDungeon.Engine_Classes
     public class Scene
     {
         public List<BaseObject> _objects; //all objects associated with this Scene
-        public List<BaseObject> _cameraAffectedObjects; //objects that are being transformed based on the camera's position
         public List<BaseObject> _renderedObjects; //objects that are currently being rendered
-        public List<BaseObject> _staticObjects; //objects that are being rendered without being affected by the camera
         public List<BaseObject> _clickableObjects; //objects that will contain an OnClick effect
 
         //further renderable objects to be added here (and in the render method with the appropriate shaders). Water objects, skybox objects, parallax objects, etc
 
-        Vector3 SceneSize; //the origin point will be the center of the screen and will extend half of the X parameter to the left and right, half of the Y parameter up and down, etc
+        public List<Texture> _textures = new List<Texture>(); //all of the textures that will need to be loaded for this scene
 
-        public Scene(Vector3 sceneSize, List<BaseObject> Objects, List<BaseObject> CamAffected, List<BaseObject> RenderedObjects, List<BaseObject> StaticObjects, List<BaseObject> ClickableObjects)
-        {
-            _objects = Objects;
-            _cameraAffectedObjects = CamAffected;
-            _renderedObjects = RenderedObjects;
-            _staticObjects = StaticObjects;
-            _clickableObjects = ClickableObjects;
-            SceneSize = sceneSize;
-        }
+        public Camera _camera = null; //can be used to define a scene's custom view transformations to be applied instead of the main camera (this can be used for cases such as previews of units off screen, etc)
+
+        public Vector3 ScenePosition;
+
+
+        //Scene will contain the location, sprites, textures, actions (ie what to do on a mouse click for example).
+        //The scene will have an overall position that determines where in the game world it's placed. 
+        //public Scene(Vector3 scenePosition, List<BaseObject> Objects, List<BaseObject> RenderedObjects, List<BaseObject> ClickableObjects)
+        //{
+        //    _objects = Objects;
+        //    _renderedObjects = RenderedObjects;
+        //    _clickableObjects = ClickableObjects;
+        //    ScenePosition = scenePosition;
+        //}
 
         public Scene() { }
     }
