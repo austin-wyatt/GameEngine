@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Scenes;
 using MortalDungeon.Objects;
 using OpenTK;
@@ -17,11 +19,17 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MortalDungeon
 {
+    public static class WindowConstants
+    {
+        public static readonly Vector2 ScreenUnits = new Vector2(1000, 1000);
+        public static Vector3 CenterScreen = new Vector3(ScreenUnits.X / 2, ScreenUnits.Y / 2, 0); //use to outline bounds;
+        public static readonly Vector4 FullColor = new Vector4(1, 1, 1, 1);
+    }
     public class Window : GameWindow
     {
-        private readonly Vector4 defaultColor = new Vector4();
+        private readonly bool DISPLAY_FPS = true;
         private readonly Random _random = new Random();
-        private Vector3 _centerScreen;
+        private Vector2i WindowSize = new Vector2i();
 
         private List<Texture> _textures = new List<Texture>();
         private Dictionary<string, int> _loadedTextures = new Dictionary<string, int>();
@@ -37,10 +45,13 @@ namespace MortalDungeon
 
         private List<BaseObject> _clickableObjects = new List<BaseObject>();
 
+        private Dictionary<int, List<BaseObject>> _animations = new Dictionary<int, List<BaseObject>>(); //uses the frequency as a key and returns a list of objects that need to update
 
-        private List<Scene> sceneList = new List<Scene>();
+
+        private List<Scene> _scenes = new List<Scene>();
 
         private Stopwatch _timer;
+        private Stopwatch _gameTimer;
 
         private int _vertexBufferObject;
         private int _vertexArrayObject;
@@ -55,10 +66,10 @@ namespace MortalDungeon
 
 
         private int _count = 0;
+        private uint tick = 0;
+        private const float tickRate = (float)1 / 30;
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
-        {
-            _centerScreen = new Vector3(ClientSize.X / 2, ClientSize.Y / 2, 0); //use to outline bounds
-        }
+        {  }
 
         protected override void OnLoad()
         {
@@ -67,8 +78,9 @@ namespace MortalDungeon
             MouseMove += Window_MouseMove;
             MouseUp += Window_MouseUp;
             KeyUp += Window_KeyUp;
+            KeyDown += Window_KeyDown;
 
-            //Clear color
+            //GL flags
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc((BlendingFactor)BlendingFactorSrc.SrcAlpha, (BlendingFactor)BlendingFactorDest.OneMinusSrcAlpha);
@@ -77,61 +89,34 @@ namespace MortalDungeon
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
 
+            SetWindowSize();
+            _camera = new Camera(Vector3.UnitZ * 3, WindowSize.X / (float)WindowSize.Y);
+            _mouseRay = new MouseRay(_camera, WindowSize);
 
-            RenderableObject cursorDisplay = new RenderableObject(CursorObjects.MAIN_CURSOR, defaultColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-            _cursorObject = new BaseObject(ClientSize, cursorDisplay, 0, "cursor", new Vector3(MousePosition));
+            _cursorObject = new BaseObject(WindowSize, CURSOR_ANIMATION.List, 0, "cursor", new Vector3(MousePosition));
             _cursorObject.LockToWindow = true;
-            _cursorObject.Display.ScaleAll(0.1f);
+            _cursorObject.BaseFrame.ScaleAll(0.1f);
+
+            //Vector3 button1Position = new Vector3(300, 100, 0);
+            ////Vector3 button1Position = _centerScreen;
+            //BaseObject button1Object = new BaseObject(WindowSize, BUTTON_ANIMATION.List, 2, "Button One", button1Position, ButtonObjects.BUTTON_SPRITESHEET.Bounds);
+            //button1Object.BaseFrame.ScaleAll(0.5f);
+            //_clickableObjects.Add(button1Object);
 
 
-            Vector3 button1Position = new Vector3(300, 100, 0);
-            RenderableObject button1Test = new RenderableObject(TestObjects.TEST_SPRITESHEET, defaultColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-            BaseObject button1Object = new BaseObject(ClientSize, button1Test, 2, "Button One", button1Position, TestObjects.TEST_SPRITESHEET.Bounds);
-            button1Object.Display.ScaleAll(0.5f);
-            _clickableObjects.Add(button1Object);
-            
-
-            Vector3 button2Position = new Vector3(button1Position.X, button1Position.Y + 300, 0);
-            RenderableObject button2Test = new RenderableObject(TestObjects.TEST_SPRITESHEET, defaultColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-            BaseObject button2Object = new BaseObject(ClientSize, button2Test, 3, "Button Two", button2Position, TestObjects.TEST_SPRITESHEET.Bounds);
-            button2Object.Display.ScaleAll(0.5f);
-            _clickableObjects.Add(button2Object);
+            //Vector3 button2Position = new Vector3(button1Position.X, button1Position.Y + 300, 0);
+            //BaseObject button2Object = new BaseObject(WindowSize, BUTTON_ANIMATION.List, 3, "Button Two", button2Position, ButtonObjects.BUTTON_SPRITESHEET.Bounds);
+            //button2Object.BaseFrame.ScaleAll(0.5f);
+            //_clickableObjects.Add(button2Object);
 
 
+            //_renderedItems.Add(button1Object);
+            //_renderedItems.Add(button2Object);
+            Scene menuScene = new MenuScene();
+            menuScene.Load(WindowSize, _camera, _cursorObject);
+            menuScene.SetCursorDetectionFunc(CheckBoundsForObjects);
 
-            Vector3 hexagonTilePosition = _centerScreen;
-
-            for (int p = 0; p < 200; p++)
-            {
-                for (int i = 0; i < 100; i++)
-                {
-                    RenderableObject hexagonTileDisplay = new RenderableObject(EnvironmentObjects.HEXAGON_TILE, new Vector4((float)_random.NextDouble(), (float)_random.NextDouble(), 0, 1), ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-                    BaseObject hexagonTileObject = new BaseObject(ClientSize, hexagonTileDisplay, p * 20 + i, "Hexagon " + (p * 20 + i), hexagonTilePosition, EnvironmentObjects.HEXAGON_TILE.Bounds);
-                    hexagonTileObject.Display.CameraPerspective = true;
-                    hexagonTileObject.Display.ScaleAll(0.5f);
-                    hexagonTileObject.Display.ColorProportion = 0f;
-
-                    _clickableObjects.Add(hexagonTileObject);
-                    _renderedItems.Add(hexagonTileObject);
-
-                    hexagonTilePosition.X += 150;
-                    hexagonTilePosition.Y += 150 * (i % 2 == 0 ? 1 : -1);
-
-                    //if(p == 0 && i == 0)
-                    //button1Object.OnClick = (obj) =>
-                    //{
-                    //    hexagonTileObject.MoveObject(new Vector3(20f, 0, 0));
-                    //};
-                }
-                hexagonTilePosition = _centerScreen;
-                hexagonTilePosition.Y -= p * 300;
-            }
-
-            _renderedItems.Add(_cursorObject);
-            _renderedItems.Add(button1Object);
-            _renderedItems.Add(button2Object);
-
-            Console.WriteLine(ButtonObjects.BASIC_BUTTON.Center.X + ", " + ButtonObjects.BASIC_BUTTON.Center.Y);
+            _scenes.Add(menuScene);
 
 
             LoadTextures();
@@ -148,32 +133,44 @@ namespace MortalDungeon
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
 
 
-
-            sceneList.Add(new MenuScene());
-
-            _camera = new Camera(Vector3.UnitZ * 3, ClientSize.X / (float)ClientSize.Y);
-            _mouseRay = new MouseRay(_camera, ClientSize);
-            
-
             _timer = new Stopwatch();
             _timer.Start();
 
-            //Game logic loop
-            //var gameLoop = new Task(() =>
-            //{
-            //    var diff = _timer.ElapsedMilliseconds;
-            //    while (true)
-            //    {
-            //        diff = _timer.ElapsedMilliseconds;
-            //        if (diff > 1000)
-            //        {
-            //            //Console.WriteLine("loop");
-            //            //_timer.Restart();
-            //        }
-            //    }
-            //});
+            _gameTimer = new Stopwatch();
+            _gameTimer.Start();
 
-            //gameLoop.Start();
+            //Game logic loop
+            var gameLoop = new Task(() =>
+            {
+                uint lastTick = 0;
+                int waitTime = (int)(tickRate / 2 * 1000);
+
+                while (true)
+                {
+                    if (tick != lastTick)
+                    {
+                        lastTick = tick;
+
+                        _scenes.ForEach(scene =>
+                        {
+                            scene.Logic();
+
+                            scene._renderedObjects.ForEach(renderedObject =>
+                            {
+                                renderedObject.CurrentAnimation.Tick();
+                            });
+
+                            scene._particleGenerators.ForEach(generator =>
+                            {
+                                generator.Tick();
+                            });
+                        });
+                        
+                    }
+                    Thread.Sleep(waitTime);
+                }
+            });
+            gameLoop.Start();
 
             //hides mouse cursor
             CursorGrabbed = true;
@@ -187,15 +184,26 @@ namespace MortalDungeon
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
-            
-            double timeValue = _timer.Elapsed.TotalSeconds;
+            double timeValue;
+
+            ////FPS
+            timeValue = _timer.Elapsed.TotalSeconds;
             _count++;
 
-            if(timeValue > 1)
+            if (timeValue > 1 && DISPLAY_FPS)
             {
                 Console.WriteLine(_count);
                 _timer.Restart();
                 _count = 0;
+            }
+
+            //Tick counter
+            timeValue = _gameTimer.Elapsed.TotalSeconds;
+
+            if (timeValue > tickRate)
+            {
+                _gameTimer.Restart();
+                tick++;
             }
 
             Matrix4 viewMatrix = _camera.GetViewMatrix();
@@ -204,13 +212,37 @@ namespace MortalDungeon
             //all objects using the default shader are handled here
             Shaders.DEFAULT_SHADER.Use();
             GL.EnableVertexAttribArray(1);
-            for (int i = 0; i < _renderedItems.Count; i++)
+            for(int u = 0; u < _scenes.Count; u++)
             {
-                bool setVertexData = !(i > 0 && _renderedItems[i - 1].Display.ObjectID == _renderedItems[i].Display.ObjectID); //if we are rerendering the same type of object don't redefine the buffer data
-                bool setTextureData = !(!setVertexData && _renderedItems[i - 1].Display.animationFrame == _renderedItems[i].Display.animationFrame); //if the object is the same and the current texture is the same don't redefine the texture
+                for (int i = 0; i < _scenes[u]._renderedObjects.Count; i++)
+                {
+                    bool setVertexData = !(i > 0 && _scenes[u]._renderedObjects[i - 1].Display.ObjectID == _scenes[u]._renderedObjects[i].Display.ObjectID); //if we are rerendering the same type of object don't redefine the buffer data
+                    bool setTextureData = !(!setVertexData && _scenes[u]._renderedObjects[i - 1].CurrentAnimation.CurrentFrame == _scenes[u]._renderedObjects[i].CurrentAnimation.CurrentFrame); //if the next item to render is in the same animation state don't redefine texture data
 
-                RenderObject(_renderedItems[i].Display, ref viewMatrix, ref projectionMatrix, setVertexData, setTextureData);
+                    RenderObject(_scenes[u]._renderedObjects[i], ref viewMatrix, ref projectionMatrix, setVertexData, setTextureData);
+                }
             }
+
+            Shaders.PARTICLE_SHADER.Use();
+            bool firstParticle = true;
+            _scenes.ForEach(scene =>
+            {
+                scene._particleGenerators.ForEach(generator =>
+                {
+                    bool freshGenerator = true;
+                    generator.Particles.ForEach(particle =>
+                    {
+                        if (particle.Life > 0) 
+                        {
+                            RenderParticle(particle, ref viewMatrix, ref projectionMatrix, firstParticle, freshGenerator);
+
+                            firstParticle = false; //all particles will have the same vertex data so we just need to set it once
+                            freshGenerator = false; //all particles in a generator will have the same texture
+                        }
+                    });
+                });
+            });
+            
 
             for (int i = 0; i < _points.Count; i++)
             {
@@ -224,6 +256,9 @@ namespace MortalDungeon
                 GL.DrawArrays(PrimitiveType.Points, 0, 1);
             }
 
+            Shaders.DEFAULT_SHADER.Use();
+            RenderObject(_cursorObject, ref viewMatrix, ref projectionMatrix);
+
             //_mouseRay.Update(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y));
 
             SwapBuffers();
@@ -232,48 +267,81 @@ namespace MortalDungeon
         }
 
         //currently this only works for the default shaders. Any new shaders will need special handling/their own function
-        private void RenderObject(RenderableObject obj, ref Matrix4 viewMatrix, ref Matrix4 projectionMatrix, bool setVertexData = true, bool setTextureData = true) 
+        private void RenderObject(BaseObject obj, ref Matrix4 viewMatrix, ref Matrix4 projectionMatrix, bool setVertexData = true, bool setTextureData = true) 
         {
             if (setVertexData)
             {
-                GL.BufferData(BufferTarget.ArrayBuffer, obj.GetVerticesSize(), obj.Vertices, BufferUsageHint.DynamicDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, obj.Stride, 0);
+                GL.BufferData(BufferTarget.ArrayBuffer, obj.Display.GetVerticesSize(), obj.Display.Vertices, BufferUsageHint.DynamicDraw);
+                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, obj.Display.Stride, 0);
 
-                GL.BufferData(BufferTarget.ElementArrayBuffer, obj.GetVerticesDrawOrderSize(), obj.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, obj.Display.GetVerticesDrawOrderSize(), obj.Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
             }
 
-            if(setTextureData)
+            if (setTextureData)
             {
-                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, obj.Stride, obj.GetRenderDataOffset());
-                obj.TextureReference.Use(TextureUnit.Texture0);
+                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, obj.Display.Stride, obj.Display.GetRenderDataOffset());
+                obj.Display.TextureReference.Use(TextureUnit.Texture0);
             }
 
             var transform = Matrix4.Identity;
-            transform *= obj.Rotation;
-            transform *= obj.Scale;
-            transform *= obj.Translation;
+            transform *= obj.BaseFrame.Rotation;
+            transform *= obj.BaseFrame.Scale;
+            transform *= obj.BaseFrame.Translation;
 
-            if (obj.CameraPerspective)
+            if (obj.BaseFrame.CameraPerspective)
             {
-                obj.ShaderReference.SetMatrix4("view", viewMatrix);
-                obj.ShaderReference.SetMatrix4("projection", projectionMatrix);
+                obj.Display.ShaderReference.SetMatrix4("view", viewMatrix);
+                obj.Display.ShaderReference.SetMatrix4("projection", projectionMatrix);
             }
             else
             {
-                obj.ShaderReference.SetMatrix4("view", Matrix4.Identity);
-                obj.ShaderReference.SetMatrix4("projection", Matrix4.Identity);
+                obj.Display.ShaderReference.SetMatrix4("view", Matrix4.Identity);
+                obj.Display.ShaderReference.SetMatrix4("projection", Matrix4.Identity);
             }
 
-            obj.ShaderReference.SetMatrix4("transform", transform);
-            obj.ShaderReference.SetVector4("aColor", obj.Color);
-            obj.ShaderReference.SetFloat("fMixPercent", obj.ColorProportion);
+            obj.Display.ShaderReference.SetMatrix4("transform", transform);
+            obj.Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.Color);
+            obj.Display.ShaderReference.SetFloat("fMixPercent", obj.BaseFrame.ColorProportion);
+
+            obj.Display.ShaderReference.SetFloat("alpha_threshold", 0);
 
 
             //GL.BindVertexArray(_vertexArrayObject);
 
-            GL.DrawElements(PrimitiveType.Triangles, obj.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(PrimitiveType.Triangles, obj.Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
         }
+        private void RenderParticle(Particle obj, ref Matrix4 viewMatrix, ref Matrix4 projectionMatrix, bool setVertexData = true, bool setTextureData = true)
+        {
+            if (setVertexData)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, obj.Display.GetVerticesSize(), obj.Display.Vertices, BufferUsageHint.DynamicDraw);
+                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, obj.Display.Stride, 0);
 
+                GL.BufferData(BufferTarget.ElementArrayBuffer, obj.Display.GetVerticesDrawOrderSize(), obj.Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
+            }
+
+            if (setTextureData)
+            {
+                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, obj.Display.Stride, obj.Display.GetRenderDataOffset());
+                obj.Display.TextureReference.Use(TextureUnit.Texture0);
+            }
+
+            var transform = Matrix4.Identity;
+            transform *= obj.Display.Rotation;
+            transform *= obj.Display.Scale;
+            transform *= obj.Display.Translation;
+
+            obj.Display.ShaderReference.SetMatrix4("view", viewMatrix);
+            obj.Display.ShaderReference.SetMatrix4("projection", projectionMatrix);
+
+            obj.Display.ShaderReference.SetMatrix4("transform", transform);
+            obj.Display.ShaderReference.SetVector4("aColor", obj.Color);
+
+            obj.Display.ShaderReference.SetFloat("alpha_threshold", 0);
+
+
+            GL.DrawElements(PrimitiveType.Triangles, obj.Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
+        }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
@@ -282,7 +350,6 @@ namespace MortalDungeon
                 return;
             }
 
-
             if (KeyboardState.IsKeyDown(Keys.Escape))
             {
                 Close();
@@ -290,12 +357,20 @@ namespace MortalDungeon
 
             //if (MouseState.ScrollDelta[1] > 0)
             //{
-                
+
             //}
             //if (MouseState.ScrollDelta[1] < 0)
             //{
-                
+
             //}
+
+            _scenes.ForEach(scene =>
+            {
+                scene.MouseState = MouseState;
+                scene.KeyboardState = KeyboardState;
+
+                scene.onUpdateFrame();
+            });
 
             var mouse = MouseState;
             const float cameraSpeed = 4.0f;
@@ -350,14 +425,11 @@ namespace MortalDungeon
             }
             if (KeyboardState.IsKeyDown(Keys.T))
             {
-                CheckBoundsForObjects(_renderedItems, (foundObjs) =>
+                CheckBoundsForObjects(_renderedItems).ForEach((foundObj) =>
                 {
-                    for (int i = 0; i < foundObjs.Count; i++)
-                    {
-                        foundObjs[i].Display.Color = new Vector4(1, 0, 0, 1);
-                        foundObjs[i].Display.ColorProportion = 0.5f;
-                        foundObjs[i].MoveObject(Vector3.UnitX * 100);
-                    }
+                    foundObj.Display.Color = new Vector4(1, 0, 0, 0);
+                    foundObj.Display.ColorProportion = 0.5f;
+                    foundObj.MoveObject(Vector3.UnitX * 100);
                 });
             }
 
@@ -367,32 +439,90 @@ namespace MortalDungeon
 
         private void LoadTextures() 
         {
-            for (int i = 0; i < _renderedItems.Count; i++)
-            {
-                for (int o = 0; o < _renderedItems[i].Display.Textures.Textures.Length; o++)
-                {
-                    if (!_loadedTextures.TryGetValue(_renderedItems[i].Display.Textures.Textures[o], out int handle))
-                    {
-                        Texture newTexture = Texture.LoadFromFile(_renderedItems[i].Display.Textures.Textures[o]);
-                        _textures.Add(newTexture);
-                        _loadedTextures.Add(_renderedItems[i].Display.Textures.Textures[o], newTexture.Handle);
+            LoadTextureFromBaseObject(_cursorObject);
 
-                        _renderedItems[i].Display.TextureReference = newTexture;
-                    }
-                    else
+            for(int u = 0; u < _scenes.Count; u++)
+            {
+                if(_scenes[u].Loaded)
+                {
+                    for (int i = 0; i < _scenes[u]._renderedObjects.Count; i++)
                     {
-                        _renderedItems[i].Display.TextureReference = new Texture(handle);
+                        LoadTextureFromBaseObject(_scenes[u]._renderedObjects[i]);
+                    }
+
+                    for (int i = 0; i < _scenes[u]._particleGenerators.Count; i++)
+                    {
+                        _scenes[u]._particleGenerators[i].Particles.ForEach(particle =>
+                        {
+                            LoadTextureFromParticle(particle);
+                        });
                     }
                 }
             }
         }
 
+        private void LoadTextureFromBaseObject(BaseObject obj)
+        {
+            foreach(KeyValuePair <AnimationType, Animation> entry in obj.Animations)
+            {
+                for (int o = 0; o < entry.Value.Frames.Count; o++)
+                {
+                    for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
+                    {
+                        if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                        {
+                            Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.Textures[p]);
+                            _textures.Add(newTexture);
+                            _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
+
+                            entry.Value.Frames[o].TextureReference = newTexture;
+                        }
+                        else
+                        {
+                            entry.Value.Frames[o].TextureReference = new Texture(handle);
+                        }
+                    }
+                }
+            }
+        }
+        private void LoadTextureFromParticle(Particle obj)
+        {
+            for (int p = 0; p < obj.Display.Textures.Textures.Length; p++)
+            {
+                if (!_loadedTextures.TryGetValue(obj.Display.Textures.Textures[p], out int handle))
+                {
+                    Texture newTexture = Texture.LoadFromFile(obj.Display.Textures.Textures[p]);
+                    _textures.Add(newTexture);
+                    _loadedTextures.Add(obj.Display.Textures.Textures[p], newTexture.Handle);
+
+                    obj.Display.TextureReference = newTexture;
+                }
+                else
+                {
+                    obj.Display.TextureReference = new Texture(handle);
+                }
+            }
+        }
+        private void SetWindowSize() 
+        {
+            WindowSize.X = ClientSize.X;
+            WindowSize.Y = ClientSize.Y;
+
+            if (_camera != null) 
+            {
+                _mouseRay._windowSize = WindowSize;
+                _cursorObject._windowSize = WindowSize;
+                _camera.AspectRatio = WindowSize.X / (float)WindowSize.Y;
+            }
+        }
         protected override void OnResize(ResizeEventArgs e)
         {
             // When the window gets resized, we have to call GL.Viewport to resize OpenGL's viewport to match the new size.
             // If we don't, the NDC will no longer be correct.
-            GL.Viewport(0, 0, Size.X, Size.Y);
             base.OnResize(e);
+
+            GL.Viewport(0, 0, Size.X, Size.Y);
+            SetWindowSize();
         }
 
         protected override void OnUnload()
@@ -419,10 +549,20 @@ namespace MortalDungeon
             base.OnUnload();
         }
 
-        private Vector2 NormalizeGlobalCoordinates(Vector2 vec) 
+        protected override void OnMaximized(MaximizedEventArgs e)
         {
-            float X = (vec.X / ClientSize.X) * 2 - 1; //converts it into local opengl coordinates
-            float Y = ((vec.Y / ClientSize.Y) * 2 - 1) * -1; //converts it into local opengl coordinates
+            base.OnMaximized(e);
+        }
+
+        protected override void OnMinimized(MinimizedEventArgs e)
+        {
+            base.OnMinimized(e);
+        }
+
+        private Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize) 
+        {
+            float X = (vec.X / clientSize.X) * 2 - 1; //converts it into local opengl coordinates
+            float Y = ((vec.Y / clientSize.Y) * 2 - 1) * -1; //converts it into local opengl coordinates
 
             return new Vector2(X, Y);
         }
@@ -431,8 +571,8 @@ namespace MortalDungeon
         {
             LineObject lineObj = new LineObject(line1, line2, thickness);
 
-            RenderableObject testLine = new RenderableObject(lineObj.CreateLineDefinition(), color, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-            BaseObject lineObject = new BaseObject(ClientSize, testLine, 999, "line", line1);
+            //RenderableObject testLine = new RenderableObject(lineObj.CreateLineDefinition(), color, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+            BaseObject lineObject = new BaseObject(WindowSize, new LINE_ANIMATION(lineObj).List, 999, "line", line1);
             lineObject.Display.ColorProportion = 1.0f;
             lineObject.Display.CameraPerspective = true;
             lineObject.MoveObject(-line1);
@@ -441,10 +581,10 @@ namespace MortalDungeon
             LoadTextures();
         }
 
-        private void CheckBoundsForObjects(List<BaseObject> listObjects, Action<List<BaseObject>> FoundObjAction)
+        private List<BaseObject> CheckBoundsForObjects(List<BaseObject> listObjects)
         {
-            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, ClientSize); // start of ray (near plane)
-            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, ClientSize); // end of ray (far plane)
+            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowSize); // start of ray (near plane)
+            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowSize); // end of ray (far plane)
 
             List<BaseObject> foundObjects = new List<BaseObject>();
 
@@ -456,69 +596,78 @@ namespace MortalDungeon
                 }
             }
 
-            FoundObjAction(foundObjects);
+            return foundObjects;
         }
 
-
-        private List<Action> _mouseDownActions = new List<Action>();
+        #region Event handlers
         private void Window_MouseDown(MouseButtonEventArgs obj)
         {
-            _mouseDownActions.ForEach(a =>
+            _scenes.ForEach(scene =>
             {
-                a.Invoke();
+                scene.onMouseDown(obj);
             });
         }
 
-        private List<Action> _mouseMoveActions = new List<Action>();
         private void Window_MouseMove(MouseMoveEventArgs obj)
         {
-            _mouseMoveActions.ForEach(a =>
+            _scenes.ForEach(scene =>
             {
-                a.Invoke();
+                scene.onMouseMove(obj);
             });
         }
 
         private void Window_MouseUp(MouseButtonEventArgs obj)
         {
-            if (obj.Button == MouseButton.Left && obj.Action == InputAction.Release)
+            _scenes.ForEach(scene =>
             {
-                Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y)));
+                scene.onMouseUp(obj);
+            });
+            //if (obj.Button == MouseButton.Left && obj.Action == InputAction.Release)
+            //{
+            //    Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y)));
 
-                //Console.WriteLine("Mouse Coordinates " + MouseCoordinates.X + ", " + MouseCoordinates.Y);
-                _clickableObjects.ForEach(o =>
-                {
-                    if (!o.Display.CameraPerspective)
-                    {
-                        if (o.Bounds.Contains(new Vector2(MouseCoordinates.X, MouseCoordinates.Y), _camera))
-                        {
-                            Console.WriteLine("Object " + o.Name + " clicked.");
+            //    //Console.WriteLine("Mouse Coordinates " + MouseCoordinates.X + ", " + MouseCoordinates.Y);
+            //    _clickableObjects.ForEach(o =>
+            //    {
+            //        if (!o.BaseFrame.CameraPerspective)
+            //        {
+            //            if (o.Bounds.Contains(new Vector2(MouseCoordinates.X, MouseCoordinates.Y), _camera))
+            //            {
+            //                Console.WriteLine("Object " + o.Name + " clicked.");
 
-                            o.Display.Color = new Vector4(1, 0, 0, 0);
-                            o.Display.ColorProportion = 0.5f;
+            //                o.Display.Color = new Vector4(1, 0, 0, 0);
+            //                o.Display.ColorProportion = 0.5f;
 
-                            if (o.OnClick != null)
-                                o.OnClick(o);
-                        }
-                    }
-                });
+            //                if (o.OnClick != null)
+            //                    o.OnClick(o);
+            //            }
+            //        }
+            //    });
 
-                CheckBoundsForObjects(_clickableObjects, (foundObjs) =>
-                {
-                    for(int i = 0; i < foundObjs.Count; i++)
-                    {
-                        foundObjs[i].MoveObject(new Vector3(-200, 0, 0));
-                    }
-                });
-            }
+            //    CheckBoundsForObjects(_clickableObjects, (foundObjs) =>
+            //    {
+            //        for(int i = 0; i < foundObjs.Count; i++)
+            //        {
+            //            foundObjs[i].OnClick?.Invoke(foundObjs[i]);
+            //            //foundObjs[i].MoveObject(new Vector3(-200, 0, 0));
+            //        }
+            //    });
+            //}
         }
 
         private void Window_KeyUp(KeyboardKeyEventArgs obj)
         {
+            _scenes.ForEach(scene =>
+            {
+                scene.onKeyUp(obj);
+            });
+
+            //
             switch (obj.Key) 
             {
                 case (Keys.Q):
-                    _points.Add(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y)));
-                    var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y));
+                    _points.Add(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowSize));
+                    var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowSize);
                     Console.WriteLine("Normalized cursor coordinates: " + temp.X + ", " + temp.Y);
                     break;
                 case (Keys.R):
@@ -531,32 +680,6 @@ namespace MortalDungeon
                         Console.Write(p.X + "f, " + p.Y + "f, 0.0f, \n");
                     });
                     Console.Write("}");
-                    break;
-                case (Keys.I):
-                    Vector3 mousePosition = new Vector3(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y)));
-
-                    var ray = _mouseRay.GetCurrentRay();
-
-                    Vector3 correctCameraPos = _camera.Position;
-                    correctCameraPos.X += 1;
-                    correctCameraPos.Y -= 1;
-                    //correctCameraPos.Z -= 1.5f;
-
-                    Vector3 rayPoint = ray;
-
-                    Vector3 rayTest = (ray * 50) + correctCameraPos;
-
-                    //Console.WriteLine(ray.X * mousePosition.X + ", " + ray.Y * mousePosition.Y + ", " + ray.Z);
-                    //Console.WriteLine(_camera.Front.X + ", " + _camera.Front.Y + ", " + _camera.Front.Z);
-                    //new Vector3(0,0,0)
-
-                    //CreateNewLine(new Vector3(0, 0, 0), cameraViewPosition, new Vector4(1, 0, 0, 1), 0.05f);
-                    //CreateNewLine(new Vector3(0, 0, 0), _camera.Position, new Vector4(0, 0, 1, 1), 0.05f);
-                    //CreateNewLine(correctCameraPos, rayTest, new Vector4(1, 0, 1, 1), 0.05f);
-
-                    Console.WriteLine(correctCameraPos);
-
-                    CreateNewLine(correctCameraPos, rayTest, new Vector4(1, 0, 1, 1), 0.05f);
                     break;
                 case (Keys.O):
                     _lines.Clear();
@@ -581,52 +704,28 @@ namespace MortalDungeon
                     _count = 0;
 
                     break;
-                case (Keys.U):
-                    //Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, ClientSize); // start of ray (near plane)
-                    //Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, ClientSize); // end of ray (far plane)
-
-                    //Vector3 correctCameraPosition = new Vector3(near.X + 1, near.Y - 1, near.Z);
-
-                    //CreateNewLine(correctCameraPosition, far, new Vector4(0,1,0.5f, 1f), 0.1f);
-
-                    CheckBoundsForObjects(_renderedItems, (foundObjs) => 
-                    {
-                        for(int i = 0; i < foundObjs.Count; i++)
-                        {
-                            foundObjs[i].Display.Color = new Vector4(1, 0, 0, 1);
-                            foundObjs[i].Display.ColorProportion = 0.5f;
-                        }
-                    });
-
-                    //float xUnit = far.X - near.X;
-                    //float yUnit = far.Y - near.Y;
-                    //float zUnit = far.Z - near.Z;
-
-                    //float percentageAlongLine = (0 - near.Z) / (far.Z - near.Z);
-
-                    //Vector3 pointAtZ = new Vector3(near.X + xUnit * percentageAlongLine, near.Y + yUnit * percentageAlongLine, near.Z + zUnit * percentageAlongLine);
-
-                    //CreateNewLine(pointAtZ, new Vector3(0, 0, 0), new Vector4(0, 1, 0.5f, 1));
-
-                    break;
-                case (Keys.Z):
-                    CreateNewLine(_camera.Position, new Vector3(_count, _count, 0), new Vector4(1, 1, 0.5f, 1f), 0.1f);
-
-                    CreateNewLine(new Vector3(_count, _count, 0), _camera.Position, new Vector4(0, 1, 0.5f, 1f), 0.1f);
-                    CreateNewLine(new Vector3(_count * 2, _count * 2, 0), new Vector3(), new Vector4(0, 1, 0.5f, 1f), 0.1f);
-
-                    _count--;
-                    RenderableObject hexagonTileDisplay = new RenderableObject(EnvironmentObjects.HEXAGON_TILE, new Vector4((float)_random.NextDouble(), (float)_random.NextDouble(), 0, 1), ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-                    BaseObject hexagonTileObject = new BaseObject(ClientSize, hexagonTileDisplay, 4, "line", new Vector3(), EnvironmentObjects.HEXAGON_TILE.Bounds);
-                    hexagonTileObject.Display.CameraPerspective = true;
-                    hexagonTileObject.Display.ColorProportion = 1.0f;
-
-                    _renderedItems.Add(hexagonTileObject);
-                    LoadTextures();
-                    break;
+                //case (Keys.U):
+                //    CheckBoundsForObjects(_renderedItems, (foundObjs) => 
+                //    {
+                //        for(int i = 0; i < foundObjs.Count; i++)
+                //        {
+                //            foundObjs[i].Display.Color = new Vector4(1, 0, 0, 1);
+                //            foundObjs[i].Display.ColorProportion = 0.5f;
+                //        }
+                //    });
+                //    break;
                 default:
                     break;
             }
         }
+
+        private void Window_KeyDown(KeyboardKeyEventArgs obj) 
+        {
+            _scenes.ForEach(scene =>
+            {
+                scene.onKeyDown(obj);
+            });
+        }
+        #endregion
     }
 }

@@ -14,7 +14,7 @@ namespace MortalDungeon
                 Size = new Vector2i(1280, 720),
                 //Size = new Vector2i(400, 200),
                 Title = "Test Window",
-                WindowBorder = OpenTK.Windowing.Common.WindowBorder.Fixed
+                WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable
             };
 
             var gameWindowSettings = GameWindowSettings.Default;

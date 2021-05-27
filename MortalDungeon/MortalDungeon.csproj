@@ -36,6 +36,12 @@
     <None Update="Resources\Tree.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Shaders\particleShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\particleShader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Shaders\pointShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -58,7 +64,7 @@
 
   <ItemGroup>
     <Compile Update="Objects\Spritesheets.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
     <Compile Update="Settings\Settings.Designer.cs">
       <DesignTime>True</DesignTime>

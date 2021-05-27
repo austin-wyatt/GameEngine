@@ -10,32 +10,63 @@ namespace MortalDungeon.Engine_Classes
 {
     public class BaseObject
     {
-        private Vector2i _windowSize;
+        public Vector2i _windowSize;
         public int ID;
         public string Name;
-        public RenderableObject Display;
         public Vector3 Position; //uses global position (based off of screen width and height), use Display.Position for local coordinates 
         public Bounds Bounds;
 
+        public Dictionary<AnimationType, Animation> Animations = new Dictionary<AnimationType, Animation>();
+        public AnimationType CurrentAnimationType = AnimationType.Idle; //static textures will use the idle animation
+
         public bool LockToWindow = false;
 
+        public RenderableObject Display
+        {
+            get
+            {
+                return Animations[CurrentAnimationType].GetCurrentFrame();
+            }
+        }
 
-        public BaseObject(Vector2i windowSize, RenderableObject display, int id, string name, Vector3 position, float[] bounds = null) 
+        public Animation CurrentAnimation
+        {
+            get
+            {
+                return Animations[CurrentAnimationType];
+            }
+        }
+
+        //All transformations should be made to the base frame. They will then be applied to the current frame
+        public RenderableObject BaseFrame
+        {
+            get
+            {
+                return Animations[AnimationType.Idle].Frames[0];
+            }
+        }
+
+        public BaseObject(Vector2i windowSize, List<Animation> animations, int id, string name, Vector3 position, float[] bounds = null) 
         {
             _windowSize = windowSize;
             ID = id;
             Name = name;
-            Display = display;
             Position = new Vector3(position);
 
-            if(bounds == null)
+            for (int i = 0; i < animations.Count; i++)
             {
-                Bounds = new Bounds(display.GetPureVertexData(), display, windowSize);
+                Animations[animations[i].Type] = new Animation(animations[i]);
+            }
+
+            if (bounds == null)
+            {
+                Bounds = new Bounds(BaseFrame.GetPureVertexData(), BaseFrame, windowSize);
             }
             else
             {
-                Bounds = new Bounds(bounds, display, windowSize);
+                Bounds = new Bounds(bounds, BaseFrame, windowSize);
             }
+            
 
             SetPosition(position);
         }
@@ -46,8 +77,8 @@ namespace MortalDungeon.Engine_Classes
             //Position = new Vector3(Math.Clamp(position.X, 0, _windowSize.X), Math.Clamp(position.Y, 0, _windowSize.Y), 0);
             Position = new Vector3(position.X, position.Y, position.Z);
 
-            float X = (position.X / 1000) * 2 - 1; //converts point to local opengl coordinates
-            float Y = ((position.Y / 1000) * 2 - 1) * -1; //converts point to local opengl coordinates
+            float X = (position.X / WindowConstants.ScreenUnits.X) * 2 - 1; //converts point to local opengl coordinates
+            float Y = ((position.Y / WindowConstants.ScreenUnits.Y) * 2 - 1) * -1; //converts point to local opengl coordinates
 
             //float X = (position.X / _windowSize.X) * 2 - 1; //converts point to local opengl coordinates
             //float Y = ((position.Y / _windowSize.Y) * 2 - 1) * -1; //converts point to local opengl coordinates
@@ -61,7 +92,7 @@ namespace MortalDungeon.Engine_Classes
                 position.Y = Math.Clamp(position.Y, -1.0f, 1.0f);
             }
 
-            Display.SetTranslation(position);
+            BaseFrame.SetTranslation(position);
         }
 
         public void SetPosition(Vector2 position)
@@ -79,7 +110,7 @@ namespace MortalDungeon.Engine_Classes
                 newPos.Y = Math.Clamp(newPos.Y, -1.0f, 1.0f);
             }
 
-            Display.SetTranslation(newPos);
+            BaseFrame.SetTranslation(newPos);
         }
 
         //uses global coordinates
@@ -91,7 +122,7 @@ namespace MortalDungeon.Engine_Classes
             //position.X = (position.X / _windowSize.X); //converts global coordinates into a proportion of the screen
             //position.Y = (position.Y / _windowSize.Y); //converts global coordinates into a proportion of the screen
 
-            Display.Translate(position);
+            BaseFrame.Translate(position);
         }
 
         public void RemakeBounds(RenderableObject display, float[] bounds = null) 
@@ -100,7 +131,12 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(Position);
         }
 
+        public void SetAnimation(AnimationType type) 
+        {
+            CurrentAnimationType = type;
+        }
 
+        
         public Action<BaseObject> OnClick;
         //public virtual void OnClick() 
         //{

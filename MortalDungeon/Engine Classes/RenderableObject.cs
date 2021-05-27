@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 
@@ -41,7 +42,6 @@ namespace MortalDungeon
 
         //when a renderable object is loaded into a scene it's texture needs to be added to the texture list
         public TextureInfo Textures;
-        public int animationFrame = 0;
 
         //Every renderable object begins at the origin and is placed from there.
         public Vector4 Position = new Vector4(0, 0, 0, 1.0f);
@@ -128,38 +128,28 @@ namespace MortalDungeon
             Stride = GetVerticesSize(def.Vertices) / Points;
         }
 
-        public RenderableObject(ObjectDefinition def, Vector4 color, ObjectRenderType renderType, Shader shaderReference, RenderableObject prevObject)
+        public RenderableObject(RenderableObject oldObj)
         {
-            Center = def.Center;
-            Points = def.Points;
-            Textures = def.Textures;
-            RenderType = renderType;
-            VerticesDrawOrder = def.Indices;
-            ShaderReference = shaderReference;
-            ObjectID = def.ID;
-            if (def.ShouldCenter())
-            {
-                Vertices = CenterVertices(def.Vertices);
-            }
-            else
-            {
-                Vertices = def.Vertices;
-            }
+            Center = oldObj.Center;
+            Points = oldObj.Points;
+            Textures = oldObj.Textures;
+            RenderType = oldObj.RenderType;
+            VerticesDrawOrder = oldObj.VerticesDrawOrder;
+            ShaderReference = oldObj.ShaderReference;
+            ObjectID = oldObj.ObjectID;
+            Vertices = oldObj.Vertices;
 
-            Color = color;
+            Color = new Vector4(oldObj.Color);
+            ColorProportion = oldObj.ColorProportion;
 
-            Stride = GetVerticesSize(def.Vertices) / Points;
+            Stride = oldObj.Stride;
 
-            Translation = prevObject.Translation;
-            Scale = prevObject.Scale;
-            Rotation = prevObject.Rotation;
+            Translation = new Matrix4(new Vector4(oldObj.Translation.Row0), new Vector4(oldObj.Translation.Row1), new Vector4(oldObj.Translation.Row2), new Vector4(oldObj.Translation.Row3));
+            Rotation = new Matrix4(new Vector4(oldObj.Rotation.Row0), new Vector4(oldObj.Rotation.Row1), new Vector4(oldObj.Rotation.Row2), new Vector4(oldObj.Rotation.Row3));
+            Scale = new Matrix4(new Vector4(oldObj.Scale.Row0), new Vector4(oldObj.Scale.Row1), new Vector4(oldObj.Scale.Row2), new Vector4(oldObj.Scale.Row3));
 
-            RotationInfo = prevObject.RotationInfo;
-
-            TextureReference = prevObject.TextureReference;
+            Position = new Vector4(oldObj.Position);
         }
-
-        //TODO, add a change texture option
 
         public int GetRenderDataOffset(ObjectRenderType renderType = ObjectRenderType.Unknown) 
         {
@@ -243,7 +233,9 @@ namespace MortalDungeon
             currentTranslation.Y += translation.Y;
             currentTranslation.Z += translation.Z;
 
-            Position = new Vector4(currentTranslation, Position.W);
+            Position.X = currentTranslation.X;
+            Position.Y = currentTranslation.Y;
+            Position.Z = currentTranslation.Z;
 
             SetTranslation(currentTranslation);
         }
@@ -304,10 +296,10 @@ namespace MortalDungeon
         }
 
         //TRANSFORMATION SETTERS
-        public void SetRotation(Vector3 translations)
-        {
-            Translation = Matrix4.CreateTranslation(translations);
-        }
+        //public void SetRotation(Vector3 translations)
+        //{
+        //    Translation = Matrix4.CreateTranslation(translations);
+        //}
         public void SetScale(Vector3 scale)
         {
             Scale = Matrix4.CreateScale(scale);

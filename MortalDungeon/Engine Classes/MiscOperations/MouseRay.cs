@@ -11,7 +11,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         private Camera camera;
 
-        private Vector2i _windowSize;
+        public Vector2i _windowSize;
 
         public MouseRay(Camera _camera, Vector2i windowSize)
         {
