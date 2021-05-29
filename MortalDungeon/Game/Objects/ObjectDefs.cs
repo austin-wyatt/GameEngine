@@ -12,7 +12,9 @@ namespace MortalDungeon.Game.Objects
         CURSOR = 0,
         HEXAGON_TILE,
         BUTTON,
-        GRASS
+        GRASS,
+        FIRE_BASE,
+        BASE_TILE
     }
     //Where static object defs are defined for usage with renderable objects, animations, etc
     public static class CursorObjects
@@ -216,6 +218,16 @@ namespace MortalDungeon.Game.Objects
         public static readonly ObjectDefinition HEXAGON_TILE_SQUARE_Generic = new SpritesheetObject(2, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.HEXAGON_TILE, HexagonBounds);
 
         public static readonly ObjectDefinition GRASS_TILE = new SpritesheetObject(14, Spritesheets.TestSheet, 1).CreateObjectDefinition(ObjectIDs.GRASS);
+        public static readonly ObjectDefinition FIRE_BASE = new SpritesheetObject(2, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.FIRE_BASE);
+        private static readonly float[] BaseTileBounds = new float[]{
+        0.26093745f, -0.44166672f, 0.0f,
+        -0.253125f, -0.44166672f, 0.0f,
+        -0.484375f, -0.008333325f, 0.0f,
+        -0.24843752f, 0.41388887f, 0.0f,
+        0.2578125f, 0.41388887f, 0.0f,
+        0.49843752f, -0.0055555105f, 0.0f,
+        };
+        public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds);
     }
 
 
@@ -235,14 +247,14 @@ namespace MortalDungeon.Game.Objects
         {
             return new ObjectDefinition(
             new float[] {
-            Point1.X, Point1.Y, Point1.Z, 0.2f, 0.0f,
-            Point1.X + Thickness, Point1.Y, Point1.Z, 0.1f, 1.0f,
-            Point2.X, Point2.Y, Point2.Z, 0.2f, 0.1f,
-            Point2.X + Thickness, Point2.Y, Point2.Z, 0.1f, 0.1f,
+            Point1.X, Point1.Y, Point1.Z, 0.4f, 0.0f,
+            Point1.X, Point1.Y + Thickness, Point1.Z, 0.4f, 0.1f,
+            Point2.X, Point2.Y, Point2.Z, 0.3f, 0.1f,
+            Point2.X, Point2.Y + Thickness, Point2.Z, 0.3f, 0.0f,
             },
             new uint[]{
             0, 1, 2,
-            2, 1, 3
+            1, 2, 3
             },
             4,
             new TextureInfo(Spritesheets.TestSheet, new int[] { 0 }),
@@ -265,7 +277,7 @@ namespace MortalDungeon.Game.Objects
             Spritesheet = spritesheet;
             SideLength = sideLength;
         }
-        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null)
+        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool includeMatrix = false)
         {
             int column = SpritesheetPosition % Spritesheet.Rows;
             int row = SpritesheetPosition / Spritesheet.Rows;
@@ -299,23 +311,41 @@ namespace MortalDungeon.Game.Objects
                 -0.5f, 0.5f, 0.0f,
             };
 
+
             ObjectDefinition returnDef = new ObjectDefinition(
-            new float[] {
-            0.5f, 0.5f, 0.0f, maxBoundX, minBoundY, // top right
-            0.5f, -0.5f, 0.0f, maxBoundX, maxBoundY, // bottom right
-            -0.5f, -0.5f, 0.0f, minBoundX, maxBoundY, // bottom left
-            -0.5f, 0.5f, 0.0f, minBoundX, minBoundY, // top left
-            },
-            new uint[]{
-            0, 1, 3,
-            1, 2, 3
-            },
-            4,
-            new TextureInfo(Spritesheet, new int[] { SpritesheetPosition }),
-            default,
-            bounds != null ? bounds : defaultBounds,
-            false
+                new float[] {
+                0.5f, 0.5f, 0.0f, maxBoundX, minBoundY, // top right
+                0.5f, -0.5f, 0.0f, maxBoundX, maxBoundY, // bottom right
+                -0.5f, -0.5f, 0.0f, minBoundX, maxBoundY, // bottom left
+                -0.5f, 0.5f, 0.0f, minBoundX, minBoundY, // top left
+                },
+                new uint[]{
+                0, 1, 3,
+                1, 2, 3
+                },
+                4,
+                new TextureInfo(Spritesheet, new int[] { SpritesheetPosition }),
+                default,
+                bounds != null ? bounds : defaultBounds,
+                false
             );
+
+            if (includeMatrix)
+            {
+                int newStride = (5 + 16);
+                int oldStride = 5;
+                float[] temp = new float[4 * newStride];
+
+                for (int i = 0; i < 4; i++) 
+                {
+                    for (int o = 0; o < 5; o++) 
+                    {
+                        temp[newStride * i + o] = returnDef.Vertices[oldStride * i + o]; //assign olds x, y, z, texX, texY values to new array
+                    }
+                }
+                returnDef.Vertices = temp;
+            }
+
 
             returnDef.ID = ID;
 

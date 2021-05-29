@@ -9,10 +9,9 @@ namespace MortalDungeon.Engine_Classes
 {
     public class Scene
     {
-        public List<BaseObject> _objects = new List<BaseObject>(); //all objects associated with this Scene
-        public List<BaseObject> _renderedObjects = new List<BaseObject>(); //objects that are currently being rendered
-        public List<BaseObject> _clickableObjects = new List<BaseObject>(); //objects that will contain an OnClick effect
-        public List<ParticleGenerator> _particleGenerators = new List<ParticleGenerator>();
+        public List<GameObject> _objects = new List<GameObject>(); //all objects associated with this Scene
+        public List<GameObject> _renderedObjects = new List<GameObject>(); //objects that are currently being rendered
+        public List<GameObject> _clickableObjects = new List<GameObject>(); //objects that will contain an OnClick effect
 
         public bool Loaded = false;
 
@@ -27,12 +26,13 @@ namespace MortalDungeon.Engine_Classes
         public KeyboardState KeyboardState;
         public MouseState MouseState;
 
+        protected Random rand = new Random();
+
         protected void InitializeFields()
         {
-            _objects = new List<BaseObject>();
-            _renderedObjects = new List<BaseObject>();
-            _clickableObjects = new List<BaseObject>();
-            _particleGenerators = new List<ParticleGenerator>();
+            _objects = new List<GameObject>();
+            _renderedObjects = new List<GameObject>();
+            _clickableObjects = new List<GameObject>();
 
             ScenePosition = new Vector3(0, 0, 0);
         }
@@ -52,8 +52,8 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        protected Func<List<BaseObject>, List<BaseObject>> _cursorBoundsCheck = null;
-        public void SetCursorDetectionFunc(Func<List<BaseObject>, List<BaseObject>> func) 
+        protected Func<List<GameObject>, List<GameObject>> _cursorBoundsCheck = null;
+        public void SetCursorDetectionFunc(Func<List<GameObject>, List<GameObject>> func) 
         {
             _cursorBoundsCheck = func;
         }
@@ -78,7 +78,7 @@ namespace MortalDungeon.Engine_Classes
         #endregion
 
         //accesses the method used to determine whether the cursor is overlapping an object that is defined in the main file.
-        protected List<BaseObject> ObjectCursorBoundsCheck(List<BaseObject> listObjects)
+        protected List<GameObject> ObjectCursorBoundsCheck(List<GameObject> listObjects)
         {
             return _cursorBoundsCheck?.Invoke(listObjects);
         }
@@ -99,6 +99,30 @@ namespace MortalDungeon.Engine_Classes
             float Y = ((vec.Y / clientSize.Y) * 2 - 1) * -1; //converts it into local opengl coordinates
 
             return new Vector2(X, Y);
+        }
+        protected BaseObject GetObjWithHighestZ(List<BaseObject> objs) //don't pass a list of 0 objects
+        {
+            BaseObject foundObject;
+            foundObject = objs[0];
+            objs.ForEach(obj =>
+            {
+                if (obj.Position.Z > foundObject.Position.Z)
+                    foundObject = obj;
+            });
+
+            return foundObject;
+        }
+        protected GameObject GetObjWithHighestZ(List<GameObject> objs) //don't pass a list of 0 objects
+        {
+            GameObject foundObject;
+            foundObject = objs[0];
+            objs.ForEach(obj =>
+            {
+                if (obj.Position.Z > foundObject.Position.Z)
+                    foundObject = obj;
+            });
+
+            return foundObject;
         }
         #endregion
     }

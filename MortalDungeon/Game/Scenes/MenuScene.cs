@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -20,55 +21,51 @@ namespace MortalDungeon.Game.Scenes
         {
             base.Load(clientSize, camera, cursorObject);
 
-            Vector3 hexagonTilePosition = WindowConstants.CenterScreen;
-
-            //for (int p = 0; p < 10; p++)
+            //Vector3 GrassTilePosition = new Vector3();
+            //for (int i = 0; i < 10; i++) 
             //{
-            //    for (int i = 0; i < 100; i++)
+            //    for(int o = 0; o <= 10; o++)
             //    {
-            //        BaseObject hexagonTileObject = new BaseObject(ClientSize, HEXAGON_ANIMATION.List, p * 20 + i, "Hexagon " + (p * 20 + i), hexagonTilePosition, EnvironmentObjects.HEXAGON_TILE_SQUARE_Generic.Bounds);
-            //        hexagonTileObject.BaseFrame.CameraPerspective = true;
-            //        hexagonTileObject.BaseFrame.ScaleAll(0.5f);
-            //        hexagonTileObject.BaseFrame.ColorProportion = 0f;
+            //        BaseObject GrassTile = new BaseObject(ClientSize, GRASS_ANIMATION.List, 0, "", GrassTilePosition, EnvironmentObjects.GRASS_TILE.Bounds);
+            //        GrassTile.BaseFrame.CameraPerspective = true;
 
-            //        _clickableObjects.Add(hexagonTileObject);
-            //        _renderedObjects.Add(hexagonTileObject);
+            //        _renderedObjects.Add(GrassTile);
 
-            //        hexagonTilePosition.X += 150;
-            //        hexagonTilePosition.Y += 150 * (i % 2 == 0 ? 1 : -1);
-
-            //        hexagonTileObject.OnClick = (obj) =>
-            //        {
-            //            obj.CurrentAnimation.Reset();
-            //            obj.CurrentAnimation.Repeats = -1;
-            //            obj.BaseFrame.Color = new Vector4(obj.Display.Color.X + 0.1f, obj.Display.Color.Y, obj.Display.Color.Z, obj.Display.Color.W);
-            //            hexagonTileObject.BaseFrame.ColorProportion = 0.5f;
-            //        };
+            //        GrassTilePosition.X = i * 500;
+            //        GrassTilePosition.Y = o * 500;
             //    }
-            //    hexagonTilePosition = WindowConstants.CenterScreen;
-            //    hexagonTilePosition.Y -= p * 300;
             //}
 
-            Vector3 GrassTilePosition = new Vector3();
-            for (int i = 0; i < 10; i++) 
+            Vector3 TilePosition = new Vector3();
+            BaseTile baseTile = new BaseTile();
+
+            for (int i = 0; i < 45; i++)
             {
-                for(int o = 0; o <= 10; o++)
+                for (int o = 0; o < 45; o++)
                 {
-                    BaseObject GrassTile = new BaseObject(ClientSize, GRASS_ANIMATION.List, 0, "", GrassTilePosition, EnvironmentObjects.GRASS_TILE.Bounds);
-                    GrassTile.BaseFrame.CameraPerspective = true;
+                    baseTile = new BaseTile(ClientSize, TilePosition, i * 45 + o + 1);
 
-                    _renderedObjects.Add(GrassTile);
+                    _renderedObjects.Add(baseTile);
+                    _clickableObjects.Add(baseTile);
 
-                    GrassTilePosition.X = i * 500;
-                    GrassTilePosition.Y = o * 500;
+                    TilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y;
                 }
+                TilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.29f;
+                TilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2);
+                TilePosition.Z += 0.0001f;
             }
 
+            Guy guy = new Guy(ClientSize, new Vector3(baseTile.BaseObjects[0].Dimensions.X * 0, 0, 0.2f), 0);
 
-            ParticleGenTest particleGen = new ParticleGenTest(new Vector3(1000, -1000, 0));
-            particleGen.Playing = false;
+            _renderedObjects.Add(guy);
+            _clickableObjects.Add(guy);
 
-            _particleGenerators.Add(particleGen);
+            for (int i = 0; i < 20; i++)
+            {
+                Fire fire = new Fire(ClientSize, new Vector3(1150 + i * 250, 950, 0.2f));
+
+                _renderedObjects.Add(fire);
+            }
         }
 
         public override void onMouseUp(MouseButtonEventArgs e)
@@ -80,57 +77,111 @@ namespace MortalDungeon.Game.Scenes
 
                 _clickableObjects.ForEach(o =>
                 {
-                    if (!o.BaseFrame.CameraPerspective)
+                    o.BaseObjects.ForEach(b =>
                     {
-                        if (o.Bounds.Contains(new Vector2(MouseCoordinates.X, MouseCoordinates.Y), _camera))
+                        if (!b.BaseFrame.CameraPerspective)
                         {
-                            Console.WriteLine("Object " + o.Name + " clicked.");
+                            if (b.Bounds.Contains(new Vector2(MouseCoordinates.X, MouseCoordinates.Y), _camera))
+                            {
+                                Console.WriteLine("Object " + b.Name + " clicked.");
 
-                            o.Display.Color = new Vector4(1, 0, 0, 0);
-                            o.Display.ColorProportion = 0.5f;
+                                b.Display.Color = new Vector4(1, 0, 0, 0);
+                                b.Display.ColorProportion = 0.5f;
 
-                            if (o.OnClick != null)
-                                o.OnClick(o);
+                                if (b.OnClick != null)
+                                    b.OnClick(b);
+                            }
                         }
-                    }
+                    });
                 });
 
                 _cursorBoundsCheck(_clickableObjects).ForEach((foundObj) =>
                 {
-                    Vector4 color = foundObj.BaseFrame.Color;
-                    color.Z += 0.1f;
-                    foundObj.BaseFrame.Color = color;
-                    foundObj.BaseFrame.ColorProportion = 0.5f;
+                    foundObj.BaseObjects.ForEach(obj =>
+                    {
+                        Vector4 color = obj.BaseFrame.Color;
+                        color.Z += 0.1f;
+                        obj.BaseFrame.Color = color;
+                        obj.BaseFrame.ColorProportion = 0.5f;
 
-                    foundObj.CurrentAnimation.Reset();
-                    foundObj.CurrentAnimation.Reverse = true;
+                        //foundObj.CurrentAnimation.Reset();
+                        //foundObj.CurrentAnimation.Reverse = true;
+
+                        if (obj.Name == "BadGuy")
+                        {
+                            obj.CurrentAnimation.Reset();
+                            obj.SetAnimation(AnimationType.Idle);
+                        }
+                    });
                 });
             }
             base.onMouseUp(e);
         }
 
+        private int tilePosition = 1;
+        public override void onKeyUp(KeyboardKeyEventArgs e)
+        {
+            GameObject badGuy = _renderedObjects.Find(g => g.Name == "Guy");
+            GameObject baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
+            Console.WriteLine(badGuy.Position);
+            if (e.Key == Keys.Right)
+            {
+                //badGuy.MoveObject(new Vector3((baseTileRef.Dimensions.X - 1) * 2 , baseTileRef.Dimensions.Y * (rand.Next(0, 2) == 0 ? -1 : 1), 0));
+                tilePosition += 45;
+                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
+                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+            }
+            if (e.Key == Keys.Left)
+            {
+                tilePosition -= 45;
+                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
+                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+            }
+            if (e.Key == Keys.Up)
+            {
+                tilePosition -= 1;
+                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
 
-        private BaseObject hoveredObject = null;
+                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+            }
+            if (e.Key == Keys.Down)
+            {
+                tilePosition += 1;
+                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
+                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+            }
+
+            if (e.Key == Keys.Equal)
+            {
+                badGuy.BaseObjects[0].CurrentAnimation.Frequency++;
+                badGuy.BaseObjects[0].BaseFrame.ScaleAddition(0.1f);
+            }
+            if (e.Key == Keys.Minus)
+            {
+                badGuy.BaseObjects[0].CurrentAnimation.Frequency--;
+                badGuy.BaseObjects[0].BaseFrame.ScaleAddition(-0.1f);
+            }
+            base.onKeyUp(e);
+        }
+
+        private GameObject hoveredObject = null;
         public override void onMouseMove(MouseMoveEventArgs e)
         {
 
             Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), ClientSize));
 
-
-
-            List<BaseObject> foundObjs = _cursorBoundsCheck(_renderedObjects);
+            List<GameObject> foundObjs = _cursorBoundsCheck(_renderedObjects);
 
             if (foundObjs.Count > 0)
             {
                 Vector4 color = new Vector4(0, 0, 100f, 1);
 
-                hoveredObject = foundObjs[0];
+                hoveredObject = GetObjWithHighestZ(foundObjs); //we only care about the topmost object
 
-                if(hoveredObject.ID != 0)
+
+                if(hoveredObject.Name == "Guy")
                 {
-                    hoveredObject.BaseFrame.Color = color;
-                    hoveredObject.BaseFrame.ColorProportion = 1.0f;
-                    hoveredObject.CurrentAnimation.Reset();
+                    hoveredObject.BaseObjects[0].SetAnimation(AnimationType.Die);
                 }
             }
 

@@ -15,17 +15,22 @@ namespace MortalDungeon.Engine_Classes
         public string Name;
         public Vector3 Position; //uses global position (based off of screen width and height), use Display.Position for local coordinates 
         public Bounds Bounds;
+        public Vector3 PositionalOffset = new Vector3();
 
         public Dictionary<AnimationType, Animation> Animations = new Dictionary<AnimationType, Animation>();
         public AnimationType CurrentAnimationType = AnimationType.Idle; //static textures will use the idle animation
 
         public bool LockToWindow = false;
+        public bool Billboard = false;
+        private Vector3 _dimensions;
+        private Animation _currentAnimation;
+        private RenderableObject _baseFrame;
 
         public RenderableObject Display
         {
             get
             {
-                return Animations[CurrentAnimationType].GetCurrentFrame();
+                return _currentAnimation.CurrentFrame;
             }
         }
 
@@ -33,16 +38,29 @@ namespace MortalDungeon.Engine_Classes
         {
             get
             {
-                return Animations[CurrentAnimationType];
+                return _currentAnimation;
             }
         }
+
+        public Vector3 Dimensions 
+        {
+            get 
+            {
+                return _dimensions * new Vector3(BaseFrame.Scale.M11, BaseFrame.Scale.M22, BaseFrame.Scale.M33);
+            }
+            set 
+            {
+                _dimensions = value;
+            }
+        }
+
 
         //All transformations should be made to the base frame. They will then be applied to the current frame
         public RenderableObject BaseFrame
         {
             get
             {
-                return Animations[AnimationType.Idle].Frames[0];
+                return _baseFrame;
             }
         }
 
@@ -58,6 +76,9 @@ namespace MortalDungeon.Engine_Classes
                 Animations[animations[i].Type] = new Animation(animations[i]);
             }
 
+            _currentAnimation = Animations[AnimationType.Idle];
+            _baseFrame = _currentAnimation.Frames[0];
+
             if (bounds == null)
             {
                 Bounds = new Bounds(BaseFrame.GetPureVertexData(), BaseFrame, windowSize);
@@ -66,25 +87,21 @@ namespace MortalDungeon.Engine_Classes
             {
                 Bounds = new Bounds(bounds, BaseFrame, windowSize);
             }
-            
+
+            _dimensions = Bounds.GetDimensionData();
 
             SetPosition(position);
         }
+
+        public BaseObject() { } //don't use this for creating objects
 
         //sets the position using units (1 thousandth of the width/height of the screen
         public void SetPosition(Vector3 position) 
         {
             //Position = new Vector3(Math.Clamp(position.X, 0, _windowSize.X), Math.Clamp(position.Y, 0, _windowSize.Y), 0);
-            Position = new Vector3(position.X, position.Y, position.Z);
+            Position = new Vector3(position.X, position.Y, position.Z) + PositionalOffset;
 
-            float X = (position.X / WindowConstants.ScreenUnits.X) * 2 - 1; //converts point to local opengl coordinates
-            float Y = ((position.Y / WindowConstants.ScreenUnits.Y) * 2 - 1) * -1; //converts point to local opengl coordinates
-
-            //float X = (position.X / _windowSize.X) * 2 - 1; //converts point to local opengl coordinates
-            //float Y = ((position.Y / _windowSize.Y) * 2 - 1) * -1; //converts point to local opengl coordinates
-
-            position.X = X;
-            position.Y = Y;
+            position = WindowConstants.ConvertGlobalToLocalCoordinates(position);
 
             if (LockToWindow)
             {
@@ -116,11 +133,10 @@ namespace MortalDungeon.Engine_Classes
         //uses global coordinates
         public void MoveObject(Vector3 position)
         {
-            position.X = (position.X / 1000); //converts global coordinates into a proportion of the screen
-            position.Y = (position.Y / 1000); //converts global coordinates into a proportion of the screen
-
-            //position.X = (position.X / _windowSize.X); //converts global coordinates into a proportion of the screen
-            //position.Y = (position.Y / _windowSize.Y); //converts global coordinates into a proportion of the screen
+            //position.X = ((position.X / WindowConstants.ScreenUnits.X) + 1) * 2; //converts proportion of screen into global coordinates?
+            //position.Y = ((position.Y / WindowConstants.ScreenUnits.Y) + 1) * 2; //converts proportion of screen into global coordinates?
+            position.X = position.X / WindowConstants.ScreenUnits.X; //converts proportion of screen into global coordinates?
+            position.Y = position.Y / WindowConstants.ScreenUnits.Y; //converts proportion of screen into global coordinates?
 
             BaseFrame.Translate(position);
         }
@@ -134,6 +150,7 @@ namespace MortalDungeon.Engine_Classes
         public void SetAnimation(AnimationType type) 
         {
             CurrentAnimationType = type;
+            _currentAnimation = Animations[type];
         }
 
         
@@ -225,6 +242,34 @@ namespace MortalDungeon.Engine_Classes
             
             //check bounds of object
             return Contains(pointAtZ.Xy, camera);
+        }
+
+        public Vector3 GetDimensionData() 
+        {
+            const int dimensions = 3;
+            float minX = float.MaxValue;
+            float maxX = float.MinValue;
+            float minY = float.MaxValue;
+            float maxY = float.MinValue;
+            float minZ = float.MaxValue;
+            float maxZ = float.MinValue;
+
+            for (int i = 0; i < Vertices.Length / dimensions; i++)
+            {
+                int Index = i * dimensions;
+                minX = Vertices[Index] < minX ? Vertices[Index] : minX;
+                maxX = Vertices[Index] > maxX ? Vertices[Index] : maxX;
+
+                minY = Vertices[Index + 1] < minY ? Vertices[Index + 1] : minY;
+                maxY = Vertices[Index + 1] > maxY ? Vertices[Index + 1] : maxY;
+
+                minZ = Vertices[Index + 2] < minZ ? Vertices[Index + 2] : minZ;
+                maxZ = Vertices[Index + 2] > maxZ ? Vertices[Index + 2] : maxZ;
+            }
+
+            Vector3 returnVec = new Vector3((maxX - minX) / 2 * WindowConstants.ScreenUnits.X, (maxY - minY) / 2 * WindowConstants.ScreenUnits.Y, maxZ - minZ);
+
+            return returnVec;
         }
 
 

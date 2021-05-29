@@ -8,17 +8,18 @@ namespace MortalDungeon.Engine_Classes
     public enum AnimationType
     {
         Idle,
-        Misc_One
+        Misc_One,
+        Die
     }
     public class Animation
     {
         public bool Repeat = true;
         public bool Reverse = false;
 
-        public int CurrentFrame;
         public List<RenderableObject> Frames = new List<RenderableObject>();
         public int Frequency = 6; //in ticks (1/30th of a second)
         public AnimationType Type = AnimationType.Idle;
+        public RenderableObject CurrentFrame;
 
         public int Repeats = 0;
         private int _repeatCount = 0;
@@ -27,11 +28,13 @@ namespace MortalDungeon.Engine_Classes
         public bool Finished = false;
 
         private uint tick = 0;
+        private int _currentFrame;
+
         public Animation() { }
 
         public static bool operator ==(Animation operand, Animation operand2)
         {
-            return operand.Type == operand2.Type && operand.CurrentFrame == operand2.CurrentFrame;
+            return operand.Type == operand2.Type && operand._currentFrame == operand2._currentFrame;
         }
         public static bool operator !=(Animation operand, Animation operand2)
         {
@@ -41,7 +44,7 @@ namespace MortalDungeon.Engine_Classes
             Repeat = anim.Repeat;
             Reverse = anim.Reverse;
 
-            CurrentFrame = anim.CurrentFrame;
+            _currentFrame = anim._currentFrame;
             Frequency = anim.Frequency;
             Type = anim.Type;
 
@@ -53,17 +56,20 @@ namespace MortalDungeon.Engine_Classes
             {
                 Frames.Add(new RenderableObject(anim.Frames[i]));
             }
+
+            CurrentFrame = Frames[_currentFrame];
         }
         public void AdvanceFrame()
         {
             if (Frames.Count > 1 && !Finished)
             {
-                if (CurrentFrame == Frames.Count - 1)
+                if (_currentFrame == Frames.Count - 1)
                 {
                     if (RepeatAnimation())
                     {
-                        CurrentFrame = 0;
+                        _currentFrame = 0;
                         _repeatCount++;
+                        CurrentFrame = Frames[_currentFrame];
                     }
                     else 
                     {
@@ -73,7 +79,8 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else
                 {
-                    CurrentFrame++;
+                    _currentFrame++;
+                    CurrentFrame = Frames[_currentFrame];
                 }
             }
         }
@@ -82,12 +89,13 @@ namespace MortalDungeon.Engine_Classes
         {
             if (Frames.Count > 1 && !Finished)
             {
-                if (CurrentFrame <= 0)
+                if (_currentFrame <= 0)
                 {
                     if (RepeatAnimation())
                     {
-                        CurrentFrame = Frames.Count - 1;
+                        _currentFrame = Frames.Count - 1;
                         _repeatCount++;
+                        CurrentFrame = Frames[_currentFrame];
                     }
                     else
                     {
@@ -97,7 +105,8 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else
                 {
-                    CurrentFrame--;
+                    _currentFrame--;
+                    CurrentFrame = Frames[_currentFrame];
                 }
             }
         }
@@ -105,15 +114,18 @@ namespace MortalDungeon.Engine_Classes
         public void Tick()
         {
             tick++;
-            if(tick % Frequency == 0)
+            if (Frequency != 0) //Setting Frequency to 0 is another method to cancel playback of an animation (as opposed to only supplying 1 frame)
             {
-                if(Reverse)
+                if (tick % Frequency == 0)
                 {
-                    RewindFrame();
-                }
-                else 
-                {
-                    AdvanceFrame();
+                    if (Reverse)
+                    {
+                        RewindFrame();
+                    }
+                    else
+                    {
+                        AdvanceFrame();
+                    }
                 }
             }
         }
@@ -125,14 +137,10 @@ namespace MortalDungeon.Engine_Classes
 
         public void Reset()
         {
-            CurrentFrame = 0;
+            _currentFrame = 0;
             _repeatCount = 0;
             Finished = false;
-        }
-
-        public RenderableObject GetCurrentFrame()
-        {
-            return Frames[CurrentFrame];
+            CurrentFrame = Frames[_currentFrame];
         }
 
         private bool RepeatAnimation() 

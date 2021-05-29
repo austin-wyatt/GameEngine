@@ -11,7 +11,8 @@ namespace MortalDungeon
     {
         Unknown,
         Color,
-        Texture
+        Texture,
+        Particle
     }
 
     //public struct ShaderInfo 
@@ -164,6 +165,8 @@ namespace MortalDungeon
                     return 5 * sizeof(float);
                 case ObjectRenderType.Texture:
                     return 3 * sizeof(float);
+                case ObjectRenderType.Particle:
+                    return 5 * sizeof(float);
                 default:
                     return 0;
             }
@@ -247,6 +250,15 @@ namespace MortalDungeon
             currentScale.X *= f;
             currentScale.Y *= f;
             currentScale.Z *= f;
+
+            SetScale(currentScale);
+        }
+        public void ScaleAddition(float f)
+        {
+            Vector3 currentScale = Scale.ExtractScale();
+            currentScale.X += f;
+            currentScale.Y += f;
+            currentScale.Z += f;
 
             SetScale(currentScale);
         }

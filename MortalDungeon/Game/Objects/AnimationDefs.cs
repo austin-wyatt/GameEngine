@@ -23,7 +23,6 @@ namespace MortalDungeon.Game.Objects
         };
     }
 
-
     public static class BUTTON_ANIMATION
     {
         private static RenderableObject button_Idle_1 = new RenderableObject(ButtonObjects.BUTTON_SPRITESHEET, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
@@ -39,7 +38,6 @@ namespace MortalDungeon.Game.Objects
             Idle
         };
     }
-
 
     public static class HEXAGON_ANIMATION
     {
@@ -76,7 +74,7 @@ namespace MortalDungeon.Game.Objects
         private static Animation Idle = new Animation()
         {
             Frames = new List<RenderableObject>() { grass_Idle_1 },
-            Frequency = 1000,
+            Frequency = 0,
             Repeats = 0
         };
 
@@ -92,6 +90,73 @@ namespace MortalDungeon.Game.Objects
         {
             Idle,
             Misc_One
+        };
+    }
+
+    public static class FIRE_BASE_ANIMATION
+    {
+        private static RenderableObject fire_Idle_1 = new RenderableObject(EnvironmentObjects.FIRE_BASE, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { fire_Idle_1 },
+            Frequency = 0,
+            Repeats = 0
+        };
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle
+        };
+    }
+
+    public static class BASE_TILE_ANIMATION
+    {
+        private static RenderableObject base_Idle_1 = new RenderableObject(EnvironmentObjects.BASE_TILE, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { base_Idle_1 },
+            Frequency = 0,
+            Repeats = 0
+        };
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle
+        };
+    }
+
+    public static class BAD_GUY_ANIMATION
+    {
+        private static RenderableObject guy_Idle_1 = new RenderableObject(new SpritesheetObject(30, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_2 = new RenderableObject(new SpritesheetObject(31, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_3 = new RenderableObject(new SpritesheetObject(32, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static RenderableObject guy_Die_1 = new RenderableObject(new SpritesheetObject(33, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_2 = new RenderableObject(new SpritesheetObject(34, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_3 = new RenderableObject(new SpritesheetObject(35, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_4 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { guy_Idle_1, guy_Idle_2, guy_Idle_3 },
+            Frequency = 3,
+            Repeats = -1
+        };
+
+        private static Animation Die = new Animation()
+        {
+            Frames = new List<RenderableObject>() { guy_Idle_1, guy_Idle_2, guy_Idle_3, guy_Die_1, guy_Die_2, guy_Die_3, guy_Die_4 },
+            Frequency = 5,
+            Repeats = 0,
+            Type = AnimationType.Die
+        };
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle,
+            Die
         };
     }
 

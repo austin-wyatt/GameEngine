@@ -6,3 +6,16 @@ like maybe equipment gives you an ability from a random skill tree that can be u
 and the level of the ability on the skill tree would be tied to the rarity of the equipment
 and if you use the equipment long enough you can learn that ability on the skill tree without having to learn all the nodes before it
 (visual idea regarding that: the branches under the node look withered and the branches above the node fill more slowly than normal (assuming the skills below the equipment skill haven't been learned, "unstable foundation" debuff))
+
+
+
+
+
+Emulate isaac's progression feeling (have meaningful upgrades after every iteration of the gameplay loop)
+
+Make the menu screen the town that the player builds. The options menu can be a building, etc.
+
+Spellcasting like d&d. Require spell slots to cast spells. Speccing into magic trees grants more spell slots
+
+
+Class trees: Fighter, archer, rogue, paladin/priest, wizard, druid, necromancer, leader (buffs team), lone wolf (gets bonuses for being solo), spatial magic

@@ -8,9 +8,13 @@ namespace MortalDungeon.Engine_Classes
     public class ParticleGenerator
     {
         public List<Particle> Particles = new List<Particle>();
+        public RenderableObject ParticleDisplay;
         public Vector3 Position = default;
+        public Vector3 PositionalOffset = default;
         public int ParticleCount = 0;
         public bool Playing = false;
+        protected bool Priming = false;
+
 
         protected int _currentParticle = 0; //the index of the current particle
         public Particle CurrentParticle 
@@ -27,7 +31,7 @@ namespace MortalDungeon.Engine_Classes
         //logic for when/where to create a particle is calculated here
         public virtual void Tick()
         {
-            if(Playing)
+            if(Playing || Priming)
             {
                 _tickCount++;
             }
@@ -50,6 +54,11 @@ namespace MortalDungeon.Engine_Classes
                 particle.Tick();
             });
         }
+
+        public void SetPosition(Vector3 position) 
+        {
+            Position = position + PositionalOffset;
+        }
     }
     public class Particle
     {
@@ -58,7 +67,11 @@ namespace MortalDungeon.Engine_Classes
         public Vector4 Color = default;
         public int Life = 0; //duration of the particle in ticks
 
-        public RenderableObject Display;
+        public Matrix4 Translation = Matrix4.Identity;
+        public Matrix4 Rotation = Matrix4.Identity;
+        public Matrix4 Scale = Matrix4.Identity;
+
+        public Vector3 RotationInfo = default;
 
         public Particle() { }
 
@@ -71,29 +84,70 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        private static Vector3 _positionHelper = default;
         public void SetPosition(Vector3 position)
         {
             Position = position;
-            Display.SetTranslation(ConvertGlobalToLocalCoordinates(position));
+
+            _positionHelper = WindowConstants.ConvertGlobalToLocalCoordinates(position);
+            
+            Translation.M41 = _positionHelper.X;
+            Translation.M42 = _positionHelper.Y;
+            Translation.M43 = _positionHelper.Z;
         }
         public void Translate(Vector3 velocity)
         {
             Position += velocity;
-            Display.Translate(ConvertGlobalToLocalCoordinates(velocity));
+
+            SetPosition(Position);
         }
         public void Translate()
         {
             Position += Velocity;
-            Display.SetTranslation(ConvertGlobalToLocalCoordinates(Position));
+            //Display.SetTranslation(WindowConstants.ConvertGlobalToLocalCoordinates(Position));
+            SetPosition(Position);
         }
 
-        private Vector3 ConvertGlobalToLocalCoordinates(Vector3 position) 
+        public void ScaleAll(float f)
         {
-            Vector3 newPosition = new Vector3(position);
-            newPosition.X = (position.X / WindowConstants.ScreenUnits.X) * 2 - 1;
-            newPosition.Y = ((position.Y / WindowConstants.ScreenUnits.Y) * 2 - 1) * -1;
+            Vector3 currentScale = Scale.ExtractScale();
+            currentScale.X *= f;
+            currentScale.Y *= f;
+            currentScale.Z *= f;
 
-            return newPosition;
+            Scale = Matrix4.CreateScale(currentScale);
+        }
+
+        public void ScaleAddition(float f)
+        {
+            Vector3 currentScale = Scale.ExtractScale();
+            currentScale.X += f;
+            currentScale.Y += f;
+            currentScale.Z += f;
+
+            Matrix4.CreateScale(currentScale);
+        }
+
+        public void RotateX(float degrees)//extremely expensive, research at some point maybe
+        {
+            Matrix4 rotationMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(degrees));
+            RotationInfo.X += degrees;
+
+            Rotation *= rotationMatrix;
+        }
+        public void RotateY(float degrees)//extremely expensive, research at some point maybe
+        {
+            Matrix4 rotationMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(degrees));
+            RotationInfo.Y += degrees;
+
+            Rotation *= rotationMatrix;
+        }
+        public void RotateZ(float degrees) //extremely expensive, research at some point maybe
+        {
+            Matrix4 rotationMatrix = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(degrees));
+            RotationInfo.Z += degrees;
+
+            Rotation *= rotationMatrix;
         }
     }
 }

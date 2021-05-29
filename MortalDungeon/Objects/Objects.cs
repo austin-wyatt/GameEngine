@@ -93,7 +93,7 @@ namespace MortalDungeon.Objects
             }
 
         }
-
+        public ObjectDefinition() { }
         //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point)
         public float[] CenterVertices(float[] vertices)
         {

@@ -9,7 +9,7 @@ in float mixPercent;
 in vec2 texCoord;
 
 uniform sampler2D texture0;
-uniform float alpha_threshold;
+//uniform float alpha_threshold;
 
 void main()
 {
@@ -31,7 +31,7 @@ void main()
 
 	outputColor = texture(texture0, texCoord) * appliedColor;
 
-	if(outputColor.a <= alpha_threshold)
+	if(outputColor.a == 0)
 		discard;
 
 	if(mixPercent == -10) //temp
