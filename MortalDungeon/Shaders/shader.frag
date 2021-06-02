@@ -4,11 +4,15 @@ out vec4 outputColor;
 
 in vec4 appliedColor;
 in float mixPercent;
+in float twoTextures;
 
 //uniform vec4 ourColor;
 in vec2 texCoord;
 
+in vec2 texCoord2;
+
 uniform sampler2D texture0;
+uniform sampler2D texture1;
 //uniform float alpha_threshold;
 
 void main()
@@ -27,13 +31,34 @@ void main()
 //		outputColor = texture(texture0, texCoord);
 //	}
 
+	vec4 texColor = texture(texture0, texCoord);
+
+	if(twoTextures == 0)
+	{
+		if(mixPercent == -10)
+			outputColor = appliedColor;
+		else
+			outputColor = texColor * appliedColor;
+
+		if(outputColor.a == 0)
+			discard;
+	}
+	else
+	{
+		vec4 texColor2 = texture(texture1, texCoord2);
+
+		if(mixPercent == -10)
+			outputColor = appliedColor;
+		else
+			outputColor = mix(texColor, texColor2, mixPercent) * appliedColor;
+	}
 	
 
-	outputColor = texture(texture0, texCoord) * appliedColor;
-
-	if(outputColor.a == 0)
+	if(texColor.a == 0)
 		discard;
 
-	if(mixPercent == -10) //temp
-		discard;
+//	if(gl_FrontFacing)  //discard if we are looking at the back of an object
+//		discard;
+
+	
 }

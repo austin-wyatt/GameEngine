@@ -147,10 +147,18 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(Position);
         }
 
-        public void SetAnimation(AnimationType type) 
+        public void SetAnimation(AnimationType type, Action onFinish = null) 
         {
+            _currentAnimation.Reset();
+
             CurrentAnimationType = type;
             _currentAnimation = Animations[type];
+
+            _currentAnimation.Reset();
+            if (onFinish != null) 
+            {
+                _currentAnimation.OnFinish = onFinish;
+            }
         }
 
         

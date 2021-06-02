@@ -11,6 +11,8 @@ out vec4 appliedColor;
 //uniform mat4 projection;
 
 uniform mat4 transform;
+uniform mat4 camera;
+uniform int enable_cam;
 
 uniform vec4 aColor;
 
@@ -20,6 +22,12 @@ void main(void)
 	appliedColor = aColor;
 //	appliedColor = vec4(1, 1, 0, 1);
 
-//	gl_Position = vec4(aPosition, 1.0) * transform * view * projection;
-	gl_Position = vec4(aPosition, 1.0) * transform;
+	if(enable_cam == 1)
+	{
+		gl_Position = vec4(aPosition, 1.0) * transform * camera;
+	}
+	else
+	{
+		gl_Position = vec4(aPosition, 1.0) * transform;
+	}
 }

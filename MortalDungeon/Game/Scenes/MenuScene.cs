@@ -1,12 +1,12 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MortalDungeon.Game.Scenes
 {
@@ -21,56 +21,40 @@ namespace MortalDungeon.Game.Scenes
         {
             base.Load(clientSize, camera, cursorObject);
 
-            //Vector3 GrassTilePosition = new Vector3();
-            //for (int i = 0; i < 10; i++) 
-            //{
-            //    for(int o = 0; o <= 10; o++)
-            //    {
-            //        BaseObject GrassTile = new BaseObject(ClientSize, GRASS_ANIMATION.List, 0, "", GrassTilePosition, EnvironmentObjects.GRASS_TILE.Bounds);
-            //        GrassTile.BaseFrame.CameraPerspective = true;
 
-            //        _renderedObjects.Add(GrassTile);
+            TileMap tileMap = new TileMap(ClientSize, default) { Width = 50, Height = 50};
 
-            //        GrassTilePosition.X = i * 500;
-            //        GrassTilePosition.Y = o * 500;
-            //    }
-            //}
+            tileMap.PopulateTileMap();
+            _tileMaps.Add(tileMap);
 
-            Vector3 TilePosition = new Vector3();
-            BaseTile baseTile = new BaseTile();
+            Guy guy = new Guy(ClientSize, tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, 5);
 
-            for (int i = 0; i < 45; i++)
-            {
-                for (int o = 0; o < 45; o++)
-                {
-                    baseTile = new BaseTile(ClientSize, TilePosition, i * 45 + o + 1);
+            _units.Add(guy);
 
-                    _renderedObjects.Add(baseTile);
-                    _clickableObjects.Add(baseTile);
-
-                    TilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y;
-                }
-                TilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.29f;
-                TilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2);
-                TilePosition.Z += 0.0001f;
-            }
-
-            Guy guy = new Guy(ClientSize, new Vector3(baseTile.BaseObjects[0].Dimensions.X * 0, 0, 0.2f), 0);
-
-            _renderedObjects.Add(guy);
-            _clickableObjects.Add(guy);
-
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < 1; i++)
             {
                 Fire fire = new Fire(ClientSize, new Vector3(1150 + i * 250, 950, 0.2f));
 
                 _renderedObjects.Add(fire);
             }
+
+            MountainTwo mountainBackground = new MountainTwo(ClientSize, new Vector3(30000, 0, -50));
+            //mountainBackground.BaseObjects[0].Display.RotateX(-15);
+            mountainBackground.BaseObjects[0].Display.ScaleAll(10);
+            _renderedObjects.Add(mountainBackground);
+
+            Text textTest = new Text(ClientSize, "Test string", new Vector3(25, -2300, 0.1f), true);
+
+            //Text textTest2 = new Text(ClientSize, "THE QUICK BROWN FOX JUMPS \nOVER THE LAZY DOG", new Vector3(100, 400, 0));
+            textTest.SetScale(2);
+
+
+            _text.Add(textTest);
+            //_text.Add(textTest2);
         }
 
         public override void onMouseUp(MouseButtonEventArgs e)
         {
-
             if (e.Button == MouseButton.Left && e.Action == InputAction.Release)
             {
                 Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), ClientSize));
@@ -118,37 +102,38 @@ namespace MortalDungeon.Game.Scenes
             base.onMouseUp(e);
         }
 
-        private int tilePosition = 1;
+        private int tilePosition = 0;
         public override void onKeyUp(KeyboardKeyEventArgs e)
         {
-            GameObject badGuy = _renderedObjects.Find(g => g.Name == "Guy");
-            GameObject baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
+            Unit badGuy = _units.Find(g => g.Name == "Guy");
             Console.WriteLine(badGuy.Position);
             if (e.Key == Keys.Right)
             {
-                //badGuy.MoveObject(new Vector3((baseTileRef.Dimensions.X - 1) * 2 , baseTileRef.Dimensions.Y * (rand.Next(0, 2) == 0 ? -1 : 1), 0));
-                tilePosition += 45;
-                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
-                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+                tilePosition += _tileMaps[0].Height;
+                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
+                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
             if (e.Key == Keys.Left)
             {
-                tilePosition -= 45;
-                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
-                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+                tilePosition -= _tileMaps[0].Height;
+                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
+                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
             if (e.Key == Keys.Up)
             {
                 tilePosition -= 1;
-                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
-
-                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
+                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
             if (e.Key == Keys.Down)
             {
                 tilePosition += 1;
-                baseTileRef = _renderedObjects.Find(g => g.BaseObjects[0].ID == tilePosition);
-                badGuy.SetPosition(new Vector3(baseTileRef.Position.X, baseTileRef.Position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z));
+                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
+                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
 
             if (e.Key == Keys.Equal)
@@ -165,28 +150,29 @@ namespace MortalDungeon.Game.Scenes
         }
 
         private GameObject hoveredObject = null;
-        public override void onMouseMove(MouseMoveEventArgs e)
+        public override bool onMouseMove(MouseMoveEventArgs e)
         {
-
-            Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), ClientSize));
-
-            List<GameObject> foundObjs = _cursorBoundsCheck(_renderedObjects);
-
-            if (foundObjs.Count > 0)
+            if(base.onMouseMove(e))
             {
-                Vector4 color = new Vector4(0, 0, 100f, 1);
+                Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), ClientSize));
 
-                hoveredObject = GetObjWithHighestZ(foundObjs); //we only care about the topmost object
+                List<GameObject> foundObjs = _cursorBoundsCheck(_renderedObjects);
 
-
-                if(hoveredObject.Name == "Guy")
+                if (foundObjs.Count > 0)
                 {
-                    hoveredObject.BaseObjects[0].SetAnimation(AnimationType.Die);
+                    Vector4 color = new Vector4(0, 0, 100f, 1);
+
+                    hoveredObject = GetObjWithHighestZ(foundObjs); //we only care about the topmost object
+
+
+                    if (hoveredObject.Name == "Guy")
+                    {
+                        hoveredObject.BaseObjects[0].SetAnimation(AnimationType.Die);
+                    }
                 }
             }
 
-
-            base.onMouseMove(e);
+            return true;
         }
     }
 

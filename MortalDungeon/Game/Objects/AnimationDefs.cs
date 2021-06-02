@@ -129,14 +129,14 @@ namespace MortalDungeon.Game.Objects
 
     public static class BAD_GUY_ANIMATION
     {
-        private static RenderableObject guy_Idle_1 = new RenderableObject(new SpritesheetObject(30, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Idle_2 = new RenderableObject(new SpritesheetObject(31, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Idle_3 = new RenderableObject(new SpritesheetObject(32, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_1 = new RenderableObject(new SpritesheetObject(30, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_2 = new RenderableObject(new SpritesheetObject(31, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_3 = new RenderableObject(new SpritesheetObject(32, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-        private static RenderableObject guy_Die_1 = new RenderableObject(new SpritesheetObject(33, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Die_2 = new RenderableObject(new SpritesheetObject(34, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Die_3 = new RenderableObject(new SpritesheetObject(35, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Die_4 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_1 = new RenderableObject(new SpritesheetObject(33, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_2 = new RenderableObject(new SpritesheetObject(34, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_3 = new RenderableObject(new SpritesheetObject(35, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_4 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation Idle = new Animation()
         {
@@ -159,8 +159,59 @@ namespace MortalDungeon.Game.Objects
             Die
         };
     }
+    public static class MOUNTAIN_ANIMATION
+    {
+        private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(70, Spritesheets.TestSheet, 5, 3).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { mountain_Idle_1 },
+            Frequency = 0,
+            Repeats = -1
+        };
 
 
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle
+        };
+    }
+
+    public static class CAVE_BACKGROUND_ANIMATION
+    {
+        private static RenderableObject cave_Idle_1 = new RenderableObject(new SpritesheetObject(0, Spritesheets.CaveSheet, 8, 8).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { cave_Idle_1 },
+            Frequency = 0,
+            Repeats = -1
+        };
+
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle
+        };
+    }
+
+    public static class MOUNTAIN_TWO_ANIMATION
+    {
+        private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(75, Spritesheets.TestSheet, 4, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { mountain_Idle_1 },
+            Frequency = 0,
+            Repeats = -1
+        };
+
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle
+        };
+    }
     public class LINE_ANIMATION
     {
         private LineObject lineObj;

@@ -67,6 +67,8 @@ namespace MortalDungeon
         public bool CameraPerspective = false;
 
         public ObjectIDs ObjectID = ObjectIDs.Unknown;
+        public float SpritesheetPosition = 0;
+        public Vector2 SideLengths = new Vector2(1, 1);
 
         public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
         {
@@ -92,6 +94,9 @@ namespace MortalDungeon
             VerticesDrawOrder = def.Indices;
             ShaderReference = shaderReference;
             ObjectID = def.ID;
+            SpritesheetPosition = def.SpritesheetPosition;
+            SideLengths = def.SideLengths;
+
             if (def.ShouldCenter())
             {
                 Vertices = CenterVertices(def.Vertices);
@@ -115,6 +120,8 @@ namespace MortalDungeon
             VerticesDrawOrder = def.Indices;
             ShaderReference = shaderReference;
             ObjectID = def.ID;
+            SpritesheetPosition = def.SpritesheetPosition;
+            SideLengths = def.SideLengths;
             if (def.ShouldCenter())
             {
                 Vertices = CenterVertices(def.Vertices);
@@ -138,6 +145,8 @@ namespace MortalDungeon
             VerticesDrawOrder = oldObj.VerticesDrawOrder;
             ShaderReference = oldObj.ShaderReference;
             ObjectID = oldObj.ObjectID;
+            SpritesheetPosition = oldObj.SpritesheetPosition;
+            SideLengths = oldObj.SideLengths;
             Vertices = oldObj.Vertices;
 
             Color = new Vector4(oldObj.Color);
@@ -250,6 +259,12 @@ namespace MortalDungeon
             currentScale.X *= f;
             currentScale.Y *= f;
             currentScale.Z *= f;
+
+            SetScale(currentScale);
+        }
+        public void SetScaleAll(float f)
+        {
+            Vector3 currentScale = new Vector3(f, f, f);
 
             SetScale(currentScale);
         }

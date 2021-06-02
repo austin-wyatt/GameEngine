@@ -73,6 +73,9 @@ namespace MortalDungeon.Engine_Classes
 
         public Vector3 RotationInfo = default;
 
+        public float SpritesheetPosition;
+        public Vector2 SideLengths = new Vector2();
+
         public Particle() { }
 
         public void Tick() 

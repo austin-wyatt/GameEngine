@@ -1,17 +1,22 @@
-﻿using OpenTK.Mathematics;
+﻿using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Objects;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
     public class Scene
     {
-        public List<GameObject> _objects = new List<GameObject>(); //all objects associated with this Scene
-        public List<GameObject> _renderedObjects = new List<GameObject>(); //objects that are currently being rendered
+        public List<GameObject> _renderedObjects = new List<GameObject>(); //GameObjects that are not Units and are being rendered independently
         public List<GameObject> _clickableObjects = new List<GameObject>(); //objects that will contain an OnClick effect
+        public List<Text> _text = new List<Text>();
+        public List<TileMap> _tileMaps = new List<TileMap>(); //The map/maps to render
+        public List<Unit> _units = new List<Unit>(); //The units to render
 
         public bool Loaded = false;
 
@@ -27,14 +32,16 @@ namespace MortalDungeon.Engine_Classes
         public MouseState MouseState;
 
         protected Random rand = new Random();
-
+        private Stopwatch mouseTimer = new Stopwatch();
         protected void InitializeFields()
         {
-            _objects = new List<GameObject>();
             _renderedObjects = new List<GameObject>();
             _clickableObjects = new List<GameObject>();
+            _text = new List<Text>();
+            _tileMaps = new List<TileMap>(); //The map/maps to render
+            _units = new List<Unit>(); //The units to render
 
-            ScenePosition = new Vector3(0, 0, 0);
+        ScenePosition = new Vector3(0, 0, 0);
         }
         public virtual void Load(Vector2i clientSize, Camera camera = null, BaseObject cursorObject = null) //all object initialization should be handled here
         {
@@ -42,6 +49,8 @@ namespace MortalDungeon.Engine_Classes
             _camera = camera;
             _cursorObject = cursorObject;
             ClientSize = clientSize;
+
+            mouseTimer.Start();
         }
 
         public virtual void Unload()
@@ -68,7 +77,16 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void onMouseDown(MouseButtonEventArgs e) { }
 
-        public virtual void onMouseMove(MouseMoveEventArgs e) { }
+        public virtual bool onMouseMove(MouseMoveEventArgs e) 
+        {
+            if (mouseTimer.ElapsedMilliseconds > 20)
+            {
+                mouseTimer.Restart();
+                return true;
+            }
+            else
+                return false;
+        }
 
         public virtual void onKeyDown(KeyboardKeyEventArgs e) { }
 

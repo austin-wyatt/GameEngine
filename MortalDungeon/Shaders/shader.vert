@@ -25,8 +25,6 @@ void main(void)
 //	mixPercent = fMixPercent;
 	mixPercent = 0;
 
-//	gl_Position = vec4(aPosition, 1.0) * transform * view * projection;
-//	gl_Position = vec4(aPosition, 1.0) * transform;
 	if(enable_cam == 1)
 	{
 		gl_Position = vec4(aPosition, 1.0) * transform * camera;

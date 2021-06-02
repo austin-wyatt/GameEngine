@@ -56,11 +56,14 @@ namespace MortalDungeon.Objects
         public TextureInfo Textures;
         public Vector3 Center;
         public float[] Bounds;
+        public float[] fastVertices;
 
         private bool _centerVertices;
 
         public ObjectIDs ID = ObjectIDs.Unknown;
 
+        public float SpritesheetPosition = 0;
+        public Vector2 SideLengths = new Vector2(1, 1);
         public ObjectDefinition(float[] vertices, uint[] indexes, int points, TextureInfo textures, Vector3 center = new Vector3(), float[] bounds = null, bool centerVertices = true)
         {
             Indices = indexes;

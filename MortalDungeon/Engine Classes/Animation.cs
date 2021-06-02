@@ -63,7 +63,7 @@ namespace MortalDungeon.Engine_Classes
         {
             if (Frames.Count > 1 && !Finished)
             {
-                if (_currentFrame == Frames.Count - 1)
+                if (_currentFrame >= Frames.Count - 1)
                 {
                     if (RepeatAnimation())
                     {
@@ -73,8 +73,9 @@ namespace MortalDungeon.Engine_Classes
                     }
                     else 
                     {
-                        OnFinish?.Invoke();
                         Finished = true;
+                        OnFinish?.Invoke();
+                        OnFinish = null;
                     }
                 }
                 else
@@ -99,8 +100,9 @@ namespace MortalDungeon.Engine_Classes
                     }
                     else
                     {
-                        OnFinish?.Invoke();
                         Finished = true;
+                        OnFinish?.Invoke();
+                        OnFinish = null;
                     }
                 }
                 else
@@ -133,6 +135,7 @@ namespace MortalDungeon.Engine_Classes
         public void Stop()
         {
             OnFinish?.Invoke();
+            OnFinish = null;
         }
 
         public void Reset()

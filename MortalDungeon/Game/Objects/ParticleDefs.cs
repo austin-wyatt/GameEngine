@@ -17,6 +17,7 @@ namespace MortalDungeon.Game.Objects
             SpritesheetObject particleObj = new SpritesheetObject(0, Spritesheets.TestSheet, 3);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
             ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.PARTICLE_SHADER);
+            ParticleDisplay.CameraPerspective = true;
 
             for (int i = 0; i < ParticleCount; i++) 
             {
@@ -24,6 +25,11 @@ namespace MortalDungeon.Game.Objects
                 fillParticle.Position = Position;
                 fillParticle.Velocity = new Vector3(((float)rand.NextDouble() * 2 - 1) * 10, ((float)rand.NextDouble() * 2 - 1) * 7, 0);
                 fillParticle.Color = new Vector4((float)rand.NextDouble(), (float)rand.NextDouble(), (float)rand.NextDouble(), 0.5f);
+
+                fillParticle.SpritesheetPosition = ParticleDisplay.SpritesheetPosition;
+                fillParticle.SideLengths = ParticleDisplay.SideLengths;
+
+                
 
                 Particles.Add(fillParticle);
             }
@@ -74,6 +80,7 @@ namespace MortalDungeon.Game.Objects
             SpritesheetObject particleObj = new SpritesheetObject(11, Spritesheets.TestSheet);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
             ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.PARTICLE_SHADER);
+            ParticleDisplay.CameraPerspective = true;
 
             for (int i = 0; i < ParticleCount; i++)
             {
@@ -82,8 +89,10 @@ namespace MortalDungeon.Game.Objects
                 fillParticle.Velocity = new Vector3(((float)rand.NextDouble() - offsetX) * fireSpeedX, (float)(rand.NextDouble() - offsetY) * -1 * fireSpeedY, ((float)rand.NextDouble()) / 10000);
                 fillParticle.Color = genFlameColor(DefaultLife);
                 fillParticle.ScaleAll(0.05f);
+                fillParticle.SpritesheetPosition = ParticleDisplay.SpritesheetPosition;
+                fillParticle.SideLengths = ParticleDisplay.SideLengths;
 
-                fillParticle.Velocity.Z = Math.Abs(fillParticle.Velocity.Y) / fireSpeedY * rotation; 
+                fillParticle.Velocity.Z = Math.Abs(fillParticle.Velocity.Y) / fireSpeedY * rotation;
 
                 Particles.Add(fillParticle);
             }

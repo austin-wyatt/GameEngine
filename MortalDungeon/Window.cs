@@ -37,37 +37,29 @@ namespace MortalDungeon
     }
     public class Window : GameWindow
     {
-        private readonly bool DISPLAY_FPS = true;
-        private readonly Random _random = new Random();
         private Vector2i WindowSize = new Vector2i();
-
-        private List<Texture> _textures = new List<Texture>();
-        private Dictionary<string, int> _loadedTextures = new Dictionary<string, int>();
 
         BaseObject _cursorObject;
 
-        //private List<BaseObject> _cameraAffectedObjects = new List<BaseObject>();
-        //private List<BaseObject> _staticObjects = new List<BaseObject>();
         private List<BaseObject> _renderedItems = new List<BaseObject>();
 
         private List<Vector2> _points = new List<Vector2>();
         private List<Vector3> _lines = new List<Vector3>();
 
-        private List<BaseObject> _clickableObjects = new List<BaseObject>();
-
-        private Dictionary<int, List<BaseObject>> _animations = new Dictionary<int, List<BaseObject>>(); //uses the frequency as a key and returns a list of objects that need to update
-
+        private Renderer _renderer = new Renderer();
 
         private List<Scene> _scenes = new List<Scene>();
 
         private Stopwatch _timer;
         private Stopwatch _gameTimer;
 
-        private int _vertexBufferObject;
-        private int _vertexArrayObject;
+        //private int _vertexBufferObject;
+        //private int _vertexArrayObject;
 
-        private int _elementBufferObject;
+        //private int _elementBufferObject;
 
+        //private int _instancedVertexBuffer;
+        //private int _instancedArrayBuffer;
 
         private Camera _camera;
         private MouseRay _mouseRay;
@@ -75,7 +67,6 @@ namespace MortalDungeon
         private Vector2 _lastPos;
 
 
-        private int _count = 0;
         private uint tick = 0;
         private uint lastTick = 0;
 
@@ -92,14 +83,7 @@ namespace MortalDungeon
             KeyUp += Window_KeyUp;
             KeyDown += Window_KeyDown;
 
-            //GL flags
-            GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc((BlendingFactor)BlendingFactorSrc.SrcAlpha, (BlendingFactor)BlendingFactorDest.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.ProgramPointSize);
-
-            GL.Enable(EnableCap.DepthTest);
-            GL.DepthFunc(DepthFunction.Less);
+            _renderer.Load(ClientSize);
 
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowSize.X / (float)WindowSize.Y);
@@ -133,19 +117,6 @@ namespace MortalDungeon
 
             LoadTextures();
 
-            //Define buffers that will be used in rendering
-            _vertexBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-
-            _vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(_vertexArrayObject);
-            GL.EnableVertexAttribArray(0);
-
-            _elementBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
-            GL.EnableVertexAttribArray(1);
-
-
             _timer = new Stopwatch();
             _timer.Start();
 
@@ -169,16 +140,19 @@ namespace MortalDungeon
 
                             scene._renderedObjects.ForEach(gameObject =>
                             {
-                                gameObject.BaseObjects.ForEach(baseObj =>
-                                {
-                                    baseObj.CurrentAnimation.Tick();
-                                });
-
-                                gameObject.ParticleGenerators.ForEach(generator =>
-                                {
-                                    generator.Tick();
-                                });
+                                gameObject.Tick();
                             });
+
+                            scene._units.ForEach(unit =>
+                            {
+                                unit.Tick();
+                            });
+
+                            scene._tileMaps.ForEach(tileMap =>
+                            {
+                                tileMap.Tick();
+                            });
+
                         });
                         
                     }
@@ -203,13 +177,14 @@ namespace MortalDungeon
 
             ////FPS
             timeValue = _timer.Elapsed.TotalSeconds;
-            _count++;
+            _renderer.FPSCount++;
 
-            if (timeValue > 1 && DISPLAY_FPS)
+            if (timeValue > 1 && _renderer.DisplayFPS)
             {
-                Console.WriteLine(_count);
+                Console.WriteLine("FPS: " + _renderer.FPSCount + "   Draws: " + _renderer.DrawCount / _renderer.FPSCount);
                 _timer.Restart();
-                _count = 0;
+                _renderer.FPSCount = 0;
+                _renderer.DrawCount = 0;
             }
 
             //Tick counter
@@ -226,7 +201,6 @@ namespace MortalDungeon
             Matrix4 cameraMatrix = viewMatrix * projectionMatrix;
 
 
-            //render points
             for (int i = 0; i < _points.Count; i++)
             {
                 Shaders.POINT_SHADER.Use();
@@ -237,48 +211,30 @@ namespace MortalDungeon
                 GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, point.Length * sizeof(float), 0);
 
                 GL.DrawArrays(PrimitiveType.Points, 0, 1);
-            }
-            //render lines
+            } //Points
 
             Shaders.DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
             _renderedItems.ForEach(obj =>
             {
                 Shaders.DEFAULT_SHADER.Use();
-                RenderObject(obj, cameraMatrix);
-            });
+                _renderer.RenderObject(obj);
+            }); //Old handling, used for lines
 
-            //all objects using the default shader are handled here
-            Shaders.DEFAULT_SHADER.Use();
-
-            ObjectIDs previousObject = ObjectIDs.Unknown;
-            Animation previousFrame = new Animation();
-            bool previousCamEnabled = false;
-            Vector4 prevColor = default;
+            //all objects using the fast default shader are handled here
+            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
             _scenes.ForEach(scene =>
             {
-                scene._renderedObjects.ForEach(gameObject =>
+                _renderer.RenderObjectsInstanced(scene._renderedObjects);
+
+                scene._tileMaps.ForEach(tileMap =>
                 {
-                    for (int i = 0; i < gameObject.BaseObjects.Count; i++)
-                    {
-                        var currDisplay = gameObject.BaseObjects[i].Display;
-                        var currAnimation = gameObject.BaseObjects[i].CurrentAnimation;
-                        bool setVertexData = !(previousObject == currDisplay.ObjectID && previousObject != ObjectIDs.Unknown); //if we are rerendering the same type of object don't redefine the buffer data
-                        bool setTextureData = !(!setVertexData && previousFrame == currAnimation); //if the next item to render is in the same animation state don't redefine texture data
-                        bool setCamData = previousCamEnabled != gameObject.BaseObjects[i].BaseFrame.CameraPerspective;
-                        bool setColor = gameObject.BaseObjects[i].BaseFrame.Color != prevColor;
-
-                        RenderObject(gameObject.BaseObjects[i], cameraMatrix, setVertexData, setTextureData, setCamData);
-
-                        previousObject = currDisplay.ObjectID;
-                        previousFrame = currAnimation;
-                        previousCamEnabled = gameObject.BaseObjects[i].BaseFrame.CameraPerspective;
-                        prevColor = gameObject.BaseObjects[i].BaseFrame.Color;
-                    }
+                    _renderer.RenderObjectsInstancedGeneric(tileMap.Tiles);
                 });
-            });
 
-            Shaders.PARTICLE_SHADER.Use();
-            bool firstParticle = true;
+                _renderer.RenderObjectsInstancedGeneric(scene._units);
+                
+            }); //GameObjects
 
 
             _scenes.ForEach(scene =>
@@ -287,96 +243,32 @@ namespace MortalDungeon
                 {
                     gameObject.ParticleGenerators.ForEach(generator =>
                     {
-                        bool freshGenerator = true;
-                        if(generator.Playing)
-                        generator.Particles.ForEach(particle =>
-                        {
-                            if (particle.Life > 0)
-                            {
-                                RenderParticle(generator, particle, cameraMatrix, firstParticle, freshGenerator);
 
-                                firstParticle = false; //all particles will have the same vertex data so we just need to set it once
-                                freshGenerator = false; //all particles in a generator will have the same texture
-                            }
-                        });
+                        if (generator.Playing)
+                        {
+                            _renderer.RenderParticlesInstanced(generator);
+                        }
                     });
                 });
-            });
-            
-            
+            }); //Particles
+
+            _scenes.ForEach(scene =>
+            {
+                scene._text.ForEach(text =>
+                {
+                    if (text.Render && text.Letters.Count > 0) 
+                    {
+                        _renderer.RenderTextInstanced(text.Letters);
+                    };
+                });
+            }); //Text
+
             Shaders.DEFAULT_SHADER.Use();
-            RenderObject(_cursorObject, cameraMatrix);
+            _renderer.RenderObject(_cursorObject);
 
             SwapBuffers();
 
             base.OnRenderFrame(args);
-        }
-
-        //currently this only works for the default shaders. Any new shaders will need special handling/their own function
-        private void RenderObject(BaseObject obj, Matrix4 cameraMatrix, bool setVertexData = true, bool setTextureData = true, bool setCam = true, bool setColor = true) 
-        {
-            RenderableObject Display = obj.Display;
-            if (setVertexData)
-            {
-                GL.BufferData(BufferTarget.ArrayBuffer, Display.GetVerticesSize(), Display.Vertices, BufferUsageHint.DynamicDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0);
-
-                GL.BufferData(BufferTarget.ElementArrayBuffer, Display.GetVerticesDrawOrderSize(), Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
-            }
-
-            if (setTextureData)
-            {
-                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, Display.GetRenderDataOffset());
-                obj.Display.TextureReference.Use(TextureUnit.Texture0);
-            }
-
-            var transform = Matrix4.Identity;
-            transform *= obj.BaseFrame.Rotation;
-            transform *= obj.BaseFrame.Scale;
-            transform *= obj.BaseFrame.Translation;
-
-
-            if (setCam) 
-            {
-                Display.ShaderReference.SetBool("enable_cam", Display.CameraPerspective);
-            }
-            if (setColor)
-            {
-                Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.Color);
-            }
-
-            Display.ShaderReference.SetMatrix4("transform", transform);
-            //Display.ShaderReference.SetFloat("fMixPercent", obj.BaseFrame.ColorProportion);
-
-            GL.DrawElements(PrimitiveType.Triangles, obj.Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
-        }
-        private void RenderParticle(ParticleGenerator generator, Particle obj, Matrix4 cameraMatrix, bool setVertexData = true, bool setTextureData = true)
-        {
-            if (setVertexData)
-            {
-                GL.BufferData(BufferTarget.ArrayBuffer, generator.ParticleDisplay.GetVerticesSize(), generator.ParticleDisplay.Vertices, BufferUsageHint.DynamicDraw);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, generator.ParticleDisplay.Stride, 0);
-
-                GL.BufferData(BufferTarget.ElementArrayBuffer, generator.ParticleDisplay.GetVerticesDrawOrderSize(), generator.ParticleDisplay.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
-            }
-
-            if (setTextureData)
-            {
-                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, generator.ParticleDisplay.Stride, generator.ParticleDisplay.GetRenderDataOffset());
-                generator.ParticleDisplay.TextureReference.Use(TextureUnit.Texture0);
-            }
-
-            var transform = Matrix4.Identity;
-            //transform *= obj.Rotation;
-            transform *= obj.Scale;
-            transform *= obj.Translation;
-            transform *= cameraMatrix;
-
-            generator.ParticleDisplay.ShaderReference.SetMatrix4("transform", transform);
-
-            generator.ParticleDisplay.ShaderReference.SetVector4("aColor", obj.Color);
-
-            GL.DrawElements(PrimitiveType.TriangleStrip, generator.ParticleDisplay.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
@@ -391,14 +283,7 @@ namespace MortalDungeon
                 Close();
             }
 
-            //if (MouseState.ScrollDelta[1] > 0)
-            //{
-
-            //}
-            //if (MouseState.ScrollDelta[1] < 0)
-            //{
-
-            //}
+            
 
             _scenes.ForEach(scene =>
             {
@@ -409,8 +294,8 @@ namespace MortalDungeon
             });
 
             var mouse = MouseState;
-            const float cameraSpeed = 4.0f;
-            const float sensitivity = 0.2f;
+            float cameraSpeed = 4.0f;
+            //float sensitivity = 0.2f;
 
             // Calculate the offset of the mouse position
             var deltaX = mouse.X - _lastPos.X;
@@ -425,23 +310,47 @@ namespace MortalDungeon
                 _firstMove = false;
             }
 
-            if (mouse.IsButtonDown(MouseButton.Left))
+            //if (mouse.IsButtonDown(MouseButton.Left))
+            //{
+            //    // Apply the camera pitch and yaw (we clamp the pitch in the camera class)
+            //    _camera.Yaw += deltaX * sensitivity;
+            //    _camera.Pitch -= deltaY * sensitivity; // reversed since y-coordinates range from bottom to top
+            //}
+            if (MouseState.ScrollDelta[1] < 0)
             {
-                // Apply the camera pitch and yaw (we clamp the pitch in the camera class)
-                _camera.Yaw += deltaX * sensitivity;
-                _camera.Pitch -= deltaY * sensitivity; // reversed since y-coordinates range from bottom to top
+                Vector3 movement = _camera.Front * cameraSpeed / 2;
+                if (_camera.Position.Z - movement.Z < 21)
+                {
+                    _camera.Position -= movement; // Backwards
+                }
+            }
+            else if (MouseState.ScrollDelta[1] > 0)
+            {
+                Vector3 movement = _camera.Front * cameraSpeed / 2;
+                if (_camera.Position.Z + movement.Z > 0)
+                {
+                    _camera.Position += movement; // Forward
+                }
+            }
+
+            if (KeyboardState.IsKeyDown(Keys.LeftShift))
+            {
+                //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
+                cameraSpeed *= 20;
             }
 
             _lastPos = new Vector2(mouse.X, mouse.Y);
 
             if (KeyboardState.IsKeyDown(Keys.W))
             {
-                _camera.Position += _camera.Front * cameraSpeed * (float)args.Time; // Forward
+                //_camera.Position += _camera.Front * cameraSpeed * (float)args.Time; // Forward
+                _camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
             }
 
             if (KeyboardState.IsKeyDown(Keys.S))
             {
-                _camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
+                //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
+                _camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
             }
             if (KeyboardState.IsKeyDown(Keys.A))
             {
@@ -453,94 +362,61 @@ namespace MortalDungeon
             }
             if (KeyboardState.IsKeyDown(Keys.Space))
             {
-                _camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
             }
-            if (KeyboardState.IsKeyDown(Keys.LeftShift))
-            {
-                _camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
-            }
-            //if (KeyboardState.IsKeyDown(Keys.T))
-            //{
-            //    CheckBoundsForObjects(_renderedItems).ForEach((foundObj) =>
-            //    {
-            //        foundObj.Display.Color = new Vector4(1, 0, 0, 0);
-            //        foundObj.Display.ColorProportion = 0.5f;
-            //        foundObj.MoveObject(Vector3.UnitX * 100);
-            //    });
-            //}
+            
 
+            
 
             base.OnUpdateFrame(args);
         }
 
-        private void LoadTextures() 
+        private void LoadTextures()
         {
-            LoadTextureFromBaseObject(_cursorObject);
+            _renderer.LoadTextureFromBaseObject(_cursorObject);
 
             _renderedItems.ForEach(obj =>
             {
-                LoadTextureFromBaseObject(obj);
+                _renderer.LoadTextureFromBaseObject(obj);
             });
 
-            for(int u = 0; u < _scenes.Count; u++)
+            for (int u = 0; u < _scenes.Count; u++)
             {
-                if(_scenes[u].Loaded)
+                if (_scenes[u].Loaded)
                 {
                     for (int i = 0; i < _scenes[u]._renderedObjects.Count; i++)
                     {
-                        _scenes[u]._renderedObjects[i].BaseObjects.ForEach(baseObj =>
-                        {
-                            LoadTextureFromBaseObject(baseObj);
-                        });
+                        //_scenes[u]._renderedObjects[i].BaseObjects.ForEach(baseObj => //Load BaseObject textures
+                        //{
+                        //    _renderer.LoadTextureFromBaseObject(baseObj);
+                        //});
+                        _renderer.LoadTextureFromGameObj(_scenes[u]._renderedObjects[i]);
 
-                        _scenes[u]._renderedObjects[i].ParticleGenerators.ForEach(particleGen =>
+                        _scenes[u]._renderedObjects[i].ParticleGenerators.ForEach(particleGen => //Load ParticleGenerator textures
                         {
-                            LoadTextureFromParticleGen(particleGen);
+                            _renderer.LoadTextureFromParticleGen(particleGen);
                         });
                     }
-                }
-            }
-        }
 
-        private void LoadTextureFromBaseObject(BaseObject obj)
-        {
-            foreach(KeyValuePair <AnimationType, Animation> entry in obj.Animations)
-            {
-                for (int o = 0; o < entry.Value.Frames.Count; o++)
-                {
-                    for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
+                    _scenes[u]._text.ForEach(text => //Load Text textures
                     {
-                        if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                        if (text.Letters.Count > 0)
                         {
-                            Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.Textures[p]);
-                            _textures.Add(newTexture);
-                            _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
-
-                            entry.Value.Frames[o].TextureReference = newTexture;
+                            _renderer.LoadTextureFromBaseObject(text.Letters[0].BaseObjects[0], false);
                         }
-                        else
-                        {
-                            entry.Value.Frames[o].TextureReference = new Texture(handle);
-                        }
-                    }
-                }
-            }
-        }
-        private void LoadTextureFromParticleGen(ParticleGenerator generator)
-        {
-            for (int p = 0; p < generator.ParticleDisplay.Textures.Textures.Length; p++)
-            {
-                if (!_loadedTextures.TryGetValue(generator.ParticleDisplay.Textures.Textures[p], out int handle))
-                {
-                    Texture newTexture = Texture.LoadFromFile(generator.ParticleDisplay.Textures.Textures[p]);
-                    _textures.Add(newTexture);
-                    _loadedTextures.Add(generator.ParticleDisplay.Textures.Textures[p], newTexture.Handle);
+                    });
 
-                    generator.ParticleDisplay.TextureReference = newTexture;
-                }
-                else
-                {
-                    generator.ParticleDisplay.TextureReference = new Texture(handle);
+                    _scenes[u]._units.ForEach(obj =>
+                    {
+                        if(obj.Render)
+                            _renderer.LoadTextureFromGameObj(obj);
+                    });
+
+                    _scenes[u]._tileMaps.ForEach(obj =>
+                    {
+                        if (obj.Render && obj.Tiles.Count > 0)
+                            _renderer.LoadTextureFromGameObj(obj.Tiles[0]);
+                    });
                 }
             }
         }
@@ -574,18 +450,14 @@ namespace MortalDungeon
             GL.UseProgram(0);
 
             // Delete all the resources.
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteVertexArray(_vertexArrayObject);
+            _renderer.ClearData();
 
             for(int i = 0; i < ShaderList.AllShaders.Count; i++)
             {
                 GL.DeleteProgram(ShaderList.AllShaders[i].Handle);
             }
 
-            for (int i = 0; i < _textures.Count; i++)
-            {
-                GL.DeleteTexture(_textures[i].Handle);
-            }
+            
             
             base.OnUnload();
         }
@@ -648,7 +520,7 @@ namespace MortalDungeon
                         foundObjects.Add(listObj);
                     }
                 });
-                
+
             });
 
             return foundObjects;
@@ -677,37 +549,6 @@ namespace MortalDungeon
             {
                 scene.onMouseUp(obj);
             });
-            //if (obj.Button == MouseButton.Left && obj.Action == InputAction.Release)
-            //{
-            //    Vector4 MouseCoordinates = new Vector4(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y)));
-
-            //    //Console.WriteLine("Mouse Coordinates " + MouseCoordinates.X + ", " + MouseCoordinates.Y);
-            //    _clickableObjects.ForEach(o =>
-            //    {
-            //        if (!o.BaseFrame.CameraPerspective)
-            //        {
-            //            if (o.Bounds.Contains(new Vector2(MouseCoordinates.X, MouseCoordinates.Y), _camera))
-            //            {
-            //                Console.WriteLine("Object " + o.Name + " clicked.");
-
-            //                o.Display.Color = new Vector4(1, 0, 0, 0);
-            //                o.Display.ColorProportion = 0.5f;
-
-            //                if (o.OnClick != null)
-            //                    o.OnClick(o);
-            //            }
-            //        }
-            //    });
-
-            //    CheckBoundsForObjects(_clickableObjects, (foundObjs) =>
-            //    {
-            //        for(int i = 0; i < foundObjs.Count; i++)
-            //        {
-            //            foundObjs[i].OnClick?.Invoke(foundObjs[i]);
-            //            //foundObjs[i].MoveObject(new Vector3(-200, 0, 0));
-            //        }
-            //    });
-            //}
         }
 
         private void Window_KeyUp(KeyboardKeyEventArgs obj)
@@ -734,6 +575,8 @@ namespace MortalDungeon
                 case (Keys.R):
                     _points.Clear();
                     _renderedItems.Clear();
+
+                    Console.WriteLine(_camera.Position.Z);
                     break;
                 case (Keys.P):
                     Console.Write("new float[]{\n");
@@ -762,9 +605,6 @@ namespace MortalDungeon
                     {
                         _renderedItems.RemoveAt(indexesToRemove[i]);
                     }
-
-                    _count = 0;
-
                     break;
                 //case (Keys.U):
                 //    CheckBoundsForObjects(_renderedItems, (foundObjs) => 

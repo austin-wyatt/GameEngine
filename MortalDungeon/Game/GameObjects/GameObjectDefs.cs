@@ -32,6 +32,8 @@ namespace MortalDungeon.Game.GameObjects
 
     public class BaseTile : GameObject
     {
+        public bool Render = true;
+
         public BaseTile() { }
         public BaseTile(Vector2i clientSize, Vector3 position, int id)
         {
@@ -48,22 +50,55 @@ namespace MortalDungeon.Game.GameObjects
         }
     }
 
-    public class Guy : GameObject
+    public class Mountain : GameObject
     {
-        public Guy() { }
-        public Guy(Vector2i clientSize, Vector3 position, int id = 0)
+        public Mountain() { }
+        public Mountain(Vector2i clientSize, Vector3 position, int id = 0)
         {
             ClientSize = clientSize;
-            Name = "Guy";
+            Name = "Moutain";
 
-            BaseObject Guy = new BaseObject(ClientSize, BAD_GUY_ANIMATION.List, id, "BadGuy", position, EnvironmentObjects.BASE_TILE.Bounds);
-            Guy.BaseFrame.CameraPerspective = true;
-            Guy.BaseFrame.Color = WindowConstants.FullColor - new Vector4(1f, 0f, 0f, 0);
-            //Guy.BaseFrame.ScaleAll(1.5f);
-            //Guy.PositionalOffset += Vector3.UnitY * -Guy.Dimensions.Y * Guy.BaseFrame.Scale.M11; 
-            Guy.BaseFrame.RotateX(25);
+            BaseObject Mountain = new BaseObject(ClientSize, MOUNTAIN_ANIMATION.List, id, "Mountain", position, EnvironmentObjects.BASE_TILE.Bounds);
+            Mountain.BaseFrame.CameraPerspective = true;
+            Mountain.BaseFrame.ScaleAll(20);
 
-            BaseObjects.Add(Guy);
+            BaseObjects.Add(Mountain);
+
+            SetPosition(position);
+        }
+    }
+
+    public class CaveBackground : GameObject
+    {
+        public CaveBackground() { }
+        public CaveBackground(Vector2i clientSize, Vector3 position, int id = 0)
+        {
+            ClientSize = clientSize;
+            Name = "CaveBackground";
+
+            BaseObject Cave = new BaseObject(ClientSize, CAVE_BACKGROUND_ANIMATION.List, id, "CaveBackground", position);
+            Cave.BaseFrame.CameraPerspective = true;
+            Cave.BaseFrame.ScaleAll(20);
+
+            BaseObjects.Add(Cave);
+
+            SetPosition(position);
+        }
+    }
+
+    public class MountainTwo : GameObject
+    {
+        public MountainTwo() { }
+        public MountainTwo(Vector2i clientSize, Vector3 position, int id = 0)
+        {
+            ClientSize = clientSize;
+            Name = "MoutainTwo";
+
+            BaseObject Mountain = new BaseObject(ClientSize, MOUNTAIN_TWO_ANIMATION.List, id, "MoutainTwo", position, EnvironmentObjects.BASE_TILE.Bounds);
+            Mountain.BaseFrame.CameraPerspective = true;
+            Mountain.BaseFrame.ScaleAll(20);
+
+            BaseObjects.Add(Mountain);
 
             SetPosition(position);
         }

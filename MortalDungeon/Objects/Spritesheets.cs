@@ -19,6 +19,8 @@ namespace MortalDungeon.Objects
     public static class Spritesheets 
     {
         public static Spritesheet TestSheet = new Spritesheet("Resources/SpritesheetTest.png");
-
+        public static Spritesheet CaveSheet = new Spritesheet("Resources/CaveSpritesheet.png");
+        public static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.png");
+        public static Spritesheet UISheet = new Spritesheet("Resources/UISpritesheet.png");
     }
 }

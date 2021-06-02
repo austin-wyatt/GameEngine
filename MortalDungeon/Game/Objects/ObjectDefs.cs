@@ -14,7 +14,8 @@ namespace MortalDungeon.Game.Objects
         BUTTON,
         GRASS,
         FIRE_BASE,
-        BASE_TILE
+        BASE_TILE,
+        CHARACTER
     }
     //Where static object defs are defined for usage with renderable objects, animations, etc
     public static class CursorObjects
@@ -227,7 +228,7 @@ namespace MortalDungeon.Game.Objects
         0.2578125f, 0.41388887f, 0.0f,
         0.49843752f, -0.0055555105f, 0.0f,
         };
-        public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds);
+        public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
     }
 
 
@@ -268,37 +269,51 @@ namespace MortalDungeon.Game.Objects
     public class SpritesheetObject
     {
         public int SpritesheetPosition = 0;
-        public int SideLength = 1; //allows multiple spreadsheet tiles to be used to define a texture
+        public Vector2 SideLengths = new Vector2(1, 1); //allows multiple spreadsheet tiles to be used to define a texture
         public Spritesheet Spritesheet;
 
-        public SpritesheetObject(int position, Spritesheet spritesheet, int sideLength = 1)
+        public SpritesheetObject(int position, Spritesheet spritesheet, int xLength = 1, int yLength = -1)
         {
             SpritesheetPosition = position;
             Spritesheet = spritesheet;
-            SideLength = sideLength;
+            if (yLength == -1)
+            {
+                SideLengths.X = xLength;
+                SideLengths.Y = xLength;
+            }
+            else 
+            {
+                SideLengths.X = xLength;
+                SideLengths.Y = yLength;
+            }
         }
-        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool includeMatrix = false)
+
+        public ObjectDefinition CreateObjectDefinition(bool fastRendering, ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null) 
         {
-            int column = SpritesheetPosition % Spritesheet.Rows;
-            int row = SpritesheetPosition / Spritesheet.Rows;
+            return CreateObjectDefinition(ID, bounds, fastRendering);
+        }
+        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true)
+        {
+            //int column = SpritesheetPosition % Spritesheet.Rows;
+            //int row = SpritesheetPosition / Spritesheet.Rows;
 
-            float minBoundX = (float)column / Spritesheet.Columns;
-            float maxBoundX = (float)(column + SideLength) / Spritesheet.Columns;
+            //float minBoundX = (float)column / Spritesheet.Columns;
+            //float maxBoundX = (float)(column + SideLengths.X) / Spritesheet.Columns;
 
-            float minBoundY = (float)(row) / Spritesheet.Rows;
-            float maxBoundY = (float)(row + SideLength) / Spritesheet.Rows;
+            //float minBoundY = (float)(row) / Spritesheet.Rows;
+            //float maxBoundY = (float)(row + SideLengths.Y) / Spritesheet.Rows;
 
-            if (maxBoundX > 1)
-            {
-                minBoundX = (float)(column - SideLength) / Spritesheet.Columns;
-                maxBoundX = 1;
-            }
+            //if (maxBoundX > 1)
+            //{
+            //    minBoundX = (float)(column - SideLengths.X) / Spritesheet.Columns;
+            //    maxBoundX = 1;
+            //}
 
-            if (maxBoundY > 1) 
-            {
-                minBoundY = (float)(row - SideLength) / Spritesheet.Rows;
-                maxBoundY = 1;
-            }
+            //if (maxBoundY > 1) 
+            //{
+            //    minBoundY = (float)(row - SideLengths.Y) / Spritesheet.Rows;
+            //    maxBoundY = 1;
+            //}
 
             //Console.WriteLine(ID);
             //Console.WriteLine(minBoundX + ", " + maxBoundX);
@@ -311,13 +326,32 @@ namespace MortalDungeon.Game.Objects
                 -0.5f, 0.5f, 0.0f,
             };
 
+            float aspectRatio = SideLengths.X / SideLengths.Y;
+
+            //ObjectDefinition returnDef = new ObjectDefinition(
+            //    new float[] {
+            //    0.5f * aspectRatio, 0.5f, 0.0f, maxBoundX, minBoundY, // top right
+            //    0.5f * aspectRatio, -0.5f, 0.0f, maxBoundX, maxBoundY, // bottom right
+            //    -0.5f * aspectRatio, -0.5f, 0.0f, minBoundX, maxBoundY, // bottom left
+            //    -0.5f * aspectRatio, 0.5f, 0.0f, minBoundX, minBoundY, // top left
+            //    },
+            //    new uint[]{
+            //    0, 1, 3,
+            //    1, 2, 3
+            //    },
+            //    4,
+            //    new TextureInfo(Spritesheet, new int[] { SpritesheetPosition }),
+            //    default,
+            //    bounds != null ? bounds : defaultBounds,
+            //    false
+            //);
 
             ObjectDefinition returnDef = new ObjectDefinition(
                 new float[] {
-                0.5f, 0.5f, 0.0f, maxBoundX, minBoundY, // top right
-                0.5f, -0.5f, 0.0f, maxBoundX, maxBoundY, // bottom right
-                -0.5f, -0.5f, 0.0f, minBoundX, maxBoundY, // bottom left
-                -0.5f, 0.5f, 0.0f, minBoundX, minBoundY, // top left
+                0.5f * aspectRatio, 0.5f, 0.0f, 0.1f, 0.1f, // top right
+                0.5f * aspectRatio, -0.5f, 0.0f, 0.1f, 0.0f, // bottom right
+                -0.5f * aspectRatio, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
+                -0.5f * aspectRatio, 0.5f, 0.0f, 0.0f, 0.1f, // top left
                 },
                 new uint[]{
                 0, 1, 3,
@@ -330,24 +364,26 @@ namespace MortalDungeon.Game.Objects
                 false
             );
 
-            if (includeMatrix)
+
+            if (fastRendering) //used for the instanced renderer
             {
-                int newStride = (5 + 16);
-                int oldStride = 5;
+                int newStride = returnDef.Vertices.Length / 4 + 16 + 4 + 1;//in order: matrix4 transformation, vector3 color, float enable_cam
+                int oldStride = returnDef.Vertices.Length / 4;
                 float[] temp = new float[4 * newStride];
 
-                for (int i = 0; i < 4; i++) 
+                for (int i = 0; i < 4 /* points */; i++)
                 {
-                    for (int o = 0; o < 5; o++) 
+                    for (int o = 0; o < oldStride; o++)
                     {
                         temp[newStride * i + o] = returnDef.Vertices[oldStride * i + o]; //assign olds x, y, z, texX, texY values to new array
                     }
                 }
-                returnDef.Vertices = temp;
+                returnDef.fastVertices = temp;
             }
 
-
             returnDef.ID = ID;
+            returnDef.SpritesheetPosition = SpritesheetPosition;
+            returnDef.SideLengths = new Vector2(SideLengths.X, SideLengths.Y);
 
             return returnDef;
         }
