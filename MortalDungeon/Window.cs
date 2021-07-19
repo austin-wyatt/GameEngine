@@ -24,13 +24,40 @@ namespace MortalDungeon
         public static readonly Vector2 ScreenUnits = new Vector2(1000, 1000);
         public static Vector3 CenterScreen = new Vector3(ScreenUnits.X / 2, ScreenUnits.Y / 2, 0); //use to outline bounds;
         public static readonly Vector4 FullColor = new Vector4(1, 1, 1, 1);
-
+        public const int TickDenominator = 45; // 1 divided by this determines the tick rate.
+        public static Vector2i ClientSize;
         private static Vector3 tempVector = new Vector3();
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
             tempVector.X = (position.X / ScreenUnits.X) * 2 - 1;
             tempVector.Y = ((position.Y / ScreenUnits.Y) * 2 - 1) * -1;
             tempVector.Z = position.Z;
+
+            return tempVector;
+        }
+
+        public static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector2i clientSize, Vector3 position) 
+        {
+            tempVector.X = position.X / clientSize.X * ScreenUnits.X;
+            tempVector.Y = position.Y / clientSize.Y * ScreenUnits.Y;
+            tempVector.Z = position.Z;
+
+            return tempVector;
+        }
+
+        public static Vector3 ConverLocalToScreenSpaceCoordinates(Vector3 position)
+        {
+            tempVector.X = (position.X + 1) / 2 * ScreenUnits.X;
+            tempVector.Y = (position.Y + 1) / 2 * ScreenUnits.Y;
+            tempVector.Z = position.Z;
+
+            return tempVector;
+        }
+        public static Vector3 ConvertLocalToScreenSpaceCoordinates(Vector2 position)
+        {
+            tempVector.X = (position.X + 1) / 2 * ScreenUnits.X;
+            tempVector.Y = ScreenUnits.Y - (position.Y + 1) / 2 * ScreenUnits.Y;
+            tempVector.Z = 0;
 
             return tempVector;
         }
@@ -53,13 +80,6 @@ namespace MortalDungeon
         private Stopwatch _timer;
         private Stopwatch _gameTimer;
 
-        //private int _vertexBufferObject;
-        //private int _vertexArrayObject;
-
-        //private int _elementBufferObject;
-
-        //private int _instancedVertexBuffer;
-        //private int _instancedArrayBuffer;
 
         private Camera _camera;
         private MouseRay _mouseRay;
@@ -67,10 +87,12 @@ namespace MortalDungeon
         private Vector2 _lastPos;
 
 
+        private bool Rendering = false;
+
         private uint tick = 0;
         private uint lastTick = 0;
 
-        private const float tickRate = (float)1 / 60;
+        private const float tickRate = (float)1 / WindowConstants.TickDenominator;
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
         {  }
 
@@ -83,34 +105,30 @@ namespace MortalDungeon
             KeyUp += Window_KeyUp;
             KeyDown += Window_KeyDown;
 
-            _renderer.Load(ClientSize);
+            _renderer.Load();
+            WindowConstants.ClientSize.X = ClientSize.X;
+            WindowConstants.ClientSize.Y = ClientSize.Y;
 
             SetWindowSize();
-            _camera = new Camera(Vector3.UnitZ * 3, WindowSize.X / (float)WindowSize.Y);
-            _mouseRay = new MouseRay(_camera, WindowSize);
+            _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
+            _camera.Pitch += 7;
 
-            _cursorObject = new BaseObject(WindowSize, CURSOR_ANIMATION.List, 0, "cursor", new Vector3(MousePosition));
+            _mouseRay = new MouseRay(_camera);
+
+            _cursorObject = new BaseObject(CURSOR_ANIMATION.List, 0, "cursor", new Vector3(MousePosition));
             _cursorObject.LockToWindow = true;
             _cursorObject.BaseFrame.ScaleAll(0.1f);
 
-            //Vector3 button1Position = new Vector3(300, 100, 0);
-            ////Vector3 button1Position = _centerScreen;
-            //BaseObject button1Object = new BaseObject(WindowSize, BUTTON_ANIMATION.List, 2, "Button One", button1Position, ButtonObjects.BUTTON_SPRITESHEET.Bounds);
-            //button1Object.BaseFrame.ScaleAll(0.5f);
-            //_clickableObjects.Add(button1Object);
 
 
-            //Vector3 button2Position = new Vector3(button1Position.X, button1Position.Y + 300, 0);
-            //BaseObject button2Object = new BaseObject(WindowSize, BUTTON_ANIMATION.List, 3, "Button Two", button2Position, ButtonObjects.BUTTON_SPRITESHEET.Bounds);
-            //button2Object.BaseFrame.ScaleAll(0.5f);
-            //_clickableObjects.Add(button2Object);
+            Scene escapeMenuScene = new EscapeMenuScene(() => Close());
+            escapeMenuScene.Load(_camera, _cursorObject, _mouseRay);
+
+            _scenes.Add(escapeMenuScene);
 
 
-            //_renderedItems.Add(button1Object);
-            //_renderedItems.Add(button2Object);
             Scene menuScene = new MenuScene();
-            menuScene.Load(WindowSize, _camera, _cursorObject);
-            menuScene.SetCursorDetectionFunc(CheckBoundsForObjects);
+            menuScene.Load(_camera, _cursorObject, _mouseRay);
 
             _scenes.Add(menuScene);
 
@@ -123,44 +141,6 @@ namespace MortalDungeon
             _gameTimer = new Stopwatch();
             _gameTimer.Start();
 
-            //Game logic loop
-            var gameLoop = new Task(() =>
-            {
-                int waitTime = (int)(tickRate / 2 * 1000);
-
-                while (true)
-                {
-                    if (tick != lastTick)
-                    {
-                        lastTick = tick;
-
-                        _scenes.ForEach(scene =>
-                        {
-                            scene.Logic();
-
-                            scene._renderedObjects.ForEach(gameObject =>
-                            {
-                                gameObject.Tick();
-                            });
-
-                            scene._units.ForEach(unit =>
-                            {
-                                unit.Tick();
-                            });
-
-                            scene._tileMaps.ForEach(tileMap =>
-                            {
-                                tileMap.Tick();
-                            });
-
-                        });
-                        
-                    }
-                    Thread.Sleep(waitTime);
-                }
-            });
-            gameLoop.Start();
-
             //hides mouse cursor
             CursorGrabbed = true;
 
@@ -170,6 +150,8 @@ namespace MortalDungeon
         
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            Rendering = true;
+
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -200,29 +182,33 @@ namespace MortalDungeon
             Matrix4 projectionMatrix = _camera.GetProjectionMatrix();
             Matrix4 cameraMatrix = viewMatrix * projectionMatrix;
 
-
             for (int i = 0; i < _points.Count; i++)
             {
                 Shaders.POINT_SHADER.Use();
 
                 float[] point = new float[] { _points[i].X, _points[i].Y };
-
+                GL.BindBuffer(BufferTarget.ArrayBuffer, _renderer._vertexArrayObject);
                 GL.BufferData(BufferTarget.ArrayBuffer, point.Length * sizeof(float), point, BufferUsageHint.DynamicDraw);
                 GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, point.Length * sizeof(float), 0);
 
                 GL.DrawArrays(PrimitiveType.Points, 0, 1);
             } //Points
 
+            Shaders.DEFAULT_SHADER.Use();
             Shaders.DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
+            Shaders.DEFAULT_SHADER.SetFloat("alpha_threshold", 0.25f);
+
             _renderedItems.ForEach(obj =>
             {
-                Shaders.DEFAULT_SHADER.Use();
                 _renderer.RenderObject(obj);
             }); //Old handling, used for lines
+            _renderer.RenderObject(_cursorObject);
+
 
             //all objects using the fast default shader are handled here
             Shaders.FAST_DEFAULT_SHADER.Use();
             Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
+            Shaders.FAST_DEFAULT_SHADER.SetFloat("alpha_threshold", 0.25f);
             _scenes.ForEach(scene =>
             {
                 _renderer.RenderObjectsInstanced(scene._renderedObjects);
@@ -258,17 +244,23 @@ namespace MortalDungeon
                 {
                     if (text.Render && text.Letters.Count > 0) 
                     {
-                        _renderer.RenderTextInstanced(text.Letters);
+                        _renderer.RenderLettersInstanced(text.Letters);
                     };
                 });
             }); //Text
 
-            Shaders.DEFAULT_SHADER.Use();
-            _renderer.RenderObject(_cursorObject);
+            _scenes.ForEach(scene =>
+            {
+                _renderer.RenderUIElements(scene._UI);
+            }); //UI
+
+
 
             SwapBuffers();
 
             base.OnRenderFrame(args);
+
+            Rendering = false;
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
@@ -277,14 +269,7 @@ namespace MortalDungeon
             {
                 return;
             }
-
-            if (KeyboardState.IsKeyDown(Keys.Escape))
-            {
-                Close();
-            }
-
             
-
             _scenes.ForEach(scene =>
             {
                 scene.MouseState = MouseState;
@@ -292,6 +277,8 @@ namespace MortalDungeon
 
                 scene.onUpdateFrame();
             });
+
+            TickAllObjects();
 
             var mouse = MouseState;
             float cameraSpeed = 4.0f;
@@ -316,10 +303,11 @@ namespace MortalDungeon
             //    _camera.Yaw += deltaX * sensitivity;
             //    _camera.Pitch -= deltaY * sensitivity; // reversed since y-coordinates range from bottom to top
             //}
+
             if (MouseState.ScrollDelta[1] < 0)
             {
                 Vector3 movement = _camera.Front * cameraSpeed / 2;
-                if (_camera.Position.Z - movement.Z < 21)
+                if (_camera.Position.Z - movement.Z < 26)
                 {
                     _camera.Position -= movement; // Backwards
                 }
@@ -344,13 +332,15 @@ namespace MortalDungeon
             if (KeyboardState.IsKeyDown(Keys.W))
             {
                 //_camera.Position += _camera.Front * cameraSpeed * (float)args.Time; // Forward
-                _camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                _camera.Position += Vector3.UnitY * cameraSpeed * (float)args.Time;
             }
 
             if (KeyboardState.IsKeyDown(Keys.S))
             {
                 //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
-                _camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
+                //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
+                _camera.Position -= Vector3.UnitY * cameraSpeed * (float)args.Time;
             }
             if (KeyboardState.IsKeyDown(Keys.A))
             {
@@ -417,7 +407,61 @@ namespace MortalDungeon
                         if (obj.Render && obj.Tiles.Count > 0)
                             _renderer.LoadTextureFromGameObj(obj.Tiles[0]);
                     });
+
+                    _scenes[u]._UI.ForEach(obj =>
+                    {
+                        _renderer.LoadTextureFromUIObject(obj);
+                    });
                 }
+            }
+        }
+
+        private void TickAllObjects() 
+        {
+            if (tick != lastTick)
+            {
+                lastTick = tick;
+                _scenes.ForEach(scene =>
+                {
+                    scene.Logic();
+
+                    Task renderedObjectTask = new Task(() =>
+                    {
+                        scene._renderedObjects.ForEach(gameObject =>
+                        {
+                            gameObject.Tick();
+                        });
+                    });
+
+                    Task unitTask = new Task(() =>
+                    {
+                        scene._units.ForEach(unit =>
+                        {
+                            unit.Tick();
+                        });
+                    });
+
+                    Task tileMapTask = new Task(() => 
+                    {
+                        scene._tileMaps.ForEach(tileMap =>
+                        {
+                            tileMap.Tick();
+                        });
+                    });
+
+                    Task uiTask = new Task(() =>
+                    {
+                        scene._UI.ForEach(ui =>
+                        {
+                            ui.Tick();
+                        });
+                    });
+
+                    renderedObjectTask.Start();
+                    unitTask.Start();
+                    tileMapTask.Start();
+                    uiTask.Start();
+                });
             }
         }
         private void SetWindowSize() 
@@ -427,8 +471,6 @@ namespace MortalDungeon
 
             if (_camera != null) 
             {
-                _mouseRay._windowSize = WindowSize;
-                _cursorObject._windowSize = WindowSize;
                 _camera.AspectRatio = WindowSize.X / (float)WindowSize.Y;
             }
         }
@@ -437,6 +479,9 @@ namespace MortalDungeon
             // When the window gets resized, we have to call GL.Viewport to resize OpenGL's viewport to match the new size.
             // If we don't, the NDC will no longer be correct.
             base.OnResize(e);
+
+            WindowConstants.ClientSize.X = ClientSize.X;
+            WindowConstants.ClientSize.Y = ClientSize.Y;
 
             GL.Viewport(0, 0, Size.X, Size.Y);
             SetWindowSize();
@@ -492,7 +537,7 @@ namespace MortalDungeon
 
             
             //RenderableObject testLine = new RenderableObject(lineObj.CreateLineDefinition(), color, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-            BaseObject lineObject = new BaseObject(WindowSize, new LINE_ANIMATION(lineObj).List, 999, "line", line1);
+            BaseObject lineObject = new BaseObject(new LINE_ANIMATION(lineObj).List, 999, "line", line1);
             //lineObject.BaseFrame.ColorProportion = 1.0f;
             lineObject.BaseFrame.CameraPerspective = camPerspective;
             lineObject.BaseFrame.Color = color;
@@ -506,8 +551,8 @@ namespace MortalDungeon
 
         private List<GameObject> CheckBoundsForObjects(List<GameObject> listObjects)
         {
-            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowSize); // start of ray (near plane)
-            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowSize); // end of ray (far plane)
+            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
+            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
             List<GameObject> foundObjects = new List<GameObject>();
 
@@ -559,24 +604,25 @@ namespace MortalDungeon
             });
 
             //
+
             switch (obj.Key) 
             {
                 case (Keys.Q):
-                    _points.Add(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowSize));
+                    _points.Add(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize));
 
                     if(_points.Count > 1)
                     {
                         CreateNewLine(new Vector3(_points[_points.Count - 2].X, _points[_points.Count - 2].Y, 0), new Vector3(_points[_points.Count - 1].X, _points[_points.Count - 1].Y, 0), new Vector4(0, 0, 1, 1), 0.02f, false);
                     }
 
-                    var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowSize);
+                    var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
                     //Console.WriteLine("Normalized cursor coordinates: " + temp.X + ", " + temp.Y);
                     break;
                 case (Keys.R):
                     _points.Clear();
                     _renderedItems.Clear();
 
-                    Console.WriteLine(_camera.Position.Z);
+                    //Console.WriteLine(_camera.Position.Z);
                     break;
                 case (Keys.P):
                     Console.Write("new float[]{\n");

@@ -9,12 +9,11 @@ namespace MortalDungeon.Game.GameObjects
 {
     public class Fire : GameObject 
     {
-        public Fire(Vector2i clientSize, Vector3 position) 
+        public Fire(Vector3 position) 
         {
-            ClientSize = clientSize;
             Name = "Fire";
 
-            BaseObject FireBaseObject = new BaseObject(ClientSize, FIRE_BASE_ANIMATION.List, 0, "", new Vector3(0, 0, 0.2f), EnvironmentObjects.FIRE_BASE.Bounds);
+            BaseObject FireBaseObject = new BaseObject(FIRE_BASE_ANIMATION.List, 0, "", new Vector3(0, 0, 0.2f), EnvironmentObjects.FIRE_BASE.Bounds);
             FireBaseObject.BaseFrame.CameraPerspective = true;
             FireBaseObject.BaseFrame.RotateX(25);
             BaseObjects.Add(FireBaseObject);
@@ -30,35 +29,14 @@ namespace MortalDungeon.Game.GameObjects
         }
     }
 
-    public class BaseTile : GameObject
-    {
-        public bool Render = true;
-
-        public BaseTile() { }
-        public BaseTile(Vector2i clientSize, Vector3 position, int id)
-        {
-            ClientSize = clientSize;
-            Name = "BaseTile";
-
-            BaseObject BaseTile = new BaseObject(ClientSize, BASE_TILE_ANIMATION.List, id, "Base Tile " + id, default, EnvironmentObjects.BASE_TILE.Bounds);
-            BaseTile.BaseFrame.CameraPerspective = true;
-            BaseTile.BaseFrame.Color = WindowConstants.FullColor - new Vector4(0.5f, 0.5f, 0.5f, 0);
-
-            BaseObjects.Add(BaseTile);
-
-            SetPosition(position);
-        }
-    }
-
     public class Mountain : GameObject
     {
         public Mountain() { }
-        public Mountain(Vector2i clientSize, Vector3 position, int id = 0)
+        public Mountain(Vector3 position, int id = 0)
         {
-            ClientSize = clientSize;
             Name = "Moutain";
 
-            BaseObject Mountain = new BaseObject(ClientSize, MOUNTAIN_ANIMATION.List, id, "Mountain", position, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject Mountain = new BaseObject(MOUNTAIN_ANIMATION.List, id, "Mountain", position, EnvironmentObjects.BASE_TILE.Bounds);
             Mountain.BaseFrame.CameraPerspective = true;
             Mountain.BaseFrame.ScaleAll(20);
 
@@ -73,10 +51,9 @@ namespace MortalDungeon.Game.GameObjects
         public CaveBackground() { }
         public CaveBackground(Vector2i clientSize, Vector3 position, int id = 0)
         {
-            ClientSize = clientSize;
             Name = "CaveBackground";
 
-            BaseObject Cave = new BaseObject(ClientSize, CAVE_BACKGROUND_ANIMATION.List, id, "CaveBackground", position);
+            BaseObject Cave = new BaseObject(CAVE_BACKGROUND_ANIMATION.List, id, "CaveBackground", position);
             Cave.BaseFrame.CameraPerspective = true;
             Cave.BaseFrame.ScaleAll(20);
 
@@ -89,12 +66,11 @@ namespace MortalDungeon.Game.GameObjects
     public class MountainTwo : GameObject
     {
         public MountainTwo() { }
-        public MountainTwo(Vector2i clientSize, Vector3 position, int id = 0)
+        public MountainTwo(Vector3 position, int id = 0)
         {
-            ClientSize = clientSize;
             Name = "MoutainTwo";
 
-            BaseObject Mountain = new BaseObject(ClientSize, MOUNTAIN_TWO_ANIMATION.List, id, "MoutainTwo", position, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject Mountain = new BaseObject(MOUNTAIN_TWO_ANIMATION.List, id, "MoutainTwo", position, EnvironmentObjects.BASE_TILE.Bounds);
             Mountain.BaseFrame.CameraPerspective = true;
             Mountain.BaseFrame.ScaleAll(20);
 

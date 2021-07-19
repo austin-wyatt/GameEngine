@@ -18,6 +18,9 @@
 	<None Update="Resources\CaveSpritesheet.png">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</None>
+	<None Update="Resources\CharacterSpritesheet.bmp">
+	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</None>
 	<None Update="Resources\CharacterSpritesheet.png">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</None>
@@ -90,10 +93,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Game\UI\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
-﻿using MortalDungeon.Game.GameObjects;
+﻿using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.UI;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -13,14 +15,19 @@ namespace MortalDungeon.Engine_Classes
         public List<BaseObject> BaseObjects = new List<BaseObject>();
         public List<ParticleGenerator> ParticleGenerators = new List<ParticleGenerator>();
         public Vector3 PositionalOffset = new Vector3();
-        public Vector2i ClientSize = new Vector2i();
+        public Vector3 Scale = new Vector3(1, 1, 1);
+
+        public List<PropertyAnimation> PropertyAnimations = new List<PropertyAnimation>();
 
         private Vector3 _velocity = default;
         private int _moveDelay = 1;
         private int _currentDelay = 0;
         private int _totalMoves = 0;
-        private float _timeToArrive = 60; //move delays it will take to arrive. (1 _moveDelay and 60 _timeToArrive would be 1 second. 2 and 30 would also be 1 second.)
+        private float _timeToArrive = WindowConstants.TickDenominator; //move delays it will take to arrive. (1 _moveDelay and 60 _timeToArrive would be 1 second. 2 and 30 would also be 1 second.)
         private bool _moving = false;
+
+        public bool Render = true;
+        public bool Clickable = false; //Note: The BaseObject's Clickable property and this property must be true for UI objects
 
         //public Stats Stats; //contains game parameters for the object
         public GameObject() { }
@@ -46,11 +53,21 @@ namespace MortalDungeon.Engine_Classes
 
             BaseObjects.ForEach(obj =>
             {
-                obj.CurrentAnimation.Tick();
+                obj._currentAnimation.Tick();
+                //obj.PropertyAnimations.ForEach(anim =>
+                //{
+                //    anim.Tick();
+                //});
+
                 if (shouldMove) 
                 {
                     obj.SetPosition(obj.Position + _velocity);
                 }
+            });
+
+            PropertyAnimations.ForEach(anim =>
+            {
+                anim.Tick();
             });
 
             ParticleGenerators.ForEach(gen =>
@@ -83,7 +100,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void GradualMove(Vector3 finalPosition, int moveDelay = 1, float timeToArrive = 60) 
+        public void GradualMove(Vector3 finalPosition, int moveDelay = 1, float timeToArrive = WindowConstants.TickDenominator) 
         {
             if (_velocity.X != 0 || _velocity.Y != 0 || _velocity.Z != 0) 
             {
@@ -95,83 +112,49 @@ namespace MortalDungeon.Engine_Classes
 
             _moving = true;
         }
-    }
 
-    public class Unit : GameObject //main unit class. Tracks position on tilemap
-    {
-        public bool Render = true;
-        public int TileMapPosition = 0; //can be anything from -1 to infinity. If the value is below 0 then it is not being positioned on the tilemap
-        public Unit() { }
-        public Unit(Vector2i clientSize, Vector3 position, int tileMapPosition = 0, int id = 0, string name = "Unit")
+        public virtual void ScaleAll(float f) 
         {
-            ClientSize = clientSize;
-            Position = position;
-            Name = name;
-        }
-    }
+            BaseObjects.ForEach(obj =>
+            {
+                obj.BaseFrame.ScaleAll(f);
+            });
 
-    public class TileMap : GameObject //grid of tiles
-    {
-        public bool Render = true;
-        public int Width = 30;
-        public int Height = 30;
-
-        public List<BaseTile> Tiles = new List<BaseTile>();
-        public TileMap(Vector2i clientSize, Vector3 position, int id = 0, string name = "TileMap")
-        {
-            ClientSize = clientSize;
-            Position = position; //position of the first tile
-            Name = name;
+            Scale *= f;
         }
 
-        public void PopulateTileMap()
+        public virtual void ScaleAddition(float f)
         {
-            BaseTile baseTile = new BaseTile();
-            Vector3 tilePosition = new Vector3(Position);
-
-            for (int i = 0; i < Width; i++)
+            BaseObjects.ForEach(obj =>
             {
-                for (int o = 0; o < Height; o++)
-                {
-                    baseTile = new BaseTile(ClientSize, tilePosition, i * Width + o);
+                obj.BaseFrame.ScaleAddition(f);
+            });
 
-                    Tiles.Add(baseTile);
-
-                    tilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y;
-                }
-                tilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.29f;
-                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2);
-                tilePosition.Z += 0.0001f;
-            }
+            Scale.X += f;
+            Scale.Y += f;
+            Scale.Z += f;
         }
 
-        public Vector3 GetPositionOfTile(int index)
+        public virtual void SetColor(Vector4 color) 
         {
-            Vector3 position = new Vector3();
-            if (index < Width * Height && index >= 0)
+            BaseObjects.ForEach(obj =>
             {
-                position = Tiles[index].Position;
-            }
-            else if (index < 0 && Tiles.Count > 0)
-            {
-                position = Tiles[0].Position;
-            }
-            else if (index >= Tiles.Count)
-            {
-                position = Tiles[Tiles.Count - 1].Position;
-            }
-
-            return position;
-        }
-
-        public override void Tick()
-        {
-            base.Tick();
-
-            Tiles.ForEach(tile =>
-            {
-                tile.Tick();
+                obj.BaseFrame.Color = color;
             });
         }
+
+        public PropertyAnimation GetPropertyAnimationByID(int id) 
+        {
+            return PropertyAnimations.Find(anim => anim.AnimationID == id);
+        }
+
+        public virtual void OnClick() { }
+        public virtual void OnHover() { }
+        public virtual void HoverEnd() { }
+        public virtual void OnMouseDown() { }
+        public virtual void OnMouseUp() { }
+        public virtual void OnGrab() { }
+        public virtual void GrabEnd() { }
+
     }
 }

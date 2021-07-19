@@ -51,12 +51,12 @@ namespace MortalDungeon.Game.Objects
 
     public class Letter : GameObject
     {
-
         public Character Character;
-        public float Scale = 0.1f;
-        private float _baseLetterOffset = 300f; 
+        public new float Scale = 0.1f;
+        private float _scaleX = 1;
+        private float _baseLetterOffset = 350f; 
         private float _baseYOffset = 0f;
-        public float LetterOffset = 300f; //how wide the character is
+        public float LetterOffset = 350f; //how wide the character is
         public float YOffset = 0f;
 
         private float _baseXCorrection = 0f;
@@ -64,14 +64,18 @@ namespace MortalDungeon.Game.Objects
         public float XCorrection = 0f; //shift by this much in the X direction
         public float YCorrection = 0f;
 
-        public Letter() { }
+        public BaseObject LetterObject;
 
-        public Letter(Vector2i clientSize, Character character, Vector3 position, bool cameraPerspective, int ID = 0, float scale = 0.1f)
+        private bool CameraPerspective = false;
+        private RenderableObject _display;
+        private bool usingMonospace = true;
+
+        public Letter(Character character, Vector3 position, bool cameraPerspective, int ID = 0, float scale = 0.1f)
         {
             Character = character;
-            ClientSize = clientSize;
 
             RenderableObject letterDisplay = new RenderableObject(new SpritesheetObject((int)Character, Spritesheets.CharacterSheet).CreateObjectDefinition(ObjectIDs.CHARACTER), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+
             Animation Idle = new Animation()
             {
                 Frames = new List<RenderableObject>() { letterDisplay },
@@ -79,11 +83,15 @@ namespace MortalDungeon.Game.Objects
                 Repeats = -1
             };
 
-            BaseObject letter = new BaseObject(ClientSize, new List<Animation>() { Idle }, ID, "letter", position, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject letter = new BaseObject(new List<Animation>() { Idle }, ID, "letter", position, EnvironmentObjects.BASE_TILE.Bounds);
             letter.BaseFrame.CameraPerspective = cameraPerspective;
-            
+            CameraPerspective = cameraPerspective;
+            letter.Clickable = false;
+            LetterObject = letter;
+            _display = letter.BaseFrame;
 
             BaseObjects.Add(letter);
+
 
             SetScale(scale);
 
@@ -108,198 +116,211 @@ namespace MortalDungeon.Game.Objects
 
         public void SetScale(float scale) 
         {
-            BaseObjects[0].BaseFrame.SetScaleAll(scale);
+            LetterObject.BaseFrame.SetScaleAll(scale);
+
             Scale = scale;
+
+            if (!CameraPerspective)
+            {
+                LetterObject.BaseFrame.ScaleX((float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X); //it'll display fine in 3D but 2D will be stretched
+                _scaleX = (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X;
+            }
 
             SetKerning();
         }
 
+        public override void SetColor(Vector4 color) 
+        {
+            _display.Color = color;
+        }
+
         private void SetKerning() 
         {
-            switch (Character) 
+            if (!usingMonospace)//using monospace 
             {
-                case Character.i:
-                    _baseLetterOffset = 180f;
-                    _baseXCorrection = -60f;
-                    break;
-                case Character.t:
-                    _baseLetterOffset = 215f;
-                    _baseXCorrection = -20f;
-                    break;
-                case Character.h:
-                    _baseLetterOffset = 275f;
-                    _baseXCorrection = 0f;
-                    break;
-                case Character.r:
-                    _baseLetterOffset = 260f;
-                    _baseXCorrection = 0f;
-                    break;
-                case Character.l:
-                    _baseLetterOffset = 200;
-                    _baseXCorrection = -75f;
-                    break;
-                case Character.u:
-                    //_baseLetterOffset = 300;
-                    //_baseXCorrection = -75f;
-                    break;
-                case Character.NewLine:
-                    _baseLetterOffset = 0f;
-                    break;
-                case Character.Space:
-                    _baseLetterOffset = 150f;
-                    break;
-                case Character.e:
-                    _baseLetterOffset = 300f;
-                    _baseXCorrection = -20f;
-                    break;
-                case Character.m:
-                    _baseLetterOffset = 360f;
-                    _baseXCorrection = 100f;
-                    break;
-                case Character.o:
-                    _baseLetterOffset = 275f;
-                    _baseXCorrection = 0f;
-                    break;
-                case Character.f:
-                    _baseLetterOffset = 225f;
-                    break;
-                case Character.c:
-                    _baseLetterOffset = 225f;
-                    _baseXCorrection = 30f;
-                    break;
-                case Character.w:
-                    _baseLetterOffset = 340f;
-                    _baseXCorrection = 40f;
-                    break;
-                case Character.y:
-                    _baseLetterOffset = 280f;
-                    _baseXCorrection = -20f;
-                    _baseYCorrection = 10f;
-                    break;
-                case Character.p:
-                    _baseYCorrection = 10f;
-                    break;
-                case Character.q:
-                    _baseYCorrection = 10f;
-                    break;
-                case Character.a:
-                    _baseLetterOffset = 250f;
-                    _baseXCorrection = 25f;
-                    break;
-                case Character.k:
-                    _baseLetterOffset = 250f;
-                    break;
-                case Character.s:
-                    _baseLetterOffset = 275f;
-                    _baseXCorrection = 15f;
-                    break;
-                case Character.j:
-                    _baseLetterOffset = 200f;
-                    _baseXCorrection = 50f;
-                    break;
-                case Character.d:
-                    _baseLetterOffset = 275f;
-                    _baseXCorrection = 20f;
-                    break;
-                case Character.n:
-                    _baseLetterOffset = 270f;
-                    _baseXCorrection = 20f;
-                    break;
-                case Character.v:
-                    _baseLetterOffset = 270f;
-                    _baseXCorrection = 20f;
-                    break;
-                case Character.Q:
-                    _baseLetterOffset = 350f;
-                    break;
-                case Character.W:
-                    _baseLetterOffset = 375f;
-                    _baseXCorrection = 90f;
-                    break;
-                case Character.I:
-                    _baseLetterOffset = 260f;
-                    _baseXCorrection = -40f;
-                    break;
-                case Character.T:
-                    _baseLetterOffset = 320f;
-                    _baseXCorrection = 10f;
-                    break;
-                case Character.B:
-                    _baseLetterOffset = 320f;
-                    _baseXCorrection = 10f;
-                    break;
-                case Character.R:
-                    _baseLetterOffset = 320f;
-                    _baseXCorrection = 10f;
-                    break;
-                case Character.U:
-                    _baseLetterOffset = 275f;
-                    //_baseXCorrection = -80f;
-                    break;
-                case Character.M:
-                    _baseLetterOffset = 325f;
-                    _baseXCorrection = 90f;
-                    break;
-                case Character.J:
-                    _baseLetterOffset = 250f;
-                    //_baseXCorrection = 90f;
-                    break;
-                case Character.Z:
-                    _baseLetterOffset = 330f;
-                    _baseXCorrection = 80f;
-                    break;
-                case Character.D:
-                    _baseLetterOffset = 360f;
-                    //_baseXCorrection = 90f;
-                    break;
-                case Character.O:
-                    //_baseLetterOffset = 300f;
-                    //_baseXCorrection = 90f;
-                    break;
-                case Character.G:
-                    _baseLetterOffset = 360f;
-                    _baseXCorrection = 60f;
-                    break;
-                case Character.L:
-                    _baseLetterOffset = 280f;
-                    _baseXCorrection = 0f;
-                    break;
-                case Character.Apostrophe:
-                    _baseLetterOffset = 200f;
-                    _baseXCorrection = -100f;
-                    break;
-                case Character.LeftParenthesis:
-                    _baseLetterOffset = 200f;
-                    break;
-                case Character.RightParenthesis:
-                    _baseLetterOffset = 200f;
-                    break;
-                case Character.LessThan:
-                    _baseLetterOffset = 275f;
-                    break;
-                case Character.GreaterThan:
-                    _baseLetterOffset = 275f;
-                    break;
-                case Character.LeftBracket:
-                    _baseLetterOffset = 200f;
-                    break;
-                case Character.RightBracket:
-                    _baseLetterOffset = 200f;
-                    break;
-                case Character.Comma:
-                    _baseLetterOffset = 150;
-                    _baseXCorrection = -50f;
-                    break;
-                case Character.Period:
-                    _baseLetterOffset = 150;
-                    _baseXCorrection = -50f;
-                    break;
-            };
+                switch (Character)
+                {
+                    case Character.i:
+                        _baseLetterOffset = 180f;
+                        _baseXCorrection = -60f;
+                        break;
+                    case Character.t:
+                        _baseLetterOffset = 215f;
+                        _baseXCorrection = -20f;
+                        break;
+                    case Character.h:
+                        _baseLetterOffset = 275f;
+                        _baseXCorrection = 0f;
+                        break;
+                    case Character.r:
+                        _baseLetterOffset = 260f;
+                        _baseXCorrection = 0f;
+                        break;
+                    case Character.l:
+                        _baseLetterOffset = 200;
+                        _baseXCorrection = -75f;
+                        break;
+                    case Character.u:
+                        break;
+                    case Character.NewLine:
+                        _baseLetterOffset = 0f;
+                        break;
+                    case Character.Space:
+                        _baseLetterOffset = 150f;
+                        break;
+                    case Character.e:
+                        _baseLetterOffset = 300f;
+                        _baseXCorrection = -20f;
+                        break;
+                    case Character.m:
+                        _baseLetterOffset = 360f;
+                        _baseXCorrection = 100f;
+                        break;
+                    case Character.o:
+                        _baseLetterOffset = 275f;
+                        _baseXCorrection = 0f;
+                        break;
+                    case Character.f:
+                        _baseLetterOffset = 225f;
+                        break;
+                    case Character.c:
+                        _baseLetterOffset = 225f;
+                        _baseXCorrection = 30f;
+                        break;
+                    case Character.w:
+                        _baseLetterOffset = 340f;
+                        _baseXCorrection = 40f;
+                        break;
+                    case Character.y:
+                        _baseLetterOffset = 280f;
+                        _baseXCorrection = -20f;
+                        _baseYCorrection = 30f;
+                        break;
+                    case Character.p:
+                        _baseYCorrection = 25f;
+                        break;
+                    case Character.q:
+                        _baseYCorrection = 10f;
+                        break;
+                    case Character.a:
+                        _baseLetterOffset = 250f;
+                        _baseXCorrection = 25f;
+                        break;
+                    case Character.k:
+                        _baseLetterOffset = 250f;
+                        break;
+                    case Character.s:
+                        _baseLetterOffset = 275f;
+                        _baseXCorrection = 15f;
+                        break;
+                    case Character.j:
+                        _baseLetterOffset = 200f;
+                        _baseXCorrection = 50f;
+                        break;
+                    case Character.d:
+                        _baseLetterOffset = 275f;
+                        _baseXCorrection = 40f;
+                        break;
+                    case Character.n:
+                        _baseLetterOffset = 270f;
+                        _baseXCorrection = 20f;
+                        break;
+                    case Character.v:
+                        _baseLetterOffset = 270f;
+                        _baseXCorrection = 20f;
+                        break;
+                    case Character.Q:
+                        _baseLetterOffset = 350f;
+                        break;
+                    case Character.W:
+                        _baseLetterOffset = 375f;
+                        _baseXCorrection = 90f;
+                        break;
+                    case Character.I:
+                        _baseLetterOffset = 260f;
+                        _baseXCorrection = -40f;
+                        break;
+                    case Character.T:
+                        _baseLetterOffset = 320f;
+                        _baseXCorrection = 10f;
+                        break;
+                    case Character.B:
+                        _baseLetterOffset = 320f;
+                        _baseXCorrection = 10f;
+                        break;
+                    case Character.R:
+                        _baseLetterOffset = 320f;
+                        _baseXCorrection = 10f;
+                        break;
+                    case Character.U:
+                        _baseLetterOffset = 275f;
+                        //_baseXCorrection = -80f;
+                        break;
+                    case Character.M:
+                        _baseLetterOffset = 325f;
+                        _baseXCorrection = 90f;
+                        break;
+                    case Character.J:
+                        _baseLetterOffset = 250f;
+                        //_baseXCorrection = 90f;
+                        break;
+                    case Character.Z:
+                        _baseLetterOffset = 330f;
+                        _baseXCorrection = 80f;
+                        break;
+                    case Character.D:
+                        _baseLetterOffset = 360f;
+                        //_baseXCorrection = 90f;
+                        break;
+                    case Character.O:
+                        //_baseLetterOffset = 300f;
+                        //_baseXCorrection = 90f;
+                        break;
+                    case Character.G:
+                        _baseLetterOffset = 360f;
+                        _baseXCorrection = 60f;
+                        break;
+                    case Character.L:
+                        _baseLetterOffset = 280f;
+                        _baseXCorrection = 0f;
+                        break;
+                    case Character.Apostrophe:
+                        _baseLetterOffset = 200f;
+                        _baseXCorrection = -100f;
+                        break;
+                    case Character.LeftParenthesis:
+                        _baseLetterOffset = 200f;
+                        break;
+                    case Character.RightParenthesis:
+                        _baseLetterOffset = 200f;
+                        break;
+                    case Character.LessThan:
+                        _baseLetterOffset = 275f;
+                        break;
+                    case Character.GreaterThan:
+                        _baseLetterOffset = 275f;
+                        break;
+                    case Character.LeftBracket:
+                        _baseLetterOffset = 200f;
+                        break;
+                    case Character.RightBracket:
+                        _baseLetterOffset = 200f;
+                        break;
+                    case Character.Comma:
+                        _baseLetterOffset = 150;
+                        _baseXCorrection = -50f;
+                        break;
+                    case Character.Period:
+                        _baseLetterOffset = 150;
+                        _baseXCorrection = -50f;
+                        break;
+                };
+            }
 
-            LetterOffset = _baseLetterOffset * Scale;
+            LetterOffset = _baseLetterOffset * Scale * _scaleX;
             YOffset = _baseYOffset * Scale;
 
-            XCorrection = _baseXCorrection * Scale;
+            XCorrection = _baseXCorrection * Scale * _scaleX;
             YCorrection = _baseYCorrection * Scale;
         }
     }
@@ -307,7 +328,7 @@ namespace MortalDungeon.Game.Objects
     public class Text
     {
         public List<Letter> Letters = new List<Letter>();
-        string TextString = "";
+        public string TextString = "";
         Vector3 Position = new Vector3();
 
         public float Scale = 0.1f;
@@ -320,15 +341,13 @@ namespace MortalDungeon.Game.Objects
 
         public bool Render = true;
 
-        Vector2i ClientSize = new Vector2i();
-
         public Text() { }
-        public Text(Vector2i clientSize, string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
+        public Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
         {
-            ClientSize = clientSize;
             TextString = textString;
             Position = position;
             CameraPerspective = cameraPerspective;
+
 
             SetTextString(textString);
         }
@@ -337,6 +356,15 @@ namespace MortalDungeon.Game.Objects
         {
             textString = textString.Replace("\r", "");
 
+            Texture tempTexture = null;
+
+            if (Letters.Count > 0) 
+            {
+                tempTexture = Letters[0].LetterObject.BaseFrame.TextureReference; //hack, we know this texture is already loaded so we can just hot swap characters
+            }
+
+            Letters.Clear();
+
             TextString = textString;
             char[] arr = TextString.ToCharArray();
             Vector3 position = new Vector3(Position);
@@ -344,9 +372,13 @@ namespace MortalDungeon.Game.Objects
 
             for (int i = 0; i < arr.Length; i++)
             {
-                Letter temp = new Letter(ClientSize, CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, Scale);
+                Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, Scale);
 
-                temp.BaseObjects[0].BaseFrame.Color = new Vector4(0, 1, 1, 1);
+                if (tempTexture != null) 
+                {
+                    temp.LetterObject.BaseFrame.TextureReference = tempTexture; //hack, figure out a fix for this problem later (TextureReference of new renderable object is null)
+                }
+
                 Letters.Add(temp);
                 if (temp.Character == Character.NewLine)
                 {
@@ -356,7 +388,7 @@ namespace MortalDungeon.Game.Objects
                 else 
                 {
                     position.X += temp.LetterOffset + temp.XCorrection;
-                    position.Y += temp.YOffset + temp.YCorrection;
+                    position.Y += temp.YOffset;
                 }
             }
         }
@@ -380,6 +412,37 @@ namespace MortalDungeon.Game.Objects
                 }
             }
         }
+        public Vector2 GetTextDimensions()
+        {
+            Vector3 position = new Vector3(Position);
+            Vector2 maxPos = new Vector2(0, 0);
+
+            for (int i = 0; i < Letters.Count; i++)
+            {
+                if (Letters[i].Character == Character.NewLine)
+                {
+                    position.X = Position.X;
+                    position.Y += NewLineHeight * Scale;
+                }
+                else
+                {
+                    position.X += Letters[i].LetterOffset + Letters[i].XCorrection;
+                    position.Y += Letters[i].YOffset + Letters[i].YCorrection;
+                }
+
+                if (position.X - Position.X > maxPos.X) 
+                {
+                    maxPos.X = position.X - Position.X;
+                }
+
+                if (position.Y - Position.Y > maxPos.Y)
+                {
+                    maxPos.Y = position.Y - Position.Y;
+                }
+            }
+
+            return maxPos;
+        }
 
         public void AddCharacter(Character character, int index = -1)
         {
@@ -387,7 +450,7 @@ namespace MortalDungeon.Game.Objects
             if (index > 0 || index >= TextString.Length)
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(TextString.Length - 1), GetYOffsetAtIndex(TextString.Length - 1), 0);
-                Letter temp = new Letter(ClientSize, character, position, CameraPerspective, TextString.Length, Scale);
+                Letter temp = new Letter(character, position, CameraPerspective, TextString.Length, Scale);
                 TextString += CharacterConstants._characterMapToChar[character];
 
                 Letters.Add(temp);
@@ -395,7 +458,7 @@ namespace MortalDungeon.Game.Objects
             else 
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(index), GetYOffsetAtIndex(index), 0);
-                Letter temp = new Letter(ClientSize, character, position, CameraPerspective, index, Scale);
+                Letter temp = new Letter(character, position, CameraPerspective, index, Scale);
 
                 char[] arr = TextString.ToCharArray();
                 string newStr = "";
@@ -424,7 +487,7 @@ namespace MortalDungeon.Game.Objects
             if (index < 0 || index >= TextString.Length)
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(TextString.Length - 1), GetYOffsetAtIndex(TextString.Length - 1), 0);
-                Letter temp = new Letter(ClientSize, CharacterConstants._characterMap[character], position, CameraPerspective, TextString.Length, Scale);
+                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, TextString.Length, Scale);
                 TextString += character;
 
                 Letters.Add(temp);
@@ -432,7 +495,7 @@ namespace MortalDungeon.Game.Objects
             else
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(index), GetYOffsetAtIndex(index), 0);
-                Letter temp = new Letter(ClientSize, CharacterConstants._characterMap[character], position, CameraPerspective, index, Scale);
+                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, index, Scale);
 
                 char[] arr = TextString.ToCharArray();
                 string newStr = "";
@@ -486,14 +549,14 @@ namespace MortalDungeon.Game.Objects
 
         public void SetScale(float scale) 
         {
-            Scale = scale;
+            Scale = scale / 10;
             LetterOffset = Scale * _baseLetterOffset;
 
             int count = 0;
             Vector3 position = Position;
             Letters.ForEach(letter =>
             {
-                letter.SetScale(scale);
+                letter.SetScale(Scale);
 
                 //letter.SetPosition(position);
 
@@ -504,7 +567,18 @@ namespace MortalDungeon.Game.Objects
 
             RecalculateTextPosition();
         }
-
+        public void SetColor(Vector4 color) 
+        {
+            Letters.ForEach(letter =>
+            {
+                letter.SetColor(color);
+            });
+        }
+        public void SetPosition(Vector3 position)
+        {
+            Position = position;
+            RecalculateTextPosition();
+        }
         private float GetOffsetAtIndex(int index) 
         {
             float offset = 0;

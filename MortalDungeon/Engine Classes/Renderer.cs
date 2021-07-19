@@ -1,4 +1,6 @@
 ﻿using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.UI;
+using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
@@ -12,8 +14,8 @@ namespace MortalDungeon.Engine_Classes
     {
         Random _rand = new Random();
 
-        private int _vertexBufferObject;
-        private int _vertexArrayObject;
+        public int _vertexBufferObject;
+        public int _vertexArrayObject;
 
         private int _elementBufferObject;
 
@@ -28,14 +30,14 @@ namespace MortalDungeon.Engine_Classes
         private List<Texture> _textures = new List<Texture>();
         private Dictionary<string, int> _loadedTextures = new Dictionary<string, int>();
 
-        public Vector2i ActualClientSize = new Vector2i();
 
         public int DrawCount = 0;
         public int FPSCount = 0;
         public bool DisplayFPS = true;
         public Stopwatch _internalTimer = new Stopwatch();
+
         public Renderer() { }
-        public void Load(Vector2i clientSize) //initialization of renderer
+        public void Load() //initialization of renderer
         {
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             GL.Enable(EnableCap.Blend);
@@ -62,14 +64,13 @@ namespace MortalDungeon.Engine_Classes
             _instancedArrayBuffer = GL.GenBuffer();
             _instancedVertexBuffer = GL.GenBuffer();
 
-            ActualClientSize = clientSize;
             _internalTimer.Start();
         }
 
         //currently this only works for the default shaders. Any new shaders will need special handling/their own function
         public void RenderObject(BaseObject obj, bool setVertexData = true, bool setTextureData = true, bool setCam = true, bool setColor = true)
         {
-            RenderableObject Display = obj.Display;
+            RenderableObject Display = obj._currentAnimation.CurrentFrame;
             if (setVertexData)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -82,13 +83,14 @@ namespace MortalDungeon.Engine_Classes
             if (setTextureData)
             {
                 GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, Display.GetRenderDataOffset());
-                obj.Display.TextureReference.Use(TextureUnit.Texture0);
+                Display.TextureReference.Use(TextureUnit.Texture0);
             }
 
-            var transform = Matrix4.Identity;
-            transform *= obj.BaseFrame.Rotation;
-            transform *= obj.BaseFrame.Scale;
-            transform *= obj.BaseFrame.Translation;
+            var transform = obj._baseFrame.Transformations;
+            //var transform = Matrix4.Identity;
+            //transform *= obj._baseFrame.Rotation;
+            //transform *= obj._baseFrame.Scale;
+            //transform *= obj._baseFrame.Translation;
 
 
             if (setCam)
@@ -97,22 +99,25 @@ namespace MortalDungeon.Engine_Classes
             }
             if (setColor)
             {
-                Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.Color);
+                Display.ShaderReference.SetVector4("aColor", obj._baseFrame.Color);
             }
 
             Display.ShaderReference.SetMatrix4("transform", transform);
 
-            //Display.ShaderReference.SetFloat("fMixPercent", obj.BaseFrame.ColorProportion);
+            //Display.ShaderReference.SetFloat("fMixPercent", obj._baseFrame.ColorProportion);
 
-            GL.DrawElements(PrimitiveType.Triangles, obj.Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
 
             DrawCount++;
         }
 
         public void RenderObjectsInstanced(List<GameObject> objects) //this should be called separately for each texture that needs to be accessed
         {
-            RenderableObject Display = objects[0].BaseObjects[0].Display;
-            string currTexture = Display.Textures.Textures[0];
+            if (objects.Count == 0)
+                return;
+
+            RenderableObject Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
+            TextureName currTexture = Display.Textures.Textures[0];
 
             Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
@@ -141,28 +146,28 @@ namespace MortalDungeon.Engine_Classes
             {
                 objG.BaseObjects.ForEach(obj =>
                 {
-                    if (obj.Display.Textures.Textures[0] != currTexture || count == ObjectBufferCount)
+                    if(obj.Render)
+
+                    if (obj._currentAnimation.CurrentFrame.Textures.Textures[0] != currTexture || count == ObjectBufferCount)
                     {
                         recursiveCallList.Add(objG);
                     }
                     else
                     {
-                        var transform = Matrix4.Identity;
-                        transform *= obj.BaseFrame.Rotation;
-                        transform *= obj.BaseFrame.Scale;
-                        transform *= obj.BaseFrame.Translation;
+                        var transform = obj._baseFrame.Transformations;
+
 
                         InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
                         currIndex += 16;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.X;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.Y;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.Z;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.W;
 
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.CameraPerspective ? 1.0f : 0.0f;
-                        _instancedRenderArray[currIndex++] = obj.Display.SpritesheetPosition;
-                        _instancedRenderArray[currIndex++] = obj.Display.SideLengths.X;
-                        _instancedRenderArray[currIndex++] = obj.Display.SideLengths.Y;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.CameraPerspective ? 1.0f : 0.0f;
+                        _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SpritesheetPosition;
+                        _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SideLengths.X;
+                        _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SideLengths.Y;
 
                         count++;
                     }
@@ -184,7 +189,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         private float[] tempVertices = new float[20];
-        public void RenderTextInstanced(List<Letter> objects, RenderableObject display = null, bool shiftingText = false) //same as RenderObjectsInstanced but uses a list of Letter objects
+        public void RenderLettersInstanced(List<Letter> objects, RenderableObject display = null, bool shiftingText = false) //same as RenderObjectsInstanced but uses a list of Letter objects
         {
             RenderableObject Display = null;
             if (display != null) 
@@ -193,17 +198,17 @@ namespace MortalDungeon.Engine_Classes
             }
             else 
             {
-                Display = objects[0].BaseObjects[0].Display;
+                Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
 
             }
-            string currTexture = Display.Textures.Textures[0];
+            TextureName currTexture = Display.Textures.Textures[0];
 
             Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
 
             if (!Display.CameraPerspective && false)  
             {
-                float aspectRatio = (float)ActualClientSize.X / ActualClientSize.Y;
+                float aspectRatio = (float)WindowConstants.ClientSize.X / WindowConstants.ClientSize.Y;
                 int j = 0; //used to avoid using modulo
                 for (int i = 0; i < Display.Vertices.Length; i++) 
                 {
@@ -226,7 +231,7 @@ namespace MortalDungeon.Engine_Classes
             }//this code makes interestingly styled text, save for later
             if (!Display.CameraPerspective && false)
             {
-                float aspectRatio = (float)ActualClientSize.X / ActualClientSize.Y;
+                float aspectRatio = (float)WindowConstants.ClientSize.X / WindowConstants.ClientSize.Y;
                 int j = 0; //used to avoid using modulo
                 for (int i = 0; i < Display.Vertices.Length; i++)
                 {
@@ -249,7 +254,7 @@ namespace MortalDungeon.Engine_Classes
             }//cartoony style text
             if (!Display.CameraPerspective && false)
             {
-                float aspectRatio = (float)ActualClientSize.X / ActualClientSize.Y;
+                float aspectRatio = (float)WindowConstants.ClientSize.X / WindowConstants.ClientSize.Y;
                 int j = 0; //used to avoid using modulo
                 for (int i = 0; i < Display.Vertices.Length; i++)
                 {
@@ -317,32 +322,32 @@ namespace MortalDungeon.Engine_Classes
             int count = 0;
             List<Letter> recursiveCallList = new List<Letter>();
 
+
             objects.ForEach(objG => //all base objects inside of a game object should use the same spritesheet. 
             {
                 objG.BaseObjects.ForEach(obj =>
                 {
-                    if (obj.Display.Textures.Textures[0] != currTexture || count == ObjectBufferCount)
+                    if (obj.Render)
+
+                    if (obj._currentAnimation.CurrentFrame.Textures.Textures[0] != currTexture || count == ObjectBufferCount)
                     {
                         recursiveCallList.Add(objG);
                     }
                     else
                     {
-                        var transform = Matrix4.Identity;
-                        transform *= obj.BaseFrame.Rotation;
-                        transform *= obj.BaseFrame.Scale;
-                        transform *= obj.BaseFrame.Translation;
+                        var transform = obj._baseFrame.Transformations;
 
                         InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
                         currIndex += 16;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.X;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.Y;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.Z;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.Color.W;
 
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.CameraPerspective ? 1.0f : 0.0f;
-                        _instancedRenderArray[currIndex++] = obj.Display.SpritesheetPosition;
-                        _instancedRenderArray[currIndex++] = obj.Display.SideLengths.X;
-                        _instancedRenderArray[currIndex++] = obj.Display.SideLengths.Y;
+                        _instancedRenderArray[currIndex++] = obj._baseFrame.CameraPerspective ? 1.0f : 0.0f;
+                        _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SpritesheetPosition;
+                        _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SideLengths.X;
+                        _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SideLengths.Y;
 
                         count++;
                     }
@@ -358,29 +363,71 @@ namespace MortalDungeon.Engine_Classes
 
             if (recursiveCallList.Count > 0)
             {
-                RenderTextInstanced(recursiveCallList, Display);
+                RenderLettersInstanced(recursiveCallList, Display);
             }
             DrawCount++;
         }
+        public void RenderTextInstanced(List<Text> objects) 
+        {
+            Shaders.FAST_DEFAULT_SHADER.SetFloat("alpha_threshold", 0.5f);
+            objects.ForEach(obj =>
+            {
+                if(obj.Render)
+                    RenderLettersInstanced(obj.Letters);
+            });
+            Shaders.FAST_DEFAULT_SHADER.SetFloat("alpha_threshold", 0.25f);
+        }
+
         public void RenderObjectsInstancedGeneric<T>(List<T> objects, RenderableObject display = null) where T : GameObject //this should be called separately for each texture that needs to be accessed
         {
+            if (objects.Count == 0)
+                return;
+
             RenderableObject Display;
 
             if (display == null)
             {
-                Display = objects[0].BaseObjects[0].Display;
+                Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
             }
             else 
             {
                 Display = display;
             }
-            string currTexture = Display.Textures.Textures[0];
+            TextureName currTexture = Display.Textures.Textures[0];
 
             Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
 
+            if (!Display.CameraPerspective)
+            {
+                float aspectRatio = (float)WindowConstants.ClientSize.X / WindowConstants.ClientSize.Y;
+                int j = 0; //used to avoid using modulo
+
+                for (int i = 0; i < Display.Vertices.Length; i++)
+                {
+                    if (j == 0)
+                    {
+                        tempVertices[i] = Display.Vertices[i] / aspectRatio;
+                    }
+                    else if (j == 2) 
+                    {
+                        j = -1;
+                    }
+
+                    j++;
+                }
+            }
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw);
+            //if (Display.CameraPerspective)
+            //{
+                GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw); //take the raw vertices
+            //}
+            //else 
+            //{
+            //    GL.BufferData(BufferTarget.ArrayBuffer, tempVertices.Length * sizeof(float), tempVertices, BufferUsageHint.StreamDraw);
+            //}
+
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data, change this to be instanced data instead and change spritesheet object definitions to compensate
 
@@ -399,36 +446,55 @@ namespace MortalDungeon.Engine_Classes
             int count = 0;
             List<T> recursiveCallList = new List<T>();
 
+            float sideLengthX = 0;
+            float sideLengthY = 0;
+            float spritesheetPosition = 0;
+            float cameraPerspective = 0;
+
+            BaseObject obj;
+            TextureName texName;
+
             objects.ForEach(objG => //all base objects inside of a game object should use the same spritesheet. 
             {
-                objG.BaseObjects.ForEach(obj =>
+                if (objG.Render)
                 {
-                    if (obj.Display.Textures.Textures[0] != currTexture || count == ObjectBufferCount)
+                    for (int i = 0; i < objG.BaseObjects.Count; i++)
                     {
-                        recursiveCallList.Add(objG);
+                        if (objG.BaseObjects[i].Render)
+                        {
+                            obj = objG.BaseObjects[i];
+                            texName = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
+                            if (count == ObjectBufferCount || texName != currTexture)
+                            {
+                                recursiveCallList.Add(objG);
+                            }
+                            else
+                            {
+                                var transform = obj._baseFrame.Transformations;
+
+                                spritesheetPosition = obj._currentAnimation.CurrentFrame.SpritesheetPosition;
+                                sideLengthX = obj._currentAnimation.CurrentFrame.SideLengths.X;
+                                sideLengthY = obj._currentAnimation.CurrentFrame.SideLengths.Y;
+                                if (obj._baseFrame.CameraPerspective)
+                                    cameraPerspective = 1.0f;
+
+                                InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
+                                currIndex += 16;
+                                _instancedRenderArray[currIndex++] = obj._baseFrame.Color.X;
+                                _instancedRenderArray[currIndex++] = obj._baseFrame.Color.Y;
+                                _instancedRenderArray[currIndex++] = obj._baseFrame.Color.Z;
+                                _instancedRenderArray[currIndex++] = obj._baseFrame.Color.W;
+
+                                _instancedRenderArray[currIndex++] = cameraPerspective;
+                                _instancedRenderArray[currIndex++] = spritesheetPosition;
+                                _instancedRenderArray[currIndex++] = sideLengthX;
+                                _instancedRenderArray[currIndex++] = sideLengthY;
+
+                                count++;
+                            }
+                        }
                     }
-                    else
-                    {
-                        var transform = Matrix4.Identity;
-                        transform *= obj.BaseFrame.Rotation;
-                        transform *= obj.BaseFrame.Scale;
-                        transform *= obj.BaseFrame.Translation;
-
-                        InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
-                        currIndex += 16;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
-
-                        _instancedRenderArray[currIndex++] = obj.BaseFrame.CameraPerspective ? 1.0f : 0.0f;
-                        _instancedRenderArray[currIndex++] = obj.Display.SpritesheetPosition;
-                        _instancedRenderArray[currIndex++] = obj.Display.SideLengths.X;
-                        _instancedRenderArray[currIndex++] = obj.Display.SideLengths.Y;
-
-                        count++;
-                    }
-                });
+                }
             });
 
             GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.StreamDraw);
@@ -446,8 +512,11 @@ namespace MortalDungeon.Engine_Classes
         }
         public void RenderParticlesInstanced(ParticleGenerator generator)
         {
+            if (generator.Particles.Count == 0)
+                return;
+
             RenderableObject Display = generator.ParticleDisplay;
-            string currTexture = Display.Textures.Textures[0];
+            TextureName currTexture = Display.Textures.Textures[0];
 
             Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
@@ -471,14 +540,25 @@ namespace MortalDungeon.Engine_Classes
 
             int count = 0;
 
-            generator.Particles.ForEach(obj =>
+            float sideLengthX = 0;
+            float sideLengthY = 0;
+            float spritesheetPosition = 0;
+            float cameraPerspective = 0;
+
+            Particle obj;
+
+            for (int i = 0; i < generator.Particles.Count; i++)
             {
+                obj = generator.Particles[i];
                 if (obj.Life > 0)
                 {
-                    var transform = Matrix4.Identity;
-                    transform *= obj.Rotation;
-                    transform *= obj.Scale; //change this to be a float at some point
-                    transform *= obj.Translation; //change this to be a vec3 and calculate in the shader
+                    var transform = obj.Transformations;
+
+                    spritesheetPosition = obj.SpritesheetPosition;
+                    sideLengthX = obj.SideLengths.X;
+                    sideLengthY = obj.SideLengths.Y;
+                    if (Display.CameraPerspective)
+                        cameraPerspective = 1.0f;
 
                     InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
                     currIndex += 16;
@@ -487,14 +567,14 @@ namespace MortalDungeon.Engine_Classes
                     _instancedRenderArray[currIndex++] = obj.Color.Z;
                     _instancedRenderArray[currIndex++] = obj.Color.W;
 
-                    _instancedRenderArray[currIndex++] = Display.CameraPerspective ? 1.0f : 0.0f;
-                    _instancedRenderArray[currIndex++] = obj.SpritesheetPosition;
-                    _instancedRenderArray[currIndex++] = obj.SideLengths.X;
-                    _instancedRenderArray[currIndex++] = obj.SideLengths.Y;
+                    _instancedRenderArray[currIndex++] = cameraPerspective;
+                    _instancedRenderArray[currIndex++] = spritesheetPosition;
+                    _instancedRenderArray[currIndex++] = sideLengthX;
+                    _instancedRenderArray[currIndex++] = sideLengthY;
 
                     count++;
                 }
-            });
+            }
 
             GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.StreamDraw);
 
@@ -505,7 +585,6 @@ namespace MortalDungeon.Engine_Classes
 
             DrawCount++;
         }
-
         public void RenderParticle(ParticleGenerator generator, Particle obj, Matrix4 cameraMatrix, bool setVertexData = true, bool setTextureData = true, bool setCam = true)
         {
             if (setVertexData)
@@ -522,10 +601,11 @@ namespace MortalDungeon.Engine_Classes
                 generator.ParticleDisplay.TextureReference.Use(TextureUnit.Texture0);
             }
 
-            var transform = Matrix4.Identity;
+            var transform = obj.Transformations;
+            //var transform = Matrix4.Identity;
             //transform *= obj.Rotation;
-            transform *= obj.Scale;
-            transform *= obj.Translation;
+            //transform *= obj.Scale;
+            //transform *= obj.Translation;
 
             if (setCam)
             {
@@ -551,11 +631,11 @@ namespace MortalDungeon.Engine_Classes
                     {
                         for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
                         {
-                            if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                            if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.TextureFilenames[p], out int handle))
                             {
-                                Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.Textures[p], nearest);
+                                Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
                                 _textures.Add(newTexture);
-                                _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
+                                _loadedTextures.Add(entry.Value.Frames[o].Textures.TextureFilenames[p], newTexture.Handle);
 
                                 entry.Value.Frames[o].TextureReference = newTexture;
                             }
@@ -576,11 +656,11 @@ namespace MortalDungeon.Engine_Classes
                 {
                     for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
                     {
-                        if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                        if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.TextureFilenames[p], out int handle))
                         {
-                            Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.Textures[p], nearest);
+                            Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
                             _textures.Add(newTexture);
-                            _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
+                            _loadedTextures.Add(entry.Value.Frames[o].Textures.TextureFilenames[p], newTexture.Handle);
 
                             entry.Value.Frames[o].TextureReference = newTexture;
                         }
@@ -596,11 +676,11 @@ namespace MortalDungeon.Engine_Classes
         {
             for (int p = 0; p < generator.ParticleDisplay.Textures.Textures.Length; p++)
             {
-                if (!_loadedTextures.TryGetValue(generator.ParticleDisplay.Textures.Textures[p], out int handle))
+                if (!_loadedTextures.TryGetValue(generator.ParticleDisplay.Textures.TextureFilenames[p], out int handle))
                 {
-                    Texture newTexture = Texture.LoadFromFile(generator.ParticleDisplay.Textures.Textures[p]);
+                    Texture newTexture = Texture.LoadFromFile(generator.ParticleDisplay.Textures.TextureFilenames[p]);
                     _textures.Add(newTexture);
-                    _loadedTextures.Add(generator.ParticleDisplay.Textures.Textures[p], newTexture.Handle);
+                    _loadedTextures.Add(generator.ParticleDisplay.Textures.TextureFilenames[p], newTexture.Handle);
 
                     generator.ParticleDisplay.TextureReference = newTexture;
                 }
@@ -610,8 +690,43 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
         }
+        public void LoadTextureFromUIObject<T>(T UIObj) where T : UIObject 
+        {
+            UIObj.BaseObjects.ForEach(obj => 
+            {
+                LoadTextureFromBaseObject(obj, true);
+            });
+            UIObj.TextObjects.ForEach(obj =>
+            {
+                if (obj.Letters.Count > 0)
+                {
+                    LoadTextureFromBaseObject(obj.Letters[0].BaseObjects[0], true);
+                }
+            });
+            UIObj.Children.ForEach(obj =>
+            {
+                LoadTextureFromUIObject(obj);
+            });
+        }
+        public void RenderUIElements<T>(List<T> uiObjects) where T : UIObject
+        {
+            if (uiObjects.Count > 0)
+            {
+                uiObjects.ForEach(obj =>
+                {
+                    if (obj.Render)
+                    {
+                        RenderTextInstanced(obj.TextObjects);
+                        RenderUIElements(obj.Children);
+                    }
+                });
 
 
+                RenderableObject display = uiObjects[0].GetDisplay();
+
+                RenderObjectsInstancedGeneric(uiObjects, display);
+            }
+        }
 
         public void ClearData() 
         {
@@ -658,24 +773,27 @@ namespace MortalDungeon.Engine_Classes
             GL.VertexAttribDivisor(6, 0);
             GL.VertexAttribDivisor(7, 0);
         }
+
         private void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)
         {
-            arr[currIndex++] = mat.M11;
-            arr[currIndex++] = mat.M21;
-            arr[currIndex++] = mat.M31;
-            arr[currIndex++] = mat.M41;
-            arr[currIndex++] = mat.M12;
-            arr[currIndex++] = mat.M22;
-            arr[currIndex++] = mat.M32;
-            arr[currIndex++] = mat.M42;
-            arr[currIndex++] = mat.M13;
-            arr[currIndex++] = mat.M23;
-            arr[currIndex++] = mat.M33;
-            arr[currIndex++] = mat.M43;
-            arr[currIndex++] = mat.M14;
-            arr[currIndex++] = mat.M24;
-            arr[currIndex++] = mat.M34;
-            arr[currIndex++] = mat.M44;
+
+            //this seems to perform better (maybe due to M11,M22,etc using getters and setters)
+            arr[currIndex++] = mat.Row0.X;
+            arr[currIndex++] = mat.Row1.X;
+            arr[currIndex++] = mat.Row2.X;
+            arr[currIndex++] = mat.Row3.X;
+            arr[currIndex++] = mat.Row0.Y;
+            arr[currIndex++] = mat.Row1.Y;
+            arr[currIndex++] = mat.Row2.Y;
+            arr[currIndex++] = mat.Row3.Y;
+            arr[currIndex++] = mat.Row0.Z;
+            arr[currIndex++] = mat.Row1.Z;
+            arr[currIndex++] = mat.Row2.Z;
+            arr[currIndex++] = mat.Row3.Z;
+            arr[currIndex++] = mat.Row0.W;
+            arr[currIndex++] = mat.Row1.W;
+            arr[currIndex++] = mat.Row2.W;
+            arr[currIndex++] = mat.Row3.W;
         }
     }
 }

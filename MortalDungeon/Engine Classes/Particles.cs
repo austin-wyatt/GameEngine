@@ -71,6 +71,8 @@ namespace MortalDungeon.Engine_Classes
         public Matrix4 Rotation = Matrix4.Identity;
         public Matrix4 Scale = Matrix4.Identity;
 
+        public Matrix4 Transformations = Matrix4.Identity;
+
         public Vector3 RotationInfo = default;
 
         public float SpritesheetPosition;
@@ -97,6 +99,8 @@ namespace MortalDungeon.Engine_Classes
             Translation.M41 = _positionHelper.X;
             Translation.M42 = _positionHelper.Y;
             Translation.M43 = _positionHelper.Z;
+
+            CalculateTransformationMatrix();
         }
         public void Translate(Vector3 velocity)
         {
@@ -119,6 +123,8 @@ namespace MortalDungeon.Engine_Classes
             currentScale.Z *= f;
 
             Scale = Matrix4.CreateScale(currentScale);
+
+            CalculateTransformationMatrix();
         }
 
         public void ScaleAddition(float f)
@@ -128,7 +134,9 @@ namespace MortalDungeon.Engine_Classes
             currentScale.Y += f;
             currentScale.Z += f;
 
-            Matrix4.CreateScale(currentScale);
+            Scale = Matrix4.CreateScale(currentScale);
+
+            CalculateTransformationMatrix();
         }
 
         public void RotateX(float degrees)//extremely expensive, research at some point maybe
@@ -137,6 +145,8 @@ namespace MortalDungeon.Engine_Classes
             RotationInfo.X += degrees;
 
             Rotation *= rotationMatrix;
+
+            CalculateTransformationMatrix();
         }
         public void RotateY(float degrees)//extremely expensive, research at some point maybe
         {
@@ -144,6 +154,8 @@ namespace MortalDungeon.Engine_Classes
             RotationInfo.Y += degrees;
 
             Rotation *= rotationMatrix;
+
+            CalculateTransformationMatrix();
         }
         public void RotateZ(float degrees) //extremely expensive, research at some point maybe
         {
@@ -151,6 +163,13 @@ namespace MortalDungeon.Engine_Classes
             RotationInfo.Z += degrees;
 
             Rotation *= rotationMatrix;
+
+            CalculateTransformationMatrix();
+        }
+
+        private void CalculateTransformationMatrix()
+        {
+            Transformations = Rotation * Scale * Translation;
         }
     }
 }

@@ -125,7 +125,7 @@ namespace MortalDungeon.Game.Objects
             else 
             {
                 color.Y *= (float)life / DefaultLife;
-                color.X *= (float)life / (_fractionOfLife);
+                color.X *= (float)life / _fractionOfLife;
             }
 
             return color;

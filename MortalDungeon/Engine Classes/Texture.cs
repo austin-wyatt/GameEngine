@@ -37,6 +37,7 @@ namespace MortalDungeon
                     ImageLockMode.ReadOnly,
                     System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
+                
                 // Now that our pixels are prepared, it's time to generate a texture. We do this with GL.TexImage2D
                 // Arguments:
                 //   The type of texture we're generating. There are various different types of textures, but the only one we need right now is Texture2D.
@@ -107,7 +108,7 @@ namespace MortalDungeon
         public void Use(TextureUnit unit)
         {
             GL.ActiveTexture(unit);
-            GL.BindTexture(TextureTarget.Texture2D, Handle);
+            GL.BindTexture(TextureTarget.Texture2D, Handle);     
         }
     }
 }

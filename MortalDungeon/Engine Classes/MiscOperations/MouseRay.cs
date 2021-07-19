@@ -11,12 +11,9 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         private Camera camera;
 
-        public Vector2i _windowSize;
-
-        public MouseRay(Camera _camera, Vector2i windowSize)
+        public MouseRay(Camera _camera)
         {
             camera = _camera;
-            _windowSize = windowSize;
         }
 
         public Vector3 GetCurrentRay() 
@@ -31,8 +28,8 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         //private Vector3 CalculateMouseRay(Vector2 mouseCoordinates)
         //{
-        //    float tmpX = (2 * mouseCoordinates.X) / _windowSize.X - 1;
-        //    float tmpY = ((2 * mouseCoordinates.Y) / _windowSize.Y - 1) * -1;
+        //    float tmpX = (2 * mouseCoordinates.X) / WindowConstants.ClientSize.X - 1;
+        //    float tmpY = ((2 * mouseCoordinates.Y) / WindowConstants.ClientSize.Y - 1) * -1;
         //    float z = 1;
 
         //    Vector3 ray_nds = new Vector3(tmpX, tmpY, z);
@@ -78,8 +75,8 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         private Vector2 GetNormalizedDeviceCoords(float mouseX, float mouseY)
         {
-            float x = (mouseX / _windowSize.X) * 2 - 1;
-            float y = ((mouseY / _windowSize.Y) * 2 - 1) * -1;
+            float x = (mouseX / WindowConstants.ClientSize.X) * 2 - 1;
+            float y = ((mouseY / WindowConstants.ClientSize.Y) * 2 - 1) * -1;
 
             return new Vector2(x, y);
         }

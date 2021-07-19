@@ -10,17 +10,20 @@ namespace MortalDungeon.Objects
         public int Offset = 64;
         public int Rows = 10;
         public int Columns = 10;
-        public Spritesheet(string file)
+        public TextureName TextureName;
+        public Spritesheet(string file, TextureName textureName)
         {
             File = file;
+            TextureName = textureName;
         }
     }
 
     public static class Spritesheets 
     {
-        public static Spritesheet TestSheet = new Spritesheet("Resources/SpritesheetTest.png");
-        public static Spritesheet CaveSheet = new Spritesheet("Resources/CaveSpritesheet.png");
-        public static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.png");
-        public static Spritesheet UISheet = new Spritesheet("Resources/UISpritesheet.png");
+        public static Spritesheet TestSheet = new Spritesheet("Resources/SpritesheetTest.png", TextureName.SpritesheetTest);
+        public static Spritesheet CaveSheet = new Spritesheet("Resources/CaveSpritesheet.png", TextureName.CaveSpritesheet);
+        //public static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.png", TextureName.CharacterSpritesheet);
+        public static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.bmp", TextureName.CharacterSpritesheet);
+        public static Spritesheet UISheet = new Spritesheet("Resources/UISpritesheet.png", TextureName.UISpritesheet);
     }
 }

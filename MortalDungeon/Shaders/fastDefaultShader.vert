@@ -10,6 +10,7 @@ out vec2 texCoord;
 out vec4 appliedColor;
 out float mixPercent;
 
+
 uniform mat4 camera;
 
 flat out int InstanceID; 
@@ -62,10 +63,14 @@ void main(void)
 		texCoord[1] = maxBoundY;
 	}
 
+
+
+
 	float aspectRatio = compositeType[2] / compositeType[3];
 
 	vec3 pos = aPosition; 
 	pos[0] *= aspectRatio; //allow for non-square objects
+
 
 	if(compositeType[0] == 1)
 	{
@@ -75,6 +80,8 @@ void main(void)
 	{
 		gl_Position = vec4(pos, 1.0) * transform;
 	}
+
+	
 
 	InstanceID = gl_InstanceID; 
 }

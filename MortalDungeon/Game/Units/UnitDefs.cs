@@ -11,13 +11,12 @@ namespace MortalDungeon.Game.Units
     public class Guy : Unit
     {
         public Guy() { }
-        public Guy(Vector2i clientSize, Vector3 position, int tileMapPosition, int id = 0, string name = "Guy")
+        public Guy(Vector3 position, int tileMapPosition, int id = 0, string name = "Guy")
         {
-            ClientSize = clientSize;
             Name = name;
             TileMapPosition = tileMapPosition;
 
-            BaseObject Guy = new BaseObject(ClientSize, BAD_GUY_ANIMATION.List, id, "BadGuy", position, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject Guy = new BaseObject(BAD_GUY_ANIMATION.List, id, "BadGuy", position, EnvironmentObjects.BASE_TILE.Bounds);
             Guy.BaseFrame.CameraPerspective = true;
             //Guy.BaseFrame.Color = WindowConstants.FullColor - new Vector4(1f, 0f, 0f, 0);
             //Guy.BaseFrame.ScaleAll(1.5f);
@@ -27,6 +26,13 @@ namespace MortalDungeon.Game.Units
             BaseObjects.Add(Guy);
 
             SetPosition(position);
+
+
+            Abilities.Move movement = new Abilities.Move(this, 6);
+            Abilities.Add(movement);
+
+            Abilities.BasicMelee melee = new Abilities.BasicMelee(this);
+            Abilities.Add(melee);
         }
     }
 }

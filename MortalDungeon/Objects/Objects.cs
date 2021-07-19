@@ -4,21 +4,38 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Objects
 {
+    public enum TextureName 
+    {
+        Unknown,
+        SpritesheetTest,
+        CaveSpritesheet,
+        CharacterSpritesheet,
+        UISpritesheet
+    }
     public class TextureInfo
     {
-        public string[] Textures; //filename of texture/spritesheet
+        public TextureName[] Textures;
+        public string[] TextureFilenames; //filename of texture/spritesheet
         public int[] TexturePositions; //which index of the spritesheet a texture resides in
 
         public Spritesheet Spritesheet;
 
-        public TextureInfo(string texture, Spritesheet spritesheet = null) 
+        public TextureInfo(string texture, Spritesheet spritesheet = null)
         {
-            Textures = new string[] { texture };
+            Textures = new TextureName[] { TextureName.Unknown };
+            TexturePositions = new int[] { 0 };
+            TextureFilenames = new string[] { texture };
+
+            Spritesheet = spritesheet;
+        }
+        public TextureInfo(TextureName texture, Spritesheet spritesheet = null) 
+        {
+            Textures = new TextureName[] { texture };
             TexturePositions = new int[] { 0 };
 
             Spritesheet = spritesheet;
         }
-        public TextureInfo(string[] textures, int[] positions, Spritesheet spritesheet = null)
+        public TextureInfo(TextureName[] textures, int[] positions, Spritesheet spritesheet = null)
         {
             Textures = textures;
             TexturePositions = positions;
@@ -26,9 +43,9 @@ namespace MortalDungeon.Objects
             Spritesheet = spritesheet;
         }
 
-        public TextureInfo(string texture, int position, Spritesheet spritesheet = null)
+        public TextureInfo(TextureName texture, int position, Spritesheet spritesheet = null)
         {
-            Textures = new string[] { texture };
+            Textures = new TextureName[] { texture };
             TexturePositions = new int[] { position };
 
             Spritesheet = spritesheet;
@@ -36,13 +53,16 @@ namespace MortalDungeon.Objects
 
         public TextureInfo(Spritesheet spritesheet, int[] positions )
         {
-            string[] textures = new string[positions.Length];
+            TextureName[] textures = new TextureName[positions.Length];
+            string[] textureFilename = new string[positions.Length];
             for(int i = 0; i < textures.Length; i++)
             {
-                textures[i] = spritesheet.File;
+                textures[i] = spritesheet.TextureName;
+                textureFilename[i] = spritesheet.File;
             }
             Textures = textures;
             TexturePositions = positions;
+            TextureFilenames = textureFilename;
 
             Spritesheet = spritesheet;
         }

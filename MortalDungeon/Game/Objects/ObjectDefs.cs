@@ -40,35 +40,6 @@ namespace MortalDungeon.Game.Objects
 
     public static class TestObjects
     {
-        public static readonly ObjectDefinition BASIC_SQUARE = new ObjectDefinition(
-            new float[]{
-            0.5f, 0.5f, 0.0f, 1.0f, 1.0f, // top right
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
-            -0.5f, 0.5f, 0.0f, 0.0f, 1.0f // top left
-            },
-            new uint[]{
-            0, 1, 3,
-            1, 2, 3
-            },
-            4,
-            new TextureInfo("Resources/container.png")
-        );
-
-        public static readonly ObjectDefinition TEST_OBJECT = new ObjectDefinition(
-            new float[]{
-            0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-            -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
-            },
-            new uint[]{
-            0, 1, 3,
-            1, 2, 3
-            },
-            4,
-            new TextureInfo("Resources/container.png")
-        );
 
         public static readonly ObjectDefinition TEST_SPRITESHEET = new ObjectDefinition(
             new float[]{
@@ -220,7 +191,7 @@ namespace MortalDungeon.Game.Objects
 
         public static readonly ObjectDefinition GRASS_TILE = new SpritesheetObject(14, Spritesheets.TestSheet, 1).CreateObjectDefinition(ObjectIDs.GRASS);
         public static readonly ObjectDefinition FIRE_BASE = new SpritesheetObject(2, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.FIRE_BASE);
-        private static readonly float[] BaseTileBounds = new float[]{
+        public static readonly float[] BaseTileBounds = new float[]{
         0.26093745f, -0.44166672f, 0.0f,
         -0.253125f, -0.44166672f, 0.0f,
         -0.484375f, -0.008333325f, 0.0f,
@@ -229,6 +200,14 @@ namespace MortalDungeon.Game.Objects
         0.49843752f, -0.0055555105f, 0.0f,
         };
         public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
+
+        public static readonly float[] UIBlockBounds = new float[] 
+        {
+            -0.5f, -0.5f, 0.0f,
+            -0.5f, 0.5f, 0.0f,
+            0.5f, 0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+        };
     }
 
 
@@ -294,30 +273,6 @@ namespace MortalDungeon.Game.Objects
         }
         public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true)
         {
-            //int column = SpritesheetPosition % Spritesheet.Rows;
-            //int row = SpritesheetPosition / Spritesheet.Rows;
-
-            //float minBoundX = (float)column / Spritesheet.Columns;
-            //float maxBoundX = (float)(column + SideLengths.X) / Spritesheet.Columns;
-
-            //float minBoundY = (float)(row) / Spritesheet.Rows;
-            //float maxBoundY = (float)(row + SideLengths.Y) / Spritesheet.Rows;
-
-            //if (maxBoundX > 1)
-            //{
-            //    minBoundX = (float)(column - SideLengths.X) / Spritesheet.Columns;
-            //    maxBoundX = 1;
-            //}
-
-            //if (maxBoundY > 1) 
-            //{
-            //    minBoundY = (float)(row - SideLengths.Y) / Spritesheet.Rows;
-            //    maxBoundY = 1;
-            //}
-
-            //Console.WriteLine(ID);
-            //Console.WriteLine(minBoundX + ", " + maxBoundX);
-            //Console.WriteLine(minBoundY + ", " + maxBoundY);
 
             float[] defaultBounds = new float[]{
                 0.5f, 0.5f, 0.0f,
@@ -327,24 +282,6 @@ namespace MortalDungeon.Game.Objects
             };
 
             float aspectRatio = SideLengths.X / SideLengths.Y;
-
-            //ObjectDefinition returnDef = new ObjectDefinition(
-            //    new float[] {
-            //    0.5f * aspectRatio, 0.5f, 0.0f, maxBoundX, minBoundY, // top right
-            //    0.5f * aspectRatio, -0.5f, 0.0f, maxBoundX, maxBoundY, // bottom right
-            //    -0.5f * aspectRatio, -0.5f, 0.0f, minBoundX, maxBoundY, // bottom left
-            //    -0.5f * aspectRatio, 0.5f, 0.0f, minBoundX, minBoundY, // top left
-            //    },
-            //    new uint[]{
-            //    0, 1, 3,
-            //    1, 2, 3
-            //    },
-            //    4,
-            //    new TextureInfo(Spritesheet, new int[] { SpritesheetPosition }),
-            //    default,
-            //    bounds != null ? bounds : defaultBounds,
-            //    false
-            //);
 
             ObjectDefinition returnDef = new ObjectDefinition(
                 new float[] {

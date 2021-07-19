@@ -65,3 +65,21 @@ Value map will contain all combats as well as all treasures
 The feature map will be split across different files to simplify storage. Features will encompass everything necessary for map generation. Different features will have different parameters associated with them and features will be what is used to style the overworld map (such as coloring whats a forest, where a river is, filling in a mountain range, etc).
 
 When entering a cell that has an associated quest, a popup will be generated informing the user of the quest and put it in their quest log. Chain quests cells will only appear once the prerequisite chains have been unlocked.
+
+Shadow of war style map clearing (permanent changes)
+
+Find and liberate cities, etc
+
+Story is to find an item and interact with. If found too fast an alternate story quest will activate.
+
+Enchantment skill tree. By spending resources you can attach a weakened version of an ability to an item. At level 1 they would be extremely weak (5% effectiveness, 1 turn duration on all multi turn effects, etc) but there would never be a limit on how many enchanted items were able to be used.
+
+Action economy is controlled by an energy system. Characters would start with 10 energy. Moving 1 tile would cost 1 energy and using an average ability would cost 5 (stronger or weaker could cost less). Using an enchanted item's ability would cost 1 always.
+
+Physical damage mitigation is via "shields" that are provided passively when taking certain abilities. Physical abilities would remove a certain amount of shields when used (innately and dependent on their type)
+
+Day/night cycle
+
+Skills can only be changed at safe havens/"church" type areas
+
+Create a fog effect that floats over the ground to signify fog 

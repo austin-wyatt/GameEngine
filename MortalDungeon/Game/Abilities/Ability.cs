@@ -1,0 +1,105 @@
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Units;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace MortalDungeon.Game.Abilities
+{
+    public enum AbilityTypes //basic denominations for skills that can be used for categorizing and sorting
+    {
+        Empty,
+        Move, //a basic movement
+        MeleeAttack, //attacks that would be used in close quarters
+        RangedAttack, //attacks that can be used from a distance
+        DamagingSpell, //an ability that does damage to an enemy (and maybe applies a secondary effect)
+        Debuff, //an ability that applies a debuff to the target
+        Utility, //an ability that provides utility to 
+        Heal, //an ability that heals
+        Repositioning //an ability that repositions a unit
+    }
+    public enum DamageType //main effect (extra effects provided by abilities)
+    {
+        NonDamaging, //does no damage
+        Piercing, //pierces lighter armor, has a higher spread of damage (bleeds, crits)
+        Blunt, //lower spread of damage (stuns, incapacitates)
+        Mental, //lowers sanity (conversion, insanity, flee)
+        Magic, //consistent damage (aoe explosion, forced movement)
+        WeakMagic, //low damage but debuffs (dispel, slow, weakness),
+        Fire, //high damage but easily resisted (burns)
+        Ice, //lowish damage but consistent debuffs (more extreme slow, freeze insta kill, AA shatter) 
+    }
+    public class Ability
+    {
+        public AbilityTypes Type = AbilityTypes.Empty;
+        public DamageType DamageType;
+
+        public Unit CastingUnit;
+        public List<Unit> AffectedUnits = new List<Unit>();
+        public List<Unit> AffectedTiles = new List<Unit>();
+
+        public TileMap TileMap;
+        public BaseTile SelectedTile;
+        public Unit SelectedUnit;
+
+        public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
+
+        public bool CanTargetAlly = true;
+        public bool CanTargetEnemy = true;
+        public bool CanTargetSelf = false;
+        public bool CanTargetGround = true;
+        public bool CanTargetTerrain = false;
+
+        public int Range = 0;
+        public float Damage = 0;
+        public int Duration = 0;
+
+        public Ability() 
+        {
+
+        }
+
+        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default) 
+        {
+            return new List<BaseTile>();
+        }
+
+        public virtual void AdvanceDuration() 
+        {
+            Duration--;
+            EnactEffect();
+        } 
+        public virtual void EnactEffect() { } //the actual effect of the skill
+
+        //remove invalid tiles from the list
+        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units) 
+        {
+            for (int i = 0; i < validTiles.Count; i++)
+            {
+                if (validTiles[i].TileIndex == CastingUnit.TileMapPosition && !CanTargetSelf)
+                {
+                    validTiles.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                if (!CanTargetEnemy || !CanTargetAlly)
+                {
+                    for (int j = 0; j < units?.Count; j++)
+                    {
+                        if (units[j].TileMapPosition == validTiles[i].TileIndex)
+                        {
+                            if ((!CanTargetAlly && units[j].IsAlly) || (!CanTargetEnemy && units[j].IsEnemy))
+                            {
+                                validTiles.RemoveAt(i);
+                                i--;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

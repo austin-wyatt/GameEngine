@@ -10,7 +10,6 @@ namespace MortalDungeon.Engine_Classes
 {
     public class BaseObject
     {
-        public Vector2i _windowSize;
         public int ID;
         public string Name;
         public Vector3 Position; //uses global position (based off of screen width and height), use Display.Position for local coordinates 
@@ -20,27 +19,14 @@ namespace MortalDungeon.Engine_Classes
         public Dictionary<AnimationType, Animation> Animations = new Dictionary<AnimationType, Animation>();
         public AnimationType CurrentAnimationType = AnimationType.Idle; //static textures will use the idle animation
 
+
         public bool LockToWindow = false;
         public bool Billboard = false;
+        public bool Render = true;
+        public bool Clickable = true;
         private Vector3 _dimensions;
-        private Animation _currentAnimation;
-        private RenderableObject _baseFrame;
-
-        public RenderableObject Display
-        {
-            get
-            {
-                return _currentAnimation.CurrentFrame;
-            }
-        }
-
-        public Animation CurrentAnimation
-        {
-            get
-            {
-                return _currentAnimation;
-            }
-        }
+        public Animation _currentAnimation;
+        public RenderableObject _baseFrame;
 
         public Vector3 Dimensions 
         {
@@ -64,9 +50,8 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public BaseObject(Vector2i windowSize, List<Animation> animations, int id, string name, Vector3 position, float[] bounds = null) 
+        public BaseObject(List<Animation> animations, int id, string name, Vector3 position, float[] bounds = null) 
         {
-            _windowSize = windowSize;
             ID = id;
             Name = name;
             Position = new Vector3(position);
@@ -81,14 +66,15 @@ namespace MortalDungeon.Engine_Classes
 
             if (bounds == null)
             {
-                Bounds = new Bounds(BaseFrame.GetPureVertexData(), BaseFrame, windowSize);
+                Bounds = new Bounds(BaseFrame.GetPureVertexData(), BaseFrame);
             }
             else
             {
-                Bounds = new Bounds(bounds, BaseFrame, windowSize);
+                Bounds = new Bounds(bounds, BaseFrame);
             }
 
             _dimensions = Bounds.GetDimensionData();
+            
 
             SetPosition(position);
         }
@@ -114,10 +100,10 @@ namespace MortalDungeon.Engine_Classes
 
         public void SetPosition(Vector2 position)
         {
-            Position = new Vector3(Math.Clamp(position.X, 0, _windowSize.X), Math.Clamp(position.Y, 0, _windowSize.Y), 0);
+            Position = new Vector3(Math.Clamp(position.X, 0, WindowConstants.ClientSize.X), Math.Clamp(position.Y, 0, WindowConstants.ClientSize.Y), 0);
 
-            float X = (position.X / _windowSize.X) * 2 - 1; //converts point to local opengl coordinates
-            float Y = ((position.Y / _windowSize.Y) * 2 - 1) * -1; //converts point to local opengl coordinates
+            float X = (position.X / WindowConstants.ClientSize.X) * 2 - 1; //converts point to local opengl coordinates
+            float Y = ((position.Y / WindowConstants.ClientSize.Y) * 2 - 1) * -1; //converts point to local opengl coordinates
 
             Vector3 newPos = new Vector3(X, Y, 0);
 
@@ -143,7 +129,7 @@ namespace MortalDungeon.Engine_Classes
 
         public void RemakeBounds(RenderableObject display, float[] bounds = null) 
         {
-            Bounds = new Bounds(bounds, display, _windowSize);
+            Bounds = new Bounds(bounds, display);
             SetPosition(Position);
         }
 
@@ -161,27 +147,28 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        
-        public Action<BaseObject> OnClick;
-        //public virtual void OnClick() 
-        //{
-        //    Console.WriteLine("Object " + Name + " clicked.");
-        //}
+        public void SetAnimation(int genericType, Action onFinish = null) 
+        {
+            SetAnimation((AnimationType)genericType, onFinish);
+        }
+
+        public RenderableObject GetDisplay() 
+        {
+            return _currentAnimation.CurrentFrame;
+        }
     }
 
     public class Bounds
     {
         public float[] Vertices;
         public RenderableObject Display;
-        private Vector2i _windowSize;
         //the square of the radius of a sphere that can be used to quickly determine whether to do a full check of the bounds of the object
         public float BoundingSphere;
 
-        public Bounds(float[] vertices, RenderableObject display, Vector2i windowSize, float boundingSphere = 1f) 
+        public Bounds(float[] vertices, RenderableObject display, float boundingSphere = 1f) 
         {
             Vertices = vertices;
             Display = display;
-            _windowSize = windowSize;
             BoundingSphere = boundingSphere;
         }
 
@@ -312,6 +299,4 @@ namespace MortalDungeon.Engine_Classes
             }
         }
     }
-
-
 }

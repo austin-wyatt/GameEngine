@@ -7,6 +7,15 @@ using System.Text;
 
 namespace MortalDungeon.Game.Objects
 {
+    #region Animation type enums
+    public enum BaseTileAnimationType
+    {
+        SolidWhite,
+        Transparent,
+        Grass
+    }
+    #endregion
+
     public static class CURSOR_ANIMATION
     {
         private static RenderableObject cursor_Idle_1 = new RenderableObject(CursorObjects.MAIN_CURSOR, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
@@ -71,6 +80,7 @@ namespace MortalDungeon.Game.Objects
         private static RenderableObject grass_Idle_1 = new RenderableObject(EnvironmentObjects.GRASS_TILE, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         //private static RenderableObject grass_Idle_2 = new RenderableObject(EnvironmentObjects.TREE1, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
+
         private static Animation Idle = new Animation()
         {
             Frames = new List<RenderableObject>() { grass_Idle_1 },
@@ -114,16 +124,39 @@ namespace MortalDungeon.Game.Objects
     {
         private static RenderableObject base_Idle_1 = new RenderableObject(EnvironmentObjects.BASE_TILE, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-        private static Animation Idle = new Animation()
+
+        private static RenderableObject base_Transparent_1 = new RenderableObject(new SpritesheetObject(10, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Grass_1 = new RenderableObject(new SpritesheetObject(4, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation SolidWhite = new Animation()
         {
             Frames = new List<RenderableObject>() { base_Idle_1 },
             Frequency = 0,
-            Repeats = 0
+            Repeats = 0,
+            GenericType = (int)BaseTileAnimationType.SolidWhite
+        };
+
+        private static Animation Transparent = new Animation()
+        {
+            Frames = new List<RenderableObject>() { base_Transparent_1 },
+            Frequency = 0,
+            Repeats = 0,
+            GenericType = (int)BaseTileAnimationType.Transparent
+        };
+
+        private static Animation Grass = new Animation()
+        {
+            Frames = new List<RenderableObject>() { base_Grass_1 },
+            Frequency = 0,
+            Repeats = 0,
+            GenericType = (int)BaseTileAnimationType.Grass
         };
 
         public static List<Animation> List = new List<Animation>()
         {
-            Idle
+            SolidWhite,
+            Transparent,
+            Grass
         };
     }
 

@@ -59,6 +59,8 @@ namespace MortalDungeon
         public Matrix4 Rotation = Matrix4.Identity;
         public Matrix4 Scale = Matrix4.Identity;
 
+        public Matrix4 Transformations = Matrix4.Identity;
+
         public RotationData RotationInfo = new RotationData() { X = 0, Y = 0, Z = 0 };
 
         public Vector4 Color = new Vector4();
@@ -212,6 +214,10 @@ namespace MortalDungeon
             return vertexData;
         }
 
+        public void SetColor(Vector4 color) 
+        {
+            Color = color;
+        }
 
         //TRANSLATE FUNCTIONS
         public void TranslateX(float f)
@@ -306,6 +312,8 @@ namespace MortalDungeon
             RotationInfo.X += degrees;
 
             Rotation *= rotationMatrix;
+
+            CalculateTransformationMatrix();
         }
         public void RotateY(float degrees)
         {
@@ -313,6 +321,8 @@ namespace MortalDungeon
             RotationInfo.Y += degrees;
 
             Rotation *= rotationMatrix;
+
+            CalculateTransformationMatrix();
         }
         public void RotateZ(float degrees)
         {
@@ -320,6 +330,8 @@ namespace MortalDungeon
             RotationInfo.Z += degrees;
 
             Rotation *= rotationMatrix;
+
+            CalculateTransformationMatrix();
         }
 
         //TRANSFORMATION SETTERS
@@ -330,11 +342,15 @@ namespace MortalDungeon
         public void SetScale(Vector3 scale)
         {
             Scale = Matrix4.CreateScale(scale);
+
+            CalculateTransformationMatrix();
         }
         public void SetTranslation(Vector3 translations) 
         {
             Translation = Matrix4.CreateTranslation(translations);
             Position = new Vector4(Translation.ExtractTranslation(), Position.W);
+
+            CalculateTransformationMatrix();
         }
         
 
@@ -342,17 +358,27 @@ namespace MortalDungeon
         public void ResetRotation()
         {
             Rotation = Matrix4.Identity;
+
+            CalculateTransformationMatrix();
         }
         public void ResetScale()
         {
             Scale = Matrix4.Identity;
+
+            CalculateTransformationMatrix();
         }
         public void ResetTranslation()
         {
             Translation = Matrix4.Identity;
             Position = new Vector4(0, 0, 0, Position.W);
+
+            CalculateTransformationMatrix();
         }
-        
+
+        private void CalculateTransformationMatrix() 
+        {
+            Transformations = Rotation * Scale * Translation;
+        }
         
         //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point) TODO, definitely move this into the texture tool
         private float[] CenterVertices(float[] vertices) 
