@@ -95,7 +95,6 @@ namespace MortalDungeon.Game.Objects
 
             BaseObjects.Add(letter);
 
-
             SetScale(scale);
 
             SetKerning();
@@ -570,17 +569,10 @@ namespace MortalDungeon.Game.Objects
             Scale = scale / 10;
             LetterOffset = Scale * _baseLetterOffset;
 
-            int count = 0;
             Vector3 position = Position;
             Letters.ForEach(letter =>
             {
                 letter.SetScale(Scale);
-
-                //letter.SetPosition(position);
-
-                //position.X += letter.LetterOffset + letter.XCorrection;
-                //position.Y += letter.YOffset + letter.YCorrection;
-                //count++;
             });
 
             RecalculateTextPosition();

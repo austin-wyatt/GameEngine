@@ -36,6 +36,7 @@ namespace MortalDungeon
         public static bool ShowFPS = true;
         public static bool ShowTicksPerSecond = false;
         public static bool EnableBoundsTestingTools = false;
+        public static bool ShowCulledChunks = true;
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position);
@@ -195,7 +196,12 @@ namespace MortalDungeon
 
             if (timeValue > 1 && WindowConstants.ShowFPS)
             {
-                Console.WriteLine("FPS: " + _renderer.FPSCount + "   Draws: " + _renderer.DrawCount / _renderer.FPSCount);
+                Console.Write("FPS: " + _renderer.FPSCount + "   Draws: " + _renderer.DrawCount / _renderer.FPSCount);
+                if (WindowConstants.ShowCulledChunks) 
+                {
+                    Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
+                }
+                Console.Write("\n");
                 _timer.Restart();
                 _renderer.FPSCount = 0;
                 _renderer.DrawCount = 0;
@@ -324,7 +330,7 @@ namespace MortalDungeon
             //TickAllObjects();
 
             var mouse = MouseState;
-            float sensitivity = 0.2f;
+            //float sensitivity = 0.2f;
 
             // Calculate the offset of the mouse position
             var deltaX = mouse.X - _lastPos.X;
@@ -515,7 +521,7 @@ namespace MortalDungeon
         {
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                _sceneController.Scenes[i].onMouseMove(obj);
+                _sceneController.Scenes[i].onMouseMove();
             }
         }
 

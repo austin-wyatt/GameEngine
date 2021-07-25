@@ -49,6 +49,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public void LoadScene(int id, Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             GetScene(id)?.Load(camera, cursorObject, mouseRay);
+
+            CullObjectsInScene();
         }
 
         public void UnloadScene(int id) 
@@ -229,22 +231,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         private void CullObjectsInScene() 
         {
+            ObjectCulling._culledChunks = 0;
+
             Scenes.ForEach(scene =>
             {
                 //for now don't cull generic objects as they are being used for background textures
                 //ObjectCulling.CullListOfGameObjects(scene._genericObjects);
 
 
-
                 scene._tileMaps.ForEach(map =>
                 {
                     //ObjectCulling.CullListOfGameObjects(map.Tiles);
+
                     map.TileChunks.ForEach(chunk =>
                     {
                         ObjectCulling.CullTileChunk(chunk);
                     });
-
-                    ObjectCulling._culledChunks = 0;
 
                     ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
                 });

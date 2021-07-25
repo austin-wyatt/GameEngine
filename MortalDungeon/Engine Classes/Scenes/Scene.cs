@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Tiles;
@@ -161,18 +162,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
                 bool clickProcessed = false;
 
-                if(!GetBit(_interceptClicks, ObjectType.UI))
-                _UI.ForEach(uiObj =>
-                {
-                    if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
+                if (!GetBit(_interceptClicks, ObjectType.UI))
+                    _UI.ForEach(uiObj =>
                     {
-                        uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                        if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
                         {
-                            onUIClicked(obj);
-                            clickProcessed = true;
-                        });
-                    }
-                });
+                            uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                            {
+                                onUIClicked(obj);
+                                clickProcessed = true;
+                            });
+                        }
+                    });
 
                 if (clickProcessed)
                     return; //stop further clicks from being processed
@@ -181,29 +182,35 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
                 if (!GetBit(_interceptClicks, ObjectType.Unit))
-                ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
-                {
-                    onUnitClicked(foundObj);
-                    clickProcessed = true;
-                });
+                    ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                    {
+                        onUnitClicked(foundObj);
+                        clickProcessed = true;
+                    });
 
                 if (clickProcessed)
                     return; //stop further clicks from being processed
 
                 if (!GetBit(_interceptClicks, ObjectType.Tile))
-                _tileMaps.ForEach(map =>
-                {
-                    ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                    _tileMaps.ForEach(map =>
                     {
-                        onTileClicked(map, foundObj);
-                        clickProcessed = true;
+                        ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                        {
+                            onTileClicked(map, foundObj);
+                            clickProcessed = true;
+                        });
                     });
-                });
 
                 if (clickProcessed)
                     return; //stop further clicks from being processed
             }
+            else if (e.Button == MouseButton.Right && e.Action == InputAction.Release) 
+            {
+                HandleRightClick();
+            }
         }
+
+        public virtual void HandleRightClick() { }
 
         public virtual void onMouseDown(MouseButtonEventArgs e)
         {
@@ -223,8 +230,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         protected bool _objectGrabbed = false;
         protected UIObject grabbedObj = null;
-        protected List<BaseTile> _hoverableTiles = new List<BaseTile>();
-        public virtual bool onMouseMove(MouseMoveEventArgs e)
+        public virtual bool onMouseMove()
         {
             if (mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
             {
@@ -295,26 +301,26 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
-                _tileMaps.ForEach(map =>
-                {
-                    _hoverableTiles.Clear();
-
-                    map.EndHover();
-
-                    ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar,(tile) =>
-                    {
-                        if(tile.Hoverable)
-                            map.HoverTile(tile);
-                    });
-                });
-
-
-                
+                EvaluateTileMapHover(mouseRayNear, mouseRayFar);
 
                 return true;
             }
             else
                 return false;
+        }
+
+        public virtual void EvaluateTileMapHover(Vector3 mouseRayNear, Vector3 mouseRayFar) 
+        {
+            _tileMaps.ForEach(map =>
+            {
+                map.EndHover();
+
+                ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar, (tile) =>
+                {
+                    if (tile.Hoverable)
+                        map.HoverTile(tile);
+                });
+            });
         }
 
         public virtual void onKeyDown(KeyboardKeyEventArgs e) { }
@@ -450,72 +456,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
         #endregion
-    }
-
-
-
-    public class CombatScene : Scene 
-    {
-        public int Round = 0;
-        public List<Unit> InitiativeOrder = new List<Unit>();
-        public int UnitTakingTurn = 0; //the unit in the initiative order that is going
-        public EnergyDisplayBar EnergyDisplayBar;
-
-        /// <summary>
-        /// Start the next round
-        /// </summary>
-        public virtual void AdvanceRound() 
-        {
-            Round++;
-
-            StartRound();
-        }
-
-        /// <summary>
-        /// End the current round and calculate anything that needs to be calculated at that point
-        /// </summary>
-        public virtual void CompleteRound() 
-        {
-            //do stuff that needs to be done when a round is completed
-
-            AdvanceRound();
-        }
-
-        /// <summary>
-        /// Makes any calculations that need to be made at the start of the round
-        /// </summary>
-        public virtual void StartRound() 
-        {
-            UnitTakingTurn = 0;
-
-            //do calculations here (advance an event, show a cutscene, etc)
-
-            StartTurn();
-        }
-
-        /// <summary>
-        /// Start the turn for the unit that is currently up in the initiative order
-        /// </summary>
-        public virtual void StartTurn() 
-        {
-            //change the UI, move the camera, show which unit is selected, etc
-        }
-
-        /// <summary>
-        /// Complete the current unit's turn and start the next unit's turn
-        /// </summary>
-        public virtual void CompleteTurn() 
-        {
-            UnitTakingTurn++;
-
-            if (UnitTakingTurn == InitiativeOrder.Count) 
-            {
-                CompleteRound();
-                return;
-            }
-
-            StartTurn(); //Advance to the next unit's turn
-        }
     }
 
 

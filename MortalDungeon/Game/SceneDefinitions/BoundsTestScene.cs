@@ -22,9 +22,9 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //load object here without camera perspective and use Q, R, and P to outline the object and get the bounds
 
-            BaseTile _tile = new BaseTile(WindowConstants.CenterScreen, 0);
-            _tile._tileObject.BaseFrame.CameraPerspective = false;
-            _genericObjects.Add(_tile);
+            //BaseTile _tile = new BaseTile(WindowConstants.CenterScreen, 0);
+            //_tile._tileObject.BaseFrame.CameraPerspective = false;
+            //_genericObjects.Add(_tile);
         }
     }
 }

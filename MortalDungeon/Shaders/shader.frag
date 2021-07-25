@@ -79,6 +79,8 @@ void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness)
                 
 	
 	outputColor = textureColor.a == 0.0 && (colorU.a != 0.0 || colorD.a != 0.0 || colorL.a != 0.0 || colorR.a != 0.0) ? outlineColor : outputColor;
+//	outputColor = textureColor.a == 0.0 && (colorU.a != 0.0 || colorD.a != 0.0 || colorL.a != 0.0 || colorR.a != 0.0) 
+//		&& (texCoord.x != xTexBounds[0] || texCoord.x != xTexBounds[1] || texCoord.y != yTexBounds[0] || texCoord.y != yTexBounds[1]) ? outlineColor : outputColor;
 }
 
 void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness)

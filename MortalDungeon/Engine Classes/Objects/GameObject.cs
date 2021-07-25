@@ -1,15 +1,10 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.UI;
+﻿using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using static MortalDungeon.Game.UI.UIHelpers;
+
 
 namespace MortalDungeon.Engine_Classes
 {
@@ -32,6 +27,10 @@ namespace MortalDungeon.Engine_Classes
 
         public bool Hovered = false;
         public bool Grabbed = false;
+
+        public int ObjectID => _objectID;
+        protected int _objectID = currentObjectID++;
+        protected static int currentObjectID = 0;
 
 
         public MultiTextureData MultiTextureData = new MultiTextureData();

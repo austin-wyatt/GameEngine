@@ -143,26 +143,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             DrawCount++;
         }
 
-        public void RenderObjectsInstancedGeneric<T>(List<T> objects, RenderableObject display = null) where T : GameObject
+        public void PrepareInstancedRenderFunc(RenderableObject Display) 
         {
-            if (objects.Count == 0)
-                return;
-
-            Shaders.FAST_DEFAULT_SHADER.Use();
-
-            RenderableObject Display;
-
-            if (display == null)
-            {
-                Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
-            }
-            else 
-            {
-                Display = display;
-            }
-            TextureName currTexture = Display.Textures.Textures[0];
-
-
             Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
 
@@ -190,18 +172,72 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + reserved + reserved
             GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
             GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
+        }
+        public void InsertDataIntoInstancedRenderArray<T>(BaseObject obj, T objG, ref float[] _instancedRenderArray, ref int currIndex, bool emptyGameObject = false) where T : GameObject
+        {
+            var transform = obj.BaseFrame.Transformations;
+
+            InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
+            currIndex += 16;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
+
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.CameraPerspective ? 1 : 0;
+            _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SpritesheetPosition;
+            _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SideLengths.X;
+            _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SideLengths.Y;
+
+            _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.Textures.Spritesheet.Columns;
+            _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.Textures.Spritesheet.Rows;
+            _instancedRenderArray[currIndex++] = emptyGameObject ? 0 : objG.MultiTextureData.MixTexture ? 1 : 0;
+            _instancedRenderArray[currIndex++] = emptyGameObject ? 0 : objG.MultiTextureData.MixPercent;
+
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineThickness;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineThickness;
+            _instancedRenderArray[currIndex++] = 0;
+            _instancedRenderArray[currIndex++] = 0;
+
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.X;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Y;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Z;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.W;
+
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.X;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Y;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Z;
+            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.W;
+        }
+
+
+        public void RenderObjectsInstancedGeneric<T>(List<T> objects, RenderableObject display = null) where T : GameObject
+        {
+            if (objects.Count == 0)
+                return;
+
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+            RenderableObject Display;
+
+            if (display == null)
+            {
+                Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
+            }
+            else 
+            {
+                Display = display;
+            }
+            TextureName currTexture = Display.Textures.Textures[0];
+
+            PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
 
             int count = 0;
             List<T> recursiveCallList = new List<T>();
 
-            float sideLengthX = 0;
-            float sideLengthY = 0;
-            float spritesheetPosition = 0;
-            float cameraPerspective = 0;
-            float spritesheetWidth = 10;
-            float spritesheetHeight = 10;
+            List<BaseObject> baseObjectCallList = new List<BaseObject>();
 
             BaseObject obj;
             TextureName tex;
@@ -226,60 +262,17 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         {
                             obj = objG.BaseObjects[i];
                             tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
-                            if (count == ObjectBufferCount || tex != currTexture)
+                            if (count == ObjectBufferCount)
                             {
                                 recursiveCallList.Add(objG);
                             }
+                            else if (tex != currTexture) 
+                            {
+                                baseObjectCallList.Add(obj);
+                            }
                             else
                             {
-                                var transform = obj.BaseFrame.Transformations;
-
-                                spritesheetPosition = obj._currentAnimation.CurrentFrame.SpritesheetPosition;
-                                sideLengthX = obj._currentAnimation.CurrentFrame.SideLengths.X;
-                                sideLengthY = obj._currentAnimation.CurrentFrame.SideLengths.Y;
-                                if (obj.BaseFrame.CameraPerspective)
-                                {
-                                    cameraPerspective = 1.0f;
-                                }
-                                else
-                                {
-                                    cameraPerspective = 0f;
-                                }
-
-                                spritesheetWidth = obj._currentAnimation.CurrentFrame.Textures.Spritesheet.Columns;
-                                spritesheetHeight = obj._currentAnimation.CurrentFrame.Textures.Spritesheet.Rows;
-
-                                InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
-                                currIndex += 16;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
-
-                                _instancedRenderArray[currIndex++] = cameraPerspective;
-                                _instancedRenderArray[currIndex++] = spritesheetPosition;
-                                _instancedRenderArray[currIndex++] = sideLengthX;
-                                _instancedRenderArray[currIndex++] = sideLengthY;
-
-                                _instancedRenderArray[currIndex++] = spritesheetWidth;
-                                _instancedRenderArray[currIndex++] = spritesheetHeight;
-                                _instancedRenderArray[currIndex++] = objG.MultiTextureData.MixTexture ? 1 : 0;
-                                _instancedRenderArray[currIndex++] = objG.MultiTextureData.MixPercent;
-
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineThickness;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineThickness;
-                                _instancedRenderArray[currIndex++] = 0;
-                                _instancedRenderArray[currIndex++] = 0;
-
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.X;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Y;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Z;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.W;
-
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.X;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Y;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Z;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.W;
+                                InsertDataIntoInstancedRenderArray(obj, objG, ref _instancedRenderArray, ref currIndex);
 
                                 count++;
                             }
@@ -303,12 +296,105 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 RenderObjectsInstancedGeneric(recursiveCallList, Display);
             }
+
+            if (baseObjectCallList.Count > 0) 
+            {
+                RenderBaseObjectsInstanced(baseObjectCallList);
+            }
+
+            DrawCount++;
+        }
+
+
+        private static readonly GameObject _emptyGameObject; 
+        public void RenderBaseObjectsInstanced(List<BaseObject> objects, RenderableObject display = null)
+        {
+            if (objects.Count == 0)
+                return;
+
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+            RenderableObject Display;
+
+            if (display == null)
+            {
+                Display = objects[0]._currentAnimation.CurrentFrame;
+            }
+            else
+            {
+                Display = display;
+            }
+            TextureName currTexture = Display.Textures.Textures[0];
+
+
+            Display.TextureReference.Use(TextureUnit.Texture0);
+
+
+            PrepareInstancedRenderFunc(Display);
+
+
+            int currIndex = 0;
+
+            int count = 0;
+            List<BaseObject> recursiveCallList = new List<BaseObject>();
+
+            List<BaseObject> difTextureCallList = new List<BaseObject>();
+
+            TextureName tex;
+
+            int temp = objects.Count / 2;
+            objects.ForEach(obj =>
+            {
+                if (obj.Render)
+                {
+                    tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
+                    if (count == ObjectBufferCount)
+                    {
+                        recursiveCallList.Add(obj);
+                    }
+                    else if (tex != currTexture)
+                    {
+                        difTextureCallList.Add(obj);
+                    }
+                    else
+                    {
+                        InsertDataIntoInstancedRenderArray(obj, _emptyGameObject, ref _instancedRenderArray, ref currIndex, true);
+
+                        count++;
+                    }
+                }
+                    
+            });
+
+
+            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.StreamDraw);
+
+
+            GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, count);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+
+            DisableInstancedShaderAttributes();
+
+
+            if (recursiveCallList.Count > 0)
+            {
+                RenderBaseObjectsInstanced(recursiveCallList);
+            }
+
+            if (difTextureCallList.Count > 0)
+            {
+                RenderBaseObjectsInstanced(difTextureCallList);
+            }
+
             DrawCount++;
         }
 
         public void RenderObjectListInstancedGeneric<T>(List<List<T>> objects, RenderableObject display = null) where T : GameObject
         {
             if (objects.Count == 0)
+                return;
+            if (objects[0].Count == 0)
                 return;
 
             Shaders.FAST_DEFAULT_SHADER.Use();
@@ -327,44 +413,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
             Display.TextureReference.Use(TextureUnit.Texture0);
-            EnableInstancedShaderAttributes();
 
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
-
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw); //take the raw vertices
-
-
-            //Whenever this data is changed the instanceDataOffset parameter needs to be updated
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedArrayBuffer);
-
-            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, instanceDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, instanceDataLength, 4 * sizeof(float));  //|
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, instanceDataLength, 8 * sizeof(float));  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, instanceDataLength, 12 * sizeof(float)); //|
-
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, instanceDataLength, 16 * sizeof(float)); //Color data
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * sizeof(float)); //Camera enabled + spritesheet position + side lengths X and Y
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y + use second texture + mix percent
-
-            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + reserved + reserved
-            GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
-            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
+            PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
 
             int count = 0;
             List<T> recursiveCallList = new List<T>();
-
-            float sideLengthX = 0;
-            float sideLengthY = 0;
-            float spritesheetPosition = 0;
-            float cameraPerspective = 0;
-            float spritesheetWidth = 10;
-            float spritesheetHeight = 10;
 
             BaseObject obj;
             TextureName tex;
@@ -397,54 +452,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                             }
                             else
                             {
-                                var transform = obj.BaseFrame.Transformations;
-
-                                spritesheetPosition = obj._currentAnimation.CurrentFrame.SpritesheetPosition;
-                                sideLengthX = obj._currentAnimation.CurrentFrame.SideLengths.X;
-                                sideLengthY = obj._currentAnimation.CurrentFrame.SideLengths.Y;
-                                if (obj.BaseFrame.CameraPerspective)
-                                {
-                                    cameraPerspective = 1.0f;
-                                }
-                                else
-                                {
-                                    cameraPerspective = 0f;
-                                }
-
-                                spritesheetWidth = obj._currentAnimation.CurrentFrame.Textures.Spritesheet.Columns;
-                                spritesheetHeight = obj._currentAnimation.CurrentFrame.Textures.Spritesheet.Rows;
-
-                                InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
-                                currIndex += 16;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
-                                _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
-
-                                _instancedRenderArray[currIndex++] = cameraPerspective;
-                                _instancedRenderArray[currIndex++] = spritesheetPosition;
-                                _instancedRenderArray[currIndex++] = sideLengthX;
-                                _instancedRenderArray[currIndex++] = sideLengthY;
-
-                                _instancedRenderArray[currIndex++] = spritesheetWidth;
-                                _instancedRenderArray[currIndex++] = spritesheetHeight;
-                                _instancedRenderArray[currIndex++] = objG.MultiTextureData.MixTexture ? 1 : 0;
-                                _instancedRenderArray[currIndex++] = objG.MultiTextureData.MixPercent;
-
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineThickness;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineThickness;
-                                _instancedRenderArray[currIndex++] = 0;
-                                _instancedRenderArray[currIndex++] = 0;
-
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.X;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Y;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Z;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.W;
-
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.X;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Y;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Z;
-                                _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.W;
+                                InsertDataIntoInstancedRenderArray(obj, objG, ref _instancedRenderArray, ref currIndex);
 
                                 count++;
                             }
@@ -559,27 +567,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             TextureName currTexture = Display.Textures.Textures[0];
 
             Display.TextureReference.Use(TextureUnit.Texture0);
-            EnableInstancedShaderAttributes();
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data, change this to be instanced data instead and change spritesheet object definitions to compensate
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedArrayBuffer);
-
-            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, instanceDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, instanceDataLength, 4 * sizeof(float));  //|
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, instanceDataLength, 8 * sizeof(float));  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, instanceDataLength, 12 * sizeof(float)); //|
-
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, instanceDataLength, 16 * sizeof(float)); //Color data
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * sizeof(float)); //Camera enabled + spritesheet position + side lengths X and Y
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y + Use second texture + Mix percent
-
-            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //inline thickness + outline thickness + reserved + reserved
-            GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
-            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
+            PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
 

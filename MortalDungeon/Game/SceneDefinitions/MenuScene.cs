@@ -23,8 +23,6 @@ namespace MortalDungeon.Game.SceneDefinitions
 {
     class MenuScene : CombatScene
     {
-        private AbilityTypes SelectedAbilityType = AbilityTypes.Move;
-
         public MenuScene() 
         {
             InitializeFields();
@@ -59,12 +57,14 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
             guy.Team = UnitTeam.Ally;
+            guy.CurrentTileMap = tileMap;
 
             _units.Add(guy);
 
             Guy guy2 = new Guy(tileMap.GetPositionOfTile(3) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
             guy2.TileMapPosition = 3;
             guy2.Team = UnitTeam.Ally;
+            guy2.CurrentTileMap = tileMap;
 
             _units.Add(guy2);
 
@@ -138,13 +138,12 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             _UI.Add(energyDisplayBar);
 
-            
+            CurrentUnit = guy;
         }
 
 
-        private Unit selectedUnit = default;
         private List<BaseTile> selectedTiles = new List<BaseTile>();
-        private bool unitSelected = false;
+
         public override void onMouseUp(MouseButtonEventArgs e)
         {
             base.onMouseUp(e);
@@ -201,9 +200,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             return true;
         }
 
-        public override bool onMouseMove(MouseMoveEventArgs e)
+        public override bool onMouseMove()
         {
-            return base.onMouseMove(e);
+            return base.onMouseMove();
         }
 
         public override void onUpdateFrame(FrameEventArgs args)
@@ -221,6 +220,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z - movement.Z < 26)
                     {
                         _camera.SetPosition(_camera.Position - movement); // Backwards
+                        onMouseMove();
                     }
                 }
                 else if (MouseState.ScrollDelta[1] > 0)
@@ -229,6 +229,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z + movement.Z > 0)
                     {
                         _camera.SetPosition(_camera.Position + movement); // Forward
+                        onMouseMove();
                     }
                 }
 
@@ -241,6 +242,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 if (KeyboardState.IsKeyDown(Keys.W))
                 {
                     _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                    onMouseMove();
                 }
 
                 if (KeyboardState.IsKeyDown(Keys.S))
@@ -248,16 +250,19 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
                     //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
                     _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                    onMouseMove();
                 }
                 if (KeyboardState.IsKeyDown(Keys.A))
                 {
                     //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
                     _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
+                    onMouseMove();
                 }
                 if (KeyboardState.IsKeyDown(Keys.D))
                 {
                     //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
                     _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
+                    onMouseMove();
                 }
                 if (KeyboardState.IsKeyDown(Keys.Space))
                 {
@@ -270,24 +275,22 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.onUnitClicked(unit);
 
-            selectedUnit = unit;
-            Ability selectedAbility = unit.GetFirstAbilityOfType(SelectedAbilityType);
-
-
-            if (_tileMaps[0].IsValidTile(unit.TileMapPosition) && selectedAbility.Type != AbilityTypes.Empty)
+            if (_selectedAbility == null)
             {
-                _tileMaps[0].SetDefaultTileValues();
+                if (!InCombat) 
+                {
+                    CurrentUnit = unit;
+                    _selectedAbility = unit.GetFirstAbilityOfType(DefaultAbilityType);
 
-
-                selectedTiles = selectedAbility.GetValidTileTargets(_tileMaps[0], _units);
-                //selectedTiles.ForEach(tile =>
-                //{
-                //    tile.SetSelected(true);
-                //});
-
-                _tileMaps[0].SelectTiles(selectedTiles);
-
-                unitSelected = true;
+                    if (_selectedAbility.Type != AbilityTypes.Empty)
+                    {
+                        SelectAbility(_selectedAbility);
+                    }
+                }
+            }
+            else 
+            {
+                _selectedAbility.OnUnitClicked(unit);
             }
         }
 
@@ -295,24 +298,9 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.onTileClicked(map, tile);
 
-            if (unitSelected)
+            if (_selectedAbility != null)
             {
-                if (selectedTiles.Exists(t => t.TileIndex == tile.TileIndex))
-                {
-                    Ability selectedAbility = selectedUnit.GetFirstAbilityOfType(SelectedAbilityType);
-                    selectedAbility.SelectedTile = tile;
-                    selectedAbility.EnactEffect();
-
-                    //selectedTiles.ForEach(tile =>
-                    //{
-                    //    tile.SetSelected(false);
-                    //});
-
-                    map.DeselectTiles();
-
-                    unitSelected = false;
-                    //onChangeAbilityType(AbilityTypes.Empty);
-                }
+                _selectedAbility.OnTileClicked(map, tile);
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftControl))
             {
@@ -423,11 +411,12 @@ namespace MortalDungeon.Game.SceneDefinitions
 
         }
 
-        public void onChangeAbilityType(AbilityTypes type) 
+        public override void onChangeAbilityType(AbilityTypes type) 
         {
-            SelectedAbilityType = type;
-
             List<Button> buttons = GetDerivedClassesFromList<Button, UIObject>(_UI[0].Children); //footer buttons
+
+            _selectedAbility = CurrentUnit.GetFirstAbilityOfType(type);
+            _selectedAbility.OnSelect(this, CurrentUnit.CurrentTileMap);
 
             int selectedIndex = 0;
             switch (type) 

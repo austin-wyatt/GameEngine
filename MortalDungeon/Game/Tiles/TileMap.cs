@@ -92,8 +92,6 @@ namespace MortalDungeon.Game.Tiles
 
         public List<TileChunk> TileChunks = new List<TileChunk>();
 
-        public int TileMapID = 0;
-
         private int _maxSelectionTiles = 1000;
         public int _amountOfSelectionTiles = 0;
         private List<BaseTile> _selectionTilePool = new List<BaseTile>();
@@ -128,7 +126,7 @@ namespace MortalDungeon.Game.Tiles
             {
                 for (int o = 0; o < Height; o++)
                 {
-                    baseTile = new BaseTile(tilePosition, i * Height + o) { Clickable = true };
+                    baseTile = new BaseTile(tilePosition, i * Height + o, this) { Clickable = true };
                     baseTile.SetAnimation(BaseTileAnimationType.Grass);
                     baseTile.DefaultAnimation = BaseTileAnimationType.Grass;
 
@@ -160,7 +158,7 @@ namespace MortalDungeon.Game.Tiles
             BaseTile baseTile = new BaseTile();
             for (int i = 0; i < _maxSelectionTiles; i++)
             {
-                baseTile = new BaseTile(tilePosition, i);
+                baseTile = new BaseTile(tilePosition, i, this);
                 baseTile.Render = false;
                 baseTile._tileObject.OutlineParameters.OutlineColor = Colors.TranslucentBlue;
                 baseTile._tileObject.OutlineParameters.InlineColor = Colors.TranslucentBlue;
@@ -180,7 +178,7 @@ namespace MortalDungeon.Game.Tiles
             }
 
             tilePosition.Z += 0.001f;
-            HoveredTile = new BaseTile(tilePosition, 0);
+            HoveredTile = new BaseTile(tilePosition, -1, this);
             HoveredTile.Render = false;
             HoveredTile._tileObject.OutlineParameters.OutlineColor = Colors.Red;
             HoveredTile._tileObject.OutlineParameters.InlineColor = Colors.Red;
@@ -379,7 +377,7 @@ namespace MortalDungeon.Game.Tiles
         public void SelectTiles(List<BaseTile> tiles) 
         {
             if (tiles.Count > _maxSelectionTiles)
-                throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + _maxSelectionTiles + " in tile map " + TileMapID);
+                throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + _maxSelectionTiles + " in tile map " + ObjectID);
 
             for (int i = 0; i < tiles.Count; i++) 
             {
@@ -399,7 +397,21 @@ namespace MortalDungeon.Game.Tiles
 
             SelectionTiles.Add(_selectionTilePool[_amountOfSelectionTiles]);
 
+            _selectionTilePool[_amountOfSelectionTiles].AttachedTile = tile;
+            tile.AttachedTile = _selectionTilePool[_amountOfSelectionTiles];
+
             _amountOfSelectionTiles++;
+        }
+
+        public void DeselectTile(BaseTile selectionTile) 
+        {
+            if (SelectionTiles.Remove(selectionTile))
+            {
+                selectionTile.Render = false;
+                selectionTile.AttachedTile.AttachedTile = null;
+                selectionTile.AttachedTile = null;
+                _amountOfSelectionTiles--;
+            }
         }
 
         public void DeselectTiles() 
@@ -407,6 +419,11 @@ namespace MortalDungeon.Game.Tiles
             for (int i = 0; i < _amountOfSelectionTiles; i++) 
             {
                 _selectionTilePool[i].Render = false;
+                if (_selectionTilePool[i].AttachedTile != null) 
+                {
+                    _selectionTilePool[i].AttachedTile.AttachedTile = null;
+                    _selectionTilePool[i].AttachedTile = null;
+                }
             }
 
             SelectionTiles.Clear();
@@ -705,6 +722,9 @@ namespace MortalDungeon.Game.Tiles
             List<TileWithParent> tileList = new List<TileWithParent>();
             List<BaseTile> returnList = new List<BaseTile>();
 
+            if (depth <= 0)
+                return returnList;
+
             List<BaseTile> neighbors = new List<BaseTile>();
 
             Vector2i startingPos = ConvertIndexToCoord(startIndex);
@@ -714,7 +734,12 @@ namespace MortalDungeon.Game.Tiles
 
             if (!traversableTypes.Exists(c => c == this[startIndex].TileClassification) || !traversableTypes.Exists(c => c == this[endIndex].TileClassification))
             {
-                return new List<BaseTile>(); //if the starting or ending tile isn't traversable then immediately return
+                return returnList; //if the starting or ending tile isn't traversable then immediately return
+            }
+
+            if (units != null && units.Exists(u => u.TileMapPosition == endIndex) && castingUnit != null && !castingUnit.PhasedMovement) 
+            {
+                return returnList; //if the ending tile is inside of a unit then immediately return
             }
 
 

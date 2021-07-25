@@ -50,14 +50,6 @@ namespace MortalDungeon.Engine_Classes
 
         public Animation() { }
 
-        public static bool operator ==(Animation operand, Animation operand2)
-        {
-            return operand.Type == operand2.Type && operand._currentFrame == operand2._currentFrame;
-        }
-        public static bool operator !=(Animation operand, Animation operand2)
-        {
-            return !(operand == operand2);
-        }
         public Animation(Animation anim) {
             Repeat = anim.Repeat;
             Reverse = anim.Reverse;

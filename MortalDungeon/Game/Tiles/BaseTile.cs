@@ -27,7 +27,7 @@ namespace MortalDungeon.Game.Tiles
         public BaseTileAnimationType DefaultAnimation = BaseTileAnimationType.SolidWhite;
         public BaseTileAnimationType CurrentAnimation = BaseTileAnimationType.SolidWhite;
         public int TileIndex = 0;
-        public int TileMapClassifier = 0; //indicates which tilemap this tile belongs to (in case multiple tile maps are ever used at once
+        public TileMap TileMap; //indicates which tilemap this tile belongs to (in case multiple tile maps are ever used at once
 
         public new ObjectType ObjectType = ObjectType.Tile;
 
@@ -46,12 +46,13 @@ namespace MortalDungeon.Game.Tiles
 
         public BaseObject _tileObject;
 
-
+        public BaseTile AttachedTile; //for selection tiles 
 
         public BaseTile() { }
-        public BaseTile(Vector3 position, int id)
+        public BaseTile(Vector3 position, int id, TileMap map)
         {
             Name = "BaseTile";
+            TileMap = map;
 
             BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, id, "Base Tile " + id, default, EnvironmentObjects.BASE_TILE.Bounds);
             DefaultColor = BaseTile.BaseFrame.Color;
@@ -72,20 +73,6 @@ namespace MortalDungeon.Game.Tiles
             //_tileObject.BaseFrame.ScaleAddition(1);
 
             SetPosition(position);
-        }
-
-        public override bool Equals(object obj)
-        {
-            dynamic d = obj;
-
-            if (obj.GetType() == d.GetType())
-            {
-                return TileIndex == d.TileIndex && TileMapClassifier == d.TileMapClassifier;
-            }
-            else 
-            {
-                return false;
-            }
         }
 
         public void SetAnimation(AnimationType type, Action onFinish = null)

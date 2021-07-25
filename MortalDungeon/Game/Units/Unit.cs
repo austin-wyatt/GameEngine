@@ -36,6 +36,9 @@ namespace MortalDungeon.Game.Units
 
         public Direction Facing = Direction.North;
 
+        public TileMap CurrentTileMap;
+
+
         public Unit() { }
         public Unit(Vector3 position, int tileMapPosition = 0, int id = 0, string name = "Unit")
         {

@@ -62,8 +62,6 @@ namespace MortalDungeon.Game.UI
 
             }
 
-            private int _tick = 0;
-
             public void SetActiveEnergy(int newEnergy) 
             {
                 CurrentEnergy = newEnergy > CurrentMaxEnergy ? CurrentMaxEnergy : newEnergy < 0 ? 0 : newEnergy;
@@ -115,7 +113,7 @@ namespace MortalDungeon.Game.UI
 
                 Vector2 ScaleFactor = new Vector2(Size.X, Size.Y);
 
-                RenderableObject pip = new RenderableObject(new SpritesheetObject(91, Spritesheets.UISheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+                RenderableObject pip = new RenderableObject(new SpritesheetObject(21, Spritesheets.TestSheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
                 pip.ScaleX(aspectRatio);
                 pip.ScaleX(ScaleFactor.X);
@@ -132,6 +130,8 @@ namespace MortalDungeon.Game.UI
 
                 BaseObjects.Add(pipObj);
                 Pip = pipObj;
+
+                Pip.OutlineParameters.SetAllInline(1);
 
                 SetOrigin(aspectRatio, ScaleFactor);
                 ChangeEnergyState(EnergyState);

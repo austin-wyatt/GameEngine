@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
@@ -47,6 +48,14 @@ namespace MortalDungeon.Game.Abilities
         public BaseTile SelectedTile;
         public Unit SelectedUnit;
 
+
+        public bool HasHoverEffect = false;
+
+
+        public CombatScene Scene;
+
+        public string Name = "";
+
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
 
         public bool CanTargetAlly = true;
@@ -75,6 +84,22 @@ namespace MortalDungeon.Game.Abilities
             EnactEffect();
         } 
         public virtual void EnactEffect() { } //the actual effect of the skill
+
+        public virtual void OnSelect(CombatScene scene, TileMap currentMap) 
+        {
+            TileMap = currentMap;
+            Scene = scene;
+        }
+
+        public virtual void OnTileClicked(TileMap map, BaseTile tile) { }
+
+        public virtual void OnUnitClicked(Unit unit) { }
+
+        public virtual void OnHover() { }
+        public virtual void OnHover(BaseTile tile, TileMap map) { }
+        public virtual void OnHover(Unit unit) { }
+
+        public virtual void OnRightClick() { }
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 
