@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using MortalDungeon.Engine_Classes.Scenes;
+using OpenTK.Mathematics;
 using System;
 
 namespace MortalDungeon
@@ -27,6 +28,10 @@ namespace MortalDungeon
 
         // The field of view of the camera (radians)
         private float _fov = MathHelper.PiOver2;
+
+        public Matrix4 ProjectionMatrix;
+
+        public Action onUpdate = null;
 
         public Camera(Vector3 position, float aspectRatio)
         {
@@ -85,6 +90,11 @@ namespace MortalDungeon
             }
         }
 
+        public float GetFOVRadians() 
+        {
+            return _fov;
+        }
+
         // Get the view matrix using the amazing LookAt function described more in depth on the web tutorials
         public Matrix4 GetViewMatrix()
         {
@@ -95,6 +105,11 @@ namespace MortalDungeon
         public Matrix4 GetProjectionMatrix()
         {
             return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 1000f);
+        }
+
+        public void UpdateProjectionMatrix() 
+        {
+            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 1000f);
         }
 
         // This function is going to update the direction vertices using some of the math learned in the web tutorials
@@ -113,6 +128,15 @@ namespace MortalDungeon
             // not be what you need for all cameras so keep this in mind if you do not want a FPS camera
             _right = Vector3.Normalize(Vector3.Cross(_front, Vector3.UnitY));
             _up = Vector3.Normalize(Vector3.Cross(_right, _front));
+
+            onUpdate?.Invoke();
+        }
+
+        public void SetPosition(Vector3 pos) 
+        {
+            Position = pos;
+
+            onUpdate?.Invoke();
         }
     }
 }

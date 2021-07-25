@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Objects
 
                 for (int i = 0; i < 16; i++) 
                 {
-                    Keyframe temp = new Keyframe(i * 2);
+                    Keyframe temp = new Keyframe(i);
 
                     if (i < 8)
                     {

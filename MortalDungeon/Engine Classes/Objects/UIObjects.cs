@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -51,6 +52,8 @@ namespace MortalDungeon.Game.UI
             public static readonly UIBorders OpenRight = new UIBorders { Bottom = true, Top = true, Left = true };
         }
 
+        public static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
+
         public enum BoundsCheckType 
         {
             None,
@@ -69,10 +72,12 @@ namespace MortalDungeon.Game.UI
         public Vector2 Size = new Vector2(1, 1);
         public bool CameraPerspective = false;
 
-        public bool Grabbed = false;
-        public bool Draggable = false;
-        public bool Hoverable = false;
-        public bool Hovered = false;
+        public new ObjectType ObjectType = ObjectType.UI;
+
+        //public new bool Grabbed = false;
+        //public new bool Draggable = false;
+        //public new bool Hoverable = false;
+        //public new bool Hovered = false;
 
         public bool Disabled = false;
 
@@ -80,7 +85,6 @@ namespace MortalDungeon.Game.UI
 
         public UIObject Parent = null;
 
-        public Vector3 _grabbedDeltaPos = default;
         protected Vector3 _originOffset = default;
 
         public Action OnClickAction = null;
@@ -195,7 +199,7 @@ namespace MortalDungeon.Game.UI
 
                                 optionalAction?.Invoke(validObj);
                             }
-                            else if (type == BoundsCheckType.Hover && Hovered)
+                            else if (type == BoundsCheckType.Hover)
                             {
                                 HoverEnd();
                             }
@@ -418,23 +422,8 @@ namespace MortalDungeon.Game.UI
         {
             base.OnMouseDown();
         }
-        public override void OnHover()
-        {
-            base.OnHover();
-            if (Hoverable && !Hovered)
-            {
-                Hovered = true;
-            }
-        }
-        public override void HoverEnd()
-        {
-            base.HoverEnd();
-            Hovered = false;
-        }
         public void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
         {
-            base.OnGrab();
-
             if (Draggable && !Grabbed)
             {
                 Grabbed = true;
@@ -450,16 +439,6 @@ namespace MortalDungeon.Game.UI
                 }
             }
         }
-        public override void GrabEnd()
-        {
-            base.GrabEnd();
-
-            if (Grabbed) 
-            {
-                Grabbed = false;
-                _grabbedDeltaPos = default;
-            }
-        }
     }
 
     public class TextBox : UIObject
@@ -469,7 +448,7 @@ namespace MortalDungeon.Game.UI
         public Vector3 TextOffset = new Vector3(20, 30, 0);
         public bool CenterText = false;
 
-        private UIBlock _mainBlock;
+        public UIBlock _mainBlock;
 
         public Text TextField;
 
@@ -482,7 +461,7 @@ namespace MortalDungeon.Game.UI
             CenterText = centerText;
             CameraPerspective = cameraPerspective;
 
-            UIBlock block = new UIBlock(Position, new Vector2(Size.X / WindowConstants.ScreenUnits.X, Size.Y / WindowConstants.ScreenUnits.Y), default, 90, true, cameraPerspective);
+            UIBlock block = new UIBlock(Position, new Vector2(Size.X / WindowConstants.ScreenUnits.X, Size.Y / WindowConstants.ScreenUnits.Y), default, 71, true, cameraPerspective);
             block.SetColor(new Vector4(0.2f, 0.2f, 0.2f, 1));
 
             Text textObj;
@@ -577,7 +556,7 @@ namespace MortalDungeon.Game.UI
 
     public class Button : UIObject
     {
-        private TextBox _mainObject;
+        public TextBox _mainObject;
         public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
 
         public Button(Vector3 position, Vector2 size, string text = "", float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, bool cameraPerspective = false)
@@ -861,7 +840,7 @@ namespace MortalDungeon.Game.UI
 
         public Action OnClickAction;
 
-        public UIBlock(Vector3 position, Vector2 size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        public UIBlock(Vector3 position, Vector2 size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
         {
             Position = position;
             Size = size.X == 0 ? Size : size;
@@ -871,17 +850,12 @@ namespace MortalDungeon.Game.UI
 
 
             Vector2i SpritesheetDimensions = spritesheetDimensions.X == 0 ? new Vector2i(1, 1) : spritesheetDimensions;
-
-            Animation tempAnimation;
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
-            Vector2 ScaleFactor = new Vector2(Size.X, Size.Y);
+            Animation tempAnimation;
 
             RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, Spritesheets.UISheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
-            window.ScaleX(aspectRatio);
-            window.ScaleX(ScaleFactor.X);
-            window.ScaleY(ScaleFactor.Y);
             window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
             tempAnimation = new Animation()
             {
@@ -896,11 +870,17 @@ namespace MortalDungeon.Game.UI
             BaseObjects.Add(windowObj);
             _window = windowObj;
 
+            windowObj.OutlineParameters.SetAllInline(2);
+
+            MultiTextureData.MixTexture = true;
+            MultiTextureData.MixPercent = 0.5f;
+            MultiTextureData.Texture = new Texture(UI_BACKGROUND.Handle, TextureName.FogTexture);
+            MultiTextureData.TextureLocation = OpenTK.Graphics.OpenGL4.TextureUnit.Texture1;
+            MultiTextureData.TextureName = TextureName.FogTexture;
+
+
             RenderableObject backdrop = new RenderableObject(new SpritesheetObject(spritesheetPosition, Spritesheets.UISheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
-            backdrop.ScaleX(aspectRatio);
-            backdrop.ScaleX(ScaleFactor.X);
-            backdrop.ScaleY(ScaleFactor.Y);
-            backdrop.ScaleAddition(0.01f);
+            
             backdrop.Color = new Vector4(0.1f, 0.1f, 0.1f, 1);
             tempAnimation = new Animation()
             {
@@ -915,7 +895,32 @@ namespace MortalDungeon.Game.UI
             BaseObjects.Add(backdropObj);
             _backdrop = backdropObj;
 
-            SetOrigin(aspectRatio, ScaleFactor);
+            _backdrop.Render = false;
+
+            SetSize(Size);
+
+            SetOrigin(aspectRatio, Size);
+        }
+
+        public void SetSize(Vector2 size) 
+        {
+            float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
+
+            Vector2 ScaleFactor = new Vector2(size.X, size.Y);
+            _window.BaseFrame.SetScaleAll(1);
+
+            _window.BaseFrame.ScaleX(aspectRatio);
+            _window.BaseFrame.ScaleX(ScaleFactor.X);
+            _window.BaseFrame.ScaleY(ScaleFactor.Y);
+
+            _backdrop.BaseFrame.SetScaleAll(1);
+
+            _backdrop.BaseFrame.ScaleX(aspectRatio);
+            _backdrop.BaseFrame.ScaleX(ScaleFactor.X);
+            _backdrop.BaseFrame.ScaleY(ScaleFactor.Y);
+            _backdrop.BaseFrame.ScaleAddition(0.01f);
+
+            Size = size;
         }
 
         public override void SetColor(Vector4 color)

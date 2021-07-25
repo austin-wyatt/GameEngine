@@ -10,7 +10,9 @@ namespace MortalDungeon.Objects
         SpritesheetTest,
         CaveSpritesheet,
         CharacterSpritesheet,
-        UISpritesheet
+        UISpritesheet,
+
+        FogTexture
     }
     public class TextureInfo
     {

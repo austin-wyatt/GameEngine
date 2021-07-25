@@ -12,7 +12,8 @@ namespace MortalDungeon.Game.Objects
     {
         SolidWhite,
         Transparent,
-        Grass
+        Grass,
+        Selected
     }
     #endregion
 
@@ -122,11 +123,11 @@ namespace MortalDungeon.Game.Objects
 
     public static class BASE_TILE_ANIMATION
     {
-        private static RenderableObject base_Idle_1 = new RenderableObject(EnvironmentObjects.BASE_TILE, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Idle_1 = new RenderableObject(new SpritesheetObject(21, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Selected_1 = new RenderableObject(new SpritesheetObject(21, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), new Vector4(1, 0.4f, 0.4f, 1), ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-
-        private static RenderableObject base_Transparent_1 = new RenderableObject(new SpritesheetObject(10, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject base_Grass_1 = new RenderableObject(new SpritesheetObject(4, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Transparent_1 = new RenderableObject(new SpritesheetObject(20, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Grass_1 = new RenderableObject(new SpritesheetObject(22, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation SolidWhite = new Animation()
         {
@@ -152,11 +153,20 @@ namespace MortalDungeon.Game.Objects
             GenericType = (int)BaseTileAnimationType.Grass
         };
 
+        private static Animation Selected = new Animation()
+        {
+            Frames = new List<RenderableObject>() { base_Selected_1 },
+            Frequency = 0,
+            Repeats = 0,
+            GenericType = (int)BaseTileAnimationType.Selected
+        };
+
         public static List<Animation> List = new List<Animation>()
         {
             SolidWhite,
             Transparent,
-            Grass
+            Grass,
+            Selected
         };
     }
 
@@ -174,6 +184,7 @@ namespace MortalDungeon.Game.Objects
         private static Animation Idle = new Animation()
         {
             Frames = new List<RenderableObject>() { guy_Idle_1, guy_Idle_2, guy_Idle_3 },
+            //Frames = new List<RenderableObject>() { guy_Idle_1 },
             Frequency = 3,
             Repeats = -1
         };

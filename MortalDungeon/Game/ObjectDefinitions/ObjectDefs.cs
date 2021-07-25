@@ -191,15 +191,24 @@ namespace MortalDungeon.Game.Objects
 
         public static readonly ObjectDefinition GRASS_TILE = new SpritesheetObject(14, Spritesheets.TestSheet, 1).CreateObjectDefinition(ObjectIDs.GRASS);
         public static readonly ObjectDefinition FIRE_BASE = new SpritesheetObject(2, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.FIRE_BASE);
+        //public static readonly float[] BaseTileBounds = new float[]{
+        //0.26093745f, -0.44166672f, 0.0f,
+        //-0.253125f, -0.44166672f, 0.0f,
+        //-0.484375f, -0.008333325f, 0.0f,
+        //-0.24843752f, 0.41388887f, 0.0f,
+        //0.2578125f, 0.41388887f, 0.0f,
+        //0.49843752f, -0.0055555105f, 0.0f,
+        //};
+
         public static readonly float[] BaseTileBounds = new float[]{
-        0.26093745f, -0.44166672f, 0.0f,
-        -0.253125f, -0.44166672f, 0.0f,
-        -0.484375f, -0.008333325f, 0.0f,
-        -0.24843752f, 0.41388887f, 0.0f,
-        0.2578125f, 0.41388887f, 0.0f,
-        0.49843752f, -0.0055555105f, 0.0f,
+        -0.2421875f, -0.42777777f, 0.0f,
+        -0.48125f, -0.0027778149f, 0.0f,
+        -0.2421875f, 0.41111112f, 0.0f,
+        0.25468755f, 0.41111112f, 0.0f,
+        0.48125f, -0.0027778149f, 0.0f,
+        0.25468755f, -0.42777777f, 0.0f,
         };
-        public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
+    public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
 
         public static readonly float[] UIBlockBounds = new float[] 
         {

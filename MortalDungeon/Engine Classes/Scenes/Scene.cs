@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -12,11 +13,21 @@ using System.Diagnostics;
 using System.Text;
 using static MortalDungeon.Game.UI.GameUIObjects;
 
-namespace MortalDungeon.Engine_Classes
+namespace MortalDungeon.Engine_Classes.Scenes
 {
+    public enum ObjectType //corresponds to their bit position in the MessageTarget enum
+    {
+        UI = 0,
+        Unit = 1,
+        Tile = 2,
+        Text = 3,
+        GenericObject = 4,
+        All = 7
+    }
+
     public class Scene
     {
-        public List<GameObject> _renderedObjects = new List<GameObject>(); //GameObjects that are not Units and are being rendered independently
+        public List<GameObject> _genericObjects = new List<GameObject>(); //GameObjects that are not Units and are being rendered independently
         public List<Text> _text = new List<Text>();
         public List<TileMap> _tileMaps = new List<TileMap>(); //The map/maps to render
         public List<Unit> _units = new List<Unit>(); //The units to render
@@ -26,7 +37,16 @@ namespace MortalDungeon.Engine_Classes
 
         public bool Loaded = false;
 
-        //further renderable objects to be added here (and in the render method with the appropriate shaders). Water objects, skybox objects, parallax objects, etc
+        public int SceneID = -1;
+        public MessageCenter MessageCenter = new MessageCenter();
+
+        #region Messaging flags
+        protected int _interceptClicks = 0b0; //see MessageTarget enum in SceneController for notable values
+
+        protected int _disableRender = 0b0;
+
+        protected int _interceptKeystrokes = 0b0;
+        #endregion
 
         public Camera _camera;
         public BaseObject _cursorObject;
@@ -41,12 +61,15 @@ namespace MortalDungeon.Engine_Classes
         private Stopwatch mouseTimer = new Stopwatch();
         protected void InitializeFields()
         {
-            _renderedObjects = new List<GameObject>();
+            _genericObjects = new List<GameObject>();
             _text = new List<Text>();
             _tileMaps = new List<TileMap>(); //The map/maps to render
             _units = new List<Unit>(); //The units to render
+            _UI = new List<UIObject>();
 
-        ScenePosition = new Vector3(0, 0, 0);
+            MessageCenter.ParseMessage = ParseMessage;
+
+            ScenePosition = new Vector3(0, 0, 0);
         }
         public virtual void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) //all object initialization should be handled here
         {
@@ -65,38 +88,124 @@ namespace MortalDungeon.Engine_Classes
             Loaded = false;
         }
 
+        #region Messaging handlers
+        public virtual void ParseMessage(Message msg) 
+        {
+            Console.WriteLine(msg.MessageType.ToString() + " from id " + msg.Sender + " to " + SceneID + ": " + msg.MessageBody.ToString() + " " + msg.MessageTarget.ToString());
+
+            switch (msg.MessageBody) 
+            {
+                case MessageBody.InterceptClicks:
+                    InterceptClicks(true, msg.MessageTarget);
+                    break;
+                case MessageBody.EndClickInterception:
+                    InterceptClicks(false, msg.MessageTarget);
+                    break;
+                case MessageBody.StartRendering:
+                    DisableRendering(false, msg.MessageTarget);
+                    break;
+                case MessageBody.StopRendering:
+                    DisableRendering(true, msg.MessageTarget);
+                    break;
+                case MessageBody.InterceptKeyStrokes:
+                    InterceptKeystrokes(true, msg.MessageTarget);
+                    break;
+                case MessageBody.EndKeyStrokeInterception:
+                    InterceptKeystrokes(false, msg.MessageTarget);
+                    break;
+            }
+
+            MessageCenter.SendMessage(msg.CreateAffirmativeResponse(SceneID));
+        }
+
+        private void InterceptClicks(bool intercept, MessageTarget target) 
+        {
+            if (intercept)
+            {
+                _interceptClicks = (int)target | _interceptClicks;
+            }
+            else
+            {
+                _interceptClicks = _interceptClicks & ~(int)target;
+            }
+        }
+        private void DisableRendering(bool disable, MessageTarget target) 
+        {
+            if (disable)
+            {
+                _disableRender = (int)target | _disableRender;
+            }
+            else 
+            {
+                _disableRender = _disableRender & ~(int)target;
+            }
+        }
+        private void InterceptKeystrokes(bool intercept, MessageTarget target) 
+        {
+            if (intercept)
+            {
+                _interceptKeystrokes = (int)target | _interceptKeystrokes;
+            }
+            else
+            {
+                _interceptKeystrokes = _interceptKeystrokes & ~(int)target;
+            }
+        }
+        #endregion
 
         #region Event handlers
-        public virtual void onMouseUp(MouseButtonEventArgs e) 
+        public virtual void onMouseUp(MouseButtonEventArgs e)
         {
-            if (e.Button == MouseButton.Left && e.Action == InputAction.Release)
+            if (e.Button == MouseButton.Left && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
             {
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
+                bool clickProcessed = false;
 
-                _tileMaps.ForEach(map =>
-                {
-                    ObjectCursorBoundsCheck(map.Tiles).ForEach(foundObj =>
-                    {
-                        onTileClicked(map, foundObj);
-                    });
-                });
-
-                ObjectCursorBoundsCheck(_units).ForEach(foundObj =>
-                {
-                    onUnitClicked(foundObj);
-                });
-
+                if(!GetBit(_interceptClicks, ObjectType.UI))
                 _UI.ForEach(uiObj =>
                 {
                     if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
                     {
-                        uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => onUIClicked(obj));
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                        {
+                            onUIClicked(obj);
+                            clickProcessed = true;
+                        });
                     }
                 });
+
+                if (clickProcessed)
+                    return; //stop further clicks from being processed
+
+                Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
+                Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
+
+                if (!GetBit(_interceptClicks, ObjectType.Unit))
+                ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                {
+                    onUnitClicked(foundObj);
+                    clickProcessed = true;
+                });
+
+                if (clickProcessed)
+                    return; //stop further clicks from being processed
+
+                if (!GetBit(_interceptClicks, ObjectType.Tile))
+                _tileMaps.ForEach(map =>
+                {
+                    ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                    {
+                        onTileClicked(map, foundObj);
+                        clickProcessed = true;
+                    });
+                });
+
+                if (clickProcessed)
+                    return; //stop further clicks from being processed
             }
         }
 
-        public virtual void onMouseDown(MouseButtonEventArgs e) 
+        public virtual void onMouseDown(MouseButtonEventArgs e)
         {
             if (e.Button == MouseButton.Left && e.Action == InputAction.Press)
             {
@@ -114,7 +223,8 @@ namespace MortalDungeon.Engine_Classes
 
         protected bool _objectGrabbed = false;
         protected UIObject grabbedObj = null;
-        public virtual bool onMouseMove(MouseMoveEventArgs e) 
+        protected List<BaseTile> _hoverableTiles = new List<BaseTile>();
+        public virtual bool onMouseMove(MouseMoveEventArgs e)
         {
             if (mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
             {
@@ -132,7 +242,7 @@ namespace MortalDungeon.Engine_Classes
                             {
                                 if (obj.Grabbed)
                                 {
-                                    Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(WindowConstants.ClientSize, _cursorObject.Position);
+                                    Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position);
                                     //obj.SetPositionConditional(mouseCoordScreenSpace - obj._grabbedDeltaPos, uiObj =>
                                     //{
                                     //    if (obj.GetType().Name == uiObj.GetType().Name)
@@ -182,6 +292,25 @@ namespace MortalDungeon.Engine_Classes
                 }); //check hovered objects
 
 
+                Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
+                Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
+
+                _tileMaps.ForEach(map =>
+                {
+                    _hoverableTiles.Clear();
+
+                    map.EndHover();
+
+                    ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar,(tile) =>
+                    {
+                        if(tile.Hoverable)
+                            map.HoverTile(tile);
+                    });
+                });
+
+
+                
+
                 return true;
             }
             else
@@ -190,18 +319,18 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void onKeyDown(KeyboardKeyEventArgs e) { }
 
-        public virtual void onKeyUp(KeyboardKeyEventArgs e) { }
+        public virtual bool onKeyUp(KeyboardKeyEventArgs e) 
+        {
+            return !GetBit(_interceptKeystrokes, ObjectType.All);
+        }
 
-        public virtual void onUpdateFrame() { }
+        public virtual void onUpdateFrame(FrameEventArgs args) { }
         #endregion
 
         //accesses the method used to determine whether the cursor is overlapping an object that is defined in the main file.
-        protected List<GameObject> ObjectCursorBoundsCheck(List<GameObject> listObjects)
-        {
-            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
-            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
-
-            List<GameObject> foundObjects = new List<GameObject>();
+        protected List<T> ObjectCursorBoundsCheck<T>(List<T> listObjects, Vector3 near, Vector3 far, Action<T> foundAction = null, Action<T> notFoundAction = null) where T : GameObject
+        { 
+            List<T> foundObjects = new List<T>();
 
             listObjects.ForEach(listObj =>
             {
@@ -210,57 +339,14 @@ namespace MortalDungeon.Engine_Classes
                     if (obj.Bounds.Contains3D(near, far, _camera))
                     {
                         foundObjects.Add(listObj);
+                        foundAction?.Invoke(listObj);
+                    }
+                    else 
+                    {
+                        notFoundAction?.Invoke(listObj);
                     }
                 });
 
-            });
-
-            return foundObjects;
-        }
-        protected List<Unit> ObjectCursorBoundsCheck(List<Unit> listObjects)
-        {
-            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
-            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
-
-            List<Unit> foundObjects = new List<Unit>();
-
-
-            listObjects.ForEach(listObj =>
-            {
-                if (listObj.Clickable) 
-                {
-                    listObj.BaseObjects.ForEach(obj =>
-                    {
-                        if (obj.Bounds.Contains3D(near, far, _camera))
-                        {
-                            foundObjects.Add(listObj);
-                        }
-                    });
-                }
-            });
-
-            return foundObjects;
-        }
-        protected List<BaseTile> ObjectCursorBoundsCheck(List<BaseTile> listObjects)
-        {
-            Vector3 near = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
-            Vector3 far = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
-
-            List<BaseTile> foundObjects = new List<BaseTile>();
-
-
-            listObjects.ForEach(listObj =>
-            {
-                if (listObj.Clickable)
-                {
-                    listObj.BaseObjects.ForEach(obj =>
-                    {
-                        if (obj.Bounds.Contains3D(near, far, _camera))
-                        {
-                            foundObjects.Add(listObj);
-                        }
-                    });
-                }
             });
 
             return foundObjects;
@@ -276,7 +362,6 @@ namespace MortalDungeon.Engine_Classes
         public virtual void onTileClicked(TileMap map, BaseTile tile) { }
 
         public Scene() { }
-
 
         #region Misc helper functions
         protected Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize)
@@ -326,8 +411,48 @@ namespace MortalDungeon.Engine_Classes
 
             return foundObjs;
         }
+
+        protected bool GetBit(int b, int bitNumber) 
+        {
+            return (b & (1 << bitNumber)) != 0;
+        }
+
+        protected bool GetBit(int b, ObjectType bitNumber)
+        {
+            return (b & (1 << (int)bitNumber)) != 0;
+        }
+        #endregion
+
+        #region Render helper functions
+
+        public List<T> GetRenderTarget<T>(ObjectType type)
+        {
+            if (GetBit(_disableRender, ObjectType.All) || GetBit(_disableRender, type)) 
+            {
+                return new List<T>();
+            }
+
+            switch (type) 
+            {
+                case ObjectType.UI:
+                    return _UI as List<T>;
+                case ObjectType.Tile:
+                    return _tileMaps as List<T>;
+                case ObjectType.Unit:
+                    return _units as List<T>;
+                case ObjectType.Text:
+                    return _text as List<T>;
+                case ObjectType.GenericObject:
+                    return _genericObjects as List<T>;
+                default:
+                    return new List<T>();
+            }
+        }
+
         #endregion
     }
+
+
 
     public class CombatScene : Scene 
     {
@@ -394,9 +519,19 @@ namespace MortalDungeon.Engine_Classes
     }
 
 
-    public static class Scenes 
+    public class MessageCenter
     {
-        //public static Scene TestScene = new Scene();
+        public Action<Message> ParseMessage = null;
 
+        public Action<Message> SendMessage = null;
+
+        public int SceneID = -1;
+
+        public MessageCenter() { }
+
+        public Message CreateMessage(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All)
+        {
+            return new Message(msgType, msgBody, msgTarget, targetAmount) { Sender = SceneID };
+        }
     }
 }

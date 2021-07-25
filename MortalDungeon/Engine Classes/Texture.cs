@@ -1,19 +1,39 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using MortalDungeon.Objects;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace MortalDungeon
 {
-    // A helper class, much like Shader, meant to simplify loading textures.
+    public class BitmapImageData 
+    {
+        public float[] ImageData;
+        public Vector2i ImageDimensions;
+
+        public BitmapImageData(float[] imgData, Vector2i dimensions) 
+        {
+            ImageData = imgData;
+            ImageDimensions = dimensions;
+        }
+        public BitmapImageData() { }
+    }
+
     public class Texture
     {
         public readonly int Handle;
+        public BitmapImageData ImageData = new BitmapImageData();
+        public TextureName TextureName = TextureName.Unknown;
 
-        public static Texture LoadFromFile(string path, bool nearest = true)
+        public static Dictionary<TextureUnit, TextureName> UsedTextures = new Dictionary<TextureUnit, TextureName>();
+
+        public static Texture LoadFromFile(string path, bool nearest = true, TextureName name = TextureName.Unknown)
         {
             // Generate handle
             int handle = GL.GenTexture();
+
 
             // Bind the handle
             GL.ActiveTexture(TextureUnit.Texture0);
@@ -69,7 +89,7 @@ namespace MortalDungeon
             // your image will fail to render at all (usually resulting in pure black instead).
             if (nearest)
             {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             }
             else 
@@ -93,12 +113,76 @@ namespace MortalDungeon
             // Here is an example of mips in action https://en.wikipedia.org/wiki/File:Mipmap_Aliasing_Comparison.png
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
-            return new Texture(handle);
+            Texture tex = new Texture(handle, name);
+
+            return tex;
         }
 
-        public Texture(int glHandle)
+        public static Texture LoadFromArray(float[] data, Vector2i imageDimensions, bool nearest = true, TextureName name = TextureName.Unknown)
+        {
+            // Generate handle
+            int handle = GL.GenTexture();
+
+            // Bind the handle
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, handle);
+
+
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                imageDimensions.X,
+                imageDimensions.Y,
+                0,
+                PixelFormat.Bgra,
+                PixelType.UnsignedByte,
+                data);
+
+            if (nearest)
+            {
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            }
+            else
+            {
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            }
+
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            Texture tex = new Texture(handle, name);
+
+            tex.ImageData = new BitmapImageData(data, imageDimensions);
+
+            return tex;
+        }
+
+        public void UpdateTextureArray() 
+        {
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
+
+
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                ImageData.ImageDimensions.X,
+                ImageData.ImageDimensions.Y,
+                0,
+                PixelFormat.Bgra,
+                PixelType.UnsignedByte,
+                ImageData.ImageData);
+        }
+
+        public Texture(int glHandle, TextureName name)
         {
             Handle = glHandle;
+            TextureName = name;
         }
 
         // Activate texture
@@ -108,7 +192,9 @@ namespace MortalDungeon
         public void Use(TextureUnit unit)
         {
             GL.ActiveTexture(unit);
-            GL.BindTexture(TextureTarget.Texture2D, Handle);     
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
+
+            UsedTextures[unit] = TextureName;
         }
     }
 }

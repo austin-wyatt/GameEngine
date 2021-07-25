@@ -15,6 +15,8 @@ namespace MortalDungeon.Engine_Classes
         public bool Playing = false;
         protected bool Priming = false;
 
+        public OutlineParameters OutlineParameters = new OutlineParameters();
+
 
         protected int _currentParticle = 0; //the index of the current particle
         public Particle CurrentParticle 
@@ -77,6 +79,9 @@ namespace MortalDungeon.Engine_Classes
 
         public float SpritesheetPosition;
         public Vector2 SideLengths = new Vector2();
+
+        public bool Cull = false;
+
 
         public Particle() { }
 

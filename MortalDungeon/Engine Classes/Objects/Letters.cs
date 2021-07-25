@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -66,6 +67,8 @@ namespace MortalDungeon.Game.Objects
 
         public BaseObject LetterObject;
 
+        public new ObjectType ObjectType = ObjectType.Text;
+
         private bool CameraPerspective = false;
         private RenderableObject _display;
         private bool usingMonospace = true;
@@ -97,6 +100,11 @@ namespace MortalDungeon.Game.Objects
 
             SetKerning();
             SetPosition(position);
+        }
+
+        public void ChangeCharacter(Character character) 
+        {
+            _display.SpritesheetPosition = (int)character;
         }
 
         public override void SetPosition(Vector3 position)
@@ -363,32 +371,42 @@ namespace MortalDungeon.Game.Objects
                 tempTexture = Letters[0].LetterObject.BaseFrame.TextureReference; //hack, we know this texture is already loaded so we can just hot swap characters
             }
 
-            Letters.Clear();
-
             TextString = textString;
             char[] arr = TextString.ToCharArray();
             Vector3 position = new Vector3(Position);
 
+            if (Letters.Count > arr.Length) 
+            {
+                Letters.RemoveRange(0, Letters.Count - arr.Length);
+            }
 
             for (int i = 0; i < arr.Length; i++)
             {
-                Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, Scale);
-
-                if (tempTexture != null) 
+                if (i < Letters.Count)
                 {
-                    temp.LetterObject.BaseFrame.TextureReference = tempTexture; //hack, figure out a fix for this problem later (TextureReference of new renderable object is null)
+                    Letters[i].ChangeCharacter(CharacterConstants._characterMap[arr[i]]);
+                }
+                else 
+                {
+                    Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, Scale);
+
+                    if (tempTexture != null)
+                    {
+                        temp.LetterObject.BaseFrame.TextureReference = tempTexture; //hack, figure out a fix for this problem later (TextureReference of new renderable object is null)
+                    }
+
+                    Letters.Add(temp);
                 }
 
-                Letters.Add(temp);
-                if (temp.Character == Character.NewLine)
+                if (Letters[i].Character == Character.NewLine)
                 {
                     position.X = Position.X;
                     position.Y += NewLineHeight * Scale;
                 }
-                else 
+                else
                 {
-                    position.X += temp.LetterOffset + temp.XCorrection;
-                    position.Y += temp.YOffset;
+                    position.X += Letters[i].LetterOffset + Letters[i].XCorrection;
+                    position.Y += Letters[i].YOffset;
                 }
             }
         }

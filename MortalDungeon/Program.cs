@@ -19,6 +19,7 @@ namespace MortalDungeon
 
             var gameWindowSettings = GameWindowSettings.Default;
 
+
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {
                 game.VSync = OpenTK.Windowing.Common.VSyncMode.Off;

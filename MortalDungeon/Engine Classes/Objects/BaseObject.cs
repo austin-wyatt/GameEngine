@@ -12,7 +12,7 @@ namespace MortalDungeon.Engine_Classes
     {
         public int ID;
         public string Name;
-        public Vector3 Position; //uses global position (based off of screen width and height), use Display.Position for local coordinates 
+        public Vector3 Position; //uses global position (based off of screen width and height), use GetDisplay().Position for local coordinates 
         public Bounds Bounds;
         public Vector3 PositionalOffset = new Vector3();
 
@@ -21,12 +21,15 @@ namespace MortalDungeon.Engine_Classes
 
 
         public bool LockToWindow = false;
-        public bool Billboard = false;
         public bool Render = true;
         public bool Clickable = true;
         private Vector3 _dimensions;
         public Animation _currentAnimation;
-        public RenderableObject _baseFrame;
+        public Vector3 _localSpacePosition = new Vector3();
+
+        public RenderableObject BaseFrame;
+
+        public OutlineParameters OutlineParameters = new OutlineParameters();
 
         public Vector3 Dimensions 
         {
@@ -37,16 +40,6 @@ namespace MortalDungeon.Engine_Classes
             set 
             {
                 _dimensions = value;
-            }
-        }
-
-
-        //All transformations should be made to the base frame. They will then be applied to the current frame
-        public RenderableObject BaseFrame
-        {
-            get
-            {
-                return _baseFrame;
             }
         }
 
@@ -62,7 +55,7 @@ namespace MortalDungeon.Engine_Classes
             }
 
             _currentAnimation = Animations[AnimationType.Idle];
-            _baseFrame = _currentAnimation.Frames[0];
+            BaseFrame = _currentAnimation.Frames[0];
 
             if (bounds == null)
             {
@@ -74,7 +67,8 @@ namespace MortalDungeon.Engine_Classes
             }
 
             _dimensions = Bounds.GetDimensionData();
-            
+
+            _localSpacePosition = new Vector3(position);
 
             SetPosition(position);
         }
@@ -94,6 +88,8 @@ namespace MortalDungeon.Engine_Classes
                 position.X = Math.Clamp(position.X, -1.0f, 1.0f);
                 position.Y = Math.Clamp(position.Y, -1.0f, 1.0f);
             }
+
+            _localSpacePosition = new Vector3(position);
 
             BaseFrame.SetTranslation(position);
         }
@@ -297,6 +293,37 @@ namespace MortalDungeon.Engine_Classes
                 PointF point3 = GetTransformedPoint(Vertices[side * dimensions], Vertices[side * dimensions + 1], Vertices[side * dimensions + 2], camera);
                 Console.WriteLine("Point " + side + ": " + point3.X + ", " + point3.Y);
             }
+        }
+    }
+
+    public class OutlineParameters 
+    {
+        public int OutlineThickness = 0;
+        public int InlineThickness = 0;
+        public Vector4 OutlineColor = Colors.Black;
+        public Vector4 InlineColor = Colors.Black;
+
+        public int BaseOutlineThickness = 0;
+        public int BaseInlineThickness = 0;
+
+        /// <summary>
+        /// Sets the inline thickness and base value to the thickness parameter
+        /// </summary>
+        /// <param name="thickness"></param>
+        public void SetAllInline(int thickness) 
+        {
+            InlineThickness = thickness;
+            BaseInlineThickness = thickness;
+        }
+
+        /// <summary>
+        /// Sets the outline thickness and base value to the thickness parameter
+        /// </summary>
+        /// <param name="thickness"></param>
+        public void SetAllOutline(int thickness) 
+        {
+            OutlineThickness = thickness;
+            BaseOutlineThickness = thickness;
         }
     }
 }

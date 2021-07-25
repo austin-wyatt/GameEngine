@@ -5,14 +5,21 @@ using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Graphics.OpenGL4;
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using static MortalDungeon.Game.UI.GameUIObjects;
+using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Tiles;
 
-namespace MortalDungeon.Game.Scenes
+namespace MortalDungeon.Game.SceneDefinitions
 {
     class MenuScene : CombatScene
     {
@@ -23,15 +30,32 @@ namespace MortalDungeon.Game.Scenes
             InitializeFields();
         }
 
+
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             base.Load(camera, cursorObject, mouseRay);
 
 
-            TileMap tileMap = new TileMap(default) { Width = 50, Height = 50};
+            Texture fogTex = Texture.LoadFromFile("Resources/FogTexture.png", default, TextureName.FogTexture);
+            
+            fogTex.Use(TextureUnit.Texture1);
+
+
+            TileMap tileMap = new TileMap(default) { Width = 50, Height = 50 };
+            //TileMap tileMap = new TileMap(default) { Width = 5, Height = 5 };
 
             tileMap.PopulateTileMap();
             _tileMaps.Add(tileMap);
+
+            tileMap.Tiles.ForEach(tile =>
+            {
+                tile.MultiTextureData.Texture = fogTex;
+                tile.MultiTextureData.TextureLocation = TextureUnit.Texture1;
+                tile.MultiTextureData.TextureName = TextureName.FogTexture;
+
+                tile.SetFog(true);
+                tile.SetExplored(false);
+            });
 
             Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
             guy.Team = UnitTeam.Ally;
@@ -48,15 +72,15 @@ namespace MortalDungeon.Game.Scenes
             {
                 Fire fire = new Fire(new Vector3(1150 + i * 250, 950, 0.2f));
 
-                _renderedObjects.Add(fire);
+                _genericObjects.Add(fire);
             }
 
             MountainTwo mountainBackground = new MountainTwo(new Vector3(30000, 0, -50));
             //mountainBackground.BaseObjects[0].Display.RotateX(-15);
             mountainBackground.BaseObjects[0].GetDisplay().ScaleAll(10);
-            _renderedObjects.Add(mountainBackground);
+            _genericObjects.Add(mountainBackground);
 
-            Text textTest = new Text("Test string", new Vector3(25, -2300, 0.1f), true);
+            Text textTest = new Text("Test string\nwith line break", new Vector3(25, -2300, 0.1f), true);
             textTest.SetScale(20);
 
             _text.Add(textTest);
@@ -89,7 +113,7 @@ namespace MortalDungeon.Game.Scenes
             footer.AddChild(turnCounter);
 
             PropertyAnimation testAnim = new PropertyAnimation(turnCounter.TextField.Letters[0].LetterObject.BaseFrame, 50) { Playing = true, Repeat = true };
-            Keyframe testFrame = new Keyframe(5, (baseFrame) => 
+            Keyframe testFrame = new Keyframe(1, (baseFrame) =>
             {
                 AdvanceRound();
                 turnCounter.TextField.SetTextString(Round.ToString());
@@ -104,6 +128,7 @@ namespace MortalDungeon.Game.Scenes
                 AdvanceRound();
                 turnCounter.TextField.SetTextString(Round.ToString());
             };
+
             
 
             EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - footer.GetDimensions().Y - 30, 0), new Vector2(1, 1), 10);
@@ -113,11 +138,12 @@ namespace MortalDungeon.Game.Scenes
 
             _UI.Add(energyDisplayBar);
 
+            
         }
 
 
         private Unit selectedUnit = default;
-        private List<BaseTile> validTiles = new List<BaseTile>();
+        private List<BaseTile> selectedTiles = new List<BaseTile>();
         private bool unitSelected = false;
         public override void onMouseUp(MouseButtonEventArgs e)
         {
@@ -129,36 +155,37 @@ namespace MortalDungeon.Game.Scenes
         }
 
         private int tilePosition = 0;
-        public override void onKeyUp(KeyboardKeyEventArgs e)
+        public override bool onKeyUp(KeyboardKeyEventArgs e)
         {
+            if (!base.onKeyUp(e)) 
+            {
+                return false;
+            }
+            
             Unit badGuy = _units.Find(g => g.Name == "Guy");
             //Console.WriteLine(badGuy.Position);
             if (e.Key == Keys.Right)
             {
                 tilePosition += _tileMaps[0].Height;
                 Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
                 badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
             if (e.Key == Keys.Left)
             {
                 tilePosition -= _tileMaps[0].Height;
                 Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
                 badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
             if (e.Key == Keys.Up)
             {
                 tilePosition -= 1;
                 Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
                 badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
             if (e.Key == Keys.Down)
             {
                 tilePosition += 1;
                 Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.GradualMove(new Vector3(position.X, position.Y + badGuy.PositionalOffset.Y, badGuy.Position.Z), 1, 5);
                 badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
             }
 
@@ -170,13 +197,73 @@ namespace MortalDungeon.Game.Scenes
             {
                 EnergyDisplayBar.AddEnergy(-1);
             }
-            base.onKeyUp(e);
+
+            return true;
         }
 
         public override bool onMouseMove(MouseMoveEventArgs e)
         {
-
             return base.onMouseMove(e);
+        }
+
+        public override void onUpdateFrame(FrameEventArgs args)
+        {
+            base.onUpdateFrame(args);
+
+            float _cameraSpeed = 4.0f;
+
+            if (!GetBit(_interceptKeystrokes, ObjectType.All))
+            {
+
+                if (MouseState.ScrollDelta[1] < 0)
+                {
+                    Vector3 movement = _camera.Front * _cameraSpeed / 2;
+                    if (_camera.Position.Z - movement.Z < 26)
+                    {
+                        _camera.SetPosition(_camera.Position - movement); // Backwards
+                    }
+                }
+                else if (MouseState.ScrollDelta[1] > 0)
+                {
+                    Vector3 movement = _camera.Front * _cameraSpeed / 2;
+                    if (_camera.Position.Z + movement.Z > 0)
+                    {
+                        _camera.SetPosition(_camera.Position + movement); // Forward
+                    }
+                }
+
+                if (KeyboardState.IsKeyDown(Keys.LeftShift))
+                {
+                    _cameraSpeed *= 20;
+                }
+
+
+                if (KeyboardState.IsKeyDown(Keys.W))
+                {
+                    _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                }
+
+                if (KeyboardState.IsKeyDown(Keys.S))
+                {
+                    //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
+                    //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
+                    _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                }
+                if (KeyboardState.IsKeyDown(Keys.A))
+                {
+                    //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
+                    _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
+                }
+                if (KeyboardState.IsKeyDown(Keys.D))
+                {
+                    //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
+                    _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
+                }
+                if (KeyboardState.IsKeyDown(Keys.Space))
+                {
+                    //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                }
+            }
         }
 
         public override void onUnitClicked(Unit unit)
@@ -190,16 +277,15 @@ namespace MortalDungeon.Game.Scenes
             if (_tileMaps[0].IsValidTile(unit.TileMapPosition) && selectedAbility.Type != AbilityTypes.Empty)
             {
                 _tileMaps[0].SetDefaultTileValues();
-                //_tileMaps[0][selectedUnit.TileMapPosition].SetColor(new Vector4(1.0f, 0, 0.5f, 1));
 
 
+                selectedTiles = selectedAbility.GetValidTileTargets(_tileMaps[0], _units);
+                //selectedTiles.ForEach(tile =>
+                //{
+                //    tile.SetSelected(true);
+                //});
 
-                //validTiles = _tileMaps[0].GetTilesInRadius(unit.TileMapPosition, 10);
-                validTiles = selectedAbility.GetValidTileTargets(_tileMaps[0], _units);
-                validTiles.ForEach(tile =>
-                {
-                    tile.SetColor(tile.DefaultColor - new Vector4(0.1f, 0.5f, 0.5f, 0));
-                });
+                _tileMaps[0].SelectTiles(selectedTiles);
 
                 unitSelected = true;
             }
@@ -211,37 +297,46 @@ namespace MortalDungeon.Game.Scenes
 
             if (unitSelected)
             {
-                if (validTiles.Exists(t => t.TileIndex == tile.TileIndex)) 
+                if (selectedTiles.Exists(t => t.TileIndex == tile.TileIndex))
                 {
                     Ability selectedAbility = selectedUnit.GetFirstAbilityOfType(SelectedAbilityType);
                     selectedAbility.SelectedTile = tile;
                     selectedAbility.EnactEffect();
 
+                    //selectedTiles.ForEach(tile =>
+                    //{
+                    //    tile.SetSelected(false);
+                    //});
 
-                    _tileMaps[0].SetDefaultTileValues();
+                    map.DeselectTiles();
+
                     unitSelected = false;
-                    onChangeAbilityType(AbilityTypes.Empty);
+                    //onChangeAbilityType(AbilityTypes.Empty);
                 }
             }
-            else if (KeyboardState.IsKeyDown(Keys.LeftControl)) 
+            else if (KeyboardState.IsKeyDown(Keys.LeftControl))
             {
-                tile.SetFogColor();
+
                 tile.TileClassification = TileClassification.AttackableTerrain;
                 tile.BlocksVision = true;
                 tile.SetAnimation(AnimationType.Idle);
+                tile.DefaultAnimation = (BaseTileAnimationType)AnimationType.Idle;
+                tile.DefaultColor = tile.SetFogColor();
+
                 Console.WriteLine(map.ConvertIndexToCoord(tile.TileIndex));
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftAlt))
             {
                 //map.SetDefaultTileValues();
-                map.Tiles.ForEach(t => {
-                    if (!t.BlocksVision) 
+                map.Tiles.ForEach(t =>
+                {
+                    if (!t.BlocksVision)
                     {
                         t.TileClassification = TileClassification.Ground;
                         t.SetColor(t.DefaultColor);
                         t.SetAnimation(t.DefaultAnimation);
                     }
-                    if (t.BlocksVision) 
+                    if (t.BlocksVision)
                     {
                         t.SetFogColor();
                         t.SetAnimation(BaseTileAnimationType.SolidWhite);
@@ -252,8 +347,8 @@ namespace MortalDungeon.Game.Scenes
             {
                 //validTiles = map.FindValidTilesInRadius(tile.TileIndex, 6, new List<TileClassification> { TileClassification.Ground });
                 //Unit unit = _units[0];
-                validTiles = map.GetVisionInRadius(tile.TileIndex, 6);
-                validTiles.ForEach(t =>
+                selectedTiles = map.GetVisionInRadius(tile.TileIndex, 6);
+                selectedTiles.ForEach(t =>
                 {
                     if (!t.BlocksVision)
                     {
@@ -279,30 +374,51 @@ namespace MortalDungeon.Game.Scenes
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftShift))
             {
-                validTiles.ForEach(t =>
+                selectedTiles.ForEach(t =>
                 {
-                    if (t.CurrentAnimation != BaseTileAnimationType.SolidWhite) 
+                    if (t.CurrentAnimation != BaseTileAnimationType.SolidWhite)
                     {
                         t.SetColor(t.DefaultColor);
                         t.SetAnimation(t.DefaultAnimation);
                     }
 
                 });
-                validTiles = map.GetPathToPoint(_units[0].TileMapPosition, tile.TileIndex, 100, new List<TileClassification>() { TileClassification.Ground }, _units);
+                selectedTiles = map.GetPathToPoint(_units[0].TileMapPosition, tile.TileIndex, 100, new List<TileClassification>() { TileClassification.Ground }, _units);
 
-                if (validTiles.Count == 0)
+                if (selectedTiles.Count == 0)
                 {
-                    validTiles.Add(tile);
+                    selectedTiles.Add(tile);
                     tile.SetColor(new Vector4(1f, 0f, 0f, 1));
                 }
-                else 
+                else
                 {
-                    validTiles.ForEach(t =>
+                    selectedTiles.ForEach(t =>
                     {
                         t.SetColor(new Vector4(0.75f, 0.5f, 0.5f, 1));
                         t.SetAnimation(t.DefaultAnimation);
                     });
                 }
+            }
+            else if (KeyboardState.IsKeyDown(Keys.F)) 
+            {
+                List<BaseTile> tiles = new List<BaseTile>();
+                _units.ForEach(unit =>
+                {
+                    tiles = map.GetVisionInRadius(unit.TileMapPosition, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
+
+                    tiles.ForEach(tile =>
+                    {
+                        tile.SetFog(false);
+                        tile.SetExplored();
+                    });
+                });
+            }
+            else if (KeyboardState.IsKeyDown(Keys.G))
+            {
+                map.Tiles.ForEach(tile =>
+                {
+                    tile.SetFog(true);
+                });
             }
 
         }

@@ -15,6 +15,20 @@ namespace MortalDungeon
         Particle
     }
 
+    public static class Colors 
+    {
+        public static Vector4 Black = new Vector4(0, 0, 0, 1);
+        public static Vector4 White = new Vector4(1, 1, 1, 1);
+        public static Vector4 Red = new Vector4(1, 0, 0, 1);
+        public static Vector4 Green = new Vector4(0, 1, 0, 1);
+        public static Vector4 Blue = new Vector4(0, 0, 1, 1);
+
+        public static Vector4 TranslucentRed = new Vector4(1, 0, 0, 0.5f);
+        public static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.4f);
+
+        public static Vector4 Invisible = new Vector4(0, 0, 0, 0);
+    }
+
     //public struct ShaderInfo 
     //{
     //    public ShaderInfo(string vertex, string fragment) 

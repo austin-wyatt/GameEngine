@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,7 +14,8 @@ namespace MortalDungeon.Engine_Classes
         Misc_One,
         Die,
         Transparent,
-        Grass
+        Grass,
+        Misc
     }
     public class Animation
     {
@@ -21,7 +23,7 @@ namespace MortalDungeon.Engine_Classes
         public bool Reverse = false;
 
         public List<RenderableObject> Frames = new List<RenderableObject>();
-        public int Frequency = 6; //in ticks (1/30th of a second)
+        public int Frequency = 6; //in ticks (1/45th of a second)
         public AnimationType Type = AnimationType.Idle;
         public RenderableObject CurrentFrame;
 
@@ -186,7 +188,7 @@ namespace MortalDungeon.Engine_Classes
         public Action OnFinish = null;
 
         public int CurrentKeyframe = 0;
-        private uint tick = 0;
+        private int tick = 0;
 
         public PropertyAnimation(RenderableObject baseFrame, int id = 0) 
         {
@@ -194,13 +196,17 @@ namespace MortalDungeon.Engine_Classes
             AnimationID = id;
 
             SetDefaultValues();
+
+            timer.Start();
         }
 
         public PropertyAnimation() { }
 
+        private int count = 0;
+        private Stopwatch timer = new Stopwatch();
         public void Tick() 
         {
-            if (Playing) 
+            if (Playing && Keyframes.Count >= 0) 
             {
                 if (CurrentKeyframe >= Keyframes.Count) 
                 {
@@ -211,13 +217,25 @@ namespace MortalDungeon.Engine_Classes
                     return;
                 }
 
-                if (Keyframes[CurrentKeyframe].ActivationTick == tick) 
+                if (Keyframes[CurrentKeyframe].ActivationTick <= tick) 
                 {
                     Keyframes[CurrentKeyframe].Action?.Invoke(BaseFrame);
+
                     CurrentKeyframe++;
                 }
 
                 tick++;
+            }
+
+            if (WindowConstants.ShowTicksPerSecond) 
+            {
+                if (timer.ElapsedMilliseconds > 1000)
+                {
+                    Console.WriteLine("Ticks per second: " + count);
+                    count = 0;
+                    timer.Restart();
+                }
+                count++;
             }
         }
 
@@ -228,14 +246,16 @@ namespace MortalDungeon.Engine_Classes
         {
             CurrentKeyframe = 0;
             tick = 0;
+            Tick();
         }
 
         public void Play() 
         {
             Playing = true;
+            SetDefaultValues();
         }
 
-        public void Pause()
+        public void Stop()
         {
             Playing = false;
         }

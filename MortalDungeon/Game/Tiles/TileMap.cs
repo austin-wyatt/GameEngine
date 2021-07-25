@@ -1,14 +1,16 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Game.GameObjects
+namespace MortalDungeon.Game.Tiles
 {
     public enum Direction
     {
@@ -85,6 +87,18 @@ namespace MortalDungeon.Game.GameObjects
         public int Height = 30;
 
         public List<BaseTile> Tiles = new List<BaseTile>();
+        public List<BaseTile> SelectionTiles = new List<BaseTile>(); //these tiles will be place above the currently selected tiles
+        public BaseTile HoveredTile;
+
+        public List<TileChunk> TileChunks = new List<TileChunk>();
+
+        public int TileMapID = 0;
+
+        private int _maxSelectionTiles = 1000;
+        public int _amountOfSelectionTiles = 0;
+        private List<BaseTile> _selectionTilePool = new List<BaseTile>();
+
+        private List<BaseTile> _hoveredTileList = new List<BaseTile>();
         public TileMap(Vector3 position, int id = 0, string name = "TileMap")
         {
             Position = position; //position of the first tile
@@ -114,25 +128,113 @@ namespace MortalDungeon.Game.GameObjects
             {
                 for (int o = 0; o < Height; o++)
                 {
-                    baseTile = new BaseTile(tilePosition, i * Width + o) { Clickable = true };
+                    baseTile = new BaseTile(tilePosition, i * Height + o) { Clickable = true };
+                    baseTile.SetAnimation(BaseTileAnimationType.Grass);
+                    baseTile.DefaultAnimation = BaseTileAnimationType.Grass;
 
                     Tiles.Add(baseTile);
 
                     if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TileIndex != 0) //add a bit on randomness to tile gen
                     {
                         baseTile.TileClassification = TileClassification.Terrain;
-                        baseTile.DefaultAnimation = Objects.BaseTileAnimationType.SolidWhite;
+                        baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
                         baseTile.DefaultColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
                     }
 
                     tilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y;
                 }
-                tilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.29f;
-                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2);
+                tilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.34f; //1.29 before outlining changes
+                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2f); //2 before outlining changes
                 tilePosition.Z += 0.0001f;
             }
 
+            tilePosition.Z += 0.03f;
+            InitializeHelperTiles(tilePosition);
+            FillTileChunks(10, 10);
+
             SetDefaultTileValues();
+        }
+
+        private void InitializeHelperTiles(Vector3 tilePosition) 
+        {
+            BaseTile baseTile = new BaseTile();
+            for (int i = 0; i < _maxSelectionTiles; i++)
+            {
+                baseTile = new BaseTile(tilePosition, i);
+                baseTile.Render = false;
+                baseTile._tileObject.OutlineParameters.OutlineColor = Colors.TranslucentBlue;
+                baseTile._tileObject.OutlineParameters.InlineColor = Colors.TranslucentBlue;
+                //baseTile._tileObject.OutlineParameters.OutlineThickness = 2;
+                baseTile._tileObject.OutlineParameters.SetAllInline(4);
+                baseTile.SetAnimation(BaseTileAnimationType.SolidWhite);
+                baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
+
+                //baseTile.DefaultColor = Colors.TranslucentBlue;
+                //baseTile.SetColor(Colors.TranslucentBlue);
+
+                baseTile.DefaultColor = Colors.Invisible;
+                baseTile.SetColor(Colors.Invisible);
+
+                //SelectionTiles.Add(baseTile);
+                _selectionTilePool.Add(baseTile);
+            }
+
+            tilePosition.Z += 0.001f;
+            HoveredTile = new BaseTile(tilePosition, 0);
+            HoveredTile.Render = false;
+            HoveredTile._tileObject.OutlineParameters.OutlineColor = Colors.Red;
+            HoveredTile._tileObject.OutlineParameters.InlineColor = Colors.Red;
+            HoveredTile._tileObject.OutlineParameters.SetAllOutline(0);
+            HoveredTile._tileObject.OutlineParameters.SetAllInline(10);
+            HoveredTile.SetAnimation(BaseTileAnimationType.Transparent);
+            HoveredTile.DefaultAnimation = BaseTileAnimationType.Transparent;
+
+            _hoveredTileList = new List<BaseTile>() { HoveredTile };
+        }
+
+        private void FillTileChunks(int width = TileChunk.DefaultChunkWidth, int height = TileChunk.DefaultChunkHeight) 
+        {
+            float yChunkCount = (float)Height / height;
+            float xChunkCount = (float)Width / width;
+
+            int currentTileID = 0;
+
+            for (int i = 0; i < xChunkCount; i++) 
+            {
+                for (int j = 0; j < yChunkCount; j++) 
+                {
+                    TileChunk chunk = new TileChunk(width, height);
+                    for (int x = 0; x < width; x++) 
+                    {
+                        for (int y = 0; y < height; y++) 
+                        {
+                            if (y + j * height >= Height) //stop adding tiles when you go past the bounds of the map
+                            {
+                                y = height; 
+                                continue;
+                            }
+                            if (x + i * width >= Width) 
+                            {
+                                x = width;
+                                continue;
+                            }
+
+
+                            currentTileID = (i * width) * Height + (j * height) + x * Height + y;
+                            chunk.AddTile(Tiles[currentTileID]);
+                        }
+                    }
+
+                    chunk.CalculateValues();
+
+                    TileChunks.Add(chunk);
+                }
+            }
+        }
+
+        public List<BaseTile> GetHoveredTile() 
+        {
+            return _hoveredTileList;
         }
 
         public Vector3 GetPositionOfTile(int index)
@@ -269,18 +371,71 @@ namespace MortalDungeon.Game.GameObjects
         }
         #endregion
 
+        public List<BaseTile> GetSelectionTilePool() 
+        {
+            return _selectionTilePool;
+        }
+
+        public void SelectTiles(List<BaseTile> tiles) 
+        {
+            if (tiles.Count > _maxSelectionTiles)
+                throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + _maxSelectionTiles + " in tile map " + TileMapID);
+
+            for (int i = 0; i < tiles.Count; i++) 
+            {
+                SelectTile(tiles[i]);
+            }
+        }
+
+        public void SelectTile(BaseTile tile)
+        {
+            Vector3 pos = new Vector3();
+            pos.X = tile.Position.X;
+            pos.Y = tile.Position.Y;
+            pos.Z = _selectionTilePool[_amountOfSelectionTiles].Position.Z;
+
+            _selectionTilePool[_amountOfSelectionTiles].SetPosition(pos);
+            _selectionTilePool[_amountOfSelectionTiles].Render = true;
+
+            SelectionTiles.Add(_selectionTilePool[_amountOfSelectionTiles]);
+
+            _amountOfSelectionTiles++;
+        }
+
+        public void DeselectTiles() 
+        {
+            for (int i = 0; i < _amountOfSelectionTiles; i++) 
+            {
+                _selectionTilePool[i].Render = false;
+            }
+
+            SelectionTiles.Clear();
+
+            _amountOfSelectionTiles = 0;
+        }
+
+        public void HoverTile(BaseTile tile) 
+        {
+            Vector3 pos = new Vector3();
+            pos.X = tile.Position.X;
+            pos.Y = tile.Position.Y;
+            pos.Z = HoveredTile.Position.Z;
+
+            HoveredTile.SetPosition(pos);
+            HoveredTile.Render = true;
+        }
+
+        public void EndHover() 
+        {
+            HoveredTile.Render = false;
+        }
+
+
         public void SetDefaultTileValues()
         {
             Tiles.ForEach(tile =>
             {
-                if (tile.InFog)
-                {
-                    tile.SetFogColor();
-                }
-                else 
-                {
-                    tile.SetColor(tile.DefaultColor);
-                }
+                tile.SetColor(tile.DefaultColor);
                 tile.SetAnimation(tile.DefaultAnimation);
             });
         }

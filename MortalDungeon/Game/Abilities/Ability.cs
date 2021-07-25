@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
@@ -36,8 +37,11 @@ namespace MortalDungeon.Game.Abilities
         public DamageType DamageType;
 
         public Unit CastingUnit;
-        public List<Unit> AffectedUnits = new List<Unit>();
-        public List<Unit> AffectedTiles = new List<Unit>();
+        public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
+        public List<BaseTile> AffectedTiles = new List<BaseTile>(); //tiles that need to be accessed frequently for the ability 
+
+        public List<Unit> Units = new List<Unit>(); //relevant units
+        public List<BaseTile> CurrentTiles = new List<BaseTile>(); //the current set of tiles that is being worked with
 
         public TileMap TileMap;
         public BaseTile SelectedTile;
@@ -73,11 +77,18 @@ namespace MortalDungeon.Game.Abilities
         public virtual void EnactEffect() { } //the actual effect of the skill
 
         //remove invalid tiles from the list
-        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units) 
+        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 
         {
             for (int i = 0; i < validTiles.Count; i++)
             {
                 if (validTiles[i].TileIndex == CastingUnit.TileMapPosition && !CanTargetSelf)
+                {
+                    validTiles.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                if (validTiles[i].InFog && !validTiles[i].Explored && trimFog) 
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -90,7 +101,7 @@ namespace MortalDungeon.Game.Abilities
                     {
                         if (units[j].TileMapPosition == validTiles[i].TileIndex)
                         {
-                            if ((!CanTargetAlly && units[j].IsAlly) || (!CanTargetEnemy && units[j].IsEnemy))
+                            if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team != UnitTeam.Ally))
                             {
                                 validTiles.RemoveAt(i);
                                 i--;

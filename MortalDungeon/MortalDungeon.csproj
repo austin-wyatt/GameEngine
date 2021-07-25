@@ -12,9 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-	<None Update="Resources\Button.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
 	<None Update="Resources\CaveSpritesheet.png">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</None>
@@ -24,28 +21,25 @@
 	<None Update="Resources\CharacterSpritesheet.png">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</None>
-	<None Update="Resources\container.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Resources\Cursor.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\HexagonTile.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\OctagonT.png">
+    <None Update="Resources\FogTexture.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\SpritesheetTest.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\stonks.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Tree.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\UISpritesheet.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\simpleShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\simpleShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\fastDefaultShader.vert">

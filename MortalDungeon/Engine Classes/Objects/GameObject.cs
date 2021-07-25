@@ -1,10 +1,15 @@
-﻿using MortalDungeon.Game.Abilities;
+﻿using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.UI;
+using MortalDungeon.Objects;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static MortalDungeon.Game.UI.UIHelpers;
 
 namespace MortalDungeon.Engine_Classes
 {
@@ -19,15 +24,21 @@ namespace MortalDungeon.Engine_Classes
 
         public List<PropertyAnimation> PropertyAnimations = new List<PropertyAnimation>();
 
-        private Vector3 _velocity = default;
-        private int _moveDelay = 1;
-        private int _currentDelay = 0;
-        private int _totalMoves = 0;
-        private float _timeToArrive = WindowConstants.TickDenominator; //move delays it will take to arrive. (1 _moveDelay and 60 _timeToArrive would be 1 second. 2 and 30 would also be 1 second.)
-        private bool _moving = false;
-
+        public bool Cull = false; //whether the object was determined to be outside of the camera's view and should be culled
         public bool Render = true;
         public bool Clickable = false; //Note: The BaseObject's Clickable property and this property must be true for UI objects
+        public bool Hoverable = false;
+        public bool Draggable = false;
+
+        public bool Hovered = false;
+        public bool Grabbed = false;
+
+
+        public MultiTextureData MultiTextureData = new MultiTextureData();
+
+        public ObjectType ObjectType = ObjectType.GenericObject;
+
+        public Vector3 _grabbedDeltaPos = default;
 
         //public Stats Stats; //contains game parameters for the object
         public GameObject() { }
@@ -49,20 +60,9 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void Tick() 
         {
-            bool shouldMove = _moving && (_moveDelay == _currentDelay);
-
             BaseObjects.ForEach(obj =>
             {
                 obj._currentAnimation.Tick();
-                //obj.PropertyAnimations.ForEach(anim =>
-                //{
-                //    anim.Tick();
-                //});
-
-                if (shouldMove) 
-                {
-                    obj.SetPosition(obj.Position + _velocity);
-                }
             });
 
             PropertyAnimations.ForEach(anim =>
@@ -70,47 +70,15 @@ namespace MortalDungeon.Engine_Classes
                 anim.Tick();
             });
 
+            if (_properyAnimationsToDestroy.Count > 0) 
+            {
+                DestroyQueuedPropertyAnimations();
+            }
+
             ParticleGenerators.ForEach(gen =>
             {
                 gen.Tick();
-                if (shouldMove)
-                {
-                    gen.SetPosition(gen.Position + _velocity);
-                }
             });
-
-            if (shouldMove)
-            {
-                _currentDelay = 0;
-                Position += _velocity;
-                _totalMoves++;
-            }
-            else if (_moving) 
-            {
-                _currentDelay++;
-            }
-
-            if (_totalMoves >= _timeToArrive) 
-            {
-                _moving = false;
-                _totalMoves = 0;
-                _velocity.X = 0;
-                _velocity.Y = 0;
-                _velocity.Z = 0;
-            }
-        }
-
-        public void GradualMove(Vector3 finalPosition, int moveDelay = 1, float timeToArrive = WindowConstants.TickDenominator) 
-        {
-            if (_velocity.X != 0 || _velocity.Y != 0 || _velocity.Z != 0) 
-            {
-                SetPosition(Position + _velocity * (_timeToArrive - _totalMoves) * _moveDelay);
-                _totalMoves = 0;
-            }
-            _timeToArrive = timeToArrive / moveDelay; //contrary to the internal variable, _timeToArrive will always be measured in the ticks the move will take when calling the function
-            _velocity = (finalPosition - Position) / _timeToArrive;
-
-            _moving = true;
         }
 
         public virtual void ScaleAll(float f) 
@@ -143,18 +111,116 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
+        public virtual RenderableObject GetDisplay()
+        {
+            RenderableObject display;
+
+            if (BaseObjects.Count > 0)
+            {
+                display = BaseObjects[0].GetDisplay();
+            }
+            else if (ParticleGenerators.Count > 0)
+            {
+                display = ParticleGenerators[0].ParticleDisplay;
+            }
+            else 
+            {
+                throw new Exception("Attemped to retrieve the display of an empty GameObject.");
+            }
+
+            return display;
+        }
+
         public PropertyAnimation GetPropertyAnimationByID(int id) 
         {
             return PropertyAnimations.Find(anim => anim.AnimationID == id);
         }
+        private List<int> _properyAnimationsToDestroy = new List<int>();
+        public void RemovePropertyAnimation(int animationID) 
+        {
+            int animIndex = PropertyAnimations.FindIndex(p => p.AnimationID == animationID);
+
+            if (animIndex != -1) 
+            {
+                _properyAnimationsToDestroy.Add(animIndex);
+            }
+        }
+        private void DestroyQueuedPropertyAnimations() 
+        {
+            _properyAnimationsToDestroy.Sort((x,y) => y - x);
+
+            _properyAnimationsToDestroy.ForEach(i =>
+            {
+                PropertyAnimations.RemoveAt(i);
+            });
+
+            _properyAnimationsToDestroy.Clear();
+        }
+
+        public void AddPropertyAnimation(PropertyAnimation animation) 
+        {
+            PropertyAnimations.Add(animation);
+        }
+        private int _animationID = 0;
+        public int NextAnimationID 
+        {
+            get 
+            {
+                return _animationID++;
+            }
+            private set 
+            {
+                NextAnimationID = value;
+            }
+        }
 
         public virtual void OnClick() { }
-        public virtual void OnHover() { }
-        public virtual void HoverEnd() { }
+        public virtual void OnHover() 
+        {
+            if (Hoverable && !Hovered)
+            {
+                Hovered = true;
+            }
+        }
+        public virtual void HoverEnd() 
+        {
+            if (Hovered) 
+            {
+                Hovered = false;
+            }
+        }
         public virtual void OnMouseDown() { }
         public virtual void OnMouseUp() { }
-        public virtual void OnGrab() { }
-        public virtual void GrabEnd() { }
+        public virtual void OnGrab(Vector2 MouseCoordinates) 
+        {
+            if (Draggable && !Grabbed)
+            {
+                Grabbed = true;
+
+                Vector3 screenCoord = WindowConstants.ConvertLocalToScreenSpaceCoordinates(MouseCoordinates);
+
+                _grabbedDeltaPos = screenCoord - Position;
+            }
+        }
+        public virtual void GrabEnd() 
+        {
+            if (Grabbed)
+            {
+                Grabbed = false;
+                _grabbedDeltaPos = default;
+            }
+        }
 
     }
+
+    public class MultiTextureData
+    {
+        public bool MixTexture = false;
+        public TextureUnit TextureLocation = TextureUnit.Texture1;
+        public float MixPercent = 0f;
+        public Texture Texture = null;
+
+        public TextureName TextureName = TextureName.Unknown;
+    }
+
 }

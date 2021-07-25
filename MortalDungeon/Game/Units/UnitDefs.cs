@@ -27,6 +27,7 @@ namespace MortalDungeon.Game.Units
 
             SetPosition(position);
 
+            VisionRadius = 6;
 
             Abilities.Move movement = new Abilities.Move(this, 6);
             Abilities.Add(movement);

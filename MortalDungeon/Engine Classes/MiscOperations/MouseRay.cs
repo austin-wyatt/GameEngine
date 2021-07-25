@@ -58,7 +58,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         private Vector4 ToEyeCoords(Vector4 clipCoords)
         {
-            Matrix4 invertedProjection = Matrix4.Invert(camera.GetProjectionMatrix());
+            Matrix4 invertedProjection = Matrix4.Invert(camera.ProjectionMatrix);
             Vector4 eyeCoords = clipCoords * invertedProjection;
             return new Vector4(eyeCoords.X, eyeCoords.Y, -1, 0);
         }
@@ -92,7 +92,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
             vec.W = 1.0f;
 
             Matrix4 viewInv = Matrix4.Invert(camera.GetViewMatrix());
-            Matrix4 projInv = Matrix4.Invert(camera.GetProjectionMatrix());
+            Matrix4 projInv = Matrix4.Invert(camera.ProjectionMatrix);
 
             vec *= projInv;
             vec *= viewInv;
