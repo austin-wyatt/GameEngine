@@ -4,9 +4,7 @@ using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using OpenTK.Mathematics;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
@@ -20,7 +18,7 @@ namespace MortalDungeon.Game.Units
     public class Unit : GameObject //main unit class. Tracks position on tilemap
     {
         public int TileMapPosition = -1; //can be anything from -1 to infinity. If the value is below 0 then it is not being positioned on the tilemap
-        public List<Ability> Abilities = new List<Ability>();
+        public Dictionary<int, Ability> Abilities = new Dictionary<int, Ability>();
 
         public int MaxEnergy = 10;
         public int CurrentEnergy = 10;

@@ -1,12 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
+﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace MortalDungeon.Game.Objects
+namespace MortalDungeon.Engine_Classes
 {
     public enum Character
     {
@@ -94,6 +92,8 @@ namespace MortalDungeon.Game.Objects
             _display = letter.BaseFrame;
 
             BaseObjects.Add(letter);
+
+            letter.RenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold };
 
             SetScale(scale);
 

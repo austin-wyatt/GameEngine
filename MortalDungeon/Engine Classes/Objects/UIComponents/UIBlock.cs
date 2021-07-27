@@ -2,15 +2,13 @@
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Game.UI
+namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class UIBlock : UIObject
     {
-        private bool _scaleAspectRatio = true;
-        protected BaseObject _window;
-
         public UIBlock(Vector3 position, Vector2 size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
         {
             Position = position;
@@ -39,39 +37,52 @@ namespace MortalDungeon.Game.UI
             windowObj.BaseFrame.CameraPerspective = CameraPerspective;
 
             BaseObjects.Add(windowObj);
-            _window = windowObj;
+            _baseObject = windowObj;
 
             windowObj.OutlineParameters.SetAllInline(2);
 
             MultiTextureData.MixTexture = true;
             MultiTextureData.MixPercent = 0.5f;
-            MultiTextureData.Texture = new Texture(UIHelpers.UI_BACKGROUND.Handle, TextureName.FogTexture);
-            MultiTextureData.TextureLocation = OpenTK.Graphics.OpenGL4.TextureUnit.Texture1;
-            MultiTextureData.TextureName = TextureName.FogTexture;
+            MultiTextureData.MixedTexture = new Texture(UIHelpers.UI_BACKGROUND.Handle, TextureName.FogTexture);
+            MultiTextureData.MixedTextureLocation = OpenTK.Graphics.OpenGL4.TextureUnit.Texture1;
+            MultiTextureData.MixedTextureName = TextureName.FogTexture;
 
 
             SetSize(Size);
 
             SetOrigin(aspectRatio, Size);
+
+            ValidateObject(this);
         }
 
-        public void SetSize(Vector2 size)
+        public override void SetSize(Vector2 size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
-            Vector2 ScaleFactor = new Vector2(size.X, size.Y);
-            _window.BaseFrame.SetScaleAll(1);
+            Vector2 oldSize = new Vector2(Size.X, Size.Y);
 
-            _window.BaseFrame.ScaleX(aspectRatio);
-            _window.BaseFrame.ScaleX(ScaleFactor.X);
-            _window.BaseFrame.ScaleY(ScaleFactor.Y);
+            Vector2 ScaleFactor = new Vector2(size.X, size.Y);
+            _baseObject.BaseFrame.SetScaleAll(1);
+
+            _baseObject.BaseFrame.ScaleX(aspectRatio);
+            _baseObject.BaseFrame.ScaleX(ScaleFactor.X);
+            _baseObject.BaseFrame.ScaleY(ScaleFactor.Y);
+
+            Vector3 oldOrigin = new Vector3(Origin);
 
             Size = size;
+            SetOrigin(aspectRatio, Size);
+        }
+
+        public void SetOrigin() 
+        {
+            float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
+            SetOrigin(aspectRatio, Size);
         }
 
         public override void SetColor(Vector4 color)
         {
-            _window.BaseFrame.Color = color;
+            _baseObject.BaseFrame.Color = color;
         }
 
         public override void ScaleAddition(float f)

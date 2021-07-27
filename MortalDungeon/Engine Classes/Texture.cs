@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace MortalDungeon
+namespace MortalDungeon.Engine_Classes
 {
     public class BitmapImageData 
     {

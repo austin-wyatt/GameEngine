@@ -1,6 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -14,7 +13,7 @@ namespace MortalDungeon.Game.Abilities
     {
         List<TileClassification> TraversableTypes = new List<TileClassification>();
 
-        public Move(Unit castingUnit, int range = 6) 
+        public Move(Unit castingUnit, int range = 6)
         {
             Type = AbilityTypes.Move;
             Range = range;
@@ -60,7 +59,7 @@ namespace MortalDungeon.Game.Abilities
 
                 ClearSelectedTiles();
             }
-            else 
+            else
             {
                 CurrentTiles = TileMap.GetPathToPoint(CastingUnit.TileMapPosition, SelectedTile.TileIndex, Range, TraversableTypes, Units, CastingUnit, Type);
             }
@@ -130,7 +129,6 @@ namespace MortalDungeon.Game.Abilities
                 moveAnimation.OnFinish = () =>
                 {
                     CastingUnit.RemovePropertyAnimation(moveAnimation.AnimationID);
-                    Scene.SelectAbility(this);
                 };
             }
 
@@ -159,7 +157,7 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile) 
+        public override void OnTileClicked(TileMap map, BaseTile tile)
         {
             if (AffectedTiles.Exists(t => t.TileIndex == tile.TileIndex))
             {
@@ -171,9 +169,9 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public override void OnUnitClicked(Unit unit) 
+        public override void OnUnitClicked(Unit unit)
         {
-            if (CastingUnit.ObjectID == unit.ObjectID) 
+            if (CastingUnit.ObjectID == unit.ObjectID)
             {
                 Scene.DeselectAbility();
             }
@@ -183,12 +181,12 @@ namespace MortalDungeon.Game.Abilities
         private Vector4 _baseSelectionColor = new Vector4();
         private List<BaseTile> _path = new List<BaseTile>();
         private List<int> _pathTilesToDelete = new List<int>();
-        public override void OnHover(BaseTile tile, TileMap map) 
+        public override void OnHover(BaseTile tile, TileMap map)
         {
             if (tile.TileIndex == CastingUnit.TileMapPosition)
                 return;
 
-            if (SelectedTile == null || tile.ObjectID != SelectedTile.ObjectID) 
+            if (SelectedTile == null || tile.ObjectID != SelectedTile.ObjectID)
             {
                 SelectedTile = tile;
                 List<BaseTile> tiles = new List<BaseTile>();
@@ -197,7 +195,7 @@ namespace MortalDungeon.Game.Abilities
                 //attempt to extend the selection from the current path
                 if (_path.Count > 0)
                 {
-                    bool selectedTileInPath = _path.Exists(p => p.AttachedTile.ObjectID == tile.ObjectID);
+                    bool selectedTileInPath = _path.Exists(p => p.AttachedTile != null && p.AttachedTile.ObjectID == tile.ObjectID);
 
                     //get the path from the last tile to the hovered point
                     tiles = TileMap.GetPathToPoint(_path[_path.Count - 1].AttachedTile.TileIndex, SelectedTile.TileIndex, Range - _path.Count + 1, TraversableTypes, Units, CastingUnit, Type);
@@ -228,7 +226,7 @@ namespace MortalDungeon.Game.Abilities
                             {
                                 tiles.Clear();
                                 //remove the last tile since we are backtracking
-                                for (int j = _path.Count - 1; j > i; j--) 
+                                for (int j = _path.Count - 1; j > i; j--)
                                 {
                                     if (_pathTilesToDelete.Contains(j))
                                     {
@@ -238,7 +236,7 @@ namespace MortalDungeon.Game.Abilities
                                     ClearTile(_path[j]);
                                     _path.Remove(_path[j]);
                                 }
-                                
+
 
                                 //if backtracking, fill the tiles list with the path up to that point
                                 for (int j = 0; j < _path.Count; j++)
@@ -264,9 +262,9 @@ namespace MortalDungeon.Game.Abilities
                         //if a path doesn't exist attempt to get one normally
                         tiles = TileMap.GetPathToPoint(CastingUnit.TileMapPosition, SelectedTile.TileIndex, Range, TraversableTypes, Units, CastingUnit, Type);
                     }
-                    
+
                 }
-                else 
+                else
                 {
                     tiles = TileMap.GetPathToPoint(CastingUnit.TileMapPosition, SelectedTile.TileIndex, Range, TraversableTypes, Units, CastingUnit, Type);
                 }
@@ -281,7 +279,7 @@ namespace MortalDungeon.Game.Abilities
                         {
                             _path.Add(t.AttachedTile);
                         }
-                        else 
+                        else
                         {
                             map.SelectTile(t);
                             _path.Add(t.AttachedTile);
@@ -300,7 +298,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        private void ClearSelectedTiles() 
+        private void ClearSelectedTiles()
         {
             _path.ForEach(t =>
             {
@@ -316,7 +314,7 @@ namespace MortalDungeon.Game.Abilities
             _pathTilesToDelete.Clear();
         }
 
-        private void ClearTile(BaseTile tile) 
+        private void ClearTile(BaseTile tile)
         {
             tile._tileObject.OutlineParameters.InlineColor = _baseSelectionColor;
             tile._tileObject.OutlineParameters.InlineThickness = tile._tileObject.OutlineParameters.BaseInlineThickness;
@@ -328,31 +326,13 @@ namespace MortalDungeon.Game.Abilities
             Scene.DeselectAbility();
             ClearSelectedTiles();
         }
-    }
 
-    public class BasicMelee : Ability
-    {
-        public BasicMelee(Unit castingUnit, int range = 1)
+        public override void OnAbilityDeselect()
         {
-            Type = AbilityTypes.MeleeAttack;
-            Range = range;
-            CastingUnit = castingUnit;
+            base.OnAbilityDeselect();
 
-            Name = "Melee";
-        }
-
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
-        {
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(CastingUnit.TileMapPosition, Range, new List<TileClassification> { TileClassification.Ground, TileClassification.AttackableTerrain }, units, CastingUnit);
-            TileMap = tileMap;
-
-            TrimTiles(validTiles, units);
-            return validTiles;
-        }
-
-        public override void EnactEffect()
-        {
-            base.EnactEffect();
+            ClearSelectedTiles();
         }
     }
+
 }

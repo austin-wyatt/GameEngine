@@ -188,6 +188,9 @@ namespace MortalDungeon
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
+            //Texture.UsedTextures.Clear();
+
+
             double timeValue;
 
             ////FPS
@@ -246,7 +249,6 @@ namespace MortalDungeon
             //all objects using the fast default shader are handled here
             Shaders.FAST_DEFAULT_SHADER.Use();
             Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat("alpha_threshold", RenderingConstants.DefaultAlphaThreshold);
             _sceneController.Scenes.ForEach(scene =>
             {
                 _renderer.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
@@ -513,7 +515,8 @@ namespace MortalDungeon
         {
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                _sceneController.Scenes[i].onMouseDown(obj);
+                if(_sceneController.Scenes[i].Loaded)
+                    _sceneController.Scenes[i].onMouseDown(obj);
             }
         }
 
@@ -521,7 +524,8 @@ namespace MortalDungeon
         {
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                _sceneController.Scenes[i].onMouseMove();
+                if (_sceneController.Scenes[i].Loaded)
+                    _sceneController.Scenes[i].onMouseMove();
             }
         }
 
@@ -529,7 +533,8 @@ namespace MortalDungeon
         {
             for (int i = 0; i < _sceneController.Scenes.Count; i++) 
             {
-                _sceneController.Scenes[i].onMouseUp(obj);
+                if (_sceneController.Scenes[i].Loaded)
+                    _sceneController.Scenes[i].onMouseUp(obj);
             }
         }
 
@@ -537,7 +542,8 @@ namespace MortalDungeon
         {
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                _sceneController.Scenes[i].onKeyUp(obj);
+                if (_sceneController.Scenes[i].Loaded)
+                    _sceneController.Scenes[i].onKeyUp(obj);
             }
 
             //
@@ -599,7 +605,8 @@ namespace MortalDungeon
         {
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                _sceneController.Scenes[i].onKeyDown(obj);
+                if (_sceneController.Scenes[i].Loaded)
+                    _sceneController.Scenes[i].onKeyDown(obj);
             }
         }
         #endregion

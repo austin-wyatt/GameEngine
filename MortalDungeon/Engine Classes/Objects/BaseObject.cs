@@ -31,6 +31,8 @@ namespace MortalDungeon.Engine_Classes
 
         public OutlineParameters OutlineParameters = new OutlineParameters();
 
+        public RenderData RenderData = RenderData.DefaultRenderData;
+
         public Vector3 Dimensions 
         {
             get 
@@ -326,4 +328,12 @@ namespace MortalDungeon.Engine_Classes
             BaseOutlineThickness = thickness;
         }
     }
+
+    public class RenderData
+    {
+        public float AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold;
+
+        public static RenderData DefaultRenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold };
+    }
+
 }

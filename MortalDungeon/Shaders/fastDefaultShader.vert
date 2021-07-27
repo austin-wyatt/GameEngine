@@ -7,7 +7,7 @@ layout(location = 6) in vec4 aColor;
 layout(location = 7) in vec4 compositeType; //composite vector of whether to enable the cam (0), the spritesheet position (1), the X and Y lengths of the spritesheet (2, 3)
 layout(location = 8) in vec4 compositeType_2; //composite vector of spritesheet width, spritesheet height, use second texture, mix percent
 
-layout(location = 9) in vec4 compositeType_3; //composite vector of inline thickness, outline thickness, reserved, reserved
+layout(location = 9) in vec4 compositeType_3; //composite vector of inline thickness, outline thickness, alpha threshold, primary texture target
 layout(location = 10) in vec4 aInlineColor;
 layout(location = 11) in vec4 aOutlineColor;
 
@@ -25,7 +25,9 @@ out float outlineThickness;
 out vec4 inlineColor;
 out vec4 outlineColor;
 
-out float blurImage;
+out float alpha_threshold;
+
+out float primaryTextureTarget;
 
 uniform mat4 camera;
 
@@ -77,8 +79,9 @@ void main(void)
 	pos[0] *= aspectRatio; //allow for non-square objects
 
 
-//	blurImage = compositeType_3[2];
-	blurImage = 1;
+	alpha_threshold = compositeType_3[2];
+	primaryTextureTarget = compositeType_3[3];
+
 
 	if(compositeType[0] == 1)
 	{

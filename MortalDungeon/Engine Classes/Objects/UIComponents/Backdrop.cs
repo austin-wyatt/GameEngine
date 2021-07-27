@@ -5,16 +5,13 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Game.UI
+namespace MortalDungeon.Engine_Classes.UIComponents
 {
     /// <summary>
     /// Functionally similar to the UIBlock class but only contains the backdrop as opposed to the backdrop + primary window
     /// </summary>
     public class Backdrop : UIObject
     {
-        private bool _scaleAspectRatio = true;
-        private BaseObject _backdrop;
-
         public Action _onClick;
 
         public Backdrop(Vector3 position, Vector2 size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true, bool cameraPerspective = false)
@@ -50,14 +47,16 @@ namespace MortalDungeon.Game.UI
             backdropObj.BaseFrame.CameraPerspective = CameraPerspective;
 
             BaseObjects.Add(backdropObj);
-            _backdrop = backdropObj;
+            _baseObject = backdropObj;
 
             SetOrigin(aspectRatio, ScaleFactor);
+
+            ValidateObject(this);
         }
 
         public override void SetColor(Vector4 color)
         {
-            _backdrop.BaseFrame.Color = color;
+            _baseObject.BaseFrame.Color = color;
         }
 
         public override void ScaleAddition(float f)

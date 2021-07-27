@@ -5,7 +5,7 @@ using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 
-namespace MortalDungeon
+namespace MortalDungeon.Engine_Classes
 {
     public enum ObjectRenderType 
     {
@@ -25,6 +25,10 @@ namespace MortalDungeon
 
         public static Vector4 TranslucentRed = new Vector4(1, 0, 0, 0.5f);
         public static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.4f);
+
+        public static Vector4 UIDefaultGray = new Vector4(0.5f, 0.5f, 0.5f, 1);
+        public static Vector4 UIHoveredGray = new Vector4(0.4f, 0.4f, 0.4f, 1);
+        public static Vector4 UISelectedGray = new Vector4(0.3f, 0.3f, 0.3f, 1);
 
         public static Vector4 Invisible = new Vector4(0, 0, 0, 0);
     }

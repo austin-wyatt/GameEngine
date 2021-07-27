@@ -1,10 +1,8 @@
 ﻿using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
-using System;
 using System.Collections.Generic;
-using System.Text;
-using static MortalDungeon.Game.UI.GameUIObjects;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
@@ -88,12 +86,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void DeselectAbility()
         {
             _selectedAbility.TileMap.DeselectTiles();
+
+            _selectedAbility?.OnAbilityDeselect();
             _selectedAbility = null;
-
-            onChangeAbilityType(AbilityTypes.Empty);
         }
-
-        public virtual void onChangeAbilityType(AbilityTypes type) { }
 
         public override void EvaluateTileMapHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {

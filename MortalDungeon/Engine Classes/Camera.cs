@@ -1,8 +1,7 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using System;
 
-namespace MortalDungeon
+namespace MortalDungeon.Engine_Classes
 {
     // This is the camera class as it could be set up after the tutorials on the website
     // It is important to note there are a few ways you could have set up this camera, for example

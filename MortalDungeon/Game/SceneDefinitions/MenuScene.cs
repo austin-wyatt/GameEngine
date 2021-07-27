@@ -3,21 +3,19 @@ using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Graphics.OpenGL4;
-
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using static MortalDungeon.Game.UI.GameUIObjects;
+using MortalDungeon.Game.UI;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Tiles;
+using MortalDungeon.Engine_Classes.UIComponents;
+using System.Linq;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -28,6 +26,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             InitializeFields();
         }
 
+        Footer _footer;
 
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
@@ -35,8 +34,9 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             Texture fogTex = Texture.LoadFromFile("Resources/FogTexture.png", default, TextureName.FogTexture);
-            
+
             fogTex.Use(TextureUnit.Texture1);
+
 
 
             TileMap tileMap = new TileMap(default) { Width = 50, Height = 50 };
@@ -47,9 +47,9 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             tileMap.Tiles.ForEach(tile =>
             {
-                tile.MultiTextureData.Texture = fogTex;
-                tile.MultiTextureData.TextureLocation = TextureUnit.Texture1;
-                tile.MultiTextureData.TextureName = TextureName.FogTexture;
+                tile.MultiTextureData.MixedTexture = fogTex;
+                tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
+                tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
 
                 tile.SetFog(true);
                 tile.SetExplored(false);
@@ -58,6 +58,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
             guy.Team = UnitTeam.Ally;
             guy.CurrentTileMap = tileMap;
+            CurrentUnit = guy;
 
             _units.Add(guy);
 
@@ -80,37 +81,75 @@ namespace MortalDungeon.Game.SceneDefinitions
             mountainBackground.BaseObjects[0].GetDisplay().ScaleAll(10);
             _genericObjects.Add(mountainBackground);
 
-            Text textTest = new Text("Test string\nwith line break", new Vector3(25, -2300, 0.1f), true);
-            textTest.SetScale(20);
+            //Text textTest = new Text("Test string\nwith line break", new Vector3(25, -2300, 0.1f), true);
+            //textTest.SetScale(20);
 
-            _text.Add(textTest);
+            //_text.Add(textTest);
 
 
-            float footerHeight = 500;
+            float footerHeight = 300;
             Footer footer = new Footer(footerHeight);
-            _UI.Add(footer);
+            AddUI(footer);
 
-            footer.Children[1].OnClickAction = () => 
+            _footer = footer;
+
+            //footer.Buttons[0].OnClickAction = () =>
+            //{
+            //    onChangeAbilityType(AbilityTypes.Move);
+
+            //};
+
+            //footer.Buttons[1].OnClickAction = () =>
+            //{
+            //    onChangeAbilityType(AbilityTypes.MeleeAttack);
+            //};
+
+            //footer.Buttons[2].OnClickAction = () =>
+            //{
+            //    onChangeAbilityType(AbilityTypes.RangedAttack);
+            //};
+
+            ToggleableButton toggleableButton = new ToggleableButton(footer.Position + new Vector3(-footer.GetDimensions().X / 2 + 30, 0, 0), new Vector2(0.15f, 0.1f), "^", 1);
+
+            toggleableButton.OnSelectAction = () =>
             {
-                onChangeAbilityType(AbilityTypes.Move);
+                Vector3 buttonDimensions = toggleableButton.GetDimensions();
+                UIList abilityList = new UIList(toggleableButton.Position + new Vector3(-buttonDimensions.X / 2 + 5, 0, 0), 
+                    new Vector2(0.75f, 0.15f), 0.5f) { Ascending = true};
 
+
+                foreach (Ability ability in CurrentUnit.Abilities.Values) 
+                {
+                    abilityList.AddItem(ability.Name, () => 
+                    {
+                        SelectAbility(ability);
+                    });
+                }
+
+                toggleableButton.AddChild(abilityList);
             };
 
-            footer.Children[2].OnClickAction = () =>
+            toggleableButton.OnDeselectAction = () =>
             {
-                onChangeAbilityType(AbilityTypes.MeleeAttack);
+                List<int> childIDs = new List<int>();
+                toggleableButton.Children.ForEach(child =>
+                {
+                    if (child != toggleableButton.BaseComponent) 
+                    {
+                        childIDs.Add(child.ObjectID);
+                    }
+                });
+
+                toggleableButton.RemoveChildren(childIDs);
             };
 
-            footer.Children[3].OnClickAction = () =>
-            {
-                onChangeAbilityType(AbilityTypes.RangedAttack);
-            };
+            footer.AddChild(toggleableButton, 100);
 
-            Button advanceTurnButton = new Button(footer.Children[3].Position + new Vector3(footer.Children[3].GetDimensions().X * 2, 0, 0), new Vector2(900, 150), "Advance round", 0.75f);
-            TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new Vector2(300, 150), "0", 0.75f, true);
+            Button advanceTurnButton = new Button(footer.Position + new Vector3(footer.GetDimensions().X / 4, 0, 0), new Vector2(0.9f, 0.15f), "Advance round", 0.75f);
+            TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new Vector2(0.3f, 0.15f), "0", 0.75f, true);
 
-            footer.AddChild(advanceTurnButton);
-            footer.AddChild(turnCounter);
+            footer.AddChild(advanceTurnButton, 100);
+            footer.AddChild(turnCounter, 100);
 
             PropertyAnimation testAnim = new PropertyAnimation(turnCounter.TextField.Letters[0].LetterObject.BaseFrame, 50) { Playing = true, Repeat = true };
             Keyframe testFrame = new Keyframe(1, (baseFrame) =>
@@ -129,16 +168,29 @@ namespace MortalDungeon.Game.SceneDefinitions
                 turnCounter.TextField.SetTextString(Round.ToString());
             };
 
-            
+
 
             EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - footer.GetDimensions().Y - 30, 0), new Vector2(1, 1), 10);
+            //EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - 200, 0), new Vector2(1, 1), 10);
             energyDisplayBar.Clickable = true;
 
             EnergyDisplayBar = energyDisplayBar;
 
-            _UI.Add(energyDisplayBar);
+            AddUI(energyDisplayBar);
 
-            CurrentUnit = guy;
+
+
+            //UIList testList = new UIList(new Vector3(500, 500, 0), new Vector2(1f, 0.2f), 0.4f) { Ascending = true, ZIndex = 100 };
+            //int count = 0;
+            //testList.AddItem(count.ToString(), () =>
+            //{
+            //    count++;
+            //    testList.AddItem("List value " + count);
+            //    Console.WriteLine("List value " + count);
+            //});
+
+            //AddUI(testList, 100);
+
         }
 
 
@@ -409,48 +461,6 @@ namespace MortalDungeon.Game.SceneDefinitions
                 });
             }
 
-        }
-
-        public override void onChangeAbilityType(AbilityTypes type) 
-        {
-            List<Button> buttons = GetDerivedClassesFromList<Button, UIObject>(_UI[0].Children); //footer buttons
-
-            _selectedAbility = CurrentUnit.GetFirstAbilityOfType(type);
-            _selectedAbility.OnSelect(this, CurrentUnit.CurrentTileMap);
-
-            int selectedIndex = 0;
-            switch (type) 
-            {
-                case AbilityTypes.Move:
-                    selectedIndex = 0;
-                    break;
-                case AbilityTypes.MeleeAttack:
-                    selectedIndex = 1;
-                    break;
-                case AbilityTypes.RangedAttack:
-                    selectedIndex = 2;
-                    break;
-                case AbilityTypes.Empty:
-                    selectedIndex = -1;
-                    break;
-            }
-
-            int count = 0;
-            buttons.ForEach(button =>
-            {
-                if (count == selectedIndex)
-                {
-                    button.SetColor(button.BaseColor - new Vector4(0.5f, 0.5f, 0.5f, 0));
-                    button.Selected = true;
-                }
-                else 
-                {
-                    button.Selected = false;
-                    button.SetColor(button.BaseColor);
-                }
-
-                count++;
-            });
         }
     }
 

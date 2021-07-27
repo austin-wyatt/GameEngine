@@ -1,15 +1,11 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.UI;
+using MortalDungeon.Engine_Classes.UIComponents;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -26,18 +22,17 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.Load(camera, cursorObject, mouseRay);
            
-            UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true };
-
+            UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true, Hoverable = true };
             Vector3 menuDimensions = escapeMenu.GetDimensions();
 
-            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new Vector2(500,150), "EXIT");
+            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new Vector2(0.5f, 0.15f), "EXIT");
             exitButton.OnClickAction = () =>
             {
                 ExitFunc?.Invoke();
             };
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new Vector2(500, 150), "TEST");
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new Vector2(0.5f, 0.15f), "TEST");
             testButton.OnClickAction = () =>
             {
                 //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
@@ -45,13 +40,14 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             escapeMenu.AddChild(testButton);
 
-            _UI.Add(escapeMenu);
+
 
             Backdrop backdropModal = new Backdrop(new Vector3(0, 0, 0), new Vector2(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f), default, 90, false);
-            _UI.Add(backdropModal);
 
-            Vector4 slightlyTransparentBackdrop = new Vector4(0.25f, 0.25f, 0.25f, 0.75f);
-            backdropModal.SetColor(slightlyTransparentBackdrop);
+            //AddUI(backdropModal);
+            AddUI(escapeMenu, 100);
+            Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.3f);
+            backdropModal.SetColor(slightlyTransparentBackdropColor);
 
             escapeMenu.Render = false;
             backdropModal.Render = false;

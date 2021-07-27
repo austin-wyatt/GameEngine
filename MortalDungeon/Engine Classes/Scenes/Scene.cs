@@ -1,9 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -11,8 +7,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
-using static MortalDungeon.Game.UI.GameUIObjects;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
@@ -87,6 +82,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InitializeFields();
 
             Loaded = false;
+        }
+
+        public void AddUI(UIObject ui, int zIndex = -1) 
+        {
+            _UI.Add(ui);
+
+            if (zIndex != -1)
+            {
+                ui.ZIndex = zIndex;
+            }
+            else 
+            {
+                ui.ZIndex = 0;
+            }
+
+            _UI.Sort();
         }
 
         #region Messaging handlers
@@ -165,7 +176,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (!GetBit(_interceptClicks, ObjectType.UI))
                     _UI.ForEach(uiObj =>
                     {
-                        if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
+                        //if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
+                        if (uiObj.Render && !uiObj.Disabled)
                         {
                             uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
                             {
@@ -220,16 +232,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 _UI.ForEach(uiObj =>
                 {
-                    if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
+                    //if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
+                    if (uiObj.Render && !uiObj.Disabled)
                     {
-                        uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIHelpers.BoundsCheckType.MouseDown);
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIHelpers.EventType.MouseDown);
                     }
                 });
             }
         }
 
-        protected bool _objectGrabbed = false;
-        protected UIObject grabbedObj = null;
+        protected UIObject _grabbedObj = null;
         public virtual bool onMouseMove()
         {
             if (mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
@@ -240,61 +252,29 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 if (MouseState != null && MouseState.IsButtonDown(MouseButton.Left))
                 {
-                    _UI.ForEach(uiObj =>
+                    if (_grabbedObj == null)
                     {
-                        uiObj.ForEach((obj) =>
+                        _UI.ForEach(uiObj =>
                         {
-                            if (obj.Draggable)
-                            {
-                                if (obj.Grabbed)
-                                {
-                                    Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position);
-                                    //obj.SetPositionConditional(mouseCoordScreenSpace - obj._grabbedDeltaPos, uiObj =>
-                                    //{
-                                    //    if (obj.GetType().Name == uiObj.GetType().Name)
-                                    //        return true;
-                                    //    return false;
-                                    //    //return true;
-                                    //}, 1);
-                                    if (grabbedObj != null)
-                                        grabbedObj.SetPosition(mouseCoordScreenSpace - grabbedObj._grabbedDeltaPos);
-                                    else
-                                    {
-                                        obj.GrabEnd();
-                                    }
-                                    //Console.WriteLine(grabbedObj.GetType().Name);
-                                }
-                                else if (!_objectGrabbed)
-                                {
-                                    obj.BoundsCheck(MouseCoordinates, _camera, (_) =>
-                                    {
-                                        _objectGrabbed = true;
-                                        grabbedObj = _;
-                                    }, UIHelpers.BoundsCheckType.Grab);
-                                }
-                            }
+                            uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => _grabbedObj = obj, UIHelpers.EventType.Grab);
                         });
-
-                    });
+                    }
+                    else 
+                    {
+                        Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position);
+                        _grabbedObj.SetPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
+                    }
                 } //resolve all ongoing grab effects
 
-                if (MouseState != null && !MouseState.IsButtonDown(MouseButton.Left) && _objectGrabbed)
+                if (MouseState != null && !MouseState.IsButtonDown(MouseButton.Left) && _grabbedObj != null)
                 {
-                    //_UI.ForEach(uiObj => uiObj.ForEach(obj => grabbedObj.GrabEnd()));
-                    grabbedObj.GrabEnd();
-                    _objectGrabbed = false;
-                    grabbedObj = null;
+                    _grabbedObj.GrabEnd();
+                    _grabbedObj = null;
                 } //resolve all grabbed effects
 
                 _UI.ForEach(uiObj =>
                 {
-                    uiObj.ForEach(obj =>
-                    {
-                        if (obj.Hoverable)
-                        {
-                            obj.BoundsCheck(MouseCoordinates, _camera, null, UIHelpers.BoundsCheckType.Hover);
-                        }
-                    });
+                    uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIHelpers.EventType.Hover);
                 }); //check hovered objects
 
 
@@ -327,7 +307,17 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual bool onKeyUp(KeyboardKeyEventArgs e) 
         {
-            return !GetBit(_interceptKeystrokes, ObjectType.All);
+            bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
+
+            if (!interceptKeystrokes) 
+            {
+                _UI.ForEach(obj => 
+                {
+                    obj.OnKeyUp(e);
+                });
+            }
+
+            return !interceptKeystrokes;
         }
 
         public virtual void onUpdateFrame(FrameEventArgs args) { }
@@ -400,22 +390,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
 
             return foundObject;
-        }
-
-        protected List<T> GetDerivedClassesFromList<T, Y>(List<Y> list) where T : Y, new()
-        {
-            List<T> foundObjs = new List<T>();
-            T temp = new T();
-
-            list.ForEach(obj => 
-            {
-                if (obj.GetType() == temp.GetType()) 
-                {
-                    foundObjs.Add((T)obj);
-                }
-            });
-
-            return foundObjs;
         }
 
         protected bool GetBit(int b, int bitNumber) 

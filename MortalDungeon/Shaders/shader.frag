@@ -1,4 +1,4 @@
-﻿#version 330
+﻿#version 420
 #extension GL_OES_standard_derivatives : enable
 
 layout(location = 0) out vec4 outputColor;
@@ -20,19 +20,46 @@ in float outlineThickness;
 in vec4 inlineColor;
 in vec4 outlineColor;
 
-in float blurImage;
+in float alpha_threshold;
 
-uniform sampler2D texture0;
-uniform sampler2D texture1;
-uniform float alpha_threshold;
+in float primaryTextureTarget;
+
+layout (binding = 0) uniform sampler2D texture0;
+layout (binding = 1) uniform sampler2D texture1;
+layout (binding = 2) uniform sampler2D texture2;
+layout (binding = 3) uniform sampler2D texture3;
+layout (binding = 4) uniform sampler2D texture4;
 
 
-void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness);
-void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness);
+void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
+void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
+void DoWork(in sampler2D primaryTexture);
 
 void main()
 {
-	vec4 texColor = texture(texture0, texCoord);
+	switch(int(primaryTextureTarget))
+	{
+		case(0):
+			DoWork(texture0);
+			break;
+		case(2):
+			DoWork(texture2);
+			break;
+		case(3):
+			DoWork(texture3);
+			break;
+		case(4):
+			DoWork(texture4);
+			break;
+		default:
+			DoWork(texture0);
+			break;
+	};
+}
+
+void DoWork(in sampler2D primaryTexture)
+{
+	vec4 texColor = texture(primaryTexture, texCoord);
 
 	if(twoTextures == 0)
 	{
@@ -53,9 +80,9 @@ void main()
 
 
 	//Handle outline and inline
-	CreateOutline(texColor, outlineColor, outlineThickness);
+	CreateOutline(texColor, outlineColor, outlineThickness, primaryTexture);
 
-	CreateInline(texColor, inlineColor, inlineThickness);
+	CreateInline(texColor, inlineColor, inlineThickness, primaryTexture);
 	
 	
 	//if the alpha is below the alpha threshold the pixel is discarded
@@ -66,16 +93,16 @@ void main()
 		discard;
 }
 
-void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness)
+void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
 {
 	float dx = dFdx(texCoord.x);
 	float dy = dFdy(texCoord.y);
 
 
-	vec4 colorU = texture2D(texture0, vec2(texCoord.x, texCoord.y - dy * thickness));
-    vec4 colorD = texture2D(texture0, vec2(texCoord.x, texCoord.y + dy * thickness));
-    vec4 colorL = texture2D(texture0, vec2(texCoord.x + dx * thickness, texCoord.y));
-    vec4 colorR = texture2D(texture0, vec2(texCoord.x - dx * thickness, texCoord.y));
+	vec4 colorU = texture2D(primaryTexture, vec2(texCoord.x, texCoord.y - dy * thickness));
+    vec4 colorD = texture2D(primaryTexture, vec2(texCoord.x, texCoord.y + dy * thickness));
+    vec4 colorL = texture2D(primaryTexture, vec2(texCoord.x + dx * thickness, texCoord.y));
+    vec4 colorR = texture2D(primaryTexture, vec2(texCoord.x - dx * thickness, texCoord.y));
                 
 	
 	outputColor = textureColor.a == 0.0 && (colorU.a != 0.0 || colorD.a != 0.0 || colorL.a != 0.0 || colorR.a != 0.0) ? outlineColor : outputColor;
@@ -83,16 +110,16 @@ void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness)
 //		&& (texCoord.x != xTexBounds[0] || texCoord.x != xTexBounds[1] || texCoord.y != yTexBounds[0] || texCoord.y != yTexBounds[1]) ? outlineColor : outputColor;
 }
 
-void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness)
+void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
 {
 	float dx = dFdx(texCoord.x);
 	float dy = dFdy(texCoord.y);
 
 
-	vec4 colorU = texture2D(texture0, vec2(texCoord.x, texCoord.y - dy * thickness));
-    vec4 colorD = texture2D(texture0, vec2(texCoord.x, texCoord.y + dy * thickness));
-    vec4 colorL = texture2D(texture0, vec2(texCoord.x + dx * thickness, texCoord.y));
-    vec4 colorR = texture2D(texture0, vec2(texCoord.x - dx * thickness, texCoord.y));
+	vec4 colorU = texture2D(primaryTexture, vec2(texCoord.x, texCoord.y - dy * thickness));
+    vec4 colorD = texture2D(primaryTexture, vec2(texCoord.x, texCoord.y + dy * thickness));
+    vec4 colorL = texture2D(primaryTexture, vec2(texCoord.x + dx * thickness, texCoord.y));
+    vec4 colorR = texture2D(primaryTexture, vec2(texCoord.x - dx * thickness, texCoord.y));
                 
 
 	outputColor = textureColor.a != 0.0 && (colorU.a == 0.0 || colorD.a == 0.0 || colorL.a == 0.0 || colorR.a == 0.0) ? outlineColor : outputColor;

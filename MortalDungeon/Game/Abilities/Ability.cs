@@ -48,6 +48,9 @@ namespace MortalDungeon.Game.Abilities
         public BaseTile SelectedTile;
         public Unit SelectedUnit;
 
+        public int AbilityID => _abilityID;
+        protected int _abilityID = _currentAbilityID++;
+        protected static int _currentAbilityID = 0;
 
         public bool HasHoverEffect = false;
 
@@ -100,6 +103,8 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnHover(Unit unit) { }
 
         public virtual void OnRightClick() { }
+
+        public virtual void OnAbilityDeselect() { }
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 

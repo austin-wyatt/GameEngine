@@ -208,18 +208,27 @@ namespace MortalDungeon.Engine_Classes
                 Grabbed = false;
                 _grabbedDeltaPos = default;
             }
+            
+        }
+        
+        public override bool Equals(object obj)
+        {
+            return obj is GameObject @object &&
+                   ObjectID == @object.ObjectID;
         }
 
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ObjectID);
+        }
     }
 
     public class MultiTextureData
     {
         public bool MixTexture = false;
-        public TextureUnit TextureLocation = TextureUnit.Texture1;
+        public TextureUnit MixedTextureLocation = TextureUnit.Texture1;
         public float MixPercent = 0f;
-        public Texture Texture = null;
-
-        public TextureName TextureName = TextureName.Unknown;
+        public Texture MixedTexture = null;
+        public TextureName MixedTextureName = TextureName.Unknown;
     }
-
 }

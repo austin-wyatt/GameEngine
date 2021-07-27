@@ -3,12 +3,14 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using static MortalDungeon.Game.UI.UIHelpers;
+using static MortalDungeon.Engine_Classes.UIHelpers;
 
-namespace MortalDungeon.Game.UI
+namespace MortalDungeon.Engine_Classes
 {
     public static class UIHelpers
     {
@@ -45,17 +47,18 @@ namespace MortalDungeon.Game.UI
 
         public static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
 
-        public enum BoundsCheckType 
+        public enum EventType 
         {
             None,
             MouseUp,
             Hover,
             MouseDown,
-            Grab
+            Grab,
+            KeyDown
         }
     }
 
-    public class UIObject : GameObject
+    public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
         public List<Text> TextObjects = new List<Text>();
@@ -65,20 +68,27 @@ namespace MortalDungeon.Game.UI
 
         public new ObjectType ObjectType = ObjectType.UI;
 
-        //public new bool Grabbed = false;
-        //public new bool Draggable = false;
-        //public new bool Hoverable = false;
-        //public new bool Hovered = false;
+        public UIObject BaseComponent;
+        public BaseObject _baseObject;
+
+        public float ZIndex = 0; //higher values get rendered in front
+
 
         public bool Disabled = false;
 
-        public bool Selected = false; //when selected, SetColor behaviour changes
+        public bool Selected = false;
+
+        public bool Focused = false; //determines whether this object should be taking key presses
 
         public UIObject Parent = null;
 
         protected Vector3 _originOffset = default;
 
+        protected bool _scaleAspectRatio = true;
+
         public Action OnClickAction = null;
+
+        public List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
 
         public UIObject() { }
 
@@ -113,10 +123,25 @@ namespace MortalDungeon.Game.UI
             }
             else 
             {
-                display = GetDisplay(obj.Children[0]); //this assumes that a UIObject will always have either a nested object or a BaseObject
+                display = GetDisplay(BaseComponent); //this assumes that a UIObject will always have either a nested object or a BaseObject
             }
 
             return display;
+        }
+
+        public virtual void SetSize(Vector2 size)
+        {
+            float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
+
+            Vector2 ScaleFactor = new Vector2(size.X, size.Y);
+            _baseObject.BaseFrame.SetScaleAll(1);
+
+            _baseObject.BaseFrame.ScaleX(aspectRatio);
+            _baseObject.BaseFrame.ScaleX(ScaleFactor.X);
+            _baseObject.BaseFrame.ScaleY(ScaleFactor.Y);
+
+            Size = size;
+            SetOrigin(aspectRatio, Size);
         }
 
         public override void ScaleAll(float f)
@@ -159,79 +184,67 @@ namespace MortalDungeon.Game.UI
             });
         }
 
-        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, BoundsCheckType type = BoundsCheckType.MouseUp)
+       
+
+        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, EventType type = EventType.MouseUp)
         {
-            if(Children.Count > 0) //evaluate all children of the UIObject
+            if (ReverseTree == null)
+                return;
+
+            int count = ReverseTree.Count;
+
+            for (int i = 0; i < count; i++)
             {
-                ForEach(uiObj =>
+                if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
                 {
-                    uiObj.BaseObjects.ForEach(obj =>
+                    if (ReverseTree[i].BoundingObject.Bounds.Contains(MouseCoordinates, camera))
                     {
-                        if (Clickable && obj.Clickable)
+                        switch (type)
                         {
-                            if (obj.Bounds.Contains(MouseCoordinates, camera))
-                            {
-                                UIObject validObj = GetFirstValidParent(uiObj, type);
-                                switch (type)
-                                {
-                                    case BoundsCheckType.MouseUp:
-                                        validObj.OnMouseUp();
-                                        break;
-                                    case BoundsCheckType.Hover:
-                                        validObj.OnHover();
-                                        break;
-                                    case BoundsCheckType.MouseDown:
-                                        validObj.OnMouseDown();
-                                        break;
-                                    case BoundsCheckType.Grab:
-                                        validObj.OnGrab(MouseCoordinates, validObj);
-                                        break;
-                                }
-
-                                optionalAction?.Invoke(validObj);
-                            }
-                            else if (type == BoundsCheckType.Hover)
-                            {
-                                HoverEnd();
-                            }
+                            case EventType.MouseUp:
+                                ReverseTree[i].UIObject.OnMouseUp();
+                                break;
+                            case EventType.Hover:
+                                ReverseTree[i].UIObject.OnHover();
+                                break;
+                            case EventType.MouseDown:
+                                ReverseTree[i].UIObject.OnMouseDown();
+                                break;
+                            case EventType.Grab:
+                                ReverseTree[i].UIObject.OnGrab(MouseCoordinates, ReverseTree[i].UIObject);
+                                optionalAction?.Invoke(ReverseTree[i].UIObject);
+                                return;
                         }
-                    });
-                });
-            }
 
-            if (BaseObjects.Count > 0) //evaluate all BaseObjects of the UIObject
-            {
-                BaseObjects.ForEach(obj =>
-                {
-                    if (Clickable && obj.Clickable)
-                    {
-                        if (obj.Bounds.Contains(MouseCoordinates, camera))
-                        {
-                            UIObject validObj = GetFirstValidParent(this, type);
-                            switch (type)
-                            {
-                                case BoundsCheckType.MouseUp:
-                                    validObj.OnMouseUp();
-                                    break;
-                                case BoundsCheckType.Hover:
-                                    validObj.OnHover();
-                                    break;
-                                case BoundsCheckType.MouseDown:
-                                    validObj.OnMouseDown();
-                                    break;
-                                case BoundsCheckType.Grab:
-                                    validObj.OnGrab(MouseCoordinates, validObj);
-                                    break;
-                            }
-
-                            optionalAction?.Invoke(validObj);
-                        }
-                        else if (type == BoundsCheckType.Hover && Hovered)
-                        {
-                            HoverEnd();
-                        }
+                        optionalAction?.Invoke(ReverseTree[i].UIObject);
                     }
-                });
+                    else if (type == EventType.Hover)
+                    {
+                        ReverseTree[i].UIObject.HoverEnd();
+                    }
+                }
+            }
+        }
+
+        public static bool IsValidForBoundsType(UIObject obj, EventType type) 
+        {
+            if (!obj.Render || obj.Disabled)
+                return false;
+
+            switch (type)
+            {
+                case EventType.MouseUp:
+                    return obj.Clickable;
+                case EventType.Hover:
+                    return obj.Hoverable;
+                case EventType.MouseDown:
+                    return obj.Clickable;
+                case EventType.Grab:
+                    return obj.Draggable;
+                case EventType.KeyDown:
+                    return obj.Focused;
+                default:
+                    return false;
             }
         }
 
@@ -241,13 +254,12 @@ namespace MortalDungeon.Game.UI
 
             Vector3 basePosition = default;
 
-            if(Children.Count > 0)
-                basePosition = Children[0].Position;
+            if(BaseComponent != null)
+                basePosition = BaseComponent.Position;
 
-            int count = 0;
             Children.ForEach(uiObj =>
             {
-                if (count == 0) //base component of the UIObject
+                if (uiObj.ObjectID == BaseComponent.ObjectID) //base component of the UIObject
                 {
                     uiObj.SetPosition(position);
                 }
@@ -255,7 +267,6 @@ namespace MortalDungeon.Game.UI
                 {
                     uiObj.SetPosition(position, basePosition);
                 }
-                count++;
             });
         }
 
@@ -270,49 +281,112 @@ namespace MortalDungeon.Game.UI
             });
         }
 
-        public void SetPositionConditional(Vector3 position, Func<UIObject, bool> conditionalCheck, int objectCount = -1) 
+
+        public List<UITreeNode> BreadthFirstSearch() 
         {
-            int count = 0;
-            if (conditionalCheck(this)) 
+            List<UITreeNode> tree = new List<UITreeNode>();
+            List<UIObject> nodesToTraverse = new List<UIObject>();
+
+            List<UIObject> temp = new List<UIObject>();
+
+            tree.Add(new UITreeNode(this, 0, GetBaseObject(this))); //root node
+            nodesToTraverse.Add(this);
+
+            int depth = 0;
+            for (int i = 0; i < nodesToTraverse.Count; i++) 
             {
-                SetPosition(position);
-                count++;
-            }
-            
-            for (int i = 0; i < Children.Count && objectCount != count; i++) 
-            {
-                if (conditionalCheck(Children[i])) 
+                nodesToTraverse[i].Children.ForEach(c =>
                 {
-                    Children[i].SetPosition(position);
-                    count++;
+                    tree.Add(new UITreeNode(c, depth, GetBaseObject(c)));
+                    temp.Add(c);
+                });
+
+                if (i == nodesToTraverse.Count - 1) 
+                {
+                    temp.Reverse();
+                    nodesToTraverse = new List<UIObject>(temp);
+                    temp.Clear();
+                    i = -1;
+
+                    depth++;
+                }
+            }
+
+            return tree;
+        }
+
+        public static BaseObject GetBaseObject(UIObject obj) 
+        {
+            if (obj._baseObject != null)
+                return obj._baseObject;
+
+            BaseObject returnObj = null;
+
+            UIObject nextObj = obj;
+
+            while (returnObj == null) 
+            {
+                nextObj = nextObj.BaseComponent;
+
+                if (nextObj != null && nextObj._baseObject != null)
+                {
+                    return nextObj._baseObject;
+                }
+                else if (nextObj == null)
+                {
+                    throw new Exception("UIObject contains no base object.");
+                }
+            }
+
+            return returnObj;
+        }
+
+        public void GenerateReverseTree() 
+        {
+            ReverseTree = BreadthFirstSearch();
+            ReverseTree.Reverse();
+        }
+
+        public void ForceTreeRegeneration() 
+        {
+            UIObject parent = this;
+            while (true) 
+            {
+                parent = parent.Parent;
+
+                if (parent.Parent == null)
+                {
+                    parent.GenerateReverseTree();
+                    return;
                 }
             }
         }
 
-        public void ForEach(Action<UIObject> objAction, UIObject uiObj = null) 
+        public void AddChild(UIObject uiObj, int zIndex = -1) 
         {
-            if (uiObj == null)
+            uiObj.ReverseTree = null;
+            uiObj.Parent = this;
+            Children.Add(uiObj);
+
+            if (zIndex != -1)
             {
-                objAction(this);
-                Children.ForEach(obj =>
-                {
-                    ForEach(objAction, obj);
-                });
+                uiObj.ZIndex = zIndex;
             }
             else 
             {
-                objAction(uiObj);
-                uiObj.Children.ForEach(obj =>
-                {
-                    ForEach(objAction, obj);
-                });
+                uiObj.ZIndex = 0;
             }
-        }
 
-        public void AddChild(UIObject uiObj) 
-        {
-            uiObj.Parent = this;
-            Children.Add(uiObj);
+            Children.Sort();
+
+            if (Parent == null)
+            {
+                GenerateReverseTree();
+            }
+            else 
+            {
+                ForceTreeRegeneration();
+            }
         }
 
         public void ClearChildren() 
@@ -324,76 +398,36 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public UIObject GetFirstValidParent(UIObject uiObj, BoundsCheckType type) //gets the deepest UIObject in the tree that the type applies to
+        public void RemoveChild(int objectID) 
         {
-            UIObject currObj = uiObj;
+            UIObject child = Children.Find(c => c.ObjectID == objectID);
 
-            while (currObj.Parent != null) 
+            if (child != null) 
             {
-                switch (type) 
+                Children.Remove(child);
+                if (Parent == null)
                 {
-                    case BoundsCheckType.Grab:
-                        if (currObj.Draggable)
-                        {
-                            return currObj;
-                        }
-
-                        if (currObj.Parent.Draggable)
-                        {
-                            return currObj.Parent;
-                        }
-                        break;
-                    case BoundsCheckType.MouseUp:
-                        if (currObj.Clickable)
-                        {
-                            return currObj;
-                        }
-
-                        if (currObj.Parent.Clickable)
-                        {
-                            return currObj.Parent;
-                        }
-                        break;
-                    case BoundsCheckType.Hover:
-                        if (currObj.Hoverable)
-                        {
-                            return currObj;
-                        }
-
-                        if (currObj.Parent.Hoverable)
-                        {
-                            return currObj.Parent;
-                        }
-                        break;
-                    case BoundsCheckType.MouseDown:
-                        if (currObj.Clickable)
-                        {
-                            return currObj;
-                        }
-
-                        if (currObj.Parent.Clickable)
-                        {
-                            return currObj.Parent;
-                        }
-                        break;
+                    GenerateReverseTree();
                 }
-                currObj = currObj.Parent;
             }
-
-            return currObj;
         }
+
+        public void RemoveChildren(List<int> objectIDs) 
+        {
+            objectIDs.ForEach(id => RemoveChild(id));
+        }
+
 
         public Vector3 GetDimensions() 
         {
             Vector3 dimensions = default;
-
-            if (Children.Count > 0)
+            if (BaseComponent != null) 
             {
-                return Children[0].GetDimensions();
+                return BaseComponent.GetDimensions();
             }
-            else if (BaseObjects.Count > 0) 
+            else if (_baseObject != null)
             {
-                return BaseObjects[0].Dimensions;
+                return _baseObject.Dimensions;
             }
 
             return dimensions;
@@ -413,16 +447,16 @@ namespace MortalDungeon.Game.UI
         {
             base.OnMouseDown();
         }
-        public void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
+        public virtual void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
         {
             if (Draggable && !Grabbed)
             {
                 Grabbed = true;
 
                 Vector3 screenCoord = WindowConstants.ConvertLocalToScreenSpaceCoordinates(MouseCoordinates);
-                if (grabbedObject.Children.Count > 0)
+                if (grabbedObject.BaseComponent != null)
                 {
-                    _grabbedDeltaPos = screenCoord - grabbedObject.Children[0].Position; //Hack. Might need to be fixed later
+                    _grabbedDeltaPos = screenCoord - grabbedObject.BaseComponent.Position;
                 }
                 else
                 {
@@ -430,6 +464,56 @@ namespace MortalDungeon.Game.UI
                 }
             }
         }
+
+        public virtual void OnKeyUp(KeyboardKeyEventArgs e) 
+        {
+            if (ReverseTree == null)
+                return;
+
+            int count = ReverseTree.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (IsValidForBoundsType(ReverseTree[i].UIObject, EventType.KeyDown))
+                {
+                    OnType(e);
+                }
+            }
+        }
+
+        public virtual void OnType(KeyboardKeyEventArgs e) 
+        {
+            Console.WriteLine(Name + "   " + e.Key);
+        }
+
+        public int CompareTo([AllowNull] UIObject other)
+        {
+            if (other == null)
+                return 1;
+
+            return -ZIndex.CompareTo(other.ZIndex);
+        }
+
+
+        protected static void ValidateObject(UIObject obj) 
+        {
+            if (obj.BaseComponent == null && obj._baseObject == null)
+                throw new Exception("Invalid base fields for UIObject " + obj.ObjectID);
+        }
     }
-    
+
+
+    public class UITreeNode 
+    {
+        public UIObject UIObject;
+        public int Depth = 0;
+        public BaseObject BoundingObject;
+
+        public UITreeNode(UIObject obj, int depth, BaseObject baseObject) 
+        {
+            UIObject = obj;
+            Depth = depth;
+            BoundingObject = baseObject;
+        }
+    }
 }
