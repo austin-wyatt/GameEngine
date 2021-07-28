@@ -23,16 +23,16 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.Load(camera, cursorObject, mouseRay);
            
             UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true, Hoverable = true };
-            Vector3 menuDimensions = escapeMenu.GetDimensions();
+            UIDimensions menuDimensions = escapeMenu.GetDimensions();
 
-            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new Vector2(0.5f, 0.15f), "EXIT");
+            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), "EXIT");
             exitButton.OnClickAction = () =>
             {
                 ExitFunc?.Invoke();
             };
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new Vector2(0.5f, 0.15f), "TEST");
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "TEST");
             testButton.OnClickAction = () =>
             {
                 //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
@@ -42,7 +42,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
 
-            Backdrop backdropModal = new Backdrop(new Vector3(0, 0, 0), new Vector2(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f), default, 90, false);
+            Backdrop backdropModal = new Backdrop(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f), default, 90, false);
 
             //AddUI(backdropModal);
             AddUI(escapeMenu, 100);
@@ -62,7 +62,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 return false;
             }
 
-            if (e.Key == Keys.Escape) 
+            if (e.Key == Keys.F1) 
             {
                 MenuOpen = !MenuOpen;
                 _UI.ForEach(ui =>

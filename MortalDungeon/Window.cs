@@ -32,6 +32,7 @@ namespace MortalDungeon
         public static readonly Vector4 FullColor = new Vector4(1, 1, 1, 1);
         public const int TickDenominator = 45; // 1 divided by this determines the tick rate.
         public static Vector2i ClientSize;
+        public static float AspectRatio => (float)ClientSize.X / ClientSize.Y;
 
         public static bool ShowFPS = true;
         public static bool ShowTicksPerSecond = false;

@@ -7,7 +7,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public TextBox _mainObject;
         public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
 
-        public Button(Vector3 position, Vector2 size, string text = "", float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
+        public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
         {
             Position = position;
             Size = size;

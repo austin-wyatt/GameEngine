@@ -7,12 +7,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
     {
         public float TextScale = 1f;
         //public float TitleScale = 1.5f;
-        public Vector3 TextOffset = new Vector3(20, 30, 0);
+        public UIDimensions TextOffset = new UIDimensions(20, 30);
         public bool CenterText = false;
 
         public Text TextField;
 
-        public TextBox(Vector3 position, Vector2 size, string text, float textScale = 1, bool centerText = false, Vector3 textOffset = default)
+        public TextBox(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
             TextScale = textScale;
             Size = size;
@@ -39,8 +39,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
 
             textObj.SetScale(textScale);
-            Vector2 textDimensions = textObj.GetTextDimensions();
-            Vector3 blockDimensions = block.GetDimensions();
+            UIDimensions textDimensions = textObj.GetTextDimensions();
+            UIDimensions blockDimensions = block.GetDimensions();
             if (CenterText)
             {
                 textObj.SetPosition(new Vector3(block.Position.X - textDimensions.X / 2, block.Position.Y, block.Position.Z));
@@ -73,14 +73,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             {
                 if (CenterText)
                 {
-                    Vector2 textDimensions = obj.GetTextDimensions();
+                    UIDimensions textDimensions = obj.GetTextDimensions();
                     obj.SetPosition(new Vector3(BaseComponent.Position.X - textDimensions.X / 2, BaseComponent.Position.Y, BaseComponent.Position.Z));
                 }
                 else
                 {
                     //obj.SetPosition(_mainBlock.Origin + TextOffset);
 
-                    Vector3 blockDimensions = BaseComponent.GetDimensions();
+                    UIDimensions blockDimensions = BaseComponent.GetDimensions();
                     obj.SetPosition(new Vector3(BaseComponent.Position.X + TextOffset.X - blockDimensions.X / 2, BaseComponent.Position.Y - blockDimensions.Y / 2 + TextOffset.Y, BaseComponent.Position.Z));
                 }
             });

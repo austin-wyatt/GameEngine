@@ -93,30 +93,16 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             _footer = footer;
 
-            //footer.Buttons[0].OnClickAction = () =>
-            //{
-            //    onChangeAbilityType(AbilityTypes.Move);
 
-            //};
-
-            //footer.Buttons[1].OnClickAction = () =>
-            //{
-            //    onChangeAbilityType(AbilityTypes.MeleeAttack);
-            //};
-
-            //footer.Buttons[2].OnClickAction = () =>
-            //{
-            //    onChangeAbilityType(AbilityTypes.RangedAttack);
-            //};
-
-            ToggleableButton toggleableButton = new ToggleableButton(footer.Position + new Vector3(-footer.GetDimensions().X / 2 + 30, 0, 0), new Vector2(0.15f, 0.1f), "^", 1);
+            ToggleableButton toggleableButton = new ToggleableButton(footer.Position + new Vector3(-footer.GetDimensions().X / 2 + 30, 0, 0), new UIScale(0.15f, 0.1f), "^", 0.1f);
 
             toggleableButton.OnSelectAction = () =>
             {
-                Vector3 buttonDimensions = toggleableButton.GetDimensions();
-                UIList abilityList = new UIList(toggleableButton.Position + new Vector3(-buttonDimensions.X / 2 + 5, 0, 0), 
-                    new Vector2(0.75f, 0.15f), 0.5f) { Ascending = true};
+                UIDimensions buttonDimensions = toggleableButton.GetDimensions();
 
+                Vector3 dim = toggleableButton.GetAnchorPosition(UIAnchorPosition.TopLeft);
+
+                UIList abilityList = new UIList(dim, new UIScale(0.75f, 0.15f), 0.05f) { Ascending = true, Focusable = true };
 
                 foreach (Ability ability in CurrentUnit.Abilities.Values) 
                 {
@@ -127,6 +113,9 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
 
                 toggleableButton.AddChild(abilityList);
+
+                abilityList.Anchor = UIAnchorPosition.BottomLeft;
+                abilityList.SetPositionFromAnchor(dim);
             };
 
             toggleableButton.OnDeselectAction = () =>
@@ -145,8 +134,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             footer.AddChild(toggleableButton, 100);
 
-            Button advanceTurnButton = new Button(footer.Position + new Vector3(footer.GetDimensions().X / 4, 0, 0), new Vector2(0.9f, 0.15f), "Advance round", 0.75f);
-            TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new Vector2(0.3f, 0.15f), "0", 0.75f, true);
+            Button advanceTurnButton = new Button(footer.Position + new Vector3(footer.GetDimensions().X / 4, 0, 0), new UIScale(0.9f, 0.15f), "Advance round", 0.075f);
+            TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new UIScale(0.3f, 0.15f), "0", 0.075f, true);
 
             footer.AddChild(advanceTurnButton, 100);
             footer.AddChild(turnCounter, 100);
@@ -160,17 +149,19 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             testAnim.Keyframes.Add(testFrame);
 
-            footer.PropertyAnimations.Add(testAnim);
+            //footer.PropertyAnimations.Add(testAnim);
 
             advanceTurnButton.OnClickAction = () =>
             {
                 AdvanceRound();
                 turnCounter.TextField.SetTextString(Round.ToString());
+
+                footer.SetPosition(footer.GetAnchorPosition(UIAnchorPosition.TopCenter));
             };
 
 
 
-            EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - footer.GetDimensions().Y - 30, 0), new Vector2(1, 1), 10);
+            EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
             //EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - 200, 0), new Vector2(1, 1), 10);
             energyDisplayBar.Clickable = true;
 
@@ -191,6 +182,13 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //AddUI(testList, 100);
 
+            Input inputComp = new Input(footer.Position - footer.GetDimensions().X / 6 * Vector3.UnitX, new UIScale(1, 0.12f), "", 0.05f);
+            inputComp.ScissorData.Scissor = true;
+            inputComp.ScissorData.Depth = 2;
+            inputComp.ScissorData.Width = 500;
+            inputComp.ScissorData.Height = WindowConstants.ClientSize.Y / 2;
+
+            footer.AddChild(inputComp, 100);
         }
 
 
@@ -215,38 +213,41 @@ namespace MortalDungeon.Game.SceneDefinitions
             
             Unit badGuy = _units.Find(g => g.Name == "Guy");
             //Console.WriteLine(badGuy.Position);
-            if (e.Key == Keys.Right)
+            if (_focusedObj == null) 
             {
-                tilePosition += _tileMaps[0].Height;
-                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-            }
-            if (e.Key == Keys.Left)
-            {
-                tilePosition -= _tileMaps[0].Height;
-                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-            }
-            if (e.Key == Keys.Up)
-            {
-                tilePosition -= 1;
-                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-            }
-            if (e.Key == Keys.Down)
-            {
-                tilePosition += 1;
-                Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-            }
+                if (e.Key == Keys.Right)
+                {
+                    tilePosition += _tileMaps[0].Height;
+                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
+                }
+                if (e.Key == Keys.Left)
+                {
+                    tilePosition -= _tileMaps[0].Height;
+                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
+                }
+                if (e.Key == Keys.Up)
+                {
+                    tilePosition -= 1;
+                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
+                }
+                if (e.Key == Keys.Down)
+                {
+                    tilePosition += 1;
+                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
+                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
+                }
 
-            if (e.Key == Keys.Equal)
-            {
-                EnergyDisplayBar.AddEnergy(1);
-            }
-            if (e.Key == Keys.Minus)
-            {
-                EnergyDisplayBar.AddEnergy(-1);
+                if (e.Key == Keys.Equal)
+                {
+                    EnergyDisplayBar.AddEnergy(1);
+                }
+                if (e.Key == Keys.Minus)
+                {
+                    EnergyDisplayBar.AddEnergy(-1);
+                }
             }
 
             return true;
@@ -263,7 +264,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             float _cameraSpeed = 4.0f;
 
-            if (!GetBit(_interceptKeystrokes, ObjectType.All))
+            if (!GetBit(_interceptKeystrokes, ObjectType.All) && _focusedObj == null)
             {
 
                 if (MouseState.ScrollDelta[1] < 0)

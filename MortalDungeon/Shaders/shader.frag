@@ -84,7 +84,6 @@ void DoWork(in sampler2D primaryTexture)
 
 	CreateInline(texColor, inlineColor, inlineThickness, primaryTexture);
 	
-	
 	//if the alpha is below the alpha threshold the pixel is discarded
 	if(outputColor.a < alpha_threshold)
 		discard;

@@ -14,7 +14,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Clickable = true;
             Hoverable = true;
 
-            UIBlock window = new UIBlock(Position, new Vector2(2, height / WindowConstants.ScreenUnits.Y), default, 90, false);
+            UIBlock window = new UIBlock(Position, new UIScale(2, height / WindowConstants.ScreenUnits.Y), default, 90, false);
             BaseComponent = window;
 
             AddChild(window);

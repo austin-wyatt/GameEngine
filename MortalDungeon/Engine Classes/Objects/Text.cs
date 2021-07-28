@@ -6,48 +6,6 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public enum Character
-    {
-        A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,
-        Period, QuestionMark, ExclamationPoint, Comma, QuotationMark, Apostrophe, LeftBracket, RightBracket, Plus, Minus, Equals, Underscore, Colon, Semicolon,
-        LessThan, GreaterThan, At, DollarSign, Modulo, Caret, Asterisk, LeftParenthesis, RightParenthesis, And, Pipe, ForwardSlash, BackSlash, Hash, Tilde, BackTick,
-        One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Zero, Space, NewLine
-    }
-    static class CharacterConstants
-    {
-        public static Dictionary<char, Character> _characterMap = new Dictionary<char, Character>()
-        {
-            {'A', Character.A }, {'B', Character.B },{'C', Character.C },{'D', Character.D },{'E', Character.E },{'F', Character.F },{'G', Character.G },{'H', Character.H },{'I', Character.I },{'J', Character.J },
-            {'K', Character.K },{'L', Character.L },{'M', Character.M },{'N', Character.N },{'O', Character.O },{'P', Character.P },{'Q', Character.Q },{'R', Character.R },{'S', Character.S },{'T', Character.T },
-            {'U', Character.U },{'V', Character.V },{'W', Character.W },{'X', Character.X },{'Y', Character.Y },{'Z', Character.Z },{'a', Character.a },{'b', Character.b },{'c', Character.c },{'d', Character.d },
-            {'e', Character.e },{'f', Character.f },{'g', Character.g },{'h', Character.h },{'i', Character.i },{'j', Character.j },{'k', Character.k },{'l', Character.l },{'m', Character.m },{'n', Character.n },
-            {'o', Character.o },{'p', Character.p },{'q', Character.q },{'r', Character.r },{'s', Character.s },{'t', Character.t },{'u', Character.u },{'v', Character.v },{'w', Character.w },{'x', Character.x },
-            {'y', Character.y },{'z', Character.z },{'.', Character.Period },{'?', Character.QuestionMark },{'!', Character.ExclamationPoint },{',', Character.Comma },{'"', Character.QuotationMark },{'\'', Character.Apostrophe },
-            {']', Character.RightBracket },{'[', Character.LeftBracket },{'+', Character.Plus },{'-', Character.Minus },{'=', Character.Equals },{'_', Character.Underscore },{':', Character.Colon },{';', Character.Semicolon },
-            {'<', Character.LessThan },{'>', Character.GreaterThan },{'@', Character.At },{'$', Character.DollarSign },{'%', Character.Modulo },{'^', Character.Caret },{'*', Character.Asterisk },{'(', Character.LeftParenthesis },
-            {')', Character.RightParenthesis },{'&', Character.And },{'|', Character.Pipe },{'\\', Character.ForwardSlash },{'/', Character.BackSlash },{'#', Character.Hash },{'~', Character.Tilde },{'`', Character.BackTick },
-            {'1', Character.One },{'2', Character.Two },{'3', Character.Three },{'4', Character.Four },{'5', Character.Five },{'6', Character.Six },{'7', Character.Seven },{'8', Character.Eight },{'9', Character.Nine },
-            {'0', Character.Zero }, {' ', Character.Space }, {'\n', Character.NewLine }
-        };
-
-        public static Dictionary<Character, char> _characterMapToChar = new Dictionary<Character, char>()
-        {
-            {Character.A, 'A' }, {Character.B, 'B' },{Character.C,'C' },{ Character.D, 'D' },{Character.E, 'E' },{Character.F, 'F' },{Character.G, 'G' },{Character.H, 'H' },{Character.I,'I' },{Character.J,'J' },
-            {Character.K, 'K' },{Character.L, 'L' },{Character.M, 'M' },{Character.N, 'N' },{Character.O, 'O' },{Character.P, 'P' },{Character.Q, 'Q' },{Character.R, 'R' },{Character.S, 'S' },{Character.T, 'T' },
-            {Character.U, 'U' },{Character.V, 'V' },{Character.W, 'W' },{Character.X, 'X' },{Character.Y, 'Y' },{Character.Z, 'Z' },{Character.a, 'a' },{Character.b, 'b' },{ Character.c, 'c' },{Character.d, 'd' },
-            {Character.e, 'e' },{Character.f, 'f' },{Character.g, 'g' },{Character.h, 'h' },{Character.i, 'i' },{Character.j, 'j' },{Character.k, 'k' },{Character.l, 'l' },{Character.m, 'm' },{Character.n, 'n' },
-            {Character.o, 'o' },{Character.p, 'p' },{Character.q, 'q' },{Character.r, 'r' },{Character.s, 's' },{Character.t, 't' },{Character.u, 'u' },{Character.v, 'v' },{Character.w, 'w' },{Character.x, 'x' },
-            {Character.y, 'y' },{Character.z, 'z' },{Character.Period, '.' },{Character.QuestionMark, '?' },{Character.ExclamationPoint, '!' },{Character.Comma, ',' },{Character.QuotationMark, '"' },{Character.Apostrophe, '\'' },
-            {Character.RightBracket, ']' },{Character.LeftBracket, '[' },{Character.Plus, '+' },{Character.Minus, '=' },{Character.Equals, '=' },{Character.Underscore, '_' },{Character.Colon, ':' },{Character.Semicolon, ';'},
-            {Character.LessThan, '<' },{Character.GreaterThan, '>' },{Character.At, '@' },{Character.DollarSign, '$' },{Character.Modulo, '%' },{Character.Caret, '^' },{Character.Asterisk, '*' },{Character.LeftParenthesis, '(' },
-            {Character.RightParenthesis, ')' },{Character.And, '&' },{Character.Pipe, '|' },{Character.ForwardSlash, '\\' },{Character.BackSlash, '/' },{Character.Hash, '#' },{Character.Tilde, '~' },{Character.BackTick, '`' },
-            {Character.One, '1' },{Character.Two, '2' },{Character.Three, '3' },{Character.Four, '4' },{Character.Five, '5' },{Character.Six, '6' },{Character.Seven, '7' },{Character.Eight, '8'},{Character.Nine, '9' },
-            {Character.Zero, '0' }, {Character.Space, ' ' }, {Character.NewLine, '\n' }
-        };
-    }
-    
-
-
     public class Letter : GameObject
     {
         public Character Character;
@@ -104,6 +62,7 @@ namespace MortalDungeon.Engine_Classes
         public void ChangeCharacter(Character character) 
         {
             _display.SpritesheetPosition = (int)character;
+            Character = character;
         }
 
         public override void SetPosition(Vector3 position)
@@ -143,7 +102,7 @@ namespace MortalDungeon.Engine_Classes
 
         private void SetKerning() 
         {
-            if (!usingMonospace)//using monospace 
+            if (!usingMonospace)
             {
                 switch (Character)
                 {
@@ -336,7 +295,7 @@ namespace MortalDungeon.Engine_Classes
     {
         public List<Letter> Letters = new List<Letter>();
         public string TextString = "";
-        Vector3 Position = new Vector3();
+        public Vector3 Position = new Vector3();
 
         public float Scale = 0.1f;
         public bool CameraPerspective = false;
@@ -361,13 +320,13 @@ namespace MortalDungeon.Engine_Classes
 
         public void SetTextString(string textString) 
         {
-            textString = textString.Replace("\r", "");
+            //textString = textString.Replace("\r", "");
 
             Texture tempTexture = null;
 
             if (Letters.Count > 0) 
             {
-                tempTexture = Letters[0].LetterObject.BaseFrame.TextureReference; //hack, we know this texture is already loaded so we can just hot swap characters
+                tempTexture = Letters[0].LetterObject.BaseFrame.TextureReference; //hack, we know this texture is already loaded so we can hot swap characters
             }
 
             TextString = textString;
@@ -376,14 +335,21 @@ namespace MortalDungeon.Engine_Classes
 
             if (Letters.Count > arr.Length) 
             {
-                Letters.RemoveRange(0, Letters.Count - arr.Length);
+                Letters.RemoveRange(arr.Length, Letters.Count - arr.Length);
             }
 
             for (int i = 0; i < arr.Length; i++)
             {
+                if (CharacterConstants._characterMap[arr[i]] == Character.NewLine)
+                {
+                    position.X = Position.X;
+                    position.Y += NewLineHeight * Scale;
+                }
+
                 if (i < Letters.Count)
                 {
                     Letters[i].ChangeCharacter(CharacterConstants._characterMap[arr[i]]);
+                    Letters[i].SetPosition(position);
                 }
                 else 
                 {
@@ -397,12 +363,18 @@ namespace MortalDungeon.Engine_Classes
                     Letters.Add(temp);
                 }
 
-                if (Letters[i].Character == Character.NewLine)
-                {
-                    position.X = Position.X;
-                    position.Y += NewLineHeight * Scale;
-                }
-                else
+                //if (CharacterConstants._characterMap[arr[i]] == Character.NewLine)
+                //{
+                //    position.X = Position.X;
+                //    position.Y += NewLineHeight * Scale;
+                //}
+                //else
+                //{
+                //    position.X += Letters[i].LetterOffset + Letters[i].XCorrection;
+                //    position.Y += Letters[i].YOffset;
+                //}
+
+                if (CharacterConstants._characterMap[arr[i]] != Character.NewLine)
                 {
                     position.X += Letters[i].LetterOffset + Letters[i].XCorrection;
                     position.Y += Letters[i].YOffset;
@@ -429,36 +401,30 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
         }
-        public Vector2 GetTextDimensions()
+
+
+        public UIDimensions GetTextDimensions()
         {
-            Vector3 position = new Vector3(Position);
-            Vector2 maxPos = new Vector2(0, 0);
+            if (Letters.Count == 0)
+                return new UIDimensions();
+
+            Vector3 maxPos = new Vector3(Letters[0].Position);
+            Vector3 minPos = new Vector3(Letters[0].Position);
+
+            Vector3 letterDimensions = Letters[0].GetDimensions(); //assume all letters have the same dimensions for now
 
             for (int i = 0; i < Letters.Count; i++)
             {
-                if (Letters[i].Character == Character.NewLine)
-                {
-                    position.X = Position.X;
-                    position.Y += NewLineHeight * Scale;
-                }
-                else
-                {
-                    position.X += Letters[i].LetterOffset + Letters[i].XCorrection;
-                    position.Y += Letters[i].YOffset + Letters[i].YCorrection;
-                }
-
-                if (position.X - Position.X > maxPos.X) 
-                {
-                    maxPos.X = position.X - Position.X;
-                }
-
-                if (position.Y - Position.Y > maxPos.Y)
-                {
-                    maxPos.Y = position.Y - Position.Y;
-                }
+                maxPos.X = Letters[i].Position.X > maxPos.X ? Letters[i].Position.X : maxPos.X;
+                maxPos.Y = Letters[i].Position.Y > maxPos.Y ? Letters[i].Position.Y : maxPos.Y;
+                minPos.X = Letters[i].Position.X < minPos.X ? Letters[i].Position.X : minPos.X;
+                minPos.Y = Letters[i].Position.Y < minPos.Y ? Letters[i].Position.Y : minPos.Y;
             }
 
-            return maxPos;
+            UIDimensions dimensions = new UIDimensions((maxPos.X + letterDimensions.X / 2) - (minPos.X - letterDimensions.X / 2), 
+                (maxPos.Y - letterDimensions.Y / 2) - (minPos.Y + letterDimensions.Y / 2));
+
+            return dimensions;
         }
 
         public void AddCharacter(Character character, int index = -1)
@@ -566,7 +532,7 @@ namespace MortalDungeon.Engine_Classes
 
         public void SetScale(float scale) 
         {
-            Scale = scale / 10;
+            Scale = scale;
             LetterOffset = Scale * _baseLetterOffset;
 
             Vector3 position = Position;

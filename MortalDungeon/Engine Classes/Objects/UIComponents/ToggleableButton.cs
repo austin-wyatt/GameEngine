@@ -7,7 +7,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
     {
         public Action OnSelectAction = null;
         public Action OnDeselectAction = null;
-        public ToggleableButton(Vector3 pos, Vector2 size, string text = "", float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = false) 
+        public ToggleableButton(Vector3 pos, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = false) 
             : base(pos, size, text, textScale, boxColor, textColor, centerText)
         {
             Name = "ToggleableButton";

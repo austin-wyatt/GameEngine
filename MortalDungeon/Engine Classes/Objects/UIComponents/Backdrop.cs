@@ -14,10 +14,10 @@ namespace MortalDungeon.Engine_Classes.UIComponents
     {
         public Action _onClick;
 
-        public Backdrop(Vector3 position, Vector2 size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        public Backdrop(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true, bool cameraPerspective = false)
         {
             Position = position;
-            Size = size.X == 0 ? Size : size;
+            Size = size == null ? Size : size;
             _scaleAspectRatio = scaleAspectRatio;
             Name = "Backdrop";
             CameraPerspective = cameraPerspective;
@@ -28,7 +28,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Animation tempAnimation;
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
-            Vector2 ScaleFactor = new Vector2(Size.X, Size.Y);
+            UIScale ScaleFactor = new UIScale(Size.X, Size.Y);
 
             RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, Spritesheets.UISheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 

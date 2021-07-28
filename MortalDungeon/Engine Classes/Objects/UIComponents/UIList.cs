@@ -6,9 +6,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     class UIList : UIObject
     {
-        public Vector2 Margin = new Vector2(0.02f, 0.02f);
-        public Vector2 ItemMargins = new Vector2(0f, 0.005f);
-        public Vector2 ListItemSize = new Vector2();
+        public UIScale Margin = new UIScale(0.02f, 0.02f);
+        public UIScale ItemMargins = new UIScale(0f, 0.005f);
+        public UIScale ListItemSize = new UIScale();
 
         public bool Ascending = false;
 
@@ -18,7 +18,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public Vector4 _textColor = Colors.White;
         public Vector4 _itemColor = Colors.UIHoveredGray;
-        public UIList(Vector3 position, Vector2 listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false)
+        public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false)
         {
             Position = position;
             ListItemSize = listItemSize;
@@ -74,8 +74,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             if (Items.Count == 0)
             {
                 position = BaseComponent.Origin;
-                position.X += BaseComponent.GetDimensions().X / 2;
-                position.X += Margin.X;
+                position.X += BaseComponent.GetAnchorPosition(UIAnchorPosition.LeftCenter).X;
+                //position.X += Margin.X;
                 position.Y += Margin.Y;
             }
             else 
@@ -85,17 +85,28 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 position.Y += ItemMargins.Y * WindowConstants.ScreenUnits.Y * (Ascending ? -1 : 1);
             }
 
+            //ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
             ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
             Items.Add(newItem);
             AddChild(newItem, 100);
 
+            UIScale textScale = newItem._textBox.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2;
+
+            if (textScale.X > ListItemSize.X || textScale.Y > ListItemSize.Y) 
+            {
+                ListItemSize.X = (textScale.X > ListItemSize.X ? textScale.X : ListItemSize.X) + newItem._textBox.TextOffset.ToScale().X + Margin.X * 2;
+                ListItemSize.Y = (textScale.Y > ListItemSize.Y ? textScale.Y : ListItemSize.Y);
+
+                Items.ForEach(item => item.SetSize(ListItemSize));
+                Console.WriteLine(ListItemSize);
+            }
 
             newItem.OnClickAction = onClickAction;
             newItem.Clickable = true;
             newItem.Hoverable = true;
 
 
-            Vector2 listSize = ListItemSize + new Vector2(0, ItemMargins.Y + Margin.Y / 4);
+            UIScale listSize = ListItemSize + new UIScale(0, ItemMargins.Y + Margin.Y / 4);
             listSize.Y *= Items.Count;
 
             listSize.Y += Margin.Y;
@@ -109,6 +120,18 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 BaseComponent.SetPosition(Position);
             }
         }
+
+        //public override void SetSize(Vector2 size)
+        //{
+        //    Children.ForEach()
+
+        //    base.SetSize(size);
+        //}
+
+        //public void SetListSize(Vector2 listItemSize) 
+        //{
+        //    ListItemSize = listItemSize;
+        //}
     }
 
     public class ListItem : UIObject 
@@ -118,9 +141,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public Vector4 _textColor = Colors.White;
         public Vector4 _itemColor = Colors.UIHoveredGray;
-        public ListItem(Vector3 position, Vector2 listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor) 
+        public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor) 
         {
-            TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new Vector3(20, 50, 0));
+            TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
             _textBox = textBox;
 
             BaseComponent = textBox;

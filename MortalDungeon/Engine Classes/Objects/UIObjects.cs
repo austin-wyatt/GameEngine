@@ -12,58 +12,12 @@ using static MortalDungeon.Engine_Classes.UIHelpers;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public static class UIHelpers
-    {
-        public struct UIBorders
-        {
-            public bool Left;
-            public bool Right;
-            public bool Top;
-            public bool Bottom;
-        }
-
-        public const int BLOCK_WIDTH = 500;
-        public const int BLOCK_HEIGHT = 500;
-
-        public static class Borders
-        {
-            public static readonly UIBorders None = new UIBorders();
-            public static readonly UIBorders All = new UIBorders { Bottom = true, Top = true, Left = true, Right = true };
-            public static readonly UIBorders LeftOnly = new UIBorders { Left = true };
-            public static readonly UIBorders RightOnly = new UIBorders { Right = true };
-            public static readonly UIBorders TopOnly = new UIBorders { Top = true };
-            public static readonly UIBorders BottomOnly = new UIBorders { Bottom = true };
-            public static readonly UIBorders TopLeft = new UIBorders { Top = true, Left = true };
-            public static readonly UIBorders BottomLeft = new UIBorders { Bottom = true, Left = true };
-            public static readonly UIBorders TopRight = new UIBorders { Top = true, Right = true };
-            public static readonly UIBorders BottomRight = new UIBorders { Bottom = true, Right = true };
-            public static readonly UIBorders TopBottom = new UIBorders { Top = true, Bottom = true };
-
-            public static readonly UIBorders OpenTop = new UIBorders { Bottom = true, Left = true, Right = true };
-            public static readonly UIBorders OpenLeft = new UIBorders { Bottom = true, Top = true, Right = true };
-            public static readonly UIBorders OpenBottom = new UIBorders { Top = true, Left = true, Right = true };
-            public static readonly UIBorders OpenRight = new UIBorders { Bottom = true, Top = true, Left = true };
-        }
-
-        public static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
-
-        public enum EventType 
-        {
-            None,
-            MouseUp,
-            Hover,
-            MouseDown,
-            Grab,
-            KeyDown
-        }
-    }
-
     public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
         public List<Text> TextObjects = new List<Text>();
         public Vector3 Origin = default; //this will be the top left of the UIBlock
-        public Vector2 Size = new Vector2(1, 1);
+        public UIScale Size = new UIScale(1, 1);
         public bool CameraPerspective = false;
 
         public new ObjectType ObjectType = ObjectType.UI;
@@ -71,7 +25,12 @@ namespace MortalDungeon.Engine_Classes
         public UIObject BaseComponent;
         public BaseObject _baseObject;
 
+        public UIAnchorPosition Anchor = UIAnchorPosition.Center;
+        public UIDimensions _anchorOffset = new UIDimensions();
+
         public float ZIndex = 0; //higher values get rendered in front
+
+        public bool Focusable = false;
 
 
         public bool Disabled = false;
@@ -92,7 +51,7 @@ namespace MortalDungeon.Engine_Classes
 
         public UIObject() { }
 
-        public void SetOrigin(float aspectRatio, Vector2 ScaleFactor) 
+        public void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
         {
             Origin = new Vector3(Position.X - Position.X * aspectRatio * ScaleFactor.X / 2, Position.Y - Position.Y * ScaleFactor.Y / 2, Position.Z);
             _originOffset.X = Position.X - Origin.X;
@@ -111,34 +70,16 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        public virtual RenderableObject GetDisplay(UIObject uiObj = null) 
-        {
-            UIObject obj = uiObj == null ? this : uiObj;
-
-            RenderableObject display;
-          
-            if (obj.BaseObjects.Count > 0)
-            {
-                display = obj.BaseObjects[0].GetDisplay();
-            }
-            else 
-            {
-                display = GetDisplay(BaseComponent); //this assumes that a UIObject will always have either a nested object or a BaseObject
-            }
-
-            return display;
-        }
-
-        public virtual void SetSize(Vector2 size)
+        public virtual void SetSize(UIScale size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
             Vector2 ScaleFactor = new Vector2(size.X, size.Y);
-            _baseObject.BaseFrame.SetScaleAll(1);
+            GetBaseObject(this).BaseFrame.SetScaleAll(1);
 
-            _baseObject.BaseFrame.ScaleX(aspectRatio);
-            _baseObject.BaseFrame.ScaleX(ScaleFactor.X);
-            _baseObject.BaseFrame.ScaleY(ScaleFactor.Y);
+            GetBaseObject(this).BaseFrame.ScaleX(aspectRatio);
+            GetBaseObject(this).BaseFrame.ScaleX(ScaleFactor.X);
+            GetBaseObject(this).BaseFrame.ScaleY(ScaleFactor.Y);
 
             Size = size;
             SetOrigin(aspectRatio, Size);
@@ -186,7 +127,7 @@ namespace MortalDungeon.Engine_Classes
 
        
 
-        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, EventType type = EventType.MouseUp)
+        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.MouseUp)
         {
             if (ReverseTree == null)
                 return;
@@ -201,24 +142,31 @@ namespace MortalDungeon.Engine_Classes
                     {
                         switch (type)
                         {
-                            case EventType.MouseUp:
+                            case UIEventType.MouseUp:
                                 ReverseTree[i].UIObject.OnMouseUp();
                                 break;
-                            case EventType.Hover:
+                            case UIEventType.Hover:
                                 ReverseTree[i].UIObject.OnHover();
                                 break;
-                            case EventType.MouseDown:
+                            case UIEventType.MouseDown:
                                 ReverseTree[i].UIObject.OnMouseDown();
-                                break;
-                            case EventType.Grab:
+                                return;
+                            case UIEventType.Grab:
                                 ReverseTree[i].UIObject.OnGrab(MouseCoordinates, ReverseTree[i].UIObject);
+                                optionalAction?.Invoke(ReverseTree[i].UIObject);
+                                return;
+                            case UIEventType.Focus:
+                                if (!ReverseTree[i].UIObject.Focused) 
+                                {
+                                    ReverseTree[i].UIObject.OnFocus();
+                                }
                                 optionalAction?.Invoke(ReverseTree[i].UIObject);
                                 return;
                         }
 
                         optionalAction?.Invoke(ReverseTree[i].UIObject);
                     }
-                    else if (type == EventType.Hover)
+                    else if (type == UIEventType.Hover)
                     {
                         ReverseTree[i].UIObject.HoverEnd();
                     }
@@ -226,61 +174,140 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public static bool IsValidForBoundsType(UIObject obj, EventType type) 
+        public static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
         {
             if (!obj.Render || obj.Disabled)
                 return false;
 
             switch (type)
             {
-                case EventType.MouseUp:
+                case UIEventType.MouseUp:
                     return obj.Clickable;
-                case EventType.Hover:
+                case UIEventType.Hover:
                     return obj.Hoverable;
-                case EventType.MouseDown:
+                case UIEventType.MouseDown:
                     return obj.Clickable;
-                case EventType.Grab:
+                case UIEventType.Grab:
                     return obj.Draggable;
-                case EventType.KeyDown:
+                case UIEventType.KeyDown:
                     return obj.Focused;
+                case UIEventType.Focus:
+                    return obj.Focusable;
                 default:
                     return false;
             }
         }
 
+
         public override void SetPosition(Vector3 position)
         {
+            Vector3 deltaPos = Position - position;
             base.SetPosition(position);
 
-            Vector3 basePosition = default;
-
-            if(BaseComponent != null)
-                basePosition = BaseComponent.Position;
-
-            Children.ForEach(uiObj =>
+            for (int i = 0; i < Children.Count; i++) 
             {
-                if (uiObj.ObjectID == BaseComponent.ObjectID) //base component of the UIObject
-                {
-                    uiObj.SetPosition(position);
-                }
-                else 
-                {
-                    uiObj.SetPosition(position, basePosition);
-                }
-            });
+                Children[i].SetPosition(Children[i].Position - deltaPos);
+            }
         }
 
-        public void SetPosition(Vector3 position, Vector3 basePosition)
+        public void SetPositionFromAnchor(Vector3 position) 
         {
-            base.SetPosition(position);
+            UIDimensions anchorOffset = GetAnchorOffset(Anchor);
 
-            Children.ForEach(uiObj =>
-            {
-                Vector3 offsetPosition = uiObj.Position - basePosition;
-                uiObj.SetPosition(position + offsetPosition);
-            });
+            _anchorOffset = anchorOffset;
+
+             SetPosition(position - anchorOffset);
         }
 
+
+        public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition) 
+        {
+            return GetAnchorPosition(anchorPosition, Position);
+        }
+        public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
+        {
+            UIDimensions dimensions = GetDimensions();
+            Vector3 anchorPos = new Vector3(position);
+
+            switch (anchorPosition)
+            {
+                case UIAnchorPosition.TopCenter:
+                    anchorPos.Y -= dimensions.Y / 2;
+                    break;
+                case UIAnchorPosition.TopLeft:
+                    anchorPos.Y -= dimensions.Y / 2;
+                    anchorPos.X -= dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.TopRight:
+                    anchorPos.Y -= dimensions.Y / 2;
+                    anchorPos.X += dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.LeftCenter:
+                    anchorPos.X -= dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.RightCenter:
+                    anchorPos.X += dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.BottomCenter:
+                    anchorPos.Y += dimensions.Y / 2;
+                    break;
+                case UIAnchorPosition.BottomLeft:
+                    anchorPos.Y += dimensions.Y / 2;
+                    anchorPos.X -= dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.BottomRight:
+                    anchorPos.Y += dimensions.Y / 2;
+                    anchorPos.X += dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.Center:
+                default:
+                    break;
+            }
+
+            return anchorPos;
+        }
+        public UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
+        {
+            UIDimensions dimensions = GetDimensions();
+            UIDimensions returnDim = new UIDimensions();
+
+            switch (anchorPosition)
+            {
+                case UIAnchorPosition.TopCenter:
+                    returnDim.Y -= dimensions.Y / 2;
+                    break;
+                case UIAnchorPosition.TopLeft:
+                    returnDim.Y -= dimensions.Y / 2;
+                    returnDim.X -= dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.TopRight:
+                    returnDim.Y -= dimensions.Y / 2;
+                    returnDim.X += dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.LeftCenter:
+                    returnDim.X -= dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.RightCenter:
+                    returnDim.X += dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.BottomCenter:
+                    returnDim.Y += dimensions.Y / 2;
+                    break;
+                case UIAnchorPosition.BottomLeft:
+                    returnDim.Y += dimensions.Y / 2;
+                    returnDim.X -= dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.BottomRight:
+                    returnDim.Y += dimensions.Y / 2;
+                    returnDim.X += dimensions.X / 2;
+                    break;
+                case UIAnchorPosition.Center:
+                default:
+                    break;
+            }
+
+            return returnDim;
+        }
 
         public List<UITreeNode> BreadthFirstSearch() 
         {
@@ -418,16 +445,16 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        public Vector3 GetDimensions() 
+        public new UIDimensions GetDimensions() 
         {
-            Vector3 dimensions = default;
+            UIDimensions dimensions = default;
             if (BaseComponent != null) 
             {
                 return BaseComponent.GetDimensions();
             }
             else if (_baseObject != null)
             {
-                return _baseObject.Dimensions;
+                return new UIDimensions(_baseObject.Dimensions);
             }
 
             return dimensions;
@@ -447,6 +474,23 @@ namespace MortalDungeon.Engine_Classes
         {
             base.OnMouseDown();
         }
+
+        public virtual void OnFocus() 
+        {
+            if (Focusable && !Focused)
+            {
+                Focused = true;
+            }
+        }
+
+        public virtual void EndFocus() 
+        {
+            if (Focused) 
+            {
+                Focused = false;
+            }
+        }
+
         public virtual void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
         {
             if (Draggable && !Grabbed)
@@ -465,7 +509,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void OnKeyUp(KeyboardKeyEventArgs e) 
+        public virtual void OnKeyDown(KeyboardKeyEventArgs e) 
         {
             if (ReverseTree == null)
                 return;
@@ -474,16 +518,18 @@ namespace MortalDungeon.Engine_Classes
 
             for (int i = 0; i < count; i++)
             {
-                if (IsValidForBoundsType(ReverseTree[i].UIObject, EventType.KeyDown))
+                if (IsValidForBoundsType(ReverseTree[i].UIObject, UIEventType.KeyDown))
                 {
-                    OnType(e);
+                    ReverseTree[i].UIObject.OnType(e);
                 }
             }
         }
 
+        public virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
+
         public virtual void OnType(KeyboardKeyEventArgs e) 
         {
-            Console.WriteLine(Name + "   " + e.Key);
+            //Console.WriteLine(Name + "   " + TextHelper.KeyStrokeToString(e));
         }
 
         public int CompareTo([AllowNull] UIObject other)
@@ -515,5 +561,19 @@ namespace MortalDungeon.Engine_Classes
             Depth = depth;
             BoundingObject = baseObject;
         }
+    }
+
+    public class ScissorData
+    {
+        public int X = 0;
+        public int Y = 0;
+        public int Width = 0;
+        public int Height = 0;
+        public int Depth = 0;
+
+        public bool Scissor = false;
+
+        public bool _scissorFlag = false;
+        public int _startingDepth = 0;
     }
 }

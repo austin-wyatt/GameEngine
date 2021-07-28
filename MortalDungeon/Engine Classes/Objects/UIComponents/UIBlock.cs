@@ -9,10 +9,10 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class UIBlock : UIObject
     {
-        public UIBlock(Vector3 position, Vector2 size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        public UIBlock(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
         {
             Position = position;
-            Size = size.X == 0 ? Size : size;
+            Size = size == null ? Size : size;
             _scaleAspectRatio = scaleAspectRatio;
             Name = "UIBlock";
             CameraPerspective = cameraPerspective;
@@ -55,7 +55,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        public override void SetSize(Vector2 size)
+        public override void SetSize(UIScale size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 

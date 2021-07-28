@@ -35,6 +35,9 @@ namespace MortalDungeon.Engine_Classes
 
         public MultiTextureData MultiTextureData = new MultiTextureData();
 
+        public ScissorData ScissorData = new ScissorData();
+
+
         public ObjectType ObjectType = ObjectType.GenericObject;
 
         public Vector3 _grabbedDeltaPos = default;
@@ -128,6 +131,17 @@ namespace MortalDungeon.Engine_Classes
             }
 
             return display;
+        }
+
+        public Vector3 GetDimensions()
+        {
+            Vector3 dimensions = default;
+            if (BaseObjects.Count > 0) 
+            {
+                dimensions = BaseObjects[0].Dimensions;
+            }
+
+            return dimensions;
         }
 
         public PropertyAnimation GetPropertyAnimationByID(int id) 

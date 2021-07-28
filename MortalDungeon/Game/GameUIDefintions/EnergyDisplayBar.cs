@@ -24,7 +24,7 @@ namespace MortalDungeon.Game.UI
         public int CurrentEnergy = 10;
         public List<EnergyPip> Pips = new List<EnergyPip>(MaxEnergy);
 
-        public EnergyDisplayBar(Vector3 position, Vector2 size, int maxEnergy = 10)
+        public EnergyDisplayBar(Vector3 position, UIScale size, int maxEnergy = 10)
         {
             Position = position;
             Size = size;
@@ -38,7 +38,7 @@ namespace MortalDungeon.Game.UI
             Clickable = true;
 
             float aspectRatio = (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X;
-            Vector2 ScaleFactor = new Vector2(Size.X, Size.Y);
+            UIScale ScaleFactor = new UIScale(Size.X, Size.Y);
             SetOrigin(aspectRatio, ScaleFactor);
 
             float pipWidth = 0;
@@ -46,7 +46,7 @@ namespace MortalDungeon.Game.UI
 
             for (int i = 0; i < CurrentMaxEnergy; i++)
             {
-                EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new Vector2(0.12f, 0.12f)) { Clickable = true };
+                EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new UIScale(0.12f, 0.12f)) { Clickable = true };
                 pipWidth = energyPip.GetDimensions().X;
 
                 energyPip.OnClickAction = () =>
@@ -101,10 +101,10 @@ namespace MortalDungeon.Game.UI
 
         public EnergyStates EnergyState = EnergyStates.Energized;
 
-        public EnergyPip(Vector3 position, Vector2 size = default)
+        public EnergyPip(Vector3 position, UIScale size = default)
         {
             Position = position;
-            Size = size.X == 0 ? Size : size;
+            Size = size == null ? Size : size;
             Name = "EnergyPip";
             CameraPerspective = false;
 
@@ -115,7 +115,7 @@ namespace MortalDungeon.Game.UI
             Animation tempAnimation;
             float aspectRatio = (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X;
 
-            Vector2 ScaleFactor = new Vector2(Size.X, Size.Y);
+            UIScale ScaleFactor = new UIScale(Size.X, Size.Y);
 
             RenderableObject pip = new RenderableObject(new SpritesheetObject(21, Spritesheets.TestSheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
@@ -143,7 +143,7 @@ namespace MortalDungeon.Game.UI
             SetOrigin(aspectRatio, ScaleFactor);
             ChangeEnergyState(EnergyState);
 
-            PropertyAnimations.Add(new BounceAnimation(GetDisplay()));
+            PropertyAnimations.Add(new BounceAnimation(GetBaseObject(this).BaseFrame));
         }
 
         public override void OnHover()

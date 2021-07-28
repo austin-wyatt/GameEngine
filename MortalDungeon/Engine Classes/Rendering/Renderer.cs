@@ -175,7 +175,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * sizeof(float)); //Camera enabled + spritesheet position + side lengths X and Y
             GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y + use second texture + mix percent
 
-            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + reserved + reserved
+            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + alpha threshold + primary texture target
             GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
             GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
         }
@@ -217,7 +217,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
 
-        public void RenderObjectsInstancedGeneric<T>(List<T> objects, RenderableObject display = null) where T : GameObject
+        public void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true) where T : GameObject
         {
             if (objects.Count == 0)
                 return;
@@ -230,12 +230,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
             }
-            else 
+            else
             {
                 Display = display;
             }
             TextureName currTexture = Display.Textures.Textures[0];
 
+            //if(instantiateRenderFunc)
             PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
@@ -249,6 +250,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             Dictionary<TextureName, TextureUnit> usedTextures = new Dictionary<TextureName, TextureUnit>();
 
+            List<T> scissorCallList = new List<T>();
+
             usedTextures.Add(currTexture, TextureUnit.Texture0);
 
             BaseObject obj;
@@ -256,68 +259,96 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             TextureUnit currentTextureUnit = TextureUnit.Texture2;
 
+            //GL.Sci
+
             int temp = objects.Count / 2;
-            objects.ForEach((objG => 
+            for (int i = 0; i < objects.Count; i++)
             {
-                if (objG.Render && !objG.Cull)
+                if (objects[i].Render && !objects[i].Cull)
                 {
-                    if (objG.MultiTextureData.MixedTexture != null && objG.MultiTextureData.MixTexture)
+                    if (objects[i].MultiTextureData.MixedTexture != null && objects[i].MultiTextureData.MixTexture)
                     {
-                        if (!Texture.UsedTextures.TryGetValue(objG.MultiTextureData.MixedTextureLocation, out tex) && tex != objG.MultiTextureData.MixedTextureName)
+                        if (!Texture.UsedTextures.TryGetValue(objects[i].MultiTextureData.MixedTextureLocation, out tex) && tex != objects[i].MultiTextureData.MixedTextureName)
                         {
-                            objG.MultiTextureData.MixedTexture.Use(objG.MultiTextureData.MixedTextureLocation);
-                            //Display.TextureReference.Use(TextureUnit.Texture0);
+                            objects[i].MultiTextureData.MixedTexture.Use(objects[i].MultiTextureData.MixedTextureLocation);
                         }
                     }
 
-                    for (int i = 0; i < objG.BaseObjects.Count; i++)
+                    
+                    if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag) 
                     {
-                        if (objG.BaseObjects[i].Render)
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+
+                        ScissorData scissorData = scissorCallList[scissorCallList.Count - 1].ScissorData;
+                        GL.Scissor(scissorData.X, scissorData.Y, scissorData.Width, scissorData.Height);
+                        GL.Enable(EnableCap.ScissorTest);
+
+                        float[] instancedArr = new float[scissorCallList.Count * instanceDataOffset];
+
+                        RenderObjectsInstancedGeneric(scissorCallList, ref instancedArr, Display, false);
+
+
+                        GL.Disable(EnableCap.ScissorTest);
+
+                        scissorCallList.Clear();
+                    }
+                    else if (objects[i].ScissorData._scissorFlag)
+                    {
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+                    }
+                    else
+                    {
+                        for (int j = 0; j < objects[i].BaseObjects.Count; j++)
                         {
-                            obj = objG.BaseObjects[i];
-                            tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
-
-                            if (tex != currTexture) 
+                            if (objects[i].BaseObjects[j].Render)
                             {
-                                if (!usedTextures.ContainsKey(tex)) 
+                                obj = objects[i].BaseObjects[j];
+                                tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
+
+                                if (tex != currTexture)
                                 {
-                                    usedTextures.Add(tex, currentTextureUnit);
+                                    if (!usedTextures.ContainsKey(tex))
+                                    {
+                                        usedTextures.Add(tex, currentTextureUnit);
 
-                                    obj._currentAnimation.CurrentFrame.TextureReference.Use(currentTextureUnit);
+                                        obj._currentAnimation.CurrentFrame.TextureReference.Use(currentTextureUnit);
 
-                                    currentTextureUnit++;
+                                        currentTextureUnit++;
+                                    }
                                 }
-                            }
 
-                            if (count == ObjectBufferCount)
-                            {
-                                recursiveCallList.Add(objG);
-                            }
-                            else
-                            {
-                                InsertDataIntoInstancedRenderArray(obj, objG.MultiTextureData, ref _instancedRenderArray, ref currIndex, (usedTextures[tex] - TextureUnit.Texture0));
+                                if (count == ObjectBufferCount)
+                                {
+                                    recursiveCallList.Add(objects[i]);
+                                }
+                                else
+                                {
+                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[tex] - TextureUnit.Texture0));
 
-                                count++;
+                                    count++;
+                                }
                             }
                         }
                     }
                 }
-            }));
+            }
 
 
-            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.StreamDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderDataArray, BufferUsageHint.StreamDraw);
 
 
             GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, count);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
-            
-            DisableInstancedShaderAttributes();
+            if (instantiateRenderFunc)
+                DisableInstancedShaderAttributes();
 
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, Display);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, Display);
             }
 
             if (baseObjectCallList.Count > 0) 
@@ -502,7 +533,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, Display);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderArray, Display);
             }
             DrawCount++;
         }
@@ -760,7 +791,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 if (obj.Letters.Count > 0)
                 {
-                    LoadTextureFromBaseObject(obj.Letters[0].BaseObjects[0], true);
+                    LoadTextureFromBaseObject(obj.Letters[0].BaseObjects[0], false);
                 }
             });
             UIObj.Children.ForEach(obj =>
@@ -796,7 +827,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public void RenderQueue() 
         {
             //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to 
-
             RenderQueuedUI();
 
             //RenderFrameBuffer(MainFBO);
@@ -850,38 +880,57 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region UI queue
-        public void QueueUITextForRender(List<Text> text)
+        public void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
         {
             text.ForEach(obj =>
             {
                 if (obj.Render)
-                    QueueUIForRender(obj.Letters);
+                    QueueUIForRender(obj.Letters, scissorFlag);
             });
         }
         public void RenderQueuedLetters() 
         {
-            RenderObjectsInstancedGeneric(_LettersToRender);
+            RenderObjectsInstancedGeneric(_LettersToRender, ref _instancedRenderArray);
             _LettersToRender.Clear();
         }
 
-        public void QueueNestedUI<T>(List<T> uiObjects) where T : UIObject
+        public void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
         {
             if (uiObjects.Count > 0)
             {
-                uiObjects.ForEach(obj =>
-                {
-                    if (obj.Render)
+                //uiObjects.ForEach(obj =>
+                //{
+                for (int i = 0; i < uiObjects.Count; i++)
+                { 
+                    if (uiObjects[i].Render)
                     {
-                        QueueUITextForRender(obj.TextObjects);
-
-                        if (obj.Children.Count > 0)
+                        if (uiObjects[i].ScissorData.Scissor == true)
                         {
-                            QueueNestedUI(obj.Children);
+                            scissorData = uiObjects[i].ScissorData;
+                            scissorData._startingDepth = depth;
                         }
 
-                        QueueUIForRender(obj);
+                        bool scissorFlag = false;
+                        if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
+                        {
+                            scissorFlag = true;
+                        }
+                        else
+                        {
+                            scissorData = null;
+                        }
+
+                        QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
+
+                        if (uiObjects[i].Children.Count > 0)
+                        {
+                            QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
+                        }
+
+                        QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
                     }
-                });
+                //});
+                }
 
 
                 //RenderableObject display = uiObjects[0].GetDisplay();
@@ -890,20 +939,24 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 //QueueUIForRender(uiObjects);
             }
         }
-        public void QueueUIForRender<T>(List<T> objList) where T : GameObject
+        public void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
         {
             objList.ForEach(obj =>
             {
+                obj.ScissorData._scissorFlag = scissorFlag;
+
                 _UIToRender.Add(obj);
             });
         }
-        public void QueueUIForRender<T>(T obj) where T : GameObject
+        public void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
         {
+            obj.ScissorData._scissorFlag = scissorFlag;
+
             _UIToRender.Add(obj);
         }
         public void RenderQueuedUI() 
         {
-            RenderObjectsInstancedGeneric(_UIToRender);
+            RenderObjectsInstancedGeneric(_UIToRender, ref _instancedRenderArray);
             _UIToRender.Clear();
         }
 
@@ -923,7 +976,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
         public void RenderQueuedObjects() 
         {
-            RenderObjectsInstancedGeneric(_ObjectsToRender);
+            RenderObjectsInstancedGeneric(_ObjectsToRender, ref _instancedRenderArray);
             _ObjectsToRender.Clear();
         }
         #endregion
