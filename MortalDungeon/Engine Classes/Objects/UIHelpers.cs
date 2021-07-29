@@ -64,10 +64,12 @@ namespace MortalDungeon.Engine_Classes
 
         public static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
 
-        
+        public static readonly Vector3 BaseMargin = new Vector3(10, 10, 0);
+        public static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
+        public static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
     }
 
-    public class UIDimensions 
+    public class UIDimensions
     {
         public Vector2 _dimensions;
         public float X { get { return _dimensions.X; } set { _dimensions.X = value; } }
@@ -88,12 +90,12 @@ namespace MortalDungeon.Engine_Classes
             return new Vector3(self.X, self.Y, 0);
         }
 
-        public UIDimensions() 
+        public UIDimensions()
         {
             _dimensions = new Vector2();
         }
 
-        public UIDimensions(Vector2 dimensions) 
+        public UIDimensions(Vector2 dimensions)
         {
             _dimensions = dimensions;
         }
@@ -108,7 +110,7 @@ namespace MortalDungeon.Engine_Classes
             _dimensions = new Vector2(x, y);
         }
 
-        public UIScale ToScale() 
+        public UIScale ToScale()
         {
             return new UIScale(_dimensions.X / WindowConstants.ScreenUnits.X, _dimensions.Y / WindowConstants.ScreenUnits.Y);
         }
@@ -131,7 +133,7 @@ namespace MortalDungeon.Engine_Classes
         public static UIScale operator *(UIScale a, float f) => new UIScale(a.X * f, a.Y * f);
         public static UIScale operator /(UIScale a, float f) => new UIScale(a.X / f, a.Y / f);
 
-        public static implicit operator UIDimensions(UIScale self) 
+        public static implicit operator UIDimensions(UIScale self)
         {
             return self.ToDimensions();
         }
@@ -159,6 +161,27 @@ namespace MortalDungeon.Engine_Classes
         public override string ToString()
         {
             return "{" + X + ", " + Y + "}";
+        }
+    }
+
+    public class BoundingArea
+    {
+        public float MinX = 0;
+        public float MaxX = 0;
+        public float MinY = 0;
+        public float MaxY = 0;
+
+        public bool InBoundingArea(Vector3 position) 
+        {
+            return !(position.X < MinX || position.X > MaxX || position.Y > MinY || position.Y < MaxY);
+        }
+
+        public void UpdateBoundingArea(float minX, float maxX, float minY, float maxY) 
+        {
+            MinX = minX;
+            MaxX = maxX;
+            MinY = minY;
+            MaxY = maxY;
         }
     }
 }

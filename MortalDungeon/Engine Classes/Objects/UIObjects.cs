@@ -4,6 +4,7 @@ using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -32,22 +33,20 @@ namespace MortalDungeon.Engine_Classes
 
         public bool Focusable = false;
 
-
         public bool Disabled = false;
-
         public bool Selected = false;
-
         public bool Focused = false; //determines whether this object should be taking key presses
 
         public UIObject Parent = null;
 
         protected Vector3 _originOffset = default;
-
         protected bool _scaleAspectRatio = true;
 
         public Action OnClickAction = null;
 
         public List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
+        public BoundingArea ScissorBounds = new BoundingArea();
+        public Bounds AdditionalBounds = null;
 
         public UIObject() { }
 
@@ -138,7 +137,7 @@ namespace MortalDungeon.Engine_Classes
             {
                 if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
                 {
-                    if (ReverseTree[i].BoundingObject.Bounds.Contains(MouseCoordinates, camera))
+                    if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
                     {
                         switch (type)
                         {
@@ -173,6 +172,8 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
         }
+
+        
 
         public static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
         {
@@ -210,9 +211,14 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void SetPositionFromAnchor(Vector3 position) 
+        
+
+        public void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
         {
-            UIDimensions anchorOffset = GetAnchorOffset(Anchor);
+            if (anchor == UIAnchorPosition.Center)
+                anchor = Anchor;
+
+            UIDimensions anchorOffset = GetAnchorOffset(anchor);
 
             _anchorOffset = anchorOffset;
 
@@ -389,7 +395,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void AddChild(UIObject uiObj, int zIndex = -1) 
+        public virtual void AddChild(UIObject uiObj, int zIndex = -1) 
         {
             uiObj.ReverseTree = null;
             uiObj.Parent = this;
@@ -442,6 +448,26 @@ namespace MortalDungeon.Engine_Classes
         public void RemoveChildren(List<int> objectIDs) 
         {
             objectIDs.ForEach(id => RemoveChild(id));
+        }
+
+        public void ForEach(Action<UIObject> objAction, UIObject uiObj = null)
+        {
+            if (uiObj == null)
+            {
+                objAction(this);
+                Children.ForEach(obj =>
+                {
+                    ForEach(objAction, obj);
+                });
+            }
+            else
+            {
+                objAction(uiObj);
+                uiObj.Children.ForEach(obj =>
+                {
+                    ForEach(objAction, obj);
+                });
+            }
         }
 
 
@@ -529,7 +555,24 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void OnType(KeyboardKeyEventArgs e) 
         {
-            //Console.WriteLine(Name + "   " + TextHelper.KeyStrokeToString(e));
+            switch (e.Key)
+            {
+                case Keys.Escape:
+                    EndFocus();
+                    break;
+            }
+        }
+
+        public virtual void OnUpdate(MouseState mouseState) { }
+
+        public virtual void OnResize() { }
+
+        public virtual void UpdateScissorBounds()
+        {
+            Vector3 botLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
+            Vector3 topRight = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopRight);
+
+            ScissorBounds.UpdateBoundingArea(botLeft.X, topRight.X, botLeft.Y, topRight.Y);
         }
 
         public int CompareTo([AllowNull] UIObject other)
@@ -561,19 +604,17 @@ namespace MortalDungeon.Engine_Classes
             Depth = depth;
             BoundingObject = baseObject;
         }
-    }
 
-    public class ScissorData
-    {
-        public int X = 0;
-        public int Y = 0;
-        public int Width = 0;
-        public int Height = 0;
-        public int Depth = 0;
-
-        public bool Scissor = false;
-
-        public bool _scissorFlag = false;
-        public int _startingDepth = 0;
+        public bool InsideBounds(Vector2 point, Camera camera = null)
+        {
+            if (UIObject.AdditionalBounds == null)
+            {
+                return BoundingObject.Bounds.Contains(point, camera);
+            }
+            else 
+            {
+                return BoundingObject.Bounds.Contains(point, camera) && UIObject.AdditionalBounds.Contains(point, camera);
+            }
+        }
     }
 }

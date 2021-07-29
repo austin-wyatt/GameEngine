@@ -64,6 +64,16 @@ namespace MortalDungeon
             return returnVec;
         }
 
+        public static Vector3 ConvertScreenSpaceToGlobalCoordinates(Vector3 position)
+        {
+            Vector3 returnVec = new Vector3(position);
+            returnVec.X = position.X * ClientSize.X / ScreenUnits.X;
+            returnVec.Y = position.Y * ClientSize.Y / ScreenUnits.Y;
+            returnVec.Z = position.Z;
+
+            return returnVec;
+        }
+
         public static Vector3 ConverLocalToScreenSpaceCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position);
@@ -447,6 +457,14 @@ namespace MortalDungeon
             SetWindowSize();
 
             _renderer.ResizeFBOs(WindowConstants.ClientSize);
+
+            _sceneController.Scenes.ForEach(scene =>
+            {
+                scene._UI.ForEach(ui =>
+                {
+                    ui.ForEach(obj => obj.OnResize());
+                });
+            });
         }
 
         protected override void OnUnload()

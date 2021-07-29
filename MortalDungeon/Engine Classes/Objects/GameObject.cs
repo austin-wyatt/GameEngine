@@ -60,6 +60,11 @@ namespace MortalDungeon.Engine_Classes
             Position = position;
         }
 
+        public virtual void SetDragPosition(Vector3 position)
+        {
+            SetPosition(position);
+        }
+
         public virtual void Tick() 
         {
             BaseObjects.ForEach(obj =>
@@ -224,7 +229,7 @@ namespace MortalDungeon.Engine_Classes
             }
             
         }
-        
+
         public override bool Equals(object obj)
         {
             return obj is GameObject @object &&
@@ -244,5 +249,19 @@ namespace MortalDungeon.Engine_Classes
         public float MixPercent = 0f;
         public Texture MixedTexture = null;
         public TextureName MixedTextureName = TextureName.Unknown;
+    }
+
+    public class ScissorData
+    {
+        public int X = 0;
+        public int Y = 0;
+        public int Width = 0;
+        public int Height = 0;
+        public int Depth = 0;
+
+        public bool Scissor = false;
+
+        public bool _scissorFlag = false;
+        public int _startingDepth = 0;
     }
 }

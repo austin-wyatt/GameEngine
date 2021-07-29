@@ -120,5 +120,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _selectedAbility.OnRightClick();
             }
         }
+
+
     }
 }

@@ -89,7 +89,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             float footerHeight = 300;
             Footer footer = new Footer(footerHeight);
-            AddUI(footer);
+            AddUI(footer, 100);
 
             _footer = footer;
 
@@ -155,8 +155,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             {
                 AdvanceRound();
                 turnCounter.TextField.SetTextString(Round.ToString());
-
-                footer.SetPosition(footer.GetAnchorPosition(UIAnchorPosition.TopCenter));
             };
 
 
@@ -182,13 +180,36 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //AddUI(testList, 100);
 
-            Input inputComp = new Input(footer.Position - footer.GetDimensions().X / 6 * Vector3.UnitX, new UIScale(1, 0.12f), "", 0.05f);
-            inputComp.ScissorData.Scissor = true;
-            inputComp.ScissorData.Depth = 2;
-            inputComp.ScissorData.Width = 500;
-            inputComp.ScissorData.Height = WindowConstants.ClientSize.Y / 2;
+            Input inputComp = new Input(footer.Position - footer.GetDimensions().X / 6 * Vector3.UnitX, new UIScale(1, 0.12f), "", 0.05f, false, new UIDimensions(10, 30));
 
             footer.AddChild(inputComp, 100);
+
+
+            //Scrollable component demo
+            ScrollableArea scrollableComp = new ScrollableArea(WindowConstants.CenterScreen, new UIScale(1.5f, 1), WindowConstants.CenterScreen, new UIScale(5, 5));
+
+            UIList testList = new UIList(new Vector3(), new UIScale(0.75f, 0.15f), 0.05f);
+            testList.AddItem("Test", () =>
+            {
+                testList.AddItem("more test");
+            });
+
+            scrollableComp.BaseComponent.AddChild(testList, 100);
+            scrollableComp.SetVisibleAreaSize(testList.ListItemSize + testList.Margin + testList.ItemMargins + new UIScale(0, testList.ListItemSize.Y * 4));
+            testList.SetPositionFromAnchor(scrollableComp.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+
+            UIBlock scrollableParent = new UIBlock(WindowConstants.CenterScreen) { Draggable = true };
+            scrollableParent.AddChild(scrollableComp, 100);
+
+            scrollableComp.SetPosition(scrollableParent.GetAnchorPosition(UIAnchorPosition.TopLeft) + UIHelpers.BaseMargin);
+
+
+            testList.AddItem("TestTwo", () =>
+            {
+                scrollableParent.SetPosition(scrollableParent.Position + new Vector3(0, 10, 0));
+            });
+
+            AddUI(scrollableParent, 1000);
         }
 
 

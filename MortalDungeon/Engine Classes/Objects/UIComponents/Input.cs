@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
@@ -10,11 +11,19 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public UIDimensions TextOffset = new UIDimensions(20, 30);
         public bool CenterText = false;
 
-        public int _cursorPosition = 0;
+        public int _cursorIndex = 0;
 
         public TextBox _textBox;
 
         public Cursor _cursorObject;
+
+        public bool Scrollable = true;
+
+        public bool WordWrap = false;
+        public int Lines = 1;
+        public int Columns = 25;
+
+        private int _lineCount = 0;
 
         public Input(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
@@ -31,7 +40,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Focusable = true;
 
-            _cursorPosition = text.Length;
+            _cursorIndex = text.Length;
 
             TextBox textBox = new TextBox(position, Size, text, textScale, centerText, textOffset);
             BaseComponent = textBox;
@@ -44,6 +53,10 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             _cursorObject = new Cursor(textBox.TextField.Position, textScale);
 
             AddChild(_cursorObject, 100);
+
+
+
+            UpdateScissorBounds();
 
             ValidateObject(this);
         }
@@ -59,50 +72,71 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             if (typedLetter.Length > 0)
             {
-                _textBox.TextField.SetTextString(currString.Substring(0, _cursorPosition) + typedLetter + currString.Substring(_cursorPosition, currString.Length - _cursorPosition));
-                _cursorPosition++;
+                if (currString.Length <= Columns * Lines) 
+                {
+                    if (typedLetter == "\n")
+                    {
+                        if (_lineCount < Lines - 1) 
+                        {
+                            _textBox.TextField.SetTextString(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
+                            _cursorIndex++;
+                            _lineCount++;
+                        }
+                            
+                    }
+                    else
+                    {
+                        _textBox.TextField.SetTextString(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
+                        _cursorIndex++;
+                    }
+                }
             }
             else 
             {
                 switch (e.Key) 
                 {
                     case Keys.Backspace:
-                        if (_cursorPosition > 0) 
+                        if (_cursorIndex > 0) 
                         {
-                            _textBox.TextField.SetTextString(currString.Remove(_cursorPosition - 1, 1));
-                            _cursorPosition--;
+                            if (currString[_cursorIndex - 1] == '\n') 
+                            {
+                                _lineCount--;
+                            }
+
+                            _textBox.TextField.SetTextString(currString.Remove(_cursorIndex - 1, 1));
+                            _cursorIndex--;
                         }
                         break;
                     case Keys.Delete:
-                        if (_cursorPosition < currString.Length)
+                        if (_cursorIndex < currString.Length)
                         {
-                            _textBox.TextField.SetTextString(currString.Remove(_cursorPosition, 1));
+                            _textBox.TextField.SetTextString(currString.Remove(_cursorIndex, 1));
                         }
                         break;
                     case Keys.Home:
-                        _cursorPosition = 0;
+                        _cursorIndex = 0;
                         break;
                     case Keys.End:
-                        _cursorPosition = currString.Length;
+                        _cursorIndex = currString.Length;
                         break;
                     case Keys.Escape:
                         EndFocus();
                         break;
                     case Keys.Right:
-                        _cursorPosition++;
+                        _cursorIndex++;
                         break;
                     case Keys.Left:
-                        _cursorPosition--;
+                        _cursorIndex--;
                         break;
                 }
 
-                if (_cursorPosition < 0)
+                if (_cursorIndex < 0)
                 {
-                    _cursorPosition = 0;
+                    _cursorIndex = 0;
                 }
-                else if (_cursorPosition > currString.Length) 
+                else if (_cursorIndex > currString.Length) 
                 {
-                    _cursorPosition = currString.Length;
+                    _cursorIndex = currString.Length;
                 }
             }
 
@@ -111,24 +145,33 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void SetCursorPosition() 
         {
-            if (_textBox.TextField.Letters.Count > 0 && _cursorPosition != 0)
+            if (_textBox.TextField.Letters.Count > 0 && _cursorIndex != 0)
             {
-                Vector3 textDimensions = _textBox.TextField.Letters[_cursorPosition - 1].GetDimensions();
+                Vector3 textDimensions = _textBox.TextField.Letters[_cursorIndex - 1].GetDimensions();
 
-                if (_textBox.TextField.Letters[_cursorPosition - 1].Character == Character.NewLine)
+                if (_textBox.TextField.Letters[_cursorIndex - 1].Character == Character.NewLine)
                 {
-                    _cursorObject.SetPosition(_textBox.TextField.Letters[_cursorPosition - 1].Position - textDimensions.X / 1.95f * Vector3.UnitX);
+                    _cursorObject.SetPosition(_textBox.TextField.Letters[_cursorIndex - 1].Position - textDimensions.X / 1.95f * Vector3.UnitX);
                 }
                 else 
                 {
-                    _cursorObject.SetPosition(_textBox.TextField.Letters[_cursorPosition - 1].Position + textDimensions.X / 2 * Vector3.UnitX);
+                    _cursorObject.SetPosition(_textBox.TextField.Letters[_cursorIndex - 1].Position + textDimensions.X / 2 * Vector3.UnitX);
                 }
             }
             else 
             {
-                _cursorObject.SetPosition(_textBox.TextField.Position - new Vector3(_textBox.TextField.LetterOffset / 2.01f, 0, 0));
+                _cursorObject.SetPosition(_textBox.GetAnchorPosition(UIAnchorPosition.LeftCenter) + (_textBox.TextOffset.X / 2) * Vector3.UnitX);
             }
+
+            //if (!ScissorBounds.InBoundingArea(_cursorObject.Position)) 
+            //{
+                
+            //    //_textBox.SetPosition(_cursorObject.Position);
+            //    UpdateScissorBounds();
+            //}
         }
+
+        
 
         public override void OnFocus()
         {

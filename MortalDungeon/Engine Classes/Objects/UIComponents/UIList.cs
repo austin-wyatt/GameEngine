@@ -9,6 +9,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public UIScale Margin = new UIScale(0.02f, 0.02f);
         public UIScale ItemMargins = new UIScale(0f, 0.005f);
         public UIScale ListItemSize = new UIScale();
+        public UIScale ListSize = new UIScale();
 
         public bool Ascending = false;
 
@@ -24,6 +25,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ListItemSize = listItemSize;
             TextScale = textScale;
             Ascending = ascending;
+
+            ListSize = listItemSize;
 
             //Clickable = true;
             //Draggable = true;
@@ -113,6 +116,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             listSize.X += Margin.X;
 
             BaseComponent.SetSize(listSize);
+            ListSize = listSize;
 
             if (Items.Count > 0) 
             {

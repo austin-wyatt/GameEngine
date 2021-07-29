@@ -277,8 +277,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     else 
                     {
                         Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position);
-                        _grabbedObj.SetPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
-                        //_grabbedObj.SetPosition(mouseCoordScreenSpace);
+                        //_grabbedObj.SetPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
+                        _grabbedObj.SetDragPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
                     }
                 } //resolve all ongoing grab effects
 
@@ -347,7 +347,17 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return !interceptKeystrokes;
         }
 
-        public virtual void onUpdateFrame(FrameEventArgs args) { }
+        public virtual void onUpdateFrame(FrameEventArgs args) 
+        {
+            if (_focusedObj != null && !_focusedObj.Focused)
+            {
+                _focusedObj = null;
+            }
+            else if(_focusedObj != null) 
+            {
+                _focusedObj.OnUpdate(MouseState);
+            }
+        }
         #endregion
 
         //accesses the method used to determine whether the cursor is overlapping an object that is defined in the main file.
