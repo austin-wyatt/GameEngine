@@ -67,8 +67,9 @@ namespace MortalDungeon.Game.Abilities
         public bool CanTargetGround = true;
         public bool CanTargetTerrain = false;
 
-        public int EnergyCost = 0;
+        public float EnergyCost = 0;
         public int Range = 0;
+        public int CurrentRange = 0;
         public float Damage = 0;
         public int Duration = 0;
 
@@ -108,6 +109,8 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnAbilityDeselect() { }
 
         public virtual void UpdateEnergyCost() { }
+
+        public virtual void OnCast() { }
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 

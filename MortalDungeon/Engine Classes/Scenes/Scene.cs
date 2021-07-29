@@ -33,8 +33,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool Loaded = false;
 
-        public int SceneID = -1;
-        public MessageCenter MessageCenter = new MessageCenter();
+        public int SceneID => _sceneID;
+        protected int _sceneID = currentSceneID++;
+        protected static int currentSceneID = 0;
+
+        public MessageCenter MessageCenter = null;
 
         #region Messaging flags
         protected int _interceptClicks = 0b0; //see MessageTarget enum in SceneController for notable values
@@ -62,6 +65,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _tileMaps = new List<TileMap>(); //The map/maps to render
             _units = new List<Unit>(); //The units to render
             _UI = new List<UIObject>();
+
+            MessageCenter = new MessageCenter(SceneID);
 
             MessageCenter.ParseMessage = ParseMessage;
 
@@ -245,13 +250,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             _focusedObj = tempFocusedObj;
                         }
+                        onObjectFocused();
                     }, UIEventType.Focus);
                 });
 
                 if (_focusedObj != null && (tempFocusedObj == null || tempFocusedObj.ObjectID != _focusedObj.ObjectID)) 
                 {
-                    _focusedObj.EndFocus();
+                    _focusedObj.FocusEnd();
                     _focusedObj = tempFocusedObj;
+                    onObjectFocusEnd();
                 }
             }
         }
@@ -319,7 +326,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
         }
 
-        public virtual void onKeyDown(KeyboardKeyEventArgs e) 
+        public virtual bool onKeyDown(KeyboardKeyEventArgs e) 
         {
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
@@ -330,6 +337,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     obj.OnKeyDown(e);
                 });
             }
+
+            return !interceptKeystrokes;
         }
 
         public virtual bool onKeyUp(KeyboardKeyEventArgs e) 
@@ -352,12 +361,42 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (_focusedObj != null && !_focusedObj.Focused)
             {
                 _focusedObj = null;
+                onObjectFocusEnd();
             }
             else if(_focusedObj != null) 
             {
                 _focusedObj.OnUpdate(MouseState);
             }
         }
+
+        public virtual void onUnitClicked(Unit unit) { }
+        public virtual void onUIClicked(UIObject uiObj) { }
+        public virtual void onTileClicked(TileMap map, BaseTile tile) { }
+
+        public virtual void onCameraMoved()
+        {
+            _units.ForEach(u =>
+            {
+                if (u.StatusBarComp != null)
+                {
+                    u.StatusBarComp.OnCameraMove();
+                }
+            });
+        }
+
+        public virtual void onObjectFocused() 
+        {
+            Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
+            MessageCenter.SendMessage(msg);
+        }
+
+        public virtual void onObjectFocusEnd() 
+        {
+            Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
+            MessageCenter.SendMessage(msg);
+        }
+
+        public virtual void onRenderEnd() { }
         #endregion
 
         //accesses the method used to determine whether the cursor is overlapping an object that is defined in the main file.
@@ -390,9 +429,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         }
 
-        public virtual void onUnitClicked(Unit unit) { }
-        public virtual void onUIClicked(UIObject uiObj) { }
-        public virtual void onTileClicked(TileMap map, BaseTile tile) { }
+        
 
         public Scene() { }
 
@@ -474,15 +511,25 @@ namespace MortalDungeon.Engine_Classes.Scenes
     {
         public Action<Message> ParseMessage = null;
 
-        public Action<Message> SendMessage = null;
+        public Action<Message> _sendMessage = null;
 
-        public int SceneID = -1;
+        public int SceneID => _sceneID;
+        private int _sceneID = -1;
 
-        public MessageCenter() { }
+        public MessageCenter(int id) 
+        {
+            _sceneID = id;
+        }
 
         public Message CreateMessage(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All)
         {
             return new Message(msgType, msgBody, msgTarget, targetAmount) { Sender = SceneID };
+        }
+
+        public void SendMessage(Message msg) 
+        {
+            msg.Sender = SceneID;
+            _sendMessage?.Invoke(msg);
         }
     }
 }

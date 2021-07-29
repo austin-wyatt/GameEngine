@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Units
 
             VisionRadius = 6;
 
-            Abilities.Move movement = new Abilities.Move(this, 6);
+            Abilities.Move movement = new Abilities.Move(this);
             Abilities.Add(movement.AbilityID, movement);
 
             Abilities.Strike melee = new Abilities.Strike(this);

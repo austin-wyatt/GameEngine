@@ -120,7 +120,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                         _cursorIndex = currString.Length;
                         break;
                     case Keys.Escape:
-                        EndFocus();
+                        FocusEnd();
                         break;
                     case Keys.Right:
                         _cursorIndex++;
@@ -182,9 +182,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetCursorPosition();
         }
 
-        public override void EndFocus()
+        public override void FocusEnd()
         {
-            base.EndFocus();
+            base.FocusEnd();
             _cursorObject.PropertyAnimations[0].Stop();
             _cursorObject.Render = false;
         }

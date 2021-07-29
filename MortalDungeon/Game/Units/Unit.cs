@@ -36,7 +36,7 @@ namespace MortalDungeon.Game.Units
 
         public TileMap CurrentTileMap;
 
-
+        public UnitStatusBar StatusBarComp = null;
         public Unit() { }
         public Unit(Vector3 position, int tileMapPosition = 0, int id = 0, string name = "Unit")
         {
@@ -65,6 +65,16 @@ namespace MortalDungeon.Game.Units
             }
 
             return abilities;
+        }
+
+        public override void SetPosition(Vector3 position)
+        {
+            base.SetPosition(position);
+
+            if (StatusBarComp != null) 
+            {
+                StatusBarComp.UpdateUnitStatusPosition();
+            }
         }
     }
 }

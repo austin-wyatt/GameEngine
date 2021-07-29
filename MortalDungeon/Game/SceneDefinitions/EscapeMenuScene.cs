@@ -55,14 +55,14 @@ namespace MortalDungeon.Game.SceneDefinitions
 
         private bool MenuOpen = false;
 
-        public override bool onKeyUp(KeyboardKeyEventArgs e)
+        public override bool onKeyDown(KeyboardKeyEventArgs e)
         {
-            if (!base.onKeyUp(e))
+            if (!base.onKeyDown(e))
             {
                 return false;
             }
 
-            if (e.Key == Keys.F1) 
+            if (e.Key == Keys.Escape && !e.IsRepeat) 
             {
                 MenuOpen = !MenuOpen;
                 _UI.ForEach(ui =>

@@ -102,13 +102,14 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                 Vector3 dim = toggleableButton.GetAnchorPosition(UIAnchorPosition.TopLeft);
 
-                UIList abilityList = new UIList(dim, new UIScale(0.75f, 0.15f), 0.05f) { Ascending = true, Focusable = true };
+                UIList abilityList = new UIList(dim, new UIScale(0.75f, 0.15f), 0.05f) { Ascending = true };
 
                 foreach (Ability ability in CurrentUnit.Abilities.Values) 
                 {
                     abilityList.AddItem(ability.Name, () => 
                     {
                         SelectAbility(ability);
+                        toggleableButton.OnMouseUp();
                     });
                 }
 
@@ -151,11 +152,11 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //footer.PropertyAnimations.Add(testAnim);
 
-            advanceTurnButton.OnClickAction = () =>
-            {
-                AdvanceRound();
-                turnCounter.TextField.SetTextString(Round.ToString());
-            };
+            //advanceTurnButton.OnClickAction = () =>
+            //{
+            //    AdvanceRound();
+            //    turnCounter.TextField.SetTextString(Round.ToString());
+            //};
 
 
 
@@ -186,30 +187,44 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             //Scrollable component demo
-            ScrollableArea scrollableComp = new ScrollableArea(WindowConstants.CenterScreen, new UIScale(1.5f, 1), WindowConstants.CenterScreen, new UIScale(5, 5));
+            //ScrollableArea scrollableComp = new ScrollableArea(WindowConstants.CenterScreen, new UIScale(1.5f, 1), WindowConstants.CenterScreen, new UIScale(5, 5));
 
-            UIList testList = new UIList(new Vector3(), new UIScale(0.75f, 0.15f), 0.05f);
-            testList.AddItem("Test", () =>
+            //UIList testList = new UIList(new Vector3(), new UIScale(0.75f, 0.15f), 0.05f);
+            //testList.AddItem("Test", () =>
+            //{
+            //    testList.AddItem("more test");
+            //});
+
+            //scrollableComp.BaseComponent.AddChild(testList, 100);
+            //scrollableComp.SetVisibleAreaSize(testList.ListItemSize + testList.Margin + testList.ItemMargins + new UIScale(0, testList.ListItemSize.Y * 4));
+            //testList.SetPositionFromAnchor(scrollableComp.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+
+            //UIBlock scrollableParent = new UIBlock(WindowConstants.CenterScreen) { Draggable = true };
+            //scrollableParent.AddChild(scrollableComp, 100);
+
+            //scrollableComp.SetPosition(scrollableParent.GetAnchorPosition(UIAnchorPosition.TopLeft) + UIHelpers.BaseMargin);
+
+
+            //testList.AddItem("TestTwo", () =>
+            //{
+            //    scrollableParent.SetPosition(scrollableParent.Position + new Vector3(0, 10, 0));
+            //});
+
+            //AddUI(scrollableParent, 1000);
+
+
+            UnitStatusBar guyStatusBar = new UnitStatusBar(guy, _camera);
+            AddUI(guyStatusBar);
+
+            guy2.Name = "Other guy";
+            UnitStatusBar guyStatusBar2 = new UnitStatusBar(guy2, _camera);
+            AddUI(guyStatusBar2);
+
+            advanceTurnButton.OnClickAction = () =>
             {
-                testList.AddItem("more test");
-            });
+                guyStatusBar.UpdateUnitStatusPosition();
+            };
 
-            scrollableComp.BaseComponent.AddChild(testList, 100);
-            scrollableComp.SetVisibleAreaSize(testList.ListItemSize + testList.Margin + testList.ItemMargins + new UIScale(0, testList.ListItemSize.Y * 4));
-            testList.SetPositionFromAnchor(scrollableComp.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
-
-            UIBlock scrollableParent = new UIBlock(WindowConstants.CenterScreen) { Draggable = true };
-            scrollableParent.AddChild(scrollableComp, 100);
-
-            scrollableComp.SetPosition(scrollableParent.GetAnchorPosition(UIAnchorPosition.TopLeft) + UIHelpers.BaseMargin);
-
-
-            testList.AddItem("TestTwo", () =>
-            {
-                scrollableParent.SetPosition(scrollableParent.Position + new Vector3(0, 10, 0));
-            });
-
-            AddUI(scrollableParent, 1000);
         }
 
 
@@ -295,6 +310,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         _camera.SetPosition(_camera.Position - movement); // Backwards
                         onMouseMove();
+                        onCameraMoved();
                     }
                 }
                 else if (MouseState.ScrollDelta[1] > 0)
@@ -304,6 +320,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         _camera.SetPosition(_camera.Position + movement); // Forward
                         onMouseMove();
+                        onCameraMoved();
                     }
                 }
 
@@ -317,6 +334,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 {
                     _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
                     onMouseMove();
+                    onCameraMoved();
                 }
 
                 if (KeyboardState.IsKeyDown(Keys.S))
@@ -325,18 +343,21 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
                     _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
                     onMouseMove();
+                    onCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.A))
                 {
                     //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
                     _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
                     onMouseMove();
+                    onCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.D))
                 {
                     //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
                     _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
                     onMouseMove();
+                    onCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.Space))
                 {

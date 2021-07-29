@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using static MortalDungeon.Engine_Classes.UIHelpers;
 
 namespace MortalDungeon.Engine_Classes
 {
@@ -486,6 +485,20 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
+        public BaseObject GetBaseObject() 
+        {
+            if (_baseObject != null) 
+            {
+                return _baseObject;
+            }
+            else if (BaseComponent != null) 
+            {
+                return BaseComponent.GetBaseObject();
+            }
+
+            throw new Exception("Attempted to get the base object of an empty UIObject");
+        }
+
         public override void OnMouseUp()
         {
             base.OnMouseUp();
@@ -509,7 +522,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void EndFocus() 
+        public virtual void FocusEnd() 
         {
             if (Focused) 
             {
@@ -558,7 +571,7 @@ namespace MortalDungeon.Engine_Classes
             switch (e.Key)
             {
                 case Keys.Escape:
-                    EndFocus();
+                    FocusEnd();
                     break;
             }
         }
@@ -566,6 +579,8 @@ namespace MortalDungeon.Engine_Classes
         public virtual void OnUpdate(MouseState mouseState) { }
 
         public virtual void OnResize() { }
+
+        public virtual void OnCameraMove() { }
 
         public virtual void UpdateScissorBounds()
         {

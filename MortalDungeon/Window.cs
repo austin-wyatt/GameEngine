@@ -74,15 +74,6 @@ namespace MortalDungeon
             return returnVec;
         }
 
-        public static Vector3 ConverLocalToScreenSpaceCoordinates(Vector3 position)
-        {
-            Vector3 returnVec = new Vector3(position);
-            returnVec.X = (position.X + 1) / 2 * ScreenUnits.X;
-            returnVec.Y = (position.Y + 1) / 2 * ScreenUnits.Y;
-            returnVec.Z = position.Z;
-
-            return returnVec;
-        }
         public static Vector3 ConvertLocalToScreenSpaceCoordinates(Vector2 position)
         {
             Vector3 returnVec = new Vector3(position);
@@ -146,6 +137,7 @@ namespace MortalDungeon
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
             _camera.Pitch += 7;
 
+            _camera.UpdateProjectionMatrix();
 
             _mouseRay = new MouseRay(_camera);
 
@@ -172,8 +164,8 @@ namespace MortalDungeon
                 _sceneController.LoadScene(boundSceneID, _camera, _cursorObject, _mouseRay);
             }
 
-            _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
             _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
+            _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
 
 
             _sceneController.LoadTextures();
@@ -323,6 +315,11 @@ namespace MortalDungeon
             SwapBuffers();
 
             base.OnRenderFrame(args);
+
+            _sceneController.Scenes.ForEach(scene =>
+            {
+                scene.onRenderEnd();
+            });
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)

@@ -22,7 +22,9 @@ namespace MortalDungeon.Game.UI
 
         public int CurrentMaxEnergy = 10;
         public int CurrentEnergy = 10;
+        public int EnergyHovered = 0;
         public List<EnergyPip> Pips = new List<EnergyPip>(MaxEnergy);
+
 
         public EnergyDisplayBar(Vector3 position, UIScale size, int maxEnergy = 10)
         {
@@ -87,6 +89,21 @@ namespace MortalDungeon.Game.UI
         {
             SetActiveEnergy(CurrentEnergy + energy);
         }
+
+        public void HoverAmount(int energyToHover) 
+        {
+            //todo
+            if (energyToHover != EnergyHovered) 
+            {
+                Pips.ForEach(pip => pip.EndBouncingAnimation());
+                EnergyHovered = energyToHover;
+
+                for (int i = CurrentEnergy - 1; i > CurrentEnergy - EnergyHovered && i >= 0; i--) 
+                {
+                    Pips[i].PlayBouncingAnimation();
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -146,22 +163,6 @@ namespace MortalDungeon.Game.UI
             PropertyAnimations.Add(new BounceAnimation(GetBaseObject(this).BaseFrame));
         }
 
-        public override void OnHover()
-        {
-            if (!Hovered && Hoverable)
-            {
-                PlayBouncingAnimation();
-            }
-            base.OnHover();
-        }
-
-        public override void HoverEnd()
-        {
-            base.HoverEnd();
-
-            EndBouncingAnimation();
-        }
-
         public void ChangeEnergyState(EnergyStates state)
         {
             EnergyState = state;
@@ -184,7 +185,13 @@ namespace MortalDungeon.Game.UI
 
         public void EndBouncingAnimation()
         {
-            GetPropertyAnimationByID((int)PropertyAnimationIDs.Bounce)?.Reset();
+            PropertyAnimation bounce = GetPropertyAnimationByID((int)PropertyAnimationIDs.Bounce);
+
+            if (bounce != null) 
+            {
+                bounce.SetDefaultColor();
+                bounce.Reset();
+            }
         }
     }
 }

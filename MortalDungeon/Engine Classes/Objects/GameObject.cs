@@ -124,7 +124,7 @@ namespace MortalDungeon.Engine_Classes
 
             if (BaseObjects.Count > 0)
             {
-                display = BaseObjects[0].GetDisplay();
+                display = BaseObjects[0].BaseFrame;
             }
             else if (ParticleGenerators.Count > 0)
             {

@@ -38,7 +38,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 textObj = new Text(text, block.Origin + TextOffset);
             }
 
-            textObj.SetScale(textScale);
+            textObj.SetTextScale(textScale);
             UIDimensions textDimensions = textObj.GetTextDimensions();
             UIDimensions blockDimensions = block.GetDimensions();
             if (CenterText)

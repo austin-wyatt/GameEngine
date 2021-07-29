@@ -113,6 +113,16 @@ namespace MortalDungeon.Engine_Classes
             BaseTranslation = BaseFrame.Translation.ExtractTranslation();
             BaseColor = new Vector4(BaseFrame.Color);
         }
+
+        public void SetDefaultColor() 
+        {
+            BaseColor = new Vector4(BaseFrame.Color);
+        }
+
+        public void SetDefaultTranslation() 
+        {
+            BaseTranslation = BaseFrame.Translation.ExtractTranslation();
+        }
     }
 
     public class Keyframe

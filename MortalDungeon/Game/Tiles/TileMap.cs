@@ -167,8 +167,8 @@ namespace MortalDungeon.Game.Tiles
                 //baseTile.DefaultColor = Colors.TranslucentBlue;
                 //baseTile.SetColor(Colors.TranslucentBlue);
 
-                baseTile.DefaultColor = Colors.Invisible;
-                baseTile.SetColor(Colors.Invisible);
+                baseTile.DefaultColor = Colors.Transparent;
+                baseTile.SetColor(Colors.Transparent);
 
                 //SelectionTiles.Add(baseTile);
                 _selectionTilePool.Add(baseTile);

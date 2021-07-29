@@ -17,7 +17,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public Renderer Renderer;
         public Camera Camera;
 
-        private int _currentScene = 0;
         public SceneController(Renderer renderer, Camera camera) 
         {
             Renderer = renderer;
@@ -35,11 +34,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public int AddScene(Scene scene) 
         {
-            scene.SceneID = _currentScene;
-            _currentScene++;
-
-            scene.MessageCenter.SendMessage = ParseMessage;
-            scene.MessageCenter.SceneID = scene.SceneID;
+            scene.MessageCenter._sendMessage = ParseMessage;
 
             Scenes.Add(scene);
 

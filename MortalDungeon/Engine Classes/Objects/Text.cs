@@ -297,7 +297,7 @@ namespace MortalDungeon.Engine_Classes
         public string TextString = "";
         public Vector3 Position = new Vector3();
 
-        public float Scale = 0.1f;
+        public float TextScale = 0.1f;
         public bool CameraPerspective = false;
         private float _baseLetterOffset = 300f;
         public float LetterOffset = 300f;
@@ -343,7 +343,7 @@ namespace MortalDungeon.Engine_Classes
                 if (CharacterConstants._characterMap[arr[i]] == Character.NewLine)
                 {
                     position.X = Position.X;
-                    position.Y += NewLineHeight * Scale;
+                    position.Y += NewLineHeight * TextScale;
                 }
 
                 if (i < Letters.Count)
@@ -353,7 +353,7 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else 
                 {
-                    Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, Scale);
+                    Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, TextScale);
 
                     if (tempTexture != null)
                     {
@@ -392,7 +392,7 @@ namespace MortalDungeon.Engine_Classes
                 if (Letters[i].Character == Character.NewLine)
                 {
                     position.X = Position.X;
-                    position.Y += NewLineHeight * Scale;
+                    position.Y += NewLineHeight * TextScale;
                 }
                 else
                 {
@@ -433,7 +433,7 @@ namespace MortalDungeon.Engine_Classes
             if (index > 0 || index >= TextString.Length)
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(TextString.Length - 1), GetYOffsetAtIndex(TextString.Length - 1), 0);
-                Letter temp = new Letter(character, position, CameraPerspective, TextString.Length, Scale);
+                Letter temp = new Letter(character, position, CameraPerspective, TextString.Length, TextScale);
                 TextString += CharacterConstants._characterMapToChar[character];
 
                 Letters.Add(temp);
@@ -441,7 +441,7 @@ namespace MortalDungeon.Engine_Classes
             else 
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(index), GetYOffsetAtIndex(index), 0);
-                Letter temp = new Letter(character, position, CameraPerspective, index, Scale);
+                Letter temp = new Letter(character, position, CameraPerspective, index, TextScale);
 
                 char[] arr = TextString.ToCharArray();
                 string newStr = "";
@@ -470,7 +470,7 @@ namespace MortalDungeon.Engine_Classes
             if (index < 0 || index >= TextString.Length)
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(TextString.Length - 1), GetYOffsetAtIndex(TextString.Length - 1), 0);
-                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, TextString.Length, Scale);
+                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, TextString.Length, TextScale);
                 TextString += character;
 
                 Letters.Add(temp);
@@ -478,7 +478,7 @@ namespace MortalDungeon.Engine_Classes
             else
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(index), GetYOffsetAtIndex(index), 0);
-                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, index, Scale);
+                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, index, TextScale);
 
                 char[] arr = TextString.ToCharArray();
                 string newStr = "";
@@ -530,15 +530,15 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void SetScale(float scale) 
+        public void SetTextScale(float scale) 
         {
-            Scale = scale;
-            LetterOffset = Scale * _baseLetterOffset;
+            TextScale = scale;
+            LetterOffset = TextScale * _baseLetterOffset;
 
             Vector3 position = Position;
             Letters.ForEach(letter =>
             {
-                letter.SetScale(Scale);
+                letter.SetScale(TextScale);
             });
 
             RecalculateTextPosition();
@@ -579,7 +579,7 @@ namespace MortalDungeon.Engine_Classes
                     offset += Letters[i].YOffset;
                     if (Letters[i].Character == Character.NewLine)
                     {
-                        offset += NewLineHeight * Scale;
+                        offset += NewLineHeight * TextScale;
                     }
                 }
 

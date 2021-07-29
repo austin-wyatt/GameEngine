@@ -100,7 +100,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Texture tex = null;
             if (Scrollbar != null) 
             {
-                tex = Scrollbar.GetDisplay().TextureReference;
+                tex = Scrollbar._baseObject.BaseFrame.TextureReference;
                 RemoveChild(Scrollbar.ObjectID);
             }
 
