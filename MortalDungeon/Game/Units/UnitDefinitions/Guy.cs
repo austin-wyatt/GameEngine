@@ -10,7 +10,7 @@ namespace MortalDungeon.Game.Units
     public class Guy : Unit
     {
         public Guy() { }
-        public Guy(Vector3 position, int tileMapPosition, int id = 0, string name = "Guy")
+        public Guy(Vector3 position, int tileMapPosition, int id = 0, string name = "Guy") : base()
         {
             Name = name;
             TileMapPosition = tileMapPosition;
@@ -25,11 +25,15 @@ namespace MortalDungeon.Game.Units
 
             VisionRadius = 6;
 
-            Abilities.Move movement = new Abilities.Move(this);
-            Abilities.Add(movement.AbilityID, movement);
-
-            Abilities.Strike melee = new Abilities.Strike(this);
+            Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
             Abilities.Add(melee.AbilityID, melee);
+        }
+
+        public override void OnKill()
+        {
+            base.OnKill();
+
+            BaseObjects[0].SetAnimation(AnimationType.Die);
         }
     }
 }

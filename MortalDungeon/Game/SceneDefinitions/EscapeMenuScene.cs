@@ -49,8 +49,8 @@ namespace MortalDungeon.Game.SceneDefinitions
             Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.3f);
             backdropModal.SetColor(slightlyTransparentBackdropColor);
 
-            escapeMenu.Render = false;
-            backdropModal.Render = false;
+            escapeMenu.SetRender(false);
+            backdropModal.SetRender(false);
         }
 
         private bool MenuOpen = false;
@@ -67,7 +67,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 MenuOpen = !MenuOpen;
                 _UI.ForEach(ui =>
                 {
-                    ui.Render = MenuOpen;
+                    ui.SetRender(MenuOpen);
                 });
 
                 Message msg;

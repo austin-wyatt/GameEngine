@@ -67,7 +67,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             string typedLetter = TextHelper.KeyStrokeToString(e);
             string currString = _textBox.TextField.TextString;
 
-            _cursorObject.Render = true;
+            _cursorObject.SetRender(true);
             _cursorObject.PropertyAnimations[0].Restart();
 
             if (typedLetter.Length > 0)
@@ -176,7 +176,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void OnFocus()
         {
             base.OnFocus();
-            _cursorObject.Render = true;
+            _cursorObject.SetRender(true);
             _cursorObject.PropertyAnimations[0].Restart();
             _cursorObject.PropertyAnimations[0].Play();
             SetCursorPosition();
@@ -186,7 +186,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             base.FocusEnd();
             _cursorObject.PropertyAnimations[0].Stop();
-            _cursorObject.Render = false;
+            _cursorObject.SetRender(false);
         }
     }
 }

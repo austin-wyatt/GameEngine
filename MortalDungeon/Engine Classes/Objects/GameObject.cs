@@ -179,6 +179,24 @@ namespace MortalDungeon.Engine_Classes
         {
             PropertyAnimations.Add(animation);
         }
+
+        public void AddSingleUsePropertyAnimation(PropertyAnimation animation) 
+        {
+            animation.OnFinish = () =>
+            {
+                animation.Reset();
+                RemovePropertyAnimation(animation.AnimationID);
+            };
+
+            PropertyAnimations.Add(animation);
+        }
+
+        public virtual void SetRender(bool render) 
+        {
+            Render = render;
+        }
+
+
         private int _animationID = 0;
         public int NextAnimationID 
         {

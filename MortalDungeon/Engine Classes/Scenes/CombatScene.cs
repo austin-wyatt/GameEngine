@@ -1,8 +1,15 @@
 ﻿using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
@@ -19,7 +26,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool InCombat = true;
 
+        public bool DisplayUnitStatuses = true;
+
         protected const AbilityTypes DefaultAbilityType = AbilityTypes.Move;
+
+        Texture _normalFogTexture;
+
+        public CombatScene() 
+        {
+            Texture fogTex = Texture.LoadFromFile("Resources/FogTexture.png", default, TextureName.FogTexture);
+
+            fogTex.Use(TextureUnit.Texture1);
+
+            _normalFogTexture = fogTex;
+        }
 
         /// <summary>
         /// Start the next round
@@ -37,6 +57,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void CompleteRound()
         {
             //do stuff that needs to be done when a round is completed
+            InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList();
+
 
             AdvanceRound();
         }
@@ -48,6 +70,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             UnitTakingTurn = 0;
 
+            InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList(); //sort the list by speed
+
+            EnergyDisplayBar.SetActiveEnergy(InitiativeOrder[UnitTakingTurn].MaxEnergy);
+
             //do calculations here (advance an event, show a cutscene, etc)
 
             StartTurn();
@@ -58,6 +84,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// </summary>
         public virtual void StartTurn()
         {
+            CurrentUnit = InitiativeOrder[UnitTakingTurn];
+
+            EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
+
+            FillInTeamFog(CurrentUnit.Team);
+
+
+            CurrentUnit.OnTurnStart();
+
             //change the UI, move the camera, show which unit is selected, etc
         }
 
@@ -66,7 +101,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// </summary>
         public virtual void CompleteTurn()
         {
+            if (CurrentUnit != null) 
+            {
+                CurrentUnit.OnTurnEnd();
+            }
+
             UnitTakingTurn++;
+
 
             if (UnitTakingTurn == InitiativeOrder.Count)
             {
@@ -85,10 +126,84 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void DeselectAbility()
         {
-            _selectedAbility.TileMap.DeselectTiles();
+            if (_selectedAbility != null)
+            {
+                _selectedAbility.TileMap.DeselectTiles();
 
-            _selectedAbility?.OnAbilityDeselect();
-            _selectedAbility = null;
+                _selectedAbility?.OnAbilityDeselect();
+                _selectedAbility = null;
+            }
+        }
+
+        public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally) 
+        {
+            FillInAllFog(currentTeam);
+
+            _units.ForEach(unit =>
+            {
+                if (unit.Team == currentTeam)
+                {
+                    List<BaseTile> tiles = _tileMaps[0].GetVisionInRadius(unit.TileMapPosition, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
+
+                    tiles.ForEach(tile =>
+                    {
+                        tile.SetExplored(true, currentTeam);
+                        tile.SetFog(false, currentTeam);
+                    });
+                }
+            });
+
+            HideObjectsInFog();
+        }
+
+        public void FillInAllFog(UnitTeam currentTeam) 
+        {
+            _tileMaps[0].Tiles.ForEach(tile =>
+            {
+                tile.MultiTextureData.MixedTexture = _normalFogTexture;
+                tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
+                tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
+
+                //foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
+                //{
+                //tile.SetExplored(tile.Explored[team], team);
+                //}
+
+                tile.SetExplored(tile.Explored[currentTeam], currentTeam);
+                tile.SetFog(true, currentTeam);
+            });
+        }
+
+        public void HideObjectsInFog(List<Unit> units = null) 
+        {
+            if (units == null)
+            {
+                _units.ForEach(unit =>
+                {
+                    if (_tileMaps[0].Tiles[unit.TileMapPosition].InFog)
+                    {
+                        unit.SetRender(false);
+                    }
+                    else
+                    {
+                        unit.SetRender(true);
+                    }
+                });
+            }
+            else 
+            {
+                units.ForEach(unit =>
+                {
+                    if (_tileMaps[0].Tiles[unit.TileMapPosition].InFog)
+                    {
+                        unit.SetRender(false);
+                    }
+                    else
+                    {
+                        unit.SetRender(true);
+                    }
+                });
+            }
         }
 
         public override void EvaluateTileMapHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
@@ -121,6 +236,30 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
+        public override bool onKeyDown(KeyboardKeyEventArgs e)
+        {
+            bool processKeyStrokes = base.onKeyDown(e);
 
+            if (processKeyStrokes) 
+            {
+                switch (e.Key) 
+                {
+                    case Keys.LeftAlt:
+                    case Keys.RightAlt:
+                        if (!e.IsRepeat) 
+                        {
+                            DisplayUnitStatuses = !DisplayUnitStatuses;
+                            _units.ForEach(u =>
+                            {
+                                if (u.StatusBarComp != null)
+                                    u.StatusBarComp.SetWillDisplay(DisplayUnitStatuses);
+                            });
+                        }
+                        break;
+                }
+            }
+
+            return processKeyStrokes;
+        }
     }
 }

@@ -31,7 +31,7 @@ namespace MortalDungeon.Engine_Classes
 
         public OutlineParameters OutlineParameters = new OutlineParameters();
 
-        public RenderData RenderData = RenderData.DefaultRenderData;
+        public RenderData RenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold };
 
         public Vector3 Dimensions 
         {

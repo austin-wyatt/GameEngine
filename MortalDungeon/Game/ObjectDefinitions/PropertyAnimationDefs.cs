@@ -8,41 +8,52 @@ namespace MortalDungeon.Game.Objects
 {
     namespace PropertyAnimations
     {
-        public enum PropertyAnimationIDs 
-        {
-            Unknown,
-            Bounce
-        }
         public class BounceAnimation : PropertyAnimation
         {
-            public BounceAnimation(RenderableObject baseFrame)
+            public BounceAnimation(RenderableObject baseFrame, int bounceFrameDelay = 1)
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
                 BaseColor = new Vector4(baseFrame.Color);
-
-                AnimationID = (int)PropertyAnimationIDs.Bounce;
 
                 Repeat = true;
                 Playing = false;
 
 
 
-                for (int i = 0; i < 16; i++) 
+                for (int i = 0; i < 26; i++) 
                 {
-                    Keyframe temp = new Keyframe(i);
+                    Keyframe temp = new Keyframe(i * bounceFrameDelay);
 
-                    if (i < 8)
+                    if (i < 13)
                     {
-                        temp.Action = (baseFrame) => baseFrame.TranslateY(0.003f);
+                        temp.Action = (baseFrame) => baseFrame.TranslateY(0.0005f);
                     }
                     else  
                     {
-                        temp.Action = (baseFrame) => baseFrame.TranslateY(-0.003f);
+                        temp.Action = (baseFrame) => baseFrame.TranslateY(-0.0005f);
                     }
 
                     Keyframes.Add(temp);
                 }
+            }
+        }
+
+        public class LiftAnimation : PropertyAnimation
+        {
+            public LiftAnimation(RenderableObject baseFrame)
+            {
+                BaseFrame = baseFrame;
+                BaseTranslation = baseFrame.Translation.ExtractTranslation();
+                BaseColor = new Vector4(baseFrame.Color);
+
+                Repeat = false;
+                Playing = false;
+
+                Keyframe temp = new Keyframe(0);
+                temp.Action = (baseFrame) => baseFrame.TranslateY(0.02f);
+
+                Keyframes.Add(temp);
             }
         }
     }

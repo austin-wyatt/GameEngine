@@ -24,6 +24,7 @@ namespace MortalDungeon.Game.Abilities
     public enum DamageType //main effect (extra effects provided by abilities)
     {
         NonDamaging, //does no damage
+        Slashing, 
         Piercing, //pierces lighter armor, has a higher spread of damage (bleeds, crits)
         Blunt, //lower spread of damage (stuns, incapacitates)
         Mental, //lowers sanity (conversion, insanity, flee)
@@ -35,7 +36,7 @@ namespace MortalDungeon.Game.Abilities
     public class Ability
     {
         public AbilityTypes Type = AbilityTypes.Empty;
-        public DamageType DamageType;
+        public DamageType DamageType = DamageType.Slashing;
 
         public Unit CastingUnit;
         public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
@@ -54,6 +55,7 @@ namespace MortalDungeon.Game.Abilities
 
         public bool HasHoverEffect = false;
 
+        public int Tier = 0;
 
         public CombatScene Scene;
 
@@ -83,6 +85,26 @@ namespace MortalDungeon.Game.Abilities
             return new List<BaseTile>();
         }
 
+        public float GetEnergyCost()
+        {
+            if (CastingUnit != null)
+            {
+                return CastingUnit.EnergyCostMultiplier * EnergyCost + CastingUnit.EnergyAddition;
+            }
+
+            return EnergyCost;
+        }
+
+        public float GetDamage() 
+        {
+            if (CastingUnit != null)
+            {
+                return CastingUnit.DamageMultiplier * Damage + CastingUnit.DamageAddition;
+            }
+
+            return Damage;
+        }
+
         public virtual void AdvanceDuration() 
         {
             Duration--;
@@ -104,13 +126,27 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnHover(BaseTile tile, TileMap map) { }
         public virtual void OnHover(Unit unit) { }
 
-        public virtual void OnRightClick() { }
+        public virtual void OnRightClick()
+        {
+            Scene.DeselectAbility();
+            Scene.EnergyDisplayBar.HoverAmount(0);
+        }
 
-        public virtual void OnAbilityDeselect() { }
+        public virtual void OnAbilityDeselect() 
+        {
+            Scene.EnergyDisplayBar.HoverAmount(0);
+        }
 
         public virtual void UpdateEnergyCost() { }
 
-        public virtual void OnCast() { }
+        /// <summary>
+        /// Apply the energy cost and clean up and effects here.
+        /// </summary>
+        public virtual void OnCast() 
+        {
+            Scene.DeselectAbility();
+        }
+
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 
@@ -124,7 +160,7 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if (validTiles[i].InFog && !validTiles[i].Explored && trimFog) 
+                if (validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.Team] && trimFog) 
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -137,7 +173,7 @@ namespace MortalDungeon.Game.Abilities
                     {
                         if (units[j].TileMapPosition == validTiles[i].TileIndex)
                         {
-                            if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team != UnitTeam.Ally))
+                            if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team == UnitTeam.Enemy))
                             {
                                 validTiles.RemoveAt(i);
                                 i--;

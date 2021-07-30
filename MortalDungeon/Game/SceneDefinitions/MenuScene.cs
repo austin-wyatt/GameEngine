@@ -21,7 +21,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 {
     class MenuScene : CombatScene
     {
-        public MenuScene() 
+        public MenuScene() : base()
         {
             InitializeFields();
         }
@@ -33,41 +33,28 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.Load(camera, cursorObject, mouseRay);
 
 
-            Texture fogTex = Texture.LoadFromFile("Resources/FogTexture.png", default, TextureName.FogTexture);
-
-            fogTex.Use(TextureUnit.Texture1);
-
-
-
             TileMap tileMap = new TileMap(default) { Width = 50, Height = 50 };
             //TileMap tileMap = new TileMap(default) { Width = 5, Height = 5 };
 
             tileMap.PopulateTileMap();
             _tileMaps.Add(tileMap);
 
-            tileMap.Tiles.ForEach(tile =>
-            {
-                tile.MultiTextureData.MixedTexture = fogTex;
-                tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
-                tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
-
-                tile.SetFog(true);
-                tile.SetExplored(false);
-            });
 
             Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
             guy.Team = UnitTeam.Ally;
             guy.CurrentTileMap = tileMap;
+            guy._movementAbility.EnergyCost = 2f;
             CurrentUnit = guy;
 
             _units.Add(guy);
 
-            Guy guy2 = new Guy(tileMap.GetPositionOfTile(3) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
-            guy2.TileMapPosition = 3;
-            guy2.Team = UnitTeam.Ally;
-            guy2.CurrentTileMap = tileMap;
+            Guy badGuy = new Guy(tileMap.GetPositionOfTile(3) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
+            badGuy.TileMapPosition = 3;
+            badGuy.Team = UnitTeam.Enemy;
+            badGuy.CurrentTileMap = tileMap;
+            badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
-            _units.Add(guy2);
+            _units.Add(badGuy);
 
             for (int i = 0; i < 1; i++)
             {
@@ -106,11 +93,17 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                 foreach (Ability ability in CurrentUnit.Abilities.Values) 
                 {
-                    abilityList.AddItem(ability.Name, () => 
+                    ListItem newItem = abilityList.AddItem(ability.Name, () => 
                     {
+                        DeselectAbility();
                         SelectAbility(ability);
                         toggleableButton.OnMouseUp();
                     });
+
+                    if (ability.GetEnergyCost() > EnergyDisplayBar.CurrentEnergy)
+                    {
+                        newItem.SetDisabled(true);
+                    }
                 }
 
                 toggleableButton.AddChild(abilityList);
@@ -141,14 +134,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             footer.AddChild(advanceTurnButton, 100);
             footer.AddChild(turnCounter, 100);
 
-            PropertyAnimation testAnim = new PropertyAnimation(turnCounter.TextField.Letters[0].LetterObject.BaseFrame, 50) { Playing = true, Repeat = true };
-            Keyframe testFrame = new Keyframe(1, (baseFrame) =>
-            {
-                AdvanceRound();
-                turnCounter.TextField.SetTextString(Round.ToString());
-            });
-
-            testAnim.Keyframes.Add(testFrame);
 
             //footer.PropertyAnimations.Add(testAnim);
 
@@ -216,15 +201,25 @@ namespace MortalDungeon.Game.SceneDefinitions
             UnitStatusBar guyStatusBar = new UnitStatusBar(guy, _camera);
             AddUI(guyStatusBar);
 
-            guy2.Name = "Other guy";
-            UnitStatusBar guyStatusBar2 = new UnitStatusBar(guy2, _camera);
+            badGuy.Name = "Other guy";
+            UnitStatusBar guyStatusBar2 = new UnitStatusBar(badGuy, _camera);
             AddUI(guyStatusBar2);
 
+
+            badGuy.SetShields(5);
+
+
+            InitiativeOrder = new List<Unit>() { guy, badGuy };
+
+            StartRound();
             advanceTurnButton.OnClickAction = () =>
             {
-                guyStatusBar.UpdateUnitStatusPosition();
+                CompleteTurn();
+
+                turnCounter.TextField.SetTextString(Round.ToString());
             };
 
+            FillInTeamFog();
         }
 
 

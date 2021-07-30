@@ -156,7 +156,7 @@ namespace MortalDungeon.Game.Tiles
             for (int i = 0; i < _maxSelectionTiles; i++)
             {
                 baseTile = new BaseTile(tilePosition, i, this);
-                baseTile.Render = false;
+                baseTile.SetRender(false);
                 baseTile._tileObject.OutlineParameters.OutlineColor = Colors.TranslucentBlue;
                 baseTile._tileObject.OutlineParameters.InlineColor = Colors.TranslucentBlue;
                 //baseTile._tileObject.OutlineParameters.OutlineThickness = 2;
@@ -176,7 +176,7 @@ namespace MortalDungeon.Game.Tiles
 
             tilePosition.Z += 0.001f;
             HoveredTile = new BaseTile(tilePosition, -1, this);
-            HoveredTile.Render = false;
+            HoveredTile.SetRender(false);
             HoveredTile._tileObject.OutlineParameters.OutlineColor = Colors.Red;
             HoveredTile._tileObject.OutlineParameters.InlineColor = Colors.Red;
             HoveredTile._tileObject.OutlineParameters.SetAllOutline(0);
@@ -390,7 +390,7 @@ namespace MortalDungeon.Game.Tiles
             pos.Z = _selectionTilePool[_amountOfSelectionTiles].Position.Z;
 
             _selectionTilePool[_amountOfSelectionTiles].SetPosition(pos);
-            _selectionTilePool[_amountOfSelectionTiles].Render = true;
+            _selectionTilePool[_amountOfSelectionTiles].SetRender(true);
 
             SelectionTiles.Add(_selectionTilePool[_amountOfSelectionTiles]);
 
@@ -404,7 +404,7 @@ namespace MortalDungeon.Game.Tiles
         {
             if (SelectionTiles.Remove(selectionTile))
             {
-                selectionTile.Render = false;
+                selectionTile.SetRender(false);
                 selectionTile.AttachedTile.AttachedTile = null;
                 selectionTile.AttachedTile = null;
                 _amountOfSelectionTiles--;
@@ -415,7 +415,7 @@ namespace MortalDungeon.Game.Tiles
         {
             for (int i = 0; i < _amountOfSelectionTiles; i++) 
             {
-                _selectionTilePool[i].Render = false;
+                _selectionTilePool[i].SetRender(false);
                 if (_selectionTilePool[i].AttachedTile != null) 
                 {
                     _selectionTilePool[i].AttachedTile.AttachedTile = null;
@@ -436,12 +436,12 @@ namespace MortalDungeon.Game.Tiles
             pos.Z = HoveredTile.Position.Z;
 
             HoveredTile.SetPosition(pos);
-            HoveredTile.Render = true;
+            HoveredTile.SetRender(true);
         }
 
         public void EndHover() 
         {
-            HoveredTile.Render = false;
+            HoveredTile.SetRender(false);
         }
 
 

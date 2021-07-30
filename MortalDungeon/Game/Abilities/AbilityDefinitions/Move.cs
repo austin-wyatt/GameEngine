@@ -31,9 +31,11 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
+        
+
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
         {
-            Range = (int)(Scene.EnergyDisplayBar.CurrentEnergy / EnergyCost); //special case for general move ability
+            Range = (int)(Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost()); //special case for general move ability
 
             AffectedTiles = tileMap.FindValidTilesInRadius(CastingUnit.TileMapPosition, Range, TraversableTypes, units, CastingUnit, Type);
             TileMap = tileMap;
@@ -71,7 +73,7 @@ namespace MortalDungeon.Game.Abilities
 
             if (CurrentTiles.Count > 0)
             {
-                PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame, CastingUnit.NextAnimationID);
+                PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
 
                 Vector3 tileAPosition = CurrentTiles[0].Position;
                 Vector3 tileBPosition;
@@ -107,18 +109,23 @@ namespace MortalDungeon.Game.Abilities
                     {
                         TileMap.Tiles.ForEach(tile =>
                         {
-                            tile.SetFog(true);
+                            tile.SetFog(true, CastingUnit.Team);
                         });
 
                         Units.ForEach(unit =>
                         {
-                            List<BaseTile> tiles = TileMap.GetVisionInRadius(currentTile.TileIndex, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, Units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
-
-                            tiles.ForEach(tile =>
+                            if (unit.Team == CastingUnit.Team)
                             {
-                                tile.SetFog(false);
-                                tile.SetExplored();
-                            });
+                                List<Unit> allOtherUnits = Units.FindAll(u => u.TileMapPosition != unit.TileMapPosition);
+                                List<BaseTile> tiles = TileMap.GetVisionInRadius(currentTile.TileIndex, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, Units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
+
+                                tiles.ForEach(tile =>
+                                {
+                                    tile.SetExplored(true, CastingUnit.Team);
+                                    tile.SetFog(false, CastingUnit.Team);
+                                    Scene.HideObjectsInFog(allOtherUnits);
+                                });
+                            }
                         });
                     };
 
@@ -148,12 +155,12 @@ namespace MortalDungeon.Game.Abilities
 
             Scene.EnergyDisplayBar.HoverAmount(0);
 
-            int energyCost = (int)((CurrentTiles.Count - 1) * EnergyCost);
+            float energyCost = (CurrentTiles.Count - 1) * GetEnergyCost();
 
-            if (energyCost == 0) //special cases will go here
-            {
-                energyCost = 1;
-            }
+            //if (energyCost == 0) //special cases will go here
+            //{
+            //    energyCost = 1;
+            //}
 
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
         }
@@ -164,13 +171,13 @@ namespace MortalDungeon.Game.Abilities
 
             AffectedTiles = GetValidTileTargets(currentMap, scene._units);
 
-            Range = (int)(Scene.EnergyDisplayBar.CurrentEnergy / EnergyCost); //special case for general move ability
+            Range = (int)(Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost()); //special case for general move ability
 
             //currentMap.SelectTiles(AffectedTiles);
 
             AffectedTiles.ForEach(tile =>
             {
-                if (tile.Explored || !(tile.InFog))
+                if (tile.Explored[CastingUnit.Team] || !(tile.InFog))
                     currentMap.SelectTile(tile);
             });
         }
@@ -195,14 +202,18 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        private Vector4 _pathColor = Colors.Red;
+        private Vector4 _pathColor = new Vector4(0.8f, 0.59f, 0.14f, 1);
         private Vector4 _baseSelectionColor = new Vector4();
         private List<BaseTile> _path = new List<BaseTile>();
         private List<int> _pathTilesToDelete = new List<int>();
         public override void OnHover(BaseTile tile, TileMap map)
         {
-            if (tile.TileIndex == CastingUnit.TileMapPosition)
+            if (tile.TileIndex == CastingUnit.TileMapPosition) 
+            {
+                ClearSelectedTiles();
+                Scene.EnergyDisplayBar.HoverAmount(0);
                 return;
+            }
 
 
             if (SelectedTile == null || tile.ObjectID != SelectedTile.ObjectID)
@@ -316,7 +327,7 @@ namespace MortalDungeon.Game.Abilities
                 }
             }
 
-            Scene.EnergyDisplayBar.HoverAmount((int)(_path.Count * EnergyCost));
+            Scene.EnergyDisplayBar.HoverAmount((_path.Count - 1) * GetEnergyCost());
         }
 
         private void ClearSelectedTiles()
@@ -344,7 +355,6 @@ namespace MortalDungeon.Game.Abilities
         public override void OnRightClick()
         {
             base.OnRightClick();
-            Scene.DeselectAbility();
             ClearSelectedTiles();
         }
 
@@ -353,7 +363,6 @@ namespace MortalDungeon.Game.Abilities
             base.OnAbilityDeselect();
 
             ClearSelectedTiles();
-            Scene.EnergyDisplayBar.HoverAmount(0);
         }
     }
 

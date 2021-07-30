@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 
 namespace MortalDungeon.Game.Tiles
@@ -34,11 +36,11 @@ namespace MortalDungeon.Game.Tiles
         public TileClassification TileClassification = TileClassification.Ground;
         public TileType TileType = TileType.Default;
 
-        public bool InFog = false;
+        public bool InFog = true;
         public bool BlocksVision = false;
         public bool Selected = false;
 
-        public bool Explored = false;
+        public Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
 
         private Vector4 _fogColorOffset = new Vector4(0.5f, 0.5f, 0.5f, 0);
 
@@ -48,7 +50,10 @@ namespace MortalDungeon.Game.Tiles
 
         public BaseTile AttachedTile; //for selection tiles 
 
-        public BaseTile() { }
+        public BaseTile() 
+        {
+            FillExploredDictionary();
+        }
         public BaseTile(Vector3 position, int id, TileMap map)
         {
             Name = "BaseTile";
@@ -72,6 +77,7 @@ namespace MortalDungeon.Game.Tiles
 
             //_tileObject.BaseFrame.ScaleAddition(1);
 
+            FillExploredDictionary();
             SetPosition(position);
         }
 
@@ -93,13 +99,21 @@ namespace MortalDungeon.Game.Tiles
             return DefaultColor - _fogColorOffset;
         }
 
+        protected void FillExploredDictionary() 
+        {
+            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
+            {
+                Explored.Add(team, false);
+            }
+        }
 
-        public void SetFog(bool inFog) 
+
+        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally) 
         {
             InFog = inFog;
             MultiTextureData.MixTexture = inFog;
 
-            if (inFog && !Explored && !Selected && !Hovered) //Outline the tile if it's not in fog (with some exceptions)
+            if (inFog && !Explored[team] && !Selected && !Hovered) //Outline the tile if it's not in fog (with some exceptions)
             {
                 _tileObject.OutlineParameters.InlineThickness = 0;
             }
@@ -109,9 +123,9 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public void SetExplored(bool explored = true) 
+        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.Ally) 
         {
-            Explored = explored;
+            Explored[team] = explored;
             if (explored)
             {
                 MultiTextureData.MixPercent = 0.5f;

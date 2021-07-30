@@ -167,7 +167,6 @@ namespace MortalDungeon
             _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
             _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
 
-
             _sceneController.LoadTextures();
             LoadTextures();
 

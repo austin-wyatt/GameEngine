@@ -30,6 +30,7 @@ namespace MortalDungeon.Engine_Classes
         public static Vector4 UIDefaultGray = new Vector4(0.5f, 0.5f, 0.5f, 1);
         public static Vector4 UIHoveredGray = new Vector4(0.4f, 0.4f, 0.4f, 1);
         public static Vector4 UISelectedGray = new Vector4(0.3f, 0.3f, 0.3f, 1);
+        public static Vector4 UIDisabledGray = new Vector4(0.71f, 0.71f, 0.71f, 1);
 
         public static Vector4 Transparent = new Vector4(0, 0, 0, 0);
     }
@@ -399,7 +400,6 @@ namespace MortalDungeon.Engine_Classes
             Transformations = Rotation * Scale * Translation;
         }
         
-        //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point) TODO, definitely move this into the texture tool
         private float[] CenterVertices(float[] vertices) 
         {
             //vertices will be stored in [x, y, z, textureX, textureY] format

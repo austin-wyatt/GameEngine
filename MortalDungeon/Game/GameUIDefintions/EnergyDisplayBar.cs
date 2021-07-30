@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using MortalDungeon.Game.Objects.PropertyAnimations;
+using MortalDungeon.Game.Units;
 
 namespace MortalDungeon.Game.UI
 {
@@ -13,18 +14,20 @@ namespace MortalDungeon.Game.UI
     {
         Empty,
         Energized,
-        Flashing
+        Flashing,
+        PartiallyEnergized
     }
 
     public class EnergyDisplayBar : UIObject
     {
         private const int MaxEnergy = 25;
 
-        public int CurrentMaxEnergy = 10;
-        public int CurrentEnergy = 10;
-        public int EnergyHovered = 0;
+        public float CurrentMaxEnergy = 10;
+        public float CurrentEnergy = 10;
+        public float EnergyHovered = 0;
         public List<EnergyPip> Pips = new List<EnergyPip>(MaxEnergy);
 
+        //todo, add a onHover tooltip to display exact energy amount
 
         public EnergyDisplayBar(Vector3 position, UIScale size, int maxEnergy = 10)
         {
@@ -50,11 +53,7 @@ namespace MortalDungeon.Game.UI
             {
                 EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new UIScale(0.12f, 0.12f)) { Clickable = true };
                 pipWidth = energyPip.GetDimensions().X;
-
-                energyPip.OnClickAction = () =>
-                {
-                    energyPip.ChangeEnergyState(EnergyStates.Empty);
-                };
+                energyPip.HoverAnimation.SetDefaultValues();
 
                 Pips.Add(energyPip);
 
@@ -66,17 +65,66 @@ namespace MortalDungeon.Game.UI
                 AddChild(energyPip);
             }
 
+            PropertyAnimation hoverColorShift = new PropertyAnimation(GetBaseObject().BaseFrame) { Repeat = true };
+
+            Vector4 shiftedColor = new Vector4(0.11f, 0.48f, 0.11f, 1);
+            Vector4 baseColor = new Vector4(Pips[0].EnergizedColor);
+
+            int shiftDelay = 2;
+            int shifts = 30;
+
+            Vector4 deltaColor = (baseColor - shiftedColor) / (shifts / 2);
+
+            for (int i = 0; i < shifts; i++) 
+            {
+                Keyframe temp = new Keyframe(i * shiftDelay);
+
+                temp.Action = (_) =>
+                {
+                    if (temp.ActivationTick < shiftDelay * shifts / 2)
+                    {
+                        baseColor -= deltaColor;
+                    }
+                    else 
+                    {
+                        baseColor += deltaColor;
+                    }
+
+                    for (int j = 0; j < Pips.Count; j++) 
+                    {
+                        if (Pips[j].HoverAnimation.Finished) 
+                        {
+                            Pips[j].SetColor(baseColor);
+                        }
+                    }
+                };
+
+                hoverColorShift.Keyframes.Add(temp);
+            }
+
+            PropertyAnimations.Add(hoverColorShift);
+            hoverColorShift.Play();
         }
 
-        public void SetActiveEnergy(int newEnergy)
+        public void SetActiveEnergy(float newEnergy)
         {
             CurrentEnergy = newEnergy > CurrentMaxEnergy ? CurrentMaxEnergy : newEnergy < 0 ? 0 : newEnergy;
+
 
             for (int i = 0; i < CurrentMaxEnergy; i++)
             {
                 if (i < CurrentEnergy)
                 {
-                    Pips[i].ChangeEnergyState(EnergyStates.Energized);
+                    float afterDecimal = CurrentEnergy - (float)Math.Truncate(CurrentEnergy);
+
+                    if (i + 1 >= CurrentEnergy && afterDecimal != 0)
+                    {
+                        Pips[i].ChangeEnergyState(EnergyStates.PartiallyEnergized, CurrentEnergy - (float)Math.Truncate(CurrentEnergy));
+                    }
+                    else
+                    {
+                        Pips[i].ChangeEnergyState(EnergyStates.Energized);
+                    }
                 }
                 else
                 {
@@ -85,24 +133,64 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void AddEnergy(int energy)
+        public void AddEnergy(float energy)
         {
-            SetActiveEnergy(CurrentEnergy + energy);
+            SetActiveEnergy(CurrentEnergy + (energy + 0.0001f));
         }
 
-        public void HoverAmount(int energyToHover) 
+        private int _currentHoveredIndex = MaxEnergy;
+        public void HoverAmount(float energyToHover) 
         {
-            //todo
-            if (energyToHover != EnergyHovered) 
+            if (energyToHover == 0) 
             {
-                Pips.ForEach(pip => pip.EndBouncingAnimation());
+                Pips.ForEach(pip => pip.EndHoverAnimation());
+                return;
+            }
+
+            //if (energyToHover != EnergyHovered) 
+            //{
+                if (_currentHoveredIndex > CurrentMaxEnergy - 1)
+                    _currentHoveredIndex = (int)CurrentMaxEnergy - 1;
+
+                int amountToHover = (int)(CurrentEnergy - energyToHover);
+
                 EnergyHovered = energyToHover;
 
-                for (int i = CurrentEnergy - 1; i > CurrentEnergy - EnergyHovered && i >= 0; i--) 
+                for (int i = (int)CurrentMaxEnergy - 1; i >= 0; i--) 
                 {
-                    Pips[i].PlayBouncingAnimation();
+                    if (i <= (int)CurrentEnergy)
+                    {
+                        if (i >= CurrentMaxEnergy)
+                            i--;
+
+                        if (i >= amountToHover && i >= 0)
+                        {
+                            if (!Pips[i].HoverAnimation.Finished)
+                            {
+                                Pips[i].PlayHoverAnimation();
+                            }
+
+                            _currentHoveredIndex = i;
+                        }
+                        else
+                        {
+                            Pips[i].EndHoverAnimation();
+                        }
+                    }
+                    else 
+                    {
+                        Pips[i].EndHoverAnimation();
+                    }
                 }
-            }
+            //}
+        }
+
+        public void SetEnergyFromUnit(Unit unit) 
+        {
+            CurrentMaxEnergy = unit.MaxEnergy;
+            CurrentEnergy = unit.CurrentEnergy;
+
+            SetActiveEnergy(CurrentEnergy);
         }
     }
 
@@ -117,6 +205,8 @@ namespace MortalDungeon.Game.UI
         public Vector4 EmptyColor = new Vector4(0.20f, 0.28f, 0.20f, 1);
 
         public EnergyStates EnergyState = EnergyStates.Energized;
+
+        public PropertyAnimation HoverAnimation;
 
         public EnergyPip(Vector3 position, UIScale size = default)
         {
@@ -158,12 +248,15 @@ namespace MortalDungeon.Game.UI
             Pip.OutlineParameters.SetAllInline(1);
 
             SetOrigin(aspectRatio, ScaleFactor);
-            ChangeEnergyState(EnergyState);
 
-            PropertyAnimations.Add(new BounceAnimation(GetBaseObject(this).BaseFrame));
+            HoverAnimation = new LiftAnimation(GetBaseObject(this).BaseFrame);
+
+            PropertyAnimations.Add(HoverAnimation);
+
+            ChangeEnergyState(EnergyState);
         }
 
-        public void ChangeEnergyState(EnergyStates state)
+        public void ChangeEnergyState(EnergyStates state, float percent = 1)
         {
             EnergyState = state;
 
@@ -175,23 +268,25 @@ namespace MortalDungeon.Game.UI
                 case EnergyStates.Energized:
                     Pip.BaseFrame.SetColor(EnergizedColor);
                     break;
+                case EnergyStates.PartiallyEnergized:
+                    Vector4 colorDif = EnergizedColor - EmptyColor;
+
+                    Pip.BaseFrame.SetColor(EnergizedColor - colorDif * (1 - percent));
+                    break;
             }
+
+            HoverAnimation.SetDefaultColor();
         }
 
-        public void PlayBouncingAnimation()
+        public void PlayHoverAnimation()
         {
-            GetPropertyAnimationByID((int)PropertyAnimationIDs.Bounce)?.Play();
+            HoverAnimation.Playing = true;
         }
 
-        public void EndBouncingAnimation()
+        public void EndHoverAnimation()
         {
-            PropertyAnimation bounce = GetPropertyAnimationByID((int)PropertyAnimationIDs.Bounce);
-
-            if (bounce != null) 
-            {
-                bounce.SetDefaultColor();
-                bounce.Reset();
-            }
+            //HoverAnimation.SetDefaultColor();
+            HoverAnimation.Reset();
         }
     }
 }

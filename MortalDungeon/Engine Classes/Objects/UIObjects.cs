@@ -449,6 +449,11 @@ namespace MortalDungeon.Engine_Classes
             objectIDs.ForEach(id => RemoveChild(id));
         }
 
+        public void SetDisabled(bool disable) 
+        {
+            ForEach(obj => obj.OnDisabled(disable));
+        }
+
         public void ForEach(Action<UIObject> objAction, UIObject uiObj = null)
         {
             if (uiObj == null)
@@ -528,6 +533,11 @@ namespace MortalDungeon.Engine_Classes
             {
                 Focused = false;
             }
+        }
+
+        public virtual void OnDisabled(bool disable) 
+        {
+            Disabled = disable;
         }
 
         public virtual void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 

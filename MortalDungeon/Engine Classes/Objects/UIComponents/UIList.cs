@@ -70,7 +70,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
         }
 
-        public void AddItem(string text, Action onClickAction = null)
+        public ListItem AddItem(string text, Action onClickAction = null)
         {
             Vector3 position;
 
@@ -123,6 +123,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 Position = (Items[0].Children[0].Position + Items[Items.Count - 1].Children[0].Position) / 2;
                 BaseComponent.SetPosition(Position);
             }
+
+            return newItem;
         }
 
         //public override void SetSize(Vector2 size)
@@ -178,7 +180,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public override void OnHover()
         {
-            if (Hoverable && !Hovered)
+            if (Hoverable && !Hovered && !Disabled)
             {
                 Hovered = true;
                 _textBox.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
@@ -188,11 +190,25 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public override void HoverEnd()
         {
-            if (Hovered)
+            if (Hovered && !Disabled)
             {
                 Hovered = false;
                 _textBox.SetColor(_itemColor);
                 _textBox.SetTextColor(_textColor);
+            }
+        }
+
+        public override void OnDisabled(bool disable)
+        {
+            base.OnDisabled(disable);
+
+            if (Disabled)
+            {
+                BaseComponent.SetColor(Colors.UIDisabledGray);
+            }
+            else 
+            {
+                BaseComponent.SetColor(_itemColor);
             }
         }
     }

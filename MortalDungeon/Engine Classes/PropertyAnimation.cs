@@ -13,7 +13,6 @@ namespace MortalDungeon.Engine_Classes
     {
         public RenderableObject BaseFrame;
         public List<Keyframe> Keyframes = new List<Keyframe>();
-        public int AnimationID = 0; //semi-unique identifier to distinguish between active animations in a list
 
         public Vector3 BaseTranslation = new Vector3();
         public Vector4 BaseColor = new Vector4();
@@ -21,15 +20,20 @@ namespace MortalDungeon.Engine_Classes
         public bool Playing = false;
         public bool Repeat = false;
 
+        public bool Finished = false; //this reflects not playing and hasn't been reset yet
+
         public Action OnFinish = null;
 
         public int CurrentKeyframe = 0;
         private int tick = 0;
 
-        public PropertyAnimation(RenderableObject baseFrame, int id = 0)
+        public int AnimationID => _animationID;
+        protected int _animationID = currentAnimationID++;
+        protected static int currentAnimationID = 0;
+
+        public PropertyAnimation(RenderableObject baseFrame)
         {
             BaseFrame = baseFrame;
-            AnimationID = id;
 
             SetDefaultValues();
 
@@ -37,6 +41,19 @@ namespace MortalDungeon.Engine_Classes
         }
 
         public PropertyAnimation() { }
+
+
+        public static PropertyAnimation CreateSingleFrameAnimation(RenderableObject baseFrame, Action<RenderableObject> action, int delay) 
+        {
+            PropertyAnimation temp = new PropertyAnimation(baseFrame);
+            temp.Play();
+
+            Keyframe frame = new Keyframe(delay, action);
+
+            temp.Keyframes.Add(frame);
+
+            return temp;
+        }
 
         private int count = 0;
         private Stopwatch timer = new Stopwatch();
@@ -47,13 +64,14 @@ namespace MortalDungeon.Engine_Classes
                 if (CurrentKeyframe >= Keyframes.Count)
                 {
                     Playing = Repeat;
+                    Finished = !Repeat;
                     Restart();
                     OnFinish?.Invoke();
 
                     return;
                 }
 
-                if (Keyframes[CurrentKeyframe].ActivationTick <= tick)
+                if (tick >= Keyframes[CurrentKeyframe].ActivationTick)
                 {
                     Keyframes[CurrentKeyframe].Action?.Invoke(BaseFrame);
 
@@ -82,6 +100,7 @@ namespace MortalDungeon.Engine_Classes
         {
             CurrentKeyframe = 0;
             tick = 0;
+
             Tick();
         }
 
@@ -94,6 +113,12 @@ namespace MortalDungeon.Engine_Classes
         public void Stop()
         {
             Playing = false;
+            Finished = true;
+        }
+
+        public void SetStartDelay(int delay) 
+        {
+            tick = -delay;
         }
 
         /// <summary>
@@ -105,6 +130,7 @@ namespace MortalDungeon.Engine_Classes
             BaseFrame.SetColor(BaseColor);
 
             Playing = false;
+            Finished = false;
             Restart();
         }
 
