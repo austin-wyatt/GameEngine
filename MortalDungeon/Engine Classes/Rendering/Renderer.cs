@@ -17,44 +17,42 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static float TextAlphaThreshold = 0.5f;
         public static float DefaultAlphaThreshold = 0.15f;
     }
-    public class Renderer
+    public static class Renderer
     {
-        Random _rand = new Random();
+        static Random _rand = new Random();
+        public static int _vertexBufferObject;
+        public static int _vertexArrayObject;
 
-        public int _vertexBufferObject;
-        public int _vertexArrayObject;
-
-        private int _elementBufferObject;
-
-        private int _instancedVertexBuffer;
-        private int _instancedArrayBuffer;
+        private static int _elementBufferObject;
+        private static int _instancedVertexBuffer;
+        private static int _instancedArrayBuffer;
 
 
         private const int ObjectBufferCount = 15000;
         private const int instanceDataOffset = 40;
-        private float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
+        private static float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
         private const int instanceDataLength = instanceDataOffset * sizeof(float);
 
-        private List<Texture> _textures = new List<Texture>();
-        private Dictionary<TextureName, int> _loadedTextures = new Dictionary<TextureName, int>();
-
-        private List<Letter> _LettersToRender = new List<Letter>();
-        private List<GameObject> _UIToRender = new List<GameObject>();
-        private List<GameObject> _ObjectsToRender = new List<GameObject>();
-        private List<List<BaseTile>> _TileRenderQueue = new List<List<BaseTile>>();
-        private List<ParticleGenerator> _ParticleGeneratorsToRender = new List<ParticleGenerator>();
-
-        private FrameBufferObject MainFBO;
-
-        private List<FrameBufferObject> _fbos = new List<FrameBufferObject>();
+        private static List<Texture> _textures = new List<Texture>();
+        private static Dictionary<TextureName, int> _loadedTextures = new Dictionary<TextureName, int>();
 
 
-        public int DrawCount = 0;
-        public int FPSCount = 0;
-        public Stopwatch _internalTimer = new Stopwatch();
+        private static List<Letter> _LettersToRender = new List<Letter>();
+        private static List<GameObject> _UIToRender = new List<GameObject>();
+        private static List<GameObject> _ObjectsToRender = new List<GameObject>();
+        private static List<List<BaseTile>> _TileRenderQueue = new List<List<BaseTile>>();
+        private static List<ParticleGenerator> _ParticleGeneratorsToRender = new List<ParticleGenerator>();
 
-        public Renderer() { }
-        public void Load() //initialization of renderer
+        private static FrameBufferObject MainFBO;
+
+        private static List<FrameBufferObject> _fbos = new List<FrameBufferObject>();
+
+        public static int DrawCount = 0;
+        public static int FPSCount = 0;
+        public static Stopwatch _internalTimer = new Stopwatch();
+
+        static Renderer() { }
+        public static void Load() //initialization of renderer
         {
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             GL.Enable(EnableCap.Blend);
@@ -110,7 +108,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.Uniform1(texLocation, 0);
         }
 
-        public void RenderObject(BaseObject obj, bool setVertexData = true, bool setTextureData = true, bool setCam = true, bool setColor = true)
+        public static void RenderObject(BaseObject obj, bool setVertexData = true, bool setTextureData = true, bool setCam = true, bool setColor = true)
         {
             RenderableObject Display = obj._currentAnimation.CurrentFrame;
             if (setVertexData)
@@ -149,7 +147,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             DrawCount++;
         }
 
-        public void PrepareInstancedRenderFunc(RenderableObject Display) 
+        public static void PrepareInstancedRenderFunc(RenderableObject Display) 
         {
             Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
@@ -179,7 +177,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
             GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
         }
-        public void InsertDataIntoInstancedRenderArray(BaseObject obj, MultiTextureData renderingData, ref float[] _instancedRenderArray, ref int currIndex, int textureTarget)
+        public static void InsertDataIntoInstancedRenderArray(BaseObject obj, MultiTextureData renderingData, ref float[] _instancedRenderArray, ref int currIndex, int textureTarget)
         {
             var transform = obj.BaseFrame.Transformations;
 
@@ -217,7 +215,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
 
-        public void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true) where T : GameObject
+        public static void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true) where T : GameObject
         {
             if (objects.Count == 0)
                 return;
@@ -360,7 +358,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
 
-        public void RenderBaseObjectsInstanced(List<BaseObject> objects, List<MultiTextureData> multiTextureData, RenderableObject display = null)
+        public static void RenderBaseObjectsInstanced(List<BaseObject> objects, List<MultiTextureData> multiTextureData, RenderableObject display = null)
         {
             if (objects.Count == 0)
                 return;
@@ -449,7 +447,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             DrawCount++;
         }
 
-        public void RenderObjectListInstancedGeneric<T>(List<List<T>> objects, RenderableObject display = null) where T : GameObject
+        public static void RenderObjectListInstancedGeneric<T>(List<List<T>> objects, RenderableObject display = null) where T : GameObject
         {
             if (objects.Count == 0)
                 return;
@@ -528,7 +526,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
 
-            DisableInstancedShaderAttributes();
+            Renderer.DisableInstancedShaderAttributes();
 
 
             if (recursiveCallList.Count > 0)
@@ -538,7 +536,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             DrawCount++;
         }
 
-        float[] g_quad_vertex_buffer_data = new float[]{
+        static float[] g_quad_vertex_buffer_data = new float[]{
             -1.0f, -1.0f, 0.0f,
             1.0f, -1.0f, 0.0f,
             -1.0f,  1.0f, 0.0f,
@@ -556,7 +554,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         //    0f,  0f, 0.0f,
         //};
 
-        public void RenderFrameBuffer(FrameBufferObject frameBuffer, FrameBufferObject destinationBuffer = null, Shader shader = null) 
+        public static void RenderFrameBuffer(FrameBufferObject frameBuffer, FrameBufferObject destinationBuffer = null, Shader shader = null) 
         {
             //Bind the texture that the objects were rendered on to
             GL.ActiveTexture(TextureUnit.Texture0);
@@ -608,7 +606,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public void DrawToFrameBuffer(FrameBufferObject frameBuffer) 
+        public static void DrawToFrameBuffer(FrameBufferObject frameBuffer) 
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer.FrameBuffer);
 
@@ -617,7 +615,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public void RenderParticlesInstanced(ParticleGenerator generator)
+        public static void RenderParticlesInstanced(ParticleGenerator generator)
         {
             if (generator.Particles.Count == 0)
                 return;
@@ -706,7 +704,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
         #region Load/unload textures
-        public void LoadTextureFromGameObj<T>(T gameObj, bool nearest = true) where T : GameObject 
+        public static void LoadTextureFromGameObj<T>(T gameObj, bool nearest = true) where T : GameObject 
         {
             gameObj.BaseObjects.ForEach(obj =>
             {
@@ -734,8 +732,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     }
                 }
             });
-        } 
-        public void LoadTextureFromBaseObject(BaseObject obj, bool nearest = true)
+        }
+        public static void LoadTextureFromBaseObject(BaseObject obj, bool nearest = true)
         {
             foreach (KeyValuePair<AnimationType, Animation> entry in obj.Animations)
             {
@@ -761,7 +759,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 }
             }
         }
-        public void LoadTextureFromParticleGen(ParticleGenerator generator)
+        public static void LoadTextureFromParticleGen(ParticleGenerator generator)
         {
             for (int p = 0; p < generator.ParticleDisplay.Textures.Textures.Length; p++)
             {
@@ -781,7 +779,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 }
             }
         }
-        public void LoadTextureFromUIObject<T>(T UIObj) where T : UIObject 
+        public static void LoadTextureFromUIObject<T>(T UIObj) where T : UIObject 
         {
             UIObj.BaseObjects.ForEach(obj => 
             {
@@ -799,7 +797,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 LoadTextureFromUIObject(obj);
             });
         }
-        public void UnloadTexture(TextureName textureName) 
+        public static void UnloadTexture(TextureName textureName) 
         {
             Texture tex = _textures.Find(tex => tex.TextureName == textureName);
             if (tex != null) 
@@ -808,7 +806,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 _loadedTextures.Remove(tex.TextureName);
             }
         }
-        public void UnloadAllTextures() 
+        public static void UnloadAllTextures() 
         {
             for (int i = 0; i < _textures.Count; i++)
             {
@@ -819,12 +817,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _loadedTextures.Clear();
         }
         #endregion
-        
+
 
         /// <summary>
         /// Render all queued objects
         /// </summary>
-        public void RenderQueue() 
+        public static void RenderQueue() 
         {
             //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to 
             RenderQueuedUI();
@@ -846,11 +844,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
         #region Particle queue
-        public void QueueParticlesForRender(ParticleGenerator generator) 
+        public static void QueueParticlesForRender(ParticleGenerator generator) 
         {
             _ParticleGeneratorsToRender.Add(generator);
         }
-        public void RenderQueuedParticles() 
+        public static void RenderQueuedParticles() 
         {
             _ParticleGeneratorsToRender.ForEach(gen =>
             {
@@ -862,14 +860,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Text queue
-        public void QueueLettersForRender(List<Letter> letters) 
+        public static void QueueLettersForRender(List<Letter> letters) 
         {
             letters.ForEach(letter =>
             {
                 _LettersToRender.Add(letter);
             });
         }
-        public void QueueTextForRender(List<Text> text) 
+        public static void QueueTextForRender(List<Text> text) 
         {
             text.ForEach(obj =>
             {
@@ -880,21 +878,21 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region UI queue
-        public void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
+        public static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
         {
             text.ForEach(obj =>
             {
                 if (obj.Render)
-                    QueueUIForRender(obj.Letters, scissorFlag);
+                    Renderer.QueueUIForRender(obj.Letters, scissorFlag);
             });
         }
-        public void RenderQueuedLetters() 
+        public static void RenderQueuedLetters() 
         {
             RenderObjectsInstancedGeneric(_LettersToRender, ref _instancedRenderArray);
             _LettersToRender.Clear();
         }
 
-        public void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
+        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
         {
             if (uiObjects.Count > 0)
             {
@@ -939,7 +937,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 //QueueUIForRender(uiObjects);
             }
         }
-        public void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
+        public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
         {
             objList.ForEach(obj =>
             {
@@ -948,13 +946,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 _UIToRender.Add(obj);
             });
         }
-        public void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
+        public static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
         {
             obj.ScissorData._scissorFlag = scissorFlag;
 
             _UIToRender.Add(obj);
         }
-        public void RenderQueuedUI() 
+        public static void RenderQueuedUI() 
         {
             RenderObjectsInstancedGeneric(_UIToRender, ref _instancedRenderArray);
             _UIToRender.Clear();
@@ -963,18 +961,18 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Object queue
-        public void QueueObjectsForRender<T>(List<T> objList) where T : GameObject 
+        public static void QueueObjectsForRender<T>(List<T> objList) where T : GameObject 
         {
             objList.ForEach(obj =>
             {
                 _ObjectsToRender.Add(obj);
             });
         }
-        public void QueueObjectForRender<T>(T obj) where T : GameObject
+        public static void QueueObjectForRender<T>(T obj) where T : GameObject
         {
             _ObjectsToRender.Add(obj);
         }
-        public void RenderQueuedObjects() 
+        public static void RenderQueuedObjects() 
         {
             RenderObjectsInstancedGeneric(_ObjectsToRender, ref _instancedRenderArray);
             _ObjectsToRender.Clear();
@@ -982,11 +980,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Tile queue
-        public void QueueTileObjectsForRender(List<BaseTile> objList)
+        public static void QueueTileObjectsForRender(List<BaseTile> objList)
         {
             _TileRenderQueue.Add(objList);
         }
-        public void RenderTileQueue() 
+        public static void RenderTileQueue() 
         {
             //_TileRenderQueue.ForEach(queue =>
             //{
@@ -999,7 +997,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
         #endregion
 
-        public void ClearData() 
+        public static void ClearData() 
         {
             GL.DeleteBuffer(_vertexBufferObject);
             GL.DeleteBuffer(_instancedVertexBuffer);
@@ -1014,7 +1012,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
         }
 
-        public void ResizeFBOs(Vector2i newSize) 
+        public static void ResizeFBOs(Vector2i newSize) 
         {
             _fbos.ForEach(fbo =>
             {
@@ -1022,7 +1020,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             });
         }
 
-        private void EnableInstancedShaderAttributes()
+        private static void EnableInstancedShaderAttributes()
         {
             GL.EnableVertexAttribArray(2);
             GL.EnableVertexAttribArray(3);
@@ -1045,7 +1043,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribDivisor(10, 1);
             GL.VertexAttribDivisor(11, 1);
         }
-        private void DisableInstancedShaderAttributes()
+        private static void DisableInstancedShaderAttributes()
         {
             GL.DisableVertexAttribArray(2);
             GL.DisableVertexAttribArray(3);
@@ -1069,7 +1067,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribDivisor(11, 0);
         }
 
-        private void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)
+        private static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)
         {
 
             //this seems to perform better (maybe due to M11,M22,etc using getters and setters)

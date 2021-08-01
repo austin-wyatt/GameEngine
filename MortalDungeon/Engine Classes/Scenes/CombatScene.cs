@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Abilities;
+﻿using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
@@ -19,8 +20,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Unit> InitiativeOrder = new List<Unit>();
         public int UnitTakingTurn = 0; //the unit in the initiative order that is going
         public EnergyDisplayBar EnergyDisplayBar;
+        public GameFooter Footer;
 
         public Ability _selectedAbility = null;
+        public List<Unit> _selectedUnits = new List<Unit>();
 
         public Unit CurrentUnit;
 
@@ -59,7 +62,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //do stuff that needs to be done when a round is completed
             InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList();
 
-
             AdvanceRound();
         }
 
@@ -87,6 +89,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
 
             EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
+            Footer.UpdateFooterInfo(CurrentUnit);
 
             FillInTeamFog(CurrentUnit.Team);
 
@@ -133,6 +136,29 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _selectedAbility?.OnAbilityDeselect();
                 _selectedAbility = null;
             }
+        }
+
+        public void SelectUnit(Unit unit) 
+        {
+            if (_selectedUnits.Count > 0) 
+            {
+                DeselectUnits();
+            }
+
+            _selectedUnits.Add(unit);
+            unit.Select();
+        }
+
+        public void DeselectUnit(Unit unit) 
+        {
+            _selectedUnits.Remove(unit);
+            unit.Deselect();
+        }
+
+        public void DeselectUnits() 
+        {
+            _selectedUnits.ForEach(u => u.Deselect());
+            _selectedUnits.Clear();
         }
 
         public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally) 
@@ -206,7 +232,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public override void EvaluateTileMapHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
+        public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
             _tileMaps.ForEach(map =>
             {
@@ -222,13 +248,34 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             _selectedAbility.OnHover(tile, map);
                         }
                     }
+
+                    if (tile.HasTimedHoverEffect)
+                    {
+                        _hoverTimer.Restart();
+                        _hoveredObject = tile;
+                    }
                 });
             });
+
+            ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar, (unit) =>
+            {
+                if (unit.Hoverable)
+                    unit.OnHover();
+
+                if (unit.HasTimedHoverEffect) 
+                {
+                    _hoverTimer.Restart();
+                    _hoveredObject = unit;
+                }
+
+            }, notFound => notFound.HoverEnd());
         }
 
         public override void HandleRightClick()
         {
             base.HandleRightClick();
+
+            DeselectUnits();
 
             if (_selectedAbility != null)
             {
@@ -251,8 +298,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             DisplayUnitStatuses = !DisplayUnitStatuses;
                             _units.ForEach(u =>
                             {
-                                if (u.StatusBarComp != null)
+                                if (u.StatusBarComp != null && !u.Dead) 
+                                {
                                     u.StatusBarComp.SetWillDisplay(DisplayUnitStatuses);
+                                }
+                                    
                             });
                         }
                         break;
@@ -260,6 +310,52 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
 
             return processKeyStrokes;
+        }
+
+        public virtual void OnUnitKilled(Unit unit) 
+        {
+            if (unit.StatusBarComp != null) 
+            {
+                unit.StatusBarComp.SetWillDisplay(false);
+            }
+
+            int index = InitiativeOrder.FindIndex(u => u.ObjectID == unit.ObjectID);
+            if (index != -1) 
+            {
+                if (index <= UnitTakingTurn) 
+                {
+                    UnitTakingTurn--;
+                }
+            }
+
+            InitiativeOrder.Remove(unit);
+        }
+
+        public override void onUnitClicked(Unit unit)
+        {
+            base.onUnitClicked(unit);
+
+            if (_selectedAbility == null)
+            {
+                if (unit.Selectable)
+                    SelectUnit(unit);
+                
+
+                if (!InCombat)
+                {
+                    CurrentUnit = unit;
+                    _selectedAbility = unit.GetFirstAbilityOfType(DefaultAbilityType);
+
+                    if (_selectedAbility.Type != AbilityTypes.Empty)
+                    {
+                        SelectAbility(_selectedAbility);
+                    }
+                }
+            }
+            else
+            {
+                _selectedAbility.OnUnitClicked(unit);
+            }
         }
     }
 }

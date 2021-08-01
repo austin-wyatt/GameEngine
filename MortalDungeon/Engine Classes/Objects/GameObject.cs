@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
+﻿using MortalDungeon.Engine_Classes.Rendering;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -24,6 +25,7 @@ namespace MortalDungeon.Engine_Classes
         public bool Clickable = false; //Note: The BaseObject's Clickable property and this property must be true for UI objects
         public bool Hoverable = false;
         public bool Draggable = false;
+        public bool HasTimedHoverEffect = false;
 
         public bool Hovered = false;
         public bool Grabbed = false;
@@ -223,8 +225,22 @@ namespace MortalDungeon.Engine_Classes
             if (Hovered) 
             {
                 Hovered = false;
+                
+                for (int i = 0; i < _onHoverEndActions.Count; i++) 
+                {
+                    _onHoverEndActions[i]?.Invoke();
+                }
             }
         }
+
+        public virtual void OnTimedHover() 
+        {
+            for (int i = 0; i < _onTimedHoverActions.Count; i++)
+            {
+                _onTimedHoverActions[i]?.Invoke();
+            }
+        }
+
         public virtual void OnMouseDown() { }
         public virtual void OnMouseUp() { }
         public virtual void OnGrab(Vector2 MouseCoordinates) 
@@ -246,6 +262,15 @@ namespace MortalDungeon.Engine_Classes
                 _grabbedDeltaPos = default;
             }
             
+        }
+
+        public List<Action> _onHoverEndActions = new List<Action>();
+        public List<Action> _onTimedHoverActions = new List<Action>();
+
+
+        protected virtual void LoadTexture<T>(T obj) where T : GameObject 
+        {
+            Renderer.LoadTextureFromGameObj(obj);
         }
 
         public override bool Equals(object obj)

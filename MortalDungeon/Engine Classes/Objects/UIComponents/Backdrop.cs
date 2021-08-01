@@ -14,13 +14,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
     {
         public Action _onClick;
 
-        public Backdrop(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        public Backdrop(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true)
         {
             Position = position;
             Size = size == null ? Size : size;
             _scaleAspectRatio = scaleAspectRatio;
             Name = "Backdrop";
-            CameraPerspective = cameraPerspective;
 
 
             Vector2i SpritesheetDimensions = spritesheetDimensions.X == 0 ? new Vector2i(1, 1) : spritesheetDimensions;

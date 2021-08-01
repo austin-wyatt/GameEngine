@@ -4,7 +4,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class Button : UIObject
     {
-        public TextBox _mainObject;
+        public TextBox TextBox;
         public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
 
         public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
@@ -18,7 +18,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Name = "Button";
 
             TextBox textBox = new TextBox(position, size, text, textScale, centerText);
-            _mainObject = textBox;
+            TextBox = textBox;
             BaseComponent = textBox;
 
             AddChild(textBox);
@@ -81,7 +81,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void SetColor(Vector4 color)
         {
             if (!Selected)
-                _mainObject.SetColor(color);
+                TextBox.SetColor(color);
         }
     }
 }

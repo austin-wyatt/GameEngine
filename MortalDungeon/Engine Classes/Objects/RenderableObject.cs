@@ -31,6 +31,7 @@ namespace MortalDungeon.Engine_Classes
         public static Vector4 UIHoveredGray = new Vector4(0.4f, 0.4f, 0.4f, 1);
         public static Vector4 UISelectedGray = new Vector4(0.3f, 0.3f, 0.3f, 1);
         public static Vector4 UIDisabledGray = new Vector4(0.71f, 0.71f, 0.71f, 1);
+        public static Vector4 UITextBlack = new Vector4(0.1f, 0.1f, 0.1f, 1);
 
         public static Vector4 Transparent = new Vector4(0, 0, 0, 0);
     }

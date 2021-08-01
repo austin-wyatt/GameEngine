@@ -14,12 +14,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
     {
         public List<Scene> Scenes = new List<Scene>();
 
-        public Renderer Renderer;
         public Camera Camera;
 
-        public SceneController(Renderer renderer, Camera camera) 
+        public SceneController(Camera camera) 
         {
-            Renderer = renderer;
             Camera = camera;
 
             ObjectCulling.Initialize();

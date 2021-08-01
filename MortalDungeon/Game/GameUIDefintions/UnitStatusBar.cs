@@ -37,19 +37,19 @@ namespace MortalDungeon.Game.UI
             BaseComponent.SetColor(Colors.UILightGray);
 
 
-            TextBox textBox = new TextBox(new Vector3(), scale, unit.Name, 0.07f, true);
+            TextBox textBox = new TextBox(new Vector3(), scale, unit.Name, 0.07f, true, new UIDimensions(10, 0));
             textBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopCenter), UIAnchorPosition.TopCenter);
             textBox.BaseComponent.SetColor(Colors.Transparent);
             textBox.BaseComponent.GetBaseObject().OutlineParameters.SetAllInline(0);
             textBox.GetBaseObject().RenderData = new RenderData() { AlphaThreshold = 1 };
             textBox.BaseComponent.MultiTextureData.MixTexture = false;
-            textBox.TextField.SetColor(new Vector4(0.1f, 0.1f, 0.1f, 1));
+            textBox.TextField.SetColor(Colors.UITextBlack);
 
             _mainTextBox = textBox;
             BaseComponent.AddChild(textBox);
 
 
-            _turnDisplay = new TextBox(new Vector3(), new UIScale(scale.X / 4, scale.Y / 2), " ", 0.07f, true);
+            _turnDisplay = new TextBox(new Vector3(), new UIScale(scale.X / 4, scale.Y / 2), " ", 0.07f, true, new UIDimensions(0, 0));
             _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
             _turnDisplay.BaseComponent.SetColor(Colors.Transparent);
             _turnDisplay.BaseComponent.GetBaseObject().OutlineParameters.SetAllInline(0);
@@ -68,6 +68,7 @@ namespace MortalDungeon.Game.UI
 
             ShieldBar = new ShieldBar(new Vector3(), scale);
             ShieldBar.MultiTextureData.MixTexture = false;
+            ShieldBar.SetCurrentShields(unit.CurrentShields);
 
             BaseComponent.AddChild(ShieldBar);
 
@@ -154,7 +155,7 @@ namespace MortalDungeon.Game.UI
             WillDisplay = display;
             SetRender(display);
 
-            if (display) 
+            if (display)
             {
                 UpdateUnitStatusPosition();
             }

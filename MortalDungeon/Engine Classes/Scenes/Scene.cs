@@ -47,6 +47,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected int _interceptKeystrokes = 0b0;
         #endregion
 
+        
+
+
         public Camera _camera;
         public BaseObject _cursorObject;
         public MouseRay _mouseRay;
@@ -57,7 +60,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public MouseState MouseState = default;
 
         protected Random rand = new Random();
-        private Stopwatch mouseTimer = new Stopwatch();
+        private Stopwatch _mouseTimer = new Stopwatch();
+        protected Stopwatch _hoverTimer = new Stopwatch();
+        protected GameObject _hoveredObject;
         protected void InitializeFields()
         {
             _genericObjects = new List<GameObject>();
@@ -79,7 +84,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _cursorObject = cursorObject;
             _mouseRay = mouseRay;
 
-            mouseTimer.Start();
+            _mouseTimer.Start();
         }
 
         public virtual void Unload()
@@ -102,6 +107,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 ui.ZIndex = 0;
             }
 
+            SortUIByZIndex();
+        }
+
+        public void SortUIByZIndex() 
+        {
             _UI.Sort();
         }
 
@@ -171,6 +181,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #endregion
 
         #region Event handlers
+
         public virtual void onMouseUp(MouseButtonEventArgs e)
         {
             if (e.Button == MouseButton.Left && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
@@ -202,7 +213,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
                     {
                         onUnitClicked(foundObj);
-                        clickProcessed = true;
+                        //clickProcessed = true;
                     });
 
                 if (clickProcessed)
@@ -266,9 +277,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected UIObject _grabbedObj = null;
         public virtual bool onMouseMove()
         {
-            if (mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
+            if (_mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
             {
-                mouseTimer.Restart();
+                _mouseTimer.Restart();
+                _hoverTimer.Reset();
 
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
 
@@ -298,13 +310,24 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _UI.ForEach(uiObj =>
                 {
                     uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.Hover);
+
+                    uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                    {
+                        if (obj.HasTimedHoverEffect)
+                        {
+                            _hoverTimer.Restart();
+                            _hoveredObject = obj;
+                        }
+                    }, UIEventType.TimedHover);
                 }); //check hovered objects
+
+                
 
 
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
-                EvaluateTileMapHover(mouseRayNear, mouseRayFar);
+                EvaluateObjectHover(mouseRayNear, mouseRayFar);
 
                 return true;
             }
@@ -312,18 +335,31 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 return false;
         }
 
-        public virtual void EvaluateTileMapHover(Vector3 mouseRayNear, Vector3 mouseRayFar) 
+        public virtual void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar) 
         {
-            _tileMaps.ForEach(map =>
-            {
-                map.EndHover();
+            //_tileMaps.ForEach(map =>
+            //{
+            //    map.EndHover();
 
-                ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar, (tile) =>
-                {
-                    if (tile.Hoverable)
-                        map.HoverTile(tile);
-                });
-            });
+            //    ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar, (tile) =>
+            //    {
+            //        if (tile.Hoverable)
+            //        { 
+            //            map.HoverTile(tile);
+            //        }
+            //        _hoverTimer.Restart();
+            //    });
+            //});
+
+            //ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar, (unit) =>
+            //{
+            //    if (unit.Hoverable) 
+            //    {
+            //        unit.OnHover();
+            //    }
+            //    _hoverTimer.Restart();
+            //}, notFound => notFound.HoverEnd());
+
         }
 
         public virtual bool onKeyDown(KeyboardKeyEventArgs e) 
@@ -367,6 +403,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 _focusedObj.OnUpdate(MouseState);
             }
+
+            if (_hoverTimer.ElapsedMilliseconds > 500) 
+            {
+                _hoverTimer.Reset();
+                _hoveredObject.OnTimedHover();
+            }
         }
 
         public virtual void onUnitClicked(Unit unit) { }
@@ -397,6 +439,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
         public virtual void onRenderEnd() { }
+        #endregion
+
+        #region event action lists
+        
+
+
+
         #endregion
 
         //accesses the method used to determine whether the cursor is overlapping an object that is defined in the main file.
@@ -441,32 +490,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             return new Vector2(X, Y);
         }
-        protected BaseObject GetObjWithHighestZ(List<BaseObject> objs) //don't pass a list of 0 objects
-        {
-            BaseObject foundObject;
-            foundObject = objs[0];
-            objs.ForEach(obj =>
-            {
-                if (obj.Position.Z > foundObject.Position.Z)
-                    foundObject = obj;
-            });
-
-            return foundObject;
-        }
-        protected GameObject GetObjWithHighestZ(List<GameObject> objs) //don't pass a list of 0 objects
-        {
-            GameObject foundObject;
-            foundObject = objs[0];
-            objs.ForEach(obj =>
-            {
-                if (obj.Position.Z > foundObject.Position.Z)
-                    foundObject = obj;
-            });
-
-            return foundObject;
-        }
-
-        protected bool GetBit(int b, int bitNumber) 
+         protected bool GetBit(int b, int bitNumber) 
         {
             return (b & (1 << bitNumber)) != 0;
         }
@@ -502,7 +526,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     return new List<T>();
             }
         }
-
         #endregion
     }
 

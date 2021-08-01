@@ -24,6 +24,10 @@ namespace MortalDungeon.Game.UI
             Size = scale;
             Position = position;
 
+            //HasTimedHoverEffect = true;
+            //Hoverable = true;
+
+
             BaseComponent = new UIBlock(Position, Size);
             BaseComponent.MultiTextureData.MixTexture = false;
             //BaseComponent.SetColor(Colors.UILightGray);
@@ -31,11 +35,11 @@ namespace MortalDungeon.Game.UI
             BaseComponent.SetColor(Colors.Transparent);
             BaseComponent._baseObject.OutlineParameters.SetAllInline(0);
 
-
             for (int i = 0; i < _maxShieldsDisplayed; i++) 
             {
                 UIBlock shield = new UIBlock(new Vector3(), new UIScale(Size.Y, Size.Y), default, 27);
                 shield.MultiTextureData.MixTexture = false;
+                shield.SetColor(Colors.White);
 
                 shield._baseObject.Animations.Add((AnimationType)ShieldAnimations.Broken, CreateBrokenShieldAnimation());
 

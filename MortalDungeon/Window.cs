@@ -54,6 +54,7 @@ namespace MortalDungeon
             position.Y = ((position.Y / ScreenUnits.Y) * 2 - 1) * -1;
         }
 
+        //Ie convert mouse coordinates to workable screen coordinates
         public static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector3 position) 
         {
             Vector3 returnVec = new Vector3(position);
@@ -83,6 +84,14 @@ namespace MortalDungeon
 
             return returnVec;
         }
+
+        public static Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize)
+        {
+            float X = (vec.X / clientSize.X) * 2 - 1; //converts it into local opengl coordinates
+            float Y = ((vec.Y / clientSize.Y) * 2 - 1) * -1; //converts it into local opengl coordinates
+
+            return new Vector2(X, Y);
+        }
     }
     public class Window : GameWindow
     {
@@ -94,8 +103,6 @@ namespace MortalDungeon
 
         private List<Vector2> _points = new List<Vector2>();
         private List<Vector3> _lines = new List<Vector3>();
-
-        private Renderer _renderer = new Renderer();
 
         //private List<Scene> _scenes = new List<Scene>();
 
@@ -131,7 +138,7 @@ namespace MortalDungeon
             KeyUp += Window_KeyUp;
             KeyDown += Window_KeyDown;
 
-            _renderer.Load();
+            Renderer.Load();
             
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
@@ -146,7 +153,7 @@ namespace MortalDungeon
             _cursorObject.BaseFrame.ScaleAll(0.1f);
 
 
-            _sceneController = new SceneController(_renderer, _camera);
+            _sceneController = new SceneController(_camera);
 
             Scene escapeMenuScene = new EscapeMenuScene(() => Close());
 
@@ -197,19 +204,19 @@ namespace MortalDungeon
 
             ////FPS
             timeValue = _timer.Elapsed.TotalSeconds;
-            _renderer.FPSCount++;
+            Renderer.FPSCount++;
 
             if (timeValue > 1 && WindowConstants.ShowFPS)
             {
-                Console.Write("FPS: " + _renderer.FPSCount + "   Draws: " + _renderer.DrawCount / _renderer.FPSCount);
+                Console.Write("FPS: " + Renderer.FPSCount + "   Draws: " + Renderer.DrawCount / Renderer.FPSCount);
                 if (WindowConstants.ShowCulledChunks) 
                 {
                     Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
                 }
                 Console.Write("\n");
                 _timer.Restart();
-                _renderer.FPSCount = 0;
-                _renderer.DrawCount = 0;
+                Renderer.FPSCount = 0;
+                Renderer.DrawCount = 0;
             }
 
             //Tick counter
@@ -230,7 +237,7 @@ namespace MortalDungeon
                 Shaders.POINT_SHADER.Use();
 
                 float[] point = new float[] { _points[i].X, _points[i].Y };
-                GL.BindBuffer(BufferTarget.ArrayBuffer, _renderer._vertexArrayObject);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, Renderer._vertexArrayObject);
                 GL.BufferData(BufferTarget.ArrayBuffer, point.Length * sizeof(float), point, BufferUsageHint.DynamicDraw);
                 GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, point.Length * sizeof(float), 0);
 
@@ -243,9 +250,9 @@ namespace MortalDungeon
 
             _renderedItems.ForEach(obj =>
             {
-                _renderer.RenderObject(obj);
+                Renderer.RenderObject(obj);
             }); //Old handling, used for lines
-            _renderer.RenderObject(_cursorObject);
+            Renderer.RenderObject(_cursorObject);
 
 
             //all objects using the fast default shader are handled here
@@ -253,27 +260,27 @@ namespace MortalDungeon
             Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
             _sceneController.Scenes.ForEach(scene =>
             {
-                _renderer.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
+                Renderer.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
 
                 scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
                 {
-                    //_renderer.QueueTileObjectsForRender(tileMap.Tiles);
+                    //Renderer.QueueTileObjectsForRender(tileMap.Tiles);
                     tileMap.TileChunks.ForEach(chunk =>
                     {
                         if (!chunk.Cull) 
                         {
-                            _renderer.QueueTileObjectsForRender(chunk.Tiles);
+                            Renderer.QueueTileObjectsForRender(chunk.Tiles);
                         }
                     });
 
-                    _renderer.QueueTileObjectsForRender(tileMap.SelectionTiles);
+                    Renderer.QueueTileObjectsForRender(tileMap.SelectionTiles);
 
-                    _renderer.QueueTileObjectsForRender(tileMap.GetHoveredTile());
+                    Renderer.QueueTileObjectsForRender(tileMap.GetHoveredTile());
                 }); //TileMap
 
 
-                //_renderer.RenderObjectsInstancedGeneric(scene.GetRenderTarget<Unit>(ObjectType.Unit));
-                _renderer.QueueObjectsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit));
+                //Renderer.RenderObjectsInstancedGeneric(scene.GetRenderTarget<Unit>(ObjectType.Unit));
+                Renderer.QueueObjectsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit));
             }); //GameObjects
 
 
@@ -285,7 +292,7 @@ namespace MortalDungeon
                     {
                         if (generator.Playing)
                         {
-                            _renderer.QueueParticlesForRender(generator);
+                            Renderer.QueueParticlesForRender(generator);
                         }
                     });
                 });
@@ -294,7 +301,7 @@ namespace MortalDungeon
 
             _sceneController.Scenes.ForEach(scene =>
             {
-                _renderer.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI));
+                Renderer.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI));
             }); //UI
 
             _sceneController.Scenes.ForEach(scene =>
@@ -303,13 +310,13 @@ namespace MortalDungeon
                 {
                     if (text.Render && text.Letters.Count > 0)
                     {
-                        _renderer.QueueLettersForRender(text.Letters);
+                        Renderer.QueueLettersForRender(text.Letters);
                     };
                 });
             }); //Misc
 
 
-            _renderer.RenderQueue();
+            Renderer.RenderQueue();
 
             SwapBuffers();
 
@@ -368,11 +375,11 @@ namespace MortalDungeon
 
         private void LoadTextures()
         {
-            _renderer.LoadTextureFromBaseObject(_cursorObject);
+            Renderer.LoadTextureFromBaseObject(_cursorObject);
 
             _renderedItems.ForEach(obj =>
             {
-                _renderer.LoadTextureFromBaseObject(obj);
+                Renderer.LoadTextureFromBaseObject(obj);
             });
         }
 
@@ -452,7 +459,7 @@ namespace MortalDungeon
             GL.Viewport(0, 0, Size.X, Size.Y);
             SetWindowSize();
 
-            _renderer.ResizeFBOs(WindowConstants.ClientSize);
+            Renderer.ResizeFBOs(WindowConstants.ClientSize);
 
             _sceneController.Scenes.ForEach(scene =>
             {
@@ -471,7 +478,7 @@ namespace MortalDungeon
             GL.UseProgram(0);
 
             // Delete all the resources.
-            _renderer.ClearData();
+            Renderer.ClearData();
 
             for(int i = 0; i < ShaderList.AllShaders.Count; i++)
             {

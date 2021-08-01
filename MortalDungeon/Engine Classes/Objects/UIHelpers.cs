@@ -13,7 +13,8 @@ namespace MortalDungeon.Engine_Classes
         MouseDown,
         Grab,
         KeyDown,
-        Focus
+        Focus,
+        TimedHover
     }
 
     public enum UIAnchorPosition

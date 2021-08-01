@@ -4,6 +4,7 @@ using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -22,7 +23,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
         {
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(CastingUnit.TileMapPosition, Range, new List<TileClassification> { TileClassification.AttackableTerrain }, units, CastingUnit);
+            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(CastingUnit.TileMapPosition, Range, TileMapConstants.AllTileClassifications, units, CastingUnit);
             TileMap = tileMap;
 
             TrimTiles(validTiles, units);
@@ -58,7 +59,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 Scene.DeselectAbility();
             }
-            else if (unit.Team != CastingUnit.Team) 
+            else if (unit.Team != CastingUnit.Team && AffectedTiles.FindIndex(t => t.TileIndex == unit.TileMapPosition) != -1) 
             {
                 SelectedUnit = unit;
                 EnactEffect();

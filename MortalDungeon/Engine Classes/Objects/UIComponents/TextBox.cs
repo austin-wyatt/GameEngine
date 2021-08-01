@@ -74,7 +74,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 if (CenterText)
                 {
                     UIDimensions textDimensions = obj.GetTextDimensions();
-                    obj.SetPosition(new Vector3(BaseComponent.Position.X - textDimensions.X / 2, BaseComponent.Position.Y, BaseComponent.Position.Z));
+                    obj.SetPosition(new Vector3(BaseComponent.Position.X - textDimensions.X / 2 + + TextOffset.X / 2, BaseComponent.Position.Y, BaseComponent.Position.Z));
                 }
                 else
                 {

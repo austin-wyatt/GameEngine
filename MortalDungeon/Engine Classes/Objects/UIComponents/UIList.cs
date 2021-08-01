@@ -195,6 +195,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 Hovered = false;
                 _textBox.SetColor(_itemColor);
                 _textBox.SetTextColor(_textColor);
+
+                base.HoverEnd();
             }
         }
 

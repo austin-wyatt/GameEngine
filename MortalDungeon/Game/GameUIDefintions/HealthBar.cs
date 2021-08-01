@@ -18,6 +18,9 @@ namespace MortalDungeon.Game.UI
 
             BaseComponent = new UIBlock(Position, Size);
 
+            //HasTimedHoverEffect = true;
+            //Hoverable = true;
+
 
             _healthBar = new UIBlock(Position, Size);
             _healthBar.SetColor(new Vector4(0, 1, 0, 0.25f));
@@ -41,6 +44,7 @@ namespace MortalDungeon.Game.UI
                 _healthPercent = percent;
             }
 
+            BaseComponent.SetSize(Size);
             _healthBar.SetSize(new UIScale(Size.X * _healthPercent, Size.Y));
             _healthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
         }
@@ -50,6 +54,12 @@ namespace MortalDungeon.Game.UI
             base.SetSize(size);
 
             SetHealthPercent(_healthPercent);
+        }
+
+        public override void SetInlineColor(Vector4 color)
+        {
+            base.SetInlineColor(color);
+            _healthBar.SetInlineColor(color);
         }
     }
 }

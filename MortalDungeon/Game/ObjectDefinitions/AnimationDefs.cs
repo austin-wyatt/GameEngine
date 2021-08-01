@@ -203,6 +203,39 @@ namespace MortalDungeon.Game.Objects
             Die
         };
     }
+
+    public static class SKELETON_ANIMATION
+    {
+        private static RenderableObject idle1 = new RenderableObject(new SpritesheetObject(40, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject idle2 = new RenderableObject(new SpritesheetObject(41, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject idle3 = new RenderableObject(new SpritesheetObject(42, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static RenderableObject die1 = new RenderableObject(new SpritesheetObject(43, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject die2 = new RenderableObject(new SpritesheetObject(44, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject die3 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+        private static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { idle1, idle2, idle3 },
+            Frequency = 8,
+            Repeats = -1
+        };
+
+        private static Animation Die = new Animation()
+        {
+            Frames = new List<RenderableObject>() { idle1, idle2, idle3, die1, die2, die3 },
+            Frequency = 8,
+            Repeats = 0,
+            Type = AnimationType.Die
+        };
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle,
+            Die
+        };
+    }
+
     public static class MOUNTAIN_ANIMATION
     {
         private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(70, Spritesheets.TestSheet, 5, 3).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);

@@ -31,6 +31,10 @@ namespace MortalDungeon.Game.Tiles
             { Direction.NorthWest, new Vector3i(-1, 1, 0) },
         };
 
+        public static List<TileClassification> AllTileClassifications = new List<TileClassification>() 
+        { TileClassification.Ground, TileClassification.AttackableTerrain, TileClassification.Terrain, TileClassification.Water };
+
+
         /// <summary>
         /// Linear interpolation between 2 values
         /// </summary>

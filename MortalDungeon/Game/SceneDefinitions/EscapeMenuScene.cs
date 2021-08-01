@@ -42,13 +42,17 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
 
-            Backdrop backdropModal = new Backdrop(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f), default, 90, false);
-
-            //AddUI(backdropModal);
-            AddUI(escapeMenu, 100);
+            //Backdrop backdropModal = new Backdrop(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f), default, 90);
+            UIBlock backdropModal = new UIBlock(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f));
+            backdropModal.MultiTextureData.MixTexture = false;
             Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.3f);
             backdropModal.SetColor(slightlyTransparentBackdropColor);
 
+
+            //AddUI(backdropModal);
+            AddUI(escapeMenu, 100);
+
+            
             escapeMenu.SetRender(false);
             backdropModal.SetRender(false);
         }

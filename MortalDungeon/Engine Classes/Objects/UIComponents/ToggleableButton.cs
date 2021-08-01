@@ -63,7 +63,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void SetColor(Vector4 color)
         {
             if (!Selected)
-                _mainObject.SetColor(color);
+                TextBox.SetColor(color);
         }
     }
 }

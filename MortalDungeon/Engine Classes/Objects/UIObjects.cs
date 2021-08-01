@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
@@ -123,7 +124,15 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-       
+        public virtual void SetInlineColor(Vector4 color) 
+        {
+            GetBaseObject().OutlineParameters.InlineColor = color;
+        }
+
+        public virtual void SetAllInline(int num) 
+        {
+            GetBaseObject().OutlineParameters.SetAllInline(num);
+        }
 
         public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.MouseUp)
         {
@@ -134,10 +143,18 @@ namespace MortalDungeon.Engine_Classes
 
             for (int i = 0; i < count; i++)
             {
+                if (count != ReverseTree.Count) 
+                {
+                    Console.WriteLine("ReverseTree modified during BoundsCheck");
+                    return;
+                }
+
                 if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
                 {
                     if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
                     {
+                        optionalAction?.Invoke(ReverseTree[i].UIObject);
+
                         switch (type)
                         {
                             case UIEventType.MouseUp:
@@ -145,6 +162,9 @@ namespace MortalDungeon.Engine_Classes
                                 break;
                             case UIEventType.Hover:
                                 ReverseTree[i].UIObject.OnHover();
+                                break;
+                            case UIEventType.TimedHover:
+                                optionalAction?.Invoke(ReverseTree[i].UIObject);
                                 break;
                             case UIEventType.MouseDown:
                                 ReverseTree[i].UIObject.OnMouseDown();
@@ -161,8 +181,6 @@ namespace MortalDungeon.Engine_Classes
                                 optionalAction?.Invoke(ReverseTree[i].UIObject);
                                 return;
                         }
-
-                        optionalAction?.Invoke(ReverseTree[i].UIObject);
                     }
                     else if (type == UIEventType.Hover)
                     {
@@ -185,6 +203,8 @@ namespace MortalDungeon.Engine_Classes
                     return obj.Clickable;
                 case UIEventType.Hover:
                     return obj.Hoverable;
+                case UIEventType.TimedHover:
+                    return obj.HasTimedHoverEffect;
                 case UIEventType.MouseDown:
                     return obj.Clickable;
                 case UIEventType.Grab:
@@ -419,6 +439,8 @@ namespace MortalDungeon.Engine_Classes
             {
                 ForceTreeRegeneration();
             }
+
+            LoadTexture(uiObj);
         }
 
         public void ClearChildren() 
@@ -608,7 +630,10 @@ namespace MortalDungeon.Engine_Classes
             return -ZIndex.CompareTo(other.ZIndex);
         }
 
-
+        protected void LoadTexture(UIObject obj)
+        {
+            Renderer.LoadTextureFromUIObject(obj);
+        }
         protected static void ValidateObject(UIObject obj) 
         {
             if (obj.BaseComponent == null && obj._baseObject == null)

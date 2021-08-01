@@ -107,6 +107,8 @@ namespace MortalDungeon.Game.Abilities
                     BaseTile currentTile = CurrentTiles[i];
                     endOfTileMoveKeyframe.Action = display =>
                     {
+                        CastingUnit.TileMapPosition = currentTile.TileIndex;
+
                         TileMap.Tiles.ForEach(tile =>
                         {
                             tile.SetFog(true, CastingUnit.Team);
@@ -116,15 +118,16 @@ namespace MortalDungeon.Game.Abilities
                         {
                             if (unit.Team == CastingUnit.Team)
                             {
-                                List<Unit> allOtherUnits = Units.FindAll(u => u.TileMapPosition != unit.TileMapPosition);
-                                List<BaseTile> tiles = TileMap.GetVisionInRadius(currentTile.TileIndex, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, Units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
+                                List<Unit> allOtherUnits = Units.FindAll(u => u.Team != unit.Team);
+                                List<BaseTile> tiles = TileMap.GetVisionInRadius(unit.TileMapPosition, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, Units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
 
                                 tiles.ForEach(tile =>
                                 {
                                     tile.SetExplored(true, CastingUnit.Team);
                                     tile.SetFog(false, CastingUnit.Team);
-                                    Scene.HideObjectsInFog(allOtherUnits);
                                 });
+
+                                Scene.HideObjectsInFog(allOtherUnits);
                             }
                         });
                     };
@@ -145,7 +148,7 @@ namespace MortalDungeon.Game.Abilities
 
 
             OnCast();
-            CastingUnit.TileMapPosition = SelectedTile.TileIndex;
+            //CastingUnit.TileMapPosition = SelectedTile.TileIndex;
             SelectedTile = null;
         }
 

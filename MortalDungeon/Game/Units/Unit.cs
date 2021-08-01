@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
@@ -35,7 +36,7 @@ namespace MortalDungeon.Game.Units
 
         public int CurrentShields = 0;
         public float ShieldBlock = 10;
-        public float DamageBlockedByShield = 0;
+        public float DamageBlockedByShields = 0;
 
         public Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
 
@@ -51,12 +52,20 @@ namespace MortalDungeon.Game.Units
         public Direction Facing = Direction.North;
 
         public TileMap CurrentTileMap;
+        public CombatScene Scene;
 
         public UnitStatusBar StatusBarComp = null;
+        public static int BaseStatusBarZIndex = 100;
+
+        public bool Selectable = false;
 
         public Ability _movementAbility = null;
-        public Unit() 
+        public Unit(CombatScene scene) 
         {
+            Scene = scene;
+
+            Hoverable = true;
+
             Move movement = new Move(this);
             Abilities.Add(movement.AbilityID, movement);
 
@@ -67,7 +76,7 @@ namespace MortalDungeon.Game.Units
                 DamageResistances.Add(damageType, 0);
             }
         }
-        public Unit(Vector3 position, int tileMapPosition = 0, int id = 0, string name = "Unit")
+        public Unit(Vector3 position, int tileMapPosition = 0, string name = "Unit")
         {
             Position = position;
             Name = name;
@@ -112,7 +121,7 @@ namespace MortalDungeon.Game.Units
 
             if (StatusBarComp != null) 
             {
-                StatusBarComp.SetWillDisplay(render);
+                StatusBarComp.SetWillDisplay(render && !Dead && Scene.DisplayUnitStatuses);
             }
         }
 
@@ -146,7 +155,7 @@ namespace MortalDungeon.Game.Units
 
             float shieldDamageBlocked;
 
-            DamageBlockedByShield += actualDamage;
+            DamageBlockedByShields += actualDamage;
 
             if (CurrentShields < 0)
             {
@@ -163,10 +172,10 @@ namespace MortalDungeon.Game.Units
                 }
             }
 
-            if (DamageBlockedByShield > ShieldBlock) 
+            if (DamageBlockedByShields > ShieldBlock) 
             {
                 CurrentShields--;
-                DamageBlockedByShield = 0;
+                DamageBlockedByShields = 0;
             }
 
 
@@ -187,7 +196,60 @@ namespace MortalDungeon.Game.Units
             OnKill();
         }
 
-        public virtual void OnKill() { }
+        public virtual void OnKill() 
+        {
+            if (StatusBarComp != null) 
+            {
+                Scene.OnUnitKilled(this);
+            }
+        }
 
+        public override void OnHover()
+        {
+            if (Hoverable && !Hovered)
+            {
+                Hovered = true;
+
+                if (StatusBarComp != null && StatusBarComp.Render) 
+                {
+                    StatusBarComp.ZIndex = BaseStatusBarZIndex + 1;
+                    StatusBarComp.Parent.Children.Sort();
+                }
+
+                //Scene.Footer.UpdateFooterInfo(this);
+            }
+        }
+
+        public override void HoverEnd()
+        {
+            if (Hovered)
+            {
+                Hovered = false;
+                if (StatusBarComp != null && StatusBarComp.Render)
+                {
+                    StatusBarComp.ZIndex = BaseStatusBarZIndex;
+                    StatusBarComp.Parent.Children.Sort();
+                }
+
+                base.HoverEnd();
+            }
+        }
+
+        public override void OnTimedHover()
+        {
+            base.OnTimedHover();
+
+            //Scene.Footer.UpdateFooterInfo(this);
+        }
+
+        public void Select() 
+        {
+            Scene.Footer.UpdateFooterInfo(this);
+        }
+
+        public void Deselect()
+        {
+            Scene.Footer.UpdateFooterInfo(Scene.CurrentUnit);
+        }
     }
 }

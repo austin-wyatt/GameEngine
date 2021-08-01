@@ -8,27 +8,30 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
-    public class Guy : Unit
+    public class Skeleton : Unit
     {
-        public Guy(Vector3 position, CombatScene scene, int tileMapPosition, string name = "Guy") : base(scene)
+        public Skeleton(Vector3 position, CombatScene scene, int tileMapPosition, string name = "Skeleton") : base(scene)
         {
             Name = name;
             TileMapPosition = tileMapPosition;
             Clickable = true;
             Selectable = true;
 
-            BaseObject Guy = new BaseObject(BAD_GUY_ANIMATION.List, ObjectID, "BadGuy", position, EnvironmentObjects.BASE_TILE.Bounds);
-            Guy.BaseFrame.CameraPerspective = true;
-            Guy.BaseFrame.RotateX(25);
+            BaseObject Skeleton = new BaseObject(SKELETON_ANIMATION.List, ObjectID, "", position, EnvironmentObjects.BASE_TILE.Bounds);
+            Skeleton.BaseFrame.CameraPerspective = true;
+            Skeleton.BaseFrame.RotateX(25);
 
-            BaseObjects.Add(Guy);
+            BaseObjects.Add(Skeleton);
 
             SetPosition(position);
 
             VisionRadius = 6;
 
-            Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
-            Abilities.Add(melee.AbilityID, melee);
+            CurrentShields = 5;
+            ShieldBlock = 3;
+
+            //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
+            //Abilities.Add(melee.AbilityID, melee);
         }
 
         public override void OnKill()

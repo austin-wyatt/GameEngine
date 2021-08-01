@@ -305,6 +305,8 @@ namespace MortalDungeon.Engine_Classes
 
         public float NewLineHeight = 700f;
 
+        public Vector4 Color = Colors.White;
+
         public bool Render = true;
 
         public Text() { }
@@ -380,6 +382,8 @@ namespace MortalDungeon.Engine_Classes
                     position.Y += Letters[i].YOffset;
                 }
             }
+
+            SetColor(Color);
         }
         public void RecalculateTextPosition() 
         {
@@ -545,6 +549,8 @@ namespace MortalDungeon.Engine_Classes
         }
         public void SetColor(Vector4 color) 
         {
+            Color = color;
+
             Letters.ForEach(letter =>
             {
                 letter.SetColor(color);

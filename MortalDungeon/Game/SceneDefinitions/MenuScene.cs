@@ -26,7 +26,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             InitializeFields();
         }
 
-        Footer _footer;
+        
 
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
@@ -40,7 +40,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             _tileMaps.Add(tileMap);
 
 
-            Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
+            Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, this, 0) { Clickable = true };
             guy.Team = UnitTeam.Ally;
             guy.CurrentTileMap = tileMap;
             guy._movementAbility.EnergyCost = 2f;
@@ -48,8 +48,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             _units.Add(guy);
 
-            Guy badGuy = new Guy(tileMap.GetPositionOfTile(3) + Vector3.UnitZ * 0.2f, 0) { Clickable = true };
-            badGuy.TileMapPosition = 3;
+            Guy badGuy = new Guy(tileMap.GetPositionOfTile(3) + Vector3.UnitZ * 0.2f, this, 3) { Clickable = true };
             badGuy.Team = UnitTeam.Enemy;
             badGuy.CurrentTileMap = tileMap;
             badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
@@ -68,86 +67,30 @@ namespace MortalDungeon.Game.SceneDefinitions
             mountainBackground.BaseObjects[0].GetDisplay().ScaleAll(10);
             _genericObjects.Add(mountainBackground);
 
-            //Text textTest = new Text("Test string\nwith line break", new Vector3(25, -2300, 0.1f), true);
-            //textTest.SetScale(20);
 
-            //_text.Add(textTest);
 
 
             float footerHeight = 300;
-            Footer footer = new Footer(footerHeight);
-            AddUI(footer, 100);
 
-            _footer = footer;
-
-
-            ToggleableButton toggleableButton = new ToggleableButton(footer.Position + new Vector3(-footer.GetDimensions().X / 2 + 30, 0, 0), new UIScale(0.15f, 0.1f), "^", 0.1f);
-
-            toggleableButton.OnSelectAction = () =>
-            {
-                UIDimensions buttonDimensions = toggleableButton.GetDimensions();
-
-                Vector3 dim = toggleableButton.GetAnchorPosition(UIAnchorPosition.TopLeft);
-
-                UIList abilityList = new UIList(dim, new UIScale(0.75f, 0.15f), 0.05f) { Ascending = true };
-
-                foreach (Ability ability in CurrentUnit.Abilities.Values) 
-                {
-                    ListItem newItem = abilityList.AddItem(ability.Name, () => 
-                    {
-                        DeselectAbility();
-                        SelectAbility(ability);
-                        toggleableButton.OnMouseUp();
-                    });
-
-                    if (ability.GetEnergyCost() > EnergyDisplayBar.CurrentEnergy)
-                    {
-                        newItem.SetDisabled(true);
-                    }
-                }
-
-                toggleableButton.AddChild(abilityList);
-
-                abilityList.Anchor = UIAnchorPosition.BottomLeft;
-                abilityList.SetPositionFromAnchor(dim);
-            };
-
-            toggleableButton.OnDeselectAction = () =>
-            {
-                List<int> childIDs = new List<int>();
-                toggleableButton.Children.ForEach(child =>
-                {
-                    if (child != toggleableButton.BaseComponent) 
-                    {
-                        childIDs.Add(child.ObjectID);
-                    }
-                });
-
-                toggleableButton.RemoveChildren(childIDs);
-            };
-
-            footer.AddChild(toggleableButton, 100);
-
-            Button advanceTurnButton = new Button(footer.Position + new Vector3(footer.GetDimensions().X / 4, 0, 0), new UIScale(0.9f, 0.15f), "Advance round", 0.075f);
-            TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new UIScale(0.3f, 0.15f), "0", 0.075f, true);
-
-            footer.AddChild(advanceTurnButton, 100);
-            footer.AddChild(turnCounter, 100);
+            Footer = new GameFooter(footerHeight, this); ;
+            AddUI(Footer, 100);
 
 
-            //footer.PropertyAnimations.Add(testAnim);
+            //Button advanceTurnButton = new Button(Footer.Position + new Vector3(Footer.GetDimensions().X / 4, 0, 0), new UIScale(0.9f, 0.15f), "Advance round", 0.075f);
+            ////TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new UIScale(0.3f, 0.15f), "0", 0.075f, true);
 
             //advanceTurnButton.OnClickAction = () =>
             //{
-            //    AdvanceRound();
-            //    turnCounter.TextField.SetTextString(Round.ToString());
+            //    CompleteTurn();
             //};
 
+            //Footer.AddChild(advanceTurnButton, 100);
+            //footer.AddChild(turnCounter, 100);
 
 
-            EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
-            //EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - 200, 0), new Vector2(1, 1), 10);
-            energyDisplayBar.Clickable = true;
+
+            EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - Footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
+            //energyDisplayBar.SetPositionFromAnchor(Footer.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, -10, 0), UIAnchorPosition.BottomLeft);
 
             EnergyDisplayBar = energyDisplayBar;
 
@@ -166,9 +109,11 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //AddUI(testList, 100);
 
-            Input inputComp = new Input(footer.Position - footer.GetDimensions().X / 6 * Vector3.UnitX, new UIScale(1, 0.12f), "", 0.05f, false, new UIDimensions(10, 30));
 
-            footer.AddChild(inputComp, 100);
+            //input component demo
+            //Input inputComp = new Input(footer.Position - footer.GetDimensions().X / 6 * Vector3.UnitX, new UIScale(1, 0.12f), "", 0.05f, false, new UIDimensions(10, 30));
+
+            //footer.AddChild(inputComp, 100);
 
 
             //Scrollable component demo
@@ -199,27 +144,40 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             UnitStatusBar guyStatusBar = new UnitStatusBar(guy, _camera);
-            AddUI(guyStatusBar);
+            //AddUI(guyStatusBar);
 
             badGuy.Name = "Other guy";
             UnitStatusBar guyStatusBar2 = new UnitStatusBar(badGuy, _camera);
-            AddUI(guyStatusBar2);
+            //AddUI(guyStatusBar2);
 
 
             badGuy.SetShields(5);
 
 
-            InitiativeOrder = new List<Unit>() { guy, badGuy };
+            Skeleton skeleton = new Skeleton(tileMap.GetPositionOfTile(55) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 55) { };
+            UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
+            _units.Add(skeleton);
+            //AddUI(skeletonStatusBar);
+
+
+            InitiativeOrder = new List<Unit>(_units);
 
             StartRound();
-            advanceTurnButton.OnClickAction = () =>
-            {
-                CompleteTurn();
 
-                turnCounter.TextField.SetTextString(Round.ToString());
-            };
 
-            FillInTeamFog();
+            UIBlock statusBarContainer = new UIBlock(new Vector3());
+            statusBarContainer.MultiTextureData.MixTexture = false;
+            statusBarContainer.SetAllInline(0);
+            statusBarContainer.SetColor(Colors.Transparent);
+
+            statusBarContainer.AddChild(skeletonStatusBar);
+            statusBarContainer.AddChild(guyStatusBar2);
+            statusBarContainer.AddChild(guyStatusBar);
+
+            AddUI(statusBarContainer);
+
+
+            FillInTeamFog(InitiativeOrder[0].Team);
         }
 
 
@@ -361,28 +319,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
         }
 
-        public override void onUnitClicked(Unit unit)
-        {
-            base.onUnitClicked(unit);
-
-            if (_selectedAbility == null)
-            {
-                if (!InCombat) 
-                {
-                    CurrentUnit = unit;
-                    _selectedAbility = unit.GetFirstAbilityOfType(DefaultAbilityType);
-
-                    if (_selectedAbility.Type != AbilityTypes.Empty)
-                    {
-                        SelectAbility(_selectedAbility);
-                    }
-                }
-            }
-            else 
-            {
-                _selectedAbility.OnUnitClicked(unit);
-            }
-        }
+        
 
         public override void onTileClicked(TileMap map, BaseTile tile) 
         {
