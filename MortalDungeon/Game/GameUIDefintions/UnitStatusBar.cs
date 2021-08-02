@@ -61,7 +61,7 @@ namespace MortalDungeon.Game.UI
 
             HealthBar = new HealthBar(new Vector3(), scale);
             HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
-            HealthBar.SetHealthPercent(1);
+            HealthBar.SetHealthPercent(1, unit.Team);
 
             BaseComponent.AddChild(HealthBar);
 

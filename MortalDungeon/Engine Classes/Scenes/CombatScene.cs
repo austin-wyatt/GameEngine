@@ -125,6 +125,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             _selectedAbility = ability;
             ability.OnSelect(this, _tileMaps[0]);
+
+            _onSelectAbilityActions.ForEach(a => a?.Invoke(ability));
         }
 
         public virtual void DeselectAbility()
@@ -136,6 +138,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _selectedAbility?.OnAbilityDeselect();
                 _selectedAbility = null;
             }
+
+            _onDeselectAbilityActions.ForEach(a => a?.Invoke());
         }
 
         public void SelectUnit(Unit unit) 
@@ -298,7 +302,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             DisplayUnitStatuses = !DisplayUnitStatuses;
                             _units.ForEach(u =>
                             {
-                                if (u.StatusBarComp != null && !u.Dead) 
+                                if (u.StatusBarComp != null && !u.Dead && u.Render) 
                                 {
                                     u.StatusBarComp.SetWillDisplay(DisplayUnitStatuses);
                                 }
@@ -312,7 +316,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return processKeyStrokes;
         }
 
-        public virtual void OnUnitKilled(Unit unit) 
+        public virtual void onUnitKilled(Unit unit) 
         {
             if (unit.StatusBarComp != null) 
             {
@@ -357,5 +361,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _selectedAbility.OnUnitClicked(unit);
             }
         }
+
+        public virtual void onAbilityCast(Ability ability) 
+        {
+            _onAbilityCastActions.ForEach(a => a?.Invoke(ability));
+        }
+
+        public List<Action<Ability>> _onSelectAbilityActions = new List<Action<Ability>>();
+        public List<Action> _onDeselectAbilityActions = new List<Action>();
+        public List<Action<Ability>> _onAbilityCastActions = new List<Action<Ability>>();
     }
 }

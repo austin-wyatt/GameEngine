@@ -1,7 +1,9 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -26,6 +28,8 @@ namespace MortalDungeon.Game.Abilities
             HasHoverEffect = true;
 
             Name = "Move";
+
+            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.WalkingBoot, Spritesheets.IconSheet, true);
 
             TraversableTypes.Add(TileClassification.Ground);
         }
@@ -154,8 +158,6 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnCast()
         {
-            base.OnCast();
-
             Scene.EnergyDisplayBar.HoverAmount(0);
 
             float energyCost = (CurrentTiles.Count - 1) * GetEnergyCost();
@@ -166,6 +168,8 @@ namespace MortalDungeon.Game.Abilities
             //}
 
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+
+            base.OnCast();
         }
 
         public override void OnSelect(CombatScene scene, TileMap currentMap)

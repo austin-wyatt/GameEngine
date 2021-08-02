@@ -11,6 +11,7 @@ namespace MortalDungeon.Objects
         CaveSpritesheet,
         CharacterSpritesheet,
         UISpritesheet,
+        IconSpritesheet,
 
         FogTexture
     }

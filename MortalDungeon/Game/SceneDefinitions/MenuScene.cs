@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, this, 0) { Clickable = true };
             guy.Team = UnitTeam.Ally;
             guy.CurrentTileMap = tileMap;
-            guy._movementAbility.EnergyCost = 2f;
+            guy._movementAbility.EnergyCost = 0.3f;
             CurrentUnit = guy;
 
             _units.Add(guy);

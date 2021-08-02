@@ -27,6 +27,9 @@
     <None Update="Resources\FogTexture.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\IconSpritesheet.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\SpritesheetTest.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -1,8 +1,11 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -60,6 +63,7 @@ namespace MortalDungeon.Game.Abilities
         public CombatScene Scene;
 
         public string Name = "";
+        public string Description = "";
 
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
 
@@ -75,6 +79,8 @@ namespace MortalDungeon.Game.Abilities
         public float Damage = 0;
         public int Duration = 0;
 
+        public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
+
         public Ability() 
         {
 
@@ -83,6 +89,41 @@ namespace MortalDungeon.Game.Abilities
         public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default) 
         {
             return new List<BaseTile>();
+        }
+
+        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false) 
+        {
+            Icon icon = new Icon(Icon, scale, withBackground, backgroundType);
+
+            if (showEnergyCost || true) 
+            {
+                UIScale textBoxSize = icon.Size;
+                textBoxSize *= 0.333f;
+
+                string energyString = GetEnergyCost().ToString("g1");
+                float textScale = 0.05f;
+
+                TextBox energyCostBox = new TextBox(new Vector3(), textBoxSize, energyString, textScale, true, new UIDimensions(10, 0));
+                energyCostBox.BaseComponent.MultiTextureData.MixTexture = false;
+                energyCostBox.SetColor(Colors.UILightGray);
+                energyCostBox.SetTextColor(Colors.UITextBlack);
+
+                UIScale textDimensions = energyCostBox.TextField.GetTextDimensions();
+                textBoxSize = energyCostBox.GetDimensions();
+                //Console.WriteLine(textDimensions);
+
+                if (textDimensions.X > textBoxSize.X) 
+                {
+                    energyCostBox.TextField.SetTextScale((textScale - 0.001f) * textBoxSize.X / textDimensions.X);
+                }
+
+                energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
+
+                icon.AddChild(energyCostBox);
+            }
+
+
+            return icon;
         }
 
         public float GetEnergyCost()
@@ -145,8 +186,10 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnCast() 
         {
             Scene.DeselectAbility();
+            Scene.onAbilityCast(this);
         }
 
+        
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 

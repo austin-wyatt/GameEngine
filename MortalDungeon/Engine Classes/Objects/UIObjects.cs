@@ -80,6 +80,18 @@ namespace MortalDungeon.Engine_Classes
             GetBaseObject(this).BaseFrame.ScaleX(ScaleFactor.X);
             GetBaseObject(this).BaseFrame.ScaleY(ScaleFactor.Y);
 
+            if (BaseObjects.Count > 0) 
+            {
+                BaseObjects.ForEach(obj =>
+                {
+                    obj.BaseFrame.SetScaleAll(1);
+
+                    obj.BaseFrame.ScaleX(aspectRatio);
+                    obj.BaseFrame.ScaleX(ScaleFactor.X);
+                    obj.BaseFrame.ScaleY(ScaleFactor.Y);
+                });
+            }
+
             Size = size;
             SetOrigin(aspectRatio, Size);
         }
@@ -458,6 +470,8 @@ namespace MortalDungeon.Engine_Classes
 
             if (child != null) 
             {
+                child.CleanUp();
+
                 Children.Remove(child);
                 if (Parent == null)
                 {

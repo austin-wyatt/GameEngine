@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -19,6 +21,8 @@ namespace MortalDungeon.Game.Abilities
             EnergyCost = 5;
 
             Name = "Strike";
+
+            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
@@ -68,8 +72,6 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnCast()
         {
-            base.OnCast();
-
             Scene.EnergyDisplayBar.HoverAmount(0);
 
             float energyCost = GetEnergyCost();
@@ -79,6 +81,8 @@ namespace MortalDungeon.Game.Abilities
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
 
             TileMap.DeselectTiles();
+
+            base.OnCast();
         }
 
         public override void EnactEffect()

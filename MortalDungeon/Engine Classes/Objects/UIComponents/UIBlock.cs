@@ -99,7 +99,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             base.SetPosition(position);
 
-            float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
             Origin = new Vector3(Position.X - _originOffset.X, Position.Y - _originOffset.Y, Position.Z - _originOffset.Z);
         }
     }

@@ -218,6 +218,11 @@ namespace MortalDungeon.Engine_Classes
             if (Hoverable && !Hovered)
             {
                 Hovered = true;
+
+                for (int i = 0; i < _onHoverActions.Count; i++)
+                {
+                    _onHoverActions[i]?.Invoke();
+                }
             }
         }
         public virtual void HoverEnd() 
@@ -264,8 +269,16 @@ namespace MortalDungeon.Engine_Classes
             
         }
 
+        public virtual void CleanUp() 
+        {
+            _cleanUpAction?.Invoke();
+        }
+
+        public Action _cleanUpAction = null;
+
         public List<Action> _onHoverEndActions = new List<Action>();
         public List<Action> _onTimedHoverActions = new List<Action>();
+        public List<Action> _onHoverActions = new List<Action>();
 
 
         protected virtual void LoadTexture<T>(T obj) where T : GameObject 

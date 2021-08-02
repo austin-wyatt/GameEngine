@@ -83,8 +83,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
             else 
             {
-                position = Items[Items.Count - 1].Children[0].Position;
-                position.Y += Items[Items.Count - 1].Children[0].GetDimensions().Y * (Ascending ? -1 : 1);
+                position = Items[Items.Count - 1].BaseComponent.Position;
+                position.Y += Items[Items.Count - 1].BaseComponent.GetDimensions().Y * (Ascending ? -1 : 1);
                 position.Y += ItemMargins.Y * WindowConstants.ScreenUnits.Y * (Ascending ? -1 : 1);
             }
 
@@ -120,7 +120,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             if (Items.Count > 0) 
             {
-                Position = (Items[0].Children[0].Position + Items[Items.Count - 1].Children[0].Position) / 2;
+                Position = (Items[0].BaseComponent.Position + Items[Items.Count - 1].BaseComponent.Position) / 2;
                 BaseComponent.SetPosition(Position);
             }
 

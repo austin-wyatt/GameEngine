@@ -14,7 +14,8 @@ namespace MortalDungeon.Game.Units
     {
         Ally,
         Enemy,
-        Neutral
+        Neutral,
+        Unknown
     }
 
     public class Unit : GameObject //main unit class. Tracks position on tilemap
@@ -181,7 +182,7 @@ namespace MortalDungeon.Game.Units
 
             Health -= actualDamage;
 
-            StatusBarComp.HealthBar.SetHealthPercent(Health / MaxHealth);
+            StatusBarComp.HealthBar.SetHealthPercent(Health / MaxHealth, Team);
             StatusBarComp.ShieldBar.SetCurrentShields(CurrentShields);
 
             if (Health <= 0) 
@@ -200,7 +201,7 @@ namespace MortalDungeon.Game.Units
         {
             if (StatusBarComp != null) 
             {
-                Scene.OnUnitKilled(this);
+                Scene.onUnitKilled(this);
             }
         }
 
