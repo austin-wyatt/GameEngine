@@ -11,9 +11,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public UIBlock VisibleArea;
         public Scrollbar Scrollbar;
 
-        private UIScale _baseAreaSize;
+        public UIScale _baseAreaSize;
         private float _scrollPercent = 0;
-        public ScrollableArea(Vector3 position, UIScale visibleAreaSize, Vector3 baseAreaPosition, UIScale baseAreaSize) 
+
+        private bool _showScrollbar = true;
+        float _scrollbarWidth = 0.1f;
+
+        public ScrollableArea(Vector3 position, UIScale visibleAreaSize, Vector3 baseAreaPosition, UIScale baseAreaSize, float scrollbarWidth = 0.1f) 
         {
             Size = visibleAreaSize;
             Position = position;
@@ -23,6 +27,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Focusable = true;
 
             _baseAreaSize = baseAreaSize;
+
+            _scrollbarWidth = scrollbarWidth;
+
+            _showScrollbar = _baseAreaSize.Y != Size.Y;
+            if(!_showScrollbar)
+                _baseAreaSize.Y += 0.00001f;
 
             VisibleArea = new UIBlock(Position, Size, default, 71, true);
             VisibleArea.Name = "VisibleArea";
@@ -34,6 +44,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             scrollableArea.SetColor(new Vector4(0, 0, 0, 0));
 
             BaseComponent = scrollableArea;
+
 
             SetVisibleAreaPosition(Position);
 
@@ -54,6 +65,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void SetVisibleAreaPosition(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
         {
+            Anchor = anchor;
+            Position = position;
+
             VisibleArea.SetPositionFromAnchor(position, anchor);
 
             Vector3 globalCoord = WindowConstants.ConvertScreenSpaceToGlobalCoordinates(VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomLeft));
@@ -76,9 +90,43 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             VisibleArea.SetSize(size);
             Size = size;
 
-            SetVisibleAreaPosition(Position, UIAnchorPosition.TopLeft);
+            _showScrollbar = _baseAreaSize.Y != Size.Y;
+            if (!_showScrollbar)
+                _baseAreaSize.Y += 0.00001f;
+
+            SetVisibleAreaPosition(Position, Anchor);
+
             InitializeScrollbar();
             SetScrollbarPosition();
+            Scrollbar.ScrollByPercentage(_scrollPercent);
+        }
+
+        public void SetBaseAreaSize(UIScale size) 
+        {
+            Vector3 oldTopLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+
+            _baseAreaSize = size;
+
+            _showScrollbar = _baseAreaSize.Y != Size.Y;
+            if (!_showScrollbar)
+                _baseAreaSize.Y += 0.00001f;
+
+            BaseComponent.SetSize(_baseAreaSize);
+
+            Vector3 newTopLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+
+            BaseComponent.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+            InitializeScrollbar();
+            SetScrollbarPosition();
+            Scrollbar.ScrollByPercentage(_scrollPercent);
+
+            Vector3 offset = new Vector3(oldTopLeft.X - newTopLeft.X, newTopLeft.Y - oldTopLeft.Y, 0);
+
+            for (int i = 0; i < BaseComponent.Children.Count; i++) 
+            {
+                BaseComponent.Children[i].SetPosition(BaseComponent.Children[i].Position + offset);    
+            }
+            
         }
 
         public void UpdateScrollableAreaBounds() 
@@ -107,8 +155,17 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Vector3 visibleTopRight = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight);
             Vector3 visibleBottomRight = VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomRight);
 
-            UIScale scrollbarScale = new UIScale(0.1f, Size.Y / _baseAreaSize.Y);
-            Scrollbar = new Scrollbar(new Vector3(), scrollbarScale, new Scrollbar.ScrollInfo(new Vector2(visibleBottomRight.Y, visibleTopRight.Y)));
+            float J = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight).Y;
+            float K = VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomRight).Y;
+
+            float A = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft).Y;
+            float B = BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft).Y;
+
+            float H = (J - K) * (J - K) / (A - B) * -1;
+
+            UIScale scrollbarScale = new UIScale(_scrollbarWidth, UIScale.CoordToScale(H * 2));
+
+            Scrollbar = new Scrollbar(new Vector3(), scrollbarScale, new Scrollbar.ScrollInfo(new Vector2(K, J)), H);
 
             SetScrollbarPosition();
 
@@ -120,6 +177,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             {
                 Scrollbar.GetDisplay().TextureReference = tex;
             }
+
+            Scrollbar.SetRender(_showScrollbar);
         }
 
         public override void OnUpdate(MouseState mouseState)
@@ -152,21 +211,23 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             {
                 Scrollbar.ScrollByPercentage(_scrollPercent);
             }
-
-            //OnScroll(_scrollPercent);
         }
 
         public void OnScroll(float percent) 
         {
             Vector3 scrollableRange = new Vector3();
 
-            Vector3 pos = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft);
+            Vector3 pos = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopCenter);
 
-            if (Scrollbar.Bounds.ScrollY)
-            {
-                scrollableRange = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) - BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
-                scrollableRange.Y *= percent;
-            }
+            float J = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight).Y;
+            float K = VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomRight).Y;
+
+            float A = J;
+
+            float H = (BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft).Y - BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft).Y) * -1;
+            float B = A + H;
+
+            pos.Y = A - (B + (J - K) - A) * percent;
 
             _scrollPercent = percent;
 
@@ -185,12 +246,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public Action<float> OnScrollAction = null;
 
-        private float _sizeCorrection = 0;
-
-        public Scrollbar(Vector3 position, UIScale size = default, ScrollInfo bounds = default) 
+        private float H;
+        public Scrollbar(Vector3 position, UIScale size = default, ScrollInfo bounds = default, float h = 0) 
             : base(position, size)
         {
             Name = "Scrollbar";
+            H = h;
 
             SetScrollBounds(bounds);
 
@@ -200,17 +261,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public void SetScrollBounds(ScrollInfo bounds) 
         {
             Bounds = bounds;
-
-            UIDimensions offset = GetAnchorOffset(UIAnchorPosition.TopRight);
-
-            if (Bounds.ScrollX)
-            {
-                _sizeCorrection = offset.X;
-            }
-            else 
-            {
-                _sizeCorrection = offset.Y;
-            }
         }
 
         public override void SetDragPosition(Vector3 position)
@@ -235,10 +285,10 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                     anchor = UIAnchorPosition.TopCenter;
                     position.Y = Bounds.Max;
                 }
-                else if (bottomRight.Y > Bounds.Min)
+                else if (bottomRight.Y > (Bounds.Min))
                 {
                     anchor = UIAnchorPosition.BottomCenter;
-                    position.Y = Bounds.Min;
+                    position.Y = (Bounds.Min);
                 }
             }
             else 
@@ -254,40 +304,28 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public void ScrollByPercentage(float percent) 
         {
             Vector3 pos = Position;
-            UIAnchorPosition anchor = UIAnchorPosition.Center;
 
-            pos.Y = Bounds.Max + percent * (Bounds.Min - Bounds.Max) - _sizeCorrection;
+            float T = Bounds.Max + H / 2;
+            float B = Bounds.Min - H / 2;
 
-            Vector3 topRight = GetAnchorPosition(UIAnchorPosition.TopRight, pos);
-            Vector3 bottomRight = GetAnchorPosition(UIAnchorPosition.BottomRight, pos);
+            pos.Y = T - (T - B) * percent;
 
-            if (topRight.Y < Bounds.Max)
-            {
-                anchor = UIAnchorPosition.TopCenter;
-                pos.Y = Bounds.Max;
-            }
-            else if (bottomRight.Y > Bounds.Min)
-            {
-                anchor = UIAnchorPosition.BottomCenter;
-                pos.Y = Bounds.Min;
-            }
-
-            SetPositionFromAnchor(pos, anchor);
+            SetPositionFromAnchor(pos);
             OnScrollAction?.Invoke(GetScrollPercentage());
         }
 
         public float GetScrollPercentage() 
         {
-            if (Bounds.ScrollX)
-            {
-                return (Position.X + _sizeCorrection - Bounds.Max) / (Bounds.Min - Bounds.Max + _sizeCorrection);
-            }
-            else if (Bounds.ScrollY) 
-            {
-                return (Position.Y + _sizeCorrection - Bounds.Max) / (Bounds.Min - Bounds.Max);
-            }
+            float percentage = 0;
 
-            return 0;
+            float T = Bounds.Max + H / 2;
+            float B = Bounds.Min - H / 2;
+
+            float Y = Position.Y;
+
+            percentage = (T - Y) / (T - B);
+
+            return percentage;
         }
 
         public class ScrollInfo 

@@ -388,6 +388,9 @@ namespace MortalDungeon.Game.Tiles
 
         public void SelectTile(BaseTile tile)
         {
+            if (_amountOfSelectionTiles == _selectionTilePool.Count)
+                _amountOfSelectionTiles--;
+
             Vector3 pos = new Vector3();
             pos.X = tile.Position.X;
             pos.Y = tile.Position.Y;

@@ -234,7 +234,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
             TextureName currTexture = Display.Textures.Textures[0];
 
-            //if(instantiateRenderFunc)
             PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
@@ -242,24 +241,29 @@ namespace MortalDungeon.Engine_Classes.Rendering
             int count = 0;
             List<T> recursiveCallList = new List<T>();
 
-            List<BaseObject> baseObjectCallList = new List<BaseObject>();
-
-            List<MultiTextureData> multiTextureList = new List<MultiTextureData>();
-
             Dictionary<TextureName, TextureUnit> usedTextures = new Dictionary<TextureName, TextureUnit>();
+            Dictionary<Texture, TextureUnit> textureReferences = new Dictionary<Texture, TextureUnit>();
 
             List<T> scissorCallList = new List<T>();
 
             usedTextures.Add(currTexture, TextureUnit.Texture0);
+            textureReferences.Add(Display.TextureReference, TextureUnit.Texture0);
 
             BaseObject obj;
             TextureName tex;
 
             TextureUnit currentTextureUnit = TextureUnit.Texture2;
 
-            //GL.Sci
+            void draw(int itemCount, float[] renderDataArray) 
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.StreamDraw);
 
-            int temp = objects.Count / 2;
+
+                GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, itemCount);
+
+                DrawCount++;
+            }
+
             for (int i = 0; i < objects.Count; i++)
             {
                 if (objects[i].Render && !objects[i].Cull)
@@ -275,6 +279,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     
                     if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag) 
                     {
+                        draw(count, _instancedRenderDataArray);
+                        count = 0;
+                        currIndex = 0;
+
                         scissorCallList.Add(objects[i]);
                         objects[i].ScissorData._scissorFlag = false;
 
@@ -282,14 +290,28 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         GL.Scissor(scissorData.X, scissorData.Y, scissorData.Width, scissorData.Height);
                         GL.Enable(EnableCap.ScissorTest);
 
-                        float[] instancedArr = new float[scissorCallList.Count * instanceDataOffset];
+                        int totalObjCount = 0;
+
+                        for (int l = 0; l < scissorCallList.Count; l++) 
+                        {
+                            totalObjCount += scissorCallList[l].BaseObjects.Count;
+                        }
+
+                        float[] instancedArr = new float[totalObjCount * instanceDataOffset];
+
+
 
                         RenderObjectsInstancedGeneric(scissorCallList, ref instancedArr, Display, false);
 
+                        foreach (Texture texture in textureReferences.Keys) 
+                        {
+                            texture.Use(textureReferences[texture]);
+                        }
 
                         GL.Disable(EnableCap.ScissorTest);
 
                         scissorCallList.Clear();
+
                     }
                     else if (objects[i].ScissorData._scissorFlag)
                     {
@@ -310,6 +332,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                                     if (!usedTextures.ContainsKey(tex))
                                     {
                                         usedTextures.Add(tex, currentTextureUnit);
+                                        textureReferences.Add(obj._currentAnimation.CurrentFrame.TextureReference, currentTextureUnit);
 
                                         obj._currentAnimation.CurrentFrame.TextureReference.Use(currentTextureUnit);
 
@@ -333,12 +356,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 }
             }
 
-
-            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderDataArray, BufferUsageHint.StreamDraw);
-
-
-            GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, count);
-            //GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            draw(count, _instancedRenderDataArray);
 
             if (instantiateRenderFunc)
                 DisableInstancedShaderAttributes();
@@ -348,13 +366,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, Display);
             }
-
-            if (baseObjectCallList.Count > 0) 
-            {
-                //RenderBaseObjectsInstanced(baseObjectCallList, multiTextureList);
-            }
-
-            DrawCount++;
         }
 
 
@@ -896,8 +907,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             if (uiObjects.Count > 0)
             {
-                //uiObjects.ForEach(obj =>
-                //{
                 for (int i = 0; i < uiObjects.Count; i++)
                 { 
                     if (uiObjects[i].Render)
@@ -927,7 +936,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                         QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
                     }
-                //});
                 }
 
 

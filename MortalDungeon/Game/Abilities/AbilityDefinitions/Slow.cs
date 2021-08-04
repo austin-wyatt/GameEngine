@@ -10,19 +10,26 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Strike : Ability
+    public class Slow : Ability
     {
-        public Strike(Unit castingUnit, int range = 1, float damage = 10)
+        float _slowMultiplier;
+        int _slowDuration;
+
+        public Slow(Unit castingUnit, int range = 1, float slowAmount = 0.25f, int duration = 3)
         {
-            Type = AbilityTypes.MeleeAttack;
+            Type = AbilityTypes.Debuff;
             Range = range;
             CastingUnit = castingUnit;
-            Damage = damage;
-            EnergyCost = 5;
+            EnergyCost = 1;
 
-            Name = "Strike";
+            _slowDuration = duration;
+            _slowMultiplier = 1 + slowAmount;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
+            Name = "Slow";
+
+            CanTargetGround = false;
+
+            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
@@ -38,8 +45,8 @@ namespace MortalDungeon.Game.Abilities
         {
             if (!base.OnUnitClicked(unit))
                 return false;
-            
-            if (unit.Team != CastingUnit.Team && AffectedTiles.FindIndex(t => t.TileIndex == unit.TileMapPosition) != -1) 
+
+            if (AffectedTiles.FindIndex(t => t.TileIndex == unit.TileMapPosition) != -1)
             {
                 SelectedUnit = unit;
                 EnactEffect();
@@ -54,7 +61,7 @@ namespace MortalDungeon.Game.Abilities
 
             float energyCost = GetEnergyCost();
 
-             //special cases for energy reduction go here
+            //special cases for energy reduction go here
 
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
 
@@ -67,7 +74,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(GetDamage(), DamageType);
+            SlowDebuff slowDebuff = new SlowDebuff(SelectedUnit, _slowDuration, _slowMultiplier);
 
             OnCast();
         }

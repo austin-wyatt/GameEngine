@@ -1,5 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -27,7 +29,15 @@ namespace MortalDungeon.Game.Units
 
             VisionRadius = 6;
 
-            Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
+            Buff shieldBlock = new Buff(this);
+            shieldBlock.ShieldBlock.Additive = 10;
+            shieldBlock.IndefiniteDuration = true;
+            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
+
+            shieldBlock.DamageResistances[DamageType.Slashing] = -1;
+
+
+            Strike melee = new Strike(this, 1, 45);
             Abilities.Add(melee.AbilityID, melee);
         }
 

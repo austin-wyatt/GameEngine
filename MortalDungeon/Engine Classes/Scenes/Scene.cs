@@ -21,6 +21,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
         All = 7
     }
 
+    public enum EventAction 
+    {
+        OneKeyDown,
+        TwoKeyDown,
+        ThreeKeyDown,
+        FourKeyDown,
+        FiveKeyDown,
+        SixKeyDown,
+        SevenKeyDown,
+        EightKeyDown,
+    }
+
     public class Scene
     {
         public List<GameObject> _genericObjects = new List<GameObject>(); //GameObjects that are not Units and are being rendered independently
@@ -47,7 +59,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected int _interceptKeystrokes = 0b0;
         #endregion
 
-        
+
+        public Dictionary<EventAction, Action> EventActions = new Dictionary<EventAction, Action>();
 
 
         public Camera _camera;
@@ -63,7 +76,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         private Stopwatch _mouseTimer = new Stopwatch();
         protected Stopwatch _hoverTimer = new Stopwatch();
         protected GameObject _hoveredObject;
-        protected void InitializeFields()
+        protected virtual void InitializeFields()
         {
             _genericObjects = new List<GameObject>();
             _text = new List<Text>();
@@ -108,6 +121,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
 
             SortUIByZIndex();
+        }
+
+        public void RemoveUI(UIObject ui) 
+        {
+            _UI.Remove(ui);
         }
 
         public void SortUIByZIndex() 
@@ -372,6 +390,37 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     obj.OnKeyDown(e);
                 });
+
+                if (!e.IsRepeat)
+                {
+                    switch (e.Key)
+                    {
+                        case Keys.D1:
+                            GetEventAction(EventAction.OneKeyDown)?.Invoke();
+                            break;
+                        case Keys.D2:
+                            GetEventAction(EventAction.TwoKeyDown)?.Invoke();
+                            break;
+                        case Keys.D3:
+                            GetEventAction(EventAction.ThreeKeyDown)?.Invoke();
+                            break;
+                        case Keys.D4:
+                            GetEventAction(EventAction.FourKeyDown)?.Invoke();
+                            break;
+                        case Keys.D5:
+                            GetEventAction(EventAction.FiveKeyDown)?.Invoke();
+                            break;
+                        case Keys.D6:
+                            GetEventAction(EventAction.SixKeyDown)?.Invoke();
+                            break;
+                        case Keys.D7:
+                            GetEventAction(EventAction.SevenKeyDown)?.Invoke();
+                            break;
+                        case Keys.D8:
+                            GetEventAction(EventAction.EightKeyDown)?.Invoke();
+                            break;
+                    }
+                }
             }
 
             return !interceptKeystrokes;
@@ -498,6 +547,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected bool GetBit(int b, ObjectType bitNumber)
         {
             return (b & (1 << (int)bitNumber)) != 0;
+        }
+
+        protected Action GetEventAction(EventAction action) 
+        {
+            EventActions.TryGetValue(action, out Action val);
+
+            return val;
         }
         #endregion
 

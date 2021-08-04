@@ -29,7 +29,7 @@ namespace MortalDungeon.Game.UI
 
             Vector3 screenSpace = WindowConstants.ConvertLocalToScreenSpaceCoordinates(unitPos.Xy);
 
-            UIScale scale = new UIScale(0.55f, 0.1f);
+            UIScale scale = new UIScale(0.3f, 0.1f);
 
             BaseComponent = new UIBlock(screenSpace, scale);
 
@@ -107,33 +107,33 @@ namespace MortalDungeon.Game.UI
 
                 if (_camera.Position.Z < 4 && _camera.Position.Z > 2)
                 {
-                    zoomScale = new UIScale(0.5f, 0.085f);
+                    //zoomScale = new UIScale(0.5f, 0.085f);
+                    zoomScale = new UIScale(0.3f, 0.06f);
 
-                    unitPos.Y += 0.3f;
+                    unitPos.Y += 0.25f;
                     SetSize(zoomScale);
-                    _mainTextBox.TextField.SetTextScale(0.05f);
+                    _mainTextBox.TextField.SetTextScale(0.03f);
                     UpdateInfoBarScales(zoomScale);
                 }
                 else if (_camera.Position.Z >= 4 && _camera.Position.Z < 8)
                 {
-                    zoomScale = new UIScale(0.4f, 0.075f);
-                    unitPos.Y += 0.20f;
+                    zoomScale = new UIScale(0.18f, 0.045f);
+                    unitPos.Y += 0.17f;
 
                     SetSize(zoomScale);
-                    _mainTextBox.TextField.SetTextScale(0.04f);
+                    _mainTextBox.TextField.SetTextScale(0.018f);
                     UpdateInfoBarScales(zoomScale);
                 }
                 else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
                 {
-                    zoomScale = new UIScale(0.3f, 0.06f);
-                    unitPos.Y += 0.15f;
+                    zoomScale = new UIScale(0.15f, 0.040f);
+                    unitPos.Y += 0.12f;
 
                     SetSize(zoomScale);
-                    _mainTextBox.TextField.SetTextScale(0.03f);
+                    _mainTextBox.TextField.SetTextScale(0.015f);
                 }
                 else if (_camera.Position.Z >= 10)
                 {
-                    //unitPos.Y += 0.15f;
                     SetRender(false);
                 }
 

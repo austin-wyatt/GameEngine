@@ -16,6 +16,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BleedingDagger,
             WalkingBoot,
             QuestionMark,
+            SpiderWeb
         }
 
         public enum BackgroundType 

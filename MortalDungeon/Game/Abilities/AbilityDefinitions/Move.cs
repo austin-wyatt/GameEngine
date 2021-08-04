@@ -172,23 +172,6 @@ namespace MortalDungeon.Game.Abilities
             base.OnCast();
         }
 
-        public override void OnSelect(CombatScene scene, TileMap currentMap)
-        {
-            base.OnSelect(scene, currentMap);
-
-            AffectedTiles = GetValidTileTargets(currentMap, scene._units);
-
-            Range = (int)(Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost()); //special case for general move ability
-
-            //currentMap.SelectTiles(AffectedTiles);
-
-            AffectedTiles.ForEach(tile =>
-            {
-                if (tile.Explored[CastingUnit.Team] || !(tile.InFog))
-                    currentMap.SelectTile(tile);
-            });
-        }
-
         public override void OnTileClicked(TileMap map, BaseTile tile)
         {
             if (AffectedTiles.Exists(t => t.TileIndex == tile.TileIndex))
@@ -198,14 +181,6 @@ namespace MortalDungeon.Game.Abilities
                 Scene._selectedAbility = null;
 
                 map.DeselectTiles();
-            }
-        }
-
-        public override void OnUnitClicked(Unit unit)
-        {
-            if (CastingUnit.ObjectID == unit.ObjectID)
-            {
-                Scene.DeselectAbility();
             }
         }
 
@@ -370,6 +345,16 @@ namespace MortalDungeon.Game.Abilities
             base.OnAbilityDeselect();
 
             ClearSelectedTiles();
+        }
+
+        public override float GetEnergyCost()
+        {
+            if (CastingUnit != null)
+            {
+                return CastingUnit.EnergyCostMultiplier * CastingUnit.SpeedMultiplier * EnergyCost + CastingUnit.EnergyAddition + CastingUnit.SpeedAddition;
+            }
+
+            return EnergyCost;
         }
     }
 

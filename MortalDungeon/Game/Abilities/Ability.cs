@@ -8,6 +8,7 @@ using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MortalDungeon.Game.Abilities
@@ -95,15 +96,15 @@ namespace MortalDungeon.Game.Abilities
         {
             Icon icon = new Icon(Icon, scale, withBackground, backgroundType);
 
-            if (showEnergyCost || true) 
+            if (showEnergyCost) 
             {
                 UIScale textBoxSize = icon.Size;
                 textBoxSize *= 0.333f;
 
-                string energyString = GetEnergyCost().ToString("g1");
+                string energyString = GetEnergyCost().ToString("n1").Replace(".0", "");
                 float textScale = 0.05f;
 
-                TextBox energyCostBox = new TextBox(new Vector3(), textBoxSize, energyString, textScale, true, new UIDimensions(10, 0));
+                TextBox energyCostBox = new TextBox(new Vector3(), textBoxSize, energyString, textScale, true, new UIDimensions(7.5f, 0));
                 energyCostBox.BaseComponent.MultiTextureData.MixTexture = false;
                 energyCostBox.SetColor(Colors.UILightGray);
                 energyCostBox.SetTextColor(Colors.UITextBlack);
@@ -114,7 +115,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (textDimensions.X > textBoxSize.X) 
                 {
-                    energyCostBox.TextField.SetTextScale((textScale - 0.001f) * textBoxSize.X / textDimensions.X);
+                    energyCostBox.TextField.SetTextScale((textScale - 0.003f) * textBoxSize.X / textDimensions.X);
                 }
 
                 energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
@@ -122,11 +123,10 @@ namespace MortalDungeon.Game.Abilities
                 icon.AddChild(energyCostBox);
             }
 
-
             return icon;
         }
 
-        public float GetEnergyCost()
+        public virtual float GetEnergyCost()
         {
             if (CastingUnit != null)
             {
@@ -157,11 +157,38 @@ namespace MortalDungeon.Game.Abilities
         {
             TileMap = currentMap;
             Scene = scene;
+
+            if (Scene.EnergyDisplayBar.CurrentEnergy >= GetEnergyCost())
+            {
+                AffectedTiles = GetValidTileTargets(currentMap, scene._units);
+
+                TrimTiles(AffectedTiles, Units);
+
+                AffectedTiles.ForEach(tile =>
+                {
+                    currentMap.SelectTile(tile);
+                });
+
+                Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
+            }
+            else
+            {
+                Scene.DeselectAbility();
+            }
         }
 
         public virtual void OnTileClicked(TileMap map, BaseTile tile) { }
 
-        public virtual void OnUnitClicked(Unit unit) { }
+        public virtual bool OnUnitClicked(Unit unit)
+        {
+            if (CastingUnit.ObjectID == unit.ObjectID && !CanTargetSelf)
+            {
+                Scene.DeselectAbility();
+                return false;
+            }
+
+            return true;
+        }
 
         public virtual void OnHover() { }
         public virtual void OnHover(BaseTile tile, TileMap map) { }

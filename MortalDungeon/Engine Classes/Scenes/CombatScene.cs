@@ -14,6 +14,10 @@ using System.Linq;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
+    enum GeneralContextFlags
+    {
+        TooltipOpen
+    }
     public class CombatScene : Scene
     {
         public int Round = 0;
@@ -21,6 +25,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public int UnitTakingTurn = 0; //the unit in the initiative order that is going
         public EnergyDisplayBar EnergyDisplayBar;
         public GameFooter Footer;
+        
 
         public Ability _selectedAbility = null;
         public List<Unit> _selectedUnits = new List<Unit>();
@@ -31,9 +36,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool DisplayUnitStatuses = true;
 
+        ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
+
         protected const AbilityTypes DefaultAbilityType = AbilityTypes.Move;
 
         Texture _normalFogTexture;
+        public UIBlock _tooltipBlock;
 
         public CombatScene() 
         {
@@ -42,6 +50,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
             fogTex.Use(TextureUnit.Texture1);
 
             _normalFogTexture = fogTex;
+        }
+
+        protected override void InitializeFields()
+        {
+            base.InitializeFields();
+
+            _tooltipBlock = new UIBlock(new Vector3());
+            _tooltipBlock.MultiTextureData.MixTexture = false;
+            _tooltipBlock.SetColor(Colors.Transparent);
+            _tooltipBlock.SetAllInline(0);
+
+            AddUI(_tooltipBlock, 999999999);
         }
 
         /// <summary>
@@ -63,6 +83,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList();
 
             AdvanceRound();
+
+            _units.ForEach(unit =>
+            {
+                for (int i = 0; i < unit.Buffs.Count; i++)
+                {
+                    unit.Buffs[i].OnRoundEnd();
+                }
+            });
         }
 
         /// <summary>
@@ -77,6 +105,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
             EnergyDisplayBar.SetActiveEnergy(InitiativeOrder[UnitTakingTurn].MaxEnergy);
 
             //do calculations here (advance an event, show a cutscene, etc)
+
+            _units.ForEach(unit =>
+            {
+                for (int i = 0; i < unit.Buffs.Count; i++)
+                {
+                    unit.Buffs[i].OnRoundStart();
+                }
+            });
 
             StartTurn();
         }
@@ -96,6 +132,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             CurrentUnit.OnTurnStart();
 
+
+            for (int i = 0; i < CurrentUnit.Buffs.Count; i++)
+            {
+                CurrentUnit.Buffs[i].OnTurnStart();
+            }
             //change the UI, move the camera, show which unit is selected, etc
         }
 
@@ -119,10 +160,21 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
 
             StartTurn(); //Advance to the next unit's turn
+
+
+            for (int i = 0; i < CurrentUnit.Buffs.Count; i++)
+            {
+                CurrentUnit.Buffs[i].OnTurnEnd();
+            }
         }
 
         public virtual void SelectAbility(Ability ability)
         {
+            if(_selectedAbility != null) 
+            {
+                DeselectAbility();
+            }
+
             _selectedAbility = ability;
             ability.OnSelect(this, _tileMaps[0]);
 
@@ -365,10 +417,51 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void onAbilityCast(Ability ability) 
         {
             _onAbilityCastActions.ForEach(a => a?.Invoke(ability));
+
+            Footer.UpdateFooterInfo(Footer._currentUnit);
         }
 
         public List<Action<Ability>> _onSelectAbilityActions = new List<Action<Ability>>();
         public List<Action> _onDeselectAbilityActions = new List<Action>();
         public List<Action<Ability>> _onAbilityCastActions = new List<Action<Ability>>();
+
+
+
+        public void CreateToolTip(string text, UIObject tooltipParent, UIObject baseObject)
+        {
+            if (ContextManager.GetFlag(GeneralContextFlags.TooltipOpen))
+                return;
+
+            ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, true);
+
+            TextBox tooltip = new TextBox(new Vector3(), new UIScale(), text, 0.05f, true);
+            tooltip.SetColor(Colors.UILightGray);
+            tooltip.SetTextColor(Colors.UITextBlack);
+            tooltip.BaseComponent.MultiTextureData.MixTexture = false;
+
+            tooltip.Hoverable = true;
+
+            UIDimensions textOffset = new UIDimensions(tooltip.TextOffset);
+            textOffset.Y = 0;
+
+            UIScale textScale = tooltip.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 2;
+            textScale.Y *= -1;
+            tooltip.SetSize(textScale);
+
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
+
+            Console.WriteLine(_cursorObject.Position);
+
+            baseObject.AddChild(tooltip, 100000);
+
+            void temp()
+            {
+                baseObject.RemoveChild(tooltip.ObjectID);
+                tooltipParent._onHoverEndActions.Remove(temp);
+                ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, false);
+            }
+
+            tooltipParent._onHoverEndActions.Add(temp);
+        }
     }
 }

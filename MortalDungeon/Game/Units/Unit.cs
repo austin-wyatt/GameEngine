@@ -7,6 +7,7 @@ using MortalDungeon.Game.UI;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MortalDungeon.Game.Units
 {
@@ -22,24 +23,31 @@ namespace MortalDungeon.Game.Units
     {
         public int TileMapPosition = -1; //can be anything from -1 to infinity. If the value is below 0 then it is not being positioned on the tilemap
         public Dictionary<int, Ability> Abilities = new Dictionary<int, Ability>();
+        public List<Buff> Buffs = new List<Buff>();
 
         public float MaxEnergy = 10;
         public float CurrentEnergy = 10;
 
-        public float EnergyCostMultiplier = 1;
-        public float EnergyAddition = 0;
-        public float DamageMultiplier = 1;
-        public float DamageAddition = 0;
-        public float DamageReduction = 0;
+        public float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
+        public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
+        public float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
+        public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
+        public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.Speed.Multiplier * seed);
+        public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.Speed.Additive + seed);
+
 
         public float Health = 100;
         public const float MaxHealth = 100;
 
         public int CurrentShields = 0;
-        public float ShieldBlock = 10;
+
+        public float ShieldBlockMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.ShieldBlock.Multiplier * seed);
+
+        public float ShieldBlock => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ShieldBlock.Additive + seed) * ShieldBlockMultiplier;
+
         public float DamageBlockedByShields = 0;
 
-        public Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
+        public Dictionary<DamageType, float> BaseDamageResistances = new Dictionary<DamageType, float>();
 
         public UnitTeam Team = UnitTeam.Ally;
 
@@ -71,11 +79,6 @@ namespace MortalDungeon.Game.Units
             Abilities.Add(movement.AbilityID, movement);
 
             _movementAbility = movement;
-
-            foreach (DamageType damageType in Enum.GetValues(typeof(DamageType)))
-            {
-                DamageResistances.Add(damageType, 0);
-            }
         }
         public Unit(Vector3 position, int tileMapPosition = 0, string name = "Unit")
         {
@@ -126,6 +129,19 @@ namespace MortalDungeon.Game.Units
             }
         }
 
+        public virtual float GetBuffResistanceModifier(DamageType damageType) 
+        {
+            float modifier = 0;
+
+            for (int i = 0; i < Buffs.Count; i++) 
+            {
+                Buffs[i].DamageResistances.TryGetValue(damageType, out float val);
+                modifier += val;
+            }
+
+            return modifier;
+        }
+
         public void OnTurnStart() 
         {
             if (StatusBarComp != null) 
@@ -150,9 +166,11 @@ namespace MortalDungeon.Game.Units
 
         public virtual void ApplyDamage(float damage, DamageType damageType)
         {
-            float damageMultiplier = Math.Abs(DamageResistances[damageType] - 1);
+            BaseDamageResistances.TryGetValue(damageType, out float baseResistance);
 
-            float actualDamage = damage * damageMultiplier - DamageReduction;
+            float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(damageType)) - 1);
+
+            float actualDamage = damage * damageMultiplier + DamageAddition;
 
             float shieldDamageBlocked;
 
@@ -239,8 +257,6 @@ namespace MortalDungeon.Game.Units
         public override void OnTimedHover()
         {
             base.OnTimedHover();
-
-            //Scene.Footer.UpdateFooterInfo(this);
         }
 
         public void Select() 

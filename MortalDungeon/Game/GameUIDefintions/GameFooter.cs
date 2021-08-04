@@ -22,7 +22,9 @@ namespace MortalDungeon.Game.UI
         private HealthBar _unitHealthBar;
         private UIBlock _containingBlock;
         private ShieldBar _unitShieldBar;
-        private Unit _currentUnit;
+        public Unit _currentUnit;
+
+        private ScrollableArea _scrollableArea;
 
         public ContextManager<GameFooterContextFlags> ContextManager = new ContextManager<GameFooterContextFlags>();
 
@@ -124,6 +126,8 @@ namespace MortalDungeon.Game.UI
             //_containingBlock.SetColor(Colors.UISelectedGray);
             _containingBlock.SetColor(new Vector4(0.447f, 0.51f, 0.639f, 0.75f));
             _containingBlock.SetSize(containingBlockDimensions);
+            _containingBlock.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.LeftCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
+
             AddChild(_containingBlock, 1);
 
             #region name box
@@ -148,7 +152,7 @@ namespace MortalDungeon.Game.UI
 
             void healthBarHover() 
             {
-                CreateToolTip(_currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar);
+                Scene.CreateToolTip(_currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
             }
 
             _unitHealthBar._onTimedHoverActions.Add(healthBarHover);
@@ -161,11 +165,11 @@ namespace MortalDungeon.Game.UI
             {
                 if (_currentUnit.CurrentShields >= 0)
                 {
-                    CreateToolTip(_currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack", _unitShieldBar);
+                    Scene.CreateToolTip(_currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack", _unitShieldBar, Scene._tooltipBlock);
                 }
                 else 
                 {
-                    CreateToolTip("Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage", _unitShieldBar);
+                    Scene.CreateToolTip("Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage", _unitShieldBar, Scene._tooltipBlock);
                 }
             }
 
@@ -174,7 +178,25 @@ namespace MortalDungeon.Game.UI
             _containingBlock.AddChild(_unitShieldBar, 100);
             #endregion
 
+            UIScale scrollableAreaSize = new UIScale(containingBlockDimensions);
+            scrollableAreaSize.X /= 1.8f;
+            scrollableAreaSize.Y -= .02f;
 
+            //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
+            _scrollableArea = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
+
+            float scrollbarWidth = 0;
+            if (_scrollableArea.Scrollbar != null) 
+            {
+                scrollbarWidth = _scrollableArea.Scrollbar.GetDimensions().X;
+            }
+
+            _scrollableArea.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3( -3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopRight);
+            _scrollableArea.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
+
+            _scrollableArea.BaseComponent.SetColor(new Vector4(0, 0, 0, 0));
+
+            AddChild(_scrollableArea, 1000);
 
 
             UpdateFooterInfo(Scene.CurrentUnit);
@@ -207,13 +229,14 @@ namespace MortalDungeon.Game.UI
             _currentIcons.ForEach(i => RemoveChild(i.ObjectID));
             _currentIcons.Clear();
             UIScale iconSize = new UIScale(0.25f, 0.25f);
+            int count = 0;
             foreach (Ability ability in Scene.CurrentUnit.Abilities.Values) 
             {
-                Icon abilityIcon = ability.GenerateIcon(iconSize, true, Scene.CurrentUnit.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground);
+                Icon abilityIcon = ability.GenerateIcon(iconSize, true, Scene.CurrentUnit.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
 
                 if (_currentIcons.Count == 0)
                 {
-                    abilityIcon.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.LeftCenter) + new Vector3(20, 0, 0), UIAnchorPosition.LeftCenter);
+                    abilityIcon.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(20, 0, 0), UIAnchorPosition.LeftCenter);
                 }
                 else 
                 {
@@ -235,7 +258,6 @@ namespace MortalDungeon.Game.UI
                 }
 
                 checkAbilityClickable();
-
 
                 abilityIcon.OnClickAction = () =>
                 {
@@ -287,8 +309,13 @@ namespace MortalDungeon.Game.UI
                 Scene._onDeselectAbilityActions.Add(onAbilityDeselected);
                 Scene._onAbilityCastActions.Add(onAbilityCast);
 
+                Scene.EventActions[(EventAction)count] = () => {
+                    Scene.SelectAbility(ability);
+                };
+
                 abilityIcon._onHoverActions.Add(onHover);
                 abilityIcon._onHoverEndActions.Add(hoverEnd);
+
 
                 abilityIcon._cleanUpAction = () =>
                 {
@@ -299,45 +326,61 @@ namespace MortalDungeon.Game.UI
 
                 _currentIcons.Add(abilityIcon);
                 AddChild(abilityIcon, 100);
+
+                count++;
             }
             #endregion
-        }
 
-        public void CreateToolTip(string text, UIObject parent) 
-        {
-            if (ContextManager.GetFlag(GameFooterContextFlags.TooltipOpen))
-                return;
 
-            ContextManager.SetFlag(GameFooterContextFlags.TooltipOpen, true);
+            #region buff icons
+            _scrollableArea.BaseComponent.ClearChildren();
 
-            TextBox tooltip = new TextBox(new Vector3(), new UIScale(), text, 0.05f, true);
-            tooltip.SetColor(Colors.UILightGray);
-            tooltip.SetTextColor(Colors.UITextBlack);
-            tooltip.BaseComponent.MultiTextureData.MixTexture = false;
+            UIScale buffSize = new UIScale(0.09f, 0.09f);
 
-            tooltip.Hoverable = true;
-
-            UIDimensions textOffset = new UIDimensions(tooltip.TextOffset);
-            textOffset.Y = 0;
-
-            UIScale textScale = tooltip.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 2;
-            textScale.Y *= -1;
-            tooltip.SetSize(textScale);
-
-            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(Scene._cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
-
-            Console.WriteLine(Scene._cursorObject.Position);
-
-            AddChild(tooltip, 10000);
-
-            void temp()
+            List<Icon> icons = new List<Icon>();
+            count = 0;
+            int delimiter = -1;
+            _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea.Size.X, _scrollableArea.Size.Y));
+            foreach (Buff buff in unit.Buffs) 
             {
-                RemoveChild(tooltip.ObjectID);
-                parent._onHoverEndActions.Remove(temp);
-                ContextManager.SetFlag(GameFooterContextFlags.TooltipOpen, false);
+                Icon icon = buff.GenerateIcon(buffSize);
+                icons.Add(icon);
+
+                if (count == 0)
+                {
+                    icon.SetPositionFromAnchor(_scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+                }
+                else 
+                {
+                    icon.SetPositionFromAnchor(icons[count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
+                }
+
+                Console.WriteLine(icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X);
+                Console.WriteLine(_scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X);
+
+                if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X) 
+                {
+                    if (delimiter == -1) 
+                    {
+                        delimiter = count;
+                    }
+                    icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+
+                    if (icon.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y > _scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y) 
+                    {
+                        _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea._baseAreaSize.X, _scrollableArea._baseAreaSize.Y + icon.GetDimensions().ToScale().Y * 3));
+
+                        icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+                    }
+
+                    //_scrollableArea.BaseComponent.SetSize(_scrollableArea._baseAreaSize);
+                }
+
+                _scrollableArea.BaseComponent.AddChild(icon, 1000);
+                count++;
             }
 
-            parent._onHoverEndActions.Add(temp);
+            #endregion
         }
     }
 }

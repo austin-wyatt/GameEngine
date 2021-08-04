@@ -1,5 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -28,7 +30,15 @@ namespace MortalDungeon.Game.Units
             VisionRadius = 6;
 
             CurrentShields = 5;
-            ShieldBlock = 3;
+
+            Buff shieldBlock = new Buff(this);
+            shieldBlock.ShieldBlock.Additive = 3;
+            shieldBlock.IndefiniteDuration = true;
+            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
+
+            Slow slowAbility = new Slow(this, 5, 0.1f, 3);
+            Abilities.Add(slowAbility.AbilityID, slowAbility);
+
 
             //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
             //Abilities.Add(melee.AbilityID, melee);

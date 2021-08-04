@@ -462,6 +462,15 @@ namespace MortalDungeon.Engine_Classes
                 Children[i].Parent = null;
                 Children.RemoveAt(i);
             }
+
+            if (Parent == null)
+            {
+                GenerateReverseTree();
+            }
+            else
+            {
+                ForceTreeRegeneration();
+            }
         }
 
         public void RemoveChild(int objectID) 
@@ -476,6 +485,10 @@ namespace MortalDungeon.Engine_Classes
                 if (Parent == null)
                 {
                     GenerateReverseTree();
+                }
+                else 
+                {
+                    ForceTreeRegeneration();
                 }
             }
         }
@@ -644,9 +657,14 @@ namespace MortalDungeon.Engine_Classes
             return -ZIndex.CompareTo(other.ZIndex);
         }
 
-        protected void LoadTexture(UIObject obj)
+        public void LoadTexture(UIObject obj)
         {
             Renderer.LoadTextureFromUIObject(obj);
+        }
+
+        public void LoadTexture()
+        {
+            Renderer.LoadTextureFromUIObject(this);
         }
         protected static void ValidateObject(UIObject obj) 
         {

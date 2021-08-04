@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Engine_Classes.Scenes;
 
 namespace MortalDungeon.Game.UI
 {
@@ -27,14 +28,17 @@ namespace MortalDungeon.Game.UI
         public float EnergyHovered = 0;
         public List<EnergyPip> Pips = new List<EnergyPip>(MaxEnergy);
 
+        CombatScene Scene;
+
         //todo, add a onHover tooltip to display exact energy amount
 
-        public EnergyDisplayBar(Vector3 position, UIScale size, int maxEnergy = 10)
+        public EnergyDisplayBar(CombatScene scene, Vector3 position, UIScale size, int maxEnergy = 10)
         {
             Position = position;
             Size = size;
             Name = "EnergyDisplayBar";
             CameraPerspective = false;
+            Scene = scene;
 
             CurrentEnergy = maxEnergy;
             CurrentMaxEnergy = maxEnergy;
@@ -54,6 +58,9 @@ namespace MortalDungeon.Game.UI
                 EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new UIScale(0.12f, 0.12f)) { Clickable = true };
                 pipWidth = energyPip.GetDimensions().X;
                 energyPip.HoverAnimation.SetDefaultValues();
+
+                energyPip.HasTimedHoverEffect = true;
+                energyPip._onTimedHoverActions.Add(() => Scene.CreateToolTip(CurrentEnergy.ToString("n1") + " Energy", energyPip, this));
 
                 Pips.Add(energyPip);
 

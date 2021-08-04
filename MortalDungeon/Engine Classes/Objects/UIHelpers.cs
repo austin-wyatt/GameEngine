@@ -149,6 +149,11 @@ namespace MortalDungeon.Engine_Classes
             _scale = scale;
         }
 
+        public UIScale(UIScale scale)
+        {
+            _scale = new Vector2(scale.X, scale.Y);
+        }
+
         public UIScale(float x, float y)
         {
             _scale = new Vector2(x, y);
@@ -157,6 +162,11 @@ namespace MortalDungeon.Engine_Classes
         public UIDimensions ToDimensions()
         {
             return new UIDimensions(_scale.X * WindowConstants.ScreenUnits.X, _scale.Y * WindowConstants.ScreenUnits.Y);
+        }
+
+        public static float CoordToScale(float coord)
+        {
+            return coord / WindowConstants.ScreenUnits.X;
         }
 
         public override string ToString()

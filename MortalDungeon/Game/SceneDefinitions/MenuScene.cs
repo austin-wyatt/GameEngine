@@ -63,7 +63,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
 
             MountainTwo mountainBackground = new MountainTwo(new Vector3(30000, 0, -50));
-            //mountainBackground.BaseObjects[0].Display.RotateX(-15);
             mountainBackground.BaseObjects[0].GetDisplay().ScaleAll(10);
             _genericObjects.Add(mountainBackground);
 
@@ -76,21 +75,8 @@ namespace MortalDungeon.Game.SceneDefinitions
             AddUI(Footer, 100);
 
 
-            //Button advanceTurnButton = new Button(Footer.Position + new Vector3(Footer.GetDimensions().X / 4, 0, 0), new UIScale(0.9f, 0.15f), "Advance round", 0.075f);
-            ////TextBox turnCounter = new TextBox(advanceTurnButton.Position + new Vector3(advanceTurnButton.GetDimensions().X / 1.3f, 0, 0), new UIScale(0.3f, 0.15f), "0", 0.075f, true);
 
-            //advanceTurnButton.OnClickAction = () =>
-            //{
-            //    CompleteTurn();
-            //};
-
-            //Footer.AddChild(advanceTurnButton, 100);
-            //footer.AddChild(turnCounter, 100);
-
-
-
-            EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(new Vector3(30, WindowConstants.ScreenUnits.Y - Footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
-            //energyDisplayBar.SetPositionFromAnchor(Footer.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, -10, 0), UIAnchorPosition.BottomLeft);
+            EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(this, new Vector3(30, WindowConstants.ScreenUnits.Y - Footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
 
             EnergyDisplayBar = energyDisplayBar;
 
