@@ -1,5 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -7,9 +9,9 @@ using System.Text;
 
 namespace MortalDungeon.Game.GameObjects
 {
-    public class Fire : GameObject 
+    public class Fire : GameObject
     {
-        public Fire(Vector3 position) 
+        public Fire(Vector3 position)
         {
             Name = "Fire";
 
@@ -79,4 +81,5 @@ namespace MortalDungeon.Game.GameObjects
             SetPosition(position);
         }
     }
+    
 }

@@ -102,8 +102,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList(); //sort the list by speed
 
-            EnergyDisplayBar.SetActiveEnergy(InitiativeOrder[UnitTakingTurn].MaxEnergy);
-
             //do calculations here (advance an event, show a cutscene, etc)
 
             _units.ForEach(unit =>
@@ -124,7 +122,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
 
-            EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
+            //EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
+
+            //max energy displayed is the larger between current energy with buffs and default max energy.
+            //If buffs are reducing energy the max will still be the default max for the unit.
+            float maxEnergy = CurrentUnit.MaxEnergy > CurrentUnit.CurrentEnergy ? CurrentUnit.MaxEnergy : CurrentUnit.CurrentEnergy;
+            EnergyDisplayBar.SetMaxEnergy(maxEnergy);
+            EnergyDisplayBar.SetActiveEnergy(CurrentUnit.CurrentEnergy);
+
             Footer.UpdateFooterInfo(CurrentUnit);
 
             FillInTeamFog(CurrentUnit.Team);

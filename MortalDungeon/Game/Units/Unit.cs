@@ -26,7 +26,7 @@ namespace MortalDungeon.Game.Units
         public List<Buff> Buffs = new List<Buff>();
 
         public float MaxEnergy = 10;
-        public float CurrentEnergy = 10;
+        public float CurrentEnergy => MaxEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyBoost.Additive + seed);
 
         public float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
         public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
@@ -34,6 +34,7 @@ namespace MortalDungeon.Game.Units
         public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
         public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.Speed.Multiplier * seed);
         public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.Speed.Additive + seed);
+
 
 
         public float Health = 100;
@@ -68,7 +69,13 @@ namespace MortalDungeon.Game.Units
 
         public bool Selectable = false;
 
+        public bool Selected = false;
+        public bool Targeted = false;
+
         public Ability _movementAbility = null;
+        public UnitSelectionTile SelectionTile;
+
+
         public Unit(CombatScene scene) 
         {
             Scene = scene;
@@ -79,6 +86,9 @@ namespace MortalDungeon.Game.Units
             Abilities.Add(movement.AbilityID, movement);
 
             _movementAbility = movement;
+
+            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+            Scene._genericObjects.Add(SelectionTile);
         }
         public Unit(Vector3 position, int tileMapPosition = 0, string name = "Unit")
         {
@@ -117,6 +127,11 @@ namespace MortalDungeon.Game.Units
             {
                 StatusBarComp.UpdateUnitStatusPosition();
             }
+
+            if (SelectionTile != null) 
+            {
+                SelectionTile.SetPosition(position);
+            }
         }
 
         public override void SetRender(bool render)
@@ -126,6 +141,19 @@ namespace MortalDungeon.Game.Units
             if (StatusBarComp != null) 
             {
                 StatusBarComp.SetWillDisplay(render && !Dead && Scene.DisplayUnitStatuses);
+            }
+
+            if (Targeted && render)
+            {
+                SelectionTile.Target();
+            }
+            else if (Selected && render)
+            {
+                SelectionTile.Select();
+            }
+            else 
+            {
+                SelectionTile.SetRender(false);
             }
         }
 
@@ -155,6 +183,24 @@ namespace MortalDungeon.Game.Units
             if (StatusBarComp != null) 
             {
                 StatusBarComp.SetIsTurn(false);
+            }
+        }
+
+        public virtual void SetTeam(UnitTeam team) 
+        {
+            Team = team;
+
+            switch (team) 
+            {
+                case UnitTeam.Ally:
+                    SelectionTile.SetColor(new Vector4(0, 0.75f, 0, 1));
+                    break;
+                case UnitTeam.Enemy:
+                    SelectionTile.SetColor(new Vector4(0.75f, 0, 0, 1));
+                    break;
+                case UnitTeam.Neutral:
+                    SelectionTile.SetColor(Colors.Tan);
+                    break;
             }
         }
 
@@ -239,6 +285,15 @@ namespace MortalDungeon.Game.Units
             }
         }
 
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            //remove the objects that are related to the unit but not created by the unit
+            Scene._genericObjects.Remove(SelectionTile);
+            Scene.RemoveUI(StatusBarComp);
+        }
+
         public override void HoverEnd()
         {
             if (Hovered)
@@ -262,11 +317,27 @@ namespace MortalDungeon.Game.Units
         public void Select() 
         {
             Scene.Footer.UpdateFooterInfo(this);
+            SelectionTile.Select();
+            Selected = true;
         }
 
         public void Deselect()
         {
             Scene.Footer.UpdateFooterInfo(Scene.CurrentUnit);
+            SelectionTile.Deselect();
+            Selected = false;
+        }
+
+        public void Target() 
+        {
+            SelectionTile.Target();
+            Targeted = true;
+        }
+
+        public void Untarget() 
+        {
+            SelectionTile.Untarget();
+            Targeted = false;
         }
     }
 }

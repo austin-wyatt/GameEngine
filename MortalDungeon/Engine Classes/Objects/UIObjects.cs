@@ -649,6 +649,8 @@ namespace MortalDungeon.Engine_Classes
             ScissorBounds.UpdateBoundingArea(botLeft.X, topRight.X, botLeft.Y, topRight.Y);
         }
 
+        
+
         public int CompareTo([AllowNull] UIObject other)
         {
             if (other == null)

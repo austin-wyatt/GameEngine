@@ -22,6 +22,8 @@ namespace MortalDungeon.Game.Abilities
 
         public BuffModifier DamageReduction = new BuffModifier();
 
+        public BuffModifier EnergyBoost = new BuffModifier();
+
         public Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
 
         public int MaxDuration = 0;

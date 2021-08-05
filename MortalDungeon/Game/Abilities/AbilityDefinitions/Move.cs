@@ -169,6 +169,8 @@ namespace MortalDungeon.Game.Abilities
 
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
 
+            TileMap.DeselectTiles();
+
             base.OnCast();
         }
 

@@ -30,6 +30,8 @@ layout (binding = 2) uniform sampler2D texture2;
 layout (binding = 3) uniform sampler2D texture3;
 layout (binding = 4) uniform sampler2D texture4;
 
+const float OUTLINE_ALPHA_STEP_WIDTH = 0.125;
+const float OUTLINE_ALPHA_STEPS = 8;
 
 void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
 void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
@@ -80,8 +82,10 @@ void DoWork(in sampler2D primaryTexture)
 
 
 	//Handle outline and inline
+	if(outlineThickness > 0)
 	CreateOutline(texColor, outlineColor, outlineThickness, primaryTexture);
 
+	if(inlineThickness > 0)
 	CreateInline(texColor, inlineColor, inlineThickness, primaryTexture);
 	
 	//if the alpha is below the alpha threshold the pixel is discarded
@@ -94,17 +98,13 @@ void DoWork(in sampler2D primaryTexture)
 
 void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
 {
-	float dx = dFdx(texCoord.x);
-	float dy = dFdy(texCoord.y);
-
-
-	vec4 colorU = texture2D(primaryTexture, vec2(texCoord.x, texCoord.y - dy * thickness));
-    vec4 colorD = texture2D(primaryTexture, vec2(texCoord.x, texCoord.y + dy * thickness));
-    vec4 colorL = texture2D(primaryTexture, vec2(texCoord.x + dx * thickness, texCoord.y));
-    vec4 colorR = texture2D(primaryTexture, vec2(texCoord.x - dx * thickness, texCoord.y));
-                
-	
-	outputColor = textureColor.a == 0.0 && (colorU.a != 0.0 || colorD.a != 0.0 || colorL.a != 0.0 || colorR.a != 0.0) ? outlineColor : outputColor;
+	if(textureColor.w < 1)
+	{
+		if(textureColor.w > OUTLINE_ALPHA_STEP_WIDTH * (OUTLINE_ALPHA_STEPS - thickness))
+		{
+			outputColor = outlineColor;
+		}
+	}
 }
 
 void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)

@@ -39,6 +39,8 @@ namespace MortalDungeon.Game.Units
 
             Strike melee = new Strike(this, 1, 45);
             Abilities.Add(melee.AbilityID, melee);
+
+            MaxEnergy = 15;
         }
 
         public override void OnKill()

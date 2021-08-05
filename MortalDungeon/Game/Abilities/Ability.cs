@@ -164,10 +164,12 @@ namespace MortalDungeon.Game.Abilities
 
                 TrimTiles(AffectedTiles, Units);
 
-                AffectedTiles.ForEach(tile =>
-                {
-                    currentMap.SelectTile(tile);
-                });
+                //AffectedTiles.ForEach(tile =>
+                //{
+                //    currentMap.SelectTile(tile);
+                //});
+
+                
 
                 Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
             }
@@ -197,12 +199,12 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnRightClick()
         {
             Scene.DeselectAbility();
-            Scene.EnergyDisplayBar.HoverAmount(0);
         }
 
         public virtual void OnAbilityDeselect() 
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
+            AffectedUnits.ForEach(u => u.Untarget());
         }
 
         public virtual void UpdateEnergyCost() { }
@@ -230,6 +232,12 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
+                if (CanTargetSelf) 
+                {
+                    AffectedUnits.Add(CastingUnit);
+                    CastingUnit.Target();
+                }
+
                 if (validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.Team] && trimFog) 
                 {
                     validTiles.RemoveAt(i);
@@ -237,18 +245,20 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if (!CanTargetEnemy || !CanTargetAlly)
+                for (int j = 0; j < units?.Count; j++)
                 {
-                    for (int j = 0; j < units?.Count; j++)
+                    if (units[j].TileMapPosition == validTiles[i].TileIndex)
                     {
-                        if (units[j].TileMapPosition == validTiles[i].TileIndex)
+                        if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team == UnitTeam.Enemy))
                         {
-                            if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team == UnitTeam.Enemy))
-                            {
-                                validTiles.RemoveAt(i);
-                                i--;
-                                continue;
-                            }
+                            validTiles.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                        else
+                        {
+                            AffectedUnits.Add(units[j]);
+                            units[j].Target();
                         }
                     }
                 }

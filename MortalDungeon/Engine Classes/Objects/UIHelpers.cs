@@ -1,4 +1,6 @@
-﻿using OpenTK.Mathematics;
+﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Abilities;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -68,6 +70,29 @@ namespace MortalDungeon.Engine_Classes
         public static readonly Vector3 BaseMargin = new Vector3(10, 10, 0);
         public static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
         public static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
+
+        public static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability)
+        {
+            void onHover()
+            {
+                obj.SetColor(Colors.IconHover);
+            }
+
+            void hoverEnd()
+            {
+                if (scene._selectedAbility != null && scene._selectedAbility.AbilityID == ability.AbilityID)
+                {
+                    obj.SetColor(Colors.IconSelected);
+                }
+                else
+                {
+                    obj.SetColor(Colors.White);
+                }
+            }
+
+            obj._onHoverActions.Add(onHover);
+            obj._onHoverEndActions.Add(hoverEnd);
+        }
     }
 
     public class UIDimensions

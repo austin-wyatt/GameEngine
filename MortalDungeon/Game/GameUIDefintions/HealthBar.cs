@@ -47,7 +47,19 @@ namespace MortalDungeon.Game.UI
                 _team = team;
             }
 
-            _healthBar.SetColor(team == UnitTeam.Ally ? new Vector4(0, 1, 0, 0.25f) : new Vector4(1, 0, 0, 0.25f));
+
+            switch (team) 
+            {
+                case UnitTeam.Ally:
+                    _healthBar.SetColor(new Vector4(0, 1, 0, 0.25f));
+                    break;
+                case UnitTeam.Enemy:
+                    _healthBar.SetColor(new Vector4(1, 0, 0, 0.25f));
+                    break;
+                case UnitTeam.Neutral:
+                    _healthBar.SetColor(new Vector4(0.68f, 0.66f, 0.48f, 0.25f));
+                    break;
+            }
 
             if (percent < 0)
             {

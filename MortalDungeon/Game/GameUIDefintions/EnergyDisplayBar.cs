@@ -53,7 +53,7 @@ namespace MortalDungeon.Game.UI
             float pipWidth = 0;
             float padding = 2;
 
-            for (int i = 0; i < CurrentMaxEnergy; i++)
+            for (int i = 0; i < MaxEnergy; i++)
             {
                 EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new UIScale(0.12f, 0.12f)) { Clickable = true };
                 pipWidth = energyPip.GetDimensions().X;
@@ -68,6 +68,9 @@ namespace MortalDungeon.Game.UI
                 {
                     BaseComponent = energyPip;
                 }
+
+                if (i > CurrentMaxEnergy)
+                    energyPip.SetRender(false);
 
                 AddChild(energyPip);
             }
@@ -140,6 +143,19 @@ namespace MortalDungeon.Game.UI
             }
         }
 
+        public void SetMaxEnergy(float maxEnergy) 
+        {
+            CurrentMaxEnergy = maxEnergy;
+
+            for (int i = 0; i < MaxEnergy; i++) 
+            {
+                if (i < maxEnergy)
+                    Pips[i].SetRender(true);
+                else
+                    Pips[i].SetRender(false);
+            }
+        }
+
         public void AddEnergy(float energy)
         {
             SetActiveEnergy(CurrentEnergy + (energy + 0.0001f));
@@ -192,13 +208,13 @@ namespace MortalDungeon.Game.UI
             //}
         }
 
-        public void SetEnergyFromUnit(Unit unit) 
-        {
-            CurrentMaxEnergy = unit.MaxEnergy;
-            CurrentEnergy = unit.CurrentEnergy;
+        //public void SetEnergyFromUnit(Unit unit) 
+        //{
+        //    CurrentMaxEnergy = unit.MaxEnergy;
+        //    CurrentEnergy = unit.CurrentEnergy;
 
-            SetActiveEnergy(CurrentEnergy);
-        }
+        //    SetActiveEnergy(CurrentEnergy);
+        //}
     }
 
     /// <summary>

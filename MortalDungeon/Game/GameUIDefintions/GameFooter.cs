@@ -207,6 +207,7 @@ namespace MortalDungeon.Game.UI
         {
             _currentUnit = unit;
 
+            #region unit status box
             _unitNameTextBox.TextField.SetTextString(unit.Name);
             UIDimensions textOffset = new UIDimensions(_unitNameTextBox.TextOffset);
             textOffset.Y = 0;
@@ -223,7 +224,7 @@ namespace MortalDungeon.Game.UI
 
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
             _unitShieldBar.SetCurrentShields(unit.CurrentShields);
-
+            #endregion
 
             #region ability icons
             _currentIcons.ForEach(i => RemoveChild(i.ObjectID));
@@ -288,23 +289,6 @@ namespace MortalDungeon.Game.UI
                     }
                 }
 
-                void onHover() 
-                {
-                    abilityIcon.SetColor(Colors.IconHover);
-                }
-
-                void hoverEnd() 
-                {
-                    if (Scene._selectedAbility != null && Scene._selectedAbility.AbilityID == ability.AbilityID)
-                    {
-                        abilityIcon.SetColor(Colors.IconSelected);
-                    }
-                    else 
-                    {
-                        abilityIcon.SetColor(Colors.White);
-                    }
-                }
-
                 Scene._onSelectAbilityActions.Add(onAbilitySelected);
                 Scene._onDeselectAbilityActions.Add(onAbilityDeselected);
                 Scene._onAbilityCastActions.Add(onAbilityCast);
@@ -313,8 +297,7 @@ namespace MortalDungeon.Game.UI
                     Scene.SelectAbility(ability);
                 };
 
-                abilityIcon._onHoverActions.Add(onHover);
-                abilityIcon._onHoverEndActions.Add(hoverEnd);
+                UIHelpers.AddAbilityIconHoverEffect(abilityIcon, Scene, ability);
 
 
                 abilityIcon._cleanUpAction = () =>

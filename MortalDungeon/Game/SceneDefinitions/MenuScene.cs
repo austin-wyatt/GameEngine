@@ -40,18 +40,24 @@ namespace MortalDungeon.Game.SceneDefinitions
             _tileMaps.Add(tileMap);
 
 
-            Guy guy = new Guy(tileMap.GetPositionOfTile(0) + Vector3.UnitZ * 0.2f, this, 0) { Clickable = true };
-            guy.Team = UnitTeam.Ally;
+            Guy guy = new Guy(tileMap.GetPositionOfTile(0) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 0) { Clickable = true };
+            guy.SetTeam(UnitTeam.Ally);
             guy.CurrentTileMap = tileMap;
             guy._movementAbility.EnergyCost = 0.3f;
             CurrentUnit = guy;
 
+            guy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
+            guy.SelectionTile.SetPosition(guy.Position);
+
             _units.Add(guy);
 
-            Guy badGuy = new Guy(tileMap.GetPositionOfTile(3) + Vector3.UnitZ * 0.2f, this, 3) { Clickable = true };
-            badGuy.Team = UnitTeam.Enemy;
+            Guy badGuy = new Guy(tileMap.GetPositionOfTile(3) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 3) { Clickable = true };
+            badGuy.SetTeam(UnitTeam.Enemy);
             badGuy.CurrentTileMap = tileMap;
             badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
+
+            badGuy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
+            badGuy.SelectionTile.SetPosition(badGuy.Position);
 
             _units.Add(badGuy);
 
@@ -84,57 +90,11 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
 
-            //UIList testList = new UIList(new Vector3(500, 500, 0), new Vector2(1f, 0.2f), 0.4f) { Ascending = true, ZIndex = 100 };
-            //int count = 0;
-            //testList.AddItem(count.ToString(), () =>
-            //{
-            //    count++;
-            //    testList.AddItem("List value " + count);
-            //    Console.WriteLine("List value " + count);
-            //});
-
-            //AddUI(testList, 100);
-
-
-            //input component demo
-            //Input inputComp = new Input(footer.Position - footer.GetDimensions().X / 6 * Vector3.UnitX, new UIScale(1, 0.12f), "", 0.05f, false, new UIDimensions(10, 30));
-
-            //footer.AddChild(inputComp, 100);
-
-
-            //Scrollable component demo
-            //ScrollableArea scrollableComp = new ScrollableArea(WindowConstants.CenterScreen, new UIScale(1.5f, 1), WindowConstants.CenterScreen, new UIScale(5, 5));
-
-            //UIList testList = new UIList(new Vector3(), new UIScale(0.75f, 0.15f), 0.05f);
-            //testList.AddItem("Test", () =>
-            //{
-            //    testList.AddItem("more test");
-            //});
-
-            //scrollableComp.BaseComponent.AddChild(testList, 100);
-            //scrollableComp.SetVisibleAreaSize(testList.ListItemSize + testList.Margin + testList.ItemMargins + new UIScale(0, testList.ListItemSize.Y * 4));
-            //testList.SetPositionFromAnchor(scrollableComp.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
-
-            //UIBlock scrollableParent = new UIBlock(WindowConstants.CenterScreen) { Draggable = true };
-            //scrollableParent.AddChild(scrollableComp, 100);
-
-            //scrollableComp.SetPosition(scrollableParent.GetAnchorPosition(UIAnchorPosition.TopLeft) + UIHelpers.BaseMargin);
-
-
-            //testList.AddItem("TestTwo", () =>
-            //{
-            //    scrollableParent.SetPosition(scrollableParent.Position + new Vector3(0, 10, 0));
-            //});
-
-            //AddUI(scrollableParent, 1000);
-
 
             UnitStatusBar guyStatusBar = new UnitStatusBar(guy, _camera);
-            //AddUI(guyStatusBar);
 
             badGuy.Name = "Other guy";
             UnitStatusBar guyStatusBar2 = new UnitStatusBar(badGuy, _camera);
-            //AddUI(guyStatusBar2);
 
 
             badGuy.SetShields(5);
@@ -142,8 +102,12 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             Skeleton skeleton = new Skeleton(tileMap.GetPositionOfTile(55) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 55) { };
             UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
+            skeleton.SetTeam(UnitTeam.Neutral);
+
+            skeleton.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
+            skeleton.SelectionTile.SetPosition(skeleton.Position);
+
             _units.Add(skeleton);
-            //AddUI(skeletonStatusBar);
 
 
             InitiativeOrder = new List<Unit>(_units);
