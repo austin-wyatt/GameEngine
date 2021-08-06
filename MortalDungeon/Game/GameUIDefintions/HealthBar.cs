@@ -57,7 +57,7 @@ namespace MortalDungeon.Game.UI
                     _healthBar.SetColor(new Vector4(1, 0, 0, 0.25f));
                     break;
                 case UnitTeam.Neutral:
-                    _healthBar.SetColor(new Vector4(0.68f, 0.66f, 0.48f, 0.25f));
+                    _healthBar.SetColor(new Vector4(0.93f, 0.83f, 0.56f, 0.75f));
                     break;
             }
 

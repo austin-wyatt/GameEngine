@@ -13,7 +13,7 @@ namespace MortalDungeon.Game.UI
         public Camera _camera;
         public Unit _unit;
 
-        public TextBox _mainTextBox;
+        public TextComponent _mainTextBox;
         public TextBox _turnDisplay;
         public HealthBar HealthBar;
         public ShieldBar ShieldBar;
@@ -37,19 +37,19 @@ namespace MortalDungeon.Game.UI
             BaseComponent.SetColor(Colors.UILightGray);
 
 
-            TextBox textBox = new TextBox(new Vector3(), scale, unit.Name, 0.07f, true, new UIDimensions(10, 0));
-            textBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopCenter), UIAnchorPosition.TopCenter);
-            textBox.BaseComponent.SetColor(Colors.Transparent);
-            textBox.BaseComponent.GetBaseObject().OutlineParameters.SetAllInline(0);
-            textBox.GetBaseObject().RenderData = new RenderData() { AlphaThreshold = 1 };
-            textBox.BaseComponent.MultiTextureData.MixTexture = false;
-            textBox.TextField.SetColor(Colors.UITextBlack);
+            TextComponent nameBox = new TextComponent();
+            nameBox.SetText(unit.Name);
+            nameBox.SetColor(Colors.UITextBlack);
+            nameBox.SetPositionFromAnchor(BaseComponent.Position, UIAnchorPosition.Center);
 
-            _mainTextBox = textBox;
-            BaseComponent.AddChild(textBox);
+            _mainTextBox = nameBox;
+
+            //_mainTextBox = textBox;
+            //BaseComponent.AddChild(textBox);
+            BaseComponent.AddChild(nameBox);
 
 
-            _turnDisplay = new TextBox(new Vector3(), new UIScale(scale.X / 4, scale.Y / 2), " ", 0.07f, true, new UIDimensions(0, 0));
+            _turnDisplay = new TextBox(new Vector3(), new UIScale(scale.X / 4, scale.Y / 2), " ", 0.07f, false, new UIDimensions(0, 0));
             _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
             _turnDisplay.BaseComponent.SetColor(Colors.Transparent);
             _turnDisplay.BaseComponent.GetBaseObject().OutlineParameters.SetAllInline(0);
@@ -112,7 +112,7 @@ namespace MortalDungeon.Game.UI
 
                     unitPos.Y += 0.25f;
                     SetSize(zoomScale);
-                    _mainTextBox.TextField.SetTextScale(0.03f);
+                    _mainTextBox.SetTextScale(0.03f);
                     UpdateInfoBarScales(zoomScale);
                 }
                 else if (_camera.Position.Z >= 4 && _camera.Position.Z < 8)
@@ -121,7 +121,7 @@ namespace MortalDungeon.Game.UI
                     unitPos.Y += 0.17f;
 
                     SetSize(zoomScale);
-                    _mainTextBox.TextField.SetTextScale(0.018f);
+                    _mainTextBox.SetTextScale(0.018f);
                     UpdateInfoBarScales(zoomScale);
                 }
                 else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
@@ -130,7 +130,7 @@ namespace MortalDungeon.Game.UI
                     unitPos.Y += 0.12f;
 
                     SetSize(zoomScale);
-                    _mainTextBox.TextField.SetTextScale(0.015f);
+                    _mainTextBox.SetTextScale(0.015f);
                 }
                 else if (_camera.Position.Z >= 10)
                 {
@@ -144,6 +144,7 @@ namespace MortalDungeon.Game.UI
 
                 BaseComponent.SetPosition(screenSpace);
 
+                _mainTextBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
                 _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
                 HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
                 ShieldBar.SetPositionFromAnchor(HealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
@@ -165,13 +166,13 @@ namespace MortalDungeon.Game.UI
         {
             if (isTurn)
             {
-                _turnDisplay.TextField.SetTextString("*");
-                _turnDisplay.TextField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(1);
+                _turnDisplay.TextField.SetText("*");
+                _turnDisplay.TextField._textField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(1);
             }
             else 
             {
-                _turnDisplay.TextField.SetTextString(" ");
-                _turnDisplay.TextField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(0);
+                _turnDisplay.TextField._textField.SetTextString(" ");
+                _turnDisplay.TextField._textField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(0);
             }
         }
 

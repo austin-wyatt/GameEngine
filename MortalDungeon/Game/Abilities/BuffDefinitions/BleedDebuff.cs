@@ -9,14 +9,15 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class SlowDebuff : Buff
+    public class BleedDebuff : Buff
     {
-        public SlowDebuff(Unit affected, int duration, float slowMultiplier) : base(affected, duration)
+        public float Damage;
+        public BleedDebuff(Unit affected, int duration, float damage) : base(affected, duration)
         {
-            Name = "Slow";
-            Speed.Multiplier = slowMultiplier;
+            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BleedingDagger, Spritesheets.IconSheet);
+            Name = "Bleed";
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.SpiderWeb, Spritesheets.IconSheet);
+            Damage = damage;
         }
 
         public override Icon GenerateIcon(UIScale scale)
@@ -24,6 +25,13 @@ namespace MortalDungeon.Game.Abilities
             Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.DebuffBackground);
 
             return icon;
+        }
+
+        public override void OnTurnStart()
+        {
+            Unit.ApplyDamage(Damage, DamageType.Bleed);
+
+            base.OnTurnStart();
         }
 
         public override Tooltip GenerateTooltip()
@@ -38,7 +46,7 @@ namespace MortalDungeon.Game.Abilities
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
             description.SetColor(Colors.UITextBlack);
-            description.SetText("Unit's speed is reduced by " + ((1 - Speed.Multiplier) * -1).ToString("p") +
+            description.SetText("At the beginning of the unit's turn \nit will suffer " + Damage.ToString("n1").Replace(".0", "") + " bleed damage." +
                 "\n\n" + Duration + " turns remaining.");
 
             tooltip.AddChild(header);

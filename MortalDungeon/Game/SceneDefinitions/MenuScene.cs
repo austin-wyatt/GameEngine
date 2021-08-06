@@ -101,8 +101,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             Skeleton skeleton = new Skeleton(tileMap.GetPositionOfTile(55) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 55) { };
-            UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
             skeleton.SetTeam(UnitTeam.Neutral);
+            UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
 
             skeleton.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
             skeleton.SelectionTile.SetPosition(skeleton.Position);
@@ -128,6 +128,25 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             FillInTeamFog(InitiativeOrder[0].Team);
+
+
+            //TextComponent description = new TextComponent();
+            //description.SetTextScale(0.2f);
+            //description.SetColor(Colors.UITextBlack);
+            //description.SetText("description 1");
+
+            //description.SetPositionFromAnchor(WindowConstants.CenterScreen, UIAnchorPosition.Center);
+
+            //TextComponent desc2 = new TextComponent();
+            //desc2.SetTextScale(0.2f);
+            //desc2.SetColor(Colors.UITextBlack);
+            //desc2.SetText("description 2");
+
+            //desc2.SetPositionFromAnchor(description.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.TopCenter);
+
+
+            //AddUI(description);
+            //AddUI(desc2);
         }
 
 
@@ -288,7 +307,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 tile.DefaultAnimation = (BaseTileAnimationType)AnimationType.Idle;
                 tile.DefaultColor = tile.SetFogColor();
 
-                Console.WriteLine(map.ConvertIndexToCoord(tile.TileIndex));
+                //Console.WriteLine(map.ConvertIndexToCoord(tile.TileIndex));
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftAlt))
             {

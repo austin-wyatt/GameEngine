@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,6 +31,9 @@ namespace MortalDungeon.Game.Abilities
         public int Duration = 0;
         public bool IndefiniteDuration = false;
         public bool Hidden = false;
+
+        public bool Dispellable = false;
+        public bool DispellableStrong = false;
 
         public string Name = "";
 
@@ -83,6 +87,13 @@ namespace MortalDungeon.Game.Abilities
         public virtual Icon GenerateIcon(UIScale scale)
         {
             return GenerateIcon(scale, false);
+        }
+
+        public virtual Tooltip GenerateTooltip() 
+        {
+            Tooltip tooltip = new Tooltip();
+
+            return tooltip;
         }
 
         public virtual void OnTurnStart()

@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using OpenTK.Mathematics;
 using System;
@@ -92,6 +93,94 @@ namespace MortalDungeon.Engine_Classes
 
             obj._onHoverActions.Add(onHover);
             obj._onHoverEndActions.Add(hoverEnd);
+        }
+
+        public static void CreateToolTip(CombatScene scene, string text, UIObject tooltipParent, UIObject baseObject)
+        {
+            if (scene.ContextManager.GetFlag(GeneralContextFlags.TooltipOpen))
+                return;
+
+            scene.ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, true);
+
+
+            TextComponent tooltip = new TextComponent();
+            tooltip.SetColor(Colors.UITextBlack);
+            tooltip.SetText(text);
+            tooltip.SetTextScale(0.05f);
+            tooltip.Hoverable = true;
+
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
+
+
+            UIBlock tooltipBackground = new UIBlock();
+            tooltipBackground.SetColor(Colors.UILightGray);
+            tooltipBackground.MultiTextureData.MixTexture = false;
+
+            UIScale tooltipScale = tooltip.GetScale();
+            tooltipScale.Y += 0.05f;
+            tooltipScale.X += 0.05f;
+
+            tooltipBackground.SetSize(tooltipScale);
+            tooltipBackground.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(-5, -10, 0), UIAnchorPosition.TopLeft);
+
+            baseObject.AddChild(tooltip, 100000);
+            baseObject.AddChild(tooltipBackground, 99999);
+
+            void temp()
+            {
+                baseObject.RemoveChild(tooltip.ObjectID);
+                baseObject.RemoveChild(tooltipBackground.ObjectID);
+                tooltipParent._onHoverEndActions.Remove(temp);
+                scene.ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, false);
+            }
+
+            tooltipParent._onHoverEndActions.Add(temp);
+        }
+
+        public static void CreateToolTip(CombatScene scene, UIObject obj, UIObject tooltipParent, UIObject baseObject)
+        {
+            if (scene.ContextManager.GetFlag(GeneralContextFlags.TooltipOpen))
+                return;
+
+            scene.ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, true);
+
+            Tooltip tooltip = new Tooltip();
+
+            tooltip.AddChild(obj, 100);
+
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
+
+            baseObject.AddChild(tooltip, 100000);
+
+            void temp()
+            {
+                baseObject.RemoveChild(tooltip.ObjectID);
+                tooltipParent._onHoverEndActions.Remove(temp);
+                scene.ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, false);
+            }
+
+            tooltipParent._onHoverEndActions.Add(temp);
+        }
+
+        public static void CreateToolTip(CombatScene scene, Tooltip tooltip, UIObject tooltipParent, UIObject baseObject)
+        {
+            if (scene.ContextManager.GetFlag(GeneralContextFlags.TooltipOpen))
+                return;
+
+            scene.ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, true);
+
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
+
+            baseObject.AddChild(tooltip, 100000);
+
+            void temp()
+            {
+                baseObject.RemoveChild(tooltip.ObjectID);
+                tooltipParent._onHoverEndActions.Remove(temp);
+                scene.ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, false);
+            }
+
+            tooltipParent._onHoverEndActions.Add(temp);
         }
     }
 

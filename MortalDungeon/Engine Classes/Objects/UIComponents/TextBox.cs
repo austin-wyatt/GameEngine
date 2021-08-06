@@ -10,7 +10,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public UIDimensions TextOffset = new UIDimensions(20, 30);
         public bool CenterText = false;
 
-        public Text TextField;
+        public TextComponent TextField;
 
         public TextBox(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
@@ -28,18 +28,25 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             UIBlock block = new UIBlock(Position, Size, default, 71, true);
             block.SetColor(new Vector4(0.2f, 0.2f, 0.2f, 1));
 
-            Text textObj;
+            TextComponent textObj;
             if (CenterText)
             {
-                textObj = new Text(text, block.Position);
+                //textObj = new Text(text, block.Position);
+                textObj = new TextComponent();
+                textObj.SetText(text);
+                textObj.SetPositionFromAnchor(block.Position, UIAnchorPosition.Center);
             }
             else
             {
-                textObj = new Text(text, block.Origin + TextOffset);
+                //textObj = new Text(text, block.Origin + TextOffset);
+                textObj = new TextComponent();
+                textObj.SetText(text);
+                textObj.SetPosition(block.Position);
+
             }
 
             textObj.SetTextScale(textScale);
-            UIDimensions textDimensions = textObj.GetTextDimensions();
+            UIDimensions textDimensions = textObj.GetDimensions();
             UIDimensions blockDimensions = block.GetDimensions();
             if (CenterText)
             {
@@ -50,12 +57,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 textObj.SetPosition(new Vector3(block.Position.X + TextOffset.X - blockDimensions.X / 2, block.Position.Y - blockDimensions.Y / 2 + TextOffset.Y, block.Position.Z));
             }
 
-            TextObjects.Add(textObj);
+            //TextObjects.Add(textObj);
 
             TextField = textObj;
             BaseComponent = block;
 
-
+            AddChild(textObj, 10);
             AddChild(block);
 
             block.OnClickAction = () =>
@@ -86,20 +93,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             });
         }
 
-        //public void SetSize(Vector2 size)
-        //{
-        //    float aspectRatio = (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X;
-
-        //    Vector2 ScaleFactor = new Vector2(size.X, size.Y);
-        //    BaseComponent._baseObject.BaseFrame.SetScaleAll(1);
-
-        //    BaseComponent._baseObject.BaseFrame.ScaleX(aspectRatio);
-        //    BaseComponent._baseObject.BaseFrame.ScaleX(ScaleFactor.X);
-        //    BaseComponent._baseObject.BaseFrame.ScaleY(ScaleFactor.Y);
-
-        //    Size = size;
-        //    SetOrigin(aspectRatio, Size);
-        //}
 
         public override void SetColor(Vector4 color)
         {

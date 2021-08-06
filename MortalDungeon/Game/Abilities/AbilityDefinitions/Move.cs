@@ -22,6 +22,7 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit = castingUnit;
             CanTargetEnemy = false;
             CanTargetAlly = false;
+            CanTargetThroughFog = true;
 
             EnergyCost = 1;
 
@@ -196,6 +197,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 ClearSelectedTiles();
                 Scene.EnergyDisplayBar.HoverAmount(0);
+                SelectedTile = null;
                 return;
             }
 
@@ -347,6 +349,7 @@ namespace MortalDungeon.Game.Abilities
             base.OnAbilityDeselect();
 
             ClearSelectedTiles();
+            SelectedTile = null;
         }
 
         public override float GetEnergyCost()

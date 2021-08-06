@@ -18,7 +18,7 @@ namespace MortalDungeon.Game.UI
     {
         CombatScene Scene;
 
-        private TextBox _unitNameTextBox;
+        private TextComponent _unitNameTextBox;
         private HealthBar _unitHealthBar;
         private UIBlock _containingBlock;
         private ShieldBar _unitShieldBar;
@@ -96,13 +96,13 @@ namespace MortalDungeon.Game.UI
 
             #region end turn button
             Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", 0.075f, default, default, false);
-            
-            UIDimensions textOffset = new UIDimensions(endTurnButton.TextBox.TextOffset);
-            textOffset.Y = 0;
 
-            UIScale textScale = endTurnButton.TextBox.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 3;
-            textScale.Y *= -1;
-            endTurnButton.SetSize(textScale);
+            UIDimensions textOffset = new UIDimensions(80, 100);
+            //textOffset.Y = 0;
+
+            //UIScale textScale = endTurnButton.TextBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 3;
+            //textScale.Y *= -1;
+            endTurnButton.SetSize(endTurnButton.TextBox.GetScale() + textOffset.ToScale());
 
             endTurnButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -10, 0), UIAnchorPosition.BottomRight);
 
@@ -131,18 +131,13 @@ namespace MortalDungeon.Game.UI
             AddChild(_containingBlock, 1);
 
             #region name box
-            _unitNameTextBox = new TextBox(new Vector3(), new UIScale(0.5f, 0.1f), "", 0.075f, true);
-            _unitNameTextBox.BaseComponent.MultiTextureData.MixTexture = false;
-            _unitNameTextBox.SetColor(Colors.Transparent);
-            _unitNameTextBox.GetBaseObject().OutlineParameters.SetAllInline(0);
-            _unitNameTextBox.GetBaseObject().RenderData = new RenderData() { AlphaThreshold = 1 };
-            _unitNameTextBox.TextField.SetColor(new Vector4(0.149f, 0.173f, 0.22f, 1));
-            //_unitNameTextBox.TextField.SetColor(new Vector4(0.1f, 0.1f, 0.1f, 1));
-            UIScale nameBoxScale = containingBlockDimensions;
-            nameBoxScale.X /= 3;
-            nameBoxScale.Y = 0.1f;
+            Vector3 nameBoxPos = _containingBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
+            nameBoxPos.X = nameBoxPos.X + containingBlockDimensions.X / 6;
 
-            _unitNameTextBox.SetSize(nameBoxScale);
+            _unitNameTextBox = new TextComponent();
+            _unitNameTextBox.SetColor(Colors.UITextBlack);
+            _unitNameTextBox.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
+            _unitNameTextBox.SetTextScale(0.075f);
 
             _containingBlock.AddChild(_unitNameTextBox, 100);
             #endregion
@@ -152,7 +147,7 @@ namespace MortalDungeon.Game.UI
 
             void healthBarHover() 
             {
-                Scene.CreateToolTip(_currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+                UIHelpers.CreateToolTip(Scene, _currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
             }
 
             _unitHealthBar._onTimedHoverActions.Add(healthBarHover);
@@ -165,11 +160,11 @@ namespace MortalDungeon.Game.UI
             {
                 if (_currentUnit.CurrentShields >= 0)
                 {
-                    Scene.CreateToolTip(_currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack", _unitShieldBar, Scene._tooltipBlock);
+                    UIHelpers.CreateToolTip(Scene, _currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack", _unitShieldBar, Scene._tooltipBlock);
                 }
                 else 
                 {
-                    Scene.CreateToolTip("Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage", _unitShieldBar, Scene._tooltipBlock);
+                    UIHelpers.CreateToolTip(Scene, "Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage", _unitShieldBar, Scene._tooltipBlock);
                 }
             }
 
@@ -208,18 +203,20 @@ namespace MortalDungeon.Game.UI
             _currentUnit = unit;
 
             #region unit status box
-            _unitNameTextBox.TextField.SetTextString(unit.Name);
-            UIDimensions textOffset = new UIDimensions(_unitNameTextBox.TextOffset);
-            textOffset.Y = 0;
-
-            UIScale textScale = _unitNameTextBox.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 2;
-            textScale.Y *= -1;
-            //_unitNameTextBox.SetSize(textScale);
+            _unitNameTextBox.SetText(unit.Name);
             
+            
+            Vector3 nameBoxPos = _containingBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
+            nameBoxPos.X = nameBoxPos.X + _containingBlock.GetDimensions().X / 6;
+            nameBoxPos.Y = nameBoxPos.Y - _containingBlock.GetDimensions().Y / 4;
 
-            _unitNameTextBox.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+            _unitNameTextBox.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
 
-            _unitHealthBar.SetPositionFromAnchor(_unitNameTextBox.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(10, 0, 0), UIAnchorPosition.TopLeft);
+            nameBoxPos = _containingBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
+            nameBoxPos.X = nameBoxPos.X + (_containingBlock.GetDimensions().X / 6) * 3;
+            nameBoxPos.Y = nameBoxPos.Y - _containingBlock.GetDimensions().Y / 4;
+
+            _unitHealthBar.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
             _unitHealthBar.SetHealthPercent(unit.Health / Unit.MaxHealth, unit.Team);
 
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -326,6 +323,9 @@ namespace MortalDungeon.Game.UI
             _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea.Size.X, _scrollableArea.Size.Y));
             foreach (Buff buff in unit.Buffs) 
             {
+                if (buff.Hidden)
+                    continue;
+
                 Icon icon = buff.GenerateIcon(buffSize);
                 icons.Add(icon);
 
@@ -337,9 +337,6 @@ namespace MortalDungeon.Game.UI
                 {
                     icon.SetPositionFromAnchor(icons[count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
                 }
-
-                Console.WriteLine(icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X);
-                Console.WriteLine(_scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X);
 
                 if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X) 
                 {
@@ -358,6 +355,16 @@ namespace MortalDungeon.Game.UI
 
                     //_scrollableArea.BaseComponent.SetSize(_scrollableArea._baseAreaSize);
                 }
+
+                void buffHover() 
+                {
+                    UIHelpers.CreateToolTip(Scene, buff.GenerateTooltip(), icon, Scene._tooltipBlock);
+                }
+
+                icon.HasTimedHoverEffect = true;
+                icon.Hoverable = true;
+                icon._onTimedHoverActions.Add(buffHover);
+
 
                 _scrollableArea.BaseComponent.AddChild(icon, 1000);
                 count++;

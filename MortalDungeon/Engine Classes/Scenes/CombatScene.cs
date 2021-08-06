@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
-    enum GeneralContextFlags
+    public enum GeneralContextFlags
     {
         TooltipOpen
     }
@@ -36,7 +36,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool DisplayUnitStatuses = true;
 
-        ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
+        public ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
 
         protected const AbilityTypes DefaultAbilityType = AbilityTypes.Move;
 
@@ -398,7 +398,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             if (_selectedAbility == null)
             {
-                if (unit.Selectable)
+                if (unit.Selectable && !GetTile(unit.TileMapPosition).InFog)
                     SelectUnit(unit);
                 
 
@@ -431,42 +431,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Action<Ability>> _onAbilityCastActions = new List<Action<Ability>>();
 
 
-
-        public void CreateToolTip(string text, UIObject tooltipParent, UIObject baseObject)
+        public BaseTile GetTile(int tileIndex) 
         {
-            if (ContextManager.GetFlag(GeneralContextFlags.TooltipOpen))
-                return;
-
-            ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, true);
-
-            TextBox tooltip = new TextBox(new Vector3(), new UIScale(), text, 0.05f, true);
-            tooltip.SetColor(Colors.UILightGray);
-            tooltip.SetTextColor(Colors.UITextBlack);
-            tooltip.BaseComponent.MultiTextureData.MixTexture = false;
-
-            tooltip.Hoverable = true;
-
-            UIDimensions textOffset = new UIDimensions(tooltip.TextOffset);
-            textOffset.Y = 0;
-
-            UIScale textScale = tooltip.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 2;
-            textScale.Y *= -1;
-            tooltip.SetSize(textScale);
-
-            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
-
-            Console.WriteLine(_cursorObject.Position);
-
-            baseObject.AddChild(tooltip, 100000);
-
-            void temp()
-            {
-                baseObject.RemoveChild(tooltip.ObjectID);
-                tooltipParent._onHoverEndActions.Remove(temp);
-                ContextManager.SetFlag(GeneralContextFlags.TooltipOpen, false);
-            }
-
-            tooltipParent._onHoverEndActions.Add(temp);
+            return _tileMaps[0][tileIndex];
         }
     }
 }

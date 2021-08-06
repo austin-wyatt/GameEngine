@@ -93,7 +93,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Items.Add(newItem);
             AddChild(newItem, 100);
 
-            UIScale textScale = newItem._textBox.TextField.GetTextDimensions() * WindowConstants.AspectRatio * 2;
+            UIScale textScale = newItem._textBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2;
 
             if (textScale.X > ListItemSize.X || textScale.Y > ListItemSize.Y) 
             {

@@ -39,6 +39,8 @@ namespace MortalDungeon.Game.Units
             Slow slowAbility = new Slow(this, 5, 0.1f, 3);
             Abilities.Add(slowAbility.AbilityID, slowAbility);
 
+            Bleed bleedAbility = new Bleed(this, 2, 15, 5);
+            Abilities.Add(bleedAbility.AbilityID, bleedAbility);
 
             //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
             //Abilities.Add(melee.AbilityID, melee);

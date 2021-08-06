@@ -9,7 +9,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class UIBlock : UIObject
     {
-        public UIBlock(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        public UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
         {
             Position = position;
             Size = size == null ? Size : size;

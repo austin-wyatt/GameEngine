@@ -170,6 +170,29 @@ namespace MortalDungeon.Game.Units
             return modifier;
         }
 
+        public bool GetPierceShields(DamageType damageType) 
+        {
+            switch (damageType) 
+            {
+                case DamageType.Poison:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public bool GetAmplifiedByNegativeShields(DamageType damageType)
+        {
+            switch (damageType)
+            {
+                case DamageType.Bleed:
+                case DamageType.Poison:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
         public void OnTurnStart() 
         {
             if (StatusBarComp != null) 
@@ -216,38 +239,54 @@ namespace MortalDungeon.Game.Units
 
             float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(damageType)) - 1);
 
+            
             float actualDamage = damage * damageMultiplier + DamageAddition;
 
-            float shieldDamageBlocked;
 
-            DamageBlockedByShields += actualDamage;
-
-            if (CurrentShields < 0)
+            //shield piercing exceptions should go here
+            if (GetPierceShields(damageType))
             {
-                actualDamage *= 1 + (0.25f * Math.Abs(CurrentShields));
+
             }
             else 
             {
-                shieldDamageBlocked = CurrentShields * ShieldBlock;
-                actualDamage -= shieldDamageBlocked;
+                float shieldDamageBlocked;
 
-                if (actualDamage < 0) 
+                DamageBlockedByShields += actualDamage;
+
+                if (CurrentShields < 0 && GetAmplifiedByNegativeShields(damageType))
                 {
-                    actualDamage = 0;
+                    actualDamage *= 1 + (0.25f * Math.Abs(CurrentShields));
+                }
+                else if (CurrentShields > 0)
+                {
+                    shieldDamageBlocked = CurrentShields * ShieldBlock;
+                    actualDamage -= shieldDamageBlocked;
+
+                    if (actualDamage < 0)
+                    {
+                        actualDamage = 0;
+                    }
+                }
+                else 
+                {
+                    DamageBlockedByShields -= actualDamage;
+                }
+
+                if (DamageBlockedByShields > ShieldBlock) 
+                {
+                    CurrentShields--;
+                    DamageBlockedByShields = 0;
                 }
             }
 
-            if (DamageBlockedByShields > ShieldBlock) 
-            {
-                CurrentShields--;
-                DamageBlockedByShields = 0;
-            }
 
 
             Health -= actualDamage;
 
             StatusBarComp.HealthBar.SetHealthPercent(Health / MaxHealth, Team);
             StatusBarComp.ShieldBar.SetCurrentShields(CurrentShields);
+            Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
 
             if (Health <= 0) 
             {

@@ -99,8 +99,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void OnClick()
         {
             base.OnClick();
-
-            Console.WriteLine("Icon clicked");
         }
     }
 }

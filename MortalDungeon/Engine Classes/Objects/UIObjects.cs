@@ -244,7 +244,7 @@ namespace MortalDungeon.Engine_Classes
 
         
 
-        public void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
+        public virtual void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
         {
             if (anchor == UIAnchorPosition.Center)
                 anchor = Anchor;
@@ -261,7 +261,7 @@ namespace MortalDungeon.Engine_Classes
         {
             return GetAnchorPosition(anchorPosition, Position);
         }
-        public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
+        public virtual Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
         {
             UIDimensions dimensions = GetDimensions();
             Vector3 anchorPos = new Vector3(position);
@@ -303,7 +303,7 @@ namespace MortalDungeon.Engine_Classes
 
             return anchorPos;
         }
-        public UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
+        public virtual UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
         {
             UIDimensions dimensions = GetDimensions();
             UIDimensions returnDim = new UIDimensions();
@@ -524,7 +524,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        public new UIDimensions GetDimensions() 
+        public virtual new UIDimensions GetDimensions() 
         {
             UIDimensions dimensions = default;
             if (BaseComponent != null) 

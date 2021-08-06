@@ -415,7 +415,7 @@ namespace MortalDungeon.Engine_Classes
             Vector3 maxPos = new Vector3(Letters[0].Position);
             Vector3 minPos = new Vector3(Letters[0].Position);
 
-            Vector3 letterDimensions = Letters[0].GetDimensions(); //assume all letters have the same dimensions for now
+            Vector3 letterDimensions = Letters[0].GetDimensions(); //assume all letters have the same dimensions
 
             for (int i = 0; i < Letters.Count; i++)
             {
@@ -426,7 +426,7 @@ namespace MortalDungeon.Engine_Classes
             }
 
             UIDimensions dimensions = new UIDimensions((maxPos.X + letterDimensions.X / 2) - (minPos.X - letterDimensions.X / 2), 
-                (maxPos.Y - letterDimensions.Y / 2) - (minPos.Y + letterDimensions.Y / 2));
+                (maxPos.Y + letterDimensions.Y / 2) - (minPos.Y - letterDimensions.Y / 2));
 
             return dimensions;
         }
@@ -556,6 +556,7 @@ namespace MortalDungeon.Engine_Classes
                 letter.SetColor(color);
             });
         }
+
         public void SetPosition(Vector3 position)
         {
             Position = position;

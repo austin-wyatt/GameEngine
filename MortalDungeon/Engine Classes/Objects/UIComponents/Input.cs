@@ -65,7 +65,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             base.OnType(e);
             string typedLetter = TextHelper.KeyStrokeToString(e);
-            string currString = _textBox.TextField.TextString;
+            string currString = _textBox.TextField._textField.TextString;
 
             _cursorObject.SetRender(true);
             _cursorObject.PropertyAnimations[0].Restart();
@@ -78,7 +78,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                     {
                         if (_lineCount < Lines - 1) 
                         {
-                            _textBox.TextField.SetTextString(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
+                            _textBox.TextField.SetText(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
                             _cursorIndex++;
                             _lineCount++;
                         }
@@ -86,7 +86,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                     }
                     else
                     {
-                        _textBox.TextField.SetTextString(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
+                        _textBox.TextField.SetText(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
                         _cursorIndex++;
                     }
                 }
@@ -103,14 +103,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                                 _lineCount--;
                             }
 
-                            _textBox.TextField.SetTextString(currString.Remove(_cursorIndex - 1, 1));
+                            _textBox.TextField.SetText(currString.Remove(_cursorIndex - 1, 1));
                             _cursorIndex--;
                         }
                         break;
                     case Keys.Delete:
                         if (_cursorIndex < currString.Length)
                         {
-                            _textBox.TextField.SetTextString(currString.Remove(_cursorIndex, 1));
+                            _textBox.TextField.SetText(currString.Remove(_cursorIndex, 1));
                         }
                         break;
                     case Keys.Home:
@@ -145,17 +145,17 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void SetCursorPosition() 
         {
-            if (_textBox.TextField.Letters.Count > 0 && _cursorIndex != 0)
+            if (_textBox.TextField._textField.Letters.Count > 0 && _cursorIndex != 0)
             {
-                Vector3 textDimensions = _textBox.TextField.Letters[_cursorIndex - 1].GetDimensions();
+                Vector3 textDimensions = _textBox.TextField._textField.Letters[_cursorIndex - 1].GetDimensions();
 
-                if (_textBox.TextField.Letters[_cursorIndex - 1].Character == Character.NewLine)
+                if (_textBox.TextField._textField.Letters[_cursorIndex - 1].Character == Character.NewLine)
                 {
-                    _cursorObject.SetPosition(_textBox.TextField.Letters[_cursorIndex - 1].Position - textDimensions.X / 1.95f * Vector3.UnitX);
+                    _cursorObject.SetPosition(_textBox.TextField._textField.Letters[_cursorIndex - 1].Position - textDimensions.X / 1.95f * Vector3.UnitX);
                 }
                 else 
                 {
-                    _cursorObject.SetPosition(_textBox.TextField.Letters[_cursorIndex - 1].Position + textDimensions.X / 2 * Vector3.UnitX);
+                    _cursorObject.SetPosition(_textBox.TextField._textField.Letters[_cursorIndex - 1].Position + textDimensions.X / 2 * Vector3.UnitX);
                 }
             }
             else 

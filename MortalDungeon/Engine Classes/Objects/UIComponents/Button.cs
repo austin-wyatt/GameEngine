@@ -4,7 +4,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class Button : UIObject
     {
-        public TextBox TextBox;
+        public TextComponent TextBox;
         public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
 
         public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
@@ -17,25 +17,44 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Name = "Button";
 
-            TextBox textBox = new TextBox(position, size, text, textScale, centerText);
-            TextBox = textBox;
-            BaseComponent = textBox;
+            BaseComponent = new UIBlock();
+            BaseComponent.SetColor(Colors.UILightGray);
+            BaseComponent.SetPosition(Position);
 
-            AddChild(textBox);
+            BaseComponent.SetSize(size);
+
+            //TextBox textBox = new TextBox(position, size, text, textScale, centerText);
+            //TextBox = textBox;
+            //BaseComponent = textBox;
+
+            //AddChild(textBox);
+            TextComponent textBox = new TextComponent();
+            textBox.SetText(text);
+            textBox.SetTextScale(textScale);
+            
+            TextBox = textBox;
+            
+
+            AddChild(textBox, 50);
+            AddChild(BaseComponent, 49);
+
+
+            textBox.SetPositionFromAnchor(Position, UIAnchorPosition.Center);
 
 
             if (boxColor != default)
             {
                 BaseColor = boxColor;
-                textBox.SetColor(boxColor);
+                BaseComponent.SetColor(boxColor);
             }
             else
             {
-                textBox.SetColor(BaseColor);
+                BaseComponent.SetColor(BaseColor);
             }
+
             if (textColor != default)
             {
-                textBox.SetTextColor(textColor);
+                textBox.SetColor(textColor);
             }
 
             ValidateObject(this);
@@ -81,7 +100,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void SetColor(Vector4 color)
         {
             if (!Selected)
-                TextBox.SetColor(color);
+                BaseComponent.SetColor(color);
         }
     }
 }

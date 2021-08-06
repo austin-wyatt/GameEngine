@@ -36,6 +36,9 @@ namespace MortalDungeon.Game.Abilities
         WeakMagic, //low damage but debuffs (dispel, slow, weakness),
         Fire, //high damage but easily resisted (burns)
         Ice, //lowish damage but consistent debuffs (more extreme slow, freeze insta kill, AA shatter) 
+
+        Bleed, //hurts positive shields but doesn't get amplified by negative shields
+        Poison //unaffected by shields
     }
     public class Ability
     {
@@ -74,6 +77,9 @@ namespace MortalDungeon.Game.Abilities
         public bool CanTargetGround = true;
         public bool CanTargetTerrain = false;
 
+        public bool CanTargetThroughFog = false;
+        public bool CanTargetDeadUnits = false;
+
         public float EnergyCost = 0;
         public int Range = 0;
         public int CurrentRange = 0;
@@ -104,23 +110,34 @@ namespace MortalDungeon.Game.Abilities
                 string energyString = GetEnergyCost().ToString("n1").Replace(".0", "");
                 float textScale = 0.05f;
 
-                TextBox energyCostBox = new TextBox(new Vector3(), textBoxSize, energyString, textScale, true, new UIDimensions(7.5f, 0));
-                energyCostBox.BaseComponent.MultiTextureData.MixTexture = false;
-                energyCostBox.SetColor(Colors.UILightGray);
-                energyCostBox.SetTextColor(Colors.UITextBlack);
 
-                UIScale textDimensions = energyCostBox.TextField.GetTextDimensions();
-                textBoxSize = energyCostBox.GetDimensions();
-                //Console.WriteLine(textDimensions);
+                TextComponent energyCostBox = new TextComponent();
+                energyCostBox.SetColor(Colors.UITextBlack);
+                energyCostBox.SetText(energyString);
+                energyCostBox.SetTextScale(textScale);
 
-                if (textDimensions.X > textBoxSize.X) 
+                UIScale textDimensions = energyCostBox.GetDimensions();
+
+                if (textDimensions.X > textDimensions.Y) 
                 {
-                    energyCostBox.TextField.SetTextScale((textScale - 0.003f) * textBoxSize.X / textDimensions.X);
+                    energyCostBox.SetTextScale((textScale - 0.004f) * textDimensions.Y / textDimensions.X);
                 }
 
-                energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
+                UIBlock energyCostBackground = new UIBlock();
+                energyCostBackground.SetColor(Colors.UILightGray);
+                energyCostBackground.MultiTextureData.MixTexture = false;
 
-                icon.AddChild(energyCostBox);
+                energyCostBackground.SetSize(textBoxSize);
+
+                energyCostBackground.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
+                energyCostBox.SetPositionFromAnchor(energyCostBackground.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+
+                //energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
+
+                icon.AddChild(energyCostBox, 50);
+                icon.AddChild(energyCostBackground, 49);
+
+                
             }
 
             return icon;
@@ -225,6 +242,9 @@ namespace MortalDungeon.Game.Abilities
         {
             for (int i = 0; i < validTiles.Count; i++)
             {
+                if (i < 0)
+                    i = 0;
+
                 if (validTiles[i].TileIndex == CastingUnit.TileMapPosition && !CanTargetSelf)
                 {
                     validTiles.RemoveAt(i);
@@ -238,7 +258,7 @@ namespace MortalDungeon.Game.Abilities
                     CastingUnit.Target();
                 }
 
-                if (validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.Team] && trimFog) 
+                if ((validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.Team] && trimFog) || (validTiles[i].InFog && !CanTargetThroughFog)) 
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -250,6 +270,12 @@ namespace MortalDungeon.Game.Abilities
                     if (units[j].TileMapPosition == validTiles[i].TileIndex)
                     {
                         if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team == UnitTeam.Enemy))
+                        {
+                            validTiles.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                        else if (units[j].Dead && !CanTargetDeadUnits) 
                         {
                             validTiles.RemoveAt(i);
                             i--;
