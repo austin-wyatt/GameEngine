@@ -299,21 +299,27 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 map.EndHover();
 
-                ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar, (tile) =>
+                map.TileChunks.ForEach(chunk =>
                 {
-                    if (tile.Hoverable)
+                    if (!chunk.Cull) 
                     {
-                        map.HoverTile(tile);
-                        if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
+                        ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar, (tile) =>
                         {
-                            _selectedAbility.OnHover(tile, map);
-                        }
-                    }
+                            if (tile.Hoverable)
+                            {
+                                map.HoverTile(tile);
+                                if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
+                                {
+                                    _selectedAbility.OnHover(tile, map);
+                                }
+                            }
 
-                    if (tile.HasTimedHoverEffect)
-                    {
-                        _hoverTimer.Restart();
-                        _hoveredObject = tile;
+                            if (tile.HasTimedHoverEffect)
+                            {
+                                _hoverTimer.Restart();
+                                _hoveredObject = tile;
+                            }
+                        });
                     }
                 });
             });

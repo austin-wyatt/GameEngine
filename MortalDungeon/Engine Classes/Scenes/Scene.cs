@@ -240,10 +240,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (!GetBit(_interceptClicks, ObjectType.Tile))
                     _tileMaps.ForEach(map =>
                     {
-                        ObjectCursorBoundsCheck(map.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                        map.TileChunks.ForEach(chunk =>
                         {
-                            onTileClicked(map, foundObj);
-                            clickProcessed = true;
+                            if (!chunk.Cull)
+                            {
+                                ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                                {
+                                    onTileClicked(map, foundObj);
+                                    clickProcessed = true;
+                                });
+                            }
                         });
                     });
 

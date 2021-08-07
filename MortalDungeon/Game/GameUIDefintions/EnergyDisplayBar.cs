@@ -170,42 +170,44 @@ namespace MortalDungeon.Game.UI
                 return;
             }
 
-            //if (energyToHover != EnergyHovered) 
-            //{
-                if (_currentHoveredIndex > CurrentMaxEnergy - 1)
-                    _currentHoveredIndex = (int)CurrentMaxEnergy - 1;
+            if (_currentHoveredIndex > CurrentMaxEnergy - 1)
+                _currentHoveredIndex = (int)CurrentMaxEnergy - 1;
 
-                int amountToHover = (int)(CurrentEnergy - energyToHover);
+            int amountToHover = (int)(CurrentEnergy - energyToHover);
 
-                EnergyHovered = energyToHover;
+            if (CurrentEnergy - (int)CurrentEnergy < 0.01f) 
+            {
+                CurrentEnergy = (int)CurrentEnergy;
+            }
 
-                for (int i = (int)CurrentMaxEnergy - 1; i >= 0; i--) 
+            EnergyHovered = energyToHover;
+
+            for (int i = (int)CurrentMaxEnergy - 1; i >= 0; i--) 
+            {
+                if (i < CurrentEnergy)
                 {
-                    if (i <= (int)CurrentEnergy)
+                    if (i >= CurrentMaxEnergy)
+                        i--;
+
+                    if (i >= amountToHover && i >= 0)
                     {
-                        if (i >= CurrentMaxEnergy)
-                            i--;
-
-                        if (i >= amountToHover && i >= 0)
+                        if (!Pips[i].HoverAnimation.Finished)
                         {
-                            if (!Pips[i].HoverAnimation.Finished)
-                            {
-                                Pips[i].PlayHoverAnimation();
-                            }
+                            Pips[i].PlayHoverAnimation();
+                        }
 
-                            _currentHoveredIndex = i;
-                        }
-                        else
-                        {
-                            Pips[i].EndHoverAnimation();
-                        }
+                        _currentHoveredIndex = i;
                     }
-                    else 
+                    else
                     {
                         Pips[i].EndHoverAnimation();
                     }
                 }
-            //}
+                else 
+                {
+                    Pips[i].EndHoverAnimation();
+                }
+            }
         }
 
         //public void SetEnergyFromUnit(Unit unit) 
