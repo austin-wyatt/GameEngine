@@ -39,7 +39,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
             
-            if (unit.Team != CastingUnit.Team && AffectedTiles.FindIndex(t => t.TileIndex == unit.TileMapPosition) != -1) 
+            if (unit.Team != CastingUnit.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.TileMapPosition) != -1) 
             {
                 SelectedUnit = unit;
                 EnactEffect();

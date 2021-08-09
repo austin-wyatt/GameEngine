@@ -28,8 +28,7 @@ namespace MortalDungeon.Game.Tiles
         public Vector4 DefaultColor = default;
         public BaseTileAnimationType DefaultAnimation = BaseTileAnimationType.SolidWhite;
         public BaseTileAnimationType CurrentAnimation = BaseTileAnimationType.SolidWhite;
-        public int TileIndex = 0;
-        public TileMap TileMap; //indicates which tilemap this tile belongs to (in case multiple tile maps are ever used at once
+        public TilePoint TilePoint;
 
         public new ObjectType ObjectType = ObjectType.Tile;
 
@@ -50,16 +49,16 @@ namespace MortalDungeon.Game.Tiles
 
         public BaseTile AttachedTile; //for selection tiles 
 
-        public BaseTile() 
+        public BaseTile()
         {
             FillExploredDictionary();
         }
-        public BaseTile(Vector3 position, int id, TileMap map)
+        public BaseTile(Vector3 position, TilePoint point)
         {
             Name = "BaseTile";
-            TileMap = map;
+            TilePoint = point;
 
-            BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, id, "Base Tile " + id, default, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, ObjectID, "Base Tile " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
             DefaultColor = BaseTile.BaseFrame.Color;
             BaseTile.BaseFrame.CameraPerspective = true;
 
@@ -70,8 +69,6 @@ namespace MortalDungeon.Game.Tiles
             Hoverable = true;
             Clickable = true;
 
-            TileIndex = id;
-
             BaseObjects.Add(BaseTile);
             _tileObject = BaseTile;
 
@@ -80,6 +77,8 @@ namespace MortalDungeon.Game.Tiles
             FillExploredDictionary();
             SetPosition(position);
         }
+
+        public static implicit operator TilePoint(BaseTile tile) => tile.TilePoint;
 
         public void SetAnimation(AnimationType type, Action onFinish = null)
         {
@@ -93,13 +92,13 @@ namespace MortalDungeon.Game.Tiles
             CurrentAnimation = type;
         }
 
-        public Vector4 SetFogColor() 
+        public Vector4 SetFogColor()
         {
             SetColor(DefaultColor - _fogColorOffset);
             return DefaultColor - _fogColorOffset;
         }
 
-        protected void FillExploredDictionary() 
+        protected void FillExploredDictionary()
         {
             foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
             {
@@ -108,7 +107,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally) 
+        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally)
         {
             InFog = inFog;
             MultiTextureData.MixTexture = inFog;
@@ -117,26 +116,26 @@ namespace MortalDungeon.Game.Tiles
             {
                 _tileObject.OutlineParameters.InlineThickness = 0;
             }
-            else 
+            else
             {
                 _tileObject.OutlineParameters.InlineThickness = _tileObject.OutlineParameters.BaseInlineThickness;
             }
         }
 
-        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.Ally) 
+        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.Ally)
         {
             Explored[team] = explored;
             if (explored)
             {
                 MultiTextureData.MixPercent = 0.5f;
             }
-            else 
+            else
             {
                 MultiTextureData.MixPercent = 1f;
             }
         }
 
-        public void SetHovered(bool hovered) 
+        public void SetHovered(bool hovered)
         {
             Hovered = hovered;
 
@@ -145,7 +144,7 @@ namespace MortalDungeon.Game.Tiles
                 _tileObject.OutlineParameters.OutlineThickness = _tileObject.OutlineParameters.BaseOutlineThickness;
                 _tileObject.OutlineParameters.OutlineColor = Colors.Red;
             }
-            else 
+            else
             {
                 _tileObject.OutlineParameters.OutlineThickness = 0;
             }
@@ -184,6 +183,55 @@ namespace MortalDungeon.Game.Tiles
 
                 SetHovered(false);
             }
+        }
+    }
+
+    public class TilePoint
+    {
+        public int X;
+        public int Y;
+
+        public TileMap ParentTileMap;
+
+        public bool _visited = false; //using for pathing
+
+        public TilePoint(int x, int y, TileMap map) 
+        {
+            X = x;
+            Y = y;
+            ParentTileMap = map;
+        }
+
+        public TilePoint(Vector2i coords, TileMap map)
+        {
+            X = coords.X;
+            Y = coords.Y;
+            ParentTileMap = map;
+        }
+
+        public BaseTile GetTile() 
+        {
+            return ParentTileMap[this];
+        }
+
+        public static bool operator ==(TilePoint a, TilePoint b) => a.X == b.X && a.Y == b.Y && a.ParentTileMap.TileMapCoords == b.ParentTileMap.TileMapCoords;
+        public static bool operator !=(TilePoint a, TilePoint b) => !(a == b);
+
+        public override string ToString()
+        {
+            return "TilePoint {" + X + ", " + Y + "}";
+        }
+        public override bool Equals(object obj)
+        {
+            return obj is TilePoint point &&
+                   X == point.X &&
+                   Y == point.Y &&
+                   EqualityComparer<TileMap>.Default.Equals(ParentTileMap, point.ParentTileMap);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y, ParentTileMap);
         }
     }
 }

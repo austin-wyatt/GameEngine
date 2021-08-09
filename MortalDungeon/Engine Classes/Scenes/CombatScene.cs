@@ -181,7 +181,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
 
             _selectedAbility = ability;
-            ability.OnSelect(this, _tileMaps[0]);
+            ability.OnSelect(this, ability.CastingUnit.GetTileMap());
 
             _onSelectAbilityActions.ForEach(a => a?.Invoke(ability));
         }
@@ -230,7 +230,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 if (unit.Team == currentTeam)
                 {
-                    List<BaseTile> tiles = _tileMaps[0].GetVisionInRadius(unit.TileMapPosition, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
+                    List<BaseTile> tiles = unit.GetTileMap().GetVisionInRadius(unit.TileMapPosition, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
 
                     tiles.ForEach(tile =>
                     {
@@ -243,21 +243,27 @@ namespace MortalDungeon.Engine_Classes.Scenes
             HideObjectsInFog();
         }
 
-        public void FillInAllFog(UnitTeam currentTeam) 
+        public void FillInAllFog(UnitTeam currentTeam)
         {
-            _tileMaps[0].Tiles.ForEach(tile =>
+            _tileMapController.TileMaps.ForEach(m =>
             {
-                tile.MultiTextureData.MixedTexture = _normalFogTexture;
-                tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
-                tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
+                if (!m.Render)
+                    return;
 
-                //foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
-                //{
-                //tile.SetExplored(tile.Explored[team], team);
-                //}
+                m.Tiles.ForEach(tile =>
+                {
+                    tile.MultiTextureData.MixedTexture = _normalFogTexture;
+                    tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
+                    tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
 
-                tile.SetExplored(tile.Explored[currentTeam], currentTeam);
-                tile.SetFog(true, currentTeam);
+                    //foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
+                    //{
+                    //tile.SetExplored(tile.Explored[team], team);
+                    //}
+
+                    tile.SetExplored(tile.Explored[currentTeam], currentTeam);
+                    tile.SetFog(true, currentTeam);
+                });
             });
         }
 
@@ -267,7 +273,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 _units.ForEach(unit =>
                 {
-                    if (_tileMaps[0].Tiles[unit.TileMapPosition].InFog)
+                    if (unit.TileMapPosition.InFog)
                     {
                         unit.SetRender(false);
                     }
@@ -281,7 +287,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 units.ForEach(unit =>
                 {
-                    if (_tileMaps[0].Tiles[unit.TileMapPosition].InFog)
+                    if (unit.TileMapPosition.InFog)
                     {
                         unit.SetRender(false);
                     }
@@ -295,8 +301,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
-            _tileMaps.ForEach(map =>
+            _tileMapController.TileMaps.ForEach(map =>
             {
+                if (!map.Render)
+                    return;
+
                 map.EndHover();
 
                 map.TileChunks.ForEach(chunk =>
@@ -404,7 +413,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             if (_selectedAbility == null)
             {
-                if (unit.Selectable && !GetTile(unit.TileMapPosition).InFog)
+                if (unit.Selectable && !unit.TileMapPosition.InFog)
                     SelectUnit(unit);
                 
 
@@ -435,11 +444,5 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Action<Ability>> _onSelectAbilityActions = new List<Action<Ability>>();
         public List<Action> _onDeselectAbilityActions = new List<Action>();
         public List<Action<Ability>> _onAbilityCastActions = new List<Action<Ability>>();
-
-
-        public BaseTile GetTile(int tileIndex) 
-        {
-            return _tileMaps[0][tileIndex];
-        }
     }
 }

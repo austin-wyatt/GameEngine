@@ -1,0 +1,89 @@
+﻿using OpenTK.Mathematics;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace MortalDungeon.Game.Tiles
+{
+    public class TileMapController
+    {
+        public List<TileMap> TileMaps = new List<TileMap>();
+
+        public TileMapController() 
+        {
+
+        }
+
+        public void AddTileMap(TileMapPoint point, TileMap map) 
+        {
+            map.TileMapCoords = point;
+            map.Controller = this;
+            TileMaps.Add(map);
+
+            PositionTileMaps();
+            map.InitializeTileChunks();
+        }
+
+        public void PositionTileMaps() 
+        {
+            if (TileMaps.Count == 0)
+                return;
+
+            Vector3 tileMapDimensions = TileMaps[0].GetTileMapDimensions();
+
+            TileMaps.ForEach(map =>
+            {
+                Vector3 pos = new Vector3(tileMapDimensions.X * map.TileMapCoords.X, tileMapDimensions.Y * map.TileMapCoords.Y, 0);
+                map.SetPosition(pos);
+            });
+        }
+
+        public void RecreateTileChunks() 
+        {
+            TileMaps.ForEach(map =>
+            {
+                map.InitializeTileChunks();
+            });
+        }
+
+        internal bool IsValidTile(int xIndex, int yIndex, TileMap map)
+        {
+            int currX;
+            int currY;
+            for (int i = 0; i < TileMaps.Count; i++) 
+            {
+                currX = xIndex + TileMaps[i].Width * (map.TileMapCoords.X - TileMaps[i].TileMapCoords.X);
+                currY = yIndex + TileMaps[i].Height * (map.TileMapCoords.Y - TileMaps[i].TileMapCoords.Y);
+
+                if (currX >= 0 && currY >= 0 && currX < map.Width && currY < map.Height) 
+                {
+                    return true;
+                }
+                    
+            }
+
+            return false;
+        }
+
+        internal BaseTile GetTile(int xIndex, int yIndex, TileMap map)
+        {
+            int currX;
+            int currY;
+            for (int i = 0; i < TileMaps.Count; i++)
+            {
+                currX = xIndex + TileMaps[i].Width * (map.TileMapCoords.X - TileMaps[i].TileMapCoords.X);
+                currY = yIndex + TileMaps[i].Height * (map.TileMapCoords.Y - TileMaps[i].TileMapCoords.Y);
+
+                if (currX >= 0 && currY >= 0 && currX < map.Width && currY < map.Height)
+                    return TileMaps[i].GetLocalTile(currX, currY);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        internal void ClearAllVisitedTiles()
+        {
+            TileMaps.ForEach(m => m.Tiles.ForEach(tile => tile.TilePoint._visited = false)); //clear visited tiles
+        }
+    }
+}

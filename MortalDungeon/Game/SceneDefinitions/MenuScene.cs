@@ -33,14 +33,35 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.Load(camera, cursorObject, mouseRay);
 
 
-            TileMap tileMap = new TileMap(default) { Width = 50, Height = 50 };
-            //TileMap tileMap = new TileMap(default) { Width = 5, Height = 5 };
-
+            TileMap tileMap = new TileMap(default, new TileMapPoint(0,0)) { Width = 50, Height = 50 };
             tileMap.PopulateTileMap();
-            _tileMaps.Add(tileMap);
+
+            _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
 
 
-            Guy guy = new Guy(tileMap.GetPositionOfTile(0) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 0) { Clickable = true };
+            TileMap tileMap2 = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
+
+            tileMap2.PopulateTileMap();
+
+            _tileMapController.AddTileMap(new TileMapPoint(-1, 0), tileMap2);
+
+
+            TileMap tileMap3 = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
+
+            tileMap3.PopulateTileMap();
+
+            _tileMapController.AddTileMap(new TileMapPoint(-2, 0), tileMap3);
+
+
+            TileMap tileMap4 = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
+
+            tileMap4.PopulateTileMap();
+
+            _tileMapController.AddTileMap(new TileMapPoint(0, -1), tileMap4);
+
+
+
+            Guy guy = new Guy(tileMap[0, 0].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 0]) { Clickable = true };
             guy.SetTeam(UnitTeam.Ally);
             guy.CurrentTileMap = tileMap;
             guy._movementAbility.EnergyCost = 0.3f;
@@ -51,7 +72,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             _units.Add(guy);
 
-            Guy badGuy = new Guy(tileMap.GetPositionOfTile(3) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 3) { Clickable = true };
+            Guy badGuy = new Guy(tileMap[0, 3].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 3]) { Clickable = true };
             badGuy.SetTeam(UnitTeam.Enemy);
             badGuy.CurrentTileMap = tileMap;
             badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
@@ -100,7 +121,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             badGuy.SetShields(5);
 
 
-            Skeleton skeleton = new Skeleton(tileMap.GetPositionOfTile(55) + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, 55) { };
+            Skeleton skeleton = new Skeleton(tileMap[1, 5].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[1, 5]) { };
             skeleton.SetTeam(UnitTeam.Neutral);
             UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
 
@@ -161,7 +182,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.onMouseDown(e);
         }
 
-        private int tilePosition = 0;
         public override bool onKeyUp(KeyboardKeyEventArgs e)
         {
             if (!base.onKeyUp(e)) 
@@ -173,39 +193,14 @@ namespace MortalDungeon.Game.SceneDefinitions
             //Console.WriteLine(badGuy.Position);
             if (_focusedObj == null) 
             {
-                if (e.Key == Keys.Right)
-                {
-                    tilePosition += _tileMaps[0].Height;
-                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-                }
-                if (e.Key == Keys.Left)
-                {
-                    tilePosition -= _tileMaps[0].Height;
-                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-                }
-                if (e.Key == Keys.Up)
-                {
-                    tilePosition -= 1;
-                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-                }
-                if (e.Key == Keys.Down)
-                {
-                    tilePosition += 1;
-                    Vector3 position = _tileMaps[0].GetPositionOfTile(tilePosition);
-                    badGuy.BaseObjects[0].SetAnimation(AnimationType.Die, () => badGuy.BaseObjects[0].SetAnimation(AnimationType.Idle));
-                }
-
-                if (e.Key == Keys.Equal)
-                {
-                    EnergyDisplayBar.AddEnergy(1);
-                }
-                if (e.Key == Keys.Minus)
-                {
-                    EnergyDisplayBar.AddEnergy(-1);
-                }
+                //if (e.Key == Keys.Equal)
+                //{
+                //    EnergyDisplayBar.AddEnergy(1);
+                //}
+                //if (e.Key == Keys.Minus)
+                //{
+                //    EnergyDisplayBar.AddEnergy(-1);
+                //}
             }
 
             return true;
@@ -331,7 +326,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             {
                 //validTiles = map.FindValidTilesInRadius(tile.TileIndex, 6, new List<TileClassification> { TileClassification.Ground });
                 //Unit unit = _units[0];
-                selectedTiles = map.GetVisionInRadius(tile.TileIndex, 6);
+                selectedTiles = map.GetVisionInRadius(tile.TilePoint, 6);
                 selectedTiles.ForEach(t =>
                 {
                     if (!t.BlocksVision)
@@ -344,7 +339,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             else if (KeyboardState.IsKeyDown(Keys.RightShift))
             {
                 Unit unit = _units[0];
-                map.GetLineOfTiles(unit.TileMapPosition, tile.TileIndex).ForEach(t =>
+                map.GetLineOfTiles(unit.TileMapPosition, tile.TilePoint).ForEach(t =>
                 {
                     t.SetAnimation(AnimationType.Idle);
                     t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
@@ -367,7 +362,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
 
                 });
-                selectedTiles = map.GetPathToPoint(_units[0].TileMapPosition, tile.TileIndex, 100, new List<TileClassification>() { TileClassification.Ground }, _units);
+                selectedTiles = map.GetPathToPoint(_units[0].TileMapPosition, tile.TilePoint, 100, new List<TileClassification>() { TileClassification.Ground }, _units);
 
                 if (selectedTiles.Count == 0)
                 {

@@ -21,7 +21,7 @@ namespace MortalDungeon.Game.Units
 
     public class Unit : GameObject //main unit class. Tracks position on tilemap
     {
-        public int TileMapPosition = -1; //can be anything from -1 to infinity. If the value is below 0 then it is not being positioned on the tilemap
+        public BaseTile TileMapPosition;
         public Dictionary<int, Ability> Abilities = new Dictionary<int, Ability>();
         public List<Buff> Buffs = new List<Buff>();
 
@@ -32,8 +32,8 @@ namespace MortalDungeon.Game.Units
         public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
         public float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
         public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
-        public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.Speed.Multiplier * seed);
-        public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.Speed.Additive + seed);
+        public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.SpeedModifier.Multiplier * seed);
+        public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.SpeedModifier.Additive + seed);
 
 
 
@@ -117,6 +117,11 @@ namespace MortalDungeon.Game.Units
             }
 
             return abilities;
+        }
+
+        public TileMap GetTileMap() 
+        {
+            return TileMapPosition.TilePoint.ParentTileMap;
         }
 
         public override void SetPosition(Vector3 position)

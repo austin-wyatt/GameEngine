@@ -37,7 +37,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
     {
         public List<GameObject> _genericObjects = new List<GameObject>(); //GameObjects that are not Units and are being rendered independently
         public List<Text> _text = new List<Text>();
-        public List<TileMap> _tileMaps = new List<TileMap>(); //The map/maps to render
+        public TileMapController _tileMapController = new TileMapController();
         public List<Unit> _units = new List<Unit>(); //The units to render
         public List<UIObject> _UI = new List<UIObject>();
 
@@ -80,9 +80,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             _genericObjects = new List<GameObject>();
             _text = new List<Text>();
-            _tileMaps = new List<TileMap>(); //The map/maps to render
             _units = new List<Unit>(); //The units to render
             _UI = new List<UIObject>();
+            _tileMapController = new TileMapController();
 
             MessageCenter = new MessageCenter(SceneID);
 
@@ -238,8 +238,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     return; //stop further clicks from being processed
 
                 if (!GetBit(_interceptClicks, ObjectType.Tile))
-                    _tileMaps.ForEach(map =>
+                    _tileMapController.TileMaps.ForEach(map =>
                     {
+                        if (!map.Render)
+                            return;
+
                         map.TileChunks.ForEach(chunk =>
                         {
                             if (!chunk.Cull)
@@ -577,7 +580,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 case ObjectType.UI:
                     return _UI as List<T>;
                 case ObjectType.Tile:
-                    return _tileMaps as List<T>;
+                    return _tileMapController.TileMaps as List<T>;
                 case ObjectType.Unit:
                     return _units as List<T>;
                 case ObjectType.Text:

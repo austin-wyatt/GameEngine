@@ -19,11 +19,13 @@ namespace MortalDungeon.Game.Abilities
 
         public BuffModifier EnergyCost = new BuffModifier();
 
-        public BuffModifier Speed = new BuffModifier();
+        public BuffModifier SpeedModifier = new BuffModifier();
 
         public BuffModifier DamageReduction = new BuffModifier();
 
         public BuffModifier EnergyBoost = new BuffModifier();
+
+        public BuffModifier SoundModifier = new BuffModifier();
 
         public Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
 

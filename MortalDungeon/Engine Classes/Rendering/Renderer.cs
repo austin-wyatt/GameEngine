@@ -990,6 +990,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #region Tile queue
         public static void QueueTileObjectsForRender(List<BaseTile> objList)
         {
+            if (objList.Count == 0)
+                return;
+
             _TileRenderQueue.Add(objList);
         }
         public static void RenderTileQueue() 

@@ -92,8 +92,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         Renderer.LoadTextureFromGameObj(obj);
                     });
 
-                    Scenes[u]._tileMaps.ForEach(obj =>
+                    Scenes[u]._tileMapController.TileMaps.ForEach(obj =>
                     {
+                        if (!obj.Render)
+                            return;
+
                         if (obj.Tiles.Count > 0) 
                         {
                             obj.Tiles.ForEach(tile =>
@@ -232,7 +235,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 //ObjectCulling.CullListOfGameObjects(scene._genericObjects);
 
 
-                scene._tileMaps.ForEach(map =>
+                scene._tileMapController.TileMaps.ForEach(map =>
                 {
                     //ObjectCulling.CullListOfGameObjects(map.Tiles);
 

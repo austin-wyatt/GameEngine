@@ -46,7 +46,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
 
-            if (AffectedTiles.FindIndex(t => t.TileIndex == unit.TileMapPosition) != -1)
+            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.TileMapPosition) != -1)
             {
                 SelectedUnit = unit;
                 EnactEffect();

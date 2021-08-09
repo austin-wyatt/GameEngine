@@ -3,6 +3,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace MortalDungeon.Game.Units
 {
     public class Skeleton : Unit
     {
-        public Skeleton(Vector3 position, CombatScene scene, int tileMapPosition, string name = "Skeleton") : base(scene)
+        public Skeleton(Vector3 position, CombatScene scene, BaseTile tileMapPosition, string name = "Skeleton") : base(scene)
         {
             Name = name;
             TileMapPosition = tileMapPosition;

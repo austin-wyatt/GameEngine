@@ -85,6 +85,7 @@ namespace MortalDungeon.Game.Abilities
         public int CurrentRange = 0;
         public float Damage = 0;
         public int Duration = 0;
+        public float Sound = 0;
 
         public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
 
@@ -245,7 +246,7 @@ namespace MortalDungeon.Game.Abilities
                 if (i < 0)
                     i = 0;
 
-                if (validTiles[i].TileIndex == CastingUnit.TileMapPosition && !CanTargetSelf)
+                if (validTiles[i].TilePoint == CastingUnit.TileMapPosition && !CanTargetSelf)
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -267,7 +268,7 @@ namespace MortalDungeon.Game.Abilities
 
                 for (int j = 0; j < units?.Count; j++)
                 {
-                    if (units[j].TileMapPosition == validTiles[i].TileIndex)
+                    if (units[j].TileMapPosition == validTiles[i].TilePoint)
                     {
                         if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team == UnitTeam.Enemy))
                         {

@@ -36,7 +36,7 @@ namespace MortalDungeon
 
         public static bool ShowFPS = true;
         public static bool ShowTicksPerSecond = false;
-        public static bool EnableBoundsTestingTools = false;
+        public static bool EnableBoundsTestingTools = true;
         public static bool ShowCulledChunks = true;
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
@@ -155,13 +155,7 @@ namespace MortalDungeon
 
             _sceneController = new SceneController(_camera);
 
-            Scene escapeMenuScene = new EscapeMenuScene(() => Close());
-
-            int escapeMenuID = _sceneController.AddScene(escapeMenuScene);
-
-            Scene menuScene = new MenuScene();
-
-            int menuSceneID = _sceneController.AddScene(menuScene);
+            
 
             if (WindowConstants.EnableBoundsTestingTools) 
             {
@@ -170,9 +164,20 @@ namespace MortalDungeon
                 int boundSceneID = _sceneController.AddScene(boundScene);
                 _sceneController.LoadScene(boundSceneID, _camera, _cursorObject, _mouseRay);
             }
+            else 
+            {
+                Scene escapeMenuScene = new EscapeMenuScene(() => Close());
 
-            _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
-            _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
+                int escapeMenuID = _sceneController.AddScene(escapeMenuScene);
+
+                Scene menuScene = new MenuScene();
+
+                int menuSceneID = _sceneController.AddScene(menuScene);
+
+                _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
+                _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
+            }
+            
 
             _sceneController.LoadTextures();
             LoadTextures();
@@ -410,7 +415,7 @@ namespace MortalDungeon
 
                     Task tileMapTask = new Task(() =>
                     {
-                        scene._tileMaps.ForEach(tileMap =>
+                        scene._tileMapController.TileMaps.ForEach(tileMap =>
                         {
                             tileMap.Tick();
                         });
