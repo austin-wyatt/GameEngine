@@ -111,6 +111,28 @@ namespace MortalDungeon.Game.UI
             {
                 Scene.CompleteTurn();
                 Scene.DeselectUnits();
+
+                //TEMP
+                //Random rnd = new Random();
+                //float blue = (float)rnd.NextDouble();
+                //float green = (float)rnd.NextDouble();
+                //float red = (float)rnd.NextDouble();
+                //for (int i = 0; i < SceneDefinitions.BoundsTestScene.imageData.Length; i++) 
+                //{
+                //    if (i % 4 == 0) 
+                //    {
+                //        SceneDefinitions.BoundsTestScene.imageData[i] = red;
+                //    }
+                //    else if ((i + 2) % 4 == 0)
+                //    {
+                //        SceneDefinitions.BoundsTestScene.imageData[i] = green;
+                //    }
+                //    else if ((i + 3) % 4 == 0)
+                //    {
+                //        SceneDefinitions.BoundsTestScene.imageData[i] = blue;
+                //    }
+                //}
+                //SceneDefinitions.BoundsTestScene.tex.UpdateTextureArray();
             };
 
             AddChild(endTurnButton, 100);

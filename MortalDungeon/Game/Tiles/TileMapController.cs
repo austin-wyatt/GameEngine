@@ -2,16 +2,30 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
+using System.Drawing.Imaging;
+using MortalDungeon.Engine_Classes.MiscOperations;
 
 namespace MortalDungeon.Game.Tiles
 {
     public class TileMapController
     {
         public List<TileMap> TileMaps = new List<TileMap>();
+        public static DirectBitmap TileBitmap;
 
         public TileMapController() 
         {
+            Bitmap tempMap = new Bitmap("Resources/TileSpritesheet.png");
 
+            TileBitmap = new DirectBitmap(tempMap.Width, tempMap.Height);
+
+            for (int y = 0; y < tempMap.Height; y++) 
+            {
+                for (int x = 0; x < tempMap.Width; x++)
+                {
+                    TileBitmap.SetPixel(x, y, tempMap.GetPixel(x, y));
+                }
+            }
         }
 
         public void AddTileMap(TileMapPoint point, TileMap map) 

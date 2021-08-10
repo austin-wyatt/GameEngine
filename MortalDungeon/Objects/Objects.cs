@@ -13,7 +13,9 @@ namespace MortalDungeon.Objects
         UISpritesheet,
         IconSpritesheet,
 
-        FogTexture
+        FogTexture,
+
+        DynamicTexture
     }
     public class TextureInfo
     {

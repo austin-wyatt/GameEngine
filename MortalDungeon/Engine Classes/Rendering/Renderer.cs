@@ -725,6 +725,38 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     {
                         for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
                         {
+                            if (entry.Value.Frames[o].TextureReference == null || entry.Value.Frames[o].TextureReference.ImageData == null) 
+                            {
+                                if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                                {
+                                    Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
+                                    newTexture.TextureName = entry.Value.Frames[o].Textures.Textures[p];
+
+                                    _textures.Add(newTexture);
+                                    _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
+
+                                    entry.Value.Frames[o].TextureReference = newTexture;
+                                }
+                                else
+                                {
+                                    entry.Value.Frames[o].TextureReference = new Texture(handle, entry.Value.Frames[o].Textures.Textures[p]);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        public static void LoadTextureFromBaseObject(BaseObject obj, bool nearest = true)
+        {
+            foreach (KeyValuePair<AnimationType, Animation> entry in obj.Animations)
+            {
+                for (int o = 0; o < entry.Value.Frames.Count; o++)
+                {
+                    for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
+                    {
+                        if (entry.Value.Frames[o].TextureReference == null || entry.Value.Frames[o].TextureReference.ImageData == null) 
+                        {
                             if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
                             {
                                 Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
@@ -740,32 +772,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                                 entry.Value.Frames[o].TextureReference = new Texture(handle, entry.Value.Frames[o].Textures.Textures[p]);
                             }
                         }
-                    }
-                }
-            });
-        }
-        public static void LoadTextureFromBaseObject(BaseObject obj, bool nearest = true)
-        {
-            foreach (KeyValuePair<AnimationType, Animation> entry in obj.Animations)
-            {
-                for (int o = 0; o < entry.Value.Frames.Count; o++)
-                {
-                    for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
-                    {
-                        if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
-                        {
-                            Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
-                            newTexture.TextureName = entry.Value.Frames[o].Textures.Textures[p];
 
-                            _textures.Add(newTexture);
-                            _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
-
-                            entry.Value.Frames[o].TextureReference = newTexture;
-                        }
-                        else
-                        {
-                            entry.Value.Frames[o].TextureReference = new Texture(handle, entry.Value.Frames[o].Textures.Textures[p]);
-                        }
                     }
                 }
             }
@@ -808,6 +815,16 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 LoadTextureFromUIObject(obj);
             });
         }
+
+        public static void LoadTextureFromTextureObj(Texture texture, TextureName textureName) 
+        {
+            if(!_loadedTextures.TryGetValue(textureName, out int handle))
+            {
+                _textures.Add(texture);
+                _loadedTextures.Add(textureName, texture.Handle);
+            }
+        }
+
         public static void UnloadTexture(TextureName textureName) 
         {
             Texture tex = _textures.Find(tex => tex.TextureName == textureName);
@@ -848,8 +865,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             RenderQueuedLetters();
 
             RenderQueuedParticles();
-            RenderQueuedObjects();
             RenderTileQueue();
+            RenderQueuedObjects();
 
             //RenderFrameBuffer(MainFBO);
         }

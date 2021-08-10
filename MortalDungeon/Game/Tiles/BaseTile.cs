@@ -18,10 +18,9 @@ namespace MortalDungeon.Game.Tiles
 
     public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc
     {
-        Default,
-        Grass,
-        Tree,
-        Water
+        Default = 21,
+        Grass = 22,
+        Outline = 20
     }
     public class BaseTile : GameObject
     {
@@ -33,7 +32,12 @@ namespace MortalDungeon.Game.Tiles
         public new ObjectType ObjectType = ObjectType.Tile;
 
         public TileClassification TileClassification = TileClassification.Ground;
-        public TileType TileType = TileType.Default;
+
+        public TileType TileType = TileType.Grass;
+        public Vector4 Color; //color that will be applied to the tile on the dynamic texture
+        public Vector4 OutlineColor = Colors.Black; //outline color that will be applied to the dynamic texture
+        public bool Outline = true; //whether the tile should be outline on the dynamic texture
+
 
         public bool InFog = true;
         public bool BlocksVision = false;

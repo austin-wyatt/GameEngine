@@ -97,6 +97,9 @@ namespace MortalDungeon.Game.Tiles
 
         public List<TileChunk> TileChunks = new List<TileChunk>();
 
+        public Texture DynamicTexture;
+        public List<BaseTile> TilesToUpdate = new List<BaseTile>();
+
         private int _maxSelectionTiles = 1000;
         public int _amountOfSelectionTiles = 0;
         private List<BaseTile> _selectionTilePool = new List<BaseTile>();
@@ -348,10 +351,6 @@ namespace MortalDungeon.Game.Tiles
         //}
 
         #region Tile validity checks
-        //public bool IsValidTile(int tileIndex)
-        //{
-        //    return tileIndex >= 0 && tileIndex < Width * Height;
-        //}
         public bool IsValidTile(int xIndex, int yIndex)
         {
             return Controller.IsValidTile(xIndex, yIndex, this);

@@ -169,6 +169,7 @@ namespace MortalDungeon.Engine_Classes
             Center = oldObj.Center;
             Points = oldObj.Points;
             Textures = oldObj.Textures;
+            TextureReference = oldObj.TextureReference;
             RenderType = oldObj.RenderType;
             VerticesDrawOrder = oldObj.VerticesDrawOrder;
             ShaderReference = oldObj.ShaderReference;
