@@ -71,8 +71,6 @@ namespace MortalDungeon.Engine_Classes
             }
             
 
-            // Now, set the wrapping mode. S is for the X axis, and T is for the Y axis.
-            // We set this to Repeat so that textures will repeat when wrapped. Not demonstrated here since the texture coordinates exactly match
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
@@ -153,10 +151,6 @@ namespace MortalDungeon.Engine_Classes
             TextureName = name;
         }
 
-        // Activate texture
-        // Multiple textures can be bound, if your shader needs more than just one.
-        // If you want to do that, use GL.ActiveTexture to set which slot GL.BindTexture binds to.
-        // The OpenGL standard requires that there be at least 16, but there can be more depending on your graphics card.
         public void Use(TextureUnit unit)
         {
             GL.ActiveTexture(unit);

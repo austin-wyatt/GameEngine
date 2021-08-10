@@ -1,45 +1,37 @@
 ﻿using OpenTK.Mathematics;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
     public class Frustum
     {
-        private readonly float[] _clipMatrix = new float[16];
-        private readonly float[,] _frustum = new float[6, 4];
+        private float[] clip_matrix = new float[16];
+        private float[,] frustum = new float[6, 4];
 
-        public const int A = 0;
-        public const int B = 1;
-        public const int C = 2;
-        public const int D = 3;
-
-        public enum ClippingPlane : int
+        public enum ClippingPlanes
         {
-            Right = 0,
-            Left = 1,
-            Bottom = 2,
-            Top = 3,
-            Back = 4,
-            Front = 5
+            Right,
+            Left,
+            Bottom,
+            Top,
+            Back,
+            Front
         }
 
         private void NormalizePlane(float[,] frustum, int side)
         {
-            float magnitude = (float)Math.Sqrt((frustum[side, 0] * frustum[side, 0]) + (frustum[side, 1] * frustum[side, 1])
-                                                + (frustum[side, 2] * frustum[side, 2]));
+            float magnitude = (float)Math.Sqrt((frustum[side, 0] * frustum[side, 0]) + (frustum[side, 1] * frustum[side, 1]) + (frustum[side, 2] * frustum[side, 2]));
             frustum[side, 0] /= magnitude;
             frustum[side, 1] /= magnitude;
             frustum[side, 2] /= magnitude;
             frustum[side, 3] /= magnitude;
         }
 
-        public bool PointVsFrustum(float x, float y, float z)
+        public bool TestPoint(float x, float y, float z)
         {
             for (int i = 0; i < 6; i++)
             {
-                if (this._frustum[i, 0] * x + this._frustum[i, 1] * y + this._frustum[i, 2] * z + this._frustum[i, 3] <= 0.0f)
+                if (frustum[i, 0] * x + frustum[i, 1] * y + frustum[i, 2] * z + frustum[i, 3] <= 0.0f)
                 {
                     return false;
                 }
@@ -47,23 +39,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return true;
         }
 
-        public bool PointVsFrustum(Vector3 location)
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                if (this._frustum[i, 0] * location.X + this._frustum[i, 1] * location.Y + this._frustum[i, 2] * location.Z + this._frustum[i, 3] <= 0.0f)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public bool SphereVsFrustum(float x, float y, float z, float radius)
+        public bool TestSphere(float x, float y, float z, float radius)
         {
             for (int p = 0; p < 6; p++)
             {
-                float d = _frustum[p, 0] * x + _frustum[p, 1] * y + _frustum[p, 2] * z + _frustum[p, 3];
+                float d = frustum[p, 0] * x + frustum[p, 1] * y + frustum[p, 2] * z + frustum[p, 3];
                 if (d <= -radius)
                 {
                     return false;
@@ -72,113 +52,25 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return true;
         }
 
-        public bool SphereVsFrustum(Vector3 location, float radius)
-        {
-            for (int p = 0; p < 6; p++)
-            {
-                float d = _frustum[p, 0] * location.X + _frustum[p, 1] * location.Y + _frustum[p, 2] * location.Z + _frustum[p, 3];
-                if (d <= -radius)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public bool VolumeVsFrustum(float x, float y, float z, float width, float height, float length)
+        public bool TestCube(float x, float y, float z, float size)
         {
             for (int i = 0; i < 6; i++)
             {
-                if (_frustum[i, A] * (x - width) + _frustum[i, B] * (y - height) + _frustum[i, C] * (z - length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x - size) + frustum[i, 1] * (y - size) + frustum[i, 2] * (z - size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x + width) + _frustum[i, B] * (y - height) + _frustum[i, C] * (z - length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x + size) + frustum[i, 1] * (y - size) + frustum[i, 2] * (z - size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x - width) + _frustum[i, B] * (y + height) + _frustum[i, C] * (z - length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x - size) + frustum[i, 1] * (y + size) + frustum[i, 2] * (z - size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x + width) + _frustum[i, B] * (y + height) + _frustum[i, C] * (z - length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x + size) + frustum[i, 1] * (y + size) + frustum[i, 2] * (z - size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x - width) + _frustum[i, B] * (y - height) + _frustum[i, C] * (z + length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x - size) + frustum[i, 1] * (y - size) + frustum[i, 2] * (z + size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x + width) + _frustum[i, B] * (y - height) + _frustum[i, C] * (z + length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x + size) + frustum[i, 1] * (y - size) + frustum[i, 2] * (z + size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x - width) + _frustum[i, B] * (y + height) + _frustum[i, C] * (z + length) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x - size) + frustum[i, 1] * (y + size) + frustum[i, 2] * (z + size) + frustum[i, 3] > 0)
                     continue;
-                if (_frustum[i, A] * (x + width) + _frustum[i, B] * (y + height) + _frustum[i, C] * (z + length) + _frustum[i, D] > 0)
-                    continue;
-                return false;
-            }
-            return true;
-        }
-
-        //public bool VolumeVsFrustum(BoundingVolume volume)
-        //{
-        //    for (int i = 0; i < 6; i++)
-        //    {
-        //        if (_frustum[i, A] * (volume.X - volume.Width) + _frustum[i, B] * (volume.Y - volume.Height) + _frustum[i, C] * (volume.Z - volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X + volume.Width) + _frustum[i, B] * (volume.Y - volume.Height) + _frustum[i, C] * (volume.Z - volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X - volume.Width) + _frustum[i, B] * (volume.Y + volume.Height) + _frustum[i, C] * (volume.Z - volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X + volume.Width) + _frustum[i, B] * (volume.Y + volume.Height) + _frustum[i, C] * (volume.Z - volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X - volume.Width) + _frustum[i, B] * (volume.Y - volume.Height) + _frustum[i, C] * (volume.Z + volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X + volume.Width) + _frustum[i, B] * (volume.Y - volume.Height) + _frustum[i, C] * (volume.Z + volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X - volume.Width) + _frustum[i, B] * (volume.Y + volume.Height) + _frustum[i, C] * (volume.Z + volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        if (_frustum[i, A] * (volume.X + volume.Width) + _frustum[i, B] * (volume.Y + volume.Height) + _frustum[i, C] * (volume.Z + volume.Length) + _frustum[i, D] > 0)
-        //            continue;
-        //        return false;
-        //    }
-        //    return true;
-        //}
-
-        public bool VolumeVsFrustum(Vector3 location, float width, float height, float length)
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                if (_frustum[i, A] * (location.X - width) + _frustum[i, B] * (location.Y - height) + _frustum[i, C] * (location.Z - length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X + width) + _frustum[i, B] * (location.Y - height) + _frustum[i, C] * (location.Z - length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X - width) + _frustum[i, B] * (location.Y + height) + _frustum[i, C] * (location.Z - length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X + width) + _frustum[i, B] * (location.Y + height) + _frustum[i, C] * (location.Z - length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X - width) + _frustum[i, B] * (location.Y - height) + _frustum[i, C] * (location.Z + length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X + width) + _frustum[i, B] * (location.Y - height) + _frustum[i, C] * (location.Z + length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X - width) + _frustum[i, B] * (location.Y + height) + _frustum[i, C] * (location.Z + length) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (location.X + width) + _frustum[i, B] * (location.Y + height) + _frustum[i, C] * (location.Z + length) + _frustum[i, D] > 0)
-                    continue;
-                return false;
-            }
-            return true;
-        }
-
-        public bool CubeVsFrustum(float x, float y, float z, float size)
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                if (_frustum[i, A] * (x - size) + _frustum[i, B] * (y - size) + _frustum[i, C] * (z - size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x + size) + _frustum[i, B] * (y - size) + _frustum[i, C] * (z - size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x - size) + _frustum[i, B] * (y + size) + _frustum[i, C] * (z - size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x + size) + _frustum[i, B] * (y + size) + _frustum[i, C] * (z - size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x - size) + _frustum[i, B] * (y - size) + _frustum[i, C] * (z + size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x + size) + _frustum[i, B] * (y - size) + _frustum[i, C] * (z + size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x - size) + _frustum[i, B] * (y + size) + _frustum[i, C] * (z + size) + _frustum[i, D] > 0)
-                    continue;
-                if (_frustum[i, A] * (x + size) + _frustum[i, B] * (y + size) + _frustum[i, C] * (z + size) + _frustum[i, D] > 0)
+                if (frustum[i, 0] * (x + size) + frustum[i, 1] * (y + size) + frustum[i, 2] * (z + size) + frustum[i, 3] > 0)
                     continue;
                 return false;
             }
@@ -188,61 +80,61 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void CalculateFrustum(Matrix4 projectionMatrix, Matrix4 modelViewMatrix)
         {
-            _clipMatrix[0] = (modelViewMatrix.M11 * projectionMatrix.M11) + (modelViewMatrix.M12 * projectionMatrix.M21) + (modelViewMatrix.M13 * projectionMatrix.M31) + (modelViewMatrix.M14 * projectionMatrix.M41);
-            _clipMatrix[1] = (modelViewMatrix.M11 * projectionMatrix.M12) + (modelViewMatrix.M12 * projectionMatrix.M22) + (modelViewMatrix.M13 * projectionMatrix.M32) + (modelViewMatrix.M14 * projectionMatrix.M42);
-            _clipMatrix[2] = (modelViewMatrix.M11 * projectionMatrix.M13) + (modelViewMatrix.M12 * projectionMatrix.M23) + (modelViewMatrix.M13 * projectionMatrix.M33) + (modelViewMatrix.M14 * projectionMatrix.M43);
-            _clipMatrix[3] = (modelViewMatrix.M11 * projectionMatrix.M14) + (modelViewMatrix.M12 * projectionMatrix.M24) + (modelViewMatrix.M13 * projectionMatrix.M34) + (modelViewMatrix.M14 * projectionMatrix.M44);
+            clip_matrix[0] = (modelViewMatrix.M11 * projectionMatrix.M11) + (modelViewMatrix.M12 * projectionMatrix.M21) + (modelViewMatrix.M13 * projectionMatrix.M31) + (modelViewMatrix.M14 * projectionMatrix.M41);
+            clip_matrix[1] = (modelViewMatrix.M11 * projectionMatrix.M12) + (modelViewMatrix.M12 * projectionMatrix.M22) + (modelViewMatrix.M13 * projectionMatrix.M32) + (modelViewMatrix.M14 * projectionMatrix.M42);
+            clip_matrix[2] = (modelViewMatrix.M11 * projectionMatrix.M13) + (modelViewMatrix.M12 * projectionMatrix.M23) + (modelViewMatrix.M13 * projectionMatrix.M33) + (modelViewMatrix.M14 * projectionMatrix.M43);
+            clip_matrix[3] = (modelViewMatrix.M11 * projectionMatrix.M14) + (modelViewMatrix.M12 * projectionMatrix.M24) + (modelViewMatrix.M13 * projectionMatrix.M34) + (modelViewMatrix.M14 * projectionMatrix.M44);
 
-            _clipMatrix[4] = (modelViewMatrix.M21 * projectionMatrix.M11) + (modelViewMatrix.M22 * projectionMatrix.M21) + (modelViewMatrix.M23 * projectionMatrix.M31) + (modelViewMatrix.M24 * projectionMatrix.M41);
-            _clipMatrix[5] = (modelViewMatrix.M21 * projectionMatrix.M12) + (modelViewMatrix.M22 * projectionMatrix.M22) + (modelViewMatrix.M23 * projectionMatrix.M32) + (modelViewMatrix.M24 * projectionMatrix.M42);
-            _clipMatrix[6] = (modelViewMatrix.M21 * projectionMatrix.M13) + (modelViewMatrix.M22 * projectionMatrix.M23) + (modelViewMatrix.M23 * projectionMatrix.M33) + (modelViewMatrix.M24 * projectionMatrix.M43);
-            _clipMatrix[7] = (modelViewMatrix.M21 * projectionMatrix.M14) + (modelViewMatrix.M22 * projectionMatrix.M24) + (modelViewMatrix.M23 * projectionMatrix.M34) + (modelViewMatrix.M24 * projectionMatrix.M44);
+            clip_matrix[4] = (modelViewMatrix.M21 * projectionMatrix.M11) + (modelViewMatrix.M22 * projectionMatrix.M21) + (modelViewMatrix.M23 * projectionMatrix.M31) + (modelViewMatrix.M24 * projectionMatrix.M41);
+            clip_matrix[5] = (modelViewMatrix.M21 * projectionMatrix.M12) + (modelViewMatrix.M22 * projectionMatrix.M22) + (modelViewMatrix.M23 * projectionMatrix.M32) + (modelViewMatrix.M24 * projectionMatrix.M42);
+            clip_matrix[6] = (modelViewMatrix.M21 * projectionMatrix.M13) + (modelViewMatrix.M22 * projectionMatrix.M23) + (modelViewMatrix.M23 * projectionMatrix.M33) + (modelViewMatrix.M24 * projectionMatrix.M43);
+            clip_matrix[7] = (modelViewMatrix.M21 * projectionMatrix.M14) + (modelViewMatrix.M22 * projectionMatrix.M24) + (modelViewMatrix.M23 * projectionMatrix.M34) + (modelViewMatrix.M24 * projectionMatrix.M44);
 
-            _clipMatrix[8] = (modelViewMatrix.M31 * projectionMatrix.M11) + (modelViewMatrix.M32 * projectionMatrix.M21) + (modelViewMatrix.M33 * projectionMatrix.M31) + (modelViewMatrix.M34 * projectionMatrix.M41);
-            _clipMatrix[9] = (modelViewMatrix.M31 * projectionMatrix.M12) + (modelViewMatrix.M32 * projectionMatrix.M22) + (modelViewMatrix.M33 * projectionMatrix.M32) + (modelViewMatrix.M34 * projectionMatrix.M42);
-            _clipMatrix[10] = (modelViewMatrix.M31 * projectionMatrix.M13) + (modelViewMatrix.M32 * projectionMatrix.M23) + (modelViewMatrix.M33 * projectionMatrix.M33) + (modelViewMatrix.M34 * projectionMatrix.M43);
-            _clipMatrix[11] = (modelViewMatrix.M31 * projectionMatrix.M14) + (modelViewMatrix.M32 * projectionMatrix.M24) + (modelViewMatrix.M33 * projectionMatrix.M34) + (modelViewMatrix.M34 * projectionMatrix.M44);
+            clip_matrix[8] = (modelViewMatrix.M31 * projectionMatrix.M11) + (modelViewMatrix.M32 * projectionMatrix.M21) + (modelViewMatrix.M33 * projectionMatrix.M31) + (modelViewMatrix.M34 * projectionMatrix.M41);
+            clip_matrix[9] = (modelViewMatrix.M31 * projectionMatrix.M12) + (modelViewMatrix.M32 * projectionMatrix.M22) + (modelViewMatrix.M33 * projectionMatrix.M32) + (modelViewMatrix.M34 * projectionMatrix.M42);
+            clip_matrix[10] = (modelViewMatrix.M31 * projectionMatrix.M13) + (modelViewMatrix.M32 * projectionMatrix.M23) + (modelViewMatrix.M33 * projectionMatrix.M33) + (modelViewMatrix.M34 * projectionMatrix.M43);
+            clip_matrix[11] = (modelViewMatrix.M31 * projectionMatrix.M14) + (modelViewMatrix.M32 * projectionMatrix.M24) + (modelViewMatrix.M33 * projectionMatrix.M34) + (modelViewMatrix.M34 * projectionMatrix.M44);
 
-            _clipMatrix[12] = (modelViewMatrix.M41 * projectionMatrix.M11) + (modelViewMatrix.M42 * projectionMatrix.M21) + (modelViewMatrix.M43 * projectionMatrix.M31) + (modelViewMatrix.M44 * projectionMatrix.M41);
-            _clipMatrix[13] = (modelViewMatrix.M41 * projectionMatrix.M12) + (modelViewMatrix.M42 * projectionMatrix.M22) + (modelViewMatrix.M43 * projectionMatrix.M32) + (modelViewMatrix.M44 * projectionMatrix.M42);
-            _clipMatrix[14] = (modelViewMatrix.M41 * projectionMatrix.M13) + (modelViewMatrix.M42 * projectionMatrix.M23) + (modelViewMatrix.M43 * projectionMatrix.M33) + (modelViewMatrix.M44 * projectionMatrix.M43);
-            _clipMatrix[15] = (modelViewMatrix.M41 * projectionMatrix.M14) + (modelViewMatrix.M42 * projectionMatrix.M24) + (modelViewMatrix.M43 * projectionMatrix.M34) + (modelViewMatrix.M44 * projectionMatrix.M44);
+            clip_matrix[12] = (modelViewMatrix.M41 * projectionMatrix.M11) + (modelViewMatrix.M42 * projectionMatrix.M21) + (modelViewMatrix.M43 * projectionMatrix.M31) + (modelViewMatrix.M44 * projectionMatrix.M41);
+            clip_matrix[13] = (modelViewMatrix.M41 * projectionMatrix.M12) + (modelViewMatrix.M42 * projectionMatrix.M22) + (modelViewMatrix.M43 * projectionMatrix.M32) + (modelViewMatrix.M44 * projectionMatrix.M42);
+            clip_matrix[14] = (modelViewMatrix.M41 * projectionMatrix.M13) + (modelViewMatrix.M42 * projectionMatrix.M23) + (modelViewMatrix.M43 * projectionMatrix.M33) + (modelViewMatrix.M44 * projectionMatrix.M43);
+            clip_matrix[15] = (modelViewMatrix.M41 * projectionMatrix.M14) + (modelViewMatrix.M42 * projectionMatrix.M24) + (modelViewMatrix.M43 * projectionMatrix.M34) + (modelViewMatrix.M44 * projectionMatrix.M44);
 
-            _frustum[(int)ClippingPlane.Right, 0] = _clipMatrix[3] - _clipMatrix[0];
-            _frustum[(int)ClippingPlane.Right, 1] = _clipMatrix[7] - _clipMatrix[4];
-            _frustum[(int)ClippingPlane.Right, 2] = _clipMatrix[11] - _clipMatrix[8];
-            _frustum[(int)ClippingPlane.Right, 3] = _clipMatrix[15] - _clipMatrix[12];
-            NormalizePlane(_frustum, (int)ClippingPlane.Right);
+            frustum[(int)ClippingPlanes.Right, 0] = clip_matrix[3] - clip_matrix[0];
+            frustum[(int)ClippingPlanes.Right, 1] = clip_matrix[7] - clip_matrix[4];
+            frustum[(int)ClippingPlanes.Right, 2] = clip_matrix[11] - clip_matrix[8];
+            frustum[(int)ClippingPlanes.Right, 3] = clip_matrix[15] - clip_matrix[12];
+            NormalizePlane(frustum, (int)ClippingPlanes.Right);
 
-            _frustum[(int)ClippingPlane.Left, 0] = _clipMatrix[3] + _clipMatrix[0];
-            _frustum[(int)ClippingPlane.Left, 1] = _clipMatrix[7] + _clipMatrix[4];
-            _frustum[(int)ClippingPlane.Left, 2] = _clipMatrix[11] + _clipMatrix[8];
-            _frustum[(int)ClippingPlane.Left, 3] = _clipMatrix[15] + _clipMatrix[12];
-            NormalizePlane(_frustum, (int)ClippingPlane.Left);
+            frustum[(int)ClippingPlanes.Left, 0] = clip_matrix[3] + clip_matrix[0];
+            frustum[(int)ClippingPlanes.Left, 1] = clip_matrix[7] + clip_matrix[4];
+            frustum[(int)ClippingPlanes.Left, 2] = clip_matrix[11] + clip_matrix[8];
+            frustum[(int)ClippingPlanes.Left, 3] = clip_matrix[15] + clip_matrix[12];
+            NormalizePlane(frustum, (int)ClippingPlanes.Left);
 
-            _frustum[(int)ClippingPlane.Bottom, 0] = _clipMatrix[3] + _clipMatrix[1];
-            _frustum[(int)ClippingPlane.Bottom, 1] = _clipMatrix[7] + _clipMatrix[5];
-            _frustum[(int)ClippingPlane.Bottom, 2] = _clipMatrix[11] + _clipMatrix[9];
-            _frustum[(int)ClippingPlane.Bottom, 3] = _clipMatrix[15] + _clipMatrix[13];
-            NormalizePlane(_frustum, (int)ClippingPlane.Bottom);
+            frustum[(int)ClippingPlanes.Bottom, 0] = clip_matrix[3] + clip_matrix[1];
+            frustum[(int)ClippingPlanes.Bottom, 1] = clip_matrix[7] + clip_matrix[5];
+            frustum[(int)ClippingPlanes.Bottom, 2] = clip_matrix[11] + clip_matrix[9];
+            frustum[(int)ClippingPlanes.Bottom, 3] = clip_matrix[15] + clip_matrix[13];
+            NormalizePlane(frustum, (int)ClippingPlanes.Bottom);
 
-            _frustum[(int)ClippingPlane.Top, 0] = _clipMatrix[3] - _clipMatrix[1];
-            _frustum[(int)ClippingPlane.Top, 1] = _clipMatrix[7] - _clipMatrix[5];
-            _frustum[(int)ClippingPlane.Top, 2] = _clipMatrix[11] - _clipMatrix[9];
-            _frustum[(int)ClippingPlane.Top, 3] = _clipMatrix[15] - _clipMatrix[13];
-            NormalizePlane(_frustum, (int)ClippingPlane.Top);
+            frustum[(int)ClippingPlanes.Top, 0] = clip_matrix[3] - clip_matrix[1];
+            frustum[(int)ClippingPlanes.Top, 1] = clip_matrix[7] - clip_matrix[5];
+            frustum[(int)ClippingPlanes.Top, 2] = clip_matrix[11] - clip_matrix[9];
+            frustum[(int)ClippingPlanes.Top, 3] = clip_matrix[15] - clip_matrix[13];
+            NormalizePlane(frustum, (int)ClippingPlanes.Top);
 
-            _frustum[(int)ClippingPlane.Back, 0] = _clipMatrix[3] - _clipMatrix[2];
-            _frustum[(int)ClippingPlane.Back, 1] = _clipMatrix[7] - _clipMatrix[6];
-            _frustum[(int)ClippingPlane.Back, 2] = _clipMatrix[11] - _clipMatrix[10];
-            _frustum[(int)ClippingPlane.Back, 3] = _clipMatrix[15] - _clipMatrix[14];
-            NormalizePlane(_frustum, (int)ClippingPlane.Back);
+            frustum[(int)ClippingPlanes.Back, 0] = clip_matrix[3] - clip_matrix[2];
+            frustum[(int)ClippingPlanes.Back, 1] = clip_matrix[7] - clip_matrix[6];
+            frustum[(int)ClippingPlanes.Back, 2] = clip_matrix[11] - clip_matrix[10];
+            frustum[(int)ClippingPlanes.Back, 3] = clip_matrix[15] - clip_matrix[14];
+            NormalizePlane(frustum, (int)ClippingPlanes.Back);
 
-            _frustum[(int)ClippingPlane.Front, 0] = _clipMatrix[3] + _clipMatrix[2];
-            _frustum[(int)ClippingPlane.Front, 1] = _clipMatrix[7] + _clipMatrix[6];
-            _frustum[(int)ClippingPlane.Front, 2] = _clipMatrix[11] + _clipMatrix[10];
-            _frustum[(int)ClippingPlane.Front, 3] = _clipMatrix[15] + _clipMatrix[14];
-            NormalizePlane(_frustum, (int)ClippingPlane.Front);
+            frustum[(int)ClippingPlanes.Front, 0] = clip_matrix[3] + clip_matrix[2];
+            frustum[(int)ClippingPlanes.Front, 1] = clip_matrix[7] + clip_matrix[6];
+            frustum[(int)ClippingPlanes.Front, 2] = clip_matrix[11] + clip_matrix[10];
+            frustum[(int)ClippingPlanes.Front, 3] = clip_matrix[15] + clip_matrix[14];
+            NormalizePlane(frustum, (int)ClippingPlanes.Front);
         }
     }
 }

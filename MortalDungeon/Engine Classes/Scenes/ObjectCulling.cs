@@ -45,7 +45,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjuntion with the scale 
 
                 WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
-                if (Frustum.SphereVsFrustum(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
+                if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
                 {
                     obj.Cull = false;
                 }
@@ -79,7 +79,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             scaleMax *= obj.LocalRadius;
 
             WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
-            if (Frustum.SphereVsFrustum(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
+            if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
             {
                 obj.Cull = false;
             }
@@ -114,7 +114,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                     WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
 
-                    if (Frustum.SphereVsFrustum(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
+                    if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
                     {
                         obj.Cull = false;
                     }
