@@ -40,8 +40,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
         private static List<Letter> _LettersToRender = new List<Letter>();
         private static List<GameObject> _UIToRender = new List<GameObject>();
         private static List<GameObject> _ObjectsToRender = new List<GameObject>();
-        private static List<List<BaseTile>> _TileRenderQueue = new List<List<BaseTile>>();
+        private static List<List<BaseTile>> _TilesToRender = new List<List<BaseTile>>();
         private static List<ParticleGenerator> _ParticleGeneratorsToRender = new List<ParticleGenerator>();
+        private static List<GameObject> _TileQuadsToRender = new List<GameObject>();
 
         private static FrameBufferObject MainFBO;
 
@@ -867,7 +868,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             RenderQueuedParticles();
             RenderTileQueue();
             RenderQueuedObjects();
-
+            RenderTileQuadQueue();
             //RenderFrameBuffer(MainFBO);
         }
 
@@ -1010,20 +1011,51 @@ namespace MortalDungeon.Engine_Classes.Rendering
             if (objList.Count == 0)
                 return;
 
-            _TileRenderQueue.Add(objList);
+            _TilesToRender.Add(objList);
         }
         public static void RenderTileQueue() 
         {
-            //_TileRenderQueue.ForEach(queue =>
-            //{
-            //    RenderObjectsInstancedGeneric(queue, null);
-            //});
+            RenderObjectListInstancedGeneric(_TilesToRender, null);
 
-            RenderObjectListInstancedGeneric(_TileRenderQueue, null);
-
-            _TileRenderQueue.Clear();
+            _TilesToRender.Clear();
         }
         #endregion
+
+        #region Tile quad queue
+        public static void QueueTileQuadForRender(GameObject obj) 
+        {
+            if (obj == null)
+                return;
+
+            _TileQuadsToRender.Add(obj);
+        }
+
+        private static List<GameObject> _tempGameObjList = new List<GameObject>();
+        public static void RenderTileQuadQueue()
+        {
+            for (int i = 0; i < _TileQuadsToRender.Count; i++) 
+            {
+                _tempGameObjList.Add(_TileQuadsToRender[i]);
+                RenderObjectsInstancedGeneric(_tempGameObjList, ref _instancedRenderArray);
+                _tempGameObjList.Clear();
+            }
+
+            _TileQuadsToRender.Clear();
+        }
+        #endregion
+
+
+        public static int CreatePixelBufferObject(float[] imgData) 
+        {
+            int pbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pbo);
+            GL.BufferData(BufferTarget.PixelUnpackBuffer, imgData.Length * 4, imgData, BufferUsageHint.StreamDraw);
+
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+            return pbo;
+        }
+
+
 
         public static void ClearData() 
         {

@@ -135,6 +135,8 @@ namespace MortalDungeon.Game.Abilities
                                 Scene.HideObjectsInFog(allOtherUnits);
                             }
                         });
+
+                        TileMap.Controller.Scene.FinishedSettingFog();
                     };
 
                     moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);

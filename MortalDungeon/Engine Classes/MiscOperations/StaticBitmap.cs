@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace MortalDungeon.Engine_Classes.MiscOperations
 {
-    public class DirectBitmap : IDisposable
+    public class StaticBitmap : IDisposable
     {
         public Bitmap Bitmap { get; private set; }
         public int[] Bits { get; private set; }
@@ -15,7 +15,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         protected GCHandle BitsHandle { get; private set; }
 
-        public DirectBitmap(int width, int height)
+        public StaticBitmap(int width, int height)
         {
             Width = width;
             Height = height;

@@ -1,10 +1,13 @@
-﻿using MortalDungeon.Objects;
+﻿using MortalDungeon.Game.Tiles;
+using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Threading.Tasks;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace MortalDungeon.Engine_Classes
@@ -126,23 +129,46 @@ namespace MortalDungeon.Engine_Classes
             return tex;
         }
 
-        public void UpdateTextureArray() 
+        public void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Restart();
+
+            Console.WriteLine("Beginning texture array update.");
+
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, Handle);
 
 
-            GL.TexImage2D(TextureTarget.Texture2D,
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, tileMap.DynamicTextureInfo.PixelBufferObject);
+
+            unsafe
+            {
+                float* temp = (float*)GL.MapBuffer(BufferTarget.PixelUnpackBuffer, BufferAccess.ReadWrite);
+
+                if (temp != null)
+                {
+                    TileTexturer.UpdateTexture(tileMap, temp);
+                }
+                GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
+            }
+
+
+            GL.TexSubImage2D(TextureTarget.Texture2D,
                 0,
-                PixelInternalFormat.Rgba,
+                0,
+                0,
                 ImageData.ImageDimensions.X,
                 ImageData.ImageDimensions.Y,
-                0,
                 PixelFormat.Rgba,
-                PixelType.Float,
-                ImageData.ImageData);
+                PixelType.Float, new IntPtr());
+
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         }
 
         public Texture(int glHandle, TextureName name)

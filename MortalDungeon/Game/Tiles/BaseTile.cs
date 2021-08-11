@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
@@ -20,7 +21,12 @@ namespace MortalDungeon.Game.Tiles
     {
         Default = 21,
         Grass = 22,
-        Outline = 20
+        Outline = 20,
+
+        Fog_1 = 80,
+        Fog_2 = 81,
+        Fog_3 = 90,
+        Fog_4 = 91,
     }
     public class BaseTile : GameObject
     {
@@ -47,11 +53,10 @@ namespace MortalDungeon.Game.Tiles
 
         private Vector4 _fogColorOffset = new Vector4(0.5f, 0.5f, 0.5f, 0);
 
-        private Vector4 _selectedColor = new Vector4(0.75f, 0, 0, 1);
-
         public BaseObject _tileObject;
 
         public BaseTile AttachedTile; //for selection tiles 
+        public TileMap TileMap;
 
         public BaseTile()
         {
@@ -111,8 +116,25 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally)
+        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Ally)
         {
+            if (inFog != InFog) 
+            {
+                InFog = inFog;
+
+                TileMap.TilesToUpdate.Add(this);
+                TileMap.DynamicTextureInfo.TextureChanged = true;
+            }
+
+            if (inFog && !Explored[team])
+            {
+                Outline = false;
+            }
+            else
+            {
+                Outline = true;
+            }
+
             InFog = inFog;
             MultiTextureData.MixTexture = inFog;
 
@@ -126,8 +148,16 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.Ally)
+        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Ally)
         {
+            if (explored != Explored[team] || Explored[team] != Explored[previousTeam])
+            {
+                Explored[team] = explored;
+
+                TileMap.TilesToUpdate.Add(this);
+                TileMap.DynamicTextureInfo.TextureChanged = true;
+            }
+
             Explored[team] = explored;
             if (explored)
             {

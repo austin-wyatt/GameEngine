@@ -71,7 +71,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //_genericObjects.Add(temp);
 
-            TileMap tileMap = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
+            TileMap tileMap = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
             tileMap.PopulateTileMap();
 
             //_tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);

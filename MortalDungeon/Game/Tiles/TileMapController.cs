@@ -5,19 +5,22 @@ using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
 using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Engine_Classes.Scenes;
 
 namespace MortalDungeon.Game.Tiles
 {
     public class TileMapController
     {
         public List<TileMap> TileMaps = new List<TileMap>();
-        public static DirectBitmap TileBitmap;
+        public static StaticBitmap TileBitmap;
 
-        public TileMapController() 
+        public CombatScene Scene;
+
+        public TileMapController(CombatScene scene = null) 
         {
             Bitmap tempMap = new Bitmap("Resources/TileSpritesheet.png");
 
-            TileBitmap = new DirectBitmap(tempMap.Width, tempMap.Height);
+            TileBitmap = new StaticBitmap(tempMap.Width, tempMap.Height);
 
             for (int y = 0; y < tempMap.Height; y++) 
             {
@@ -26,12 +29,13 @@ namespace MortalDungeon.Game.Tiles
                     TileBitmap.SetPixel(x, y, tempMap.GetPixel(x, y));
                 }
             }
+
+            Scene = scene;
         }
 
         public void AddTileMap(TileMapPoint point, TileMap map) 
         {
             map.TileMapCoords = point;
-            map.Controller = this;
             TileMaps.Add(map);
 
             PositionTileMaps();

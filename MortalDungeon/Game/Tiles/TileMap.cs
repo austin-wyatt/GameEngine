@@ -1,11 +1,14 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -98,19 +101,22 @@ namespace MortalDungeon.Game.Tiles
         public List<TileChunk> TileChunks = new List<TileChunk>();
 
         public Texture DynamicTexture;
-        public List<BaseTile> TilesToUpdate = new List<BaseTile>();
+        public DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
+        public HashSet<BaseTile> TilesToUpdate = new HashSet<BaseTile>();
+        public GameObject TexturedQuad;
 
         private int _maxSelectionTiles = 1000;
         public int _amountOfSelectionTiles = 0;
         private List<BaseTile> _selectionTilePool = new List<BaseTile>();
 
         private List<BaseTile> _hoveredTileList = new List<BaseTile>();
-        public TileMap(Vector3 position, TileMapPoint point, string name = "TileMap")
+        public TileMap(Vector3 position, TileMapPoint point, TileMapController controller, string name = "TileMap")
         {
             Position = position; //position of the first tile
             Name = name;
 
             TileMapCoords = point;
+            Controller = controller;
         }
 
         public BaseTile this[int x, int y]
@@ -149,27 +155,32 @@ namespace MortalDungeon.Game.Tiles
                     baseTile = new BaseTile(tilePosition, new TilePoint(i, o, this)) { Clickable = true };
                     baseTile.SetAnimation(BaseTileAnimationType.Grass);
                     baseTile.DefaultAnimation = BaseTileAnimationType.Grass;
+                    baseTile.TileType = TileType.Grass;
+                    baseTile.TileMap = this;
 
                     Tiles.Add(baseTile);
 
-                    if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0) //add a bit on randomness to tile gen
+                    if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0) //add a bit of randomness to tile gen
                     {
                         baseTile.TileClassification = TileClassification.Terrain;
                         baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
                         baseTile.DefaultColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+
+                        baseTile.TileType = TileType.Default;
                     }
 
                     tilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y;
                 }
                 tilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.34f; //1.29 before outlining changes
                 tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2f); //2 before outlining changes
-                tilePosition.Z += 0.0001f;
+                //tilePosition.Z += 0.0001f;
             }
 
             tilePosition.Z += 0.03f;
             InitializeHelperTiles(tilePosition);
 
             SetDefaultTileValues();
+            InitializeTexturedQuad();
         }
 
         private void InitializeHelperTiles(Vector3 tilePosition)
@@ -205,6 +216,7 @@ namespace MortalDungeon.Game.Tiles
             HoveredTile._tileObject.OutlineParameters.SetAllInline(10);
             HoveredTile.SetAnimation(BaseTileAnimationType.Transparent);
             HoveredTile.DefaultAnimation = BaseTileAnimationType.Transparent;
+            //HoveredTile.ScaleAll(0.99f);
 
             _hoveredTileList = new List<BaseTile>() { HoveredTile };
         }
@@ -252,6 +264,70 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
+        internal void InitializeTexturedQuad() 
+        {
+            TileTexturer.InitializeTexture(this);
+
+            RenderableObject obj = new RenderableObject(new SpritesheetObject(0, Spritesheets.TestSheet, 10, 10).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+            obj.TextureReference = DynamicTexture;
+            obj.TextureReference.TextureName = TextureName.DynamicTexture;
+            obj.Textures.Textures[0] = TextureName.DynamicTexture;
+
+            Renderer.LoadTextureFromTextureObj(obj.TextureReference, TextureName.DynamicTexture);
+
+            Animation Idle = new Animation()
+            {
+                Frames = new List<RenderableObject>() { obj },
+                Frequency = -1,
+                Repeats = -1
+            };
+
+            BaseObject baseObj = new BaseObject(new List<Animation>() { Idle }, 0, "", new Vector3());
+
+            GameObject temp = new GameObject();
+            temp.BaseObjects.Add(baseObj);
+
+            temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
+            temp.BaseObjects[0].BaseFrame.ScaleAll(Width);
+            //temp.BaseObjects[0].BaseFrame.ScaleY(1.065f); //10x10
+            //temp.BaseObjects[0].BaseFrame.ScaleY(1.04f); //20x20
+            //temp.BaseObjects[0].BaseFrame.ScaleY(1.03f); //30x30
+            //temp.BaseObjects[0].BaseFrame.ScaleY(1.027f); //40x40
+
+            temp.BaseObjects[0].BaseFrame.ScaleY(1.0237f); //50x50
+            temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
+
+            //temp.BaseObjects[0].BaseFrame.ScaleY(1.019f); //100x100
+            //temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
+
+            TexturedQuad = temp;
+
+            UpdateQuadPosition();
+        }
+
+        internal void UpdateQuadPosition() 
+        {
+            Vector3 tileMapPos = (Tiles[0].Position + Tiles[Tiles.Count - 1].Position) / 2;
+
+
+            //the most magic of magic numbers (I'll probably need to redo tiling in some fashion if I want to make a general solution for this)
+
+            //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 7110, tileMapPos.Y + 3720, tileMapPos.Z)); //100x100
+
+            TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 3520, tileMapPos.Y + 1740, tileMapPos.Z)); //50x50
+
+            //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 2800, tileMapPos.Y + 1360, tileMapPos.Z)); //40x40
+        }
+
+        internal void UpdateDynamicTexture() 
+        {
+            DynamicTexture.UpdateTextureArray(DynamicTextureInfo.MinChangedBounds, DynamicTextureInfo.MaxChangedBounds, this);
+
+            TilesToUpdate.Clear();
+            DynamicTextureInfo.TextureChanged = false;
+        }
+
         public Vector3 GetTileMapDimensions() 
         {
             if (Tiles.Count > 0) 
@@ -260,7 +336,7 @@ namespace MortalDungeon.Game.Tiles
                 Vector3 returnDim = this[0, 0].Position - this[Width - 1, Height - 1].Position;
 
                 returnDim.X = Math.Abs(returnDim.X) + tileDim.X * 0.75f;
-                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.5f;
+                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.475f;
 
                 return returnDim;
             }
@@ -278,77 +354,14 @@ namespace MortalDungeon.Game.Tiles
             });
 
             base.SetPosition(position);
+
+            UpdateQuadPosition();
         }
 
         public List<BaseTile> GetHoveredTile()
         {
             return _hoveredTileList;
         }
-
-        public Vector3 GetPositionOfTile(int index)
-        {
-            Vector3 position = new Vector3();
-            if (index < Width * Height && index >= 0)
-            {
-                position = Tiles[index].Position;
-            }
-            else if (index < 0 && Tiles.Count > 0)
-            {
-                position = Tiles[0].Position;
-            }
-            else if (index >= Tiles.Count)
-            {
-                position = Tiles[Tiles.Count - 1].Position;
-            }
-
-            return position;
-        }
-
-        //public List<BaseTile> GetTilesInRadius(int index, int radius)
-        //{
-        //    List<BaseTile> tileList = new List<BaseTile>();
-
-        //    int x = index / Height;
-        //    int y = index - (x * Height);
-
-        //    if (radius > 0 && IsValidTile(index))
-        //    {
-        //        //center
-        //        tileList.Add(Tiles[index]);
-
-        //        for (int i = 0; i < radius; i++)
-        //        {
-        //            if (IsValidTile(x, y + i + 1))
-        //            {
-        //                tileList.Add(this[x, y + i + 1]); //tiles above center
-        //            }
-        //            if (IsValidTile(x, y - i - 1))
-        //            {
-        //                tileList.Add(this[x, y - i - 1]); //tiles below center
-        //            }
-
-        //            int sideHeight = radius * 2 - i;
-        //            int sideX = i + 1;
-        //            int sideY = -sideHeight / 2 - (-(i + 1) % 2 * (x + 1) % 2);
-
-        //            for (int j = 0; j < sideHeight; j++)
-        //            {
-        //                if (IsValidTile(x + sideX, y + sideY))
-        //                {
-        //                    tileList.Add(this[x + sideX, y + sideY]); //tiles in layers to the right of the center
-        //                }
-
-        //                if (IsValidTile(x - sideX, y + sideY))
-        //                {
-        //                    tileList.Add(this[x - sideX, y + sideY]); //tiles in layers to the left of the center
-        //                }
-        //                sideY++;
-        //            }
-        //        }
-        //    }
-
-        //    return tileList;
-        //}
 
         #region Tile validity checks
         public bool IsValidTile(int xIndex, int yIndex)
@@ -1029,5 +1042,16 @@ namespace MortalDungeon.Game.Tiles
         {
             return HashCode.Combine(X, Y);
         }
+    }
+
+    public class DynamicTextureInfo 
+    {
+        public bool TextureChanged = false;
+        public Vector2i MinChangedBounds = new Vector2i();
+        public Vector2i MaxChangedBounds = new Vector2i();
+
+        public int PixelBufferObject;
+
+        public bool UnmapPixelBuffer = false;
     }
 }

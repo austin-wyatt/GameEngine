@@ -36,7 +36,7 @@ namespace MortalDungeon
 
         public static bool ShowFPS = true;
         public static bool ShowTicksPerSecond = false;
-        public static bool EnableBoundsTestingTools = true;
+        public static bool EnableBoundsTestingTools = false;
         public static bool ShowCulledChunks = true;
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
@@ -203,7 +203,6 @@ namespace MortalDungeon
 
             //Texture.UsedTextures.Clear();
 
-
             double timeValue;
 
             ////FPS
@@ -269,13 +268,20 @@ namespace MortalDungeon
                 scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
                 {
                     //Renderer.QueueTileObjectsForRender(tileMap.Tiles);
-                    tileMap.TileChunks.ForEach(chunk =>
+                    //tileMap.TileChunks.ForEach(chunk =>
+                    //{
+                    //    if (!chunk.Cull)
+                    //    {
+                    //        Renderer.QueueTileObjectsForRender(chunk.Tiles);
+                    //    }
+                    //});
+
+                    if (tileMap.DynamicTextureInfo.TextureChanged)
                     {
-                        if (!chunk.Cull) 
-                        {
-                            Renderer.QueueTileObjectsForRender(chunk.Tiles);
-                        }
-                    });
+                        tileMap.UpdateDynamicTexture();
+                    }
+
+                    Renderer.QueueTileQuadForRender(tileMap.TexturedQuad);
 
                     Renderer.QueueTileObjectsForRender(tileMap.SelectionTiles);
 

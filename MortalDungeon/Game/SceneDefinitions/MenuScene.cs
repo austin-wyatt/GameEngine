@@ -33,31 +33,31 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.Load(camera, cursorObject, mouseRay);
 
 
-            TileMap tileMap = new TileMap(default, new TileMapPoint(0,0)) { Width = 50, Height = 50 };
+            TileMap tileMap = new TileMap(default, new TileMapPoint(0,0), _tileMapController) { Width = 50, Height = 50 };
             tileMap.PopulateTileMap();
 
             _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
 
-            
-            TileMap tileMap2 = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
 
-            tileMap2.PopulateTileMap();
+            //TileMap tileMap2 = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
 
-            _tileMapController.AddTileMap(new TileMapPoint(-1, 0), tileMap2);
+            //tileMap2.PopulateTileMap();
 
-
-            TileMap tileMap3 = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
-
-            tileMap3.PopulateTileMap();
-
-            _tileMapController.AddTileMap(new TileMapPoint(-2, 0), tileMap3);
+            //_tileMapController.AddTileMap(new TileMapPoint(-1, 0), tileMap2);
 
 
-            TileMap tileMap4 = new TileMap(default, new TileMapPoint(0, 0)) { Width = 50, Height = 50 };
+            //TileMap tileMap3 = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
 
-            tileMap4.PopulateTileMap();
+            //tileMap3.PopulateTileMap();
 
-            _tileMapController.AddTileMap(new TileMapPoint(0, -1), tileMap4);
+            //_tileMapController.AddTileMap(new TileMapPoint(-2, 0), tileMap3);
+
+
+            //TileMap tileMap4 = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
+
+            //tileMap4.PopulateTileMap();
+
+            //_tileMapController.AddTileMap(new TileMapPoint(0, -1), tileMap4);
 
 
             Guy guy = new Guy(tileMap[0, 0].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 0]) { Clickable = true };

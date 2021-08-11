@@ -56,6 +56,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             base.InitializeFields();
 
+            _tileMapController = new TileMapController(this);
+
             _tooltipBlock = new UIBlock(new Vector3());
             _tooltipBlock.MultiTextureData.MixTexture = false;
             _tooltipBlock.SetColor(Colors.Transparent);
@@ -120,6 +122,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// </summary>
         public virtual void StartTurn()
         {
+            UnitTeam prevTeam = CurrentUnit.Team;
+
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
 
             //EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
@@ -132,7 +136,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             Footer.UpdateFooterInfo(CurrentUnit);
 
-            FillInTeamFog(CurrentUnit.Team);
+            FillInTeamFog(CurrentUnit.Team, prevTeam);
 
 
             CurrentUnit.OnTurnStart();
@@ -222,9 +226,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _selectedUnits.Clear();
         }
 
-        public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally) 
+        public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Unknown) 
         {
-            FillInAllFog(currentTeam);
+            FillInAllFog(currentTeam, previousTeam);
 
             _units.ForEach(unit =>
             {
@@ -234,16 +238,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                     tiles.ForEach(tile =>
                     {
-                        tile.SetExplored(true, currentTeam);
-                        tile.SetFog(false, currentTeam);
+                        tile.SetExplored(true, currentTeam, previousTeam);
+                        tile.SetFog(false, currentTeam, previousTeam);
                     });
                 }
             });
 
             HideObjectsInFog();
+
+            FinishedSettingFog();
         }
 
-        public void FillInAllFog(UnitTeam currentTeam)
+        public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown)
         {
             _tileMapController.TileMaps.ForEach(m =>
             {
@@ -261,10 +267,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     //tile.SetExplored(tile.Explored[team], team);
                     //}
 
-                    tile.SetExplored(tile.Explored[currentTeam], currentTeam);
-                    tile.SetFog(true, currentTeam);
+                    tile.SetExplored(tile.Explored[currentTeam], currentTeam, previousTeam);
+                    tile.SetFog(true, currentTeam, previousTeam);
                 });
             });
+        }
+
+        public void FinishedSettingFog() 
+        {
+            //for (int i = 0; i < _tileMapController.TileMaps.Count; i++)
+            //{
+            //    if (_tileMapController.TileMaps[i].DynamicTextureChanged)
+            //    {
+            //        _tileMapController.TileMaps[i].DynamicTexture.UpdateTextureArray();
+            //        _tileMapController.TileMaps[i].DynamicTextureChanged = false;
+            //    }
+            //}
         }
 
         public void HideObjectsInFog(List<Unit> units = null) 
