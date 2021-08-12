@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using MortalDungeon.Engine_Classes.Rendering;
+using MortalDungeon.Objects;
+using OpenTK.Graphics.OpenGL4;
+using System.Linq;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -15,6 +18,7 @@ namespace MortalDungeon.Game.Tiles
         private const int tile_height = 54; //individual tile height
         private const int tile_height_partial = 27; //stacked height
 
+        private static Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
 
         private const int cell_height = 64;
         private const int cell_width = 64;
@@ -25,396 +29,198 @@ namespace MortalDungeon.Game.Tiles
 
         public static void InitializeTexture(TileMap map)
         {
-            //int width = tile_width + (map.Width - 1) * tile_width_partial;
-            //int height = tile_height + (map.Height - 1) * tile_height_partial;
+            int textureScale = 2; //how much we are scaling up the base tile textures to make it look good
+            map.FrameBuffer = new FrameBufferObject(new Vector2i((int)((tile_width + (map.Width) * tile_width_partial) / WindowConstants.AspectRatio) * textureScale,
+                (tile_height * map.Height + tile_height) * textureScale));
 
-            //float[] textureData = new float[width * height * floats_per_pixel];
-
-            int width = cell_width * map.Width;
-            int height = (cell_height) * map.Width + cell_height / 2;
-
-            float[] textureData = new float[width * height * floats_per_pixel];
-            map.DynamicTexture = Texture.LoadFromArray(textureData, new Vector2i(width, height));
+            map.DynamicTexture = new Texture(map.FrameBuffer.RenderTexture, TextureName.DynamicTexture);
 
             map.Tiles.ForEach(tile => map.TilesToUpdate.Add(tile));
-
-            map.DynamicTextureInfo.PixelBufferObject = Renderer.CreatePixelBufferObject(map.DynamicTexture.ImageData.ImageData);
-            map.DynamicTexture.ImageData.ImageData = null;
-
-            //map.DynamicTexture.UpdateTextureArray(new Vector2i(0, 0), map.DynamicTexture.ImageData.ImageDimensions, map);
+            RenderTilesToFramebuffer(map);
         }
 
-        public static Vector2 GetTextureProportions(TileMap map) 
+        public static void UpdateTexture(TileMap map) 
         {
-            int width = cell_width * map.Width;
-            int height = (cell_height) * map.Width + cell_height / 2;
-
-            return new Vector2((float)width / (tile_width + tile_width_partial * (map.Width - 1)),
-                (float)height / (tile_height * (map.Height) + tile_height_partial));
+            RenderTilesToFramebuffer(map);
         }
 
-        private static void GenerateTexture(TileMap map, HashSet<BaseTile> tiles) 
+        private static void RenderTilesToFramebuffer(TileMap map) 
         {
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
+            map.FrameBuffer.BindFrameBuffer();
 
-            float[] textureData = map.DynamicTexture.ImageData.ImageData;
+            GL.Viewport(0, 0, map.FrameBuffer.FBODimensions.X, map.FrameBuffer.FBODimensions.Y);
 
-            //int width = tile_width + (map.Width - 1) * tile_width_partial;
-            //int height = tile_height + (map.Height - 1) * tile_height_partial;
-
-            int width = cell_width * map.Width;
-
-            //BaseTile tile;
-            Vector2i tileTexPos;
+            GL.DrawBuffer(DrawBufferMode.ColorAttachment0);
+            GL.Disable(EnableCap.DepthTest);
 
 
-            //add min and max changed calculation here
+            RenderTiles(map.TilesToUpdate, ref Renderer._instancedRenderArray, map);
+            //RenderTiles(new HashSet<BaseTile>() { map.Tiles[0], map.Tiles[1], map.Tiles[2], map.Tiles[3], map.Tiles[4], map.Tiles[5], map.Tiles[6], map.Tiles[7] }, ref Renderer._instancedRenderArray, map);
 
-            //initial pass
-            foreach (BaseTile tile in tiles) 
+            map.FrameBuffer.UnbindFrameBuffer();
+            GL.Enable(EnableCap.DepthTest);
+
+
+            GL.BindTexture(TextureTarget.Texture2D, map.FrameBuffer.RenderTexture);
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            GL.Viewport(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y);
+        }
+
+
+        private const int _dataOffset = 20;
+        private static void RenderTiles(HashSet<BaseTile> objects, ref float[] _instancedRenderDataArray, TileMap map)
+        {
+            if (objects.Count == 0)
+                return;
+
+            Shaders.TILE_MAP_SHADER.Use();
+
+            RenderableObject Display = objects.First().BaseObjects[0]._currentAnimation.CurrentFrame;
+
+            TileSpritesheet.Use(TextureUnit.Texture0);
+            EnableInstancedShaderAttributes();
+
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Renderer._instancedVertexBuffer);
+
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw); //take the raw vertices
+
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Renderer._instancedArrayBuffer);
+
+            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, _dataOffset, 0 * sizeof(float));  //color that will be applied to the primary texture
+            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, _dataOffset, 4 * sizeof(float));  //spritesheet position [0], second texture position [1], 
+                                                                                                                 //mix percent [2], outline [3] (0 or 1)
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, _dataOffset, 8 * sizeof(float));  //color that will be applied to the outline
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, _dataOffset, 12 * sizeof(float)); //X position of tile [0], Y position of tile[1], map width [2] and height [3]
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, _dataOffset, 16 * sizeof(float)); //width of the FBO render texture [0], height of the FBO render texture [1], empty [2, 3]
+            int currIndex = 0;
+
+            int count = 0;
+
+            float mixPercent;
+            int overlayPosition = 0;
+
+            foreach (BaseTile tile in objects) 
             {
-                tileTexPos = GetOriginPoint(tile);
-
-                UpdateDynamicTextureBounds(map, tileTexPos);
-
-                int spritesheetY = (int)((int)tile.TileType * 0.1f);
-                int spritesheetX = (int)tile.TileType - spritesheetY * 10;
-
-                if (tile.InFog)
+                if (tile.Render)
                 {
-                    int num = random.Next() % 4;
-                    TileType fogType;
-
-                    switch (num)
+                    if (tile.InFog)
                     {
-                        default:
-                            fogType = TileType.Fog_1;
-                            break;
-                        case 1:
-                            fogType = TileType.Fog_2;
-                            break;
-                        case 2:
-                            fogType = TileType.Fog_3;
-                            break;
-                        case 3:
-                            fogType = TileType.Fog_4;
-                            break;
-                    }
+                        int num = random.Next() % 4;
+                        TileType fogType;
 
-                    int overlayY = (int)((int)fogType * 0.1f);
-                    int overlayX = (int)fogType - overlayY * 10;
-
-                    float mixPercent = tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team] ? 0.5f : 1;
-
-                    ApplySpritesheetColorToImage(spritesheetX, spritesheetY, textureData, tileTexPos, width, overlayX, overlayY, mixPercent);
-                }
-                else
-                {
-                    ApplySpritesheetColorToImage(spritesheetX, spritesheetY, textureData, tileTexPos, width);
-                }
-            }
-
-            //outline pass
-            foreach (BaseTile tile in tiles) 
-            {
-                if (tile.Outline && !(tile.InFog && !(map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team])))
-                {
-                    tileTexPos = GetOriginPoint(tile);
-                    int spritesheetY = (int)((int)TileType.Outline * 0.1f);
-                    int spritesheetX = (int)TileType.Outline - spritesheetY * 10;
-
-                    ApplyCustomColorToImage(spritesheetX, spritesheetY, textureData, tileTexPos, width, tile.OutlineColor);
-                }
-            }
-
-
-            //map.DynamicTexture.UpdateTextureArray();
-
-            Console.WriteLine("Texture generated in " + timer.ElapsedMilliseconds + " milliseconds");
-        }
-
-        private static void ApplySpritesheetColorToImage(int spritesheetX, int spritesheetY, float[] textureData, Vector2i tileTexPos, int width,
-            int overlayX = -1, int overlayY = -1, float mixPercent = 0.5f) 
-        {
-            for (int y = 0; y < cell_height; y++)
-            {
-                for (int x = 0; x < cell_width; x++)
-                {
-                    Color4 color = TileMapController.TileBitmap.GetPixel(spritesheetX * cell_width + x, spritesheetY * cell_height + y);
-
-                    if (overlayX != -1)
-                    {
-                        Color4 overlayColor = TileMapController.TileBitmap.GetPixel(overlayX * cell_width + x, overlayY * cell_height + y);
-                        if (color.A != 0)
+                        switch (num)
                         {
-                            int pos = (tileTexPos.Y + y) * width * floats_per_pixel + (tileTexPos.X + x) * floats_per_pixel;
-                            textureData[pos] = color.R * (1 - mixPercent) + mixPercent * overlayColor.R;
-                            textureData[pos + 1] = color.G * (1 - mixPercent) + mixPercent * overlayColor.G;
-                            textureData[pos + 2] = color.B * (1 - mixPercent) + mixPercent * overlayColor.B;
-                            textureData[pos + 3] = color.A * (1 - mixPercent) + mixPercent * overlayColor.A;
+                            default:
+                                fogType = TileType.Fog_1;
+                                break;
+                            case 1:
+                                fogType = TileType.Fog_2;
+                                break;
+                            case 2:
+                                fogType = TileType.Fog_3;
+                                break;
+                            case 3:
+                                fogType = TileType.Fog_4;
+                                break;
                         }
+
+                        overlayPosition = (int)fogType;
+
+                        mixPercent = tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team] ? 0.5f : 1;
                     }
                     else 
                     {
-                        if (color.A != 0)
+                        mixPercent = 0;
+                    }
+
+                    for (int j = 0; j < tile.BaseObjects.Count; j++)
+                    {
+                        if (tile.BaseObjects[j].Render)
                         {
-                            int pos = (tileTexPos.Y + y) * width * floats_per_pixel + (tileTexPos.X + x) * floats_per_pixel;
-                            textureData[pos] = color.R;
-                            textureData[pos + 1] = color.G;
-                            textureData[pos + 2] = color.B;
-                            textureData[pos + 3] = color.A;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.X;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.Y;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.Z;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.W;
+
+                            _instancedRenderDataArray[currIndex++] = (int)tile.TileType;
+                            _instancedRenderDataArray[currIndex++] = overlayPosition;
+                            _instancedRenderDataArray[currIndex++] = mixPercent;
+                            _instancedRenderDataArray[currIndex++] = tile.Outline ? 1 : 0;
+
+                            _instancedRenderDataArray[currIndex++] = tile.OutlineColor.X;
+                            _instancedRenderDataArray[currIndex++] = tile.OutlineColor.Y;
+                            _instancedRenderDataArray[currIndex++] = tile.OutlineColor.Z;
+                            _instancedRenderDataArray[currIndex++] = tile.OutlineColor.W;
+
+                            _instancedRenderDataArray[currIndex++] = tile.TilePoint.X;
+                            _instancedRenderDataArray[currIndex++] = tile.TilePoint.Y;
+                            _instancedRenderDataArray[currIndex++] = 0;
+                            _instancedRenderDataArray[currIndex++] = 0;
+
+                            _instancedRenderDataArray[currIndex++] = map.FrameBuffer.FBODimensions.X;
+                            _instancedRenderDataArray[currIndex++] = map.FrameBuffer.FBODimensions.Y;
+                            _instancedRenderDataArray[currIndex++] = WindowConstants.ClientSize.X;
+                            _instancedRenderDataArray[currIndex++] = WindowConstants.ClientSize.Y;
+
+                            count++;
                         }
                     }
                 }
             }
-        }
 
-        private static void ApplyCustomColorToImage(int spritesheetX, int spritesheetY, float[] textureData, Vector2i tileTexPos, int width, Vector4 newColor)
-        {
-            for (int y = 0; y < cell_height; y++)
+            GL.BufferData(BufferTarget.ArrayBuffer, count * _dataOffset * sizeof(float), _instancedRenderDataArray, BufferUsageHint.StreamDraw);
+
+            GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, count * 4);
+
+
+            FramebufferErrorCode errorTest = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+
+            if (errorTest != FramebufferErrorCode.FramebufferComplete)
             {
-                for (int x = 0; x < cell_width; x++)
-                {
-                    Color4 color = TileMapController.TileBitmap.GetPixel(spritesheetX * cell_width + x, spritesheetY * cell_height + y);
-
-                    if (color.A != 0)
-                    {
-                        int pos = (tileTexPos.Y + y) * width * floats_per_pixel + (tileTexPos.X + x) * floats_per_pixel;
-                        textureData[pos] = newColor.X;
-                        textureData[pos + 1] = newColor.Y;
-                        textureData[pos + 2] = newColor.Z;
-                        textureData[pos + 3] = newColor.W;
-                    }
-                }
-            }
-        }
-
-
-
-
-        public unsafe static void UpdateTexture(TileMap map, float* dataPointer)
-        {
-            GenerateTexture(map, map.TilesToUpdate, dataPointer);
-
-            map.DynamicTextureInfo.TextureChanged = false;
-        }
-
-        private static int _operations = 0;
-        private unsafe static void GenerateTexture(TileMap map, HashSet<BaseTile> tiles, float* dataPointer)
-        {
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-
-            //int width = tile_width + (map.Width - 1) * tile_width_partial;
-            //int height = tile_height + (map.Height - 1) * tile_height_partial;
-
-            int width = cell_width * map.Width;
-
-            //BaseTile tile;
-            Vector2i tileTexPos;
-
-            Console.WriteLine("Generating texture");
-
-            //add min and max changed calculation here
-
-            //initial pass
-            foreach (BaseTile tile in tiles) 
-            {
-                tileTexPos = GetOriginPoint(tile);
-
-                UpdateDynamicTextureBounds(map, tileTexPos);
-
-                int spritesheetY = (int)((int)tile.TileType * 0.1f);
-                int spritesheetX = (int)tile.TileType - spritesheetY * 10;
-
-                if (tile.InFog)
-                {
-                    int num = random.Next() % 4;
-                    TileType fogType;
-
-                    switch (num)
-                    {
-                        default:
-                            fogType = TileType.Fog_1;
-                            break;
-                        case 1:
-                            fogType = TileType.Fog_2;
-                            break;
-                        case 2:
-                            fogType = TileType.Fog_3;
-                            break;
-                        case 3:
-                            fogType = TileType.Fog_4;
-                            break;
-                    }
-
-                    int overlayY = (int)((int)fogType * 0.1f);
-                    int overlayX = (int)fogType - overlayY * 10;
-
-                    float mixPercent = tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team] ? 0.5f : 1;
-
-                    ApplySpritesheetColorToImage(spritesheetX, spritesheetY, dataPointer, tileTexPos, width, overlayX, overlayY, mixPercent);
-                }
-                else
-                {
-                    ApplySpritesheetColorToImage(spritesheetX, spritesheetY, dataPointer, tileTexPos, width);
-                }
+                Console.WriteLine("Error in RenderFrameBuffer: " + errorTest);
             }
 
-            Console.WriteLine(timer.ElapsedMilliseconds);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
 
-            foreach (BaseTile tile in tiles)
-            {
-                if (tile.Outline)
-                {
-                    tileTexPos = GetOriginPoint(tile);
-                    int spritesheetY = (int)((int)TileType.Outline * 0.1f);
-                    int spritesheetX = (int)TileType.Outline - spritesheetY * 10;
+            Renderer.DrawCount++;
 
-                    ApplyCustomColorToImage(spritesheetX, spritesheetY, dataPointer, tileTexPos, width, tile.OutlineColor);
-                }
-            }
-
-            //map.DynamicTexture.UpdateTextureArray();
-
-            Console.WriteLine("Texture generated in " + timer.ElapsedMilliseconds + " milliseconds using " + _operations + " operations");
-            _operations = 0;
-        }
-
-        private unsafe static void ApplySpritesheetColorToImage(int spritesheetX, int spritesheetY, float* textureData, Vector2i tileTexPos, int width,
-            int overlayX = -1, int overlayY = -1, float mixPercent = 0.5f)
-        {
-
-            int spritesheetWidth = spritesheetX * cell_width;
-            int spritesheetHeight = spritesheetY * cell_height;
-
-            int overlayWidth = overlayX * cell_width;
-            int overlayHeight = overlayY * cell_height;
-
-            int width_times_fpp = width * floats_per_pixel;
-
-            Color4 color;
-            Color4 overlayColor;
-            for (int y = 0; y < cell_height; y++)
-            {
-                for (int x = 0; x < cell_width; x++)
-                {
-                    color = TileMapController.TileBitmap.GetPixel(spritesheetWidth + x, spritesheetHeight + y);
-
-                    if (overlayX != -1)
-                    {
-                        overlayColor = TileMapController.TileBitmap.GetPixel(overlayWidth + x, overlayHeight + y);
-                        if (color.A != 0)
-                        {
-                            int pos = (tileTexPos.Y + y) * width_times_fpp + (tileTexPos.X + x) * floats_per_pixel;
-                            textureData[pos] = color.R * (1 - mixPercent) + mixPercent * overlayColor.R;
-                            textureData[pos + 1] = color.G * (1 - mixPercent) + mixPercent * overlayColor.G;
-                            textureData[pos + 2] = color.B * (1 - mixPercent) + mixPercent * overlayColor.B;
-                            textureData[pos + 3] = color.A * (1 - mixPercent) + mixPercent * overlayColor.A;
-
-                            _operations += 7;
-                        }
-                    }
-                    else
-                    {
-                        if (color.A != 0)
-                        {
-                            int pos = (tileTexPos.Y + y) * width_times_fpp + (tileTexPos.X + x) * floats_per_pixel;
-                            textureData[pos] = color.R;
-                            textureData[pos + 1] = color.G;
-                            textureData[pos + 2] = color.B;
-                            textureData[pos + 3] = color.A;
-
-                            _operations += 6;
-                        }
-                    }
-                }
-            }
-        }
-        private unsafe static void ApplyCustomColorToImage(int spritesheetX, int spritesheetY, float* textureData, Vector2i tileTexPos, int width, Vector4 newColor)
-        {
-            int spritesheetWidth = spritesheetX * cell_width;
-            int spritesheetHeight = spritesheetY * cell_height;
-
-            int width_times_fpp = width * floats_per_pixel;
-
-            for (int y = 0; y < cell_height; y++)
-            {
-                for (int x = 0; x < cell_width; x++)
-                {
-                    Color4 color = TileMapController.TileBitmap.GetPixel(spritesheetWidth + x, spritesheetHeight + y);
-
-                    if (color.A != 0)
-                    {
-                        int pos = (tileTexPos.Y + y) * width_times_fpp + (tileTexPos.X + x) * floats_per_pixel;
-                        textureData[pos] = newColor.X;
-                        textureData[pos + 1] = newColor.Y;
-                        textureData[pos + 2] = newColor.Z;
-                        textureData[pos + 3] = newColor.W;
-
-                        _operations += 6;
-                    }
-                }
-            }
+            DisableInstancedShaderAttributes();
         }
 
 
-
-        private static void UpdateDynamicTextureBounds(TileMap map, Vector2i tileTexPos) 
+        private static void EnableInstancedShaderAttributes()
         {
-            return;
-            //if the texture hasn't been changed at all
-            if (!map.DynamicTextureInfo.TextureChanged)
-            {
-                map.DynamicTextureInfo.MinChangedBounds.X = tileTexPos.X;
-                map.DynamicTextureInfo.MinChangedBounds.Y = tileTexPos.Y;
-                map.DynamicTextureInfo.MaxChangedBounds.X = tileTexPos.X + cell_width;
-                map.DynamicTextureInfo.MaxChangedBounds.Y = tileTexPos.Y + cell_height;
-            }
-            else
-            {
-                if (tileTexPos.X < map.DynamicTextureInfo.MinChangedBounds.X)
-                {
-                    map.DynamicTextureInfo.MinChangedBounds.X = tileTexPos.X;
-                }
-
-                if (tileTexPos.Y < map.DynamicTextureInfo.MinChangedBounds.Y)
-                {
-                    map.DynamicTextureInfo.MinChangedBounds.Y = tileTexPos.Y;
-                }
-
-                if (tileTexPos.X + cell_width > map.DynamicTextureInfo.MaxChangedBounds.X)
-                {
-                    map.DynamicTextureInfo.MaxChangedBounds.X = tileTexPos.X + cell_width;
-                }
-
-                if (tileTexPos.Y + cell_height > map.DynamicTextureInfo.MaxChangedBounds.Y)
-                {
-                    map.DynamicTextureInfo.MaxChangedBounds.Y = tileTexPos.Y + cell_height;
-                }
-            }
-
-            //map.DynamicTextureInfo.MinChangedBounds.X = 0;
-            //map.DynamicTextureInfo.MinChangedBounds.Y = 0;
-            //map.DynamicTextureInfo.MaxChangedBounds.X = cell_width * map.Width;
-            //map.DynamicTextureInfo.MaxChangedBounds.Y = (cell_height) * map.Width + cell_height / 2;
+            GL.EnableVertexAttribArray(2);
+            GL.EnableVertexAttribArray(3);
+            GL.EnableVertexAttribArray(4);
+            GL.EnableVertexAttribArray(5);
+            GL.EnableVertexAttribArray(6);
+            GL.VertexAttribDivisor(2, 1);
+            GL.VertexAttribDivisor(3, 1);
+            GL.VertexAttribDivisor(4, 1);
+            GL.VertexAttribDivisor(5, 1);
+            GL.VertexAttribDivisor(6, 1);
         }
 
-        //get the tiles origin point on the texture
-        private static Vector2i GetOriginPoint(BaseTile tile) 
+        private static void DisableInstancedShaderAttributes()
         {
-            Vector2i val = new Vector2i();
-
-            int yOffset = tile.TilePoint.X % 2 == 1 ? 1 : 0;
-
-            val.X = tile.TilePoint.X * tile_width_partial;
-            val.Y = (tile.TilePoint.Y + 1) * tile_height - yOffset * tile_height_partial;
-            //val.Y = tile.TilePoint.Y * tile_height;
-
-            //should get us close enough for now, fine tune later
-
-            return val;
+            GL.DisableVertexAttribArray(2);
+            GL.DisableVertexAttribArray(3);
+            GL.DisableVertexAttribArray(4);
+            GL.DisableVertexAttribArray(5);
+            GL.DisableVertexAttribArray(6);
+            GL.VertexAttribDivisor(2, 0);
+            GL.VertexAttribDivisor(3, 0);
+            GL.VertexAttribDivisor(4, 0);
+            GL.VertexAttribDivisor(5, 0);
+            GL.VertexAttribDivisor(6, 0);
         }
     }
 }

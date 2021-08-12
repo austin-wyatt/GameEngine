@@ -40,9 +40,9 @@ namespace MortalDungeon.Game.Tiles
         public TileClassification TileClassification = TileClassification.Ground;
 
         public TileType TileType = TileType.Grass;
-        public Vector4 Color; //color that will be applied to the tile on the dynamic texture
+        public Vector4 Color = Colors.White; //color that will be applied to the tile on the dynamic texture
         public Vector4 OutlineColor = Colors.Black; //outline color that will be applied to the dynamic texture
-        public bool Outline = true; //whether the tile should be outline on the dynamic texture
+        public bool Outline = false; //whether the tile should be outline on the dynamic texture
 
 
         public bool InFog = true;
@@ -80,6 +80,7 @@ namespace MortalDungeon.Game.Tiles
 
             BaseObjects.Add(BaseTile);
             _tileObject = BaseTile;
+
 
             //_tileObject.BaseFrame.ScaleAddition(1);
 

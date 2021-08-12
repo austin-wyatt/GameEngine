@@ -327,6 +327,13 @@ namespace MortalDungeon
 
 
             Renderer.RenderQueue();
+            //_sceneController.Scenes.ForEach(scene =>
+            //{
+            //    scene._tileMapController.TileMaps.ForEach(map =>
+            //    {
+            //        Renderer.RenderFrameBuffer(map.FrameBuffer);
+            //    });
+            //});
 
             SwapBuffers();
 

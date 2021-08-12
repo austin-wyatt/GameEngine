@@ -18,17 +18,17 @@ namespace MortalDungeon.Game.Tiles
 
         public TileMapController(CombatScene scene = null) 
         {
-            Bitmap tempMap = new Bitmap("Resources/TileSpritesheet.png");
+            //Bitmap tempMap = new Bitmap("Resources/TileSpritesheet.png");
 
-            TileBitmap = new StaticBitmap(tempMap.Width, tempMap.Height);
+            //TileBitmap = new StaticBitmap(tempMap.Width, tempMap.Height);
 
-            for (int y = 0; y < tempMap.Height; y++) 
-            {
-                for (int x = 0; x < tempMap.Width; x++)
-                {
-                    TileBitmap.SetPixel(x, y, tempMap.GetPixel(x, y));
-                }
-            }
+            //for (int y = 0; y < tempMap.Height; y++) 
+            //{
+            //    for (int x = 0; x < tempMap.Width; x++)
+            //    {
+            //        TileBitmap.SetPixel(x, y, tempMap.GetPixel(x, y));
+            //    }
+            //}
 
             Scene = scene;
         }

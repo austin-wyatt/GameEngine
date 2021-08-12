@@ -129,47 +129,47 @@ namespace MortalDungeon.Engine_Classes
             return tex;
         }
 
-        public void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
-        {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Restart();
+        //public void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
+        //{
+        //    Stopwatch stopwatch = new Stopwatch();
+        //    stopwatch.Restart();
 
-            Console.WriteLine("Beginning texture array update.");
+        //    Console.WriteLine("Beginning texture array update.");
 
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, Handle);
-
-
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, tileMap.DynamicTextureInfo.PixelBufferObject);
-
-            unsafe
-            {
-                float* temp = (float*)GL.MapBuffer(BufferTarget.PixelUnpackBuffer, BufferAccess.ReadWrite);
-
-                if (temp != null)
-                {
-                    TileTexturer.UpdateTexture(tileMap, temp);
-                }
-                GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
-            }
+        //    GL.ActiveTexture(TextureUnit.Texture0);
+        //    GL.BindTexture(TextureTarget.Texture2D, Handle);
 
 
-            GL.TexSubImage2D(TextureTarget.Texture2D,
-                0,
-                0,
-                0,
-                ImageData.ImageDimensions.X,
-                ImageData.ImageDimensions.Y,
-                PixelFormat.Rgba,
-                PixelType.Float, new IntPtr());
+        //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, tileMap.DynamicTextureInfo.PixelBufferObject);
+
+        //    unsafe
+        //    {
+        //        float* temp = (float*)GL.MapBuffer(BufferTarget.PixelUnpackBuffer, BufferAccess.ReadWrite);
+
+        //        if (temp != null)
+        //        {
+        //            TileTexturer.UpdateTexture(tileMap, temp);
+        //        }
+        //        GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
+        //    }
 
 
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+        //    GL.TexSubImage2D(TextureTarget.Texture2D,
+        //        0,
+        //        0,
+        //        0,
+        //        ImageData.ImageDimensions.X,
+        //        ImageData.ImageDimensions.Y,
+        //        PixelFormat.Rgba,
+        //        PixelType.Float, new IntPtr());
 
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
-        }
+        //    GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+        //    Console.WriteLine(stopwatch.ElapsedMilliseconds);
+
+        //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+        //}
 
         public Texture(int glHandle, TextureName name)
         {

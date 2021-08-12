@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.Load(camera, cursorObject, mouseRay);
 
 
-            TileMap tileMap = new TileMap(default, new TileMapPoint(0,0), _tileMapController) { Width = 50, Height = 50 };
+            TileMap tileMap = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
             tileMap.PopulateTileMap();
 
             _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
@@ -58,6 +58,20 @@ namespace MortalDungeon.Game.SceneDefinitions
             //tileMap4.PopulateTileMap();
 
             //_tileMapController.AddTileMap(new TileMapPoint(0, -1), tileMap4);
+
+            for (int x = 0; x < 3; x++) 
+            {
+                for (int y = 0; y < 3; y++) 
+                {
+                    if (!(x == 0 && y == 0)) 
+                    {
+                        tileMap = new TileMap(default, new TileMapPoint(-x, -y), _tileMapController) { Width = 50, Height = 50 };
+                        tileMap.PopulateTileMap();
+
+                        _tileMapController.AddTileMap(new TileMapPoint(-x, -y), tileMap);
+                    }
+                }
+            }
 
 
             Guy guy = new Guy(tileMap[0, 0].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 0]) { Clickable = true };

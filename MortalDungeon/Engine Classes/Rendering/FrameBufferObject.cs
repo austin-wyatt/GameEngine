@@ -18,7 +18,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public Vector2i FBODimensions;
 
         public Shader Shader;
-        public FrameBufferObject(Vector2i dimensions = default) 
+        public FrameBufferObject(Vector2i dimensions = default, Shader shader = null) 
         {
             if (dimensions.X == 0)
             {
@@ -38,7 +38,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Console.WriteLine(err);
             }
 
-            Shader = Shaders.SIMPLE_SHADER; //no transformations
+            if (shader == null)
+            {
+                Shader = Shaders.SIMPLE_SHADER; //no transformations
+            }
+            else 
+            {
+                Shader = shader;
+            }
         }
 
         /// <summary>
@@ -86,7 +93,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
         }
 
-        public void CreateTexture() 
+        private void CreateTexture() 
         {
             if (RenderTexture != 0)
             {
@@ -112,18 +119,19 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
 
+        //TODO, this might need to be looked at later when post processing techniques begin to be incorporated
         public void CreateDepthBuffer() 
         {
-            if (DepthBuffer != 0) 
-            {
-                GL.DeleteRenderbuffer(DepthBuffer);
-            }
+            //if (DepthBuffer != 0)
+            //{
+            //    GL.DeleteRenderbuffer(DepthBuffer);
+            //}
 
-            DepthBuffer = GL.GenRenderbuffer();
+            //DepthBuffer = GL.GenRenderbuffer();
 
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, DepthBuffer);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent, FBODimensions.X, FBODimensions.Y);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.RenderbufferExt, DepthBuffer);
+            //GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, DepthBuffer);
+            //GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent, FBODimensions.X, FBODimensions.Y);
+            //GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.RenderbufferExt, DepthBuffer);
         }
 
         public void CreateFrameBuffer() 

@@ -24,13 +24,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static int _vertexArrayObject;
 
         private static int _elementBufferObject;
-        private static int _instancedVertexBuffer;
-        private static int _instancedArrayBuffer;
+        public static int _instancedVertexBuffer;
+        public static int _instancedArrayBuffer;
 
 
         private const int ObjectBufferCount = 15000;
         private const int instanceDataOffset = 40;
-        private static float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
+        public static float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
         private const int instanceDataLength = instanceDataOffset * sizeof(float);
 
         private static List<Texture> _textures = new List<Texture>();
@@ -87,7 +87,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _instancedVertexBuffer = GL.GenBuffer();
 
             _internalTimer.Start();
-
 
 
             //set the texture uniform locations
@@ -538,7 +537,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
 
-            Renderer.DisableInstancedShaderAttributes();
+            DisableInstancedShaderAttributes();
 
 
             if (recursiveCallList.Count > 0)
@@ -861,13 +860,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
             //MainFBO.UnbindFrameBuffer();
             //MainFBO.ClearColorBuffer(false);
 
-            //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to 
+            //DrawToFrameBuffer(MainFBO); 
 
             RenderQueuedLetters();
 
             RenderQueuedParticles();
             RenderTileQueue();
             RenderQueuedObjects();
+
             RenderTileQuadQueue();
             //RenderFrameBuffer(MainFBO);
         }
@@ -912,7 +912,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             text.ForEach(obj =>
             {
                 if (obj.Render)
-                    Renderer.QueueUIForRender(obj.Letters, scissorFlag);
+                    QueueUIForRender(obj.Letters, scissorFlag);
             });
         }
         public static void RenderQueuedLetters() 
@@ -1080,7 +1080,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             });
         }
 
-        private static void EnableInstancedShaderAttributes()
+        public static void EnableInstancedShaderAttributes()
         {
             GL.EnableVertexAttribArray(2);
             GL.EnableVertexAttribArray(3);
@@ -1103,7 +1103,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribDivisor(10, 1);
             GL.VertexAttribDivisor(11, 1);
         }
-        private static void DisableInstancedShaderAttributes()
+        public static void DisableInstancedShaderAttributes()
         {
             GL.DisableVertexAttribArray(2);
             GL.DisableVertexAttribArray(3);
@@ -1127,7 +1127,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribDivisor(11, 0);
         }
 
-        private static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)
+        public static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)
         {
 
             //this seems to perform better (maybe due to M11,M22,etc using getters and setters)

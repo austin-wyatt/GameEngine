@@ -50,6 +50,12 @@
     <None Update="Resources\UISpritesheet.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Shaders\tileMapShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\tileMapShader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Shaders\oldShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

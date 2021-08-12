@@ -101,6 +101,7 @@ namespace MortalDungeon.Game.Tiles
         public List<TileChunk> TileChunks = new List<TileChunk>();
 
         public Texture DynamicTexture;
+        public FrameBufferObject FrameBuffer;
         public DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
         public HashSet<BaseTile> TilesToUpdate = new HashSet<BaseTile>();
         public GameObject TexturedQuad;
@@ -289,20 +290,22 @@ namespace MortalDungeon.Game.Tiles
             temp.BaseObjects.Add(baseObj);
 
             temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
+            temp.BaseObjects[0].BaseFrame.ScaleX(0.7783f);
+            temp.BaseObjects[0].BaseFrame.ScaleY(1.035f);
             temp.BaseObjects[0].BaseFrame.ScaleAll(Width);
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.065f); //10x10
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.04f); //20x20
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.03f); //30x30
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.027f); //40x40
 
-            temp.BaseObjects[0].BaseFrame.ScaleY(1.0237f); //50x50
-            temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
+            //temp.BaseObjects[0].BaseFrame.ScaleY(1.0237f); //50x50
+            //temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
 
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.019f); //100x100
             //temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
 
             TexturedQuad = temp;
-
+            
             UpdateQuadPosition();
         }
 
@@ -315,15 +318,19 @@ namespace MortalDungeon.Game.Tiles
 
             //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 7110, tileMapPos.Y + 3720, tileMapPos.Z)); //100x100
 
-            TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 3520, tileMapPos.Y + 1740, tileMapPos.Z)); //50x50
+            //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 3520, tileMapPos.Y + 1740, tileMapPos.Z)); //50x50
 
             //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 2800, tileMapPos.Y + 1360, tileMapPos.Z)); //40x40
+
+
+            TexturedQuad.SetPosition(tileMapPos + new Vector3(363, 1800, 0));
+            //TexturedQuad.SetPosition(new Vector3(0, 0, 0));
         }
 
         internal void UpdateDynamicTexture() 
         {
-            DynamicTexture.UpdateTextureArray(DynamicTextureInfo.MinChangedBounds, DynamicTextureInfo.MaxChangedBounds, this);
-
+            //DynamicTexture.UpdateTextureArray(DynamicTextureInfo.MinChangedBounds, DynamicTextureInfo.MaxChangedBounds, this);
+            TileTexturer.UpdateTexture(this);
             TilesToUpdate.Clear();
             DynamicTextureInfo.TextureChanged = false;
         }
@@ -1047,11 +1054,7 @@ namespace MortalDungeon.Game.Tiles
     public class DynamicTextureInfo 
     {
         public bool TextureChanged = false;
-        public Vector2i MinChangedBounds = new Vector2i();
-        public Vector2i MaxChangedBounds = new Vector2i();
 
-        public int PixelBufferObject;
-
-        public bool UnmapPixelBuffer = false;
+        //public int PixelBufferObject;
     }
 }

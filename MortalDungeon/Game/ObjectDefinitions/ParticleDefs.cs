@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Objects
 
             SpritesheetObject particleObj = new SpritesheetObject(0, Spritesheets.TestSheet, 3);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
-            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.PARTICLE_SHADER);
+            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
             ParticleDisplay.CameraPerspective = true;
 
             for (int i = 0; i < ParticleCount; i++) 
@@ -79,7 +79,7 @@ namespace MortalDungeon.Game.Objects
 
             SpritesheetObject particleObj = new SpritesheetObject(11, Spritesheets.TestSheet);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
-            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.PARTICLE_SHADER);
+            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
             ParticleDisplay.CameraPerspective = true;
 
             for (int i = 0; i < ParticleCount; i++)
