@@ -34,7 +34,15 @@ namespace MortalDungeon.Game.Abilities
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
         {
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(CastingUnit.TileMapPosition, Range, TileMapConstants.AllTileClassifications, units, CastingUnit);
+            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.TileMapPosition, Range)
+            {
+                TraversableTypes = TileMapConstants.AllTileClassifications,
+                Units = units,
+                CastingUnit = CastingUnit
+            };
+
+
+            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
             TileMap = tileMap;
 
             TrimTiles(validTiles, units);

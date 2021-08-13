@@ -3,10 +3,10 @@
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec2 aTexCoord;
 layout(location = 2) in vec4 appliedColorPrimary;
-layout(location = 3) in vec4 compositeType_PPMO; //spritesheet position [0], second texture spritesheet position [1], mix percent [2], whether to outline [3]
+layout(location = 3) in vec4 compositeType_PPMO;  //spritesheet position [0], second texture spritesheet position [1], mix percent [2], whether to outline [3]
 layout(location = 4) in vec4 appliedColorOutline;
-layout(location = 5) in vec4 tileParameters; //tile X [0] and Y [1] position, empty [2, 3]
-layout(location = 6) in vec4 compositeType_WH; //framebuffer texture width [0] and height [1], client size x [2] and y [3]
+layout(location = 5) in vec4 tileParameters;	  //tile X [0] and Y [1] position, empty [2] empty [3]
+layout(location = 6) in vec4 compositeType_WH;    //framebuffer texture width [0] and height [1], client size x [2] and y [3]
 
 out vec2 primaryTextureCoordinates;
 out vec2 mixedTextureCoordinates;
@@ -88,6 +88,8 @@ void main(void)
 	float height_of_tile_clip_space = tile_height / compositeType_WH[1];
 
 
+	
+
 	vec2 temp = vec2(0, 0);
 	temp.x = (aPosition.x + 1) / 2; //percentage of the width of the screen that this vertex is at
 	temp.y = (aPosition.y + 1) / 2; //percentage of the height of the screen that this vertex is at
@@ -96,17 +98,8 @@ void main(void)
 
 	pos.x = tileOriginPoint.x + aPosition.x * width_of_tile_clip_space * 2 * aspectRatio;
 	pos.y = tileOriginPoint.y + aPosition.y * height_of_tile_clip_space * 2;
-	pos.z = 0;
 
 	gl_Position = pos;
-
-
-
-//	pos.x = aPosition.x;
-//	pos.y = aPosition.y;
-//
-//	gl_Position = pos;
-//	gl_Position = vec4(aPosition, 1);
 
 	InstanceID = gl_InstanceID; 
 }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Tiles.HelperTiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 
@@ -17,10 +18,12 @@ namespace MortalDungeon.Game.Tiles
         Water //inhibits movement, cannot be attacked
     }
 
-    public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc
+    public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
         Default = 21,
         Grass = 22,
+        AltGrass = 23,
+        Water = 24,
         Outline = 20,
 
         Fog_1 = 80,
@@ -37,16 +40,14 @@ namespace MortalDungeon.Game.Tiles
 
         public new ObjectType ObjectType = ObjectType.Tile;
 
-        public TileClassification TileClassification = TileClassification.Ground;
+        public TileProperties Properties;
 
-        public TileType TileType = TileType.Grass;
         public Vector4 Color = Colors.White; //color that will be applied to the tile on the dynamic texture
         public Vector4 OutlineColor = Colors.Black; //outline color that will be applied to the dynamic texture
         public bool Outline = false; //whether the tile should be outline on the dynamic texture
-
+        public bool NeverOutline = false; //whether this tile should never be outlined (used for contiguous tiles like water)
 
         public bool InFog = true;
-        public bool BlocksVision = false;
         public bool Selected = false;
 
         public Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
@@ -56,6 +57,7 @@ namespace MortalDungeon.Game.Tiles
         public BaseObject _tileObject;
 
         public BaseTile AttachedTile; //for selection tiles 
+        public HeightIndicatorTile HeightIndicator;
         public TileMap TileMap;
 
         public BaseTile()
@@ -81,6 +83,11 @@ namespace MortalDungeon.Game.Tiles
             BaseObjects.Add(BaseTile);
             _tileObject = BaseTile;
 
+            Properties = new TileProperties() 
+            {
+                Type = TileType.Grass,
+                Classification = TileClassification.Ground
+            };
 
             //_tileObject.BaseFrame.ScaleAddition(1);
 
@@ -123,9 +130,10 @@ namespace MortalDungeon.Game.Tiles
             {
                 InFog = inFog;
 
-                TileMap.TilesToUpdate.Add(this);
-                TileMap.DynamicTextureInfo.TextureChanged = true;
+                Update();
             }
+
+            TileMap.RemoveHeightIndicatorTile(this);
 
             if (inFog && !Explored[team])
             {
@@ -133,7 +141,7 @@ namespace MortalDungeon.Game.Tiles
             }
             else
             {
-                Outline = true;
+                Outline = !NeverOutline;
             }
 
             InFog = inFog;
@@ -155,8 +163,7 @@ namespace MortalDungeon.Game.Tiles
             {
                 Explored[team] = explored;
 
-                TileMap.TilesToUpdate.Add(this);
-                TileMap.DynamicTextureInfo.TextureChanged = true;
+                Update();
             }
 
             Explored[team] = explored;
@@ -174,15 +181,15 @@ namespace MortalDungeon.Game.Tiles
         {
             Hovered = hovered;
 
-            if (hovered)
-            {
-                _tileObject.OutlineParameters.OutlineThickness = _tileObject.OutlineParameters.BaseOutlineThickness;
-                _tileObject.OutlineParameters.OutlineColor = Colors.Red;
-            }
-            else
-            {
-                _tileObject.OutlineParameters.OutlineThickness = 0;
-            }
+            //if (hovered)
+            //{
+            //    _tileObject.OutlineParameters.OutlineThickness = _tileObject.OutlineParameters.BaseOutlineThickness;
+            //    _tileObject.OutlineParameters.OutlineColor = Colors.Red;
+            //}
+            //else
+            //{
+            //    _tileObject.OutlineParameters.OutlineThickness = 0;
+            //}
         }
 
         public void SetSelected(bool selected)
@@ -217,7 +224,39 @@ namespace MortalDungeon.Game.Tiles
                 base.HoverEnd();
 
                 SetHovered(false);
+
+                for (int i = 0; i < _onHoverEndActions.Count; i++)
+                {
+                    _onHoverEndActions[i]?.Invoke();
+                }
             }
+        }
+
+        public void Update()
+        {
+            TileMap.TilesToUpdate.Add(this);
+            TileMap.DynamicTextureInfo.TextureChanged = true;
+        }
+
+        public static string GetTooltipString(BaseTile tile, CombatScene scene) 
+        {
+            string tooltip;
+
+            if (tile.InFog && !tile.Explored[scene.CurrentUnit.Team])
+            {
+                tooltip = "Unexplored tile";
+            }
+            else 
+            {
+                int coordX = tile.TilePoint.X + tile.TilePoint.ParentTileMap.TileMapCoords.X * tile.TilePoint.ParentTileMap.Width;
+                int coordY = tile.TilePoint.Y + tile.TilePoint.ParentTileMap.TileMapCoords.Y * tile.TilePoint.ParentTileMap.Height;
+
+                tooltip = $"Type: {tile.Properties.Type} \n";
+                tooltip += $"Coordinates: {coordX}, {coordY} \n";
+                tooltip += $"Height: {tile.Properties.Height}";
+            }
+
+            return tooltip;
         }
     }
 
@@ -249,7 +288,12 @@ namespace MortalDungeon.Game.Tiles
             return ParentTileMap[this];
         }
 
-        public static bool operator ==(TilePoint a, TilePoint b) => a.X == b.X && a.Y == b.Y && a.ParentTileMap.TileMapCoords == b.ParentTileMap.TileMapCoords;
+        public bool IsValidTile() 
+        {
+            return ParentTileMap.IsValidTile(X, Y);
+        }
+
+        public static bool operator ==(TilePoint a, TilePoint b) => a is TilePoint && a.Equals(b);
         public static bool operator !=(TilePoint a, TilePoint b) => !(a == b);
 
         public override string ToString()
@@ -261,12 +305,27 @@ namespace MortalDungeon.Game.Tiles
             return obj is TilePoint point &&
                    X == point.X &&
                    Y == point.Y &&
+                   ParentTileMap.TileMapCoords == point.ParentTileMap.TileMapCoords &&
                    EqualityComparer<TileMap>.Default.Equals(ParentTileMap, point.ParentTileMap);
         }
 
         public override int GetHashCode()
         {
             return HashCode.Combine(X, Y, ParentTileMap);
+        }
+    }
+
+    public class TileProperties 
+    {
+        public TileType Type;
+        public TileClassification Classification;
+        public float DamageOnEnter = 0;
+        public float Slow = 0;
+        public bool BlocksVision = false;
+        public int Height = 0; //the tile's height for vision and movement purposes
+
+        public TileProperties() 
+        {
         }
     }
 }

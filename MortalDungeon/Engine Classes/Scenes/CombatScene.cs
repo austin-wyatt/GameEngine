@@ -16,7 +16,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 {
     public enum GeneralContextFlags
     {
-        TooltipOpen
+        UITooltipOpen,
+        TileTooltipOpen
     }
     public class CombatScene : Scene
     {
@@ -249,7 +250,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             FinishedSettingFog();
         }
 
-        public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown)
+        public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown, bool reveal = false)
         {
             _tileMapController.TileMaps.ForEach(m =>
             {
@@ -266,9 +267,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     //{
                     //tile.SetExplored(tile.Explored[team], team);
                     //}
-
-                    tile.SetExplored(tile.Explored[currentTeam], currentTeam, previousTeam);
-                    tile.SetFog(true, currentTeam, previousTeam);
+                    if (reveal)
+                    {
+                        tile.SetExplored(true, currentTeam, previousTeam);
+                        tile.SetFog(false, currentTeam, previousTeam);
+                    }
+                    else 
+                    {
+                        tile.SetExplored(tile.Explored[currentTeam], currentTeam, previousTeam);
+                        tile.SetFog(true, currentTeam, previousTeam);
+                    }
                 });
             });
         }
@@ -338,6 +346,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                 if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
                                 {
                                     _selectedAbility.OnHover(tile, map);
+                                }
+
+                                if (Game.Settings.EnableTileTooltips) 
+                                {
+                                    UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, BaseTile.GetTooltipString(tile, this), tile, _tooltipBlock)
+                                    {
+                                        TooltipFlag = GeneralContextFlags.TileTooltipOpen,
+                                        Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
+                                        Anchor = UIAnchorPosition.TopRight,
+                                        BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.5f),
+                                        TextScale = 0.04f
+                                    };
+
+                                    UIHelpers.CreateToolTip(param);
                                 }
                             }
 

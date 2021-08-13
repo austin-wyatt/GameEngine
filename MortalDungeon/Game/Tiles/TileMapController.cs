@@ -39,7 +39,7 @@ namespace MortalDungeon.Game.Tiles
             TileMaps.Add(map);
 
             PositionTileMaps();
-            map.InitializeTileChunks();
+            map.OnAddedToController();
         }
 
         public void PositionTileMaps() 

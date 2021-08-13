@@ -95,6 +95,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             UIDimensions dimensions = _textField.GetTextDimensions();
             UIDimensions returnDim = new UIDimensions();
 
+            Vector3 letterDim = new Vector3();
+            if (_textField.Letters.Count > 0) 
+            {
+                letterDim = _textField.Letters[0].GetDimensions();
+            }
+
             switch (anchorPosition)
             {
                 case UIAnchorPosition.TopCenter:
@@ -102,10 +108,10 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                     returnDim.X += dimensions.X / 2;
                     break;
                 case UIAnchorPosition.TopLeft:
-                    returnDim.Y -= dimensions.Y / 2;
+                    returnDim.Y -= letterDim.Y / 2;
                     break;
                 case UIAnchorPosition.TopRight:
-                    returnDim.Y -= dimensions.Y / 2;
+                    returnDim.Y -= letterDim.Y / 2;
                     returnDim.X += dimensions.X;
                     break;
                 case UIAnchorPosition.LeftCenter:

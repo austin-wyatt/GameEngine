@@ -169,7 +169,8 @@ namespace MortalDungeon.Game.UI
 
             void healthBarHover() 
             {
-                UIHelpers.CreateToolTip(Scene, _currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+                UIHelpers.CreateToolTip(param);
             }
 
             _unitHealthBar._onTimedHoverActions.Add(healthBarHover);
@@ -182,11 +183,19 @@ namespace MortalDungeon.Game.UI
             {
                 if (_currentUnit.CurrentShields >= 0)
                 {
-                    UIHelpers.CreateToolTip(Scene, _currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack", _unitShieldBar, Scene._tooltipBlock);
+                    UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, "", _unitShieldBar, Scene._tooltipBlock)
+                    {
+                        Text = _currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack"
+                    };
+                    UIHelpers.CreateToolTip(param);
                 }
                 else 
                 {
-                    UIHelpers.CreateToolTip(Scene, "Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage", _unitShieldBar, Scene._tooltipBlock);
+                    UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, "", _unitShieldBar, Scene._tooltipBlock)
+                    {
+                        Text = "Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage"
+                    };
+                    UIHelpers.CreateToolTip(param);
                 }
             }
 

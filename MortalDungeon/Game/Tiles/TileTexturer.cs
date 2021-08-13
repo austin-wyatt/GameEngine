@@ -20,15 +20,15 @@ namespace MortalDungeon.Game.Tiles
 
         private static Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
 
-        private const int cell_height = 64;
-        private const int cell_width = 64;
-
-        private const int floats_per_pixel = 4; //RGBA values
-
         private static Random random = new Random();
 
         public static void InitializeTexture(TileMap map)
         {
+            if (map.FrameBuffer != null) 
+            {
+                map.FrameBuffer.Dispose();
+            }
+
             int textureScale = 2; //how much we are scaling up the base tile textures to make it look good
             map.FrameBuffer = new FrameBufferObject(new Vector2i((int)((tile_width + (map.Width) * tile_width_partial) / WindowConstants.AspectRatio) * textureScale,
                 (tile_height * map.Height + tile_height) * textureScale));
@@ -54,8 +54,21 @@ namespace MortalDungeon.Game.Tiles
             GL.Disable(EnableCap.DepthTest);
 
 
-            RenderTiles(map.TilesToUpdate, ref Renderer._instancedRenderArray, map);
-            //RenderTiles(new HashSet<BaseTile>() { map.Tiles[0], map.Tiles[1], map.Tiles[2], map.Tiles[3], map.Tiles[4], map.Tiles[5], map.Tiles[6], map.Tiles[7] }, ref Renderer._instancedRenderArray, map);
+            HashSet<BaseTile> outlineTiles = new HashSet<BaseTile>();
+            HashSet<BaseTile> nonOutlineTiles = new HashSet<BaseTile>();
+
+            foreach (BaseTile tile in map.TilesToUpdate)
+            {
+                if (tile.Outline)
+                    outlineTiles.Add(tile);
+                else
+                    nonOutlineTiles.Add(tile);
+            }
+
+            RenderTiles(nonOutlineTiles, ref Renderer._instancedRenderArray, map);
+            RenderTiles(outlineTiles, ref Renderer._instancedRenderArray, map);
+
+            //RenderTiles(map.TilesToUpdate, ref Renderer._instancedRenderArray, map);
 
             map.FrameBuffer.UnbindFrameBuffer();
             GL.Enable(EnableCap.DepthTest);
@@ -149,7 +162,7 @@ namespace MortalDungeon.Game.Tiles
                             _instancedRenderDataArray[currIndex++] = tile.Color.Z;
                             _instancedRenderDataArray[currIndex++] = tile.Color.W;
 
-                            _instancedRenderDataArray[currIndex++] = (int)tile.TileType;
+                            _instancedRenderDataArray[currIndex++] = (int)tile.Properties.Type;
                             _instancedRenderDataArray[currIndex++] = overlayPosition;
                             _instancedRenderDataArray[currIndex++] = mixPercent;
                             _instancedRenderDataArray[currIndex++] = tile.Outline ? 1 : 0;

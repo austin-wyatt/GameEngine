@@ -156,5 +156,22 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.Clear(ClearBufferMask.DepthBufferBit);
             UnbindFrameBuffer();
         }
+
+        /// <summary>
+        /// Deletes the depth buffer, texture, and the render buffer from the GPU
+        /// </summary>
+        public void Dispose() 
+        {
+            if (DepthBuffer != 0)
+            {
+                GL.DeleteRenderbuffer(DepthBuffer);
+            }
+            if (RenderTexture != 0) 
+            {
+                GL.DeleteTexture(RenderTexture);
+            }
+            
+            GL.DeleteFramebuffer(FrameBuffer);
+        }
     }
 }

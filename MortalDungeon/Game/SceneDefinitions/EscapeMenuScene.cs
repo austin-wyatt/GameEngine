@@ -11,6 +11,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 {
     class EscapeMenuScene : Scene
     {
+
+        private UIObject _backdrop;
         public EscapeMenuScene(Action exitFunc)
         {
             InitializeFields();
@@ -36,20 +38,20 @@ namespace MortalDungeon.Game.SceneDefinitions
             testButton.OnClickAction = () =>
             {
                 //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
+                Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
             };
 
             escapeMenu.AddChild(testButton);
 
 
-
-            //Backdrop backdropModal = new Backdrop(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f), default, 90);
             UIBlock backdropModal = new UIBlock(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f));
             backdropModal.MultiTextureData.MixTexture = false;
-            Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.3f);
+            Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.75f);
             backdropModal.SetColor(slightlyTransparentBackdropColor);
 
+            _genericObjects.Add(backdropModal);
+            _backdrop = backdropModal;
 
-            //AddUI(backdropModal);
             AddUI(escapeMenu, 100);
 
             
@@ -73,6 +75,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                 {
                     ui.SetRender(MenuOpen);
                 });
+
+                _backdrop.SetRender(MenuOpen);
 
                 Message msg;
 

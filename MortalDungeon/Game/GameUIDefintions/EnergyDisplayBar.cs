@@ -60,7 +60,10 @@ namespace MortalDungeon.Game.UI
                 energyPip.HoverAnimation.SetDefaultValues();
 
                 energyPip.HasTimedHoverEffect = true;
-                energyPip._onTimedHoverActions.Add(() => UIHelpers.CreateToolTip(Scene, CurrentEnergy.ToString("n1") + " Energy", energyPip, this));
+
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentEnergy.ToString("n1") + " Energy", energyPip, this);
+
+                energyPip._onTimedHoverActions.Add(() => UIHelpers.CreateToolTip(param));
 
                 Pips.Add(energyPip);
 

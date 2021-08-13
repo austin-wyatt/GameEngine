@@ -93,6 +93,7 @@ namespace MortalDungeon
             return new Vector2(X, Y);
         }
     }
+
     public class Window : GameWindow
     {
         private Vector2i WindowSize = new Vector2i();
@@ -165,13 +166,13 @@ namespace MortalDungeon
             }
             else 
             {
-                Scene escapeMenuScene = new EscapeMenuScene(() => Close());
-
-                int escapeMenuID = _sceneController.AddScene(escapeMenuScene);
-
                 Scene menuScene = new MenuScene();
 
                 int menuSceneID = _sceneController.AddScene(menuScene);
+
+                Scene escapeMenuScene = new EscapeMenuScene(() => Close());
+
+                int escapeMenuID = _sceneController.AddScene(escapeMenuScene);
 
                 _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
                 _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
@@ -327,6 +328,7 @@ namespace MortalDungeon
 
 
             Renderer.RenderQueue();
+
             //_sceneController.Scenes.ForEach(scene =>
             //{
             //    scene._tileMapController.TileMaps.ForEach(map =>
@@ -483,6 +485,11 @@ namespace MortalDungeon
                 scene._UI.ForEach(ui =>
                 {
                     ui.ForEach(obj => obj.OnResize());
+                });
+
+                scene._tileMapController.TileMaps.ForEach(map =>
+                {
+                    map.InitializeTexturedQuad();
                 });
             });
         }
