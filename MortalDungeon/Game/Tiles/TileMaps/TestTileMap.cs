@@ -1,4 +1,6 @@
 ﻿using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -32,14 +34,15 @@ namespace MortalDungeon.Game.Tiles.TileMaps
 
                     Tiles.Add(baseTile);
 
-                    if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0) //add a bit of randomness to tile gen
-                    {
-                        baseTile.Properties.Classification = TileClassification.Terrain;
-                        baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
-                        baseTile.DefaultColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
+                    //if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0) //add a bit of randomness to tile gen
+                    //{
+                    //    //baseTile.Properties.Classification = TileClassification.Terrain;
+                    //    //baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
+                    //    //baseTile.DefaultColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
 
-                        baseTile.Properties.Type = TileType.Default;
-                    }
+                    //    //baseTile.Properties.Type = TileType.Default;
+                    //    CreateTree(baseTile);
+                    //}
 
                     tilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y;
                 }
@@ -54,9 +57,44 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             InitializeTexturedQuad();
         }
 
+        public void CreateTree(BaseTile tile) 
+        {
+            Structure tree = new Structure(Controller.Scene, Spritesheets.StructureSheet, _randomNumberGen.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
+            tree.BaseObject.BaseFrame.RotateX(25);
+            tree.BaseObject.BaseFrame.SetScaleAll(1 + (float)_randomNumberGen.NextDouble() / 2);
+
+            //tree.NonCombatant = true;
+            tree.VisibleThroughFog = true;
+            tree.TileMapPosition = tile;
+            tree.Name = "Tree";
+            tile.Properties.Classification = TileClassification.Terrain;
+
+            tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
+
+            tree.SetTeam(UnitTeam.Neutral);
+            tree.Height = 2;
+
+            tile.Chunk.Structures.Add(tree);
+            tile.Structure = tree;
+            //tile.Chunk.GenericObjects.Add(tree.SelectionTile);
+        }
+
         public override void OnAddedToController()
         {
             base.OnAddedToController();
+        }
+
+        public override void PopulateFeatures()
+        {
+            base.PopulateFeatures();
+
+            foreach (BaseTile baseTile in Tiles)
+            {
+                if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0 && baseTile.Properties.Classification != TileClassification.Water) //add a bit of randomness to tile gen
+                {
+                    CreateTree(baseTile);
+                }
+            }
         }
     }
 }

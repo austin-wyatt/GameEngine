@@ -17,7 +17,7 @@ namespace MortalDungeon.Engine_Classes
         Grass,
         Misc
     }
-    public class Animation
+    public class Animation : ITickable
     {
         public bool Repeat = true;
         public bool Reverse = false;

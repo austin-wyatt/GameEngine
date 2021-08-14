@@ -47,7 +47,8 @@ namespace MortalDungeon.Game.Abilities
                 TraversableTypes = TraversableTypes,
                 Units = units,
                 CastingUnit = CastingUnit,
-                AbilityType = Type
+                AbilityType = Type,
+                CheckTileLower = true
             };
 
             AffectedTiles = tileMap.FindValidTilesInRadius(param);
@@ -85,7 +86,8 @@ namespace MortalDungeon.Game.Abilities
                     TraversableTypes = TraversableTypes,
                     Units = Units,
                     CastingUnit = CastingUnit,
-                    AbilityType = Type
+                    AbilityType = Type,
+                    CheckTileLower = true
                 };
 
                 CurrentTiles = TileMap.GetPathToPoint(param);
@@ -115,7 +117,7 @@ namespace MortalDungeon.Game.Abilities
                     {
                         Keyframe frame = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * j);
 
-                        frame.Action = display =>
+                        frame.Action = (display) =>
                         {
                             CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
                         };
@@ -126,9 +128,9 @@ namespace MortalDungeon.Game.Abilities
                     Keyframe endOfTileMoveKeyframe = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * moveIncrements);
 
                     BaseTile currentTile = CurrentTiles[i];
-                    endOfTileMoveKeyframe.Action = display =>
+                    endOfTileMoveKeyframe.Action = ( display) =>
                     {
-                        CastingUnit.TileMapPosition = currentTile.TilePoint.GetTile();
+                        CastingUnit.TileMapPosition = currentTile;
 
                         TileMap.Controller.TileMaps.ForEach(m => m.Tiles.ForEach(tile =>
                         {
@@ -244,7 +246,8 @@ namespace MortalDungeon.Game.Abilities
                         TraversableTypes = TraversableTypes,
                         Units = Units,
                         CastingUnit = CastingUnit,
-                        AbilityType = Type
+                        AbilityType = Type,
+                        CheckTileLower = true
                     };
                     tiles = TileMap.GetPathToPoint(param);
 
@@ -328,7 +331,8 @@ namespace MortalDungeon.Game.Abilities
                         TraversableTypes = TraversableTypes,
                         Units = Units,
                         CastingUnit = CastingUnit,
-                        AbilityType = Type
+                        AbilityType = Type,
+                        CheckTileLower = true
                     };
 
                     tiles = TileMap.GetPathToPoint(param);

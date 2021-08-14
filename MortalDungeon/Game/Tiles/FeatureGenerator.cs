@@ -31,7 +31,7 @@ namespace MortalDungeon.Game.Tiles
                     {
                         tile = map[i, j + yPos + wiggle];
 
-                        tile.Properties.Type = TileType.Water;
+                        tile.Properties.Type = TileMap._randomNumberGen.NextDouble() > 0.3 ? TileType.Water : TileType.AltWater;
                         tile.Properties.Classification = TileClassification.Water;
                         tile.Outline = false;
                         tile.NeverOutline = true;

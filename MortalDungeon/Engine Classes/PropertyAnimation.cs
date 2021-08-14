@@ -9,7 +9,7 @@ namespace MortalDungeon.Engine_Classes
     /// <summary>
     /// Works similarly to the Animation class but changes properties such as transformations and color instead of the sprite.
     /// </summary>
-    public class PropertyAnimation
+    public class PropertyAnimation : ITickable
     {
         public RenderableObject BaseFrame;
         public List<Keyframe> Keyframes = new List<Keyframe>();

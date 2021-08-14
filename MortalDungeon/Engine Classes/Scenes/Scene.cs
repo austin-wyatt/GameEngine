@@ -41,6 +41,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Unit> _units = new List<Unit>(); //The units to render
         public List<UIObject> _UI = new List<UIObject>();
 
+        public List<ITickable> TickableObjects = new List<ITickable>();
+
         public Action ExitFunc = null; //function used to exit the application
 
         public bool Loaded = false;

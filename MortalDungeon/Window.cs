@@ -264,34 +264,35 @@ namespace MortalDungeon
             Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
             _sceneController.Scenes.ForEach(scene =>
             {
-                Renderer.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
+                RenderingQueue.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
 
                 scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
                 {
                     //Renderer.QueueTileObjectsForRender(tileMap.Tiles);
-                    //tileMap.TileChunks.ForEach(chunk =>
-                    //{
-                    //    if (!chunk.Cull)
-                    //    {
-                    //        Renderer.QueueTileObjectsForRender(chunk.Tiles);
-                    //    }
-                    //});
+                    tileMap.TileChunks.ForEach(chunk =>
+                    {
+                        if (!chunk.Cull)
+                        {
+                            RenderingQueue.QueueStructuresForRender(chunk.Structures);
+                            RenderingQueue.QueueObjectsForRender(chunk.GenericObjects);
+                        }
+                    });
 
                     if (tileMap.DynamicTextureInfo.TextureChanged)
                     {
                         tileMap.UpdateDynamicTexture();
                     }
 
-                    Renderer.QueueTileQuadForRender(tileMap.TexturedQuad);
+                    RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
 
-                    Renderer.QueueTileObjectsForRender(tileMap.SelectionTiles);
+                    RenderingQueue.QueueTileObjectsForRender(tileMap.SelectionTiles);
 
-                    Renderer.QueueTileObjectsForRender(tileMap.GetHoveredTile());
+                    RenderingQueue.QueueTileObjectsForRender(tileMap.GetHoveredTile());
                 }); //TileMap
 
 
                 //Renderer.RenderObjectsInstancedGeneric(scene.GetRenderTarget<Unit>(ObjectType.Unit));
-                Renderer.QueueObjectsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit));
+                RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit));
             }); //GameObjects
 
 
@@ -303,7 +304,7 @@ namespace MortalDungeon
                     {
                         if (generator.Playing)
                         {
-                            Renderer.QueueParticlesForRender(generator);
+                            RenderingQueue.QueueParticlesForRender(generator);
                         }
                     });
                 });
@@ -312,7 +313,7 @@ namespace MortalDungeon
 
             _sceneController.Scenes.ForEach(scene =>
             {
-                Renderer.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI));
+                RenderingQueue.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI));
             }); //UI
 
             _sceneController.Scenes.ForEach(scene =>
@@ -321,13 +322,13 @@ namespace MortalDungeon
                 {
                     if (text.Render && text.Letters.Count > 0)
                     {
-                        Renderer.QueueLettersForRender(text.Letters);
+                        RenderingQueue.QueueLettersForRender(text.Letters);
                     };
                 });
             }); //Misc
 
 
-            Renderer.RenderQueue();
+            RenderingQueue.RenderQueue();
 
             //_sceneController.Scenes.ForEach(scene =>
             //{
@@ -443,15 +444,26 @@ namespace MortalDungeon
                         });
                     });
 
+                    Task tickableObjectsTask = new Task(() =>
+                    {
+                        scene.TickableObjects.ForEach(obj =>
+                        {
+                            obj.Tick();
+                        });
+                    });
+                    
+
                     renderedObjectTask.Start();
                     unitTask.Start();
                     tileMapTask.Start();
                     uiTask.Start();
+                    tickableObjectsTask.Start();
 
                     renderedObjectTask.Wait();
                     unitTask.Wait();
                     tileMapTask.Wait();
                     uiTask.Wait();
+                    tickableObjectsTask.Wait();
                 });
             }
         }

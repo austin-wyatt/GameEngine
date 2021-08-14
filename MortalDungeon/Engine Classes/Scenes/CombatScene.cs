@@ -83,7 +83,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void CompleteRound()
         {
             //do stuff that needs to be done when a round is completed
-            InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList();
+            InitiativeOrder = InitiativeOrder.OrderBy(i => i.Speed).ToList();
 
             AdvanceRound();
 
@@ -103,7 +103,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             UnitTakingTurn = 0;
 
-            InitiativeOrder = InitiativeOrder.OrderBy(i => i._movementAbility.GetEnergyCost()).ToList(); //sort the list by speed
+            InitiativeOrder = InitiativeOrder.OrderBy(i => i.Speed).ToList(); //sort the list by speed
 
             //do calculations here (advance an event, show a cutscene, etc)
 
@@ -176,6 +176,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 CurrentUnit.Buffs[i].OnTurnEnd();
             }
+        }
+
+        public virtual void StartCombat() 
+        {
+            InitiativeOrder = new List<Unit>(_units);
+            InitiativeOrder.RemoveAll(u => u.NonCombatant);
+
+            Round = 0;
+
+            StartRound();
         }
 
         public virtual void SelectAbility(Ability ability)
@@ -299,7 +309,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 _units.ForEach(unit =>
                 {
-                    if (unit.TileMapPosition.InFog)
+                    if (unit.TileMapPosition.InFog && !(unit.VisibleThroughFog && unit.TileMapPosition.Explored[CurrentUnit.Team]))
                     {
                         unit.SetRender(false);
                     }
@@ -313,7 +323,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 units.ForEach(unit =>
                 {
-                    if (unit.TileMapPosition.InFog)
+                    if (unit.TileMapPosition.InFog && !(unit.VisibleThroughFog && unit.TileMapPosition.Explored[CurrentUnit.Team]))
                     {
                         unit.SetRender(false);
                     }

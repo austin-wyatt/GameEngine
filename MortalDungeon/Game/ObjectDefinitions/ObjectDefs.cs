@@ -271,7 +271,7 @@ namespace MortalDungeon.Game.Objects
         {
             return CreateObjectDefinition(ID, bounds, fastRendering);
         }
-        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true)
+        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true, bool invertTexture = false)
         {
 
             float[] defaultBounds = new float[]{
@@ -283,13 +283,30 @@ namespace MortalDungeon.Game.Objects
 
             float aspectRatio = SideLengths.X / SideLengths.Y;
 
-            ObjectDefinition returnDef = new ObjectDefinition(
-                new float[] {
+            float[] vertices;
+
+            if (invertTexture)
+            {
+                vertices = new float[] {
+                0.5f * aspectRatio, 0.5f, 0.0f, 0.1f, 0.0f, // top right
+                0.5f * aspectRatio, -0.5f, 0.0f, 0.1f, 0.1f, // bottom right
+                -0.5f * aspectRatio, -0.5f, 0.0f, 0.0f, 0.1f, // bottom left
+                -0.5f * aspectRatio, 0.5f, 0.0f, 0.0f, 0.0f, // top left
+                };
+            }
+            else 
+            {
+                vertices = new float[] {
                 0.5f * aspectRatio, 0.5f, 0.0f, 0.1f, 0.1f, // top right
                 0.5f * aspectRatio, -0.5f, 0.0f, 0.1f, 0.0f, // bottom right
                 -0.5f * aspectRatio, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
                 -0.5f * aspectRatio, 0.5f, 0.0f, 0.0f, 0.1f, // top left
-                },
+                };
+            }
+
+
+            ObjectDefinition returnDef = new ObjectDefinition(
+                vertices,
                 new uint[]{
                 0, 1, 3,
                 1, 2, 3

@@ -209,7 +209,9 @@ namespace MortalDungeon.Engine_Classes
         public float Y { get { return _dimensions.Y; } set { _dimensions.Y = value; } }
 
         public static UIDimensions operator +(UIDimensions a, UIDimensions b) => new UIDimensions(a.X + b.X, a.Y + b.Y);
+        public static Vector3 operator +(Vector3 b, UIDimensions a) => new Vector3(a.X + b.X, a.Y + b.Y, b.Z);
         public static UIDimensions operator -(UIDimensions a, UIDimensions b) => new UIDimensions(a.X - b.X, a.Y - b.Y);
+        public static Vector3 operator -(Vector3 a, UIDimensions b) => new Vector3(a.X - b.X, a.Y - b.Y, a.Z);
         public static UIDimensions operator *(UIDimensions a, float f) => new UIDimensions(a.X * f, a.Y * f);
         public static UIDimensions operator /(UIDimensions a, float f) => new UIDimensions(a.X / f, a.Y / f);
 
@@ -221,6 +223,11 @@ namespace MortalDungeon.Engine_Classes
         public static implicit operator Vector3(UIDimensions self)
         {
             return new Vector3(self.X, self.Y, 0);
+        }
+
+        public static implicit operator UIDimensions(Vector3 vec) 
+        {
+            return new UIDimensions(vec.X, vec.Y);
         }
 
         public UIDimensions()

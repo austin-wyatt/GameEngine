@@ -53,8 +53,8 @@ void main()
 //	outputColor = vec4(1, 0, 0, 1);
 
 	//if the alpha is below the alpha threshold the pixel is discarded
-//	if(outputColor.a < alpha_threshold)
-//		discard;
+	if(outputColor.a < alpha_threshold)
+		discard;
 
 	if(gl_FrontFacing)  //discard if we are looking at the back of an object
 		discard;

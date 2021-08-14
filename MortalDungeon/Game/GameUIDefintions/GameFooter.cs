@@ -10,10 +10,6 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    public enum GameFooterContextFlags
-    {
-        TooltipOpen
-    }
     public class GameFooter : Footer
     {
         CombatScene Scene;
@@ -25,8 +21,6 @@ namespace MortalDungeon.Game.UI
         public Unit _currentUnit;
 
         private ScrollableArea _scrollableArea;
-
-        public ContextManager<GameFooterContextFlags> ContextManager = new ContextManager<GameFooterContextFlags>();
 
         public GameFooter(float height, CombatScene scene) : base(height)
         {
@@ -204,26 +198,7 @@ namespace MortalDungeon.Game.UI
             _containingBlock.AddChild(_unitShieldBar, 100);
             #endregion
 
-            UIScale scrollableAreaSize = new UIScale(containingBlockDimensions);
-            scrollableAreaSize.X /= 1.8f;
-            scrollableAreaSize.Y -= .02f;
-
-            //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
-            _scrollableArea = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
-
-            float scrollbarWidth = 0;
-            if (_scrollableArea.Scrollbar != null) 
-            {
-                scrollbarWidth = _scrollableArea.Scrollbar.GetDimensions().X;
-            }
-
-            _scrollableArea.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3( -3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopRight);
-            _scrollableArea.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
-
-            _scrollableArea.BaseComponent.SetColor(new Vector4(0, 0, 0, 0));
-
-            AddChild(_scrollableArea, 1000);
-
+            InitializeScrollableArea();
 
             UpdateFooterInfo(Scene.CurrentUnit);
         }
@@ -344,7 +319,7 @@ namespace MortalDungeon.Game.UI
 
 
             #region buff icons
-            _scrollableArea.BaseComponent.ClearChildren();
+            _scrollableArea.BaseComponent.RemoveChildren();
 
             UIScale buffSize = new UIScale(0.09f, 0.09f);
 
@@ -402,6 +377,37 @@ namespace MortalDungeon.Game.UI
             }
 
             #endregion
+        }
+
+        public override void OnResize()
+        {
+            base.OnResize();
+
+            RemoveChild(_scrollableArea);
+            InitializeScrollableArea();
+        }
+
+        private void InitializeScrollableArea() 
+        {
+            UIScale scrollableAreaSize = new UIScale(_containingBlock.Size);
+            scrollableAreaSize.X /= 1.8f;
+            scrollableAreaSize.Y -= .02f;
+
+            //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
+            _scrollableArea = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
+
+            float scrollbarWidth = 0;
+            if (_scrollableArea.Scrollbar != null)
+            {
+                scrollbarWidth = _scrollableArea.Scrollbar.GetDimensions().X;
+            }
+
+            _scrollableArea.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopRight);
+            _scrollableArea.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
+
+            _scrollableArea.BaseComponent.SetColor(new Vector4(0, 0, 0, 0));
+
+            AddChild(_scrollableArea, 1000);
         }
     }
 }

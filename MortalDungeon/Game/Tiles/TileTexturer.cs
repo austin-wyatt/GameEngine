@@ -98,6 +98,7 @@ namespace MortalDungeon.Game.Tiles
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, Renderer._instancedVertexBuffer);
 
+
             GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw); //take the raw vertices
 
 

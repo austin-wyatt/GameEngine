@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -9,7 +10,7 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class GameObject
+    public class GameObject : ITickable
     {
         public string Name = "";
         public Vector3 Position = new Vector3();
@@ -17,6 +18,7 @@ namespace MortalDungeon.Engine_Classes
         public List<ParticleGenerator> ParticleGenerators = new List<ParticleGenerator>();
         public Vector3 PositionalOffset = new Vector3();
         public Vector3 Scale = new Vector3(1, 1, 1);
+        public BaseObject BaseObject => BaseObjects.Count > 0 ? BaseObjects[0] : null;
 
         public List<PropertyAnimation> PropertyAnimations = new List<PropertyAnimation>();
 
@@ -46,6 +48,28 @@ namespace MortalDungeon.Engine_Classes
 
         //public Stats Stats; //contains game parameters for the object
         public GameObject() { }
+
+        public GameObject(Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) 
+        {
+            RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+            Animation anim = new Animation()
+            {
+                Frames = new List<RenderableObject>() { renderableObj },
+                Frequency = 0,
+                Repeats = 0,
+                GenericType = 0
+            };
+
+            BaseObject baseObj = new BaseObject(new List<Animation>() { anim }, ObjectID, "Game object " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
+            baseObj.BaseFrame.CameraPerspective = true;
+
+            BaseObjects.Add(baseObj);
+
+            SetPosition(position);
+
+            LoadTexture(this);
+        }
 
         public virtual void SetPosition(Vector3 position) 
         {
@@ -98,6 +122,16 @@ namespace MortalDungeon.Engine_Classes
             });
 
             Scale *= f;
+        }
+
+        public virtual void SetScale(float f) 
+        {
+            BaseObjects.ForEach(obj =>
+            {
+                obj.BaseFrame.SetScaleAll(f);
+            });
+
+            Scale = new Vector3(f, f, f);
         }
 
         public virtual void ScaleAddition(float f)

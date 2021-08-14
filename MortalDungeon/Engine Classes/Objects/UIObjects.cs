@@ -455,24 +455,6 @@ namespace MortalDungeon.Engine_Classes
             LoadTexture(uiObj);
         }
 
-        public void ClearChildren() 
-        {
-            for (int i = Children.Count - 1; i > 0; i--) 
-            {
-                Children[i].Parent = null;
-                Children.RemoveAt(i);
-            }
-
-            if (Parent == null)
-            {
-                GenerateReverseTree();
-            }
-            else
-            {
-                ForceTreeRegeneration();
-            }
-        }
-
         public void RemoveChild(int objectID) 
         {
             UIObject child = Children.Find(c => c.ObjectID == objectID);
@@ -490,6 +472,29 @@ namespace MortalDungeon.Engine_Classes
                 {
                     ForceTreeRegeneration();
                 }
+            }
+        }
+
+        public void RemoveChild(UIObject obj) 
+        {
+            RemoveChild(obj.ObjectID);
+        }
+
+        public void RemoveChildren()
+        {
+            for (int i = Children.Count - 1; i > 0; i--)
+            {
+                Children[i].Parent = null;
+                Children.RemoveAt(i);
+            }
+
+            if (Parent == null)
+            {
+                GenerateReverseTree();
+            }
+            else
+            {
+                ForceTreeRegeneration();
             }
         }
 

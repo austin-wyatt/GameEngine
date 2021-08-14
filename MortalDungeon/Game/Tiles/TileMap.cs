@@ -15,6 +15,7 @@ namespace MortalDungeon.Game.Tiles
 {
     public enum Direction
     {
+        None = -1,
         SouthWest,
         South,
         SouthEast,
@@ -98,6 +99,8 @@ namespace MortalDungeon.Game.Tiles
         public List<BaseTile> Tiles = new List<BaseTile>();
         public List<BaseTile> SelectionTiles = new List<BaseTile>(); //these tiles will be place above the currently selected tiles
         public BaseTile HoveredTile;
+
+        public List<GameObject> Structures = new List<GameObject>();
 
         public List<TileChunk> TileChunks = new List<TileChunk>();
 
@@ -222,10 +225,12 @@ namespace MortalDungeon.Game.Tiles
             InitializeTileChunks();
         }
 
+        public virtual void PopulateFeatures() { }
+
         public void InitializeTileChunks() 
         {
             TileChunks.Clear();
-            FillTileChunks(10, 10);
+            FillTileChunks(5, 5);
         }
         private void FillTileChunks(int width = TileChunk.DefaultChunkWidth, int height = TileChunk.DefaultChunkHeight)
         {
@@ -291,7 +296,7 @@ namespace MortalDungeon.Game.Tiles
 
             temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
             temp.BaseObjects[0].BaseFrame.ScaleX(0.7783f);
-            temp.BaseObjects[0].BaseFrame.ScaleY(1.035f);
+            temp.BaseObjects[0].BaseFrame.ScaleY(1.036f);
             temp.BaseObjects[0].BaseFrame.ScaleAll(Width);
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.065f); //10x10
             //temp.BaseObjects[0].BaseFrame.ScaleY(1.04f); //20x20
@@ -323,7 +328,7 @@ namespace MortalDungeon.Game.Tiles
             //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 2800, tileMapPos.Y + 1360, tileMapPos.Z)); //40x40
 
 
-            TexturedQuad.SetPosition(tileMapPos + new Vector3(363, 1800, 0));
+            TexturedQuad.SetPosition(tileMapPos + new Vector3(363, 1820, 0));
             //TexturedQuad.SetPosition(new Vector3(0, 0, 0));
         }
 
@@ -345,6 +350,90 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
+        public void GenerateCliffs() 
+        {
+            BaseTile neighborTile;
+            for (int i = 0; i < Tiles.Count; i++) 
+            {
+                short cliffBitArray = 0;
+
+                Tiles[i].ClearCliff();
+
+                for (int j = 0; j < 6; j++) 
+                {
+                    neighborTile = GetNeighboringTile(Tiles[i], (Direction)j);
+
+                    if (neighborTile != null) 
+                    {
+                        if (Tiles[i].Properties.Height - neighborTile.Properties.Height > 1)
+                        {
+                            cliffBitArray += (short)Cliff.DirectionToCliffFace((Direction)j);
+                        }
+                    }
+                }
+
+                if (cliffBitArray != 0) 
+                {
+                    new Cliff(Controller.Scene, Tiles[i], cliffBitArray);
+                }
+            }
+        }
+
+        public void GenerateCliff(BaseTile tile) 
+        {
+            BaseTile neighborTile;
+            short cliffBitArray = 0;
+
+            tile.ClearCliff();
+
+            for (int j = 0; j < 6; j++)
+            {
+                neighborTile = GetNeighboringTile(tile, (Direction)j);
+
+                if (neighborTile != null)
+                {
+                    if (tile.Properties.Height - neighborTile.Properties.Height > 1)
+                    {
+                        cliffBitArray += (short)Cliff.DirectionToCliffFace((Direction)j);
+                    }
+                }
+            }
+
+            if (cliffBitArray != 0)
+            {
+                new Cliff(Controller.Scene, tile, cliffBitArray);
+            }
+        }
+
+        private static Vector4 _deltaHeightLow = new Vector4(-0.04f, -0.04f, 0, 0);
+        private static Vector4 _deltaHeightHigh = new Vector4(0, -0.04f, -0.04f, 0);
+        public void ActivateHeightMap(BaseTile tile) 
+        {
+            for (int i = 0; i < Tiles.Count; i++) 
+            {
+                if (Tiles[i].Properties.Height != tile.Properties.Height) 
+                {
+                    int diff = tile.Properties.Height - Tiles[i].Properties.Height;
+                    if (diff > 0)
+                    {
+                        tile.Color = tile.Color + _deltaHeightHigh * diff;
+                    }
+                    else 
+                    {
+                        tile.Color = tile.Color + _deltaHeightLow * Math.Abs(diff);
+                    }
+                }
+            }
+        }
+
+        public void DeactivateHeightMap() 
+        {
+            for (int i = 0; i < Tiles.Count; i++)
+            {
+                Tiles[i].Color = new Vector4(1, 1, 1, 1);
+            }
+        }
+
         public Vector3 GetTileMapDimensions() 
         {
             if (Tiles.Count > 0) 
@@ -353,7 +442,7 @@ namespace MortalDungeon.Game.Tiles
                 Vector3 returnDim = this[0, 0].Position - this[Width - 1, Height - 1].Position;
 
                 returnDim.X = Math.Abs(returnDim.X) + tileDim.X * 0.731f;
-                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.475f;
+                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.51f;
 
                 return returnDim;
             }
@@ -583,9 +672,10 @@ namespace MortalDungeon.Game.Tiles
         {
             base.Tick();
 
-            Tiles.ForEach(tile =>
+            TileChunks.ForEach(chunk =>
             {
-                tile.Tick();
+                if(!chunk.Cull)
+                    chunk.Tick();
             });
         }
 
@@ -616,7 +706,8 @@ namespace MortalDungeon.Game.Tiles
             public List<Unit> Units;
             public Unit CastingUnit;
             public AbilityTypes AbilityType;
-            public bool CheckHeight;
+            public bool CheckTileHigher;
+            public bool CheckTileLower;
 
             public TilesInRadiusParameters(TilePoint startingPoint, int radius) 
             {
@@ -626,7 +717,8 @@ namespace MortalDungeon.Game.Tiles
                 Units = new List<Unit>();
                 CastingUnit = null;
                 AbilityType = AbilityTypes.Empty;
-                CheckHeight = true;
+                CheckTileHigher = true;
+                CheckTileLower = false;
             }
 
         }
@@ -654,7 +746,7 @@ namespace MortalDungeon.Game.Tiles
                 newNeighbors.Clear();
                 neighbors.ForEach(n =>
                 {
-                    GetNeighboringTiles(n, newNeighbors, default, param.CheckHeight);
+                    GetNeighboringTiles(n, newNeighbors, default, param.CheckTileHigher, param.CheckTileLower);
                 });
 
                 neighbors.Clear();
@@ -805,7 +897,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="untraversableTypes">tile types that will block vision</param>
         /// <param name="units"></param>
         /// <returns></returns>
-        public void GetVisionLine(TilePoint startPoint, Vector2i endPoint, List<BaseTile> outputList, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
+        public void GetVisionLine(TilePoint startPoint, Vector2i endPoint, List<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             Vector3i startCube = OffsetToCube(startPoint);
             Vector3i endCube = OffsetToCube(endPoint);
@@ -818,9 +910,9 @@ namespace MortalDungeon.Game.Tiles
 
             BaseTile currentTile = null;
 
-            if (IsValidTile(startPoint.X, startPoint.Y)) 
+            if (IsValidTile(startPoint)) 
             {
-                currentTile = this[startPoint.X, startPoint.Y];
+                currentTile = startPoint.GetTile();
             }
 
             for (int i = 0; i <= N; i++)
@@ -833,21 +925,25 @@ namespace MortalDungeon.Game.Tiles
 
                     if (currentTile != null && _BaseTileTemp.Properties.Height - currentTile.Properties.Height > 1)
                     {
-                        //_BaseTileTemp.AttachHeightIndicator(outputList[outputList.Count - 2]) or something (pass the previous tile so the indicator can be specific to the direction)
-                        AddHeightIndicator(_BaseTileTemp);
-                        return;
+                        return; //if the height difference is due to the tile we can't see the tile
                     }
 
                     outputList.Add(_BaseTileTemp);
 
-                    if ((_BaseTileTemp.Properties.BlocksVision && !ignoreBlockedVision) || (untraversableTypes != null && untraversableTypes.Contains(_BaseTileTemp.Properties.Classification)))
+                    if (currentTile != null && _BaseTileTemp.GetHeight() - currentTile.Properties.Height > 1)
+                    {
+                        return; //if the height difference is due to the structure then we can see the tile
+                    }
+
+                    if (_BaseTileTemp.Properties.BlocksVision && !ignoreBlockedVision)
                     {
                         return;
                     }
                     
                     if (units?.Count > 0)
                     {
-                        if (units.Exists(unit => unit.TileMapPosition == this[currentOffset.X, currentOffset.Y].TilePoint && unit.BlocksVision))
+                        if (units.Exists(unit => unit.TileMapPosition == _BaseTileTemp.TilePoint 
+                            && (unit.Height + _BaseTileTemp.Properties.Height) - currentTile.Properties.Height > 1)) //&& unit.BlocksVision
                         {
                             return;
                         }
@@ -875,7 +971,7 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i < ringOfTiles.Count; i++)
             {
-                GetVisionLine(point, ringOfTiles[i], outputList, untraversableTypes, units, ignoreBlockedVision);
+                GetVisionLine(point, ringOfTiles[i], outputList, units, ignoreBlockedVision);
             }
 
             return outputList.Distinct().ToList();
@@ -892,7 +988,8 @@ namespace MortalDungeon.Game.Tiles
             public List<Unit> Units;
             public Unit CastingUnit;
             public AbilityTypes AbilityType;
-            public bool CheckHeight;
+            public bool CheckTileHigher;
+            public bool CheckTileLower;
 
             public PathToPointParameters(TilePoint startingPoint, TilePoint endPoint, int depth)
             {
@@ -903,7 +1000,8 @@ namespace MortalDungeon.Game.Tiles
                 Units = new List<Unit>();
                 CastingUnit = null;
                 AbilityType = AbilityTypes.Empty;
-                CheckHeight = true;
+                CheckTileHigher = true;
+                CheckTileLower = false;
             }
         }
 
@@ -951,7 +1049,7 @@ namespace MortalDungeon.Game.Tiles
                 newNeighbors.Clear();
                 neighbors.ForEach(p =>
                 {
-                    GetNeighboringTiles(p, newNeighbors, default, true);
+                    GetNeighboringTiles(p, newNeighbors, default, param.CheckTileHigher, param.CheckTileLower);
 
                     newNeighbors.ForEach(neighbor =>
                     {
@@ -1049,7 +1147,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="tile"></param>
         /// <param name="neighborList"></param>
         /// <param name="visitedTiles"></param>
-        public void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, bool checkHeight = false, bool attachHeightIndicator = false)
+        public void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, bool checkTileHigher = false, bool checkTileLower = false, bool attachHeightIndicator = false)
         {
             TilePoint neighborPos = new TilePoint(tile.TilePoint.X, tile.TilePoint.Y, tile.TilePoint.ParentTileMap);
             int yOffset = tile.TilePoint.X % 2 == 0 ? 1 : 0;
@@ -1089,12 +1187,18 @@ namespace MortalDungeon.Game.Tiles
                     BaseTile neighborTile = this[neighborPos];
                     if (!neighborTile.TilePoint._visited)
                     {
-                        if (checkHeight && neighborTile.Properties.Height - tile.Properties.Height > 1) 
+                        if (checkTileHigher && neighborTile.Properties.Height - tile.Properties.Height > 1) 
                         {
-                            //attach tile height indicator here
                             if (attachHeightIndicator) 
                             {
-                                AddHeightIndicator(neighborTile);
+                            }
+                            continue;
+                        }
+
+                        if (checkTileLower && neighborTile.Properties.Height - tile.Properties.Height < -1)
+                        {
+                            if (attachHeightIndicator)
+                            {
                             }
                             continue;
                         }
@@ -1109,6 +1213,47 @@ namespace MortalDungeon.Game.Tiles
             {
                 ShuffleList(neighborList);
             }
+        }
+
+        public BaseTile GetNeighboringTile(BaseTile tile, Direction direction) 
+        {
+            TilePoint neighborPos = new TilePoint(tile.TilePoint.X, tile.TilePoint.Y, tile.TilePoint.ParentTileMap); ;
+            int yOffset = tile.TilePoint.X % 2 == 0 ? 1 : 0;
+
+            neighborPos.X = tile.TilePoint.X;
+            neighborPos.Y = tile.TilePoint.Y;
+            switch (direction)
+            {
+                case Direction.South: //tile below
+                    neighborPos.Y += 1;
+                    break;
+                case Direction.North: //tile above
+                    neighborPos.Y -= 1;
+                    break;
+                case Direction.SouthWest: //tile bottom left
+                    neighborPos.X -= 1;
+                    neighborPos.Y += yOffset;
+                    break;
+                case Direction.NorthWest: //tile top left
+                    neighborPos.Y -= 1 + -yOffset;
+                    neighborPos.X -= 1;
+                    break;
+                case Direction.NorthEast: //tile top right
+                    neighborPos.Y -= 1 + -yOffset;
+                    neighborPos.X += 1;
+                    break;
+                case Direction.SouthEast: //tile bottom right
+                    neighborPos.X += 1;
+                    neighborPos.Y += yOffset;
+                    break;
+            }
+
+            if (IsValidTile(neighborPos))
+            {
+                return this[neighborPos];
+            }
+
+            return null;
         }
 
         private BaseTile _BaseTileTemp = new BaseTile();

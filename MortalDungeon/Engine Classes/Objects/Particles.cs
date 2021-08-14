@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class ParticleGenerator
+    public class ParticleGenerator : ITickable
     {
         public List<Particle> Particles = new List<Particle>();
         public RenderableObject ParticleDisplay;

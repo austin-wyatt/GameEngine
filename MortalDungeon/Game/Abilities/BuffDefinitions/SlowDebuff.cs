@@ -44,7 +44,9 @@ namespace MortalDungeon.Game.Abilities
             tooltip.AddChild(header);
             tooltip.AddChild(description);
 
-            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+            UIDimensions letterScale = header._textField.Letters[0].GetDimensions();
+
+            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
             description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
 
             tooltip.Margins = new UIDimensions(0, 60);

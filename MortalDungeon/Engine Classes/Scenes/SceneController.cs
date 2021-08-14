@@ -249,6 +249,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 ObjectCulling.CullListOfGameObjects(scene._units);
 
+                //ObjectCulling.CullListOfGameObjects(scene._genericObjects);
+
                 //ObjectCulling.CullListOfGameObjects(scene._UI); //UI shouldnt ever need to be culled
 
                 //scene._text.ForEach(text =>

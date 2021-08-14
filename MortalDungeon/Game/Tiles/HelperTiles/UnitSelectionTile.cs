@@ -92,6 +92,8 @@ namespace MortalDungeon.Game.GameObjects
             SetPosition(BoundUnit.Position);
 
             _selectAnimation.Play();
+            _selectAnimation.BaseColor = _baseColor;
+            _selectAnimation.BaseTranslation = BaseObjects[0].BaseFrame.Transformations.ExtractTranslation();
 
             BaseObjects[0].SetAnimation((int)UnitSelectionAnimations.Select);
         }
@@ -110,6 +112,8 @@ namespace MortalDungeon.Game.GameObjects
             SetPosition(BoundUnit.Position);
 
             _targetAnimation.Play();
+            _targetAnimation.BaseColor = _baseColor;
+            _targetAnimation.BaseTranslation = BaseObjects[0].BaseFrame.Transformations.ExtractTranslation();
 
             BaseObjects[0].SetAnimation((int)UnitSelectionAnimations.Target);
         }
@@ -139,8 +143,14 @@ namespace MortalDungeon.Game.GameObjects
             {
                 Keyframe temp = new Keyframe(i * shiftDelay);
 
-                temp.Action = (_) =>
+                temp.Action = _ =>
                 {
+                    if (temp.ActivationTick == 0) 
+                    {
+                        currColor = new Vector4(_selectAnimation.BaseColor);
+                        base.SetScale(1);
+                    }
+
                     if (temp.ActivationTick < shiftDelay * shifts / 2)
                     {
                         currColor -= deltaColor;
@@ -176,8 +186,13 @@ namespace MortalDungeon.Game.GameObjects
             {
                 Keyframe temp = new Keyframe(i * shiftDelayTarget);
 
-                temp.Action = (_) =>
+                temp.Action = _ =>
                 {
+                    if (temp.ActivationTick == 0)
+                    {
+                        tarCurrColor = new Vector4(_targetAnimation.BaseColor);
+                    }
+
                     if (temp.ActivationTick < shiftDelayTarget * shiftsTarget / 2)
                     {
                         tarCurrColor -= deltaColor;

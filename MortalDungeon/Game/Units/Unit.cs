@@ -4,6 +4,7 @@ using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,8 @@ namespace MortalDungeon.Game.Units
 
 
 
+        public float Speed => _movementAbility != null ? _movementAbility.GetEnergyCost() : 10;
+
         public float Health = 100;
         public const float MaxHealth = 100;
 
@@ -57,6 +60,11 @@ namespace MortalDungeon.Game.Units
         public bool PhasedMovement = false;
         public bool BlocksVision = false;
 
+        public bool VisibleThroughFog = false;
+
+        public bool NonCombatant = false;
+
+        public int Height = 1;
         public int VisionRadius = 6;
 
         public Direction Facing = Direction.North;
@@ -94,6 +102,14 @@ namespace MortalDungeon.Game.Units
         {
             Position = position;
             Name = name;
+        }
+
+        public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
+        {
+            Scene = scene;
+            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+
+            Team = UnitTeam.Neutral;
         }
 
         public Ability GetFirstAbilityOfType(AbilityTypes type)

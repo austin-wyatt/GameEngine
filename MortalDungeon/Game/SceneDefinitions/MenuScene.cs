@@ -145,9 +145,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             _units.Add(skeleton);
 
 
-            InitiativeOrder = new List<Unit>(_units);
-
-            StartRound();
+            StartCombat();
 
 
             UIBlock statusBarContainer = new UIBlock(new Vector3());
@@ -309,11 +307,29 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftAlt))
             {
+                Unit tree = new Unit(this, Spritesheets.StructureSheet, rand.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
+                tree.BaseObject.BaseFrame.RotateX(25);
+                tree.BaseObject.BaseFrame.SetScaleAll(1 + (float)rand.NextDouble() / 2);
 
+                //tree.NonCombatant = true;
+                tree.VisibleThroughFog = true;
+                tree.BlocksVision = true;
+                tree.TileMapPosition = tile;
+                tree.Name = "Tree";
+
+                tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
+
+                tree.Selectable = true;
+                tree.Clickable = true;
+                tree.SetTeam(UnitTeam.Neutral);
+
+                _units.Add(tree);
+
+                StartCombat();
             }
             else if (KeyboardState.IsKeyDown(Keys.RightAlt))
             {
-                
+                _tileMapController.TileMaps.ForEach(m => m.PopulateFeatures());
             }
             else if (KeyboardState.IsKeyDown(Keys.RightShift))
             {
@@ -332,12 +348,11 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftShift))
             {
-                FillInAllFog(CurrentUnit.Team, default, true);
+                map.GenerateCliff(tile);
             }
             else if (KeyboardState.IsKeyDown(Keys.LeftControl))
             {
                 FeatureGenerator.GenerateRiver(tile.TilePoint, 5, 100);
-
             }
             else if (KeyboardState.IsKeyDown(Keys.F)) 
             {
@@ -352,6 +367,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                 //    });
                 //});
 
+                //tile.Properties.Height = 2;
+
                 tiles = map.GetVisionInRadius(tile.TilePoint, 6);
 
                 tiles.ForEach(tile =>
@@ -359,8 +376,29 @@ namespace MortalDungeon.Game.SceneDefinitions
                     tile.Properties.Height += 2;
                 });
             }
-
+            else if (KeyboardState.IsKeyDown(Keys.G))
+            {
+                _tileMapController.TileMaps.ForEach(m => m.GenerateCliffs());
+            }
+            else if (KeyboardState.IsKeyDown(Keys.H))
+            {
+                tile.Properties.Height--;
+            }
+            else if (KeyboardState.IsKeyDown(Keys.J))
+            {
+                tile.Properties.Height++;
+            }
+            else if (KeyboardState.IsKeyDown(Keys.M))
+            {
+                _tileMapController.TileMaps.ForEach(m => m.ActivateHeightMap(tile));
+            }
+            else if (KeyboardState.IsKeyDown(Keys.N))
+            {
+                _tileMapController.TileMaps.ForEach(m => m.DeactivateHeightMap());
+            }
         }
+
+        private int _temp = 0;
     }
 
 

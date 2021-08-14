@@ -37,13 +37,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
         private static readonly Dictionary<TextureName, int> _loadedTextures = new Dictionary<TextureName, int>();
 
 
-        private static readonly List<Letter> _LettersToRender = new List<Letter>();
-        private static readonly List<GameObject> _UIToRender = new List<GameObject>();
-        private static readonly List<GameObject> _ObjectsToRender = new List<GameObject>();
-        private static readonly List<List<BaseTile>> _TilesToRender = new List<List<BaseTile>>();
-        private static readonly List<ParticleGenerator> _ParticleGeneratorsToRender = new List<ParticleGenerator>();
-        private static readonly List<GameObject> _TileQuadsToRender = new List<GameObject>();
-
         private static FrameBufferObject MainFBO;
 
         public static List<FrameBufferObject> _fbos = new List<FrameBufferObject>();
@@ -232,7 +225,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
             TextureName currTexture = Display.Textures.Textures[0];
 
-            PrepareInstancedRenderFunc(Display);
+            if(instantiateRenderFunc)
+                PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
 
@@ -355,8 +349,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             draw(count, _instancedRenderDataArray);
 
-            if (instantiateRenderFunc)
-                DisableInstancedShaderAttributes();
+            //if (instantiateRenderFunc)
+            //    DisableInstancedShaderAttributes();
 
 
             if (recursiveCallList.Count > 0)
@@ -364,7 +358,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, Display);
             }
         }
-
 
         public static void RenderBaseObjectsInstanced(List<BaseObject> objects, List<MultiTextureData> multiTextureData, RenderableObject display = null)
         {
@@ -454,92 +447,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             DrawCount++;
         }
 
-        public static void RenderObjectListInstancedGeneric<T>(List<List<T>> objects, RenderableObject display = null) where T : GameObject
-        {
-            if (objects.Count == 0)
-                return;
-            if (objects[0].Count == 0)
-                return;
-
-            Shaders.FAST_DEFAULT_SHADER.Use();
-
-            RenderableObject Display;
-
-            if (display == null)
-            {
-                Display = objects[0][0].BaseObjects[0]._currentAnimation.CurrentFrame;
-            }
-            else
-            {
-                Display = display;
-            }
-            TextureName currTexture = Display.Textures.Textures[0];
-
-
-            Display.TextureReference.Use(TextureUnit.Texture0);
-
-            PrepareInstancedRenderFunc(Display);
-
-            int currIndex = 0;
-
-            int count = 0;
-            List<T> recursiveCallList = new List<T>();
-
-            BaseObject obj;
-            TextureName tex;
-
-            objects.ForEach(objList => 
-            objList.ForEach(objG =>
-            {
-                if (objG.Render && !objG.Cull)
-                {
-                    if (objG.MultiTextureData.MixedTexture != null && objG.MultiTextureData.MixTexture)
-                    {
-                        if (!Texture.UsedTextures.TryGetValue(objG.MultiTextureData.MixedTextureLocation, out tex) || tex != objG.MultiTextureData.MixedTextureName) 
-                        {
-                            objG.MultiTextureData.MixedTexture.Use(objG.MultiTextureData.MixedTextureLocation);
-                            //Display.TextureReference.Use(TextureUnit.Texture0);
-                        }
-                    }
-
-                    for (int i = 0; i < objG.BaseObjects.Count; i++)
-                    {
-                        if (objG.BaseObjects[i].Render)
-                        {
-                            obj = objG.BaseObjects[i];
-                            tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
-                            if (count == ObjectBufferCount || tex != currTexture)
-                            {
-                                recursiveCallList.Add(objG);
-                            }
-                            else
-                            {
-                                InsertDataIntoInstancedRenderArray(obj, objG.MultiTextureData, ref _instancedRenderArray, ref currIndex, 0);
-
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }));
-
-
-            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.StreamDraw);
-
-
-            GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, count);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-
-
-            DisableInstancedShaderAttributes();
-
-
-            if (recursiveCallList.Count > 0)
-            {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderArray, Display);
-            }
-            DrawCount++;
-        }
 
         static readonly float[] g_quad_vertex_buffer_data = new float[]{
             -1.0f, -1.0f, 0.0f,
@@ -836,205 +743,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             _textures.Clear();
             _loadedTextures.Clear();
-        }
-        #endregion
-
-
-        /// <summary>
-        /// Render all queued objects
-        /// </summary>
-        public static void RenderQueue() 
-        {
-            //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to 
-            RenderQueuedUI();
-
-            //RenderFrameBuffer(MainFBO);
-
-            //MainFBO.UnbindFrameBuffer();
-            //MainFBO.ClearColorBuffer(false);
-
-            //DrawToFrameBuffer(MainFBO); 
-
-            RenderQueuedLetters();
-
-            RenderQueuedParticles();
-            RenderTileQueue();
-
-            RenderTileQuadQueue();
-            RenderQueuedObjects();
-
-            //RenderFrameBuffer(MainFBO);
-        }
-
-        #region Particle queue
-        public static void QueueParticlesForRender(ParticleGenerator generator) 
-        {
-            _ParticleGeneratorsToRender.Add(generator);
-        }
-        public static void RenderQueuedParticles() 
-        {
-            _ParticleGeneratorsToRender.ForEach(gen =>
-            {
-                RenderParticlesInstanced(gen);
-            });
-
-            _ParticleGeneratorsToRender.Clear();
-        }
-        #endregion
-
-        #region Text queue
-        public static void QueueLettersForRender(List<Letter> letters) 
-        {
-            letters.ForEach(letter =>
-            {
-                _LettersToRender.Add(letter);
-            });
-        }
-        public static void QueueTextForRender(List<Text> text) 
-        {
-            text.ForEach(obj =>
-            {
-                if (obj.Render)
-                    QueueLettersForRender(obj.Letters);
-            });
-        }
-        #endregion
-
-        #region UI queue
-        public static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
-        {
-            text.ForEach(obj =>
-            {
-                if (obj.Render)
-                    QueueUIForRender(obj.Letters, scissorFlag);
-            });
-        }
-        public static void RenderQueuedLetters() 
-        {
-            RenderObjectsInstancedGeneric(_LettersToRender, ref _instancedRenderArray);
-            _LettersToRender.Clear();
-        }
-
-        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
-        {
-            if (uiObjects.Count > 0)
-            {
-                for (int i = 0; i < uiObjects.Count; i++)
-                { 
-                    if (uiObjects[i].Render)
-                    {
-                        if (uiObjects[i].ScissorData.Scissor == true)
-                        {
-                            scissorData = uiObjects[i].ScissorData;
-                            scissorData._startingDepth = depth;
-                        }
-
-                        bool scissorFlag = false;
-                        if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
-                        {
-                            scissorFlag = true;
-                        }
-                        else
-                        {
-                            scissorData = null;
-                        }
-
-                        QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
-
-                        if (uiObjects[i].Children.Count > 0)
-                        {
-                            QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
-                        }
-
-                        QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
-                    }
-                }
-
-
-                //RenderableObject display = uiObjects[0].GetDisplay();
-
-                //RenderObjectsInstancedGeneric(uiObjects, display);
-                //QueueUIForRender(uiObjects);
-            }
-        }
-        public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
-        {
-            objList.ForEach(obj =>
-            {
-                obj.ScissorData._scissorFlag = scissorFlag;
-
-                _UIToRender.Add(obj);
-            });
-        }
-        public static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
-        {
-            obj.ScissorData._scissorFlag = scissorFlag;
-
-            _UIToRender.Add(obj);
-        }
-        public static void RenderQueuedUI() 
-        {
-            RenderObjectsInstancedGeneric(_UIToRender, ref _instancedRenderArray);
-            _UIToRender.Clear();
-        }
-
-        #endregion
-
-        #region Object queue
-        public static void QueueObjectsForRender<T>(List<T> objList) where T : GameObject 
-        {
-            objList.ForEach(obj =>
-            {
-                _ObjectsToRender.Add(obj);
-            });
-        }
-        public static void QueueObjectForRender<T>(T obj) where T : GameObject
-        {
-            _ObjectsToRender.Add(obj);
-        }
-        public static void RenderQueuedObjects() 
-        {
-            RenderObjectsInstancedGeneric(_ObjectsToRender, ref _instancedRenderArray);
-            _ObjectsToRender.Clear();
-        }
-        #endregion
-
-        #region Tile queue
-        public static void QueueTileObjectsForRender(List<BaseTile> objList)
-        {
-            if (objList.Count == 0)
-                return;
-
-            _TilesToRender.Add(objList);
-        }
-        public static void RenderTileQueue() 
-        {
-            RenderObjectListInstancedGeneric(_TilesToRender, null);
-
-            _TilesToRender.Clear();
-        }
-        #endregion
-
-        #region Tile quad queue
-        public static void QueueTileQuadForRender(GameObject obj) 
-        {
-            if (obj == null)
-                return;
-
-            _TileQuadsToRender.Add(obj);
-        }
-
-        private static readonly List<GameObject> _tempGameObjList = new List<GameObject>();
-        public static void RenderTileQuadQueue()
-        {
-            for (int i = 0; i < _TileQuadsToRender.Count; i++) 
-            {
-                _tempGameObjList.Add(_TileQuadsToRender[i]);
-                RenderObjectsInstancedGeneric(_tempGameObjList, ref _instancedRenderArray);
-                _tempGameObjList.Clear();
-            }
-
-            _TileQuadsToRender.Clear();
         }
         #endregion
 

@@ -24,6 +24,7 @@ namespace MortalDungeon.Game.Tiles
         Grass = 22,
         AltGrass = 23,
         Water = 24,
+        AltWater = 25,
         Outline = 20,
 
         Fog_1 = 80,
@@ -57,8 +58,13 @@ namespace MortalDungeon.Game.Tiles
         public BaseObject _tileObject;
 
         public BaseTile AttachedTile; //for selection tiles 
+        public Structure Structure;
+        public Cliff Cliff;
+
         public HeightIndicatorTile HeightIndicator;
         public TileMap TileMap;
+
+        public TileChunk Chunk;
 
         public BaseTile()
         {
@@ -119,7 +125,8 @@ namespace MortalDungeon.Game.Tiles
         {
             foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
             {
-                Explored.Add(team, false);
+                //Explored.Add(team, false);
+                Explored.Add(team, true);
             }
         }
 
@@ -238,6 +245,15 @@ namespace MortalDungeon.Game.Tiles
             TileMap.DynamicTextureInfo.TextureChanged = true;
         }
 
+        public void ClearCliff() 
+        {
+            if (Cliff != null) 
+            {
+                Cliff.ClearCliff();
+                Cliff = null;
+            }
+        }
+
         public static string GetTooltipString(BaseTile tile, CombatScene scene) 
         {
             string tooltip;
@@ -251,12 +267,45 @@ namespace MortalDungeon.Game.Tiles
                 int coordX = tile.TilePoint.X + tile.TilePoint.ParentTileMap.TileMapCoords.X * tile.TilePoint.ParentTileMap.Width;
                 int coordY = tile.TilePoint.Y + tile.TilePoint.ParentTileMap.TileMapCoords.Y * tile.TilePoint.ParentTileMap.Height;
 
-                tooltip = $"Type: {tile.Properties.Type} \n";
+                tooltip = $"Type: {TileTypeToString(tile.Properties.Type)} \n";
                 tooltip += $"Coordinates: {coordX}, {coordY} \n";
-                tooltip += $"Height: {tile.Properties.Height}";
+                tooltip += $"Elevation: {tile.Properties.Height}\n";
+
+                if (tile.Structure != null) 
+                {
+                    tooltip += $"Structure\n* Name: {tile.Structure.Name}\n";
+                    tooltip += $"* Height: {tile.Structure.Height}\n";
+                }
             }
 
             return tooltip;
+        }
+
+        public static string TileTypeToString(TileType type) 
+        {
+            string val;
+
+            switch (type) 
+            {
+                case TileType.Water:
+                case TileType.AltWater:
+                    val = "Water";
+                    break;
+                case TileType.Grass:
+                case TileType.AltGrass:
+                    val = "Grass";
+                    break;
+                default:
+                    val = "None";
+                    break;
+            }
+
+            return val;
+        }
+
+        public int GetHeight() 
+        {
+            return Structure != null ? Structure.Height + Properties.Height : Properties.Height;
         }
     }
 

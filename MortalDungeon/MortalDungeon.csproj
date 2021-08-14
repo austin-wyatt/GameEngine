@@ -41,6 +41,9 @@
     <None Update="Resources\SpritesheetTest.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\StructureSpritesheet.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\TileSpritesheet.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
