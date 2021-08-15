@@ -357,23 +357,23 @@ namespace MortalDungeon.Game.SceneDefinitions
             else if (KeyboardState.IsKeyDown(Keys.F)) 
             {
                 List<BaseTile> tiles = new List<BaseTile>();
-                //_units.ForEach(unit =>
-                //{
-                //    tiles = map.GetVisionInRadius(unit.TileMapPosition, unit.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.TileMapPosition != unit.TileMapPosition));
-
-                //    tiles.ForEach(tile =>
-                //    {
-                //        tile.Height = 2;
-                //    });
-                //});
-
-                //tile.Properties.Height = 2;
 
                 tiles = map.GetVisionInRadius(tile.TilePoint, 6);
 
                 tiles.ForEach(tile =>
                 {
                     tile.Properties.Height += 2;
+                });
+            }
+            else if (KeyboardState.IsKeyDown(Keys.V))
+            {
+                List<BaseTile> tiles = new List<BaseTile>();
+
+                tiles = map.GetVisionInRadius(tile.TilePoint, 6);
+
+                tiles.ForEach(tile =>
+                {
+                    tile.Properties.Height -= 2;
                 });
             }
             else if (KeyboardState.IsKeyDown(Keys.G))
@@ -390,11 +390,49 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
             else if (KeyboardState.IsKeyDown(Keys.M))
             {
-                _tileMapController.TileMaps.ForEach(m => m.ActivateHeightMap(tile));
+                _tileMapController.TileMaps.ForEach(m =>
+                {
+                    m.ActivateHeightMap(tile);
+                });
             }
             else if (KeyboardState.IsKeyDown(Keys.N))
             {
                 _tileMapController.TileMaps.ForEach(m => m.DeactivateHeightMap());
+            }
+            else if (KeyboardState.IsKeyDown(Keys.KeyPad1))
+            {
+                TileMapPoint temp = new TileMapPoint(map.TileMapCoords.X, map.TileMapCoords.Y);
+                if (KeyboardState.IsKeyDown(Keys.KeyPadAdd))
+                {
+                    temp.X++;
+                    TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
+                    tileMap.PopulateTileMap();
+
+                    _tileMapController.AddTileMap(temp, tileMap);
+                }
+                else if (KeyboardState.IsKeyDown(Keys.KeyPadSubtract)) 
+                {
+                    temp.X--;
+                    TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
+                    tileMap.PopulateTileMap();
+
+                    _tileMapController.AddTileMap(temp, tileMap);
+                }
+            }
+            else if (KeyboardState.IsKeyDown(Keys.KeyPad2))
+            {
+                if (KeyboardState.IsKeyDown(Keys.KeyPadAdd))
+                {
+
+                }
+                else if (KeyboardState.IsKeyDown(Keys.KeyPadSubtract))
+                {
+
+                }
+            }
+            else if (KeyboardState.IsKeyDown(Keys.KeyPad3))
+            {
+                _tileMapController.RemoveTileMap(map);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Objects;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -31,6 +32,9 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                     baseTile.DefaultAnimation = BaseTileAnimationType.Grass;
                     baseTile.Properties.Type = TileType.Grass;
                     baseTile.TileMap = this;
+                    baseTile.Outline = true;
+
+                    LoadTexture(baseTile);
 
                     Tiles.Add(baseTile);
 
@@ -79,6 +83,35 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             //tile.Chunk.GenericObjects.Add(tree.SelectionTile);
         }
 
+        public void CreateRock(BaseTile tile)
+        {
+            Structure rock = new Structure(Controller.Scene, Spritesheets.StructureSheet, _randomNumberGen.Next() % 3 + (int)StructureEnum.Rock_1, tile.Position + new Vector3(0, -200, 0.12f));
+            rock.BaseObject.BaseFrame.RotateX(15);
+            rock.BaseObject.BaseFrame.SetScaleAll(1 + (float)_randomNumberGen.NextDouble() / 2);
+            
+            //tree.NonCombatant = true;
+            rock.VisibleThroughFog = true;
+            rock.TileMapPosition = tile;
+            rock.Name = "Rock";
+            tile.Properties.Classification = TileClassification.Terrain;
+
+            rock.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
+
+            rock.SetTeam(UnitTeam.Neutral);
+            if (rock.Type == StructureEnum.Rock_2)
+            {
+                rock.Height = 1;
+            }
+            else 
+            {
+                rock.Height = 2;
+            }
+
+            tile.Chunk.Structures.Add(rock);
+            tile.Structure = rock;
+            //tile.Chunk.GenericObjects.Add(tree.SelectionTile);
+        }
+
         public override void OnAddedToController()
         {
             base.OnAddedToController();
@@ -92,7 +125,14 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             {
                 if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0 && baseTile.Properties.Classification != TileClassification.Water) //add a bit of randomness to tile gen
                 {
-                    CreateTree(baseTile);
+                    if (_randomNumberGen.NextDouble() > 0.3)
+                    {
+                        CreateTree(baseTile);
+                    }
+                    else 
+                    {
+                        CreateRock(baseTile);
+                    }
                 }
             }
         }

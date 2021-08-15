@@ -98,10 +98,12 @@ namespace MortalDungeon.Game.Abilities
             {
                 PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
 
+                float speed = CastingUnit.Speed;
+
                 Vector3 tileAPosition = CurrentTiles[0].Position;
                 Vector3 tileBPosition;
 
-                int moveIncrements = 20;
+                int moveIncrements = (int)(20 * speed);
                 int moveDelay = 1; //in ticks
 
                 for (int i = 1; i < CurrentTiles.Count; i++)

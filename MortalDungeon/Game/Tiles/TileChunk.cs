@@ -37,6 +37,13 @@ namespace MortalDungeon.Game.Tiles
             tile.Chunk = this;
         }
 
+        public void ClearChunk() 
+        {
+            Tiles.Clear();
+            Structures.Clear();
+            GenericObjects.Clear();
+        }
+
         public void CalculateValues() 
         {
             Center = (Tiles[0].Position + Tiles[Tiles.Count - 1].Position) / 2;

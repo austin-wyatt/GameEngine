@@ -201,6 +201,8 @@ namespace MortalDungeon.Game.Tiles
 
                 //SelectionTiles.Add(baseTile);
                 _selectionTilePool.Add(baseTile);
+
+                LoadTexture(baseTile);
             }
 
             tilePosition.Z += 0.001f;
@@ -216,6 +218,8 @@ namespace MortalDungeon.Game.Tiles
 
             HoveredTile.SetColor(Colors.Red);
             HoveredTile._tileObject.OutlineParameters.SetAllInline(0);
+
+            LoadTexture(HoveredTile);
 
             _hoveredTileList = new List<BaseTile>() { HoveredTile };
         }
@@ -348,7 +352,17 @@ namespace MortalDungeon.Game.Tiles
             {
                 FrameBuffer.Dispose();
             }
+
+            for (int i = 0; i < TileChunks.Count; i++)
+            {
+                TileChunks[i].ClearChunk();
+            }
+
+            TileChunks.Clear();
+            Tiles.Clear();
+            SelectionTiles.Clear();
         }
+
 
         public void GenerateCliffs() 
         {
@@ -405,10 +419,14 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        private static Vector4 _deltaHeightLow = new Vector4(-0.04f, -0.04f, 0, 0);
-        private static Vector4 _deltaHeightHigh = new Vector4(0, -0.04f, -0.04f, 0);
+        private static Vector4 _deltaHeightLow = new Vector4(-0.2f, -0.2f, 0, 0);
+        private static Vector4 _deltaHeightHigh = new Vector4(0, -0.1f, -0.2f, 0);
+        private bool _heightMapActivated = false;
         public void ActivateHeightMap(BaseTile tile) 
         {
+            if (_heightMapActivated)
+                return;
+
             for (int i = 0; i < Tiles.Count; i++) 
             {
                 if (Tiles[i].Properties.Height != tile.Properties.Height) 
@@ -416,14 +434,20 @@ namespace MortalDungeon.Game.Tiles
                     int diff = tile.Properties.Height - Tiles[i].Properties.Height;
                     if (diff > 0)
                     {
-                        tile.Color = tile.Color + _deltaHeightHigh * diff;
+                        Tiles[i].Color = Tiles[i].Color + _deltaHeightLow * diff;
                     }
                     else 
                     {
-                        tile.Color = tile.Color + _deltaHeightLow * Math.Abs(diff);
+                        Tiles[i].Color = Tiles[i].Color + _deltaHeightHigh * Math.Abs(diff);
                     }
+
+                    TilesToUpdate.Add(Tiles[i]);
                 }
             }
+
+            TileTexturer.UpdateTexture(this);
+
+            _heightMapActivated = true;
         }
 
         public void DeactivateHeightMap() 
@@ -431,7 +455,12 @@ namespace MortalDungeon.Game.Tiles
             for (int i = 0; i < Tiles.Count; i++)
             {
                 Tiles[i].Color = new Vector4(1, 1, 1, 1);
+                TilesToUpdate.Add(Tiles[i]);
             }
+
+            TileTexturer.UpdateTexture(this);
+
+            _heightMapActivated = false;
         }
 
         public Vector3 GetTileMapDimensions() 
@@ -441,8 +470,8 @@ namespace MortalDungeon.Game.Tiles
                 Vector3 tileDim = this[0, 0].GetDimensions();
                 Vector3 returnDim = this[0, 0].Position - this[Width - 1, Height - 1].Position;
 
-                returnDim.X = Math.Abs(returnDim.X) + tileDim.X * 0.731f;
-                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.51f;
+                returnDim.X = Math.Abs(returnDim.X) + tileDim.X * 0.725f;
+                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.50f;
 
                 return returnDim;
             }
@@ -746,7 +775,7 @@ namespace MortalDungeon.Game.Tiles
                 newNeighbors.Clear();
                 neighbors.ForEach(n =>
                 {
-                    GetNeighboringTiles(n, newNeighbors, default, param.CheckTileHigher, param.CheckTileLower);
+                    GetNeighboringTiles(n, newNeighbors, true, param.CheckTileHigher, param.CheckTileLower);
                 });
 
                 neighbors.Clear();
@@ -1049,7 +1078,7 @@ namespace MortalDungeon.Game.Tiles
                 newNeighbors.Clear();
                 neighbors.ForEach(p =>
                 {
-                    GetNeighboringTiles(p, newNeighbors, default, param.CheckTileHigher, param.CheckTileLower);
+                    GetNeighboringTiles(p, newNeighbors, true, param.CheckTileHigher, param.CheckTileLower);
 
                     newNeighbors.ForEach(neighbor =>
                     {

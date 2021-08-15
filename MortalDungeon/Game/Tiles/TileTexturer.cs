@@ -33,10 +33,15 @@ namespace MortalDungeon.Game.Tiles
             map.FrameBuffer = new FrameBufferObject(new Vector2i((int)((tile_width + (map.Width) * tile_width_partial) / WindowConstants.AspectRatio) * textureScale,
                 (tile_height * map.Height + tile_height) * textureScale));
 
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
             map.DynamicTexture = new Texture(map.FrameBuffer.RenderTexture, TextureName.DynamicTexture);
 
             map.Tiles.ForEach(tile => map.TilesToUpdate.Add(tile));
             RenderTilesToFramebuffer(map);
+
+            map.TilesToUpdate.Clear();
         }
 
         public static void UpdateTexture(TileMap map) 
@@ -75,7 +80,9 @@ namespace MortalDungeon.Game.Tiles
 
 
             GL.BindTexture(TextureTarget.Texture2D, map.FrameBuffer.RenderTexture);
+
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
             GL.Viewport(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y);

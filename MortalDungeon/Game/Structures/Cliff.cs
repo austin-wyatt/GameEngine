@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -130,7 +131,9 @@ namespace MortalDungeon.Game.Units
 
         public void GenerateCliff(CombatScene scene, Direction direction, int length) 
         {
-            Structure cliffStructure = new Structure(scene, Spritesheets.StructureSheet, (int)Structures.Cliff_1 + length - 1, Tile.Position + new Vector3(0, 0, 0.005f));
+            Structure cliffStructure = new Structure(scene, Spritesheets.StructureSheet, (int)StructureEnum.Cliff_1 + length - 1, Tile.Position + new Vector3(0, 0, 0.008f));
+
+            cliffStructure.SetColor(new Vector4(0.5f, 0.5f, 0.5f, 1) + Tile.Properties.Height * new Vector4(0.05f, 0.05f, 0.05f, 0));
             CliffStructure.Add(cliffStructure);
 
             cliffStructure.SelectionTile = null;

@@ -103,11 +103,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             {
                                 Renderer.LoadTextureFromGameObj(tile);
                             });
-
-                            //Renderer.LoadTextureFromGameObj(obj.Tiles[0]);
+                            Renderer.LoadTextureFromGameObj(obj.Tiles[0]);
                         }
                         Renderer.LoadTextureFromGameObj(obj.GetSelectionTilePool()[0]);
-                        Renderer.LoadTextureFromGameObj(obj.HoveredTile);
                     });
 
                     Scenes[u]._UI.ForEach(obj =>

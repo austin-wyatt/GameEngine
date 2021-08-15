@@ -42,6 +42,13 @@ namespace MortalDungeon.Game.Tiles
             map.OnAddedToController();
         }
 
+        public void RemoveTileMap(TileMap map) 
+        {
+            map.SetRender(false);
+            map.CleanUp();
+            TileMaps.Remove(map);
+        }
+
         public void PositionTileMaps() 
         {
             if (TileMaps.Count == 0)

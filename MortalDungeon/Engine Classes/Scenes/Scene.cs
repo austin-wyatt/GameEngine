@@ -240,23 +240,23 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     return; //stop further clicks from being processed
 
                 if (!GetBit(_interceptClicks, ObjectType.Tile))
-                    _tileMapController.TileMaps.ForEach(map =>
+                    for (int i = 0; i < _tileMapController.TileMaps.Count; i++) 
                     {
-                        if (!map.Render)
-                            return;
+                        if (!_tileMapController.TileMaps[i].Render)
+                            continue;
 
-                        map.TileChunks.ForEach(chunk =>
+                        for (int j = 0; !clickProcessed && j < _tileMapController.TileMaps[i].TileChunks.Count; j++) 
                         {
-                            if (!chunk.Cull)
+                            if (!_tileMapController.TileMaps[i].TileChunks[j].Cull)
                             {
-                                ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                                ObjectCursorBoundsCheck(_tileMapController.TileMaps[i].TileChunks[j].Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
                                 {
-                                    onTileClicked(map, foundObj);
+                                    onTileClicked(_tileMapController.TileMaps[i], foundObj);
                                     clickProcessed = true;
                                 });
                             }
-                        });
-                    });
+                        }
+                    }
 
                 if (clickProcessed)
                     return; //stop further clicks from being processed
