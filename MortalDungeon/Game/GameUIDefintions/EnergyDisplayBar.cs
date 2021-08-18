@@ -63,7 +63,11 @@ namespace MortalDungeon.Game.UI
 
                 UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentEnergy.ToString("n1") + " Energy", energyPip, this);
 
-                energyPip._onTimedHoverActions.Add(() => UIHelpers.CreateToolTip(param));
+                energyPip._onTimedHoverActions.Add(() =>
+                {
+                    param.Text = CurrentEnergy.ToString("n1") + " Energy";
+                    UIHelpers.CreateToolTip(param);
+                });
 
                 Pips.Add(energyPip);
 

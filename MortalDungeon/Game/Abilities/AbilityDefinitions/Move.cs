@@ -117,11 +117,12 @@ namespace MortalDungeon.Game.Abilities
 
                     for (int j = 0; j < moveIncrements; j++)
                     {
-                        Keyframe frame = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * j);
-
-                        frame.Action = (display) =>
+                        Keyframe frame = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * j)
                         {
-                            CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
+                            Action = (display) =>
+                            {
+                                CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
+                            }
                         };
 
                         moveAnimation.Keyframes.Add(frame);
@@ -132,11 +133,20 @@ namespace MortalDungeon.Game.Abilities
                     BaseTile currentTile = CurrentTiles[i];
                     endOfTileMoveKeyframe.Action = ( display) =>
                     {
+                        bool updateAll = false;
+                        if (CastingUnit.TileMapPosition.GetPathableHeight() != currentTile.GetPathableHeight()) 
+                        {
+                            updateAll = true;
+                        }
+
                         CastingUnit.TileMapPosition = currentTile;
 
                         TileMap.Controller.TileMaps.ForEach(m => m.Tiles.ForEach(tile =>
                         {
                             tile.SetFog(true, CastingUnit.Team);
+
+                            if (updateAll)
+                                tile.Update();
                         }));
 
                         Units.ForEach(unit =>
@@ -155,8 +165,6 @@ namespace MortalDungeon.Game.Abilities
                                 Scene.HideObjectsInFog(allOtherUnits);
                             }
                         });
-
-                        TileMap.Controller.Scene.FinishedSettingFog();
                     };
 
                     moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
@@ -243,7 +251,7 @@ namespace MortalDungeon.Game.Abilities
                     bool selectedTileInPath = _path.Exists(p => p.AttachedTile != null && p.AttachedTile.ObjectID == tile.ObjectID);
 
                     //get the path from the last tile to the hovered point
-                    param = new TileMap.PathToPointParameters(_path[_path.Count - 1].AttachedTile.TilePoint, SelectedTile.TilePoint, Range - _path.Count + 1)
+                    param = new TileMap.PathToPointParameters(_path[^1].AttachedTile.TilePoint, SelectedTile.TilePoint, Range - _path.Count + 1)
                     {
                         TraversableTypes = TraversableTypes,
                         Units = Units,
@@ -255,7 +263,7 @@ namespace MortalDungeon.Game.Abilities
 
                     if (tiles.Count == 0 && _path.Count - 1 == Range && _path.Count > 1 && !selectedTileInPath)
                     {
-                        param.StartingPoint = _path[_path.Count - 2].AttachedTile.TilePoint;
+                        param.StartingPoint = _path[^2].AttachedTile.TilePoint;
                         param.Depth = Range - _path.Count + 2;
 
                         tiles = TileMap.GetPathToPoint(param);
@@ -275,7 +283,7 @@ namespace MortalDungeon.Game.Abilities
                             tiles = TileMap.GetPathToPoint(param);
                         }
                     }
-                    else if (tiles.Count != 0 || (_path.Count > 1 && _path[_path.Count - 2].AttachedTile.TilePoint == tile.TilePoint))
+                    else if (tiles.Count != 0 || (_path.Count > 1 && _path[^2].AttachedTile.TilePoint == tile.TilePoint))
                     {
                         bool backtracking = false;
                         for (int i = 0; i < _path.Count - 1; i++)

@@ -11,7 +11,8 @@ namespace MortalDungeon.Engine_Classes
     public enum UIEventType
     {
         None,
-        MouseUp,
+        Click,
+        RightClick,
         Hover,
         MouseDown,
         Grab,
@@ -199,6 +200,33 @@ namespace MortalDungeon.Engine_Classes
             }
 
             tooltipParent._onHoverEndActions.Add(temp);
+        }
+
+        /// <summary>
+        /// Creates a context menu based on the passed Tooltip object. Returns an action that will delete the context menu when invoked (or null if a context menu is open already)
+        /// </summary>
+        public static void CreateContextMenu(CombatScene scene, Tooltip tooltip, UIObject baseObject, GeneralContextFlags contextFlag = GeneralContextFlags.ContextMenuOpen)
+        {
+            if (scene.ContextManager.GetFlag(contextFlag))
+                return;
+
+            if (tooltip == null)
+                return;
+
+            scene.ContextManager.SetFlag(contextFlag, true);
+
+
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position), UIAnchorPosition.BottomLeft);
+
+            baseObject.AddChild(tooltip, 100000);
+
+            void temp()
+            {
+                baseObject.RemoveChild(tooltip.ObjectID);
+                scene.ContextManager.SetFlag(contextFlag, false);
+            }
+
+            scene._closeContextMenu = temp;
         }
     }
 

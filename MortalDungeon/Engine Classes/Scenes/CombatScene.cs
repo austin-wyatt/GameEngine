@@ -17,7 +17,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
     public enum GeneralContextFlags
     {
         UITooltipOpen,
-        TileTooltipOpen
+        TileTooltipOpen,
+        ContextMenuOpen
     }
     public class CombatScene : Scene
     {
@@ -43,6 +44,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         Texture _normalFogTexture;
         public UIBlock _tooltipBlock;
+        public Action _closeContextMenu;
 
         public CombatScene() 
         {
@@ -137,7 +139,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             Footer.UpdateFooterInfo(CurrentUnit);
 
-            FillInTeamFog(CurrentUnit.Team, prevTeam);
+            FillInTeamFog(CurrentUnit.Team, prevTeam, true);
 
 
             CurrentUnit.OnTurnStart();
@@ -237,9 +239,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _selectedUnits.Clear();
         }
 
-        public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Unknown) 
+        public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Unknown, bool updateAll = false) 
         {
-            FillInAllFog(currentTeam, previousTeam);
+            FillInAllFog(currentTeam, previousTeam, false, updateAll);
 
             _units.ForEach(unit =>
             {
@@ -256,16 +258,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
 
             HideObjectsInFog();
-
-            FinishedSettingFog();
         }
 
-        public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown, bool reveal = false)
+        public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown, bool reveal = false, bool updateAll = false)
         {
             _tileMapController.TileMaps.ForEach(m =>
             {
                 if (!m.Render)
                     return;
+
 
                 m.Tiles.ForEach(tile =>
                 {
@@ -287,20 +288,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         tile.SetExplored(tile.Explored[currentTeam], currentTeam, previousTeam);
                         tile.SetFog(true, currentTeam, previousTeam);
                     }
+
+                    if (updateAll)
+                        tile.Update();
                 });
             });
-        }
-
-        public void FinishedSettingFog() 
-        {
-            //for (int i = 0; i < _tileMapController.TileMaps.Count; i++)
-            //{
-            //    if (_tileMapController.TileMaps[i].DynamicTextureChanged)
-            //    {
-            //        _tileMapController.TileMaps[i].DynamicTexture.UpdateTextureArray();
-            //        _tileMapController.TileMaps[i].DynamicTextureChanged = false;
-            //    }
-            //}
         }
 
         public void HideObjectsInFog(List<Unit> units = null) 
@@ -397,21 +389,52 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }, notFound => notFound.HoverEnd());
         }
 
-        public override void HandleRightClick()
+
+        public override void OnMouseUp(MouseButtonEventArgs e)
         {
-            base.HandleRightClick();
+            SetMouseStateFlags();
 
-            DeselectUnits();
-
-            if (_selectedAbility != null)
+            if ((e.Button == MouseButton.Right) && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
             {
-                _selectedAbility.OnRightClick();
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ContextMenuOpen))
+                {
+                    CloseContextMenu();
+                }
+
+                DeselectUnits();
+
+                if (_selectedAbility != null)
+                {
+                    _selectedAbility.OnRightClick();
+                }
+            }
+
+            CheckMouseUp(e);
+        }
+
+        protected override void SetMouseStateFlags()
+        {
+            base.SetMouseStateFlags();
+
+            MouseUpStateFlags.SetFlag(MouseUpFlags.ContextMenuOpen, ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen));
+        }
+
+        protected override void ActOnMouseStateFlag(MouseUpFlags flag)
+        {
+            base.ActOnMouseStateFlag(flag);
+
+            switch (flag) 
+            {
+                case MouseUpFlags.ContextMenuOpen:
+                    MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                    CloseContextMenu();
+                    break;
             }
         }
 
-        public override bool onKeyDown(KeyboardKeyEventArgs e)
+        public override bool OnKeyDown(KeyboardKeyEventArgs e)
         {
-            bool processKeyStrokes = base.onKeyDown(e);
+            bool processKeyStrokes = base.OnKeyDown(e);
 
             if (processKeyStrokes) 
             {
@@ -432,13 +455,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             });
                         }
                         break;
+                    case Keys.Escape:
+                        if (ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen))
+                        {
+                            CloseContextMenu();
+                        }
+                        break;
                 }
             }
 
             return processKeyStrokes;
         }
 
-        public virtual void onUnitKilled(Unit unit) 
+        public virtual void OnUnitKilled(Unit unit) 
         {
             if (unit.StatusBarComp != null) 
             {
@@ -457,34 +486,41 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InitiativeOrder.Remove(unit);
         }
 
-        public override void onUnitClicked(Unit unit)
+        public override void OnUnitClicked(Unit unit, MouseButton button)
         {
-            base.onUnitClicked(unit);
+            base.OnUnitClicked(unit, button);
 
-            if (_selectedAbility == null)
+            if (button == MouseButton.Left)
             {
-                if (unit.Selectable && !unit.TileMapPosition.InFog)
-                    SelectUnit(unit);
-                
-
-                if (!InCombat)
+                if (_selectedAbility == null)
                 {
-                    CurrentUnit = unit;
-                    _selectedAbility = unit.GetFirstAbilityOfType(DefaultAbilityType);
+                    if (unit.Selectable && !unit.TileMapPosition.InFog)
+                        SelectUnit(unit);
 
-                    if (_selectedAbility.Type != AbilityTypes.Empty)
+
+                    if (!InCombat)
                     {
-                        SelectAbility(_selectedAbility);
+                        CurrentUnit = unit;
+                        _selectedAbility = unit.GetFirstAbilityOfType(DefaultAbilityType);
+
+                        if (_selectedAbility.Type != AbilityTypes.Empty)
+                        {
+                            SelectAbility(_selectedAbility);
+                        }
                     }
                 }
+                else
+                {
+                    _selectedAbility.OnUnitClicked(unit);
+                }
             }
-            else
+            else 
             {
-                _selectedAbility.OnUnitClicked(unit);
+                unit.OnRightClick();
             }
         }
 
-        public virtual void onAbilityCast(Ability ability) 
+        public virtual void OnAbilityCast(Ability ability) 
         {
             _onAbilityCastActions.ForEach(a => a?.Invoke(ability));
 
@@ -494,5 +530,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Action<Ability>> _onSelectAbilityActions = new List<Action<Ability>>();
         public List<Action> _onDeselectAbilityActions = new List<Action>();
         public List<Action<Ability>> _onAbilityCastActions = new List<Action<Ability>>();
+
+
+        public void OpenContextMenu(Tooltip menu) 
+        {
+            UIHelpers.CreateContextMenu(this, menu, _tooltipBlock);
+
+            Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
+            MessageCenter.SendMessage(msg);
+        }
+
+        public void CloseContextMenu() 
+        {
+            _closeContextMenu?.Invoke();
+
+            Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
+            MessageCenter.SendMessage(msg);
+        }
     }
 }

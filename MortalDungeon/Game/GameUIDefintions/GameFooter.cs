@@ -279,7 +279,16 @@ namespace MortalDungeon.Game.UI
 
                 void onAbilityDeselected() 
                 {
-                    abilityIcon.SetColor(Colors.White);
+                    if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy)
+                    {
+                        abilityIcon.Clickable = false;
+                        abilityIcon.Hoverable = false;
+                        abilityIcon.SetColor(Colors.IconDisabled);
+                    }
+                    else 
+                    {
+                        abilityIcon.SetColor(Colors.White);
+                    }
                 }
 
                 void onAbilityCast(Ability castAbility) 

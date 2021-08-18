@@ -78,9 +78,10 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             TileTexturer.InitializeTexture(tileMap);
 
-            RenderableObject obj = new RenderableObject(new SpritesheetObject(0, Spritesheets.TestSheet, 10, 10).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-
-            obj.TextureReference = tileMap.DynamicTexture;
+            RenderableObject obj = new RenderableObject(new SpritesheetObject(0, Spritesheets.TestSheet, 10, 10).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER)
+            {
+                TextureReference = tileMap.DynamicTexture
+            };
             obj.TextureReference.TextureName = TextureName.DynamicTexture;
 
             obj.Textures.Textures[0] = TextureName.DynamicTexture;
@@ -108,9 +109,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             _genericObjects.Add(temp);
         }
 
-        public override void onUpdateFrame(FrameEventArgs args)
+        public override void OnUpdateFrame(FrameEventArgs args)
         {
-            base.onUpdateFrame(args);
+            base.OnUpdateFrame(args);
 
             float _cameraSpeed = 4.0f;
 
@@ -123,8 +124,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z - movement.Z < 26)
                     {
                         _camera.SetPosition(_camera.Position - movement); // Backwards
-                        onMouseMove();
-                        onCameraMoved();
+                        OnMouseMove();
+                        OnCameraMoved();
                     }
                 }
                 else if (MouseState.ScrollDelta[1] > 0)
@@ -133,8 +134,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z + movement.Z > 0)
                     {
                         _camera.SetPosition(_camera.Position + movement); // Forward
-                        onMouseMove();
-                        onCameraMoved();
+                        OnMouseMove();
+                        OnCameraMoved();
                     }
                 }
 
@@ -147,8 +148,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                 if (KeyboardState.IsKeyDown(Keys.W))
                 {
                     _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
 
                 if (KeyboardState.IsKeyDown(Keys.S))
@@ -156,22 +157,22 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
                     //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
                     _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.A))
                 {
                     //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
                     _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.D))
                 {
                     //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
                     _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.Space))
                 {

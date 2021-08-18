@@ -1,11 +1,19 @@
-﻿using System;
+﻿using MortalDungeon.Game.Tiles;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Tiles
+namespace MortalDungeon.Game.Map
 {
     public static class FeatureGenerator
     {
+        
+
+
+        public static void GenerateFeatureFromEquation(FeatureEquation feature, TileMap map) 
+        {
+
+        }
 
         public static void GenerateRiver(TilePoint origin, int width, int length)
         {

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Tiles.HelperTiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
+using static MortalDungeon.Engine_Classes.Scenes.Scene;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -303,9 +305,67 @@ namespace MortalDungeon.Game.Tiles
             return val;
         }
 
-        public int GetHeight() 
+        public int GetVisionHeight() 
         {
             return Structure != null ? Structure.Height + Properties.Height : Properties.Height;
+        }
+
+        public int GetPathableHeight()
+        {
+            return Structure != null && Structure.Pathable ? Structure.Height + Properties.Height : Properties.Height;
+        }
+
+        internal bool StructurePathable()
+        {
+            return Structure == null || (Structure != null && Structure.Pathable);
+        }
+
+        internal CombatScene GetScene() 
+        {
+            return TilePoint.ParentTileMap.Controller.Scene;
+        }
+
+        public void OnRightClick(ContextManager<MouseUpFlags> flags)
+        {
+            CombatScene scene = GetScene();
+
+            scene.OpenContextMenu(CreateContextMenu());
+        }
+
+        public override Tooltip CreateContextMenu()
+        {
+            Tooltip menu = new Tooltip();
+
+            TextComponent header = new TextComponent();
+            header.SetTextScale(0.1f);
+            header.SetColor(Colors.UITextBlack);
+            header.SetText("Tile " + ObjectID);
+
+            TextComponent description = new TextComponent();
+            description.SetTextScale(0.05f);
+            description.SetColor(Colors.UITextBlack);
+            description.SetText(GetTooltipString(this, GetScene()));
+
+            menu.AddChild(header);
+            menu.AddChild(description);
+
+            UIDimensions letterScale = header._textField.Letters[0].GetDimensions();
+
+            //initially position the objects so that the tooltip can be fitted
+            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+
+            menu.Margins = new UIDimensions(0, 60);
+
+            menu.FitContents();
+
+            //position the objects again once the menu has been fitted to the correct size
+            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+
+            menu.Clickable = true;
+
+            return menu;
         }
     }
 
@@ -342,7 +402,7 @@ namespace MortalDungeon.Game.Tiles
             return ParentTileMap.IsValidTile(X, Y);
         }
 
-        public static bool operator ==(TilePoint a, TilePoint b) => a is TilePoint && a.Equals(b);
+        public static bool operator ==(TilePoint a, TilePoint b) => Equals(a, b);
         public static bool operator !=(TilePoint a, TilePoint b) => !(a == b);
 
         public override string ToString()

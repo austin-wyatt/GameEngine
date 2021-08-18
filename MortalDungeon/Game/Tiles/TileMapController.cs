@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Map;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -13,6 +14,8 @@ namespace MortalDungeon.Game.Tiles
     {
         public List<TileMap> TileMaps = new List<TileMap>();
         public static StaticBitmap TileBitmap;
+
+        public int BaseElevation = 0; //base elevation for determining heightmap colors
 
         public CombatScene Scene;
 
@@ -71,6 +74,17 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
+        public void ApplyFeatureEquationToMaps(FeatureEquation feature) 
+        {
+            for (int i = 0; i < TileMaps.Count; i++) 
+            {
+                if (feature.AffectsMap(TileMaps[i])) 
+                {
+                    feature.ApplyToMap(TileMaps[i]);
+                }
+            }
+        }
+
         internal bool IsValidTile(int xIndex, int yIndex, TileMap map)
         {
             int currX;
@@ -109,6 +123,16 @@ namespace MortalDungeon.Game.Tiles
         internal void ClearAllVisitedTiles()
         {
             TileMaps.ForEach(m => m.Tiles.ForEach(tile => tile.TilePoint._visited = false)); //clear visited tiles
+        }
+
+        internal void ToggleHeightmap()
+        {
+            Settings.HeightmapEnabled = !Settings.HeightmapEnabled;
+
+            TileMaps.ForEach(map =>
+            {
+                map.Tiles.ForEach(tile => tile.Update());
+            });
         }
     }
 }

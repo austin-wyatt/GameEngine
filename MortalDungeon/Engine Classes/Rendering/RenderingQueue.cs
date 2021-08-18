@@ -20,6 +20,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
         private static readonly List<ParticleGenerator> _ParticleGeneratorsToRender = new List<ParticleGenerator>();
         private static readonly List<GameObject> _TileQuadsToRender = new List<GameObject>();
 
+        private static readonly List<List<GameObject>> _LowPriorityQueue = new List<List<GameObject>>();
+
 
         /// <summary>
         /// Render all queued objects
@@ -44,8 +46,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
             RenderTileQuadQueue();
 
             RenderQueuedStructures();
-            RenderQueuedObjects();
             RenderQueuedUnits();
+            RenderQueuedObjects();
+
+            RenderLowPriorityQueue();
+
 
             //RenderFrameBuffer(MainFBO);
         }
@@ -198,6 +203,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #region Structure queue
         public static void QueueStructuresForRender(List<Structure> objList)
         {
+            if (objList.Count == 0)
+                return;
+
             _StructuresToRender.Add(objList);
         }
         public static void RenderQueuedStructures()
@@ -263,6 +271,25 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
 
             _TileQuadsToRender.Clear();
+        }
+        #endregion
+
+        #region Low priority object queue
+        public static void QueueLowPriorityObjectsForRender(List<GameObject> objList)
+        {
+            if (objList.Count == 0)
+                return;
+
+            _LowPriorityQueue.Add(objList);
+        }
+        public static void RenderLowPriorityQueue()
+        {
+            _LowPriorityQueue.ForEach(list =>
+            {
+                Renderer.RenderObjectsInstancedGeneric(list, ref Renderer._instancedRenderArray);
+            });
+
+            _LowPriorityQueue.Clear();
         }
         #endregion
     }

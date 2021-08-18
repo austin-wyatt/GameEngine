@@ -17,6 +17,8 @@ using MortalDungeon.Game.Tiles;
 using MortalDungeon.Engine_Classes.UIComponents;
 using System.Linq;
 using MortalDungeon.Game.Tiles.TileMaps;
+using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Map.FeatureEquations;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -66,10 +68,10 @@ namespace MortalDungeon.Game.SceneDefinitions
                 {
                     if (!(x == 0 && y == 0)) 
                     {
-                        TestTileMap tileMap2 = new TestTileMap(default, new TileMapPoint(-x, -y), _tileMapController) { Width = 50, Height = 50 };
+                        TestTileMap tileMap2 = new TestTileMap(default, new TileMapPoint(x, y), _tileMapController) { Width = 50, Height = 50 };
                         tileMap2.PopulateTileMap();
 
-                        _tileMapController.AddTileMap(new TileMapPoint(-x, -y), tileMap2);
+                        _tileMapController.AddTileMap(new TileMapPoint(x, y), tileMap2);
                     }
                 }
             }
@@ -106,7 +108,8 @@ namespace MortalDungeon.Game.SceneDefinitions
             MountainTwo mountainBackground = new MountainTwo(new Vector3(30000, 0, -50));
             mountainBackground.BaseObjects[0].GetDisplay().ScaleAll(10);
             _genericObjects.Add(mountainBackground);
-
+            mountainBackground.SetPosition(new Vector3(guy.Position.X, guy.Position.Y - 200, -50));
+            _camera.SetPosition(new Vector3(guy.Position.X / WindowConstants.ScreenUnits.X * 2, guy.Position.Y / WindowConstants.ScreenUnits.Y * -2, _camera.Position.Z));
 
 
 
@@ -183,20 +186,18 @@ namespace MortalDungeon.Game.SceneDefinitions
         }
 
 
-        private List<BaseTile> selectedTiles = new List<BaseTile>();
-
-        public override void onMouseUp(MouseButtonEventArgs e)
+        public override void OnMouseUp(MouseButtonEventArgs e)
         {
-            base.onMouseUp(e);
+            base.OnMouseUp(e);
         }
-        public override void onMouseDown(MouseButtonEventArgs e)
+        public override void OnMouseDown(MouseButtonEventArgs e)
         {
-            base.onMouseDown(e);
+            base.OnMouseDown(e);
         }
 
-        public override bool onKeyUp(KeyboardKeyEventArgs e)
+        public override bool OnKeyUp(KeyboardKeyEventArgs e)
         {
-            if (!base.onKeyUp(e)) 
+            if (!base.OnKeyUp(e)) 
             {
                 return false;
             }
@@ -218,14 +219,14 @@ namespace MortalDungeon.Game.SceneDefinitions
             return true;
         }
 
-        public override bool onMouseMove()
+        public override bool OnMouseMove()
         {
-            return base.onMouseMove();
+            return base.OnMouseMove();
         }
 
-        public override void onUpdateFrame(FrameEventArgs args)
+        public override void OnUpdateFrame(FrameEventArgs args)
         {
-            base.onUpdateFrame(args);
+            base.OnUpdateFrame(args);
 
             float _cameraSpeed = 4.0f;
 
@@ -238,8 +239,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z - movement.Z < 26)
                     {
                         _camera.SetPosition(_camera.Position - movement); // Backwards
-                        onMouseMove();
-                        onCameraMoved();
+                        OnMouseMove();
+                        OnCameraMoved();
                     }
                 }
                 else if (MouseState.ScrollDelta[1] > 0)
@@ -248,8 +249,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z + movement.Z > 0)
                     {
                         _camera.SetPosition(_camera.Position + movement); // Forward
-                        onMouseMove();
-                        onCameraMoved();
+                        OnMouseMove();
+                        OnCameraMoved();
                     }
                 }
 
@@ -262,8 +263,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                 if (KeyboardState.IsKeyDown(Keys.W))
                 {
                     _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
 
                 if (KeyboardState.IsKeyDown(Keys.S))
@@ -271,22 +272,22 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
                     //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
                     _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.A))
                 {
                     //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
                     _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.D))
                 {
                     //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
                     _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
-                    onMouseMove();
-                    onCameraMoved();
+                    OnMouseMove();
+                    OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.Space))
                 {
@@ -295,149 +296,180 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
         }
 
-        
 
-        public override void onTileClicked(TileMap map, BaseTile tile) 
+
+        public override void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
         {
-            base.onTileClicked(map, tile);
-
-            if (_selectedAbility != null)
+            base.OnTileClicked(map, tile, button, flags);
+            if (button == MouseButton.Left)
             {
-                _selectedAbility.OnTileClicked(map, tile);
-            }
-            else if (KeyboardState.IsKeyDown(Keys.LeftAlt))
-            {
-                Unit tree = new Unit(this, Spritesheets.StructureSheet, rand.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
-                tree.BaseObject.BaseFrame.RotateX(25);
-                tree.BaseObject.BaseFrame.SetScaleAll(1 + (float)rand.NextDouble() / 2);
-
-                //tree.NonCombatant = true;
-                tree.VisibleThroughFog = true;
-                tree.BlocksVision = true;
-                tree.TileMapPosition = tile;
-                tree.Name = "Tree";
-
-                tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
-
-                tree.Selectable = true;
-                tree.Clickable = true;
-                tree.SetTeam(UnitTeam.Neutral);
-
-                _units.Add(tree);
-
-                StartCombat();
-            }
-            else if (KeyboardState.IsKeyDown(Keys.RightAlt))
-            {
-                _tileMapController.TileMaps.ForEach(m => m.PopulateFeatures());
-            }
-            else if (KeyboardState.IsKeyDown(Keys.RightShift))
-            {
-                Unit unit = _units[0];
-                map.GetLineOfTiles(unit.TileMapPosition, tile.TilePoint).ForEach(t =>
+                if (_selectedAbility != null)
                 {
-                    t.SetAnimation(AnimationType.Idle);
-                    t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
-                });
-                //validTiles.Clear();
-                //map.GetRingOfTiles(tile.TileIndex, validTiles, 6);
-                //validTiles.ForEach(t =>
-                //{
-                //    t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
-                //});
-            }
-            else if (KeyboardState.IsKeyDown(Keys.LeftShift))
-            {
-                map.GenerateCliff(tile);
-            }
-            else if (KeyboardState.IsKeyDown(Keys.LeftControl))
-            {
-                FeatureGenerator.GenerateRiver(tile.TilePoint, 5, 100);
-            }
-            else if (KeyboardState.IsKeyDown(Keys.F)) 
-            {
-                List<BaseTile> tiles = new List<BaseTile>();
-
-                tiles = map.GetVisionInRadius(tile.TilePoint, 6);
-
-                tiles.ForEach(tile =>
-                {
-                    tile.Properties.Height += 2;
-                });
-            }
-            else if (KeyboardState.IsKeyDown(Keys.V))
-            {
-                List<BaseTile> tiles = new List<BaseTile>();
-
-                tiles = map.GetVisionInRadius(tile.TilePoint, 6);
-
-                tiles.ForEach(tile =>
-                {
-                    tile.Properties.Height -= 2;
-                });
-            }
-            else if (KeyboardState.IsKeyDown(Keys.G))
-            {
-                _tileMapController.TileMaps.ForEach(m => m.GenerateCliffs());
-            }
-            else if (KeyboardState.IsKeyDown(Keys.H))
-            {
-                tile.Properties.Height--;
-            }
-            else if (KeyboardState.IsKeyDown(Keys.J))
-            {
-                tile.Properties.Height++;
-            }
-            else if (KeyboardState.IsKeyDown(Keys.M))
-            {
-                _tileMapController.TileMaps.ForEach(m =>
-                {
-                    m.ActivateHeightMap(tile);
-                });
-            }
-            else if (KeyboardState.IsKeyDown(Keys.N))
-            {
-                _tileMapController.TileMaps.ForEach(m => m.DeactivateHeightMap());
-            }
-            else if (KeyboardState.IsKeyDown(Keys.KeyPad1))
-            {
-                TileMapPoint temp = new TileMapPoint(map.TileMapCoords.X, map.TileMapCoords.Y);
-                if (KeyboardState.IsKeyDown(Keys.KeyPadAdd))
-                {
-                    temp.X++;
-                    TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
-                    tileMap.PopulateTileMap();
-
-                    _tileMapController.AddTileMap(temp, tileMap);
+                    _selectedAbility.OnTileClicked(map, tile);
                 }
-                else if (KeyboardState.IsKeyDown(Keys.KeyPadSubtract)) 
+                else if (KeyboardState.IsKeyDown(Keys.LeftAlt))
                 {
-                    temp.X--;
-                    TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
-                    tileMap.PopulateTileMap();
+                    Unit tree = new Unit(this, Spritesheets.StructureSheet, rand.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
+                    tree.BaseObject.BaseFrame.RotateX(25);
+                    tree.BaseObject.BaseFrame.SetScaleAll(1 + (float)rand.NextDouble() / 2);
 
-                    _tileMapController.AddTileMap(temp, tileMap);
+                    //tree.NonCombatant = true;
+                    tree.VisibleThroughFog = true;
+                    tree.BlocksVision = true;
+                    tree.TileMapPosition = tile;
+                    tree.Name = "Tree";
+
+                    tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
+
+                    tree.Selectable = true;
+                    tree.Clickable = true;
+                    tree.SetTeam(UnitTeam.Neutral);
+
+                    _units.Add(tree);
+
+                    StartCombat();
+                }
+                else if (KeyboardState.IsKeyDown(Keys.RightAlt))
+                {
+                    _tileMapController.TileMaps.ForEach(m => m.PopulateFeatures());
+                }
+                else if (KeyboardState.IsKeyDown(Keys.RightShift))
+                {
+                    Unit unit = _units[0];
+                    map.GetLineOfTiles(unit.TileMapPosition, tile.TilePoint).ForEach(t =>
+                    {
+                        t.SetAnimation(AnimationType.Idle);
+                        t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
+                    });
+                    //validTiles.Clear();
+                    //map.GetRingOfTiles(tile.TileIndex, validTiles, 6);
+                    //validTiles.ForEach(t =>
+                    //{
+                    //    t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
+                    //});
+                }
+                else if (KeyboardState.IsKeyDown(Keys.LeftShift))
+                {
+                    map.GenerateCliff(tile);
+                }
+                else if (KeyboardState.IsKeyDown(Keys.LeftControl))
+                {
+                    FeatureGenerator.GenerateRiver(tile.TilePoint, 5, 100);
+                }
+                else if (KeyboardState.IsKeyDown(Keys.F))
+                {
+                    List<BaseTile> tiles = new List<BaseTile>();
+
+                    tiles = map.GetVisionInRadius(tile.TilePoint, 6);
+
+                    tiles.ForEach(tile =>
+                    {
+                        tile.Properties.Height += 2;
+                    });
+                }
+                else if (KeyboardState.IsKeyDown(Keys.V))
+                {
+                    List<BaseTile> tiles = new List<BaseTile>();
+
+                    tiles = map.GetVisionInRadius(tile.TilePoint, 6);
+
+                    tiles.ForEach(tile =>
+                    {
+                        tile.Properties.Height -= 2;
+                    });
+                }
+                else if (KeyboardState.IsKeyDown(Keys.G))
+                {
+                    _tileMapController.TileMaps.ForEach(m => m.GenerateCliffs());
+                }
+                else if (KeyboardState.IsKeyDown(Keys.H))
+                {
+                    tile.Properties.Height--;
+                }
+                else if (KeyboardState.IsKeyDown(Keys.J))
+                {
+                    tile.Properties.Height++;
+                }
+                else if (KeyboardState.IsKeyDown(Keys.M))
+                {
+                    _tileMapController.ToggleHeightmap();
+                }
+                else if (KeyboardState.IsKeyDown(Keys.KeyPad1))
+                {
+                    TileMapPoint temp = new TileMapPoint(map.TileMapCoords.X, map.TileMapCoords.Y);
+                    if (KeyboardState.IsKeyDown(Keys.KeyPadAdd))
+                    {
+                        temp.X++;
+                        TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
+                        tileMap.PopulateTileMap();
+
+                        _tileMapController.AddTileMap(temp, tileMap);
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.KeyPadSubtract))
+                    {
+                        temp.X--;
+                        TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
+                        tileMap.PopulateTileMap();
+
+                        _tileMapController.AddTileMap(temp, tileMap);
+                    }
+                }
+                else if (KeyboardState.IsKeyDown(Keys.KeyPad2))
+                {
+                    Console.WriteLine(_camera.Position);
+                    Console.WriteLine(_units[0].Position);
+                }
+                else if (KeyboardState.IsKeyDown(Keys.KeyPad3))
+                {
+                    _tileMapController.RemoveTileMap(map);
+                }
+                else if (KeyboardState.IsKeyDown(Keys.KeyPadDivide))
+                {
+                    //Vector2i point = FeatureEquation.PointToMapCoords(tile.TilePoint);
+                    //River_1 river = new River_1(point.Y, 5, 1f, point.X);
+                    _tileMapController.TileMaps.ForEach(m =>
+                    {
+                        m.Tiles.ForEach(t =>
+                        {
+                            t.Properties.Type = TileType.Grass;
+                            t.Outline = true;
+                            t.NeverOutline = false;
+                            t.Update();
+                        });
+                    });
+
+
+                    RiverParams riverParams = new RiverParams(new TileMapPoint(0, 0), new Vector2i(0, rand.Next(45)), new Vector2i(49, rand.Next(45)), 5);
+                    riverParams.AddStop(new Vector2i(rand.Next(45), rand.Next(45)));
+
+                    RiverParams riverParams2 = new RiverParams(new TileMapPoint(1, 0), new Vector2i(0, riverParams.Stops[^1].Y), new Vector2i(49, rand.Next(45)), 5);
+                    riverParams2.AddStop(new Vector2i(rand.Next(45), rand.Next(45)));
+
+                    River_1 river = new River_1(new List<RiverParams>() { riverParams, riverParams2 });
+
+                    _tileMapController.ApplyFeatureEquationToMaps(river);
+                }
+                else if (KeyboardState.IsKeyDown(Keys.GraveAccent))
+                {
+                    if (_wallTemp == null)
+                    {
+                        _wallTemp = tile.TilePoint;
+                    }
+                    else 
+                    {
+                        TestTileMap temp = map as TestTileMap;
+
+                        temp.CreateWalls(_wallTemp, tile.TilePoint);
+                        _wallTemp = null;
+                    }
                 }
             }
-            else if (KeyboardState.IsKeyDown(Keys.KeyPad2))
+            else
             {
-                if (KeyboardState.IsKeyDown(Keys.KeyPadAdd))
-                {
-
-                }
-                else if (KeyboardState.IsKeyDown(Keys.KeyPadSubtract))
-                {
-
-                }
-            }
-            else if (KeyboardState.IsKeyDown(Keys.KeyPad3))
-            {
-                _tileMapController.RemoveTileMap(map);
+                tile.OnRightClick(flags);
             }
         }
 
-        private int _temp = 0;
+        private TilePoint _wallTemp = null;
     }
-
-
 }

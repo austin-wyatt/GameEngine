@@ -121,9 +121,10 @@ namespace MortalDungeon.Engine_Classes
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
-            Texture tex = new Texture(handle, name);
-
-            tex.ImageData = new BitmapImageData(data, imageDimensions);
+            Texture tex = new Texture(handle, name)
+            {
+                ImageData = new BitmapImageData(data, imageDimensions)
+            };
 
 
             return tex;

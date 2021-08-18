@@ -16,6 +16,9 @@ namespace MortalDungeon.Game.Units
         Rock_2 = 11,
         Rock_3 = 12,
 
+        Wall_1 = 30,
+        Wall_Corner = 31,
+
         Cliff_1 = 90,
         Cliff_2 = 91,
         Cliff_3 = 92,
@@ -26,6 +29,8 @@ namespace MortalDungeon.Game.Units
     public class Structure : Unit
     {
         public StructureEnum Type;
+
+        public bool Pathable = false;
 
         public Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
         {

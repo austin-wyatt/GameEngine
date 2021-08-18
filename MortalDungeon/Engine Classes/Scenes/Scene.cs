@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using static MortalDungeon.Engine_Classes.Scenes.CombatScene;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
@@ -18,6 +19,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         Tile = 2,
         Text = 3,
         GenericObject = 4,
+        LowPriorityObject = 5,
         All = 7
     }
 
@@ -41,11 +43,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Unit> _units = new List<Unit>(); //The units to render
         public List<UIObject> _UI = new List<UIObject>();
 
+        public List<GameObject> _lowPriorityObjects = new List<GameObject>(); //the last objects that will be rendered in the scene
+
         public List<ITickable> TickableObjects = new List<ITickable>();
 
         public Action ExitFunc = null; //function used to exit the application
 
         public bool Loaded = false;
+
+        public int Priority = 0; //determines which scene will have their events evaluated first
 
         public int SceneID => _sceneID;
         protected int _sceneID = currentSceneID++;
@@ -86,9 +92,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _UI = new List<UIObject>();
             _tileMapController = new TileMapController();
 
-            MessageCenter = new MessageCenter(SceneID);
-
-            MessageCenter.ParseMessage = ParseMessage;
+            MessageCenter = new MessageCenter(SceneID)
+            {
+                ParseMessage = ParseMessage
+            };
 
             ScenePosition = new Vector3(0, 0, 0);
         }
@@ -138,7 +145,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #region Messaging handlers
         public virtual void ParseMessage(Message msg) 
         {
-            Console.WriteLine(msg.MessageType.ToString() + " from id " + msg.Sender + " to " + SceneID + ": " + msg.MessageBody.ToString() + " " + msg.MessageTarget.ToString());
+            //Console.WriteLine(msg.MessageType.ToString() + " from id " + msg.Sender + " to " + SceneID + ": " + msg.MessageBody.ToString() + " " + msg.MessageTarget.ToString());
 
             switch (msg.MessageBody) 
             {
@@ -173,7 +180,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
             else
             {
-                _interceptClicks = _interceptClicks & ~(int)target;
+                _interceptClicks &= ~(int)target;
             }
         }
         private void DisableRendering(bool disable, MessageTarget target) 
@@ -184,7 +191,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
             else 
             {
-                _disableRender = _disableRender & ~(int)target;
+                _disableRender &= ~(int)target;
             }
         }
         private void InterceptKeystrokes(bool intercept, MessageTarget target) 
@@ -195,19 +202,40 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
             else
             {
-                _interceptKeystrokes = _interceptKeystrokes & ~(int)target;
+                _interceptKeystrokes &= ~(int)target;
             }
         }
         #endregion
 
         #region Event handlers
 
-        public virtual void onMouseUp(MouseButtonEventArgs e)
+        //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
+        //Ie, it curtails the problem of setting a flag earlier in the call chain and then checking it later expecting the old value
+        public enum MouseUpFlags
         {
-            if (e.Button == MouseButton.Left && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
+            ClickProcessed,
+            ContextMenuOpen
+        }
+
+        protected ContextManager<MouseUpFlags> MouseUpStateFlags = new ContextManager<MouseUpFlags>();
+        public virtual void OnMouseUp(MouseButtonEventArgs e)
+        {
+            SetMouseStateFlags();
+            CheckMouseUp(e);
+        }
+
+        protected virtual void SetMouseStateFlags()
+        {
+            MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, false);
+        }
+
+        protected virtual void CheckMouseUp(MouseButtonEventArgs e) 
+        {
+            if ((e.Button == MouseButton.Left || e.Button == MouseButton.Right) && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
             {
+                bool leftClick = e.Button == MouseButton.Left;
+
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
-                bool clickProcessed = false;
 
                 if (!GetBit(_interceptClicks, ObjectType.UI))
                     _UI.ForEach(uiObj =>
@@ -217,14 +245,24 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
                             {
-                                onUIClicked(obj);
-                                clickProcessed = true;
-                            });
+                                OnUIClicked(obj);
+                                MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                            }, leftClick ? UIEventType.Click : UIEventType.RightClick);
                         }
                     });
 
-                if (clickProcessed)
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
                     return; //stop further clicks from being processed
+
+
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ContextMenuOpen)) 
+                {
+                    ActOnMouseStateFlag(MouseUpFlags.ContextMenuOpen);
+
+                    if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
+                        return;
+                }
+                
 
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
@@ -232,45 +270,42 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (!GetBit(_interceptClicks, ObjectType.Unit))
                     ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
                     {
-                        onUnitClicked(foundObj);
-                        //clickProcessed = true;
+                        OnUnitClicked(foundObj, e.Button);
+                        MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
                     });
 
-                if (clickProcessed)
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
                     return; //stop further clicks from being processed
 
                 if (!GetBit(_interceptClicks, ObjectType.Tile))
-                    for (int i = 0; i < _tileMapController.TileMaps.Count; i++) 
+                    for (int i = 0; i < _tileMapController.TileMaps.Count; i++)
                     {
                         if (!_tileMapController.TileMaps[i].Render)
                             continue;
 
-                        for (int j = 0; !clickProcessed && j < _tileMapController.TileMaps[i].TileChunks.Count; j++) 
+                        for (int j = 0; !MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed) && j < _tileMapController.TileMaps[i].TileChunks.Count; j++)
                         {
                             if (!_tileMapController.TileMaps[i].TileChunks[j].Cull)
                             {
                                 ObjectCursorBoundsCheck(_tileMapController.TileMaps[i].TileChunks[j].Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
                                 {
-                                    onTileClicked(_tileMapController.TileMaps[i], foundObj);
-                                    clickProcessed = true;
+                                    OnTileClicked(_tileMapController.TileMaps[i], foundObj, e.Button, MouseUpStateFlags);
+                                    MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
                                 });
                             }
                         }
                     }
 
-                if (clickProcessed)
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
                     return; //stop further clicks from being processed
-            }
-            else if (e.Button == MouseButton.Right && e.Action == InputAction.Release) 
-            {
-                HandleRightClick();
             }
         }
 
-        public virtual void HandleRightClick() { }
+        protected virtual void ActOnMouseStateFlag(MouseUpFlags flag) { }
+
 
         protected UIObject _focusedObj = null;
-        public virtual void onMouseDown(MouseButtonEventArgs e)
+        public virtual void OnMouseDown(MouseButtonEventArgs e)
         {
             if (e.Button == MouseButton.Left && e.Action == InputAction.Press)
             {
@@ -290,7 +325,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             _focusedObj = tempFocusedObj;
                         }
-                        onObjectFocused();
+                        OnObjectFocused();
                     }, UIEventType.Focus);
                 });
 
@@ -298,13 +333,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     _focusedObj.FocusEnd();
                     _focusedObj = tempFocusedObj;
-                    onObjectFocusEnd();
+                    OnObjectFocusEnd();
                 }
             }
         }
 
         protected UIObject _grabbedObj = null;
-        public virtual bool onMouseMove()
+        public virtual bool OnMouseMove()
         {
             if (_mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
             {
@@ -391,7 +426,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         }
 
-        public virtual bool onKeyDown(KeyboardKeyEventArgs e) 
+        public virtual bool OnKeyDown(KeyboardKeyEventArgs e) 
         {
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
@@ -437,7 +472,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return !interceptKeystrokes;
         }
 
-        public virtual bool onKeyUp(KeyboardKeyEventArgs e) 
+        public virtual bool OnKeyUp(KeyboardKeyEventArgs e) 
         {
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
@@ -452,12 +487,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return !interceptKeystrokes;
         }
 
-        public virtual void onUpdateFrame(FrameEventArgs args) 
+        public virtual void OnUpdateFrame(FrameEventArgs args) 
         {
             if (_focusedObj != null && !_focusedObj.Focused)
             {
                 _focusedObj = null;
-                onObjectFocusEnd();
+                OnObjectFocusEnd();
             }
             else if(_focusedObj != null) 
             {
@@ -471,11 +506,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public virtual void onUnitClicked(Unit unit) { }
-        public virtual void onUIClicked(UIObject uiObj) { }
-        public virtual void onTileClicked(TileMap map, BaseTile tile) { }
+        public virtual void OnUnitClicked(Unit unit, MouseButton button) { }
+        public virtual void OnUIClicked(UIObject uiObj) { }
+        public virtual void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags) { }
 
-        public virtual void onCameraMoved()
+        public virtual void OnCameraMoved()
         {
             _units.ForEach(u =>
             {
@@ -486,19 +521,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
         }
 
-        public virtual void onObjectFocused() 
+        public virtual void OnObjectFocused() 
         {
             Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
             MessageCenter.SendMessage(msg);
         }
 
-        public virtual void onObjectFocusEnd() 
+        public virtual void OnObjectFocusEnd() 
         {
             Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
             MessageCenter.SendMessage(msg);
         }
 
-        public virtual void onRenderEnd() { }
+        public virtual void OnRenderEnd() { }
         #endregion
 
         #region event action lists
@@ -577,21 +612,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 return new List<T>();
             }
 
-            switch (type) 
+            return type switch
             {
-                case ObjectType.UI:
-                    return _UI as List<T>;
-                case ObjectType.Tile:
-                    return _tileMapController.TileMaps as List<T>;
-                case ObjectType.Unit:
-                    return _units as List<T>;
-                case ObjectType.Text:
-                    return _text as List<T>;
-                case ObjectType.GenericObject:
-                    return _genericObjects as List<T>;
-                default:
-                    return new List<T>();
-            }
+                ObjectType.UI => _UI as List<T>,
+                ObjectType.Tile => _tileMapController.TileMaps as List<T>,
+                ObjectType.Unit => _units as List<T>,
+                ObjectType.Text => _text as List<T>,
+                ObjectType.GenericObject => _genericObjects as List<T>,
+                ObjectType.LowPriorityObject => _lowPriorityObjects as List<T>,
+                _ => new List<T>(),
+            };
         }
         #endregion
     }

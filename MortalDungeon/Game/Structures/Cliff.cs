@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
-    public enum CliffFaces 
+    public enum CliffFace 
     {
         None = -1,
         NorthWest = 1,
@@ -44,7 +44,7 @@ namespace MortalDungeon.Game.Units
                 List<short> bitArrays = new List<short>();
                 short currBitArray = 0;
                 //loop until you find an empty spot then start a fresh direction loop to create as many bit arrays as necessary. (when an empty spot is found in the direction loop start a new bit array)
-                CliffFaces cliffFace;
+                CliffFace cliffFace;
                 Direction startingDirection = Direction.None;
 
                 int firstIndex = 0;
@@ -101,10 +101,10 @@ namespace MortalDungeon.Game.Units
                 bitArrays.ForEach(arr =>
                 {
                     cliffLength = 0;
-                    CliffFaces lastFace = CliffFaces.None;
+                    CliffFace lastFace = CliffFace.None;
                     for (int i = 0; i < 6; i++)
                     {
-                        CliffFaces cliffFace = DirectionToCliffFace((Direction)i);
+                        CliffFace cliffFace = DirectionToCliffFace((Direction)i);
 
                         if ((arr & (short)cliffFace) > 0)
                         {
@@ -173,61 +173,43 @@ namespace MortalDungeon.Game.Units
             CliffStructure.Clear();
         }
 
-        public static CliffFaces DirectionToCliffFace(Direction direction) 
+        public static CliffFace DirectionToCliffFace(Direction direction) 
         {
-            switch (direction) 
+            return direction switch
             {
-                case Direction.SouthWest:
-                    return CliffFaces.SouthWest;
-                case Direction.South:
-                    return CliffFaces.South;
-                case Direction.SouthEast:
-                    return CliffFaces.SouthEast;
-                case Direction.NorthEast:
-                    return CliffFaces.NorthEast;
-                case Direction.North:
-                    return CliffFaces.North;
-                default:
-                    return CliffFaces.NorthWest;
-            }
+                Direction.SouthWest => CliffFace.SouthWest,
+                Direction.South => CliffFace.South,
+                Direction.SouthEast => CliffFace.SouthEast,
+                Direction.NorthEast => CliffFace.NorthEast,
+                Direction.North => CliffFace.North,
+                _ => CliffFace.NorthWest,
+            };
         }
 
-        public static Direction CliffFaceToDirection(CliffFaces face)
+        public static Direction CliffFaceToDirection(CliffFace face)
         {
-            switch (face)
+            return face switch
             {
-                case CliffFaces.SouthWest:
-                    return Direction.SouthWest;
-                case CliffFaces.South:
-                    return Direction.South;
-                case CliffFaces.SouthEast:
-                    return Direction.SouthEast;
-                case CliffFaces.NorthEast:
-                    return Direction.NorthEast;
-                case CliffFaces.North:
-                    return Direction.North;
-                default:
-                    return Direction.NorthWest;
-            }
+                CliffFace.SouthWest => Direction.SouthWest,
+                CliffFace.South => Direction.South,
+                CliffFace.SouthEast => Direction.SouthEast,
+                CliffFace.NorthEast => Direction.NorthEast,
+                CliffFace.North => Direction.North,
+                _ => Direction.NorthWest,
+            };
         }
 
-        private CliffFaces GetNextFace(CliffFaces face) 
+        private CliffFace GetNextFace(CliffFace face) 
         {
-            switch(face)
+            return face switch
             {
-                case CliffFaces.North:
-                    return CliffFaces.NorthWest;
-                case CliffFaces.SouthWest:
-                    return CliffFaces.South;
-                case CliffFaces.South:
-                    return CliffFaces.SouthEast;
-                case CliffFaces.SouthEast:
-                    return CliffFaces.NorthEast;
-                case CliffFaces.NorthEast:
-                    return CliffFaces.North;
-                default:
-                    return CliffFaces.SouthWest;
-            }
+                CliffFace.North => CliffFace.NorthWest,
+                CliffFace.SouthWest => CliffFace.South,
+                CliffFace.South => CliffFace.SouthEast,
+                CliffFace.SouthEast => CliffFace.NorthEast,
+                CliffFace.NorthEast => CliffFace.North,
+                _ => CliffFace.SouthWest,
+            };
         }
     }
 }

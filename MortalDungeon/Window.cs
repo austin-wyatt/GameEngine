@@ -40,10 +40,12 @@ namespace MortalDungeon
         public static bool ShowCulledChunks = true;
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
-            Vector3 returnVec = new Vector3(position);
-            returnVec.X = (position.X / ScreenUnits.X) * 2 - 1;
-            returnVec.Y = ((position.Y / ScreenUnits.Y) * 2 - 1) * -1;
-            returnVec.Z = position.Z;
+            Vector3 returnVec = new Vector3(position)
+            {
+                X = (position.X / ScreenUnits.X) * 2 - 1,
+                Y = ((position.Y / ScreenUnits.Y) * 2 - 1) * -1,
+                Z = position.Z
+            };
 
             return returnVec;
         }
@@ -57,30 +59,36 @@ namespace MortalDungeon
         //Ie convert mouse coordinates to workable screen coordinates
         public static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector3 position) 
         {
-            Vector3 returnVec = new Vector3(position);
-            returnVec.X = position.X / ClientSize.X * ScreenUnits.X;
-            returnVec.Y = position.Y / ClientSize.Y * ScreenUnits.Y;
-            returnVec.Z = position.Z;
+            Vector3 returnVec = new Vector3(position)
+            {
+                X = position.X / ClientSize.X * ScreenUnits.X,
+                Y = position.Y / ClientSize.Y * ScreenUnits.Y,
+                Z = position.Z
+            };
 
             return returnVec;
         }
 
         public static Vector3 ConvertScreenSpaceToGlobalCoordinates(Vector3 position)
         {
-            Vector3 returnVec = new Vector3(position);
-            returnVec.X = position.X * ClientSize.X / ScreenUnits.X;
-            returnVec.Y = position.Y * ClientSize.Y / ScreenUnits.Y;
-            returnVec.Z = position.Z;
+            Vector3 returnVec = new Vector3(position)
+            {
+                X = position.X * ClientSize.X / ScreenUnits.X,
+                Y = position.Y * ClientSize.Y / ScreenUnits.Y,
+                Z = position.Z
+            };
 
             return returnVec;
         }
 
         public static Vector3 ConvertLocalToScreenSpaceCoordinates(Vector2 position)
         {
-            Vector3 returnVec = new Vector3(position);
-            returnVec.X = (position.X + 1) / 2 * ScreenUnits.X;
-            returnVec.Y = ScreenUnits.Y - (position.Y + 1) / 2 * ScreenUnits.Y;
-            returnVec.Z = 0;
+            Vector3 returnVec = new Vector3(position)
+            {
+                X = (position.X + 1) / 2 * ScreenUnits.X,
+                Y = ScreenUnits.Y - (position.Y + 1) / 2 * ScreenUnits.Y,
+                Z = 0
+            };
 
             return returnVec;
         }
@@ -149,8 +157,10 @@ namespace MortalDungeon
 
             _mouseRay = new MouseRay(_camera);
 
-            _cursorObject = new BaseObject(CURSOR_ANIMATION.List, 0, "cursor", new Vector3(MousePosition));
-            _cursorObject.LockToWindow = true;
+            _cursorObject = new BaseObject(CURSOR_ANIMATION.List, 0, "cursor", new Vector3(MousePosition))
+            {
+                LockToWindow = true
+            };
             _cursorObject.BaseFrame.ScaleAll(0.1f);
 
 
@@ -161,18 +171,18 @@ namespace MortalDungeon
             {
                 Scene boundScene = new BoundsTestScene();
 
-                int boundSceneID = _sceneController.AddScene(boundScene);
+                int boundSceneID = _sceneController.AddScene(boundScene, 1);
                 _sceneController.LoadScene(boundSceneID, _camera, _cursorObject, _mouseRay);
             }
             else 
             {
                 Scene menuScene = new MenuScene();
 
-                int menuSceneID = _sceneController.AddScene(menuScene);
+                int menuSceneID = _sceneController.AddScene(menuScene, 2);
 
                 Scene escapeMenuScene = new EscapeMenuScene(() => Close());
 
-                int escapeMenuID = _sceneController.AddScene(escapeMenuScene);
+                int escapeMenuID = _sceneController.AddScene(escapeMenuScene, 1);
 
                 _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
                 _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
@@ -265,6 +275,7 @@ namespace MortalDungeon
             _sceneController.Scenes.ForEach(scene =>
             {
                 RenderingQueue.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
+                RenderingQueue.QueueLowPriorityObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.LowPriorityObject));
 
                 scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
                 {
@@ -291,52 +302,35 @@ namespace MortalDungeon
                 }); //TileMap
 
 
-                //Renderer.RenderObjectsInstancedGeneric(scene.GetRenderTarget<Unit>(ObjectType.Unit));
-                RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit));
-            }); //GameObjects
+                RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
 
+                RenderingQueue.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI)); //UI
 
-            _sceneController.Scenes.ForEach(scene =>
-            {
-                scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
-                {
-                    gameObject.ParticleGenerators.ForEach(generator =>
-                    {
-                        if (generator.Playing)
-                        {
-                            RenderingQueue.QueueParticlesForRender(generator);
-                        }
-                    });
-                });
-            }); //Particles
-
-
-            _sceneController.Scenes.ForEach(scene =>
-            {
-                RenderingQueue.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI));
-            }); //UI
-
-            _sceneController.Scenes.ForEach(scene =>
-            {
                 scene.GetRenderTarget<Text>(ObjectType.Text).ForEach(text =>
                 {
                     if (text.Render && text.Letters.Count > 0)
                     {
                         RenderingQueue.QueueLettersForRender(text.Letters);
                     };
-                });
-            }); //Misc
+                }); //Text
+
+                //scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
+                //{
+                //    gameObject.ParticleGenerators.ForEach(generator =>
+                //    {
+                //        if (generator.Playing)
+                //        {
+                //            RenderingQueue.QueueParticlesForRender(generator);
+                //        }
+                //    });
+                //});
+
+            });
+
 
 
             RenderingQueue.RenderQueue();
 
-            //_sceneController.Scenes.ForEach(scene =>
-            //{
-            //    scene._tileMapController.TileMaps.ForEach(map =>
-            //    {
-            //        Renderer.RenderFrameBuffer(map.FrameBuffer);
-            //    });
-            //});
 
             SwapBuffers();
 
@@ -344,7 +338,7 @@ namespace MortalDungeon
 
             _sceneController.Scenes.ForEach(scene =>
             {
-                scene.onRenderEnd();
+                scene.OnRenderEnd();
             });
         }
 
@@ -360,7 +354,7 @@ namespace MortalDungeon
                 scene.MouseState = MouseState;
                 scene.KeyboardState = KeyboardState;
 
-                scene.onUpdateFrame(args);
+                scene.OnUpdateFrame(args);
             });
 
             //TickAllObjects();
@@ -574,7 +568,7 @@ namespace MortalDungeon
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
                 if(_sceneController.Scenes[i].Loaded)
-                    _sceneController.Scenes[i].onMouseDown(obj);
+                    _sceneController.Scenes[i].OnMouseDown(obj);
             }
         }
 
@@ -583,7 +577,7 @@ namespace MortalDungeon
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
                 if (_sceneController.Scenes[i].Loaded)
-                    _sceneController.Scenes[i].onMouseMove();
+                    _sceneController.Scenes[i].OnMouseMove();
             }
         }
 
@@ -592,7 +586,7 @@ namespace MortalDungeon
             for (int i = 0; i < _sceneController.Scenes.Count; i++) 
             {
                 if (_sceneController.Scenes[i].Loaded)
-                    _sceneController.Scenes[i].onMouseUp(obj);
+                    _sceneController.Scenes[i].OnMouseUp(obj);
             }
         }
 
@@ -601,7 +595,7 @@ namespace MortalDungeon
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
                 if (_sceneController.Scenes[i].Loaded)
-                    _sceneController.Scenes[i].onKeyUp(obj);
+                    _sceneController.Scenes[i].OnKeyUp(obj);
             }
 
             //
@@ -614,7 +608,7 @@ namespace MortalDungeon
 
                     if(_points.Count > 1)
                     {
-                        CreateNewLine(new Vector3(_points[_points.Count - 2].X, _points[_points.Count - 2].Y, 0), new Vector3(_points[_points.Count - 1].X, _points[_points.Count - 1].Y, 0), new Vector4(0, 0, 1, 1), 0.02f, false);
+                        CreateNewLine(new Vector3(_points[^2].X, _points[^2].Y, 0), new Vector3(_points[^1].X, _points[^1].Y, 0), new Vector4(0, 0, 1, 1), 0.02f, false);
                     }
 
                     var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
@@ -664,7 +658,7 @@ namespace MortalDungeon
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
                 if (_sceneController.Scenes[i].Loaded)
-                    _sceneController.Scenes[i].onKeyDown(obj);
+                    _sceneController.Scenes[i].OnKeyDown(obj);
             }
         }
         #endregion

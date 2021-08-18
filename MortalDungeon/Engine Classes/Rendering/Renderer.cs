@@ -140,9 +140,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static void PrepareInstancedRenderFunc(RenderableObject Display) 
         {
-            Display.TextureReference.Use(TextureUnit.Texture0);
             EnableInstancedShaderAttributes();
-
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
 
@@ -224,8 +222,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Display = display;
             }
             TextureName currTexture = Display.Textures.Textures[0];
+            Display.TextureReference.Use(TextureUnit.Texture0);
 
-            if(instantiateRenderFunc)
+            if (instantiateRenderFunc)
                 PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;

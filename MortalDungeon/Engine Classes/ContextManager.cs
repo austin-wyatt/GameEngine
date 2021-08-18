@@ -15,7 +15,7 @@ namespace MortalDungeon.Engine_Classes
 
         public bool GetFlag(T flag)
         {
-            bool value = false;
+            bool value;
             _flags.TryGetValue(flag, out value);
 
             return value;

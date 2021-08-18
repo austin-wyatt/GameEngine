@@ -18,9 +18,9 @@ namespace MortalDungeon.Game.Tiles
         private const int tile_height = 54; //individual tile height
         private const int tile_height_partial = 27; //stacked height
 
-        private static Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
+        private static readonly Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
 
-        private static Random random = new Random();
+        private static readonly Random random = new Random();
 
         public static void InitializeTexture(TileMap map)
         {
@@ -131,44 +131,75 @@ namespace MortalDungeon.Game.Tiles
             {
                 if (tile.Render)
                 {
+                    Vector4 heightColorCorrection = new Vector4(0, 0, 0, 0);
+
                     if (tile.InFog)
                     {
                         int num = random.Next() % 4;
-                        TileType fogType;
-
-                        switch (num)
+                        var fogType = num switch
                         {
-                            default:
-                                fogType = TileType.Fog_1;
-                                break;
-                            case 1:
-                                fogType = TileType.Fog_2;
-                                break;
-                            case 2:
-                                fogType = TileType.Fog_3;
-                                break;
-                            case 3:
-                                fogType = TileType.Fog_4;
-                                break;
-                        }
-
+                            1 => TileType.Fog_2,
+                            2 => TileType.Fog_3,
+                            3 => TileType.Fog_4,
+                            _ => TileType.Fog_1,
+                        };
                         overlayPosition = (int)fogType;
 
-                        mixPercent = tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team] ? 0.5f : 1;
+                        if (tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team])
+                        {
+                            mixPercent = 0.5f;
+                        }
+                        else if (tile.InFog)
+                        {
+                            mixPercent = 1;
+                        }
+                        else 
+                        {
+                            mixPercent = 0;
+                        }
+
                     }
                     else 
                     {
                         mixPercent = 0;
                     }
 
+                    if (Settings.HeightmapEnabled)
+                    {
+                        //float heightDiff = tile.GetPathableHeight() - (map.Controller.Scene.CurrentUnit != null ? 
+                        //    map.Controller.Scene.CurrentUnit.TileMapPosition.GetPathableHeight() 
+                        //    : tile.GetPathableHeight());
+
+                        float heightDiff = tile.GetPathableHeight() - map.Controller.BaseElevation;
+
+                        if (heightDiff > 0)
+                        {
+                            heightColorCorrection.Y = 0.06f * Math.Abs(heightDiff); //take away green and blue
+                            heightColorCorrection.Z = 0.06f * Math.Abs(heightDiff);
+
+                            //heightColorCorrection.Y = 0.08f * 2; //take away green and blue
+                            //heightColorCorrection.Z = 0.08f * 2;
+                            //heightColorCorrection = new Vector4(0.05f, 0.15f, 0.3f, 0);
+                        }
+                        else if (heightDiff < 0)
+                        {
+                            heightColorCorrection.X = 0.06f * Math.Abs(heightDiff); //take away red and green
+                            heightColorCorrection.Y = 0.06f * Math.Abs(heightDiff);
+
+                            //heightColorCorrection.X = 0.08f * 3; //take away red and green
+                            //heightColorCorrection.Y = 0.08f * 2;
+                            //heightColorCorrection = new Vector4(0.3f, 0.35f, 0.55f, 0);
+                        }
+                    }
+
                     for (int j = 0; j < tile.BaseObjects.Count; j++)
                     {
                         if (tile.BaseObjects[j].Render)
                         {
-                            _instancedRenderDataArray[currIndex++] = tile.Color.X;
-                            _instancedRenderDataArray[currIndex++] = tile.Color.Y;
-                            _instancedRenderDataArray[currIndex++] = tile.Color.Z;
-                            _instancedRenderDataArray[currIndex++] = tile.Color.W;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.X - heightColorCorrection.X;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.Y - heightColorCorrection.Y;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.Z - heightColorCorrection.Z;
+                            _instancedRenderDataArray[currIndex++] = tile.Color.W - heightColorCorrection.W;
 
                             _instancedRenderDataArray[currIndex++] = (int)tile.Properties.Type;
                             _instancedRenderDataArray[currIndex++] = overlayPosition;

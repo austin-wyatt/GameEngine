@@ -27,18 +27,23 @@ namespace MortalDungeon.Game.SceneDefinitions
             UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true, Hoverable = true };
             UIDimensions menuDimensions = escapeMenu.GetDimensions();
 
-            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), "EXIT");
-            exitButton.OnClickAction = () =>
+            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), "EXIT")
             {
-                ExitFunc?.Invoke();
+                OnClickAction = () =>
+                {
+                    ExitFunc?.Invoke();
+                }
             };
+
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "TEST");
-            testButton.OnClickAction = () =>
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "TEST")
             {
+                OnClickAction = () =>
+                {
                 //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
                 Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
+                }
             };
 
             escapeMenu.AddChild(testButton);
@@ -49,7 +54,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.75f);
             backdropModal.SetColor(slightlyTransparentBackdropColor);
 
-            _genericObjects.Add(backdropModal);
+            _lowPriorityObjects.Add(backdropModal);
             _backdrop = backdropModal;
 
             AddUI(escapeMenu, 100);
@@ -57,13 +62,15 @@ namespace MortalDungeon.Game.SceneDefinitions
             
             escapeMenu.SetRender(false);
             backdropModal.SetRender(false);
+
+            backdropModal.LoadTexture();
         }
 
         private bool MenuOpen = false;
 
-        public override bool onKeyDown(KeyboardKeyEventArgs e)
+        public override bool OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (!base.onKeyDown(e))
+            if (!base.OnKeyDown(e))
             {
                 return false;
             }

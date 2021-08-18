@@ -233,7 +233,7 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnCast() 
         {
             Scene.DeselectAbility();
-            Scene.onAbilityCast(this);
+            Scene.OnAbilityCast(this);
         }
 
         

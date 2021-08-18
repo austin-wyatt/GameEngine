@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
@@ -189,7 +190,7 @@ namespace MortalDungeon.Engine_Classes
         {
             return PropertyAnimations.Find(anim => anim.AnimationID == id);
         }
-        private List<int> _properyAnimationsToDestroy = new List<int>();
+        private readonly List<int> _properyAnimationsToDestroy = new List<int>();
         public void RemovePropertyAnimation(int animationID) 
         {
             int animIndex = PropertyAnimations.FindIndex(p => p.AnimationID == animationID);
@@ -247,6 +248,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         public virtual void OnClick() { }
+        public virtual void OnRightClick() { }
         public virtual void OnHover() 
         {
             if (Hoverable && !Hovered)
@@ -301,6 +303,11 @@ namespace MortalDungeon.Engine_Classes
                 _grabbedDeltaPos = default;
             }
             
+        }
+
+        public virtual Tooltip CreateContextMenu() 
+        {
+            return null;
         }
 
         public virtual void CleanUp() 

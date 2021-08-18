@@ -80,7 +80,7 @@ namespace MortalDungeon.Engine_Classes
             Position = position;
         }
 
-        public void SetScale(float scale) 
+        public override void SetScale(float scale) 
         {
             LetterObject.BaseFrame.SetScaleAll(scale);
 

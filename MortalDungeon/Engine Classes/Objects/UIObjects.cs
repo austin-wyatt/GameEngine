@@ -146,7 +146,7 @@ namespace MortalDungeon.Engine_Classes
             GetBaseObject().OutlineParameters.SetAllInline(num);
         }
 
-        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.MouseUp)
+        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.Click)
         {
             if (ReverseTree == null)
                 return;
@@ -169,8 +169,11 @@ namespace MortalDungeon.Engine_Classes
 
                         switch (type)
                         {
-                            case UIEventType.MouseUp:
+                            case UIEventType.Click:
                                 ReverseTree[i].UIObject.OnMouseUp();
+                                break;
+                            case UIEventType.RightClick:
+                                ReverseTree[i].UIObject.OnRightClick();
                                 break;
                             case UIEventType.Hover:
                                 ReverseTree[i].UIObject.OnHover();
@@ -209,25 +212,17 @@ namespace MortalDungeon.Engine_Classes
             if (!obj.Render || obj.Disabled)
                 return false;
 
-            switch (type)
+            return type switch
             {
-                case UIEventType.MouseUp:
-                    return obj.Clickable;
-                case UIEventType.Hover:
-                    return obj.Hoverable;
-                case UIEventType.TimedHover:
-                    return obj.HasTimedHoverEffect;
-                case UIEventType.MouseDown:
-                    return obj.Clickable;
-                case UIEventType.Grab:
-                    return obj.Draggable;
-                case UIEventType.KeyDown:
-                    return obj.Focused;
-                case UIEventType.Focus:
-                    return obj.Focusable;
-                default:
-                    return false;
-            }
+                UIEventType.Click => obj.Clickable,
+                UIEventType.Hover => obj.Hoverable,
+                UIEventType.TimedHover => obj.HasTimedHoverEffect,
+                UIEventType.MouseDown => obj.Clickable,
+                UIEventType.Grab => obj.Draggable,
+                UIEventType.KeyDown => obj.Focused,
+                UIEventType.Focus => obj.Focusable,
+                _ => false,
+            };
         }
 
 

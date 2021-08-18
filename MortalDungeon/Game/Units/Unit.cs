@@ -98,11 +98,6 @@ namespace MortalDungeon.Game.Units
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
             Scene._genericObjects.Add(SelectionTile);
         }
-        public Unit(Vector3 position, int tileMapPosition = 0, string name = "Unit")
-        {
-            Position = position;
-            Name = name;
-        }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
         {
@@ -193,13 +188,11 @@ namespace MortalDungeon.Game.Units
 
         public bool GetPierceShields(DamageType damageType) 
         {
-            switch (damageType) 
+            return damageType switch
             {
-                case DamageType.Poison:
-                    return true;
-                default:
-                    return false;
-            }
+                DamageType.Poison => true,
+                _ => false,
+            };
         }
 
         public bool GetAmplifiedByNegativeShields(DamageType damageType)
@@ -325,7 +318,7 @@ namespace MortalDungeon.Game.Units
         {
             if (StatusBarComp != null) 
             {
-                Scene.onUnitKilled(this);
+                Scene.OnUnitKilled(this);
             }
         }
 

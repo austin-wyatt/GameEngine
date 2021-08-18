@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.MapGeneration
+namespace MortalDungeon.Game.Map
 {
     public class Cell
     {

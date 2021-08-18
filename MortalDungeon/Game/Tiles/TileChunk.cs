@@ -46,7 +46,7 @@ namespace MortalDungeon.Game.Tiles
 
         public void CalculateValues() 
         {
-            Center = (Tiles[0].Position + Tiles[Tiles.Count - 1].Position) / 2;
+            Center = (Tiles[0].Position + Tiles[^1].Position) / 2;
             Radius = new Vector3(Tiles[0].Position - Center).Length;
 
             LocalRadius = WindowConstants.ConvertGlobalToLocalCoordinates(new Vector3(Tiles[0].Position - Center)).Length;

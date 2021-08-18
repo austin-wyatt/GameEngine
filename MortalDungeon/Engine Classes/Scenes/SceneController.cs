@@ -30,11 +30,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
             };
         }
 
-        public int AddScene(Scene scene) 
+        public int AddScene(Scene scene, int priority) 
         {
             scene.MessageCenter._sendMessage = ParseMessage;
+            scene.Priority = priority;
 
             Scenes.Add(scene);
+
+            Scenes.Sort((a, b) => a.Priority - b.Priority);
 
             return scene.SceneID;
         }
@@ -147,7 +150,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     EvaluateBody(msg); //send requests to another location for processing
                     break;
                 case MessageType.Response:
-                    Console.WriteLine("Response from id " + msg.Sender + ": " + msg.MessageBody.ToString()); //just print the response for now
+                    //Console.WriteLine("Response from id " + msg.Sender + ": " + msg.MessageBody.ToString()); //just print the response for now
                     break;
             }
         }
@@ -281,12 +284,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
     public enum MessageTarget
     {
-        All           = 0b10000000,
-        UI            = 0b00000001,
-        Unit          = 0b00000010,
-        Tile          = 0b00000100,
-        Text          = 0b00001000,
-        GenericObject = 0b00010000
+        All               = 0b10000000,
+        UI                = 0b00000001,
+        Unit              = 0b00000010,
+        Tile              = 0b00000100,
+        Text              = 0b00001000,
+        GenericObject     = 0b00010000,
+        LowPriorityObject = 0b00100000,
     }
 
     public enum TargetAmount 
