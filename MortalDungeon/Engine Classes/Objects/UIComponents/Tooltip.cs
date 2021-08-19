@@ -26,7 +26,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             FitContents();
         }
 
-        public void FitContents() 
+        public void FitContents(bool useMargin = true, UIDimensions margin = default) 
         {
             UIDimensions dimTopLeft = new UIDimensions(9999,9999);
             UIDimensions dimBottomRight = new UIDimensions(-9999,-9999);
@@ -62,7 +62,17 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             if (dimTopLeft.X != 9999) 
             {
-                dimBottomRight += new UIDimensions(20, 20);
+                if (useMargin) 
+                {
+                    if (margin == null)
+                    {
+                        dimBottomRight += new UIDimensions(20, 20);
+                    }
+                    else 
+                    {
+                        dimBottomRight += margin;
+                    }
+                }
 
                 UIDimensions tooltipDim = dimBottomRight - dimTopLeft;
 

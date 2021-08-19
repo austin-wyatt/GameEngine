@@ -22,12 +22,21 @@ namespace MortalDungeon.Game.Tiles
 
     public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
+        Stone_1 = 10,
+        Stone_2 = 11,
+        Stone_3 = 12,
+        Gravel = 13,
+        WoodPlank = 14,
+
         Default = 21,
         Grass = 22,
         AltGrass = 23,
         Water = 24,
         AltWater = 25,
         Outline = 20,
+
+        Dirt = 33,
+        Grass_2 = 34,
 
         Fog_1 = 80,
         Fog_2 = 81,
@@ -298,7 +307,7 @@ namespace MortalDungeon.Game.Tiles
                     val = "Grass";
                     break;
                 default:
-                    val = "None";
+                    val = type.ToString();
                     break;
             }
 
@@ -307,12 +316,12 @@ namespace MortalDungeon.Game.Tiles
 
         public int GetVisionHeight() 
         {
-            return Structure != null ? Structure.Height + Properties.Height : Properties.Height;
+            return Structure != null && !Structure.Passable ? Structure.Height + Properties.Height : Properties.Height;
         }
 
         public int GetPathableHeight()
         {
-            return Structure != null && Structure.Pathable ? Structure.Height + Properties.Height : Properties.Height;
+            return Structure != null && Structure.Pathable && !Structure.Passable ? Structure.Height + Properties.Height : Properties.Height;
         }
 
         internal bool StructurePathable()
@@ -329,7 +338,23 @@ namespace MortalDungeon.Game.Tiles
         {
             CombatScene scene = GetScene();
 
-            scene.OpenContextMenu(CreateContextMenu());
+            if (Structure != null)
+            {
+                Tooltip structContextMenu = Structure.CreateContextMenu();
+
+                if (structContextMenu != null)
+                {
+                    scene.OpenContextMenu(structContextMenu);
+                }
+                else
+                {
+                    scene.OpenContextMenu(CreateContextMenu());
+                }
+            }
+            else 
+            {
+                scene.OpenContextMenu(CreateContextMenu());
+            }
         }
 
         public override Tooltip CreateContextMenu()

@@ -18,6 +18,10 @@ namespace MortalDungeon.Game.Units
 
         Wall_1 = 30,
         Wall_Corner = 31,
+        Wall_Door = 32,
+        Wall_Wood_1 = 40,
+        Wall_Wood_Corner = 41,
+        Wall_Wood_Door = 42,
 
         Cliff_1 = 90,
         Cliff_2 = 91,
@@ -31,6 +35,7 @@ namespace MortalDungeon.Game.Units
         public StructureEnum Type;
 
         public bool Pathable = false;
+        public bool Passable = false; //when passable the height of the object is not factored into the pathable height
 
         public Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
         {

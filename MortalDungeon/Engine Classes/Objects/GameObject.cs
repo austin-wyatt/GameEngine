@@ -72,6 +72,24 @@ namespace MortalDungeon.Engine_Classes
             LoadTexture(this);
         }
 
+        public BaseObject CreateBaseObjectFromSpritesheet(Spritesheet spritesheet, int spritesheetPos) 
+        {
+            RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+
+            Animation anim = new Animation()
+            {
+                Frames = new List<RenderableObject>() { renderableObj },
+                Frequency = 0,
+                Repeats = 0,
+                GenericType = 0
+            };
+
+            BaseObject baseObj = new BaseObject(new List<Animation>() { anim }, ObjectID, "Game object " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
+            baseObj.BaseFrame.CameraPerspective = true;
+
+            return baseObj;
+        }
+
         public virtual void SetPosition(Vector3 position) 
         {
             BaseObjects.ForEach(obj =>

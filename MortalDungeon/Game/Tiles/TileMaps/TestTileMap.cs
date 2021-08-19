@@ -39,6 +39,11 @@ namespace MortalDungeon.Game.Tiles.TileMaps
 
                     Tiles.Add(baseTile);
 
+                    if (_randomNumberGen.NextDouble() > 0.9) 
+                    {
+                        baseTile.Properties.Type = TileType.Grass_2;
+                    }
+
                     //if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0) //add a bit of randomness to tile gen
                     //{
                     //    //baseTile.Properties.Classification = TileClassification.Terrain;
@@ -66,6 +71,15 @@ namespace MortalDungeon.Game.Tiles.TileMaps
         {
             if (tile.Structure != null)
                 return;
+
+            switch (tile.Properties.Type) 
+            {
+                case TileType.Stone_1:
+                case TileType.Stone_2:
+                case TileType.Stone_3:
+                case TileType.Gravel:
+                    return;
+            }
 
             Structure tree = new Structure(Controller.Scene, Spritesheets.StructureSheet, _randomNumberGen.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
             tree.BaseObject.BaseFrame.RotateX(25);
@@ -115,92 +129,6 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             tile.Chunk.Structures.Add(rock);
             tile.Structure = rock;
             //tile.Chunk.GenericObjects.Add(tree.SelectionTile);
-        }
-
-        public void CreateWalls(TilePoint startPoint, TilePoint endPoint)
-        {
-            PathToPointParameters param = new PathToPointParameters(startPoint, endPoint, 100) 
-            {
-                TraversableTypes = new List<TileClassification>() { TileClassification.Ground, TileClassification.Terrain, TileClassification.Water }
-            };
-
-            List<BaseTile> tiles = GetPathToPoint(param);
-            Direction direction = Direction.None;
-            Direction nextDirection = Direction.None;
-
-            for (int i = 0; i < tiles.Count; i++)
-            {
-                StructureEnum wallType = StructureEnum.Wall_1;
-
-                if (direction == Direction.None) 
-                {
-                    direction = Direction.North;
-                }
-
-                int rotation = 0;
-
-                if (i < tiles.Count - 1)
-                {
-                    nextDirection = FeatureEquation.DirectionBetweenTiles(tiles[i].TilePoint, tiles[i + 1].TilePoint);
-                }
-
-                rotation = FeatureEquation.AngleOfDirection(nextDirection);
-
-                if (i != 0 && nextDirection != direction) 
-                {
-                    wallType = StructureEnum.Wall_Corner;
-
-                    Direction prevDirection = FeatureEquation.DirectionBetweenTiles(tiles[i].TilePoint, tiles[i - 1].TilePoint);
-
-                    Console.WriteLine(AngledWallDirectionsToRotation(prevDirection, nextDirection));
-                    rotation = AngledWallDirectionsToRotation(prevDirection, nextDirection);
-                }
-
-
-                CreateWall(tiles[i], wallType, rotation);
-
-                direction = nextDirection;
-            }
-        }
-
-        public void CreateWall(BaseTile tile, StructureEnum wallType, int rotation) 
-        {
-            Structure wall = new Structure(Controller.Scene, Spritesheets.StructureSheet, (int)wallType, tile.Position + new Vector3(0, 0, 0.01f));
-
-            if (wallType == StructureEnum.Wall_Corner)
-            {
-                wall.SetScale(2);
-            }
-
-            wall.BaseObject.BaseFrame.RotateZ(rotation);
-
-            wall.VisibleThroughFog = true;
-            wall.TileMapPosition = tile;
-            wall.Name = "Wall";
-            wall.Pathable = true;
-
-            //if (color)
-            //    wall.SetColor(Colors.Red);
-
-            wall.SetTeam(UnitTeam.Neutral);
-            wall.Height = 4;
-
-            tile.Chunk.Structures.Add(wall);
-            tile.Structure = wall;
-        }
-
-        //theres definitely a formula for this but this works just as well and is readable so whatev
-        public int AngledWallDirectionsToRotation(Direction inlet, Direction outlet) 
-        {
-            return inlet switch
-            {
-                Direction.NorthWest => outlet == Direction.NorthEast ? 60 : 180,
-                Direction.SouthWest => outlet == Direction.North ? 120 : 240,
-                Direction.South => outlet == Direction.NorthWest ? 180 : 300,
-                Direction.SouthEast => outlet == Direction.SouthWest ? 240 : 0,
-                Direction.NorthEast => outlet == Direction.South ? 300 : 60,
-                _ => outlet == Direction.SouthEast ? 0 : 120,
-            };
         }
 
 

@@ -115,7 +115,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                     returnDim.X += dimensions.X;
                     break;
                 case UIAnchorPosition.LeftCenter:
-                    returnDim.X += dimensions.X / 2;
                     break;
                 case UIAnchorPosition.RightCenter:
                     returnDim.X += dimensions.X;

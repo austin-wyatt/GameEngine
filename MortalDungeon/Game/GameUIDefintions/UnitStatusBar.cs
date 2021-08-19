@@ -121,7 +121,7 @@ namespace MortalDungeon.Game.UI
                     unitPos.Y += 0.17f;
 
                     SetSize(zoomScale);
-                    _mainTextBox.SetTextScale(0.018f);
+                    _mainTextBox.SetTextScale(0.02f);
                     UpdateInfoBarScales(zoomScale);
                 }
                 else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
@@ -130,7 +130,7 @@ namespace MortalDungeon.Game.UI
                     unitPos.Y += 0.12f;
 
                     SetSize(zoomScale);
-                    _mainTextBox.SetTextScale(0.015f);
+                    _mainTextBox.SetTextScale(0.02f);
                 }
                 else if (_camera.Position.Z >= 10)
                 {

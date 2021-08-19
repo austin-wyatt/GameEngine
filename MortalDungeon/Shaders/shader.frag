@@ -83,10 +83,15 @@ void DoWork(in sampler2D primaryTexture)
 
 	//Handle outline and inline
 	if(outlineThickness > 0)
-	CreateOutline(texColor, outlineColor, outlineThickness, primaryTexture);
+	{
+		CreateOutline(texColor, outlineColor, outlineThickness, primaryTexture);
+	}
+	
 
 	if(inlineThickness > 0)
-	CreateInline(texColor, inlineColor, inlineThickness, primaryTexture);
+	{
+		CreateInline(texColor, inlineColor, inlineThickness, primaryTexture);
+	}
 	
 	//if the alpha is below the alpha threshold the pixel is discarded
 	if(outputColor.a < alpha_threshold)

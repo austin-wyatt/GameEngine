@@ -18,7 +18,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
     {
         UITooltipOpen,
         TileTooltipOpen,
-        ContextMenuOpen
+        ContextMenuOpen,
+        AbilitySelected
     }
     public class CombatScene : Scene
     {
@@ -197,6 +198,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 DeselectAbility();
             }
 
+            ContextManager.SetFlag(GeneralContextFlags.AbilitySelected, true);
+
+            Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
+            MessageCenter.SendMessage(msg);
+
             _selectedAbility = ability;
             ability.OnSelect(this, ability.CastingUnit.GetTileMap());
 
@@ -212,6 +218,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _selectedAbility?.OnAbilityDeselect();
                 _selectedAbility = null;
             }
+
+            ContextManager.SetFlag(GeneralContextFlags.AbilitySelected, false);
+
+            Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
+            MessageCenter.SendMessage(msg);
 
             _onDeselectAbilityActions.ForEach(a => a?.Invoke());
         }
@@ -406,6 +417,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (_selectedAbility != null)
                 {
                     _selectedAbility.OnRightClick();
+                    return;
                 }
             }
 
@@ -417,6 +429,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             base.SetMouseStateFlags();
 
             MouseUpStateFlags.SetFlag(MouseUpFlags.ContextMenuOpen, ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen));
+            MouseUpStateFlags.SetFlag(MouseUpFlags.AbilitySelected, ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen));
         }
 
         protected override void ActOnMouseStateFlag(MouseUpFlags flag)
@@ -459,6 +472,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         if (ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen))
                         {
                             CloseContextMenu();
+                        }
+                        else if (ContextManager.GetFlag(GeneralContextFlags.AbilitySelected)) 
+                        {
+                            DeselectAbility();
                         }
                         break;
                 }

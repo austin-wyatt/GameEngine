@@ -19,6 +19,7 @@ using System.Linq;
 using MortalDungeon.Game.Tiles.TileMaps;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Map.FeatureEquations;
+using MortalDungeon.Game.Structures;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -431,9 +432,9 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         m.Tiles.ForEach(t =>
                         {
-                            t.Properties.Type = TileType.Grass;
-                            t.Outline = true;
-                            t.NeverOutline = false;
+                            //t.Properties.Type = TileType.Grass;
+                            //t.Outline = true;
+                            //t.NeverOutline = false;
                             t.Update();
                         });
                     });
@@ -459,10 +460,67 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         TestTileMap temp = map as TestTileMap;
 
-                        temp.CreateWalls(_wallTemp, tile.TilePoint);
+                        Wall.CreateWalls(map, _wallTemp, tile.TilePoint);
                         _wallTemp = null;
                     }
                 }
+                else if (KeyboardState.IsKeyDown(Keys.Tab))
+                {
+                    if (tile.Structure != null && (tile.Structure.Type == StructureEnum.Wall_Wood_1 || tile.Structure.Type == StructureEnum.Wall_1)) 
+                    {
+                        Wall wall = tile.Structure as Wall;
+                        wall.CreateDoor(tile);
+                    }
+                }
+                else if (KeyboardState.IsKeyDown(Keys.F1))
+                {
+                    List<BaseTile> tiles = new List<BaseTile>();
+
+                    tiles = map.GetVisionInRadius(tile.TilePoint, 6);
+
+                    tiles.ForEach(tile =>
+                    {
+                        tile.Properties.Type = (TileType)(rand.Next(3) + (int)TileType.Stone_1);
+
+                        if (rand.NextDouble() > 0.9) 
+                        {
+                            tile.Properties.Type = TileType.Gravel;
+                        }
+
+                        tile.Update();
+                    });
+                }
+                else if (KeyboardState.IsKeyDown(Keys.F2))
+                {
+                    List<BaseTile> tiles = new List<BaseTile>();
+
+                    tiles = map.GetVisionInRadius(tile.TilePoint, 6);
+
+                    tiles.ForEach(tile =>
+                    {
+                        if (rand.NextDouble() > 0.8) 
+                        {
+                            tile.Properties.Type = TileType.Dirt;
+                        }
+
+                        tile.Update();
+                    });
+                }
+                else if (KeyboardState.IsKeyDown(Keys.F3))
+                {
+                    List<BaseTile> tiles = new List<BaseTile>();
+
+                    tiles = map.GetVisionInRadius(tile.TilePoint, 2);
+
+                    tiles.ForEach(tile =>
+                    {
+                        tile.Properties.Type = TileType.WoodPlank;
+                        tile.Outline = true;
+
+                        tile.Update();
+                    });
+                }
+
             }
             else
             {

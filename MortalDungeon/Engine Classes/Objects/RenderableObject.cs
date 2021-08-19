@@ -404,6 +404,22 @@ namespace MortalDungeon.Engine_Classes
             CalculateTransformationMatrix();
         }
 
+        public Vector3 GetRotation() 
+        {
+            Vector3 rotations = Transformations.ExtractRotation().ToEulerAngles();
+
+            rotations.X = MathHelper.RadiansToDegrees(rotations.X);
+            rotations.Y = MathHelper.RadiansToDegrees(rotations.Y);
+            rotations.Z = MathHelper.RadiansToDegrees(rotations.Z);
+
+            return rotations;
+        }
+
+        public Vector3 GetRotationRadians()
+        {
+            return Transformations.ExtractRotation().ToEulerAngles();
+        }
+
         private void CalculateTransformationMatrix() 
         {
             Transformations = Rotation * Scale * Translation;

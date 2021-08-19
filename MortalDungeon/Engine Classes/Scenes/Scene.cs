@@ -214,7 +214,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public enum MouseUpFlags
         {
             ClickProcessed,
-            ContextMenuOpen
+            ContextMenuOpen,
+            AbilitySelected
         }
 
         protected ContextManager<MouseUpFlags> MouseUpStateFlags = new ContextManager<MouseUpFlags>();

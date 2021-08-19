@@ -21,18 +21,20 @@ out float alpha_threshold;
 
 flat out int InstanceID; 
 
-//const int tile_width = 62; //individual tile width
-//const int tile_width_partial = 46; //stacked width
-//const int tile_height = 54; //individual tile height
-//const int tile_height_partial = 27; //stacked height
 
-const int tile_width = 124; //individual tile width
-const int tile_width_partial = 92; //stacked width
-const int tile_height = 108; //individual tile height
-const int tile_height_partial = 54; //stacked height
+//const int tile_width = 124; //individual tile width
+//const int tile_width_partial = 92; //stacked width
+//const int tile_height = 108; //individual tile height
+//const int tile_height_partial = 54; //stacked height
 
-const int xTilePlacementOffset = 3;
-const int yTilePlacementOffset = 17;
+const int tile_width = 248; //individual tile width
+const int tile_width_partial = 184; //stacked width
+const int tile_height = 216; //individual tile height
+const int tile_height_partial = 108; //stacked height
+
+const int xTilePlacementOffset = 6;
+const int yTilePlacementOffset = 34;
+const int yOffsetAmount = 18;
 
 vec2 setTexCoord(vec2 primaryTextureCoordinates, float columns, float rows, float column, float row);
 
@@ -67,10 +69,10 @@ void main(void)
 	alpha_threshold = 0.05;
 
 
-	//figure out the tile's position based on its X and Y coordinates here (copy what was done in TileTexturer on the cpu (remember to convert values to opengl coordinates))
+	//figure out the tile's position based on its X and Y coordinates
 	float aspectRatio = compositeType_WH[3] / compositeType_WH[2];
 
-	int yOffset = int(tileParameters[0]) % 2 == 1 ? tile_height_partial - 9
+	int yOffset = int(tileParameters[0]) % 2 == 1 ? tile_height_partial - yOffsetAmount
 		: 0;
 	vec2 tileOriginPoint = vec2(0, 0);
 

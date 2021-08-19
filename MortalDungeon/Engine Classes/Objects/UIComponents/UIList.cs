@@ -11,20 +11,22 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public UIScale ListItemSize = new UIScale();
         public UIScale ListSize = new UIScale();
 
+        public bool Outline = false;
         public bool Ascending = false;
 
         public List<ListItem> Items = new List<ListItem>();
 
         public float TextScale = 1;
 
-        public Vector4 _textColor = Colors.White;
-        public Vector4 _itemColor = Colors.UIHoveredGray;
-        public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false)
+        public Vector4 _textColor = Colors.UITextBlack;
+        public Vector4 _itemColor = Colors.UILightGray;
+        public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
         {
             Position = position;
             ListItemSize = listItemSize;
             TextScale = textScale;
             Ascending = ascending;
+            Outline = outline;
 
             ListSize = listItemSize;
 
@@ -34,7 +36,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Name = "UIList";
 
-            BaseComponent = new UIBlock(position, (ListItemSize + ItemMargins));
+            //BaseComponent = new UIBlock(position, (ListItemSize + ItemMargins));
+            BaseComponent = new UIBlock(position, ListItemSize);
+
+            if (!outline) 
+            {
+                BaseComponent.BaseObject.OutlineParameters.SetAllInline(0);
+            }
 
             AddChild(BaseComponent);
 
@@ -47,6 +55,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             {
                 BaseComponent.SetColor(Colors.UIDefaultGray);
             }
+
+            //BaseComponent.SetColor(Colors.Transparent); //temp
 
             if (textColor != default)
             {
@@ -70,89 +80,125 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
         }
 
-        public ListItem AddItem(string text, Action onClickAction = null)
+        //public ListItem AddItem(string text, Action onClickAction = null)
+        //{
+        //    Vector3 position;
+
+        //    if (Items.Count == 0)
+        //    {
+        //        position = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+        //        position.X += BaseComponent.GetAnchorPosition(UIAnchorPosition.LeftCenter).X;
+        //        //position.X += Margin.X;
+        //        position.Y += Margin.Y;
+        //    }
+        //    else 
+        //    {
+        //        position = Items[Items.Count - 1].BaseComponent.Position;
+        //        position.Y += Items[Items.Count - 1].BaseComponent.GetDimensions().Y * (Ascending ? -1 : 1);
+        //        position.Y += ItemMargins.Y * WindowConstants.ScreenUnits.Y * (Ascending ? -1 : 1);
+        //    }
+
+        //    //ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
+        //    ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
+        //    Items.Add(newItem);
+        //    AddChild(newItem, 100);
+
+        //    //UIScale textScale = newItem._textBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2;
+        //    UIScale textScale = newItem._textBox.GetDimensions() * WindowConstants.AspectRatio * 2;
+
+        //    if (textScale.X > ListItemSize.X || textScale.Y > ListItemSize.Y) 
+        //    {
+        //        //ListItemSize.X = (textScale.X > ListItemSize.X ? textScale.X : ListItemSize.X) + newItem._textBox.TextOffset.ToScale().X + Margin.X * 2;
+        //        ListItemSize.X = (textScale.X > ListItemSize.X ? textScale.X : ListItemSize.X) + Margin.X * 2;
+        //        ListItemSize.Y = (textScale.Y > ListItemSize.Y ? textScale.Y : ListItemSize.Y);
+
+        //        Items.ForEach(item => item.SetSize(ListItemSize));
+        //        Console.WriteLine(ListItemSize);
+        //    }
+
+        //    newItem.OnClickAction = onClickAction;
+        //    newItem.Clickable = true;
+        //    newItem.Hoverable = true;
+
+
+        //    UIScale listSize = ListItemSize + new UIScale(0, ItemMargins.Y + Margin.Y / 4);
+        //    listSize.Y *= Items.Count;
+
+        //    listSize.Y += Margin.Y;
+        //    listSize.X += Margin.X;
+
+        //    BaseComponent.SetSize(listSize);
+        //    ListSize = listSize;
+
+        //    if (Items.Count > 0) 
+        //    {
+        //        Position = (Items[0].BaseComponent.Position + Items[Items.Count - 1].BaseComponent.Position) / 2;
+        //        //BaseComponent.SetPosition(Position);
+        //    }
+
+        //    return newItem;
+        //}
+
+        public ListItem AddItem(string text, Action<ListItem> onClickAction = null)
         {
             Vector3 position;
 
             if (Items.Count == 0)
             {
-                position = BaseComponent.Origin;
-                position.X += BaseComponent.GetAnchorPosition(UIAnchorPosition.LeftCenter).X;
-                //position.X += Margin.X;
-                position.Y += Margin.Y;
+                position = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
             }
-            else 
+            else
             {
-                position = Items[Items.Count - 1].BaseComponent.Position;
-                position.Y += Items[Items.Count - 1].BaseComponent.GetDimensions().Y * (Ascending ? -1 : 1);
-                position.Y += ItemMargins.Y * WindowConstants.ScreenUnits.Y * (Ascending ? -1 : 1);
+                position = Items[^1].BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
             }
 
-            //ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
-            ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
+            ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor, Outline);
             Items.Add(newItem);
             AddChild(newItem, 100);
 
-            UIScale textScale = newItem._textBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2;
-
-            if (textScale.X > ListItemSize.X || textScale.Y > ListItemSize.Y) 
-            {
-                ListItemSize.X = (textScale.X > ListItemSize.X ? textScale.X : ListItemSize.X) + newItem._textBox.TextOffset.ToScale().X + Margin.X * 2;
-                ListItemSize.Y = (textScale.Y > ListItemSize.Y ? textScale.Y : ListItemSize.Y);
-
-                Items.ForEach(item => item.SetSize(ListItemSize));
-                Console.WriteLine(ListItemSize);
-            }
 
             newItem.OnClickAction = onClickAction;
             newItem.Clickable = true;
             newItem.Hoverable = true;
 
 
-            UIScale listSize = ListItemSize + new UIScale(0, ItemMargins.Y + Margin.Y / 4);
+            UIScale listSize = new UIScale(ListItemSize);
             listSize.Y *= Items.Count;
 
-            listSize.Y += Margin.Y;
-            listSize.X += Margin.X;
 
             BaseComponent.SetSize(listSize);
             ListSize = listSize;
 
-            if (Items.Count > 0) 
+            if (Items.Count > 0)
             {
-                Position = (Items[0].BaseComponent.Position + Items[Items.Count - 1].BaseComponent.Position) / 2;
+                Position = (Items[0].BaseComponent.Position + Items[^1].BaseComponent.Position) / 2;
                 BaseComponent.SetPosition(Position);
             }
 
             return newItem;
         }
-
-        //public override void SetSize(Vector2 size)
-        //{
-        //    Children.ForEach()
-
-        //    base.SetSize(size);
-        //}
-
-        //public void SetListSize(Vector2 listItemSize) 
-        //{
-        //    ListItemSize = listItemSize;
-        //}
     }
 
     public class ListItem : UIObject 
     {
-        public TextBox _textBox;
+        public TextComponent _textBox;
+        public UIBlock _backdrop;
         public int Index = -1;
 
         public Vector4 _textColor = Colors.White;
         public Vector4 _itemColor = Colors.UIHoveredGray;
-        public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor) 
+
+        public new Action<ListItem> OnClickAction;
+        public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor, bool outline = false) 
         {
-            TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
+            //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
+            TextComponent textBox = new TextComponent();
+            textBox.SetTextScale(textScale);
+            textBox.SetText(text);
+
             _textBox = textBox;
 
-            BaseComponent = textBox;
+            //BaseComponent = textBox;
 
             Name = "ListItem";
 
@@ -161,10 +207,33 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             _itemColor = itemColor;
             _textColor = textColor;
 
-            textBox.SetTextColor(textColor);
-            textBox.SetColor(itemColor);
+            //textBox.SetTextColor(textColor);
+            textBox.SetColor(textColor);
+            //textBox.SetColor(itemColor);
 
-            AddChild(textBox);
+
+
+            UIBlock backdrop = new UIBlock(default, listItemSize);
+            backdrop.SetColor(_itemColor);
+            //backdrop.MultiTextureData.MixPercent = 0;
+            backdrop.MultiTextureData.MixTexture = false;
+
+            if (!outline) 
+            {
+                backdrop.BaseObject.OutlineParameters.SetAllInline(0);
+            }
+
+            _backdrop = backdrop;
+            BaseComponent = backdrop;
+
+            backdrop.SetPositionFromAnchor(position, UIAnchorPosition.TopLeft);
+
+            UIDimensions textMargins = new UIDimensions(10, 0); //TEMP
+            textBox.SetPositionFromAnchor(backdrop.GetAnchorPosition(UIAnchorPosition.LeftCenter) + textMargins, UIAnchorPosition.LeftCenter);
+
+
+            AddChild(backdrop, 10);
+            AddChild(textBox, 100);
 
             Index = index;
 
@@ -183,8 +252,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             if (Hoverable && !Hovered && !Disabled)
             {
                 Hovered = true;
-                _textBox.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
-                _textBox.SetTextColor(_textColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
+                //_textBox.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
+                //_textBox.SetTextColor(_textColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
+
+                _textBox.SetColor(_textColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
+                _backdrop.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
             }
         }
 
@@ -193,8 +265,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             if (Hovered && !Disabled)
             {
                 Hovered = false;
-                _textBox.SetColor(_itemColor);
-                _textBox.SetTextColor(_textColor);
+                //_textBox.SetColor(_itemColor);
+                //_textBox.SetTextColor(_textColor);
+
+                _textBox.SetColor(_textColor);
+                _backdrop.SetColor(_itemColor);
 
                 base.HoverEnd();
             }
@@ -206,12 +281,19 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             if (Disabled)
             {
-                BaseComponent.SetColor(Colors.UIDisabledGray);
+                //BaseComponent.SetColor(Colors.UIDisabledGray);
+                _textBox.SetColor(Colors.UIDisabledGray);
             }
             else 
             {
-                BaseComponent.SetColor(_itemColor);
+                //BaseComponent.SetColor(_itemColor);
+                _textBox.SetColor(_textColor);
             }
+        }
+
+        public override void OnClick()
+        {
+            OnClickAction?.Invoke(this);
         }
     }
 }

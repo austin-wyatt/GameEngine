@@ -24,12 +24,18 @@ namespace MortalDungeon.Game.Tiles
 
         public static void InitializeTexture(TileMap map)
         {
+            TileSpritesheet.Use(TextureUnit.Texture0);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+
             if (map.FrameBuffer != null) 
             {
                 map.FrameBuffer.Dispose();
             }
 
-            int textureScale = 2; //how much we are scaling up the base tile textures to make it look good
+            int textureScale = 4; //how much we are scaling up the base tile textures to make it look good
             map.FrameBuffer = new FrameBufferObject(new Vector2i((int)((tile_width + (map.Width) * tile_width_partial) / WindowConstants.AspectRatio) * textureScale,
                 (tile_height * map.Height + tile_height) * textureScale));
 

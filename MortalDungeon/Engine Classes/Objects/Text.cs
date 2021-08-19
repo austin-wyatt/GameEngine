@@ -303,7 +303,7 @@ namespace MortalDungeon.Engine_Classes
         public float LetterOffset = 300f;
         public float YOffset = 0f;
 
-        public float NewLineHeight = 700f;
+        public static float NewLineHeight = 700f;
 
         public Vector4 Color = Colors.White;
 
@@ -427,6 +427,20 @@ namespace MortalDungeon.Engine_Classes
 
             UIDimensions dimensions = new UIDimensions((maxPos.X + letterDimensions.X / 2) - (minPos.X - letterDimensions.X / 2), 
                 (maxPos.Y + letterDimensions.Y / 2) - (minPos.Y - letterDimensions.Y / 2));
+
+            return dimensions;
+        }
+
+        public static UIDimensions GetTextDimensions(int columns, int rows, float textScale)
+        {
+            if (columns == 0)
+                return new UIDimensions();
+
+            Letter temp = new Letter(Character.A, default, false, 0, textScale);
+            Vector3 letterDimensions = temp.GetDimensions(); //assume all letters have the same dimensions
+
+            //UIDimensions dimensions = new UIDimensions(columns * letterDimensions.X * 2, rows * letterDimensions.Y * 2);
+            UIDimensions dimensions = new UIDimensions(columns * temp.LetterOffset * (2 + WindowConstants.AspectRatio), rows * NewLineHeight * textScale);
 
             return dimensions;
         }
