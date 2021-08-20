@@ -203,18 +203,9 @@ namespace MortalDungeon.Game.SceneDefinitions
                 return false;
             }
             
-            Unit badGuy = _units.Find(g => g.Name == "Guy");
-            //Console.WriteLine(badGuy.Position);
-            if (_focusedObj == null) 
+            if (e.Key == Keys.F4)
             {
-                //if (e.Key == Keys.Equal)
-                //{
-                //    EnergyDisplayBar.AddEnergy(1);
-                //}
-                //if (e.Key == Keys.Minus)
-                //{
-                //    EnergyDisplayBar.AddEnergy(-1);
-                //}
+                TabMenu.SelectTab(temp++ % 4);
             }
 
             return true;
@@ -529,5 +520,6 @@ namespace MortalDungeon.Game.SceneDefinitions
         }
 
         private TilePoint _wallTemp = null;
+        private int temp = 0;
     }
 }

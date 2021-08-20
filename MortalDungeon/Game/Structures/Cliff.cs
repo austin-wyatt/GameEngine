@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -7,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Units
+namespace MortalDungeon.Game.Structures
 {
     public enum CliffFace 
     {

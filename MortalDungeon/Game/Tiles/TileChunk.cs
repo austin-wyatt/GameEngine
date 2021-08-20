@@ -1,5 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Units;
+using MortalDungeon.Game.Structures;
 using OpenTK.Mathematics;
 using System.Collections.Generic;
 

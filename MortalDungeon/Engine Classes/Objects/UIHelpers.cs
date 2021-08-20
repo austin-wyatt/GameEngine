@@ -228,6 +228,47 @@ namespace MortalDungeon.Engine_Classes
 
             scene._closeContextMenu = temp;
         }
+
+        public static (Tooltip tooltip, UIList itemList) GenerateContextMenuWithList(string headerText)
+        {
+            Tooltip menu = new Tooltip();
+
+            TextComponent header = new TextComponent();
+            header.SetTextScale(0.05f);
+            header.SetColor(Colors.UITextBlack);
+            header.SetText(headerText);
+
+            menu.AddChild(header);
+
+            float textScale = 0.04f;
+            UIList list = new UIList(default, Text.GetTextDimensions(20, 1, textScale).ToScale() + new UIScale(0, 0.05f), textScale, default, Colors.UITextBlack, Colors.UILightGray);
+
+
+            menu.AddChild(list);
+
+
+            //initially position the objects so that the tooltip can be fitted
+            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
+            list.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+
+            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+
+            //menu.Margins = new UIDimensions(0, 60);
+
+            menu.FitContents(false);
+
+            //position the objects again once the menu has been fitted to the correct size
+            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
+            list.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+
+            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+
+            menu.Clickable = true;
+
+            menu.BaseComponent.BaseObject.OutlineParameters.SetAllInline(0);
+
+            return (menu, list);
+        }
     }
 
     public class UIDimensions

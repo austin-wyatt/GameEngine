@@ -22,19 +22,33 @@ out float alpha_threshold;
 flat out int InstanceID; 
 
 
-//const int tile_width = 124; //individual tile width
-//const int tile_width_partial = 92; //stacked width
-//const int tile_height = 108; //individual tile height
-//const int tile_height_partial = 54; //stacked height
+const int tile_width = 124; //individual tile width
+const int tile_width_partial = 92; //stacked width
+const int tile_height = 108; //individual tile height
+const int tile_height_partial = 54; //stacked height
 
-const int tile_width = 248; //individual tile width
-const int tile_width_partial = 184; //stacked width
-const int tile_height = 216; //individual tile height
-const int tile_height_partial = 108; //stacked height
+//const int tile_width = 128; //individual tile width
+//const int tile_width_partial = 96; //stacked width
+//const int tile_height = 128; //individual tile height
+//const int tile_height_partial = 96; //stacked height
 
-const int xTilePlacementOffset = 6;
-const int yTilePlacementOffset = 34;
-const int yOffsetAmount = 18;
+//
+//const int tile_width = 248; //individual tile width
+//const int tile_width_partial = 184; //stacked width
+//const int tile_height = 216; //individual tile height
+//const int tile_height_partial = 108; //stacked height
+//
+//const int xTilePlacementOffset = 6;
+//const int yTilePlacementOffset = 34;
+//const int yOffsetAmount = 18;
+
+//const int xTilePlacementOffset = 3;
+//const int yTilePlacementOffset = 17;
+//const int yOffsetAmount = 9;
+
+const int xTilePlacementOffset = 0;
+const int yTilePlacementOffset = 0;
+const int yOffsetAmount = 0;
 
 vec2 setTexCoord(vec2 primaryTextureCoordinates, float columns, float rows, float column, float row);
 
@@ -43,8 +57,8 @@ void main(void)
 	primaryColor = appliedColorPrimary;
 	mixPercent = compositeType_PPMO[2];
 
-	const float columns = 10;
-	const float rows = 10;
+	const float columns = 20;
+	const float rows = 20;
 
     float row =  floor(compositeType_PPMO[0] / rows);
 	float column = compositeType_PPMO[0] - row * rows;
@@ -70,13 +84,11 @@ void main(void)
 
 
 	//figure out the tile's position based on its X and Y coordinates
-	float aspectRatio = compositeType_WH[3] / compositeType_WH[2];
-
 	int yOffset = int(tileParameters[0]) % 2 == 1 ? tile_height_partial - yOffsetAmount
 		: 0;
 	vec2 tileOriginPoint = vec2(0, 0);
 
-	tileOriginPoint.x = (tileParameters[0] * tile_width_partial + tile_width_partial - xTilePlacementOffset * tileParameters[0]) * aspectRatio;
+	tileOriginPoint.x = (tileParameters[0] * tile_width_partial + tile_width_partial - xTilePlacementOffset * tileParameters[0]);
     tileOriginPoint.y = (tileParameters[1] + 1) * tile_height - yOffset + tile_height_partial - yTilePlacementOffset * tileParameters[1];
 
 	tileOriginPoint.x /= compositeType_WH[0]; //value from 0 to 1 based on where it is in the texture
@@ -86,19 +98,12 @@ void main(void)
 	tileOriginPoint.y = tileOriginPoint.y * 2 - 1;
 //	tileOriginPoint.y *= -1;
 
-	float width_of_tile_clip_space = tile_width / compositeType_WH[0];
-	float height_of_tile_clip_space = tile_height / compositeType_WH[1];
-
-
-	
-
-	vec2 temp = vec2(0, 0);
-	temp.x = (aPosition.x + 1) / 2; //percentage of the width of the screen that this vertex is at
-	temp.y = (aPosition.y + 1) / 2; //percentage of the height of the screen that this vertex is at
+	float width_of_tile_clip_space = 128 / compositeType_WH[0];
+	float height_of_tile_clip_space = 128 / compositeType_WH[1];
 
 	vec4 pos = vec4(0, 0, 0, 1);
 
-	pos.x = tileOriginPoint.x + aPosition.x * width_of_tile_clip_space * 2 * aspectRatio;
+	pos.x = tileOriginPoint.x + aPosition.x * width_of_tile_clip_space * 2;
 	pos.y = tileOriginPoint.y + aPosition.y * height_of_tile_clip_space * 2;
 
 	gl_Position = pos;

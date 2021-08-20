@@ -215,7 +215,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             ClickProcessed,
             ContextMenuOpen,
-            AbilitySelected
+            AbilitySelected,
+            TabMenuOpen
         }
 
         protected ContextManager<MouseUpFlags> MouseUpStateFlags = new ContextManager<MouseUpFlags>();
@@ -241,7 +242,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (!GetBit(_interceptClicks, ObjectType.UI))
                     _UI.ForEach(uiObj =>
                     {
-                        //if (uiObj.Clickable && uiObj.Render && !uiObj.Disabled)
+                        if (MouseUpStateFlags.GetFlag(MouseUpFlags.TabMenuOpen)) 
+                        {
+                            if (uiObj != TabMenu)
+                            {
+                                return;
+                            }
+                        }
+
                         if (uiObj.Render && !uiObj.Disabled)
                         {
                             uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
@@ -256,14 +264,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     return; //stop further clicks from being processed
 
 
-                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ContextMenuOpen)) 
+                #region UI MouseUpEvents
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ContextMenuOpen))
                 {
                     ActOnMouseStateFlag(MouseUpFlags.ContextMenuOpen);
-
-                    if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
-                        return;
                 }
-                
+                else if (MouseUpStateFlags.GetFlag(MouseUpFlags.TabMenuOpen)) 
+                {
+                    ActOnMouseStateFlag(MouseUpFlags.TabMenuOpen);
+                }
+                #endregion
+
+                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
+                    return; //stop further clicks from being processed
+
 
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)

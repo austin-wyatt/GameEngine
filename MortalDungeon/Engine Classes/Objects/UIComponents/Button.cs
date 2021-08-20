@@ -101,6 +101,18 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             if (!Selected)
                 BaseComponent.SetColor(color);
+            else 
+            {
+                Vector4 hoveredColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
+                BaseComponent.SetColor(hoveredColor);
+            }
+        }
+
+        public void SetSelected(bool selected) 
+        {
+            Selected = selected;
+
+            SetColor(BaseColor);
         }
     }
 }

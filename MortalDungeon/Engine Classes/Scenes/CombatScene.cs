@@ -19,7 +19,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         UITooltipOpen,
         TileTooltipOpen,
         ContextMenuOpen,
-        AbilitySelected
+        AbilitySelected,
+        TabMenuOpen
     }
     public class CombatScene : Scene
     {
@@ -28,7 +29,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public int UnitTakingTurn = 0; //the unit in the initiative order that is going
         public EnergyDisplayBar EnergyDisplayBar;
         public GameFooter Footer;
-        
+
+        public static TabMenu TabMenu = new TabMenu();
 
         public Ability _selectedAbility = null;
         public List<Unit> _selectedUnits = new List<Unit>();
@@ -67,7 +69,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _tooltipBlock.SetColor(Colors.Transparent);
             _tooltipBlock.SetAllInline(0);
 
-            AddUI(_tooltipBlock, 999999999);
+            AddUI(_tooltipBlock, 10000);
+
+            TabMenu.AddToScene(this);
+            TabMenu.Display(false);
         }
 
         /// <summary>
@@ -430,6 +435,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             MouseUpStateFlags.SetFlag(MouseUpFlags.ContextMenuOpen, ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen));
             MouseUpStateFlags.SetFlag(MouseUpFlags.AbilitySelected, ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen));
+            MouseUpStateFlags.SetFlag(MouseUpFlags.TabMenuOpen, ContextManager.GetFlag(GeneralContextFlags.TabMenuOpen));
         }
 
         protected override void ActOnMouseStateFlag(MouseUpFlags flag)
@@ -441,6 +447,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 case MouseUpFlags.ContextMenuOpen:
                     MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
                     CloseContextMenu();
+                    break;
+                case MouseUpFlags.TabMenuOpen:
+                    MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                    TabMenu.Display(false);
                     break;
             }
         }
@@ -469,13 +479,23 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         }
                         break;
                     case Keys.Escape:
-                        if (ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen))
+                        if (ContextManager.GetFlag(GeneralContextFlags.TabMenuOpen)) 
+                        {
+                            TabMenu.Display(false);
+                        }
+                        else if (ContextManager.GetFlag(GeneralContextFlags.ContextMenuOpen))
                         {
                             CloseContextMenu();
                         }
-                        else if (ContextManager.GetFlag(GeneralContextFlags.AbilitySelected)) 
+                        else if (ContextManager.GetFlag(GeneralContextFlags.AbilitySelected))
                         {
                             DeselectAbility();
+                        }
+                        break;
+                    case Keys.Tab:
+                        if (!e.IsRepeat) 
+                        {
+                            TabMenu.Display(!TabMenu.Render);
                         }
                         break;
                 }

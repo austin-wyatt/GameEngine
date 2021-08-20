@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    class UIList : UIObject
+    public class UIList : UIObject
     {
         public UIScale Margin = new UIScale(0.02f, 0.02f);
         public UIScale ItemMargins = new UIScale(0f, 0.005f);

@@ -13,10 +13,10 @@ namespace MortalDungeon.Game.Tiles
 {
     public static class TileTexturer
     {
-        private const int tile_width = 62; //individual tile width
-        private const int tile_width_partial = 46; //stacked width
-        private const int tile_height = 54; //individual tile height
-        private const int tile_height_partial = 27; //stacked height
+        private const int tile_width = 124; //individual tile width
+        private const int tile_width_partial = 92; //stacked width
+        private const int tile_height = 108; //individual tile height
+        private const int tile_height_partial = 54; //stacked height
 
         private static readonly Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
 
@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Tiles
         public static void InitializeTexture(TileMap map)
         {
             TileSpritesheet.Use(TextureUnit.Texture0);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
@@ -35,10 +35,11 @@ namespace MortalDungeon.Game.Tiles
                 map.FrameBuffer.Dispose();
             }
 
-            int textureScale = 4; //how much we are scaling up the base tile textures to make it look good
-            map.FrameBuffer = new FrameBufferObject(new Vector2i((int)((tile_width + (map.Width) * tile_width_partial) / WindowConstants.AspectRatio) * textureScale,
-                (tile_height * map.Height + tile_height) * textureScale));
+            map.FrameBuffer = new FrameBufferObject(new Vector2i((tile_width + map.Width * tile_width_partial),
+                tile_height * map.Height + tile_height));
 
+
+            GL.BindTexture(TextureTarget.Texture2D, map.FrameBuffer.RenderTexture);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
@@ -96,6 +97,7 @@ namespace MortalDungeon.Game.Tiles
 
 
         private const int _dataOffset = 20;
+
         private static void RenderTiles(HashSet<BaseTile> objects, ref float[] _instancedRenderDataArray, TileMap map)
         {
             if (objects.Count == 0)
@@ -112,7 +114,7 @@ namespace MortalDungeon.Game.Tiles
             GL.BindBuffer(BufferTarget.ArrayBuffer, Renderer._instancedVertexBuffer);
 
 
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw); //take the raw vertices
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StaticDraw); //take the raw vertices
 
 
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data

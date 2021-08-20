@@ -123,11 +123,11 @@ namespace MortalDungeon.Game.Objects
 
     public static class BASE_TILE_ANIMATION
     {
-        private static RenderableObject base_Idle_1 = new RenderableObject(new SpritesheetObject(21, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject base_Selected_1 = new RenderableObject(new SpritesheetObject(21, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), new Vector4(1, 0.4f, 0.4f, 1), ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Idle_1 = new RenderableObject(new SpritesheetObject((int)Tiles.TileType.Default, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Selected_1 = new RenderableObject(new SpritesheetObject((int)Tiles.TileType.Outline, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), new Vector4(1, 0.4f, 0.4f, 1), ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-        private static RenderableObject base_Transparent_1 = new RenderableObject(new SpritesheetObject(20, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject base_Grass_1 = new RenderableObject(new SpritesheetObject(22, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Transparent_1 = new RenderableObject(new SpritesheetObject((int)Tiles.TileType.Outline, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject base_Grass_1 = new RenderableObject(new SpritesheetObject((int)Tiles.TileType.Grass, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation SolidWhite = new Animation()
         {

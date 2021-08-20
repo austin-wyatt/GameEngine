@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles.HelperTiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -300,19 +301,11 @@ namespace MortalDungeon.Game.Tiles
             temp.BaseObjects.Add(baseObj);
 
             temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
-            temp.BaseObjects[0].BaseFrame.ScaleX(0.7783f);
-            temp.BaseObjects[0].BaseFrame.ScaleY(1.036f);
+
+            temp.BaseObjects[0].BaseFrame.ScaleX(0.753f);
+            temp.BaseObjects[0].BaseFrame.ScaleY(0.8727f);
             temp.BaseObjects[0].BaseFrame.ScaleAll(Width);
-            //temp.BaseObjects[0].BaseFrame.ScaleY(1.065f); //10x10
-            //temp.BaseObjects[0].BaseFrame.ScaleY(1.04f); //20x20
-            //temp.BaseObjects[0].BaseFrame.ScaleY(1.03f); //30x30
-            //temp.BaseObjects[0].BaseFrame.ScaleY(1.027f); //40x40
 
-            //temp.BaseObjects[0].BaseFrame.ScaleY(1.0237f); //50x50
-            //temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
-
-            //temp.BaseObjects[0].BaseFrame.ScaleY(1.019f); //100x100
-            //temp.BaseObjects[0].BaseFrame.ScaleX(1.0206f);
 
             TexturedQuad = temp;
             
@@ -333,7 +326,7 @@ namespace MortalDungeon.Game.Tiles
             //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 2800, tileMapPos.Y + 1360, tileMapPos.Z)); //40x40
 
 
-            TexturedQuad.SetPosition(tileMapPos + new Vector3(363, 1820, 0));
+            TexturedQuad.SetPosition(tileMapPos + new Vector3(58, -105, 0));
             //TexturedQuad.SetPosition(new Vector3(0, 0, 0));
         }
 

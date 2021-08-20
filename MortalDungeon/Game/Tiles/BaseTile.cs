@@ -5,6 +5,7 @@ using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles.HelperTiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -22,26 +23,26 @@ namespace MortalDungeon.Game.Tiles
 
     public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
-        Stone_1 = 10,
-        Stone_2 = 11,
-        Stone_3 = 12,
-        Gravel = 13,
-        WoodPlank = 14,
+        Stone_1 = 20,
+        Stone_2 = 21,
+        Stone_3 = 22,
+        Gravel = 23,
+        WoodPlank = 24,
 
-        Default = 21,
-        Grass = 22,
-        AltGrass = 23,
-        Water = 24,
-        AltWater = 25,
-        Outline = 20,
+        Default = 41,
+        Grass = 42,
+        AltGrass = 43,
+        Water = 44,
+        AltWater = 45,
+        Outline = 40,
 
-        Dirt = 33,
-        Grass_2 = 34,
+        Dirt = 63,
+        Grass_2 = 64,
 
-        Fog_1 = 80,
-        Fog_2 = 81,
-        Fog_3 = 90,
-        Fog_4 = 91,
+        Fog_1 = 160,
+        Fog_2 = 161,
+        Fog_3 = 180,
+        Fog_4 = 181,
     }
     public class BaseTile : GameObject
     {
@@ -250,6 +251,18 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
+        public void AddStructure<T>(T structure) where T : Structure 
+        {
+            Chunk.Structures.Add(structure);
+            Structure = structure;
+        }
+
+        public void RemoveStructure<T>(T structure) where T : Structure
+        {
+            Chunk.Structures.Remove(structure);
+            Structure = null;
+        }
+
         public void Update()
         {
             TileMap.TilesToUpdate.Add(this);
@@ -278,13 +291,13 @@ namespace MortalDungeon.Game.Tiles
                 int coordX = tile.TilePoint.X + tile.TilePoint.ParentTileMap.TileMapCoords.X * tile.TilePoint.ParentTileMap.Width;
                 int coordY = tile.TilePoint.Y + tile.TilePoint.ParentTileMap.TileMapCoords.Y * tile.TilePoint.ParentTileMap.Height;
 
-                tooltip = $"Type: {TileTypeToString(tile.Properties.Type)} \n";
+                tooltip = $"Type: {tile.Properties.Type.Name()} \n";
                 tooltip += $"Coordinates: {coordX}, {coordY} \n";
                 tooltip += $"Elevation: {tile.Properties.Height}\n";
 
                 if (tile.Structure != null) 
                 {
-                    tooltip += $"Structure\n* Name: {tile.Structure.Name}\n";
+                    tooltip += $"Structure\n* Name: {tile.Structure.Type.Name()}\n";
                     tooltip += $"* Height: {tile.Structure.Height}\n";
                 }
             }
@@ -292,27 +305,6 @@ namespace MortalDungeon.Game.Tiles
             return tooltip;
         }
 
-        public static string TileTypeToString(TileType type) 
-        {
-            string val;
-
-            switch (type) 
-            {
-                case TileType.Water:
-                case TileType.AltWater:
-                    val = "Water";
-                    break;
-                case TileType.Grass:
-                case TileType.AltGrass:
-                    val = "Grass";
-                    break;
-                default:
-                    val = type.ToString();
-                    break;
-            }
-
-            return val;
-        }
 
         public int GetVisionHeight() 
         {

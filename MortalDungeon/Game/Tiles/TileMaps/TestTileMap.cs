@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -67,71 +68,6 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             InitializeTexturedQuad();
         }
 
-        public void CreateTree(BaseTile tile) 
-        {
-            if (tile.Structure != null)
-                return;
-
-            switch (tile.Properties.Type) 
-            {
-                case TileType.Stone_1:
-                case TileType.Stone_2:
-                case TileType.Stone_3:
-                case TileType.Gravel:
-                    return;
-            }
-
-            Structure tree = new Structure(Controller.Scene, Spritesheets.StructureSheet, _randomNumberGen.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
-            tree.BaseObject.BaseFrame.RotateX(25);
-            tree.BaseObject.BaseFrame.SetScaleAll(1 + (float)_randomNumberGen.NextDouble() / 2);
-
-            tree.VisibleThroughFog = true;
-            tree.TileMapPosition = tile;
-            tree.Name = "Tree";
-            tree.Pathable = false;
-
-            tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
-
-            tree.SetTeam(UnitTeam.Neutral);
-            tree.Height = 2;
-
-            tile.Chunk.Structures.Add(tree);
-            tile.Structure = tree;
-            //tile.Chunk.GenericObjects.Add(tree.SelectionTile);
-        }
-
-        public void CreateRock(BaseTile tile)
-        {
-            if (tile.Structure != null)
-                return;
-
-            Structure rock = new Structure(Controller.Scene, Spritesheets.StructureSheet, _randomNumberGen.Next() % 3 + (int)StructureEnum.Rock_1, tile.Position + new Vector3(0, -200, 0.12f));
-            rock.BaseObject.BaseFrame.RotateX(15);
-            rock.BaseObject.BaseFrame.SetScaleAll(1 + (float)_randomNumberGen.NextDouble() / 2);
-            
-            rock.VisibleThroughFog = true;
-            rock.TileMapPosition = tile;
-            rock.Name = "Rock";
-            tile.Properties.Classification = TileClassification.Terrain;
-
-            rock.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
-
-            rock.SetTeam(UnitTeam.Neutral);
-            if (rock.Type == StructureEnum.Rock_2)
-            {
-                rock.Height = 1;
-            }
-            else 
-            {
-                rock.Height = 2;
-            }
-
-            tile.Chunk.Structures.Add(rock);
-            tile.Structure = rock;
-            //tile.Chunk.GenericObjects.Add(tree.SelectionTile);
-        }
-
-
 
         public override void OnAddedToController()
         {
@@ -148,11 +84,27 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                 {
                     if (_randomNumberGen.NextDouble() > 0.3)
                     {
-                        CreateTree(baseTile);
+                        if (baseTile.Structure == null) 
+                        {
+                            switch (baseTile.Properties.Type)
+                            {
+                                case TileType.Stone_1:
+                                case TileType.Stone_2:
+                                case TileType.Stone_3:
+                                case TileType.Gravel:
+                                    continue;
+                            }
+                            Tree tree = new Tree(this, baseTile);
+                            baseTile.AddStructure(tree);
+                        }
                     }
                     else 
                     {
-                        CreateRock(baseTile);
+                        if (baseTile.Structure == null)
+                        {
+                            Rock rock = new Rock(this, baseTile);
+                            baseTile.AddStructure(rock);
+                        }
                     }
                 }
             }

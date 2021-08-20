@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Tiles;
+﻿using MortalDungeon.Game.Structures;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
