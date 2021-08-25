@@ -63,39 +63,60 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //_tileMapController.AddTileMap(new TileMapPoint(0, -1), tileMap4);
 
-            for (int x = 0; x < 2; x++) 
-            {
-                for (int y = 0; y < 2; y++) 
-                {
-                    if (!(x == 0 && y == 0)) 
-                    {
-                        TestTileMap tileMap2 = new TestTileMap(default, new TileMapPoint(x, y), _tileMapController) { Width = 50, Height = 50 };
-                        tileMap2.PopulateTileMap();
+            //for (int x = 0; x < 2; x++) 
+            //{
+            //    for (int y = 0; y < 2; y++) 
+            //    {
+            //        if (!(x == 0 && y == 0)) 
+            //        {
+            //            TestTileMap tileMap2 = new TestTileMap(default, new TileMapPoint(x, y), _tileMapController) { Width = 50, Height = 50 };
+            //            tileMap2.PopulateTileMap();
 
-                        _tileMapController.AddTileMap(new TileMapPoint(x, y), tileMap2);
-                    }
-                }
-            }
+            //            _tileMapController.AddTileMap(new TileMapPoint(x, y), tileMap2);
+            //        }
+            //    }
+            //}
+
+            RiverParams riverParams = new RiverParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
+            riverParams.AddStop(new FeaturePoint(25, 45));
+            riverParams.AddStop(new FeaturePoint(40, 30));
+            riverParams.AddStop(new FeaturePoint(80, 35));
+
+            River_1 river = new River_1(riverParams);
+
+            ForestParams forestParams = new ForestParams(new FeaturePoint(0, 0), 100, 0.1);
+            Forest_1 forest = new Forest_1(forestParams);
+
+            river.GenerateFeature();
+            _tileMapController.LoadedFeatures.Add(river);
+
+            forest.GenerateFeature();
+            _tileMapController.LoadedFeatures.Add(forest);
+
+            _tileMapController.LoadSurroundingTileMaps(tileMap.TileMapCoords);
+
 
 
             Guy guy = new Guy(tileMap[0, 0].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 0]) { Clickable = true };
             guy.SetTeam(UnitTeam.Ally);
-            guy.CurrentTileMap = tileMap;
-            guy._movementAbility.EnergyCost = 0.3f;
+            guy.Info._movementAbility.EnergyCost = 0.3f;
             CurrentUnit = guy;
 
+            guy.Info.PrimaryUnit = true;
             guy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
             guy.SelectionTile.SetPosition(guy.Position);
 
             _units.Add(guy);
 
+
             Guy badGuy = new Guy(tileMap[0, 3].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 3]) { Clickable = true };
             badGuy.SetTeam(UnitTeam.Enemy);
-            badGuy.CurrentTileMap = tileMap;
             badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
             badGuy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
             badGuy.SelectionTile.SetPosition(badGuy.Position);
+
+            badGuy.AI.ControlType = ControlType.Basic_AI;
 
             _units.Add(badGuy);
 
@@ -137,7 +158,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             badGuy.SetShields(5);
-
+            guy.SetShields(5);
 
             Skeleton skeleton = new Skeleton(tileMap[1, 5].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[1, 5]) { };
             skeleton.SetTeam(UnitTeam.Neutral);
@@ -145,6 +166,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             skeleton.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
             skeleton.SelectionTile.SetPosition(skeleton.Position);
+
+            skeleton.AI.ControlType = ControlType.Basic_AI;
 
             _units.Add(skeleton);
 
@@ -164,7 +187,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             AddUI(statusBarContainer);
 
 
-            FillInTeamFog(InitiativeOrder[0].Team);
+            FillInTeamFog(InitiativeOrder[0].AI.Team);
 
 
             //TextComponent description = new TextComponent();
@@ -202,11 +225,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             {
                 return false;
             }
-            
-            if (e.Key == Keys.F4)
-            {
-                TabMenu.SelectTab(temp++ % 4);
-            }
+           
 
             return true;
         }
@@ -307,8 +326,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                     //tree.NonCombatant = true;
                     tree.VisibleThroughFog = true;
-                    tree.BlocksVision = true;
-                    tree.TileMapPosition = tile;
+                    tree.Info.BlocksVision = true;
+                    tree.SetTileMapPosition(tile);
                     tree.Name = "Tree";
 
                     tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
@@ -328,7 +347,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 else if (KeyboardState.IsKeyDown(Keys.RightShift))
                 {
                     Unit unit = _units[0];
-                    map.GetLineOfTiles(unit.TileMapPosition, tile.TilePoint).ForEach(t =>
+                    map.GetLineOfTiles(unit.Info.TileMapPosition, tile.TilePoint).ForEach(t =>
                     {
                         t.SetAnimation(AnimationType.Idle);
                         t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
@@ -346,7 +365,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else if (KeyboardState.IsKeyDown(Keys.LeftControl))
                 {
-                    FeatureGenerator.GenerateRiver(tile.TilePoint, 5, 100);
+                    tile.Properties.MovementCost += 1f;
                 }
                 else if (KeyboardState.IsKeyDown(Keys.F))
                 {
@@ -417,27 +436,15 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else if (KeyboardState.IsKeyDown(Keys.KeyPadDivide))
                 {
-                    //Vector2i point = FeatureEquation.PointToMapCoords(tile.TilePoint);
-                    //River_1 river = new River_1(point.Y, 5, 1f, point.X);
-                    _tileMapController.TileMaps.ForEach(m =>
-                    {
-                        m.Tiles.ForEach(t =>
-                        {
-                            //t.Properties.Type = TileType.Grass;
-                            //t.Outline = true;
-                            //t.NeverOutline = false;
-                            t.Update();
-                        });
-                    });
 
+                    RiverParams riverParams = new RiverParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
+                    riverParams.AddStop(new FeaturePoint(25, 45));
+                    riverParams.AddStop(new FeaturePoint(40, 30));
+                    riverParams.AddStop(new FeaturePoint(80, 35));
 
-                    RiverParams riverParams = new RiverParams(new TileMapPoint(0, 0), new Vector2i(0, rand.Next(45)), new Vector2i(49, rand.Next(45)), 5);
-                    riverParams.AddStop(new Vector2i(rand.Next(45), rand.Next(45)));
+                    River_1 river = new River_1(riverParams);
 
-                    RiverParams riverParams2 = new RiverParams(new TileMapPoint(1, 0), new Vector2i(0, riverParams.Stops[^1].Y), new Vector2i(49, rand.Next(45)), 5);
-                    riverParams2.AddStop(new Vector2i(rand.Next(45), rand.Next(45)));
-
-                    River_1 river = new River_1(new List<RiverParams>() { riverParams, riverParams2 });
+                    river.GenerateFeature();
 
                     _tileMapController.ApplyFeatureEquationToMaps(river);
                 }

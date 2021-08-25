@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
@@ -40,52 +41,6 @@ namespace MortalDungeon.Game.Tiles
         public static List<TileClassification> AllTileClassifications = new List<TileClassification>()
         { TileClassification.Ground, TileClassification.AttackableTerrain, TileClassification.Terrain, TileClassification.Water };
 
-
-        /// <summary>
-        /// Linear interpolation between 2 values
-        /// </summary>
-        /// <param name="a">first value</param>
-        /// <param name="b">second value</param>
-        /// <param name="t">value between 0 and 1.0</param>
-        /// <returns>the interpolation between a and b</returns>
-        public static float Lerp(float a, float b, float t)
-        {
-            return a + (b - a) * t;
-        }
-
-        public static Vector3 CubeLerp(Vector3 start, Vector3 end, float t)
-        {
-            return new Vector3(Lerp(start.X, end.X, t), Lerp(start.Y, end.Y, t), Lerp(start.Z, end.Z, t));
-        }
-        public static Vector3i CubeRound(Vector3 cube)
-        {
-            float rx = (float)Math.Round(cube.X, MidpointRounding.AwayFromZero);
-            float ry = (float)Math.Round(cube.Y, MidpointRounding.AwayFromZero);
-            float rz = (float)Math.Round(cube.Z, MidpointRounding.AwayFromZero);
-
-            float x_diff = Math.Abs(rx - cube.X);
-            float y_diff = Math.Abs(ry - cube.Y);
-            float z_diff = Math.Abs(rz - cube.Z);
-
-            if (x_diff > y_diff && x_diff > z_diff)
-            {
-                rx = -ry - rz;
-            }
-            else if (y_diff > (z_diff - 0.0001f))
-            {
-                ry = -rx - rz;
-            }
-            else
-            {
-                rz = -rx - ry;
-            }
-
-            return new Vector3i((int)rx, (int)ry, (int)rz);
-        }
-        public static Vector3i CubeNeighbor(Vector3i cube, Direction direction)
-        {
-            return cube + CubeDirections[direction];
-        }
     }
 
     public class TileMap : GameObject //grid of tiles
@@ -121,7 +76,7 @@ namespace MortalDungeon.Game.Tiles
             Position = position; //position of the first tile
             Name = name;
 
-            TileMapCoords = point;
+            TileMapCoords = new TileMapPoint(point.X, point.Y);
             Controller = controller;
         }
 
@@ -177,7 +132,7 @@ namespace MortalDungeon.Game.Tiles
             InitializeHelperTiles(tilePosition);
 
             SetDefaultTileValues();
-            InitializeTexturedQuad();
+            //InitializeTexturedQuad();
         }
 
         internal void InitializeHelperTiles(Vector3 tilePosition)
@@ -319,15 +274,10 @@ namespace MortalDungeon.Game.Tiles
 
             //the most magic of magic numbers (I'll probably need to redo tiling in some fashion if I want to make a general solution for this)
 
-            //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 7110, tileMapPos.Y + 3720, tileMapPos.Z)); //100x100
-
-            //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 3520, tileMapPos.Y + 1740, tileMapPos.Z)); //50x50
-
-            //TexturedQuad.SetPosition(new Vector3(tileMapPos.X + 2800, tileMapPos.Y + 1360, tileMapPos.Z)); //40x40
-
-
-            TexturedQuad.SetPosition(tileMapPos + new Vector3(58, -105, 0));
-            //TexturedQuad.SetPosition(new Vector3(0, 0, 0));
+            if (TexturedQuad != null) 
+            {
+                TexturedQuad.SetPosition(tileMapPos + new Vector3(58, -105, 0));
+            }
         }
 
         internal void UpdateDynamicTexture() 
@@ -505,31 +455,9 @@ namespace MortalDungeon.Game.Tiles
         #endregion
 
         #region Tile conversions
-        public Vector2i CubeToOffset(Vector3i cube)
-        {
-            Vector2i offsetCoord = new Vector2i
-            {
-                X = cube.X,
-                Y = cube.Z + (cube.X + (cube.X & 1)) / 2
-            };
-
-            return offsetCoord;
-        }
-
-        public Vector3i OffsetToCube(Vector2i offset)
-        {
-            Vector3i cubeCoord = new Vector3i
-            {
-                X = offset.X,
-                Z = offset.Y - (offset.X + (offset.X & 1)) / 2
-            };
-            cubeCoord.Y = -cubeCoord.X - cubeCoord.Z;
-
-            return cubeCoord;
-        }
         public Vector3i OffsetToCube(TilePoint offset)
         {
-            int xMapOffset = (offset.ParentTileMap.TileMapCoords.X - TileMapCoords.X) * Width; 
+            int xMapOffset = (offset.ParentTileMap.TileMapCoords.X - TileMapCoords.X) * Width;
             int yMapOffset = (offset.ParentTileMap.TileMapCoords.Y - TileMapCoords.Y) * Height;
 
             Vector3i cubeCoord = new Vector3i
@@ -541,6 +469,8 @@ namespace MortalDungeon.Game.Tiles
 
             return cubeCoord;
         }
+
+
         /// <summary>
         /// Sets any coordinate values below 0 to 0 and any above the width/height to the width/height
         /// </summary>
@@ -734,7 +664,7 @@ namespace MortalDungeon.Game.Tiles
         public struct TilesInRadiusParameters 
         {
             public TilePoint StartingPoint;
-            public int Radius;
+            public float Radius;
             public List<TileClassification> TraversableTypes;
             public List<Unit> Units;
             public Unit CastingUnit;
@@ -742,7 +672,7 @@ namespace MortalDungeon.Game.Tiles
             public bool CheckTileHigher;
             public bool CheckTileLower;
 
-            public TilesInRadiusParameters(TilePoint startingPoint, int radius) 
+            public TilesInRadiusParameters(TilePoint startingPoint, float radius) 
             {
                 StartingPoint = startingPoint;
                 Radius = radius;
@@ -795,7 +725,7 @@ namespace MortalDungeon.Game.Tiles
                     param.Units?.Exists(u =>
                     {
                         count++;
-                        if (u.TileMapPosition == neighbors[j].TilePoint)
+                        if (u.Info.TileMapPosition == neighbors[j].TilePoint)
                         {
                             unitIndex = count;
                             return true;
@@ -811,7 +741,7 @@ namespace MortalDungeon.Game.Tiles
                     }
                     else if (unitIndex != -1 && param.CastingUnit != null && param.AbilityType == AbilityTypes.Move) //special cases for ability targeting should go here
                     {
-                        if (param.Units[unitIndex].BlocksSpace && !param.CastingUnit.PhasedMovement)
+                        if (param.Units[unitIndex].Info.BlocksSpace && !param.CastingUnit.Info.PhasedMovement)
                         {
                             neighbors.RemoveAt(j);
                             j--;
@@ -847,9 +777,9 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i <= N; i++)
             {
-                currentCube = TileMapConstants.CubeLerp(startCube, endCube, n * i);
+                currentCube = CubeMethods.CubeLerp(startCube, endCube, n * i);
 
-                currentOffset = CubeToOffset(TileMapConstants.CubeRound(currentCube));
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
                 if (IsValidTile(currentOffset.X, currentOffset.Y))
                 {
                     tileList.Add(this[currentOffset.X, currentOffset.Y]);
@@ -878,7 +808,7 @@ namespace MortalDungeon.Game.Tiles
             {
                 for (int j = 0; j < radius; j++)
                 {
-                    tileOffsetCoord = CubeToOffset(cubePosition);
+                    tileOffsetCoord = CubeMethods.CubeToOffset(cubePosition);
 
                     outputList.Add(new Vector2i(tileOffsetCoord.X, tileOffsetCoord.Y));
 
@@ -905,7 +835,7 @@ namespace MortalDungeon.Game.Tiles
             {
                 for (int j = 0; j < radius; j++)
                 {
-                    tileOffsetCoord = CubeToOffset(cubePosition);
+                    tileOffsetCoord = CubeMethods.CubeToOffset(cubePosition);
                     if (IsValidTile(tileOffsetCoord.X, tileOffsetCoord.Y))
                     {
                         outputList.Add(this[new TilePoint(tileOffsetCoord.X, tileOffsetCoord.Y, this)]);
@@ -933,7 +863,7 @@ namespace MortalDungeon.Game.Tiles
         public void GetVisionLine(TilePoint startPoint, Vector2i endPoint, List<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             Vector3i startCube = OffsetToCube(startPoint);
-            Vector3i endCube = OffsetToCube(endPoint);
+            Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
 
             int N = GetDistanceBetweenPoints(startCube, endCube);
             float n = 1f / N;
@@ -950,8 +880,8 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i <= N; i++)
             {
-                currentCube = TileMapConstants.CubeLerp(startCube, endCube, n * i);
-                currentOffset = CubeToOffset(TileMapConstants.CubeRound(currentCube));
+                currentCube = CubeMethods.CubeLerp(startCube, endCube, n * i);
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
                 if (IsValidTile(currentOffset.X, currentOffset.Y))
                 {
                     _BaseTileTemp = this[currentOffset.X, currentOffset.Y];
@@ -975,14 +905,13 @@ namespace MortalDungeon.Game.Tiles
                     
                     if (units?.Count > 0)
                     {
-                        if (units.Exists(unit => unit.TileMapPosition == _BaseTileTemp.TilePoint 
-                            && (unit.Height + _BaseTileTemp.GetPathableHeight()) - currentTile.GetPathableHeight() > 1)) //&& unit.BlocksVision
+                        if (units.Exists(unit => unit.Info.TileMapPosition == _BaseTileTemp.TilePoint 
+                            && (unit.Info.Height + _BaseTileTemp.GetPathableHeight()) - currentTile.GetPathableHeight() > 1)) //&& unit.BlocksVision
                         {
                             return;
                         }
                     }
                 }
-
             }
         }
 
@@ -1016,7 +945,7 @@ namespace MortalDungeon.Game.Tiles
         {
             public TilePoint StartingPoint;
             public TilePoint EndingPoint;
-            public int Depth;
+            public float Depth;
             public List<TileClassification> TraversableTypes;
             public List<Unit> Units;
             public Unit CastingUnit;
@@ -1025,7 +954,9 @@ namespace MortalDungeon.Game.Tiles
             public bool CheckTileLower;
             public bool Shuffle;
 
-            public PathToPointParameters(TilePoint startingPoint, TilePoint endPoint, int depth)
+            public bool IgnoreTargetUnit;
+
+            public PathToPointParameters(TilePoint startingPoint, TilePoint endPoint, float depth)
             {
                 StartingPoint = startingPoint;
                 EndingPoint = endPoint;
@@ -1037,16 +968,12 @@ namespace MortalDungeon.Game.Tiles
                 CheckTileHigher = true;
                 CheckTileLower = false;
                 Shuffle = true;
+
+                IgnoreTargetUnit = false;
             }
         }
 
-        /// <summary>
-        /// Get a list of tiles that leads from the start index to the end index.
-        /// </summary>
-        /// <param name="startPoint"></param>
-        /// <param name="endPoint"></param>
-        /// <param name="depth">The maximum length of the path</param>
-        /// <returns></returns>
+
         public List<BaseTile> GetPathToPoint(PathToPointParameters param)
         {
             List<TileWithParent> tileList = new List<TileWithParent>();
@@ -1055,96 +982,82 @@ namespace MortalDungeon.Game.Tiles
             if (param.Depth <= 0)
                 return returnList;
 
-            List<BaseTile> neighbors = new List<BaseTile>();
-
             ClearVisitedTiles();
+
+            BaseTile endingTile = this[param.EndingPoint];
 
             if (!param.TraversableTypes.Exists(c => c == this[param.StartingPoint].Properties.Classification) || !param.TraversableTypes.Exists(c => c == this[param.EndingPoint].Properties.Classification))
             {
                 return returnList; //if the starting or ending tile isn't traversable then immediately return
             }
 
-            if (param.Units != null && param.Units.Exists(u => u.TileMapPosition == param.EndingPoint) && param.CastingUnit != null && !param.CastingUnit.PhasedMovement)
+            if (param.Units != null && param.Units.Exists(u => u.Info.TileMapPosition == param.EndingPoint) 
+                && param.CastingUnit != null && !param.CastingUnit.Info.PhasedMovement && !param.IgnoreTargetUnit)
             {
                 return returnList; //if the ending tile is inside of a unit then immediately return
             }
 
+            if (endingTile.Structure != null && !(endingTile.Structure.Passable || endingTile.Structure.Pathable))
+            {
+                return returnList; //if the ending tile is inside of a unit then immediately return
+            }
 
+            if (GetDistanceBetweenPoints(param.StartingPoint, param.EndingPoint) > param.Depth)
+            {
+                return returnList;
+            }
 
-            neighbors.Add(this[param.StartingPoint]);
+            TileWithParent currentTile = new TileWithParent(this[param.StartingPoint]) 
+            {
+                G = GetDistanceBetweenPoints(this[param.StartingPoint].TilePoint, param.StartingPoint),
+                H = GetDistanceBetweenPoints(this[param.StartingPoint].TilePoint, param.EndingPoint),
+            };
+
+            
+
             param.StartingPoint._visited = true;
 
-            tileList.Add(new TileWithParent(this[param.StartingPoint]));
+            tileList.Add(currentTile);
 
             List<BaseTile> newNeighbors = new List<BaseTile>();
 
-
-            for (int i = 0; i < param.Depth; i++)
+            List<BaseTile> createReturnList() 
             {
+                while (currentTile.Parent != null)
+                {
+                    returnList.Add(currentTile.Tile);
+                    currentTile = currentTile.Parent;
+                }
+
+                returnList.Add(currentTile.Tile);
+                returnList.Reverse();
+
+                return returnList;
+            }
+
+            while(true)
+            {
+                currentTile.Visited = true;
+
+                if (currentTile.Tile.TilePoint == param.EndingPoint) 
+                {
+                    return createReturnList();
+                }
+
                 newNeighbors.Clear();
-                neighbors.ForEach(p =>
-                {
-                    GetNeighboringTiles(p, newNeighbors, param.Shuffle, param.CheckTileHigher, param.CheckTileLower);
+                GetNeighboringTiles(currentTile.Tile, newNeighbors, true, true, true);
 
-                    newNeighbors.ForEach(neighbor =>
-                    {
-                        tileList.Add(new TileWithParent(neighbor, p));
-                    });
-                });
-
-                neighbors.Clear();
                 for (int j = 0; j < newNeighbors.Count; j++)
-                {
-                    neighbors.Add(newNeighbors[j]);
-                }
-
-                if (neighbors.Count == 0) //if there are no more tiles to traverse return the empty list
-                {
-                    return returnList;
-                }
-
-                //same basic logic used in FindValidTilesInRadius
-                for (int j = 0; j < neighbors.Count; j++)
                 {
                     int unitIndex = -1;
                     int count = -1;
 
-                    if (neighbors[j].TilePoint == param.EndingPoint)
-                    {
-                        //if we found the destination tile then fill the returnList and return
-                        TileWithParent finalTile = tileList.Find(t => t.Tile.TilePoint == param.EndingPoint);
-
-                        returnList.Add(finalTile.Tile);
-
-                        BaseTile parent = finalTile.Parent;
-
-                        while (parent != null)
-                        {
-                            TileWithParent currentTile = tileList.Find(t => t.Tile.TilePoint == parent.TilePoint);
-                            returnList.Add(currentTile.Tile);
-
-                            parent = currentTile.Parent;
-                        }
-
-                        returnList.Reverse();
-                        return returnList;
-                    }
-
-                    int distanceToDestination = GetDistanceBetweenPoints(neighbors[j].TilePoint, param.EndingPoint);
-
-                    if (distanceToDestination + i > param.Depth)
-                    {
-                        //if the best case path to the end point is longer than our remaining movement cut off this branch and continue
-                        neighbors.RemoveAt(j);
-                        j--;
-                        continue;
-                    }
 
                     //find if there's a unit in this space
                     param.Units?.Exists(u =>
                     {
                         count++;
-                        if (u.TileMapPosition == neighbors[j].TilePoint)
+                        if (u.Info.TileMapPosition == newNeighbors[j].TilePoint)
                         {
                             unitIndex = count;
                             return true;
@@ -1153,27 +1066,82 @@ namespace MortalDungeon.Game.Tiles
                             return false;
                     });
 
-                    if (!param.TraversableTypes.Exists(c => c == neighbors[j].Properties.Classification))
+                    if (!param.TraversableTypes.Exists(c => c == newNeighbors[j].Properties.Classification))
                     {
                         //if the space contains a tile that is not traversable cut off this branch and continue
-                        neighbors.RemoveAt(j);
+                        newNeighbors.RemoveAt(j);
                         j--;
                         continue;
                     }
                     else if (unitIndex != -1 && param.CastingUnit != null && param.AbilityType == AbilityTypes.Move) //special cases for ability targeting should go here
                     {
-                        if (param.Units[unitIndex].BlocksSpace && !param.CastingUnit.PhasedMovement)
+                        if (param.Units[unitIndex].Info.BlocksSpace && !param.CastingUnit.Info.PhasedMovement 
+                            && !(param.IgnoreTargetUnit && param.Units[unitIndex].Info.TileMapPosition.TilePoint == param.EndingPoint)
+                            && !param.Units[unitIndex].Info.Dead)
                         {
-                            //if this is a movement ability and the unit using the ability does not have phased movement cut off this branch and continue
-                            neighbors.RemoveAt(j);
+                            //if this is a movement ability and the unit using the ability does not have phased movement, the target unit is alive, and the unit is not 
+                            //a unit we are attempting to path to we remove this path as a possibility
+                            newNeighbors.RemoveAt(j);
                             j--;
                             continue;
                         }
                     }
+
+                    int tileIndex = tileList.FindIndex(0, t => t.Tile.TilePoint == newNeighbors[j].TilePoint);
+                    if (tileIndex > -1)
+                    {
+                        tileList[tileIndex].Parent = currentTile;
+                        tileList[tileIndex].G = currentTile.G + tileList[tileIndex].Tile.Properties.MovementCost; //for different cost modifiers (such as height) an enum and switch statement can be employed
+                        tileList[tileIndex].H = GetDistanceBetweenPoints(newNeighbors[j].TilePoint, param.EndingPoint);
+                    }
+                    else 
+                    {
+                        TileWithParent tile = new TileWithParent(newNeighbors[j], currentTile)
+                        {
+                            G = currentTile.G + newNeighbors[j].Properties.MovementCost,
+                            H = GetDistanceBetweenPoints(newNeighbors[j].TilePoint, param.EndingPoint),
+                        };
+
+                        tileList.Add(tile);
+                    }
+
+                    if (tileList[^1].Tile.TilePoint == param.EndingPoint) 
+                    {
+                        currentTile = tileList[^1];
+                        return createReturnList();
+                    }
+                }
+
+                bool tileChanged = false;
+                for (int j = 0; j < tileList.Count; j++) 
+                {
+                    if (!tileList[j].Visited) 
+                    {
+                        if (!tileChanged) 
+                        {
+                            currentTile = tileList[j];
+                            tileChanged = true;
+                        }
+
+                        if ((tileList[j].F < currentTile.F) || (tileList[j].F == currentTile.F && tileList[j].H < currentTile.H))
+                        {
+                            currentTile = tileList[j];
+                        }
+                    }
+                }
+
+                if (currentTile.Visited) 
+                {
+                    return returnList;
+                }
+
+                if(currentTile.F > param.Depth)
+                {
+                    return returnList;
                 }
             }
 
-            return returnList;
+            //return returnList;
         }
 
         /// <summary>
@@ -1296,10 +1264,14 @@ namespace MortalDungeon.Game.Tiles
 
         internal class TileWithParent
         {
-            public BaseTile Parent = null;
+            public TileWithParent Parent = null;
             public BaseTile Tile;
+            public float G = 0; //Path cost
+            public float H = 0; //Distance to end
+            public float F => G + H;
+            public bool Visited = false;
 
-            public TileWithParent(BaseTile tile, BaseTile parent = null)
+            public TileWithParent(BaseTile tile, TileWithParent parent = null)
             {
                 Parent = parent;
                 Tile = tile;
@@ -1337,7 +1309,7 @@ namespace MortalDungeon.Game.Tiles
             Y = coords.Y;
         }
 
-        public static bool operator ==(TileMapPoint a, TileMapPoint b) => a.Equals(b);
+        public static bool operator ==(TileMapPoint a, TileMapPoint b) => Equals(a, b);
         public static bool operator !=(TileMapPoint a, TileMapPoint b) => !(a == b);
 
         public override string ToString()
@@ -1360,5 +1332,6 @@ namespace MortalDungeon.Game.Tiles
     public class DynamicTextureInfo 
     {
         public bool TextureChanged = false;
+        public bool Initialize = true;
     }
 }

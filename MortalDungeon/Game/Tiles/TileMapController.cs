@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Tiles.TileMaps;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -18,6 +19,8 @@ namespace MortalDungeon.Game.Tiles
         public int BaseElevation = 0; //base elevation for determining heightmap colors
 
         public CombatScene Scene;
+
+        public List<FeatureEquation> LoadedFeatures = new List<FeatureEquation>();
 
         public TileMapController(CombatScene scene = null) 
         {
@@ -38,7 +41,7 @@ namespace MortalDungeon.Game.Tiles
 
         public void AddTileMap(TileMapPoint point, TileMap map) 
         {
-            map.TileMapCoords = point;
+            map.TileMapCoords = new TileMapPoint(point.X, point.Y);
             TileMaps.Add(map);
 
             PositionTileMaps();
@@ -83,6 +86,72 @@ namespace MortalDungeon.Game.Tiles
                     feature.ApplyToMap(TileMaps[i]);
                 }
             }
+        }
+
+        //TODO, optimize so that it only loops through every tile once
+        public void ApplyLoadedFeaturesToMaps()
+        {
+            LoadedFeatures.ForEach(feature =>
+            {
+                for (int i = 0; i < TileMaps.Count; i++)
+                {
+                    if (feature.AffectsMap(TileMaps[i]))
+                    {
+                        feature.ApplyToMap(TileMaps[i]);
+                    }
+                }
+            });
+        }
+
+        public void LoadSurroundingTileMaps(TileMapPoint point, int width = 3) 
+        {
+            TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
+
+            List<TileMapPoint> loadedPoints = new List<TileMapPoint>();
+            List<TileMapPoint> mapsToAdd = new List<TileMapPoint>();
+
+            for (int i = 0; i < width; i++) 
+            {
+                for (int j = 0; j < width; j++) 
+                {
+                    TileMap map = TileMaps.Find(m => m.TileMapCoords == currPoint);
+
+                    if (map == null)
+                    {
+                        mapsToAdd.Add(new TileMapPoint(currPoint.X, currPoint.Y));
+                        
+                    }
+
+                    loadedPoints.Add(new TileMapPoint(currPoint.X, currPoint.Y));
+
+                    currPoint.Y++;
+                }
+
+                currPoint.X++;
+                currPoint.Y = point.Y - 1;
+            }
+
+            Scene.PostTickAction = () =>
+            {
+                for (int i = TileMaps.Count - 1; i >= 0; i--)
+                {
+                    if (loadedPoints.Find(p => p == TileMaps[i].TileMapCoords) == null)
+                    {
+                        RemoveTileMap(TileMaps[i]);
+                    }
+                }
+
+                mapsToAdd.ForEach(p =>
+                {
+                    TestTileMap newMap = new TestTileMap(default, p, this) { Width = 50, Height = 50 };
+                    newMap.PopulateTileMap();
+                    AddTileMap(p, newMap);
+                });
+
+                ApplyLoadedFeaturesToMaps();
+
+                Scene.PostTickAction = null;
+            };
         }
 
         internal bool IsValidTile(int xIndex, int yIndex, TileMap map)

@@ -13,25 +13,33 @@ namespace MortalDungeon.Game.Structures
 {
     class Tree : Structure
     {
-        public Tree(TileMap map, BaseTile tile) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetTreeType(), tile.Position + new Vector3(0, -200, 0.22f))
+        public Tree(TileMap map, BaseTile tile, int treeType = -1) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetTreeType(treeType), tile.Position + new Vector3(0, -200, 0.22f))
         {
             BaseObject.BaseFrame.RotateX(25);
             BaseObject.BaseFrame.SetScaleAll(1 + (float)TileMap._randomNumberGen.NextDouble() / 2);
 
             VisibleThroughFog = true;
-            TileMapPosition = tile;
+            Info.TileMapPosition = tile;
+            SetTileMapPosition(tile);
             Name = "Tree";
             Pathable = false;
 
             SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
 
             SetTeam(UnitTeam.Neutral);
-            Height = 2;
+            Info.Height = 2;
         }
 
-        private static int GetTreeType() 
+        private static int GetTreeType(int treeType) 
         {
-            return TileMap._randomNumberGen.Next() % 2 + 2;
+            if (treeType == -1)
+            {
+                return TileMap._randomNumberGen.Next() % 2 + 2;
+            }
+            else 
+            {
+                return treeType + 2;
+            }
         }
 
         public override Tooltip CreateContextMenu()
@@ -42,7 +50,7 @@ namespace MortalDungeon.Game.Structures
             {
                 Scene.CloseContextMenu();
 
-                TileMapPosition.RemoveStructure(this);
+                Info.TileMapPosition.RemoveStructure(this);
             });
 
             return menu;

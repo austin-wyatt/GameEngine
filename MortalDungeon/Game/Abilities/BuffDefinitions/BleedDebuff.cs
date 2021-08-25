@@ -16,6 +16,7 @@ namespace MortalDungeon.Game.Abilities
         {
             Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BleedingDagger, Spritesheets.IconSheet);
             Name = "Bleed";
+            BuffType = BuffType.Debuff;
 
             Damage = damage;
         }

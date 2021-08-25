@@ -22,7 +22,7 @@ namespace MortalDungeon.Game.Structures
 
             Pathable = false;
             VisibleThroughFog = true;
-            TileMapPosition = tile;
+            SetTileMapPosition(tile);
             Name = "Rock";
 
             SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
@@ -30,11 +30,11 @@ namespace MortalDungeon.Game.Structures
             SetTeam(UnitTeam.Neutral);
             if (Type == StructureEnum.Rock_2)
             {
-                Height = 1;
+                Info.Height = 1;
             }
             else
             {
-                Height = 2;
+                Info.Height = 2;
             }
         }
 
@@ -51,7 +51,7 @@ namespace MortalDungeon.Game.Structures
             {
                 Scene.CloseContextMenu();
 
-                TileMapPosition.RemoveStructure(this);
+                Info.TileMapPosition.RemoveStructure(this);
             });
 
             return menu;

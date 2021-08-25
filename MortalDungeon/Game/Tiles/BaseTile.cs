@@ -282,7 +282,7 @@ namespace MortalDungeon.Game.Tiles
         {
             string tooltip;
 
-            if (tile.InFog && !tile.Explored[scene.CurrentUnit.Team])
+            if (tile.InFog && !tile.Explored[scene.CurrentUnit.AI.Team])
             {
                 tooltip = "Unexplored tile";
             }
@@ -298,7 +298,7 @@ namespace MortalDungeon.Game.Tiles
                 if (tile.Structure != null) 
                 {
                     tooltip += $"Structure\n* Name: {tile.Structure.Type.Name()}\n";
-                    tooltip += $"* Height: {tile.Structure.Height}\n";
+                    tooltip += $"* Height: {tile.Structure.Info.Height}\n";
                 }
             }
 
@@ -308,12 +308,12 @@ namespace MortalDungeon.Game.Tiles
 
         public int GetVisionHeight() 
         {
-            return Structure != null && !Structure.Passable ? Structure.Height + Properties.Height : Properties.Height;
+            return Structure != null && !Structure.Passable ? Structure.Info.Height + Properties.Height : Properties.Height;
         }
 
         public int GetPathableHeight()
         {
-            return Structure != null && Structure.Pathable && !Structure.Passable ? Structure.Height + Properties.Height : Properties.Height;
+            return Structure != null && Structure.Pathable && !Structure.Passable ? Structure.Info.Height + Properties.Height : Properties.Height;
         }
 
         internal bool StructurePathable()
@@ -449,6 +449,7 @@ namespace MortalDungeon.Game.Tiles
         public float Slow = 0;
         public bool BlocksVision = false;
         public int Height = 0; //the tile's height for vision and movement purposes
+        public float MovementCost = 1; //how expensive this tile is to move across compared to normal
 
         public TileProperties() 
         {

@@ -179,7 +179,7 @@ namespace MortalDungeon.Game.Objects
         private static RenderableObject guy_Die_1 = new RenderableObject(new SpritesheetObject(33, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         private static RenderableObject guy_Die_2 = new RenderableObject(new SpritesheetObject(34, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         private static RenderableObject guy_Die_3 = new RenderableObject(new SpritesheetObject(35, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Die_4 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        //private static RenderableObject guy_Die_4 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation Idle = new Animation()
         {
@@ -191,7 +191,7 @@ namespace MortalDungeon.Game.Objects
 
         private static Animation Die = new Animation()
         {
-            Frames = new List<RenderableObject>() { guy_Idle_1, guy_Idle_2, guy_Idle_3, guy_Die_1, guy_Die_2, guy_Die_3, guy_Die_4 },
+            Frames = new List<RenderableObject>() { guy_Idle_1, guy_Idle_2, guy_Idle_3, guy_Die_1, guy_Die_2, guy_Die_3 },
             Frequency = 5,
             Repeats = 0,
             Type = AnimationType.Die
@@ -212,7 +212,7 @@ namespace MortalDungeon.Game.Objects
 
         private static RenderableObject die1 = new RenderableObject(new SpritesheetObject(43, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         private static RenderableObject die2 = new RenderableObject(new SpritesheetObject(44, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject die3 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        //private static RenderableObject die3 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation Idle = new Animation()
         {
@@ -223,7 +223,7 @@ namespace MortalDungeon.Game.Objects
 
         private static Animation Die = new Animation()
         {
-            Frames = new List<RenderableObject>() { idle1, idle2, idle3, die1, die2, die3 },
+            Frames = new List<RenderableObject>() { idle1, idle2, idle3, die1, die2 },
             Frequency = 8,
             Repeats = 0,
             Type = AnimationType.Die

@@ -51,6 +51,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool Loaded = false;
 
+        public Action PostTickAction;
+
         public int Priority = 0; //determines which scene will have their events evaluated first
 
         public int SceneID => _sceneID;

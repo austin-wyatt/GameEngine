@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Units
         public Guy(Vector3 position, CombatScene scene, BaseTile tileMapPosition, string name = "Guy") : base(scene)
         {
             Name = name;
-            TileMapPosition = tileMapPosition;
+            SetTileMapPosition(tileMapPosition);
             Clickable = true;
             Selectable = true;
 
@@ -28,20 +28,32 @@ namespace MortalDungeon.Game.Units
 
             SetPosition(position);
 
-            VisionRadius = 6;
-
             Buff shieldBlock = new Buff(this);
             shieldBlock.ShieldBlock.Additive = 10;
             shieldBlock.IndefiniteDuration = true;
             shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
-            shieldBlock.DamageResistances[DamageType.Slashing] = -1;
+            shieldBlock.DamageResistances[DamageType.Slashing] = 0;
 
 
-            Strike melee = new Strike(this, 1, 45);
-            Abilities.Add(melee.AbilityID, melee);
+            Strike melee = new Strike(this, 1, 45) 
+            {
+                EnergyCost = 7
+            };
+            Info.Abilities.Add(melee.AbilityID, melee);
 
-            MaxEnergy = 15;
+            Shoot shootAbility = new Shoot(this, 15, 4, 20);
+            Info.Abilities.Add(shootAbility.AbilityID, shootAbility);
+
+            Info.MaxEnergy = 15;
+
+            AI.MeleeDamageDealer disp = new AI.MeleeDamageDealer(this)
+            {
+                Weight = 1,
+                Bloodthirsty = 1
+            };
+
+            AI.Dispositions.Add(disp);
         }
 
         public override void OnKill()

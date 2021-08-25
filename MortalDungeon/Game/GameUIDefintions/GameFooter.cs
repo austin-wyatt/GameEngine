@@ -163,7 +163,7 @@ namespace MortalDungeon.Game.UI
 
             void healthBarHover() 
             {
-                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Health + "/" + Unit.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Health + "/" + UnitInfo.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
                 UIHelpers.CreateToolTip(param);
             }
 
@@ -175,11 +175,11 @@ namespace MortalDungeon.Game.UI
 
             void shieldBarHover()
             {
-                if (_currentUnit.CurrentShields >= 0)
+                if (_currentUnit.Info.CurrentShields >= 0)
                 {
                     UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, "", _unitShieldBar, Scene._tooltipBlock)
                     {
-                        Text = _currentUnit.CurrentShields * _currentUnit.ShieldBlock + " Damage will be blocked from the next attack"
+                        Text = _currentUnit.Info.CurrentShields * _currentUnit.Info.ShieldBlock + " Damage will be blocked from the next attack"
                     };
                     UIHelpers.CreateToolTip(param);
                 }
@@ -187,7 +187,7 @@ namespace MortalDungeon.Game.UI
                 {
                     UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, "", _unitShieldBar, Scene._tooltipBlock)
                     {
-                        Text = "Next attack recieved will deal " + _currentUnit.CurrentShields * -1 * 25 + "% more damage"
+                        Text = "Next attack recieved will deal " + _currentUnit.Info.CurrentShields * -1 * 25 + "% more damage"
                     };
                     UIHelpers.CreateToolTip(param);
                 }
@@ -223,10 +223,10 @@ namespace MortalDungeon.Game.UI
             nameBoxPos.Y = nameBoxPos.Y - _containingBlock.GetDimensions().Y / 4;
 
             _unitHealthBar.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
-            _unitHealthBar.SetHealthPercent(unit.Health / Unit.MaxHealth, unit.Team);
+            _unitHealthBar.SetHealthPercent(unit.Info.Health / UnitInfo.MaxHealth, unit.AI.Team);
 
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
-            _unitShieldBar.SetCurrentShields(unit.CurrentShields);
+            _unitShieldBar.SetCurrentShields(unit.Info.CurrentShields);
             #endregion
 
             #region ability icons
@@ -234,9 +234,9 @@ namespace MortalDungeon.Game.UI
             _currentIcons.Clear();
             UIScale iconSize = new UIScale(0.25f, 0.25f);
             int count = 0;
-            foreach (Ability ability in Scene.CurrentUnit.Abilities.Values) 
+            foreach (Ability ability in Scene.CurrentUnit.Info.Abilities.Values) 
             {
-                Icon abilityIcon = ability.GenerateIcon(iconSize, true, Scene.CurrentUnit.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
+                Icon abilityIcon = ability.GenerateIcon(iconSize, true, Scene.CurrentUnit.AI.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
 
                 if (_currentIcons.Count == 0)
                 {
@@ -336,7 +336,7 @@ namespace MortalDungeon.Game.UI
             count = 0;
             int delimiter = -1;
             _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea.Size.X, _scrollableArea.Size.Y));
-            foreach (Buff buff in unit.Buffs) 
+            foreach (Buff buff in unit.Info.Buffs) 
             {
                 if (buff.Hidden)
                     continue;

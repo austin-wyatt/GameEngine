@@ -117,15 +117,21 @@ namespace MortalDungeon.Engine_Classes
                 obj._currentAnimation.Tick();
             });
 
+            if (_properyAnimationsToDestroy.Count > 0)
+            {
+                DestroyQueuedPropertyAnimations();
+            }
+
+            if (_properyAnimationsToAdd.Count > 0) 
+            {
+                AddQueuedPropertyAnimations();
+            }
+
             PropertyAnimations.ForEach(anim =>
             {
                 anim.Tick();
             });
 
-            if (_properyAnimationsToDestroy.Count > 0) 
-            {
-                DestroyQueuedPropertyAnimations();
-            }
 
             ParticleGenerators.ForEach(gen =>
             {
@@ -230,10 +236,24 @@ namespace MortalDungeon.Engine_Classes
             _properyAnimationsToDestroy.Clear();
         }
 
+        private readonly List<PropertyAnimation> _properyAnimationsToAdd = new List<PropertyAnimation>();
         public void AddPropertyAnimation(PropertyAnimation animation) 
         {
-            PropertyAnimations.Add(animation);
+            //PropertyAnimations.Add(animation);
+            _properyAnimationsToAdd.Add(animation);
         }
+
+        private void AddQueuedPropertyAnimations() 
+        {
+            _properyAnimationsToAdd.ForEach(p =>
+            {
+                PropertyAnimations.Add(p);
+            });
+
+            _properyAnimationsToAdd.Clear();
+        }
+
+
 
         public void AddSingleUsePropertyAnimation(PropertyAnimation animation) 
         {

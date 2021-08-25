@@ -27,7 +27,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
         {
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.TileMapPosition, Range)
+            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
                 TraversableTypes = TileMapConstants.AllTileClassifications,
                 Units = units,
@@ -35,10 +35,19 @@ namespace MortalDungeon.Game.Abilities
             };
 
             List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-            TileMap = tileMap;
 
             TrimTiles(validTiles, units);
+
+            TargetAffectedUnits();
+
             return validTiles;
+        }
+
+        public override bool UnitInRange(Unit unit)
+        {
+            GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit });
+
+            return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
         }
 
         public override bool OnUnitClicked(Unit unit)
@@ -46,7 +55,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
             
-            if (unit.Team != CastingUnit.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.TileMapPosition) != -1) 
+            if (unit.AI.Team != CastingUnit.AI.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1) 
             {
                 SelectedUnit = unit;
                 EnactEffect();
@@ -70,13 +79,23 @@ namespace MortalDungeon.Game.Abilities
             base.OnCast();
         }
 
+        public override void OnAICast()
+        {
+            float energyCost = GetEnergyCost();
+
+            CastingUnit.Info.Energy -= energyCost;
+
+            base.OnAICast();
+        }
+
         public override void EnactEffect()
         {
             base.EnactEffect();
 
             SelectedUnit.ApplyDamage(GetDamage(), DamageType);
 
-            OnCast();
+            Casted();
+            EffectEnded();
         }
     }
 }

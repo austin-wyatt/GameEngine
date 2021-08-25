@@ -15,6 +15,7 @@ namespace MortalDungeon.Game.Abilities
         {
             Name = "Slow";
             SpeedModifier.Multiplier = slowMultiplier;
+            BuffType = BuffType.Debuff;
 
             Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.SpiderWeb, Spritesheets.IconSheet);
         }

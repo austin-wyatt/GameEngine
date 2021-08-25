@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Tiles;
+﻿using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -12,68 +13,83 @@ namespace MortalDungeon.Game.Map
         internal const int MAP_WIDTH = 50;
         internal const int MAP_HEIGHT = 50;
 
-        public virtual void GenerateAtPoint(BaseTile tile) 
+        public Dictionary<FeaturePoint, Feature> AffectedPoints = new Dictionary<FeaturePoint, Feature>();
+        public HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
+
+        public virtual void ApplyToTile(BaseTile tile)
         {
 
         }
 
-        public virtual bool AffectsMap(TileMap map) 
+        public virtual bool AffectsMap(TileMap map)
         {
             return true;
         }
 
-        public virtual void ApplyToMap(TileMap map) 
+        public virtual bool AffectsPoint(TilePoint point)
         {
-            
+            return AffectedPoints.TryGetValue(new FeaturePoint(PointToMapCoords(point)), out Feature feature);
+        }
+        public virtual bool AffectsPoint(FeaturePoint point)
+        {
+            return AffectedPoints.TryGetValue(point, out Feature feature);
         }
 
-        public static Vector2i PointToMapCoords(TilePoint point) 
+        public virtual void ApplyToMap(TileMap map)
         {
-            Vector2i coords = new Vector2i();
 
-            coords.X = point.X + point.ParentTileMap.TileMapCoords.X * point.ParentTileMap.Width;
-            coords.Y = point.Y + point.ParentTileMap.TileMapCoords.Y * point.ParentTileMap.Height;
+        }
+
+        /// <summary>
+        /// The AffectedPoints hash set is filled here
+        /// </summary>
+        public virtual void GenerateFeature() { }
+
+        public static Vector2i PointToMapCoords(TilePoint point)
+        {
+            Vector2i coords = new Vector2i
+            {
+                X = point.X + point.ParentTileMap.TileMapCoords.X * point.ParentTileMap.Width,
+                Y = point.Y + point.ParentTileMap.TileMapCoords.Y * point.ParentTileMap.Height
+            };
 
             return coords;
         }
 
 
-
-
         public struct FeaturePathToPointParameters
         {
-            public TilePoint StartingPoint;
-            public TilePoint EndingPoint;
-            public TileMap Map;
+            public FeaturePoint StartingPoint;
+            public FeaturePoint EndingPoint;
             public Random NumberGen;
 
 
-            public FeaturePathToPointParameters(TilePoint startingPoint, TilePoint endPoint)
+            public FeaturePathToPointParameters(FeaturePoint startingPoint, FeaturePoint endPoint)
             {
                 StartingPoint = startingPoint;
                 EndingPoint = endPoint;
-                Map = startingPoint.ParentTileMap;
 
-                NumberGen = new Random(HashCoordinates(Map.TileMapCoords.X, Map.TileMapCoords.Y));
+                NumberGen = new Random(HashCoordinates(startingPoint.X, startingPoint.Y));
             }
         }
 
-        public static List<BaseTile> GetPathToPoint(FeaturePathToPointParameters param)
+        public List<FeaturePoint> GetPathToPoint(FeaturePathToPointParameters param)
         {
-            List<TileMap.TileWithParent> tileList = new List<TileMap.TileWithParent>();
-            List<BaseTile> returnList = new List<BaseTile>();
+            List<FeaturePointWithParent> pointList = new List<FeaturePointWithParent>();
+            List<FeaturePoint> returnList = new List<FeaturePoint>();
 
-            List<BaseTile> neighbors = new List<BaseTile>();
+            List<FeaturePoint> neighbors = new List<FeaturePoint>
+            {
+                param.StartingPoint
+            };
 
-            param.Map.Controller.ClearAllVisitedTiles();
+            VisitedTiles.Clear();
 
+            VisitedTiles.Add(param.StartingPoint);
 
-            neighbors.Add(param.StartingPoint.GetTile());
-            param.StartingPoint._visited = true;
+            pointList.Add(new FeaturePointWithParent(param.StartingPoint, param.StartingPoint, true));
 
-            tileList.Add(new TileMap.TileWithParent(param.StartingPoint.GetTile()));
-
-            List<BaseTile> newNeighbors = new List<BaseTile>();
+            List<FeaturePoint> newNeighbors = new List<FeaturePoint>();
 
 
             for (int i = 0; i < MAP_HEIGHT * MAP_WIDTH; i++)
@@ -85,7 +101,7 @@ namespace MortalDungeon.Game.Map
 
                     newNeighbors.ForEach(neighbor =>
                     {
-                        tileList.Add(new TileMap.TileWithParent(neighbor, p));
+                        pointList.Add(new FeaturePointWithParent(neighbor, p));
                     });
                 });
 
@@ -103,21 +119,24 @@ namespace MortalDungeon.Game.Map
                 //same basic logic used in FindValidTilesInRadius
                 for (int j = 0; j < neighbors.Count; j++)
                 {
-                    if (neighbors[j].TilePoint == param.EndingPoint)
+                    if (neighbors[j] == param.EndingPoint)
                     {
                         //if we found the destination tile then fill the returnList and return
-                        TileMap.TileWithParent finalTile = tileList.Find(t => t.Tile.TilePoint == param.EndingPoint);
+                        FeaturePointWithParent finalPoint = pointList.Find(t => t.Point == param.EndingPoint);
 
-                        returnList.Add(finalTile.Tile);
+                        returnList.Add(finalPoint.Point);
 
-                        BaseTile parent = finalTile.Parent;
+                        FeaturePoint parent = finalPoint.Parent;
 
-                        while (parent != null)
+                        while (true)
                         {
-                            TileMap.TileWithParent currentTile = tileList.Find(t => t.Tile.TilePoint == parent.TilePoint);
-                            returnList.Add(currentTile.Tile);
+                            FeaturePointWithParent currentPoint = pointList.Find(t => t.Point == parent);
+                            returnList.Add(currentPoint.Point);
 
-                            parent = currentTile.Parent;
+                            parent = currentPoint.Parent;
+
+                            if (currentPoint.IsRoot)
+                                break;
                         }
 
                         returnList.Reverse();
@@ -129,15 +148,36 @@ namespace MortalDungeon.Game.Map
             return returnList;
         }
 
-        public static void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, Random numberGen = null)
+        public void GetRingOfTiles(FeaturePoint startPoint, List<FeaturePoint> outputList, int radius = 1)
         {
-            TilePoint neighborPos = new TilePoint(tile.TilePoint.X, tile.TilePoint.Y, tile.TilePoint.ParentTileMap);
-            int yOffset = tile.TilePoint.X % 2 == 0 ? 1 : 0;
+            Vector3i cubePosition = CubeMethods.OffsetToCube(startPoint);
+
+            cubePosition += TileMapConstants.CubeDirections[Direction.North] * radius;
+
+            FeaturePoint tileOffsetCoord;
 
             for (int i = 0; i < 6; i++)
             {
-                neighborPos.X = tile.TilePoint.X;
-                neighborPos.Y = tile.TilePoint.Y;
+                for (int j = 0; j < radius; j++)
+                {
+                    tileOffsetCoord = new FeaturePoint(CubeMethods.CubeToOffset(cubePosition));
+
+                    outputList.Add(tileOffsetCoord);
+
+                    cubePosition += TileMapConstants.CubeDirections[(Direction)i];
+                }
+            }
+        }
+
+        public void GetNeighboringTiles(FeaturePoint tile, List<FeaturePoint> neighborList, bool shuffle = true, Random numberGen = null)
+        {
+            FeaturePoint neighborPos = new FeaturePoint(tile.X, tile.Y);
+            int yOffset = tile.X % 2 == 0 ? 1 : 0;
+
+            for (int i = 0; i < 6; i++)
+            {
+                neighborPos.X = tile.X;
+                neighborPos.Y = tile.Y;
                 switch (i)
                 {
                     case 0: //tile below
@@ -164,14 +204,10 @@ namespace MortalDungeon.Game.Map
                         break;
                 }
 
-                if (tile.TilePoint.ParentTileMap.IsValidTile(neighborPos))
+                if (!VisitedTiles.Contains(neighborPos))
                 {
-                    BaseTile neighborTile = tile.TilePoint.ParentTileMap[neighborPos];
-                    if (!neighborTile.TilePoint._visited)
-                    {
-                        neighborList.Add(neighborTile);
-                        neighborTile.TilePoint._visited = true;
-                    }
+                    neighborList.Add(neighborPos);
+                    VisitedTiles.Add(neighborPos);
                 }
             }
 
@@ -181,7 +217,68 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        public static Direction DirectionBetweenTiles(TilePoint startPoint, TilePoint endPoint) 
+        public FeaturePoint GetNeighboringTile(FeaturePoint point, Direction direction)
+        {
+            FeaturePoint neighborPos = new FeaturePoint(point.X, point.Y);
+            int yOffset = point.X % 2 == 0 ? 1 : 0;
+
+            neighborPos.X = point.X;
+            neighborPos.Y = point.Y;
+            switch (direction)
+            {
+                case Direction.South: //tile below
+                    neighborPos.Y += 1;
+                    break;
+                case Direction.North: //tile above
+                    neighborPos.Y -= 1;
+                    break;
+                case Direction.SouthWest: //tile bottom left
+                    neighborPos.X -= 1;
+                    neighborPos.Y += yOffset;
+                    break;
+                case Direction.NorthWest: //tile top left
+                    neighborPos.Y -= 1 + -yOffset;
+                    neighborPos.X -= 1;
+                    break;
+                case Direction.NorthEast: //tile top right
+                    neighborPos.Y -= 1 + -yOffset;
+                    neighborPos.X += 1;
+                    break;
+                case Direction.SouthEast: //tile bottom right
+                    neighborPos.X += 1;
+                    neighborPos.Y += yOffset;
+                    break;
+            }
+
+            return neighborPos;
+        }
+
+        public void GetLine(FeaturePoint startPoint, FeaturePoint endPoint, List<FeaturePoint> outputList)
+        {
+            Vector3i startCube = CubeMethods.OffsetToCube(startPoint);
+            Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
+
+            int N = CubeMethods.GetDistanceBetweenPoints(startCube, endCube);
+            float n = 1f / N;
+
+            Vector3 currentCube;
+            Vector2i currentOffset;
+
+            FeaturePoint currentPoint = startPoint;
+            FeaturePoint temp;
+
+            for (int i = 0; i <= N; i++)
+            {
+                currentCube = CubeMethods.CubeLerp(startCube, endCube, n * i);
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
+
+                temp = new FeaturePoint(currentOffset);
+
+                outputList.Add(temp);
+            }
+        }
+
+        public static Direction DirectionBetweenTiles(TilePoint startPoint, TilePoint endPoint)
         {
             Direction direction = Direction.None;
 
@@ -198,7 +295,7 @@ namespace MortalDungeon.Game.Map
             {
                 direction = Direction.South;
             }
-            else if (start.X - end.X == -1 && start.Y + yOffset - end.Y == 0) 
+            else if (start.X - end.X == -1 && start.Y + yOffset - end.Y == 0)
             {
                 direction = Direction.NorthEast;
             }
@@ -217,8 +314,40 @@ namespace MortalDungeon.Game.Map
 
             return direction;
         }
+        public static Direction DirectionBetweenTiles(FeaturePoint startPoint, FeaturePoint endPoint)
+        {
+            Direction direction = Direction.None;
 
-        public static int AngleBetweenDirections(Direction a, Direction b) 
+            int yOffset = startPoint.X % 2 == 0 ? 0 : -1;
+
+            if (startPoint.Y - endPoint.Y == 1 && startPoint.X == endPoint.X)
+            {
+                direction = Direction.North;
+            }
+            else if (startPoint.Y - endPoint.Y == -1 && startPoint.X == endPoint.X)
+            {
+                direction = Direction.South;
+            }
+            else if (startPoint.X - endPoint.X == -1 && startPoint.Y + yOffset - endPoint.Y == 0)
+            {
+                direction = Direction.NorthEast;
+            }
+            else if (startPoint.X - endPoint.X == -1 && startPoint.Y + yOffset - endPoint.Y == -1)
+            {
+                direction = Direction.SouthEast;
+            }
+            else if (startPoint.X - endPoint.X == 1 && startPoint.Y + yOffset - endPoint.Y == 0)
+            {
+                direction = Direction.NorthWest;
+            }
+            else if (startPoint.X - endPoint.X == 1 && startPoint.Y + yOffset - endPoint.Y == -1)
+            {
+                direction = Direction.SouthWest;
+            }
+
+            return direction;
+        }
+        public static int AngleBetweenDirections(Direction a, Direction b)
         {
             int temp = (int)a - (int)b;
 
@@ -228,7 +357,7 @@ namespace MortalDungeon.Game.Map
                 temp += 6;
                 angle = 60 * temp;
             }
-            else 
+            else
             {
                 angle = 60 * temp;
             }
@@ -236,7 +365,7 @@ namespace MortalDungeon.Game.Map
             return angle;
         }
 
-        public static int AngleOfDirection(Direction dir) 
+        public static int AngleOfDirection(Direction dir)
         {
             return ((int)dir + 2) * 60; //subtract 2 from the direction so that the default direction is north
         }
@@ -252,7 +381,7 @@ namespace MortalDungeon.Game.Map
                 {
                     k = new Random().Next(n + 1);
                 }
-                else 
+                else
                 {
                     k = numberGen.Next(n + 1);
                 }
@@ -269,5 +398,90 @@ namespace MortalDungeon.Game.Map
             h = (h ^ (h >> 13)) * 1274126177;
             return h ^ (h >> 16);
         }
+
+        /// <summary>
+        /// This is where the point gets associated with a specific feature
+        /// </summary>
+        internal virtual void UpdatePoint(FeaturePoint point)
+        {
+            AffectedPoints.TryAdd(point, Feature.None);
+        }
+    }
+
+    public struct FeaturePoint
+    {
+        public int X;
+        public int Y;
+
+        public bool _visited;
+
+        public FeaturePoint(int x, int y) 
+        {
+            X = x;
+            Y = y;
+
+            _visited = false;
+        }
+
+        public FeaturePoint(TilePoint tilePoint) 
+        {
+            Vector2i coords = FeatureEquation.PointToMapCoords(tilePoint);
+
+            X = coords.X;
+            Y = coords.Y;
+
+            _visited = false;
+        }
+
+        public FeaturePoint(Vector2i coords)
+        {
+            X = coords.X;
+            Y = coords.Y;
+
+            _visited = false;
+        }
+
+        public static bool operator ==(FeaturePoint a, FeaturePoint b) => a.X == b.X && a.Y == b.Y;
+        public static bool operator !=(FeaturePoint a, FeaturePoint b) => !(a == b);
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y);
+        }
+
+        public override string ToString()
+        {
+            return $"{{{X}, {Y}}}";
+        }
+    }
+
+    public class FeaturePointWithParent 
+    {
+        public FeaturePoint Point;
+        public FeaturePoint Parent;
+        public bool IsRoot;
+
+        public FeaturePointWithParent(FeaturePoint point, FeaturePoint parent, bool isRoot = false) 
+        {
+            Point = point;
+            Parent = parent;
+
+            IsRoot = isRoot;
+        }
+    }
+
+    public enum Feature 
+    {
+        None,
+        Grass,
+        Water_1,
+        Water_2,
+        Tree_1,
+        Tree_2
     }
 }

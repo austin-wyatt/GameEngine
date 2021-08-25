@@ -61,14 +61,14 @@ namespace MortalDungeon.Game.UI
 
             HealthBar = new HealthBar(new Vector3(), scale);
             HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
-            HealthBar.SetHealthPercent(1, unit.Team);
+            HealthBar.SetHealthPercent(1, unit.AI.Team);
 
             BaseComponent.AddChild(HealthBar);
 
 
             ShieldBar = new ShieldBar(new Vector3(), scale);
             ShieldBar.MultiTextureData.MixTexture = false;
-            ShieldBar.SetCurrentShields(unit.CurrentShields);
+            ShieldBar.SetCurrentShields(unit.Info.CurrentShields);
 
             BaseComponent.AddChild(ShieldBar);
 

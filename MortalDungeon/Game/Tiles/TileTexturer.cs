@@ -153,7 +153,7 @@ namespace MortalDungeon.Game.Tiles
                         };
                         overlayPosition = (int)fogType;
 
-                        if (tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.Team])
+                        if (tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.AI.Team])
                         {
                             mixPercent = 0.5f;
                         }

@@ -289,6 +289,12 @@ namespace MortalDungeon
                         }
                     });
 
+                    if (tileMap.DynamicTextureInfo.Initialize) 
+                    {
+                        tileMap.InitializeTexturedQuad();
+                        tileMap.DynamicTextureInfo.Initialize = false;
+                    }
+
                     if (tileMap.DynamicTextureInfo.TextureChanged)
                     {
                         tileMap.UpdateDynamicTexture();
@@ -406,6 +412,9 @@ namespace MortalDungeon
                 {
                     scene.Logic();
 
+                    //if (scene.PauseTicks)
+                    //    return;
+
                     Task renderedObjectTask = new Task(() =>
                     {
                         scene._genericObjects.ForEach(gameObject =>
@@ -458,6 +467,8 @@ namespace MortalDungeon
                     tileMapTask.Wait();
                     uiTask.Wait();
                     tickableObjectsTask.Wait();
+
+                    scene.PostTickAction?.Invoke();
                 });
             }
         }

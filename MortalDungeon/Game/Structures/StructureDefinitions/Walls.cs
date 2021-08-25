@@ -158,12 +158,12 @@ namespace MortalDungeon.Game.Structures
             wall.BaseObject.BaseFrame.RotateZ(rotation);
 
             wall.VisibleThroughFog = true;
-            wall.TileMapPosition = tile;
+            wall.SetTileMapPosition(tile);
             wall.Name = "Wall";
             wall.Pathable = true;
 
             wall.SetTeam(UnitTeam.Neutral);
-            wall.Height = 4;
+            wall.Info.Height = 4;
 
             tile.Chunk.Structures.Add(wall);
             tile.Structure = wall;

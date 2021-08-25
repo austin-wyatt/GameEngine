@@ -21,6 +21,7 @@ namespace MortalDungeon.Game.Abilities
         RangedAttack, //attacks that can be used from a distance
         DamagingSpell, //an ability that does damage to an enemy (and maybe applies a secondary effect)
         Debuff, //an ability that applies a debuff to the target
+        Buff, //an ability that applies a buff to the target
         Utility, //an ability that provides utility to 
         Heal, //an ability that heals
         Repositioning //an ability that repositions a unit
@@ -44,6 +45,7 @@ namespace MortalDungeon.Game.Abilities
     {
         public AbilityTypes Type = AbilityTypes.Empty;
         public DamageType DamageType = DamageType.Slashing;
+        public int Grade = 0;
 
         public Unit CastingUnit;
         public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
@@ -52,7 +54,7 @@ namespace MortalDungeon.Game.Abilities
         public List<Unit> Units = new List<Unit>(); //relevant units
         public List<BaseTile> CurrentTiles = new List<BaseTile>(); //the current set of tiles that is being worked with
 
-        public TileMap TileMap;
+        public TileMap TileMap => CastingUnit.GetTileMap();
         public BaseTile SelectedTile;
         public Unit SelectedUnit;
 
@@ -64,7 +66,7 @@ namespace MortalDungeon.Game.Abilities
 
         public int Tier = 0;
 
-        public CombatScene Scene;
+        public CombatScene Scene => CastingUnit.Scene;
 
         public string Name = "";
         public string Description = "";
@@ -81,7 +83,8 @@ namespace MortalDungeon.Game.Abilities
         public bool CanTargetDeadUnits = false;
 
         public float EnergyCost = 0;
-        public int Range = 0;
+        public float Range = 0;
+        public int MinRange;
         public int CurrentRange = 0;
         public float Damage = 0;
         public int Duration = 0;
@@ -148,7 +151,7 @@ namespace MortalDungeon.Game.Abilities
         {
             if (CastingUnit != null)
             {
-                return CastingUnit.EnergyCostMultiplier * EnergyCost + CastingUnit.EnergyAddition;
+                return CastingUnit.Info.EnergyCostMultiplier * EnergyCost + CastingUnit.Info.EnergyAddition;
             }
 
             return EnergyCost;
@@ -158,10 +161,23 @@ namespace MortalDungeon.Game.Abilities
         {
             if (CastingUnit != null)
             {
-                return CastingUnit.DamageMultiplier * Damage + CastingUnit.DamageAddition;
+                return CastingUnit.Info.DamageMultiplier * Damage + CastingUnit.Info.DamageAddition;
             }
 
             return Damage;
+        }
+
+        public virtual bool UnitInRange(Unit unit) 
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Will return false if a unit is closer than the minimum range
+        /// </summary>
+        public virtual bool UnitUnderRange(Unit unit)
+        {
+            return MinRange > TileMap.GetDistanceBetweenPoints(unit.Info.TileMapPosition.TilePoint, CastingUnit.Info.TileMapPosition.TilePoint);
         }
 
         public virtual void AdvanceDuration() 
@@ -173,9 +189,6 @@ namespace MortalDungeon.Game.Abilities
 
         public virtual void OnSelect(CombatScene scene, TileMap currentMap) 
         {
-            TileMap = currentMap;
-            Scene = scene;
-
             if (Scene.EnergyDisplayBar.CurrentEnergy >= GetEnergyCost())
             {
                 AffectedTiles = GetValidTileTargets(currentMap, scene._units);
@@ -187,13 +200,22 @@ namespace MortalDungeon.Game.Abilities
                 //    currentMap.SelectTile(tile);
                 //});
 
-                
-
                 Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
             }
             else
             {
                 Scene.DeselectAbility();
+            }
+        }
+
+        public void TargetAffectedUnits() 
+        {
+            if (CastingUnit.AI.ControlType == ControlType.Controlled) 
+            {
+                AffectedUnits.ForEach(u =>
+                {
+                    u.Target();
+                });
             }
         }
 
@@ -223,6 +245,9 @@ namespace MortalDungeon.Game.Abilities
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
             AffectedUnits.ForEach(u => u.Untarget());
+
+            AffectedUnits.Clear();
+            AffectedTiles.Clear();
         }
 
         public virtual void UpdateEnergyCost() { }
@@ -236,17 +261,51 @@ namespace MortalDungeon.Game.Abilities
             Scene.OnAbilityCast(this);
         }
 
-        
+        public virtual void OnAICast() 
+        {
+
+        }
+
+        public void Casted() 
+        {
+            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            {
+                OnCast();
+            }
+            else 
+            {
+                OnAICast();
+            }
+
+            AffectedUnits.Clear();
+            AffectedTiles.Clear();
+        }
+
+        /// <summary>
+        /// Called once all skill effects have been resolved and another skill can be used.
+        /// </summary>
+        public virtual void EffectEnded() 
+        {
+            EffectEndedAction?.Invoke();
+        }
+        public Action EffectEndedAction = null;
 
         //remove invalid tiles from the list
-        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false) 
+        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0) 
         {
             for (int i = 0; i < validTiles.Count; i++)
             {
                 if (i < 0)
                     i = 0;
 
-                if (validTiles[i].TilePoint == CastingUnit.TileMapPosition && !CanTargetSelf)
+                if (validTiles[i].TilePoint == CastingUnit.Info.TileMapPosition && !CanTargetSelf)
+                {
+                    validTiles.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                if (minRange > 0 && minRange > TileMap.GetDistanceBetweenPoints(validTiles[i].TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -259,7 +318,7 @@ namespace MortalDungeon.Game.Abilities
                     CastingUnit.Target();
                 }
 
-                if ((validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.Team] && trimFog) || (validTiles[i].InFog && !CanTargetThroughFog)) 
+                if ((validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog && !CanTargetThroughFog)) 
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -268,15 +327,15 @@ namespace MortalDungeon.Game.Abilities
 
                 for (int j = 0; j < units?.Count; j++)
                 {
-                    if (units[j].TileMapPosition == validTiles[i].TilePoint)
+                    if (units[j].Info.TileMapPosition == validTiles[i].TilePoint)
                     {
-                        if ((!CanTargetAlly && units[j].Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].Team == UnitTeam.Enemy))
+                        if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.Enemy))
                         {
                             validTiles.RemoveAt(i);
                             i--;
                             continue;
                         }
-                        else if (units[j].Dead && !CanTargetDeadUnits) 
+                        else if (units[j].Info.Dead && !CanTargetDeadUnits) 
                         {
                             validTiles.RemoveAt(i);
                             i--;
@@ -285,7 +344,6 @@ namespace MortalDungeon.Game.Abilities
                         else
                         {
                             AffectedUnits.Add(units[j]);
-                            units[j].Target();
                         }
                     }
                 }

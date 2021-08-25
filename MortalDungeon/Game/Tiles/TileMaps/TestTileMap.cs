@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             InitializeHelperTiles(tilePosition);
 
             SetDefaultTileValues();
-            InitializeTexturedQuad();
+            //InitializeTexturedQuad();
         }
 
 

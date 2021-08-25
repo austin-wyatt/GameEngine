@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Units
         public Skeleton(Vector3 position, CombatScene scene, BaseTile tileMapPosition, string name = "Skeleton") : base(scene)
         {
             Name = name;
-            TileMapPosition = tileMapPosition;
+            SetTileMapPosition(tileMapPosition);
             Clickable = true;
             Selectable = true;
 
@@ -28,9 +28,7 @@ namespace MortalDungeon.Game.Units
 
             SetPosition(position);
 
-            VisionRadius = 6;
-
-            CurrentShields = 5;
+            Info.CurrentShields = 5;
 
             Buff shieldBlock = new Buff(this);
             shieldBlock.ShieldBlock.Additive = 3;
@@ -38,10 +36,21 @@ namespace MortalDungeon.Game.Units
             shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
             Slow slowAbility = new Slow(this, 5, 0.1f, 3);
-            Abilities.Add(slowAbility.AbilityID, slowAbility);
+            Info.Abilities.Add(slowAbility.AbilityID, slowAbility);
 
             Bleed bleedAbility = new Bleed(this, 2, 15, 5);
-            Abilities.Add(bleedAbility.AbilityID, bleedAbility);
+            Info.Abilities.Add(bleedAbility.AbilityID, bleedAbility);
+
+            Shoot shootAbility = new Shoot(this, 15, 4, 20);
+            Info.Abilities.Add(shootAbility.AbilityID, shootAbility);
+
+            AI.RangedDamageDealer disp = new AI.RangedDamageDealer(this)
+            {
+                Weight = 1,
+                Bloodthirsty = 1
+            };
+
+            AI.Dispositions.Add(disp);
 
             //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
             //Abilities.Add(melee.AbilityID, melee);

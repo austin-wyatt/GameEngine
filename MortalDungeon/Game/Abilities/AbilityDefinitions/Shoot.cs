@@ -10,26 +10,20 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Bleed : Ability
+    public class Shoot : Ability
     {
-        int _bleedDuration;
-        float _bleedDamage;
-
-        public Bleed(Unit castingUnit, int range = 1, float bleedDamage = 15f, int duration = 3)
+        public Shoot(Unit castingUnit, int range = 6, int minRange = 2, float damage = 10)
         {
-            Type = AbilityTypes.Debuff;
+            Type = AbilityTypes.RangedAttack;
             Range = range;
+            MinRange = minRange;
             CastingUnit = castingUnit;
-            EnergyCost = 1;
+            Damage = damage;
+            EnergyCost = 7;
 
-            _bleedDuration = duration;
-            _bleedDamage = bleedDamage;
+            Name = "Shoot";
 
-            Name = "Bleed";
-
-            CanTargetGround = false;
-
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BleedingDagger, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
+            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
@@ -38,17 +32,23 @@ namespace MortalDungeon.Game.Abilities
             {
                 TraversableTypes = TileMapConstants.AllTileClassifications,
                 Units = units,
-                CastingUnit = CastingUnit
+                CastingUnit = CastingUnit,
             };
-
 
             List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
 
-            TrimTiles(validTiles, units);
+            TrimTiles(validTiles, units, false, MinRange);
 
             TargetAffectedUnits();
 
             return validTiles;
+        }
+
+        public override bool UnitInRange(Unit unit)
+        {
+            GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit });
+
+            return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
         }
 
         public override bool OnUnitClicked(Unit unit)
@@ -56,7 +56,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
 
-            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
+            if (unit.AI.Team != CastingUnit.AI.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
             {
                 SelectedUnit = unit;
                 EnactEffect();
@@ -80,13 +80,23 @@ namespace MortalDungeon.Game.Abilities
             base.OnCast();
         }
 
+        public override void OnAICast()
+        {
+            float energyCost = GetEnergyCost();
+
+            CastingUnit.Info.Energy -= energyCost;
+
+            base.OnAICast();
+        }
+
         public override void EnactEffect()
         {
             base.EnactEffect();
 
-            BleedDebuff bleedDebuff = new BleedDebuff(SelectedUnit, _bleedDuration, _bleedDamage);
+            SelectedUnit.ApplyDamage(GetDamage(), DamageType);
 
             Casted();
+            EffectEnded();
         }
     }
 }

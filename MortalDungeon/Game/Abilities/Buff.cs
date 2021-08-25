@@ -9,6 +9,12 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
+    public enum BuffType 
+    {
+        Neutral,
+        Debuff,
+        Buff
+    }
     public class Buff
     {
         public Unit Unit;
@@ -38,6 +44,7 @@ namespace MortalDungeon.Game.Abilities
         public bool DispellableStrong = false;
 
         public string Name = "";
+        public BuffType BuffType = BuffType.Neutral;
 
         public int BuffID => _buffID;
         protected int _buffID = _currentBuffID++;
@@ -66,7 +73,7 @@ namespace MortalDungeon.Game.Abilities
                 RemoveBuffFromUnit();
             }
 
-            unit.Buffs.Add(this);
+            unit.Info.Buffs.Add(this);
             Unit = unit;
         }
 
@@ -74,7 +81,7 @@ namespace MortalDungeon.Game.Abilities
         {
             if (Unit != null) 
             {
-                Unit.Buffs.Remove(this);
+                Unit.Info.Buffs.Remove(this);
                 Unit = null;
             }
         }
@@ -106,7 +113,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (Duration <= 0)
                 {
-                    Unit.Buffs.Remove(this);
+                    Unit.Info.Buffs.Remove(this);
                 }
             }
         }

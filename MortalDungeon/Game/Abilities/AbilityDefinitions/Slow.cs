@@ -34,7 +34,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
         {
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.TileMapPosition, Range)
+            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
                 TraversableTypes = TileMapConstants.AllTileClassifications,
                 Units = units,
@@ -42,9 +42,11 @@ namespace MortalDungeon.Game.Abilities
             };
 
             List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-            TileMap = tileMap;
 
             TrimTiles(validTiles, units);
+
+            TargetAffectedUnits();
+
             return validTiles;
         }
 
@@ -53,7 +55,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
 
-            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.TileMapPosition) != -1)
+            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
             {
                 SelectedUnit = unit;
                 EnactEffect();
@@ -83,7 +85,7 @@ namespace MortalDungeon.Game.Abilities
 
             SlowDebuff slowDebuff = new SlowDebuff(SelectedUnit, _slowDuration, _slowMultiplier);
 
-            OnCast();
+            Casted();
         }
     }
 }
