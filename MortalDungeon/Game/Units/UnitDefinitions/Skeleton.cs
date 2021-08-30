@@ -41,7 +41,7 @@ namespace MortalDungeon.Game.Units
             Bleed bleedAbility = new Bleed(this, 2, 15, 5);
             Info.Abilities.Add(bleedAbility.AbilityID, bleedAbility);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 20);
+            Shoot shootAbility = new Shoot(this, 15, 4, 20) { EnergyCost = 2 };
             Info.Abilities.Add(shootAbility.AbilityID, shootAbility);
 
             AI.RangedDamageDealer disp = new AI.RangedDamageDealer(this)

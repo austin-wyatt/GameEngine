@@ -32,7 +32,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BleedingDagger, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
@@ -67,14 +67,6 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnCast()
         {
-            Scene.EnergyDisplayBar.HoverAmount(0);
-
-            float energyCost = GetEnergyCost();
-
-            //special cases for energy reduction go here
-
-            Scene.EnergyDisplayBar.AddEnergy(-energyCost);
-
             TileMap.DeselectTiles();
 
             base.OnCast();

@@ -58,15 +58,17 @@ namespace MortalDungeon.Engine_Classes
             _originOffset.Z = Position.Z - Origin.Z;
         }
 
-        //public virtual void UpdateBorders(UIBorders borders) { }
         public override void Tick()
         {
-            base.Tick();
-
-            Children.ForEach((child) => 
+            if (Render) 
             {
-                child.Tick();
-            });
+                base.Tick();
+
+                Children.ForEach((child) =>
+                {
+                    child.Tick();
+                });
+            }
         }
 
         public virtual void SetSize(UIScale size)

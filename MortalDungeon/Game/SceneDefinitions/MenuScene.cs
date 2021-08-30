@@ -43,40 +43,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
 
 
-            //TileMap tileMap2 = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-
-            //tileMap2.PopulateTileMap();
-
-            //_tileMapController.AddTileMap(new TileMapPoint(-1, 0), tileMap2);
-
-
-            //TileMap tileMap3 = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-
-            //tileMap3.PopulateTileMap();
-
-            //_tileMapController.AddTileMap(new TileMapPoint(-2, 0), tileMap3);
-
-
-            //TileMap tileMap4 = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-
-            //tileMap4.PopulateTileMap();
-
-            //_tileMapController.AddTileMap(new TileMapPoint(0, -1), tileMap4);
-
-            //for (int x = 0; x < 2; x++) 
-            //{
-            //    for (int y = 0; y < 2; y++) 
-            //    {
-            //        if (!(x == 0 && y == 0)) 
-            //        {
-            //            TestTileMap tileMap2 = new TestTileMap(default, new TileMapPoint(x, y), _tileMapController) { Width = 50, Height = 50 };
-            //            tileMap2.PopulateTileMap();
-
-            //            _tileMapController.AddTileMap(new TileMapPoint(x, y), tileMap2);
-            //        }
-            //    }
-            //}
-
             RiverParams riverParams = new RiverParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
             riverParams.AddStop(new FeaturePoint(25, 45));
             riverParams.AddStop(new FeaturePoint(40, 30));
@@ -187,7 +153,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             AddUI(statusBarContainer);
 
 
-            FillInTeamFog(InitiativeOrder[0].AI.Team);
 
 
             //TextComponent description = new TextComponent();
@@ -207,6 +172,9 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             //AddUI(description);
             //AddUI(desc2);
+
+            EndCombat();
+            FillInTeamFog(UnitTeam.Ally);
         }
 
 
@@ -320,25 +288,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else if (KeyboardState.IsKeyDown(Keys.LeftAlt))
                 {
-                    Unit tree = new Unit(this, Spritesheets.StructureSheet, rand.Next() % 2 + 2, tile.Position + new Vector3(0, -200, 0.22f));
-                    tree.BaseObject.BaseFrame.RotateX(25);
-                    tree.BaseObject.BaseFrame.SetScaleAll(1 + (float)rand.NextDouble() / 2);
 
-                    //tree.NonCombatant = true;
-                    tree.VisibleThroughFog = true;
-                    tree.Info.BlocksVision = true;
-                    tree.SetTileMapPosition(tile);
-                    tree.Name = "Tree";
-
-                    tree.SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
-
-                    tree.Selectable = true;
-                    tree.Clickable = true;
-                    tree.SetTeam(UnitTeam.Neutral);
-
-                    _units.Add(tree);
-
-                    StartCombat();
                 }
                 else if (KeyboardState.IsKeyDown(Keys.RightAlt))
                 {

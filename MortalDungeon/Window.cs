@@ -166,7 +166,9 @@ namespace MortalDungeon
 
             _sceneController = new SceneController(_camera);
 
-            
+            _gameTimer = new Stopwatch();
+            _gameTimer.Start();
+
             if (WindowConstants.EnableBoundsTestingTools) 
             {
                 Scene boundScene = new BoundsTestScene();
@@ -195,11 +197,11 @@ namespace MortalDungeon
             _timer = new Stopwatch();
             _timer.Start();
 
-            _gameTimer = new Stopwatch();
-            _gameTimer.Start();
 
             //hides mouse cursor
             CursorGrabbed = true;
+
+            TickAllObjects();
 
             base.OnLoad();
         }
@@ -274,8 +276,18 @@ namespace MortalDungeon
             Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
             _sceneController.Scenes.ForEach(scene =>
             {
+                scene._genericObjects.HandleQueuedItems();
+                scene._UI.HandleQueuedItems();
+                scene._units.HandleQueuedItems();
+                scene._lowPriorityObjects.HandleQueuedItems();
+
+
+
                 RenderingQueue.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
                 RenderingQueue.QueueLowPriorityObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.LowPriorityObject));
+
+                bool updateTileMaps = scene.ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate);
+
 
                 scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
                 {
@@ -295,7 +307,7 @@ namespace MortalDungeon
                         tileMap.DynamicTextureInfo.Initialize = false;
                     }
 
-                    if (tileMap.DynamicTextureInfo.TextureChanged)
+                    if (updateTileMaps && tileMap.DynamicTextureInfo.TextureChanged)
                     {
                         tileMap.UpdateDynamicTexture();
                     }
@@ -449,6 +461,9 @@ namespace MortalDungeon
 
                     Task tickableObjectsTask = new Task(() =>
                     {
+                        //scene.TickableObjects.AddQueuedItems();
+                        //scene.TickableObjects.ClearQueuedItems();
+
                         scene.TickableObjects.ForEach(obj =>
                         {
                             obj.Tick();

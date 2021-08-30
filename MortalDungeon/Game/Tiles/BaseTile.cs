@@ -60,7 +60,7 @@ namespace MortalDungeon.Game.Tiles
         public bool Outline = false; //whether the tile should be outline on the dynamic texture
         public bool NeverOutline = false; //whether this tile should never be outlined (used for contiguous tiles like water)
 
-        public bool InFog = true;
+        public Dictionary<UnitTeam, bool> InFog = new Dictionary<UnitTeam, bool>();
         public bool Selected = false;
 
         public Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
@@ -139,20 +139,21 @@ namespace MortalDungeon.Game.Tiles
             {
                 //Explored.Add(team, false);
                 Explored.Add(team, true);
+                InFog.Add(team, true);
             }
         }
 
 
-        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Ally)
+        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally)
         {
-            if (inFog != InFog) 
+            if (inFog != InFog[team]) 
             {
-                InFog = inFog;
+                InFog[team] = inFog;
 
                 Update();
             }
 
-            TileMap.RemoveHeightIndicatorTile(this);
+            //TileMap.RemoveHeightIndicatorTile(this);
 
             if (inFog && !Explored[team])
             {
@@ -163,7 +164,7 @@ namespace MortalDungeon.Game.Tiles
                 Outline = !NeverOutline;
             }
 
-            InFog = inFog;
+            InFog[team] = inFog;
             MultiTextureData.MixTexture = inFog;
 
             if (inFog && !Explored[team] && !Selected && !Hovered) //Outline the tile if it's not in fog (with some exceptions)
@@ -265,7 +266,8 @@ namespace MortalDungeon.Game.Tiles
 
         public void Update()
         {
-            TileMap.TilesToUpdate.Add(this);
+            TileMap.UpdateTile(this);
+
             TileMap.DynamicTextureInfo.TextureChanged = true;
         }
 
@@ -282,7 +284,7 @@ namespace MortalDungeon.Game.Tiles
         {
             string tooltip;
 
-            if (tile.InFog && !tile.Explored[scene.CurrentUnit.AI.Team])
+            if (tile.InFog[scene.CurrentUnit.AI.Team] && !tile.Explored[scene.CurrentUnit.AI.Team])
             {
                 tooltip = "Unexplored tile";
             }

@@ -20,6 +20,8 @@ namespace MortalDungeon.Game.UI
         private ShieldBar _unitShieldBar;
         public Unit _currentUnit;
 
+        public Button EndTurnButton;
+
         private ScrollableArea _scrollableArea;
 
         public GameFooter(float height, CombatScene scene) : base(height)
@@ -90,6 +92,8 @@ namespace MortalDungeon.Game.UI
 
             #region end turn button
             Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", 0.075f, default, default, false);
+
+            EndTurnButton = endTurnButton;
 
             UIDimensions textOffset = new UIDimensions(80, 100);
             //textOffset.Y = 0;

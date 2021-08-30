@@ -8,6 +8,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -36,7 +37,7 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             Range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost(); //special case for general move ability
 
@@ -112,42 +113,11 @@ namespace MortalDungeon.Game.Abilities
                     BaseTile currentTile = CurrentTiles[i];
                     endOfTileMoveKeyframe.Action = ( display) =>
                     {
-                        bool updateAll = false;
-                        //if (CastingUnit.TileMapPosition.GetPathableHeight() != currentTile.GetPathableHeight()) 
-                        //{
-                        //    updateAll = true;
-                        //}
-
                         CastingUnit.SetTileMapPosition(currentTile);
 
-                        TileMap.Controller.TileMaps.ForEach(m => m.Tiles.ForEach(tile =>
-                        {
-                            //tile.SetFog(true, CastingUnit.AI.Team);
-                            tile.SetFog(true, UnitTeam.Ally);
+                        Task.Run(() => Scene.FillInTeamFog());
 
-                            if (updateAll)
-                                tile.Update();
-                        }));
-
-                        Units.ForEach(unit =>
-                        {
-                            //if (unit.AI.Team == CastingUnit.AI.Team)
-                            if (unit.AI.Team == UnitTeam.Ally)
-                            {
-                                List<Unit> allOtherUnits = Units.FindAll(u => u.AI.Team != unit.AI.Team);
-                                List<BaseTile> tiles = TileMap.GetVisionInRadius(unit.Info.TileMapPosition, unit.Info.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, Units.FindAll(u => u.Info.TileMapPosition != unit.Info.TileMapPosition));
-
-                                tiles.ForEach(tile =>
-                                {
-                                    //tile.SetExplored(true, CastingUnit.AI.Team);
-                                    //tile.SetFog(false, CastingUnit.AI.Team);
-                                    tile.SetExplored(true, UnitTeam.Ally);
-                                    tile.SetFog(false, UnitTeam.Ally);
-                                });
-
-                                Scene.HideObjectsInFog(allOtherUnits);
-                            }
-                        });
+                        Scene.Controller.CullObjects();
                     };
 
                     moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
@@ -173,32 +143,36 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnCast()
         {
-            Scene.EnergyDisplayBar.HoverAmount(0);
-
-            float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
-
-            //if (energyCost == 0) //special cases will go here
-            //{
-            //    energyCost = 1;
-            //}
-
-            Scene.EnergyDisplayBar.AddEnergy(-energyCost);
-
             TileMap.DeselectTiles();
-            CurrentTiles.Clear();
 
             base.OnCast();
+
+            CurrentTiles.Clear();
         }
 
         public override void OnAICast()
         {
-            float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
-
-            CastingUnit.Info.Energy -= energyCost;
+            base.OnAICast();
 
             CurrentTiles.Clear();
+        }
 
-            base.OnAICast();
+        public override void ApplyEnergyCost()
+        {
+            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            {
+                Scene.EnergyDisplayBar.HoverAmount(0);
+
+                float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
+
+                Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+            }
+            else 
+            {
+                float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
+
+                CastingUnit.Info.Energy -= energyCost;
+            }
         }
 
         public override void OnTileClicked(TileMap map, BaseTile tile)

@@ -26,17 +26,13 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
-            {
-                TraversableTypes = TileMapConstants.AllTileClassifications,
-                Units = units,
-                CastingUnit = CastingUnit,
-            };
+            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
+            List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
 
+           
             TrimTiles(validTiles, units, false, MinRange);
 
             TargetAffectedUnits();
@@ -44,11 +40,40 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        public override bool UnitInRange(Unit unit)
+        public override bool UnitInRange(Unit unit, BaseTile position = null)
         {
-            GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit });
+            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
+            
+            bool inRange;
+            List<BaseTile> validTiles;
+            if (position == null)
+            {
+                validTiles = GetValidTileTargets(unit.GetTileMap(), null, position);
+            }
+            else 
+            {
+                validTiles = unit.GetTileMap().GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), new List<Unit> { unit });
+                unit.Info.TemporaryPosition = point;
+            }
 
-            return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
+            TileMap map = unit.GetTileMap();
+
+
+            List<BaseTile> teamVision = Scene.GetTeamVision(unit.AI.Team);
+
+            unit.Info.TemporaryPosition = null;
+
+            BaseTile tile = validTiles.Find(t => t.TilePoint == unit.Info.Point);
+            if (tile == null)
+            {
+                inRange = false;
+            }
+            else 
+            {
+                inRange = teamVision.Exists(t => t.TilePoint == tile.TilePoint) && map.GetDistanceBetweenPoints(unit.Info.Point, point) >= MinRange;
+            }
+
+            return inRange;
         }
 
         public override bool OnUnitClicked(Unit unit)
@@ -67,14 +92,6 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnCast()
         {
-            Scene.EnergyDisplayBar.HoverAmount(0);
-
-            float energyCost = GetEnergyCost();
-
-            //special cases for energy reduction go here
-
-            Scene.EnergyDisplayBar.AddEnergy(-energyCost);
-
             TileMap.DeselectTiles();
 
             base.OnCast();
@@ -82,10 +99,6 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnAICast()
         {
-            float energyCost = GetEnergyCost();
-
-            CastingUnit.Info.Energy -= energyCost;
-
             base.OnAICast();
         }
 

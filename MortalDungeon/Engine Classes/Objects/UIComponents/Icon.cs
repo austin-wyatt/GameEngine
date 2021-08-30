@@ -103,5 +103,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             base.OnClick();
         }
+
+        public void SetCameraPerspective(bool camPerspective) 
+        {
+            BaseObjects.ForEach(b =>
+            {
+                b.BaseFrame.CameraPerspective = camPerspective;
+            });
+        }
     }
 }

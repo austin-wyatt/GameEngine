@@ -64,9 +64,14 @@ namespace MortalDungeon.Game.Tiles
         public FrameBufferObject FrameBuffer;
         public DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
         public HashSet<BaseTile> TilesToUpdate = new HashSet<BaseTile>();
+
+        private const int TILE_QUEUES = 2;
+        protected int _currentTileQueue = 0;
+        protected List<HashSet<BaseTile>> _tilesToUpdate = new List<HashSet<BaseTile>>();
+
         public GameObject TexturedQuad;
 
-        private readonly int _maxSelectionTiles = 1000;
+        private const int MAX_SELECTION_TILES = 1000;
         public int _amountOfSelectionTiles = 0;
         private readonly List<BaseTile> _selectionTilePool = new List<BaseTile>();
 
@@ -78,6 +83,11 @@ namespace MortalDungeon.Game.Tiles
 
             TileMapCoords = new TileMapPoint(point.X, point.Y);
             Controller = controller;
+
+            for (int i = 0; i < TILE_QUEUES; i++) 
+            {
+                _tilesToUpdate.Add(new HashSet<BaseTile>());
+            }
         }
 
         public BaseTile this[int x, int y]
@@ -138,7 +148,7 @@ namespace MortalDungeon.Game.Tiles
         internal void InitializeHelperTiles(Vector3 tilePosition)
         {
             BaseTile baseTile = new BaseTile();
-            for (int i = 0; i < _maxSelectionTiles; i++)
+            for (int i = 0; i < MAX_SELECTION_TILES; i++)
             {
                 baseTile = new BaseTile(tilePosition, new TilePoint(i, -1,this));
                 baseTile.SetRender(false);
@@ -283,9 +293,20 @@ namespace MortalDungeon.Game.Tiles
         internal void UpdateDynamicTexture() 
         {
             //DynamicTexture.UpdateTextureArray(DynamicTextureInfo.MinChangedBounds, DynamicTextureInfo.MaxChangedBounds, this);
+            TilesToUpdate = _tilesToUpdate[_currentTileQueue];
+
+            _currentTileQueue++;
+            _currentTileQueue %= _tilesToUpdate.Count;
+
             TileTexturer.UpdateTexture(this);
             TilesToUpdate.Clear();
-            DynamicTextureInfo.TextureChanged = false;
+            //DynamicTextureInfo.TextureChanged = false;
+            DynamicTextureInfo.TextureChanged = _tilesToUpdate[_currentTileQueue].Count > 0;
+        }
+
+        internal void UpdateTile(BaseTile tile) 
+        {
+            _tilesToUpdate[_currentTileQueue].Add(tile);
         }
 
         public override void CleanUp()
@@ -361,50 +382,6 @@ namespace MortalDungeon.Game.Tiles
             {
                 new Cliff(Controller.Scene, tile, cliffBitArray);
             }
-        }
-
-        private static Vector4 _deltaHeightLow = new Vector4(-0.2f, -0.2f, 0, 0);
-        private static Vector4 _deltaHeightHigh = new Vector4(0, -0.1f, -0.2f, 0);
-        private bool _heightMapActivated = false;
-        public void ActivateHeightMap(BaseTile tile) 
-        {
-            if (_heightMapActivated)
-                return;
-
-            for (int i = 0; i < Tiles.Count; i++) 
-            {
-                if (Tiles[i].Properties.Height != tile.Properties.Height) 
-                {
-                    int diff = tile.Properties.Height - Tiles[i].Properties.Height;
-                    if (diff > 0)
-                    {
-                        Tiles[i].Color = Tiles[i].Color + _deltaHeightLow * diff;
-                    }
-                    else 
-                    {
-                        Tiles[i].Color = Tiles[i].Color + _deltaHeightHigh * Math.Abs(diff);
-                    }
-
-                    TilesToUpdate.Add(Tiles[i]);
-                }
-            }
-
-            TileTexturer.UpdateTexture(this);
-
-            _heightMapActivated = true;
-        }
-
-        public void DeactivateHeightMap() 
-        {
-            for (int i = 0; i < Tiles.Count; i++)
-            {
-                Tiles[i].Color = new Vector4(1, 1, 1, 1);
-                TilesToUpdate.Add(Tiles[i]);
-            }
-
-            TileTexturer.UpdateTexture(this);
-
-            _heightMapActivated = false;
         }
 
         public Vector3 GetTileMapDimensions() 
@@ -500,8 +477,8 @@ namespace MortalDungeon.Game.Tiles
 
         public void SelectTiles(List<BaseTile> tiles)
         {
-            if (tiles.Count > _maxSelectionTiles)
-                throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + _maxSelectionTiles + " in tile map " + ObjectID);
+            if (tiles.Count > MAX_SELECTION_TILES)
+                throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + MAX_SELECTION_TILES + " in tile map " + ObjectID);
 
             for (int i = 0; i < tiles.Count; i++)
             {
@@ -860,7 +837,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="untraversableTypes">tile types that will block vision</param>
         /// <param name="units"></param>
         /// <returns></returns>
-        public void GetVisionLine(TilePoint startPoint, Vector2i endPoint, List<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
+        public void GetVisionLine(TilePoint startPoint, Vector2i endPoint, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             Vector3i startCube = OffsetToCube(startPoint);
             Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
@@ -915,28 +892,94 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        /// <summary>
-        /// Returns a list of BaseTiles that are not in the fog of war in a radius around an index
-        /// </summary>
-        /// <param name="startIndex"></param>
-        /// <param name="endIndex"></param>
-        /// <param name="untraversableTypes"></param>
-        /// <param name="units"></param>
-        /// <param name="ignoreBlockedVision"></param>
-        /// <returns></returns>
+        public void GetTargetingLine(TilePoint startPoint, Vector3i endPointCube, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false) 
+        {
+            Vector3i startCube = OffsetToCube(startPoint);
+
+            int N = GetDistanceBetweenPoints(startCube, endPointCube);
+            float n = 1f / N;
+
+            Vector3 currentCube;
+            Vector2i currentOffset;
+
+            BaseTile currentTile = null;
+
+            if (IsValidTile(startPoint))
+            {
+                currentTile = startPoint.GetTile();
+            }
+
+            for (int i = 0; i <= N; i++)
+            {
+                currentCube = CubeMethods.CubeLerp(startCube, endPointCube, n * i);
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
+                if (IsValidTile(currentOffset.X, currentOffset.Y))
+                {
+                    _BaseTileTemp = this[currentOffset.X, currentOffset.Y];
+
+                    if (currentTile != null && _BaseTileTemp.GetPathableHeight() - currentTile.GetPathableHeight() > 1)
+                    {
+                        return; //if the height difference is due to the tile we can't see the tile
+                    }
+
+                    outputList.Add(_BaseTileTemp);
+
+                    if (currentTile != null && _BaseTileTemp.GetVisionHeight() - currentTile.GetPathableHeight() > 1)
+                    {
+                        return; //if the height difference is due to the structure then we can see the tile
+                    }
+
+                    if (_BaseTileTemp.Properties.BlocksVision && !ignoreBlockedVision)
+                    {
+                        return;
+                    }
+
+                    if (units?.Count > 0)
+                    {
+                        if (units.Exists(unit => unit.Info.TileMapPosition == _BaseTileTemp.TilePoint
+                            && (unit.Info.Height + _BaseTileTemp.GetPathableHeight()) - currentTile.GetPathableHeight() > 1)) //&& unit.BlocksVision
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        public void GetTargetingLine(TilePoint startPoint, TilePoint endPoint, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
+        {
+            GetTargetingLine(startPoint, OffsetToCube(endPoint), outputList, units, ignoreBlockedVision);
+        }
+
+
         public List<BaseTile> GetVisionInRadius(TilePoint point, int radius, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             List<Vector2i> ringOfTiles = new List<Vector2i>();
             GetRingOfTiles(point, ringOfTiles, radius);
 
-            List<BaseTile> outputList = new List<BaseTile>();
+            HashSet<BaseTile> outputList = new HashSet<BaseTile>();
 
             for (int i = 0; i < ringOfTiles.Count; i++)
             {
                 GetVisionLine(point, ringOfTiles[i], outputList, units, ignoreBlockedVision);
             }
 
-            return outputList.Distinct().ToList();
+            return outputList.ToList();
+        }
+
+        public List<BaseTile> GetTargetsInRadius(TilePoint point, int radius, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
+        {
+            List<Vector2i> ringOfTiles = new List<Vector2i>();
+            GetRingOfTiles(point, ringOfTiles, radius);
+
+            HashSet<BaseTile> outputList = new HashSet<BaseTile>();
+
+            for (int i = 0; i < ringOfTiles.Count; i++)
+            {
+                Vector3i endCube = CubeMethods.OffsetToCube(ringOfTiles[i]);
+                GetTargetingLine(point, endCube, outputList, units, ignoreBlockedVision);
+            }
+
+            return outputList.ToList();
         }
 
 
@@ -954,6 +997,9 @@ namespace MortalDungeon.Game.Tiles
             public bool CheckTileLower;
             public bool Shuffle;
 
+            /// <summary>
+            /// If a unit is at the endPoint it will not break the path.
+            /// </summary>
             public bool IgnoreTargetUnit;
 
             public PathToPointParameters(TilePoint startingPoint, TilePoint endPoint, float depth)

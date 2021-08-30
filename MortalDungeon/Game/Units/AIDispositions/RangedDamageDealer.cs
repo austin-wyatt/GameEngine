@@ -27,6 +27,8 @@ namespace MortalDungeon.Game.Units.AI
             if (rangedAbility == null)
                 return null;
 
+            UnitAIAction returnAction = null;
+
             switch (action)
             {
                 case AIAction.MoveCloser:
@@ -34,18 +36,17 @@ namespace MortalDungeon.Game.Units.AI
 
                     if (target != null)
                     {
-                        if (!rangedAbility.UnitInRange(target) && !rangedAbility.UnitUnderRange(target))
+                        if (!rangedAbility.UnitInRange(target)) 
                         {
-                            weight += 2 * Weight;
+                            weight += 2f * Weight;
 
-                            MoveToUnit returnAction = new MoveToUnit(_unit, _unit.Info._movementAbility, null, target) 
-                            { 
-                                Weight = weight,
-                                DistanceFromEnemy = rangedAbility.MinRange
+                            returnAction = new MoveInRangeOfAbility(_unit, rangedAbility, null, target)
+                            {
+                                Weight = weight
                             };
-
-                            return returnAction;
                         }
+
+                        return returnAction;
                     }
                     break;
                 case AIAction.AttackEnemyRanged:
@@ -59,15 +60,14 @@ namespace MortalDungeon.Game.Units.AI
 
                             weight += (1 - target.Info.Health / UnitInfo.MaxHealth) * Bloodthirsty;
 
-                            AttackEnemy returnAction = new AttackEnemy(_unit, rangedAbility, null, target) { Weight = weight };
+                            returnAction = new AttackEnemy(_unit, rangedAbility, null, target) { Weight = weight };
                             return returnAction;
                         }
                     }
                     break;
                 case AIAction.MoveFarther:
                     target = GetClosestUnit(_unit.AI.EnemyTeam, _unit, _unitSeekRange);
-                    BaseTile tile = null;
-
+                    
                     if (target != null)
                     {
                         if (rangedAbility.UnitUnderRange(target))
@@ -83,11 +83,11 @@ namespace MortalDungeon.Game.Units.AI
                                 }
                             }
 
-                            weight += 2 * Weight;
+                            weight += 1.5f * Weight;
 
                             Random rand = new Random();
 
-                            MoveToTile returnAction = new MoveToTile(_unit, _unit.Info._movementAbility, validTiles[rand.Next() % validTiles.Count], null)
+                            returnAction = new MoveToTile(_unit, _unit.Info._movementAbility, validTiles[rand.Next() % validTiles.Count], null)
                             {
                                 Weight = weight
                             };

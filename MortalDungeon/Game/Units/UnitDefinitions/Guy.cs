@@ -53,7 +53,7 @@ namespace MortalDungeon.Game.Units
                 Bloodthirsty = 1
             };
 
-            AI.Dispositions.Add(disp);
+            //AI.Dispositions.Add(disp);
         }
 
         public override void OnKill()

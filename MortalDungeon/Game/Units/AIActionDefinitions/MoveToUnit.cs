@@ -79,7 +79,7 @@ namespace MortalDungeon.Game.Units.AI
 
             if (path == null || path.Count == 0)
             {
-                CastingUnit.AI.BeginNextAction();
+                //CastingUnit.AI.BeginNextAction();
                 return;
             }
 
@@ -90,13 +90,19 @@ namespace MortalDungeon.Game.Units.AI
                 path.RemoveRange(path.Count - DistanceFromEnemy, DistanceFromEnemy);
             }
 
+            if (path == null || path.Count == 0)
+            {
+                //CastingUnit.AI.BeginNextAction();
+                return;
+            }
+
             CastingUnit.Info._movementAbility.CurrentTiles = path;
             CastingUnit.Info._movementAbility.EnactEffect();
 
             CastingUnit.Info._movementAbility.EffectEndedAction = () =>
             {
-                CastingUnit.AI.BeginNextAction();
                 CastingUnit.Info._movementAbility.EffectEndedAction = null;
+                CastingUnit.AI.BeginNextAction();
             };
         }
     }

@@ -34,6 +34,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             scene.MessageCenter._sendMessage = ParseMessage;
             scene.Priority = priority;
+            scene.Controller = this;
 
             Scenes.Add(scene);
 
@@ -226,6 +227,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return returnList;
         }
 
+        //separate public method for this just so we can easily keep track of where this functionality gets used
+        public void CullObjects() 
+        {
+            CullObjectsInScene();
+        }
+
         private void CullObjectsInScene() 
         {
             ObjectCulling._culledChunks = 0;
@@ -238,8 +245,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 scene._tileMapController.TileMaps.ForEach(map =>
                 {
-                    //ObjectCulling.CullListOfGameObjects(map.Tiles);
-
                     map.TileChunks.ForEach(chunk =>
                     {
                         ObjectCulling.CullTileChunk(chunk);
@@ -249,8 +254,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 });
 
                 ObjectCulling.CullListOfGameObjects(scene._units);
-
-                //ObjectCulling.CullListOfGameObjects(scene._genericObjects);
 
                 //ObjectCulling.CullListOfGameObjects(scene._UI); //UI shouldnt ever need to be culled
 

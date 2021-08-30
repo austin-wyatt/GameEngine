@@ -187,6 +187,8 @@ namespace MortalDungeon.Game.UI
         {
             HealthBar.SetSize(new UIScale(scale.X, scale.Y / 2));
             ShieldBar.SetSize(new UIScale(scale.X, scale.Y / 1.5f));
+
+            Console.WriteLine(scale);
         }
     }
 }

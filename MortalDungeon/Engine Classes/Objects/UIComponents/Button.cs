@@ -99,13 +99,24 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public override void SetColor(Vector4 color)
         {
-            if (!Selected)
+            if (Disabled) 
+            {
+                BaseComponent.SetColor(Colors.UIDisabledGray);
+            }
+            else if (!Selected)
                 BaseComponent.SetColor(color);
             else 
             {
                 Vector4 hoveredColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
                 BaseComponent.SetColor(hoveredColor);
             }
+        }
+
+        public override void OnDisabled(bool disable)
+        {
+            base.OnDisabled(disable);
+
+            SetColor(BaseColor);
         }
 
         public void SetSelected(bool selected) 

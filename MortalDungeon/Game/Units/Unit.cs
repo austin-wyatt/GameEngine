@@ -15,7 +15,7 @@ namespace MortalDungeon.Game.Units
     public class Unit : GameObject
     {
         public UnitAI AI;
-        public UnitInfo Info = new UnitInfo();
+        public UnitInfo Info;
         
 
         public bool VisibleThroughFog = false;
@@ -37,11 +37,13 @@ namespace MortalDungeon.Game.Units
         public Unit(CombatScene scene) 
         {
             AI = new UnitAI(this);
+            Info = new UnitInfo(this);
+
             Scene = scene;
 
             Hoverable = true;
 
-            Info.VisionRadius = 12;
+            Info._visionRadius = 12;
 
             Move movement = new Move(this);
             Info.Abilities.Add(movement.AbilityID, movement);
@@ -55,6 +57,8 @@ namespace MortalDungeon.Game.Units
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
         {
             AI = new UnitAI(this);
+            Info = new UnitInfo(this);
+
             Scene = scene;
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
@@ -389,7 +393,20 @@ namespace MortalDungeon.Game.Units
 
     public class UnitInfo
     {
+        public static int OUT_OF_COMBAT_VISION = 5;
+        public UnitInfo(Unit unit) 
+        {
+            Unit = unit;
+        }
+
+        public Unit Unit;
         public BaseTile TileMapPosition;
+
+        public TilePoint TemporaryPosition = null; //used as a placeholder position for calculating things like vision before a unit moves
+
+        public TilePoint Point => TileMapPosition.TilePoint;
+        public CombatScene Scene => TileMapPosition.GetScene();
+
         public Dictionary<int, Ability> Abilities = new Dictionary<int, Ability>();
         public List<Buff> Buffs = new List<Buff>();
 
@@ -428,7 +445,8 @@ namespace MortalDungeon.Game.Units
         public bool PrimaryUnit = false;
 
         public int Height = 1;
-        public int VisionRadius = 6;
+        public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
+        public int _visionRadius = 6;
 
         public Direction Facing = Direction.North;
 

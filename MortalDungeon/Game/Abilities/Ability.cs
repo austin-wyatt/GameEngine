@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -97,7 +99,7 @@ namespace MortalDungeon.Game.Abilities
 
         }
 
-        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default) 
+        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null) 
         {
             return new List<BaseTile>();
         }
@@ -167,7 +169,7 @@ namespace MortalDungeon.Game.Abilities
             return Damage;
         }
 
-        public virtual bool UnitInRange(Unit unit) 
+        public virtual bool UnitInRange(Unit unit, BaseTile position = null) 
         {
             return false;
         }
@@ -252,18 +254,44 @@ namespace MortalDungeon.Game.Abilities
 
         public virtual void UpdateEnergyCost() { }
 
+        public virtual void ApplyEnergyCost()
+        {
+            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            {
+                Scene.EnergyDisplayBar.HoverAmount(0);
+
+                float energyCost = GetEnergyCost();
+
+                Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+            }
+            else
+            {
+                float energyCost = GetEnergyCost();
+
+                CastingUnit.Info.Energy -= energyCost;
+            }
+        }
+
         /// <summary>
         /// Apply the energy cost and clean up and effects here.
         /// </summary>
         public virtual void OnCast() 
         {
+            if (Scene.InCombat) 
+            {
+                ApplyEnergyCost();
+            }
+
             Scene.DeselectAbility();
             Scene.OnAbilityCast(this);
         }
 
         public virtual void OnAICast() 
         {
-
+            if (Scene.InCombat)
+            {
+                ApplyEnergyCost();
+            }
         }
 
         public void Casted() 
@@ -277,8 +305,70 @@ namespace MortalDungeon.Game.Abilities
                 OnAICast();
             }
 
+            CreateIconHoverEffect();
+
             AffectedUnits.Clear();
             AffectedTiles.Clear();
+        }
+
+        public void CreateIconHoverEffect() 
+        {
+            Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
+
+            switch (CastingUnit.AI.Team) 
+            {
+                case UnitTeam.Ally:
+                    backgroundType = Icon.BackgroundType.BuffBackground;
+                    break;
+                case UnitTeam.Enemy:
+                    backgroundType = Icon.BackgroundType.DebuffBackground;
+                    break;
+            }
+
+            Icon icon = GenerateIcon(new UIScale(1 * WindowConstants.AspectRatio, 1), true, backgroundType);
+
+            icon.SetCameraPerspective(true);
+            if (SelectedUnit != null)
+            {
+                icon.SetPosition(SelectedUnit.Position + Vector3.UnitZ * 0.3f);
+            }
+            else if (SelectedTile != null) 
+            {
+                icon.SetPosition(SelectedTile.Position + Vector3.UnitZ * 0.3f);
+            }
+            else
+            {
+                icon.SetPosition(CastingUnit.Position + Vector3.UnitZ * 0.3f);
+            }
+
+            Scene._genericObjects.Add(icon);
+
+            PropertyAnimation anim = new PropertyAnimation(icon.BaseObject.BaseFrame);
+
+            float xMovement = (float)(new Random().NextDouble() - 1) * 10f;
+
+            for (int i = 0; i < 50; i++) 
+            {
+                Keyframe frame = new Keyframe(i * 2)
+                {
+                    Action = (obj) =>
+                    {
+                        icon.SetPosition(icon.Position + new Vector3(xMovement, -10, 0.015f));
+                        icon.SetColor(icon.BaseObject.BaseFrame.Color - new Vector4(0, 0, 0, 0.02f));
+                    }
+                };
+
+                anim.Keyframes.Add(frame);
+            }
+
+            icon.AddPropertyAnimation(anim);
+            anim.Play();
+
+            anim.OnFinish = () =>
+            {
+                icon.RemovePropertyAnimation(anim.AnimationID);
+                Scene._genericObjects.Remove(icon);
+            };
         }
 
         /// <summary>
@@ -286,6 +376,10 @@ namespace MortalDungeon.Game.Abilities
         /// </summary>
         public virtual void EffectEnded() 
         {
+            if (CastingUnit.AI.ControlType != ControlType.Controlled) 
+            {
+                Thread.Sleep(750);
+            }
             EffectEndedAction?.Invoke();
         }
         public Action EffectEndedAction = null;
@@ -315,37 +409,31 @@ namespace MortalDungeon.Game.Abilities
                 if (CanTargetSelf) 
                 {
                     AffectedUnits.Add(CastingUnit);
-                    CastingUnit.Target();
                 }
 
-                if ((validTiles[i].InFog && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog && !CanTargetThroughFog)) 
+                if ((validTiles[i].InFog[CastingUnit.AI.Team] && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog[CastingUnit.AI.Team] && !CanTargetThroughFog)) 
                 {
                     validTiles.RemoveAt(i);
                     i--;
                     continue;
                 }
+            }
 
-                for (int j = 0; j < units?.Count; j++)
+            for (int j = 0; j < units?.Count; j++)
+            {
+                if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.Enemy))
                 {
-                    if (units[j].Info.TileMapPosition == validTiles[i].TilePoint)
-                    {
-                        if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.Enemy))
-                        {
-                            validTiles.RemoveAt(i);
-                            i--;
-                            continue;
-                        }
-                        else if (units[j].Info.Dead && !CanTargetDeadUnits) 
-                        {
-                            validTiles.RemoveAt(i);
-                            i--;
-                            continue;
-                        }
-                        else
-                        {
-                            AffectedUnits.Add(units[j]);
-                        }
-                    }
+                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    continue;
+                }
+                else if (units[j].Info.Dead && !CanTargetDeadUnits)
+                {
+                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    continue;
+                }
+                else
+                {
+                    AffectedUnits.Add(units[j]);
                 }
             }
         }

@@ -28,9 +28,9 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
         }
         public static Vector3i CubeRound(Vector3 cube)
         {
-            float rx = (float)Math.Round(cube.X, MidpointRounding.AwayFromZero);
-            float ry = (float)Math.Round(cube.Y, MidpointRounding.AwayFromZero);
-            float rz = (float)Math.Round(cube.Z, MidpointRounding.AwayFromZero);
+            float rx = (float)Math.Round(cube.X);
+            float ry = (float)Math.Round(cube.Y);
+            float rz = (float)Math.Round(cube.Z);
 
             float x_diff = Math.Abs(rx - cube.X);
             float y_diff = Math.Abs(ry - cube.Y);

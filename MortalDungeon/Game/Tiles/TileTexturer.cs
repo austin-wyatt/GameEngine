@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Tiles
 
             map.DynamicTexture = new Texture(map.FrameBuffer.RenderTexture, TextureName.DynamicTexture);
 
-            map.Tiles.ForEach(tile => map.TilesToUpdate.Add(tile));
+            map.Tiles.ForEach(tile => tile.Update());
             RenderTilesToFramebuffer(map);
 
             map.TilesToUpdate.Clear();
@@ -141,7 +141,7 @@ namespace MortalDungeon.Game.Tiles
                 {
                     Vector4 heightColorCorrection = new Vector4(0, 0, 0, 0);
 
-                    if (tile.InFog)
+                    if (tile.InFog[tile.GetScene().CurrentTeam])
                     {
                         int num = random.Next() % 4;
                         var fogType = num switch
@@ -153,11 +153,11 @@ namespace MortalDungeon.Game.Tiles
                         };
                         overlayPosition = (int)fogType;
 
-                        if (tile.InFog && map.Controller.Scene.CurrentUnit != null && tile.Explored[map.Controller.Scene.CurrentUnit.AI.Team])
+                        if (tile.InFog[map.Controller.Scene.CurrentTeam] && tile.Explored[map.Controller.Scene.CurrentTeam])
                         {
                             mixPercent = 0.5f;
                         }
-                        else if (tile.InFog)
+                        else if (tile.InFog[map.Controller.Scene.CurrentTeam])
                         {
                             mixPercent = 1;
                         }

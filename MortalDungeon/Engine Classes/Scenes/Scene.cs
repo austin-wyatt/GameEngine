@@ -37,15 +37,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
     public class Scene
     {
-        public List<GameObject> _genericObjects = new List<GameObject>(); //GameObjects that are not Units and are being rendered independently
+        public SceneController Controller;
+
+        public QueuedObjectList<GameObject> _genericObjects = new QueuedObjectList<GameObject>(); //GameObjects that are not Units and are being rendered independently
         public List<Text> _text = new List<Text>();
         public TileMapController _tileMapController = new TileMapController();
-        public List<Unit> _units = new List<Unit>(); //The units to render
-        public List<UIObject> _UI = new List<UIObject>();
+        public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
+        public QueuedObjectList<UIObject> _UI = new QueuedObjectList<UIObject>();
 
-        public List<GameObject> _lowPriorityObjects = new List<GameObject>(); //the last objects that will be rendered in the scene
+        public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
 
         public List<ITickable> TickableObjects = new List<ITickable>();
+
+        public ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
 
         public Action ExitFunc = null; //function used to exit the application
 
@@ -88,10 +92,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected GameObject _hoveredObject;
         protected virtual void InitializeFields()
         {
-            _genericObjects = new List<GameObject>();
+            _genericObjects = new QueuedObjectList<GameObject>();
             _text = new List<Text>();
-            _units = new List<Unit>(); //The units to render
-            _UI = new List<UIObject>();
+            _units = new QueuedObjectList<Unit>(); //The units to render
+            _UI = new QueuedObjectList<UIObject>();
             _tileMapController = new TileMapController();
 
             MessageCenter = new MessageCenter(SceneID)
@@ -118,9 +122,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
             Loaded = false;
         }
 
-        public void AddUI(UIObject ui, int zIndex = -1) 
+        public void AddUI(UIObject ui, int zIndex = -1, bool immediate = true) 
         {
-            _UI.Add(ui);
+            if (immediate)
+            {
+                _UI.AddImmediate(ui);
+            }
+            else 
+            {
+                _UI.Add(ui);
+            }
 
             if (zIndex != -1)
             {

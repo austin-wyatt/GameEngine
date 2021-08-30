@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Units
 {
@@ -60,7 +61,7 @@ namespace MortalDungeon.Game.Units
 
         public void TakeTurn() 
         {
-            List<BaseTile> tilesInVision = Scene.GetTeamVision(_unit.AI.Team);
+            //List<BaseTile> tilesInVision = Scene.GetTeamVision(_unit.AI.Team);
 
             _unit.Info.Energy = _unit.Info.CurrentEnergy;
 
@@ -78,9 +79,15 @@ namespace MortalDungeon.Game.Units
             }
             else 
             {
-                GetAction().EnactEffect();
+                Task.Run(() => GetAction().EnactEffect());
+                //GetAction().EnactEffect();
                 _depth++;
             }
+        }
+
+        public void EndTurn() 
+        {
+            new AI.EndTurn(_unit).EnactEffect();
         }
 
 
@@ -151,12 +158,10 @@ namespace MortalDungeon.Game.Units
                 }
             });
 
-            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}");
+            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Energy remaining.");
 
             return selectedAction;
         }
-
-        
     }
 
 

@@ -8,6 +8,7 @@ using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles.TileMaps;
+using System.Diagnostics;
 
 namespace MortalDungeon.Game.Tiles
 {

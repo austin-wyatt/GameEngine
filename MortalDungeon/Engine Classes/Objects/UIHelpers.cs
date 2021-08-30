@@ -379,7 +379,7 @@ namespace MortalDungeon.Engine_Classes
 
         public override string ToString()
         {
-            return "{" + X + ", " + Y + "}";
+            return "UIScale {" + X + ", " + Y + "}";
         }
     }
 

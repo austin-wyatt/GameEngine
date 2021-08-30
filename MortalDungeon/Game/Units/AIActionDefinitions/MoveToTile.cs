@@ -39,8 +39,8 @@ namespace MortalDungeon.Game.Units.AI
 
             CastingUnit.Info._movementAbility.EffectEndedAction = () =>
             {
-                CastingUnit.AI.BeginNextAction();
                 CastingUnit.Info._movementAbility.EffectEndedAction = null;
+                CastingUnit.AI.BeginNextAction();
             };
         }
     }
