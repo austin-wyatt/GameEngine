@@ -43,7 +43,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Text> _text = new List<Text>();
         public TileMapController _tileMapController = new TileMapController();
         public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
-        public QueuedObjectList<UIObject> _UI = new QueuedObjectList<UIObject>();
+        public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
 
         public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
 
@@ -95,7 +95,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _genericObjects = new QueuedObjectList<GameObject>();
             _text = new List<Text>();
             _units = new QueuedObjectList<Unit>(); //The units to render
-            _UI = new QueuedObjectList<UIObject>();
+            _UI = new QueuedUIList<UIObject>();
             _tileMapController = new TileMapController();
 
             MessageCenter = new MessageCenter(SceneID)
@@ -221,6 +221,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #endregion
 
         #region Event handlers
+
+        public virtual void OnRender() 
+        {
+            _genericObjects.HandleQueuedItems();
+            _UI.HandleQueuedItems();
+            _units.HandleQueuedItems();
+            _lowPriorityObjects.HandleQueuedItems();
+        }
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
         //Ie, it curtails the problem of setting a flag earlier in the call chain and then checking it later expecting the old value

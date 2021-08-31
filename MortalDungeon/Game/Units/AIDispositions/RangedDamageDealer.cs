@@ -38,7 +38,7 @@ namespace MortalDungeon.Game.Units.AI
                     {
                         if (!rangedAbility.UnitInRange(target)) 
                         {
-                            weight += 2f * Weight;
+                            weight += 1.9f * Weight;
 
                             returnAction = new MoveInRangeOfAbility(_unit, rangedAbility, null, target)
                             {

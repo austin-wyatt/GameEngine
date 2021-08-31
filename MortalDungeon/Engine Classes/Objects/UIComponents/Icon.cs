@@ -19,7 +19,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SpiderWeb,
             Poison,
             BandagedHand,
-            BowAndArrow
+            BowAndArrow,
+            MasqueradeMask,
+            BrokenMask = 12
         }
 
         public enum BackgroundType 

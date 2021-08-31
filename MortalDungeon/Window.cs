@@ -276,12 +276,8 @@ namespace MortalDungeon
             Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
             _sceneController.Scenes.ForEach(scene =>
             {
-                scene._genericObjects.HandleQueuedItems();
-                scene._UI.HandleQueuedItems();
-                scene._units.HandleQueuedItems();
-                scene._lowPriorityObjects.HandleQueuedItems();
-
-
+                scene.OnRender();
+                
 
                 RenderingQueue.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
                 RenderingQueue.QueueLowPriorityObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.LowPriorityObject));

@@ -153,12 +153,15 @@ namespace MortalDungeon.Game.UI
 
         public void SetWillDisplay(bool display) 
         {
-            WillDisplay = display;
-            SetRender(display);
-
-            if (display)
+            if(WillDisplay != display) 
             {
-                UpdateUnitStatusPosition();
+                WillDisplay = display;
+                SetRender(display);
+
+                if (display)
+                {
+                    UpdateUnitStatusPosition();
+                }
             }
         }
 
@@ -183,12 +186,17 @@ namespace MortalDungeon.Game.UI
             UpdateUnitStatusPosition();
         }
 
+        private UIScale _healthBarScale = new UIScale();
+        private UIScale _shieldBarScale = new UIScale();
         private void UpdateInfoBarScales(UIScale scale) 
         {
-            HealthBar.SetSize(new UIScale(scale.X, scale.Y / 2));
-            ShieldBar.SetSize(new UIScale(scale.X, scale.Y / 1.5f));
+            _healthBarScale.X = scale.X;
+            _healthBarScale.Y = scale.Y / 2;
+            _shieldBarScale.X = scale.X;
+            _shieldBarScale.Y = scale.Y / 1.5f;
 
-            Console.WriteLine(scale);
+            HealthBar.SetSize(_healthBarScale);
+            ShieldBar.SetSize(_shieldBarScale);
         }
     }
 }

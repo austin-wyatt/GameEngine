@@ -151,6 +151,9 @@ namespace MortalDungeon.Game.UI
             {
                 Scene.CurrentUnit = Scene._units[0];
                 Scene.CurrentTeam = Scene._units[0].AI.Team;
+
+                Scene.SelectUnit(Scene._units[0]);
+
                 Scene.FillInTeamFog(Scene._units[0].AI.Team, Units.UnitTeam.Unknown, true);
             };
 
@@ -165,6 +168,9 @@ namespace MortalDungeon.Game.UI
             {
                 Scene.CurrentUnit = Scene._units[2];
                 Scene.CurrentTeam = Scene._units[2].AI.Team;
+
+                Scene.SelectUnit(Scene._units[2]);
+
                 Scene.FillInTeamFog(Scene._units[2].AI.Team, Units.UnitTeam.Unknown, true);
             };
 
@@ -172,30 +178,18 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].AddChild(unitButton2);
 
-            Button highlightRange = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Highlight Range", 0.043f, Colors.UILightGray, Colors.UITextBlack);
-            highlightRange.BaseComponent.MultiTextureData.MixTexture = false;
+            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Skele AI", 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            toggleAI.BaseComponent.MultiTextureData.MixTexture = false;
 
 
-            highlightRange.OnClickAction = () =>
+            toggleAI.OnClickAction = () =>
             {
-                List<Tiles.BaseTile> tiles = Scene._units[2].GetFirstAbilityOfType(Abilities.AbilityTypes.RangedAttack).GetValidTileTargets(Scene._units[2].GetTileMap());
-
-                Scene._tileMapController.TileMaps.ForEach(m => m.Tiles.ForEach(t =>
-                {
-                    t.Color = Colors.White;
-                    t.Update();
-                }));
-
-                tiles.ForEach(t =>
-                {
-                    t.Color = Colors.Red;
-                    t.Update();
-                });
+                Scene._units[2].AI.ControlType = Scene._units[2].AI.ControlType == Units.ControlType.Basic_AI ? Units.ControlType.Controlled : Units.ControlType.Basic_AI;
             };
 
-            highlightRange.SetPositionFromAnchor(unitButton2.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
+            toggleAI.SetPositionFromAnchor(unitButton2.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
-            Tabs[0].AddChild(highlightRange);
+            Tabs[0].AddChild(toggleAI);
 
             Button updateMaps = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Update Maps", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             updateMaps.BaseComponent.MultiTextureData.MixTexture = false;
@@ -206,7 +200,7 @@ namespace MortalDungeon.Game.UI
                 Scene.FillInTeamFog();
             };
 
-            updateMaps.SetPositionFromAnchor(highlightRange.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
+            updateMaps.SetPositionFromAnchor(toggleAI.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
             Tabs[0].AddChild(updateMaps);
         }

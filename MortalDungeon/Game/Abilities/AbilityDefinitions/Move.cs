@@ -24,6 +24,7 @@ namespace MortalDungeon.Game.Abilities
             CanTargetEnemy = false;
             CanTargetAlly = false;
             CanTargetThroughFog = true;
+            BreakStealth = false;
 
             EnergyCost = 1;
 

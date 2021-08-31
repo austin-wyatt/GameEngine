@@ -64,10 +64,10 @@ namespace MortalDungeon.Engine_Classes
             {
                 base.Tick();
 
-                Children.ForEach((child) =>
+                for (int i = 0; i < Children.Count; i++) 
                 {
-                    child.Tick();
-                });
+                    Children[i].Tick();
+                }
             }
         }
 
@@ -413,7 +413,8 @@ namespace MortalDungeon.Engine_Classes
             UIObject parent = this;
             while (true) 
             {
-                parent = parent.Parent;
+                if(parent.Parent != null)
+                    parent = parent.Parent;
 
                 if (parent.Parent == null)
                 {

@@ -27,10 +27,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
     public class CombatScene : Scene
     {
         public int Round = 0;
-        public List<Unit> InitiativeOrder = new List<Unit>();
+        public QueuedList<Unit> InitiativeOrder = new QueuedList<Unit>();
         public int UnitTakingTurn = 0; //the unit in the initiative order that is going
         public EnergyDisplayBar EnergyDisplayBar;
         public GameFooter Footer;
+
+        public QueuedList<TemporaryVision> TemporaryVision = new QueuedList<TemporaryVision>();
 
         public static TabMenu TabMenu = new TabMenu();
 
@@ -92,7 +94,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void CompleteRound()
         {
             //do stuff that needs to be done when a round is completed
-            InitiativeOrder = InitiativeOrder.OrderBy(i => i.Info.Speed).ToList();
+            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderBy(i => i.Info.Speed));
 
             AdvanceRound();
 
@@ -112,7 +114,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             UnitTakingTurn = 0;
 
-            InitiativeOrder = InitiativeOrder.OrderBy(i => i.Info.Speed).ToList(); //sort the list by speed
+            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderBy(i => i.Info.Speed)); //sort the list by speed
 
             //do calculations here (advance an event, show a cutscene, etc)
 
@@ -123,6 +125,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     unit.Info.Buffs[i].OnRoundStart();
                 }
             });
+
+            TemporaryVision.ForEach(t =>
+            {
+                if (t.TickTarget == TickDurationTarget.OnRoundStart)
+                {
+                    TickTemporaryVision(t);
+                }
+            });
+            UpdateTemporaryVision();
 
             StartTurn();
         }
@@ -135,6 +146,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
             UnitTeam prevTeam = CurrentUnit.AI.Team;
 
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
+
+            TemporaryVision.ForEach(t =>
+            {
+                if (t.TickTarget == TickDurationTarget.OnUnitTurnStart && t.TargetUnit.ObjectID == CurrentUnit.ObjectID) 
+                {
+                    TickTemporaryVision(t);
+                }
+            });
+            UpdateTemporaryVision();
 
             //EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
 
@@ -173,6 +193,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 CurrentUnit.OnTurnEnd();
             }
 
+            TemporaryVision.ForEach(t =>
+            {
+                if (t.TickTarget == TickDurationTarget.OnUnitTurnEnd && t.TargetUnit.ObjectID == CurrentUnit.ObjectID)
+                {
+                    TickTemporaryVision(t);
+                }
+            });
+            UpdateTemporaryVision();
+
             UnitTakingTurn++;
 
 
@@ -193,7 +222,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void StartCombat() 
         {
-            InitiativeOrder = new List<Unit>(_units);
+            InitiativeOrder = new QueuedList<Unit>(_units);
             InitiativeOrder.RemoveAll(u => u.Info.NonCombatant);
 
             if (InitiativeOrder.Count == 0)
@@ -299,7 +328,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 });
             });
 
-            HideObjectsInFog();
+            TemporaryVision.ForEach(vision =>
+            {
+                vision.TilesToReveal.ForEach(tile =>
+                {
+                    tile.SetExplored(true, vision.Team);
+                    tile.SetFog(false, vision.Team);
+                });
+            });
+
+            CalculateRevealedUnits();
+
+            HideNonVisibleObjects();
 
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, true);
         }
@@ -332,40 +372,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return returnList;
         }
 
-        //public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown, bool reveal = false, bool updateAll = false)
-        //{
-        //    _tileMapController.TileMaps.ForEach(m =>
-        //    {
-        //        if (!m.Render)
-        //            return;
-
-
-        //        m.Tiles.ForEach(tile =>
-        //        {
-        //            tile.MultiTextureData.MixedTexture = _normalFogTexture;
-        //            tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
-        //            tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
-
-        //            //foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
-        //            //{
-        //            //tile.SetExplored(tile.Explored[team], team);
-        //            //}
-        //            if (reveal)
-        //            {
-        //                tile.SetExplored(true, currentTeam, previousTeam);
-        //                tile.SetFog(false, currentTeam, previousTeam);
-        //            }
-        //            else 
-        //            {
-        //                tile.SetExplored(tile.Explored[currentTeam], currentTeam, previousTeam);
-        //                tile.SetFog(true, currentTeam, previousTeam);
-        //            }
-
-        //            if (updateAll)
-        //                tile.Update();
-        //        });
-        //    });
-        //}
 
         public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown, bool reveal = false, bool updateAll = false)
         {
@@ -382,11 +388,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
                         tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
 
-                    //foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
-                    //{
-                    //tile.SetExplored(tile.Explored[team], team);
-                    //}
-                    if (reveal)
+
+                        if (reveal)
                         {
                             tile.SetExplored(true, team, UnitTeam.Unknown);
                             tile.SetFog(false, team);
@@ -404,35 +407,72 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public void HideObjectsInFog(List<Unit> units = null) 
+        public void CalculateRevealedUnits() 
         {
-            if (units == null)
+            for (int i = 0; i < _units.Count; i++) 
             {
-                _units.ForEach(unit =>
+                //if the unit isn't attempting to hide then it is revealed
+                if (!_units[i].Info.Stealth.Hiding) 
                 {
-                    if (unit.Info.TileMapPosition.InFog[CurrentTeam] && !(unit.VisibleThroughFog && unit.Info.TileMapPosition.Explored[CurrentTeam]))
+                    _units[i].Info.Stealth.SetAllRevealed();
+                    continue;
+                }
+
+                foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
+                {
+                    //we don't need to check the unit's team
+                    if (team == _units[i].AI.Team)
+                        continue;
+
+                    //if the unit's position is in fog for a team then we can assume that it's hidden
+                    if (_units[i].Info.Stealth.PositionInFog(team))
                     {
-                        unit.SetRender(false);
+                        _units[i].Info.Stealth.SetRevealed(team, false);
+                        continue;
                     }
-                    else
+
+                    //if we get to this point then we need to compare and contrast Stealth and Scout skill levels for the units
+                    bool couldSee = false;
+                    _units.ForEach(u =>
                     {
-                        unit.SetRender(true);
-                    }
-                });
+                        if (u.AI.Team == team) 
+                        {
+                            if (u.Info.Scouting.CouldSeeUnit(_units[i], _units[i].Info.Map.GetDistanceBetweenPoints(u.Info.Point, _units[i].Info.Point))) 
+                            {
+                                couldSee = true;
+                            }
+                        }
+                    });
+
+                    _units[i].Info.Stealth.SetRevealed(team, couldSee);
+                }
             }
-            else 
+        }
+
+        public void HideNonVisibleObjects() 
+        {
+            _units.ForEach(unit =>
             {
-                units.ForEach(unit =>
+                if (unit.Info.Visible(CurrentTeam))
                 {
-                    if (unit.Info.TileMapPosition.InFog[CurrentTeam] && !(unit.VisibleThroughFog && unit.Info.TileMapPosition.Explored[CurrentTeam]))
-                    {
-                        unit.SetRender(false);
-                    }
-                    else
-                    {
-                        unit.SetRender(true);
-                    }
-                });
+                    unit.SetRender(true);
+                }
+                else 
+                {
+                    unit.SetRender(false);
+                }
+            });
+        }
+
+        public override void OnRender()
+        {
+            base.OnRender();
+
+            UpdateTemporaryVision();
+
+            if (InitiativeOrder.HasQueuedItems()) 
+            {
+                InitiativeOrder.HandleQueuedItems();
             }
         }
 
@@ -630,20 +670,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 if (_selectedAbility == null)
                 {
-                    if (unit.Selectable && !unit.Info.TileMapPosition.InFog[CurrentUnit.AI.Team])
+                    if (unit.Selectable && unit.Info.Visible(CurrentTeam))
                         SelectUnit(unit);
-
-
-                    //if (!InCombat)
-                    //{
-                    //    CurrentUnit = unit;
-                    //    _selectedAbility = unit.GetFirstAbilityOfType(DefaultAbilityType);
-
-                    //    if (_selectedAbility.Type != AbilityTypes.Empty)
-                    //    {
-                    //        SelectAbility(_selectedAbility);
-                    //    }
-                    //}
                 }
                 else
                 {
@@ -682,6 +710,29 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
             MessageCenter.SendMessage(msg);
+        }
+
+        public void TickTemporaryVision(TemporaryVision t) 
+        {
+            t.TickDuration();
+
+            if (t.Duration <= 0) 
+            {
+                TemporaryVision.Remove(t);
+                t.TilesToReveal.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Add or remove any new TemporaryVision objects and apply those changes to the vision.
+        /// </summary>
+        public void UpdateTemporaryVision() 
+        {
+            if (TemporaryVision.HasQueuedItems()) 
+            {
+                TemporaryVision.HandleQueuedItems();
+                FillInTeamFog();
+            }
         }
     }
 }

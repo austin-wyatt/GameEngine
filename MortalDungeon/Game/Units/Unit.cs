@@ -253,6 +253,10 @@ namespace MortalDungeon.Game.Units
             
             float actualDamage = damage * damageMultiplier + Info.DamageAddition;
 
+            if (actualDamage > Info.Stealth.Skill && Info.Stealth.Hiding)
+            {
+                Info.Stealth.SetHiding(false);
+            }
 
             //shield piercing exceptions should go here
             if (GetPierceShields(damageType))
@@ -279,10 +283,6 @@ namespace MortalDungeon.Game.Units
                         actualDamage = 0;
                     }
                 }
-                else 
-                {
-                    Info.DamageBlockedByShields -= actualDamage;
-                }
 
                 if (Info.DamageBlockedByShields > Info.ShieldBlock) 
                 {
@@ -292,8 +292,8 @@ namespace MortalDungeon.Game.Units
             }
 
 
-
             Info.Health -= actualDamage;
+
 
             StatusBarComp.HealthBar.SetHealthPercent(Info.Health / UnitInfo.MaxHealth, AI.Team);
             StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
@@ -389,6 +389,16 @@ namespace MortalDungeon.Game.Units
             SelectionTile.Untarget();
             Targeted = false;
         }
+
+        public override void Tick()
+        {
+            base.Tick();
+
+            if (Info.Stealth.HidingBrokenActions.HasQueuedItems()) 
+            {
+                Info.Stealth.HidingBrokenActions.HandleQueuedItems();
+            }
+        }
     }
 
     public class UnitInfo
@@ -397,6 +407,9 @@ namespace MortalDungeon.Game.Units
         public UnitInfo(Unit unit) 
         {
             Unit = unit;
+
+            Stealth = new Hidden(unit);
+            Scouting = new Scouting(unit);
         }
 
         public Unit Unit;
@@ -406,6 +419,7 @@ namespace MortalDungeon.Game.Units
 
         public TilePoint Point => TileMapPosition.TilePoint;
         public CombatScene Scene => TileMapPosition.GetScene();
+        public TileMap Map => TileMapPosition.TileMap;
 
         public Dictionary<int, Ability> Abilities = new Dictionary<int, Ability>();
         public List<Buff> Buffs = new List<Buff>();
@@ -454,5 +468,135 @@ namespace MortalDungeon.Game.Units
         public bool BlocksSpace = true;
         public bool PhasedMovement = false;
         public bool BlocksVision = false;
+
+        public bool Visible(UnitTeam team) 
+        {
+            if (Unit.VisibleThroughFog && TileMapPosition.Explored[team])
+                return true;
+
+            return !TileMapPosition.InFog[team] && Stealth.Revealed[team];
+        }
+
+
+        public Hidden Stealth;
+        public Scouting Scouting;
+    }
+
+    public class Hidden 
+    {
+        private Unit Unit;
+        /// <summary>
+        /// Whether a unit is currently attemping to hide
+        /// </summary>
+        public bool Hiding = false;
+
+        /// <summary>
+        /// The teams that can see this unit
+        /// </summary>
+        public Dictionary<UnitTeam, bool> Revealed = new Dictionary<UnitTeam, bool>();
+
+        public float Skill = 0;
+
+        public QueuedList<Action> HidingBrokenActions = new QueuedList<Action>();
+
+        public Hidden(Unit unit) 
+        {
+            Unit = unit;
+
+            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
+            {
+                Revealed.TryAdd(team, true);
+            }
+        }
+
+        public void SetHiding(bool hiding) 
+        {
+            if (Hiding && !hiding) 
+            {
+                Hiding = false;
+                HidingBroken();
+            }
+            else 
+            {
+                Hiding = hiding;
+            }
+        }
+
+        private void HidingBroken() 
+        {
+            SetAllRevealed();
+            HidingBrokenActions.ForEach(a => a.Invoke());
+        }
+
+        public void SetAllRevealed(bool revealed = true) 
+        {
+            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
+            {
+                Revealed[team] = revealed;
+            }
+
+            Revealed[Unit.AI.Team] = true;
+        }
+
+        public void SetRevealed(UnitTeam team, bool revealed) 
+        {
+            Revealed[team] = revealed;
+        }
+
+        /// <summary>
+        /// Returns false if any team that isn't the unit's team has vision of the space
+        /// </summary>
+        /// <returns></returns>
+        public bool EnemyHasVision()
+        {
+            bool hasVision = false;
+
+            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
+            {
+                if (team != Unit.AI.Team && !Unit.Info.TileMapPosition.InFog[team])
+                {
+                    hasVision = true;
+                }
+            }
+
+            return hasVision;
+        }
+
+        public bool PositionInFog(UnitTeam team) 
+        {
+            bool inFog = true;
+
+            if (team != Unit.AI.Team && !Unit.Info.TileMapPosition.InFog[team]) 
+            {
+                inFog = false;
+            }
+
+            return inFog;
+        }
+    }
+
+    public class Scouting 
+    {
+        private Unit Unit;
+
+        public const int DEFAULT_RANGE = 5;
+
+        public int Skill = 0;
+
+        public Scouting(Unit unit) 
+        {
+            Unit = unit;
+        }
+
+        /// <summary>
+        /// Calculates whether a unit can scout a hiding unit. This does not take into account whether the tiles are actually/would be in vision.
+        /// </summary>
+        public bool CouldSeeUnit(Unit unit, int distance)
+        {
+            if (!unit.Info.Stealth.Hiding)
+                return true;
+
+            return Skill - unit.Info.Stealth.Skill - (distance - DEFAULT_RANGE) >= 0;
+        }
     }
 }

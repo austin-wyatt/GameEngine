@@ -208,12 +208,18 @@ namespace MortalDungeon.Game.UI
         }
 
         private List<Icon> _currentIcons = new List<Icon>();
-        public void UpdateFooterInfo(Unit unit) 
+        public void UpdateFooterInfo(Unit unit = null) 
         {
-            _currentUnit = unit;
+            if (unit != null) 
+            {
+                _currentUnit = unit;
+            }
+
+            if (_currentUnit == null)
+                return;
 
             #region unit status box
-            _unitNameTextBox.SetText(unit.Name);
+            _unitNameTextBox.SetText(_currentUnit.Name);
             
             
             Vector3 nameBoxPos = _containingBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
@@ -227,10 +233,10 @@ namespace MortalDungeon.Game.UI
             nameBoxPos.Y = nameBoxPos.Y - _containingBlock.GetDimensions().Y / 4;
 
             _unitHealthBar.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
-            _unitHealthBar.SetHealthPercent(unit.Info.Health / UnitInfo.MaxHealth, unit.AI.Team);
+            _unitHealthBar.SetHealthPercent(_currentUnit.Info.Health / UnitInfo.MaxHealth, _currentUnit.AI.Team);
 
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
-            _unitShieldBar.SetCurrentShields(unit.Info.CurrentShields);
+            _unitShieldBar.SetCurrentShields(_currentUnit.Info.CurrentShields);
             #endregion
 
             #region ability icons
@@ -340,7 +346,7 @@ namespace MortalDungeon.Game.UI
             count = 0;
             int delimiter = -1;
             _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea.Size.X, _scrollableArea.Size.Y));
-            foreach (Buff buff in unit.Info.Buffs) 
+            foreach (Buff buff in _currentUnit.Info.Buffs) 
             {
                 if (buff.Hidden)
                     continue;
@@ -391,6 +397,7 @@ namespace MortalDungeon.Game.UI
 
             #endregion
         }
+
 
         public override void OnResize()
         {

@@ -44,6 +44,9 @@ namespace MortalDungeon.Game.Units
             Shoot shootAbility = new Shoot(this, 15, 4, 20) { EnergyCost = 2 };
             Info.Abilities.Add(shootAbility.AbilityID, shootAbility);
 
+            Hide hideAbility = new Hide(this);
+            Info.Abilities.Add(hideAbility.AbilityID, hideAbility);
+
             AI.RangedDamageDealer disp = new AI.RangedDamageDealer(this)
             {
                 Weight = 1,
@@ -51,6 +54,8 @@ namespace MortalDungeon.Game.Units
             };
 
             AI.Dispositions.Add(disp);
+
+            Info.Stealth.Skill = 10;
 
             //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
             //Abilities.Add(melee.AbilityID, melee);

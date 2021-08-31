@@ -43,6 +43,12 @@ namespace MortalDungeon.Game.Abilities
         Bleed, //hurts positive shields but doesn't get amplified by negative shields
         Poison //unaffected by shields
     }
+
+    public enum AbilityContext 
+    {
+        SkipEnergyCost,
+        SkipIconAnimation
+    }
     public class Ability
     {
         public AbilityTypes Type = AbilityTypes.Empty;
@@ -59,6 +65,8 @@ namespace MortalDungeon.Game.Abilities
         public TileMap TileMap => CastingUnit.GetTileMap();
         public BaseTile SelectedTile;
         public Unit SelectedUnit;
+
+        public ContextManager<AbilityContext> Context = new ContextManager<AbilityContext>();
 
         public int AbilityID => _abilityID;
         protected int _abilityID = _currentAbilityID++;
@@ -80,6 +88,8 @@ namespace MortalDungeon.Game.Abilities
         public bool CanTargetSelf = false;
         public bool CanTargetGround = true;
         public bool CanTargetTerrain = false;
+
+        public bool BreakStealth = true;
 
         public bool CanTargetThroughFog = false;
         public bool CanTargetDeadUnits = false;
@@ -104,9 +114,17 @@ namespace MortalDungeon.Game.Abilities
             return new List<BaseTile>();
         }
 
-        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false) 
+        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false, Icon passedIcon = null) 
         {
-            Icon icon = new Icon(Icon, scale, withBackground, backgroundType);
+            Icon icon;
+            if (passedIcon == null)
+            {
+                icon = new Icon(Icon, scale, withBackground, backgroundType);
+            }
+            else 
+            {
+                icon = new Icon(passedIcon, scale, withBackground, backgroundType);
+            }
 
             if (showEnergyCost) 
             {
@@ -256,6 +274,12 @@ namespace MortalDungeon.Game.Abilities
 
         public virtual void ApplyEnergyCost()
         {
+            if (Context.GetFlag(AbilityContext.SkipEnergyCost)) 
+            {
+                Context.SetFlag(AbilityContext.SkipEnergyCost, false);
+                return;
+            }
+
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
                 Scene.EnergyDisplayBar.HoverAmount(0);
@@ -306,13 +330,42 @@ namespace MortalDungeon.Game.Abilities
             }
 
             CreateIconHoverEffect();
+            CreateTemporaryVision();
+
+            if (BreakStealth && CastingUnit.Info.Stealth.Hiding) 
+            {
+                CastingUnit.Info.Stealth.SetHiding(false);
+            }
 
             AffectedUnits.Clear();
             AffectedTiles.Clear();
         }
 
-        public void CreateIconHoverEffect() 
+        public void CreateTemporaryVision() 
         {
+            if (SelectedUnit == null)
+                return;
+
+            TemporaryVision vision = new TemporaryVision();
+
+            vision.TargetUnit = CastingUnit;
+            vision.TickTarget = TickDurationTarget.OnUnitTurnStart;
+            vision.Team = SelectedUnit.AI.Team;
+            vision.TilesToReveal = SelectedUnit.Info.TileMapPosition.TileMap.GetVisionInRadius(CastingUnit.Info.Point, 1);
+            vision.Duration = 1;
+
+            Scene.TemporaryVision.Add(vision);
+        }
+
+        public void CreateIconHoverEffect(Icon passedIcon = null) 
+        {
+            if (Context.GetFlag(AbilityContext.SkipIconAnimation)) 
+            {
+                Context.SetFlag(AbilityContext.SkipIconAnimation, false);
+                return;
+            }
+
+
             Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
 
             switch (CastingUnit.AI.Team) 
@@ -325,7 +378,8 @@ namespace MortalDungeon.Game.Abilities
                     break;
             }
 
-            Icon icon = GenerateIcon(new UIScale(1 * WindowConstants.AspectRatio, 1), true, backgroundType);
+            Icon icon = GenerateIcon(new UIScale(1 * WindowConstants.AspectRatio, 1), true, backgroundType, false, passedIcon);
+            
 
             icon.SetCameraPerspective(true);
             if (SelectedUnit != null)
@@ -376,11 +430,13 @@ namespace MortalDungeon.Game.Abilities
         /// </summary>
         public virtual void EffectEnded() 
         {
-            if (CastingUnit.AI.ControlType != ControlType.Controlled) 
+            if (CastingUnit.AI.ControlType != ControlType.Controlled && Type != AbilityTypes.Move) 
             {
                 Thread.Sleep(750);
             }
             EffectEndedAction?.Invoke();
+
+            Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
         }
         public Action EffectEndedAction = null;
 
@@ -399,7 +455,7 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if (minRange > 0 && minRange > TileMap.GetDistanceBetweenPoints(validTiles[i].TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
+                if (minRange > 0 && minRange >= TileMap.GetDistanceBetweenPoints(validTiles[i].TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -421,12 +477,36 @@ namespace MortalDungeon.Game.Abilities
 
             for (int j = 0; j < units?.Count; j++)
             {
+                BaseTile tile = units[j].Info.TileMapPosition;
+
+                if (units[j] == CastingUnit && !CanTargetSelf) 
+                {
+                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    continue;
+                }
+
+                if (!validTiles.Contains(units[j].Info.TileMapPosition)) 
+                {
+                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    continue;
+                }
+
                 if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.Enemy))
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;
                 }
                 else if (units[j].Info.Dead && !CanTargetDeadUnits)
+                {
+                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    continue;
+                }
+                else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team]) 
+                {
+                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    continue;
+                }
+                else if ((tile.InFog[CastingUnit.AI.Team] && !tile.Explored[CastingUnit.AI.Team] && trimFog) || (tile.InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;

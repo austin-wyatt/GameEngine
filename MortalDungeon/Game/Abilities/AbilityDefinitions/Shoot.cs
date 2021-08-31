@@ -46,15 +46,18 @@ namespace MortalDungeon.Game.Abilities
             
             bool inRange;
             List<BaseTile> validTiles;
-            if (position == null)
-            {
-                validTiles = GetValidTileTargets(unit.GetTileMap(), null, position);
-            }
-            else 
-            {
-                validTiles = unit.GetTileMap().GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), new List<Unit> { unit });
-                unit.Info.TemporaryPosition = point;
-            }
+            //if (position == null)
+            //{
+            //    validTiles = GetValidTileTargets(unit.GetTileMap(), null, position);
+            //}
+            //else 
+            //{
+            //    validTiles = unit.GetTileMap().GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), new List<Unit> { unit });
+            //    unit.Info.TemporaryPosition = point;
+            //}
+
+            validTiles = unit.GetTileMap().GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), new List<Unit> { unit });
+            unit.Info.TemporaryPosition = point;
 
             TileMap map = unit.GetTileMap();
 
