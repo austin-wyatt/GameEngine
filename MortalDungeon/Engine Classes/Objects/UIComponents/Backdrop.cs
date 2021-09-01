@@ -34,7 +34,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             window.ScaleX(aspectRatio);
             window.ScaleX(ScaleFactor.X);
             window.ScaleY(ScaleFactor.Y);
-            window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
+            window.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
             tempAnimation = new Animation()
             {
                 Frames = new List<RenderableObject>() { window },
@@ -55,7 +55,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public override void SetColor(Vector4 color)
         {
-            _baseObject.BaseFrame.Color = color;
+            _baseObject.BaseFrame.SetBaseColor(color);
         }
 
         public override void ScaleAddition(float f)

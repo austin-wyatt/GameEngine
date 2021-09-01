@@ -114,8 +114,10 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             AddUI(energyDisplayBar);
 
+            TurnDisplay = new TurnDisplay();
+            TurnDisplay.SetPosition(WindowConstants.CenterScreen - new Vector3(0, WindowConstants.ScreenUnits.Y / 2 - 50, 0));
 
-
+            AddUI(TurnDisplay);
 
             UnitStatusBar guyStatusBar = new UnitStatusBar(guy, _camera);
 
@@ -280,6 +282,7 @@ namespace MortalDungeon.Game.SceneDefinitions
         public override void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
         {
             base.OnTileClicked(map, tile, button, flags);
+
             if (button == MouseButton.Left)
             {
                 if (_selectedAbility != null)

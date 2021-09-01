@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,8 +30,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
         /// </summary>
         public static void RenderQueue()
         {
-            //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to 
-            RenderQueuedUI();
+            //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to do post processing
+
 
             //RenderFrameBuffer(MainFBO);
 
@@ -52,6 +53,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderLowPriorityQueue();
 
+
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            RenderQueuedUI();
 
             //RenderFrameBuffer(MainFBO);
         }

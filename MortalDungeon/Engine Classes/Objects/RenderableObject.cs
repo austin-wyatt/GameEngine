@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -91,8 +92,11 @@ namespace MortalDungeon.Engine_Classes
 
         public RotationData RotationInfo = new RotationData() { X = 0, Y = 0, Z = 0 };
 
-        public Vector4 Color = new Vector4();
+        public Vector4 BaseColor = new Vector4();
+        public Vector4 InterpolatedColor = new Vector4();
         public float ColorProportion = 0;
+
+        public List<Color> AppliedColors = new List<Color>(); 
 
         public bool CameraPerspective = false;
 
@@ -110,7 +114,7 @@ namespace MortalDungeon.Engine_Classes
             VerticesDrawOrder = verticesDrawOrder;
             ShaderReference = shaderReference;
 
-            Color = color;
+            SetBaseColor(color);
 
             Stride = GetVerticesSize(vertices) / Points;
         }
@@ -136,7 +140,7 @@ namespace MortalDungeon.Engine_Classes
                 Vertices = def.Vertices;
             }
 
-            Color = color;
+            SetBaseColor(color);
 
             Stride = GetVerticesSize(def.Vertices) / Points;
         }
@@ -161,7 +165,7 @@ namespace MortalDungeon.Engine_Classes
                 Vertices = def.Vertices;
             }
 
-            Color = color;
+            SetBaseColor(color);
 
             Stride = GetVerticesSize(def.Vertices) / Points;
         }
@@ -180,7 +184,8 @@ namespace MortalDungeon.Engine_Classes
             SideLengths = oldObj.SideLengths;
             Vertices = oldObj.Vertices;
 
-            Color = new Vector4(oldObj.Color);
+            SetBaseColor(new Vector4(oldObj.BaseColor));
+
             ColorProportion = oldObj.ColorProportion;
 
             Stride = oldObj.Stride;
@@ -243,9 +248,78 @@ namespace MortalDungeon.Engine_Classes
             return vertexData;
         }
 
-        public void SetColor(Vector4 color) 
+        public void SetBaseColor(Vector4 color) 
         {
-            Color = color;
+            BaseColor = color;
+
+            CalculateInterpolatedColor();
+        }
+
+        private bool _useAppliedColors = true;
+        public void UseAppliedColors(bool use) 
+        {
+            if (_useAppliedColors != use)
+            {
+                _useAppliedColors = use;
+                CalculateInterpolatedColor();
+            }
+        }
+
+        public void AddAppliedColor(Color color) 
+        {
+            AppliedColors.Add(color);
+
+            CalculateInterpolatedColor();
+        }
+
+        public void RemoveAppliedColor(Color color) 
+        {
+            AppliedColors.Remove(color);
+
+            CalculateInterpolatedColor();
+        }
+
+        public void CalculateInterpolatedColor() 
+        {
+            InterpolatedColor = new Vector4(BaseColor);
+
+            float alpha = BaseColor.W;
+            int count = 0;
+
+            if (_useAppliedColors) 
+            {
+                for (int i = 0; i < AppliedColors.Count; i++) 
+                {
+                    if (!AppliedColors[i].Use)
+                        continue;
+
+
+                    InterpolatedColor.X += AppliedColors[i].R;
+                    InterpolatedColor.Y += AppliedColors[i].G;
+                    InterpolatedColor.Z += AppliedColors[i].B;
+
+                    if (i == 0)
+                    {
+                        alpha = AppliedColors[i].A;
+                    }
+                    else 
+                    {
+                        alpha += AppliedColors[i].A;
+                    }
+
+                    count++;
+                }
+
+                if (count > 0) 
+                {
+                    alpha /= count;
+                    InterpolatedColor.X /= count + 1;
+                    InterpolatedColor.Y /= count + 1;
+                    InterpolatedColor.Z /= count + 1;
+                }
+            }
+
+            InterpolatedColor.W = alpha;
         }
 
         //TRANSLATE FUNCTIONS

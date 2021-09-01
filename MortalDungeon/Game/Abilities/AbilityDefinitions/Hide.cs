@@ -8,6 +8,8 @@ using System.Linq;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
+using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -73,19 +75,21 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit.Info.Stealth.SetHiding(true);
             StealthBuff stealthBuff = new StealthBuff(CastingUnit, -1);
 
+            Color stealthColor = new Color(1, 1, 1, 0.5f);
+
             void hidingBroken() 
             {
                 CastingUnit.Info.Stealth.HidingBrokenActions.Remove(hidingBroken);
                 CastingUnit.Info.Buffs.Remove(stealthBuff);
                 Scene.Footer.UpdateFooterInfo();
 
-                CastingUnit.BaseObject.BaseFrame.SetColor(new Vector4(1, 1, 1, 1));
+                CastingUnit.BaseObject.BaseFrame.RemoveAppliedColor(stealthColor);
 
                 CreateIconHoverEffect(BrokenMaskIcon);
             }
 
             CastingUnit.Info.Stealth.HidingBrokenActions.Add(hidingBroken);
-            CastingUnit.BaseObject.BaseFrame.SetColor(new Vector4(1, 1, 1, 0.5f));
+            CastingUnit.BaseObject.BaseFrame.AddAppliedColor(stealthColor);
 
             Scene.Footer.UpdateFooterInfo();
 

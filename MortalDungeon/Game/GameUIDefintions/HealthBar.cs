@@ -13,7 +13,10 @@ namespace MortalDungeon.Game.UI
         public float _healthPercent = 1;
         private UIObject _healthBar;
 
-        UnitTeam _team = UnitTeam.Ally;
+        private UnitTeam _team = UnitTeam.Ally;
+
+        public Vector4 BarColor = new Vector4(0, 0.5f, 0, 1f);
+
         public HealthBar(Vector3 position, UIScale scale) 
         {
             Size = scale;
@@ -26,8 +29,9 @@ namespace MortalDungeon.Game.UI
 
 
             _healthBar = new UIBlock(Position, Size);
-            _healthBar.SetColor(new Vector4(0, 1, 0, 0.25f));
-            _healthBar.MultiTextureData.MixTexture = false;
+            _healthBar.SetColor(BarColor);
+            _healthBar.MultiTextureData.MixTexture = true;
+            _healthBar.MultiTextureData.MixPercent = 0.25f;
             _healthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
 
             BaseComponent.AddChild(_healthBar);
@@ -51,13 +55,16 @@ namespace MortalDungeon.Game.UI
             switch (team) 
             {
                 case UnitTeam.Ally:
-                    _healthBar.SetColor(new Vector4(0, 1, 0, 0.25f));
+                    BarColor = new Vector4(0, 0.5f, 0, 1f);
+                    _healthBar.SetColor(BarColor);
                     break;
                 case UnitTeam.Enemy:
-                    _healthBar.SetColor(new Vector4(1, 0, 0, 0.25f));
+                    BarColor = new Vector4(0.5f, 0, 0, 1f);
+                    _healthBar.SetColor(BarColor);
                     break;
                 case UnitTeam.Neutral:
-                    _healthBar.SetColor(new Vector4(0.93f, 0.83f, 0.56f, 0.75f));
+                    BarColor = new Vector4(0.93f, 0.83f, 0.56f, 1f);
+                    _healthBar.SetColor(BarColor);
                     break;
             }
 

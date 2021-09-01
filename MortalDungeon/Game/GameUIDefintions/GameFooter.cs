@@ -144,7 +144,7 @@ namespace MortalDungeon.Game.UI
             _containingBlock.MultiTextureData.MixTexture = true;
             _containingBlock.MultiTextureData.MixPercent = 0.4f;
             //_containingBlock.SetColor(Colors.UISelectedGray);
-            _containingBlock.SetColor(new Vector4(0.447f, 0.51f, 0.639f, 0.75f));
+            _containingBlock.SetColor(new Vector4(0.447f, 0.51f, 0.639f, 1f));
             _containingBlock.SetSize(containingBlockDimensions);
             _containingBlock.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.LeftCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
 
@@ -208,8 +208,22 @@ namespace MortalDungeon.Game.UI
         }
 
         private List<Icon> _currentIcons = new List<Icon>();
+        private bool _updatingFooterInfo = false;
+        private Action _updateAction = null;
         public void UpdateFooterInfo(Unit unit = null) 
         {
+            if (_updatingFooterInfo) 
+            {
+                _updateAction = () => 
+                {
+                    _updateAction = null;
+                    UpdateFooterInfo(unit);
+                };
+                return;
+            }
+
+            _updatingFooterInfo = true;
+
             if (unit != null) 
             {
                 _currentUnit = unit;
@@ -240,8 +254,13 @@ namespace MortalDungeon.Game.UI
             #endregion
 
             #region ability icons
-            _currentIcons.ForEach(i => RemoveChild(i.ObjectID));
+            for (int i = 0; i < _currentIcons.Count; i++) 
+            {
+                RemoveChild(_currentIcons[i].ObjectID);
+            }
+
             _currentIcons.Clear();
+
             UIScale iconSize = new UIScale(0.25f, 0.25f);
             int count = 0;
             foreach (Ability ability in Scene.CurrentUnit.Info.Abilities.Values) 
@@ -396,6 +415,12 @@ namespace MortalDungeon.Game.UI
             }
 
             #endregion
+
+            _updatingFooterInfo = false;
+            if (_updateAction != null) 
+            {
+                _updateAction.Invoke();
+            }
         }
 
 

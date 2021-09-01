@@ -20,7 +20,8 @@ namespace MortalDungeon.Game.Units
             Clickable = true;
             Selectable = true;
 
-            BaseObject Guy = new BaseObject(BAD_GUY_ANIMATION.List, ObjectID, "BadGuy", position, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject Guy = CreateBaseObject();
+            Guy.SetPosition(position);
             Guy.BaseFrame.CameraPerspective = true;
             Guy.BaseFrame.RotateX(25);
 
@@ -61,6 +62,18 @@ namespace MortalDungeon.Game.Units
             base.OnKill();
 
             BaseObjects[0].SetAnimation(AnimationType.Die);
+        }
+
+        public override BaseObject CreateBaseObject()
+        {
+            BaseObject obj = new BaseObject(BAD_GUY_ANIMATION.List, ObjectID, "BadGuy", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
+
+            if (BaseObject != null) 
+            {
+                obj.BaseFrame.SetBaseColor(BaseObject.BaseFrame.BaseColor);
+            }
+
+            return obj;
         }
     }
 }

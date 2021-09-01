@@ -8,5 +8,6 @@ namespace MortalDungeon.Game
     {
         public static bool EnableTileTooltips = true;
         public static bool HeightmapEnabled = true;
+        public static bool VsyncEnabled = false;
     }
 }

@@ -30,6 +30,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public QueuedList<Unit> InitiativeOrder = new QueuedList<Unit>();
         public int UnitTakingTurn = 0; //the unit in the initiative order that is going
         public EnergyDisplayBar EnergyDisplayBar;
+        public TurnDisplay TurnDisplay;
         public GameFooter Footer;
 
         public QueuedList<TemporaryVision> TemporaryVision = new QueuedList<TemporaryVision>();
@@ -156,8 +157,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
             UpdateTemporaryVision();
 
-            //EnergyDisplayBar.SetEnergyFromUnit(CurrentUnit);
-
             //max energy displayed is the larger between current energy with buffs and default max energy.
             //If buffs are reducing energy the max will still be the default max for the unit.
             if (CurrentUnit.AI.ControlType == ControlType.Controlled) 
@@ -167,6 +166,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Footer.UpdateFooterInfo(CurrentUnit);
                 Task.Run(() => FillInTeamFog(CurrentUnit.AI.Team, prevTeam, true));
             }
+
+            TurnDisplay.SetCurrentUnit(UnitTakingTurn);
 
             CurrentUnit.OnTurnStart();
 
@@ -223,7 +224,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void StartCombat() 
         {
             InitiativeOrder = new QueuedList<Unit>(_units);
-            InitiativeOrder.RemoveAll(u => u.Info.NonCombatant);
+            InitiativeOrder.RemoveAll(u => u.Info.NonCombatant || u.Info.Dead);
 
             if (InitiativeOrder.Count == 0)
                 return;
@@ -231,6 +232,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             EnergyDisplayBar.SetRender(true);
             //Footer.EndTurnButton.SetDisabled(false);
             Footer.EndTurnButton.SetRender(true);
+            TurnDisplay.SetRender(true);
+            TurnDisplay.SetUnits(InitiativeOrder);
+
 
             InCombat = true;
 
@@ -247,6 +251,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
             EnergyDisplayBar.SetRender(false);
             //Footer.EndTurnButton.SetDisabled(true);
             Footer.EndTurnButton.SetRender(false);
+
+            TurnDisplay.SetRender(false);
+            TurnDisplay.SetUnits(InitiativeOrder);
+
             SetCurrentUnitEnergy();
         }
 
@@ -506,7 +514,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                         TooltipFlag = GeneralContextFlags.TileTooltipOpen,
                                         Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
                                         Anchor = UIAnchorPosition.TopRight,
-                                        BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.5f),
+                                        BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
                                         TextScale = 0.04f
                                     };
 
@@ -660,6 +668,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
 
             InitiativeOrder.Remove(unit);
+            TurnDisplay.SetUnits(InitiativeOrder);
         }
 
         public override void OnUnitClicked(Unit unit, MouseButton button)

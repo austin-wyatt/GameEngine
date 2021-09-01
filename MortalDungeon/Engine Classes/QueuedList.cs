@@ -98,10 +98,10 @@ namespace MortalDungeon.Engine_Classes
 
         public void AddQueuedItems()
         {
-            _itemsToAdd.ForEach(i =>
+            for (int i = 0; i < _itemsToAdd.Count; i++)
             {
-                base.Add(i);
-            });
+                base.Add(_itemsToAdd[i]);
+            }
 
             _itemsToAdd.Clear();
         }
@@ -117,10 +117,10 @@ namespace MortalDungeon.Engine_Classes
 
         public void ClearQueuedItems()
         {
-            _itemsToRemove.ForEach(i =>
+            for (int i = 0; i < _itemsToRemove.Count; i++) 
             {
-                base.Remove(i);
-            });
+                base.Remove(_itemsToRemove[i]);
+            }
 
             _itemsToRemove.Clear();
         }

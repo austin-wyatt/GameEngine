@@ -175,7 +175,7 @@ namespace MortalDungeon.Engine_Classes
         {
             BaseObjects.ForEach(obj =>
             {
-                obj.BaseFrame.Color = color;
+                obj.BaseFrame.SetBaseColor(color);
             });
         }
 

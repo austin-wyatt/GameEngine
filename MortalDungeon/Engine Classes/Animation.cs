@@ -21,6 +21,7 @@ namespace MortalDungeon.Engine_Classes
     {
         public bool Repeat = true;
         public bool Reverse = false;
+        public bool Playing = true;
 
         public List<RenderableObject> Frames = new List<RenderableObject>();
         public int Frequency = 6; //in ticks (1/45th of a second)
@@ -125,6 +126,9 @@ namespace MortalDungeon.Engine_Classes
 
         public void Tick()
         {
+            if (!Playing)
+                return;
+
             tick++;
             if (Frequency != 0) //Setting Frequency to 0 is another method to cancel playback of an animation (as opposed to only supplying 1 frame)
             {
@@ -148,12 +152,23 @@ namespace MortalDungeon.Engine_Classes
             OnFinish = null;
         }
 
+        public void Pause() 
+        {
+            Playing = false;
+        }
+
+        public void Play() 
+        {
+            Playing = true;
+        }
+
         public void Reset()
         {
             _currentFrame = 0;
             _repeatCount = 0;
             Finished = false;
             CurrentFrame = Frames[_currentFrame];
+            Playing = true;
         }
 
         private bool RepeatAnimation() 

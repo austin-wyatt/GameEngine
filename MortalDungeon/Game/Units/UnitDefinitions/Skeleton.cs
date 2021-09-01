@@ -20,7 +20,8 @@ namespace MortalDungeon.Game.Units
             Clickable = true;
             Selectable = true;
 
-            BaseObject Skeleton = new BaseObject(SKELETON_ANIMATION.List, ObjectID, "", position, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject Skeleton = CreateBaseObject();
+            Skeleton.SetPosition(position);
             Skeleton.BaseFrame.CameraPerspective = true;
             Skeleton.BaseFrame.RotateX(25);
 
@@ -66,6 +67,11 @@ namespace MortalDungeon.Game.Units
             base.OnKill();
 
             BaseObjects[0].SetAnimation(AnimationType.Die);
+        }
+
+        public override BaseObject CreateBaseObject()
+        {
+            return new BaseObject(SKELETON_ANIMATION.List, ObjectID, "", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
         }
     }
 }

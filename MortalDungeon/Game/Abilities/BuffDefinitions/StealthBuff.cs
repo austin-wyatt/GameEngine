@@ -39,8 +39,9 @@ namespace MortalDungeon.Game.Abilities
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
             description.SetColor(Colors.UITextBlack);
-            description.SetText($"Unit is hidden until they use an action\nthat breaks stealth or they take damage\ngreater than their stealth skill\n\nSkill level: {Unit.Info.Stealth.Skill}");
 
+            description.SetText($"Unit is hidden until they use an action\nthat breaks stealth or they take damage\ngreater than their stealth skill\n\nSkill level: {Unit.Info.Stealth.Skill}");
+            
             tooltip.AddChild(header);
             tooltip.AddChild(description);
 

@@ -88,7 +88,7 @@ namespace MortalDungeon.Game.Tiles
             TilePoint = point;
 
             BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, ObjectID, "Base Tile " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
-            DefaultColor = BaseTile.BaseFrame.Color;
+            DefaultColor = BaseTile.BaseFrame.BaseColor;
             BaseTile.BaseFrame.CameraPerspective = true;
 
             BaseTile.OutlineParameters.SetAllInline(2);

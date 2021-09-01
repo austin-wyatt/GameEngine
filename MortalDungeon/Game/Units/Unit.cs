@@ -399,6 +399,11 @@ namespace MortalDungeon.Game.Units
                 Info.Stealth.HidingBrokenActions.HandleQueuedItems();
             }
         }
+
+        public virtual BaseObject CreateBaseObject() 
+        {
+            return null;
+        }
     }
 
     public class UnitInfo

@@ -25,7 +25,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, Spritesheets.UISheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
-            window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
+            window.BaseColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+            window.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
             tempAnimation = new Animation()
             {
                 Frames = new List<RenderableObject>() { window },
@@ -82,7 +83,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public override void SetColor(Vector4 color)
         {
-            _baseObject.BaseFrame.Color = color;
+            _baseObject.BaseFrame.SetBaseColor(color);
         }
 
         public override void ScaleAddition(float f)

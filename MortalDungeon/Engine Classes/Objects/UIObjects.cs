@@ -13,6 +13,11 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
+    public enum UISheetIcons 
+    {
+        Chevron = 47
+    }
+
     public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
@@ -154,59 +159,64 @@ namespace MortalDungeon.Engine_Classes
                 return;
 
             int count = ReverseTree.Count;
-
-            for (int i = 0; i < count; i++)
+            try
             {
-                if (count != ReverseTree.Count) 
+                for (int i = 0; i < count; i++)
                 {
-                    Console.WriteLine("ReverseTree modified during BoundsCheck");
-                    return;
-                }
-
-                if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
-                {
-                    if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
+                    if (count != ReverseTree.Count)
                     {
-                        optionalAction?.Invoke(ReverseTree[i].UIObject);
-
-                        switch (type)
-                        {
-                            case UIEventType.Click:
-                                ReverseTree[i].UIObject.OnMouseUp();
-                                break;
-                            case UIEventType.RightClick:
-                                ReverseTree[i].UIObject.OnRightClick();
-                                break;
-                            case UIEventType.Hover:
-                                ReverseTree[i].UIObject.OnHover();
-                                break;
-                            case UIEventType.TimedHover:
-                                optionalAction?.Invoke(ReverseTree[i].UIObject);
-                                break;
-                            case UIEventType.MouseDown:
-                                ReverseTree[i].UIObject.OnMouseDown();
-                                return;
-                            case UIEventType.Grab:
-                                ReverseTree[i].UIObject.OnGrab(MouseCoordinates, ReverseTree[i].UIObject);
-                                optionalAction?.Invoke(ReverseTree[i].UIObject);
-                                return;
-                            case UIEventType.Focus:
-                                if (!ReverseTree[i].UIObject.Focused) 
-                                {
-                                    ReverseTree[i].UIObject.OnFocus();
-                                }
-                                optionalAction?.Invoke(ReverseTree[i].UIObject);
-                                return;
-                        }
+                        Console.WriteLine("ReverseTree modified during BoundsCheck");
+                        return;
                     }
-                    else if (type == UIEventType.Hover)
+
+                    if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
                     {
-                        ReverseTree[i].UIObject.HoverEnd();
+                        if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
+                        {
+                            optionalAction?.Invoke(ReverseTree[i].UIObject);
+
+                            switch (type)
+                            {
+                                case UIEventType.Click:
+                                    ReverseTree[i].UIObject.OnMouseUp();
+                                    break;
+                                case UIEventType.RightClick:
+                                    ReverseTree[i].UIObject.OnRightClick();
+                                    break;
+                                case UIEventType.Hover:
+                                    ReverseTree[i].UIObject.OnHover();
+                                    break;
+                                case UIEventType.TimedHover:
+                                    optionalAction?.Invoke(ReverseTree[i].UIObject);
+                                    break;
+                                case UIEventType.MouseDown:
+                                    ReverseTree[i].UIObject.OnMouseDown();
+                                    return;
+                                case UIEventType.Grab:
+                                    ReverseTree[i].UIObject.OnGrab(MouseCoordinates, ReverseTree[i].UIObject);
+                                    optionalAction?.Invoke(ReverseTree[i].UIObject);
+                                    return;
+                                case UIEventType.Focus:
+                                    if (!ReverseTree[i].UIObject.Focused)
+                                    {
+                                        ReverseTree[i].UIObject.OnFocus();
+                                    }
+                                    optionalAction?.Invoke(ReverseTree[i].UIObject);
+                                    return;
+                            }
+                        }
+                        else if (type == UIEventType.Hover)
+                        {
+                            ReverseTree[i].UIObject.HoverEnd();
+                        }
                     }
                 }
             }
+            catch (Exception)
+            {
+                Console.WriteLine("Error caught in BoundsCheck");
+            }
         }
-
         
 
         public static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
@@ -480,7 +490,7 @@ namespace MortalDungeon.Engine_Classes
 
         public void RemoveChildren()
         {
-            for (int i = Children.Count - 1; i > 0; i--)
+            for (int i = Children.Count - 1; i >= 0; i--)
             {
                 Children[i].Parent = null;
                 Children.RemoveAt(i);
@@ -553,7 +563,7 @@ namespace MortalDungeon.Engine_Classes
                 return BaseComponent.GetBaseObject();
             }
 
-            throw new Exception("Attempted to get the base object of an empty UIObject");
+            return null;
         }
 
         public override void OnMouseUp()

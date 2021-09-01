@@ -83,8 +83,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public Vector3 ScenePosition;
 
-        public KeyboardState KeyboardState = default;
-        public MouseState MouseState = default;
+        public KeyboardState KeyboardState => Program.Window.KeyboardState;
+        public MouseState MouseState => Program.Window.MouseState;
 
         protected Random rand = new Random();
         private Stopwatch _mouseTimer = new Stopwatch();

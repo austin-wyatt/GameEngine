@@ -127,7 +127,7 @@ namespace MortalDungeon.Engine_Classes
         public void Reset()
         {
             BaseFrame.SetTranslation(BaseTranslation);
-            BaseFrame.SetColor(BaseColor);
+            BaseFrame.SetBaseColor(BaseColor);
 
             Playing = false;
             Finished = false;
@@ -137,12 +137,12 @@ namespace MortalDungeon.Engine_Classes
         public void SetDefaultValues()
         {
             BaseTranslation = BaseFrame.Translation.ExtractTranslation();
-            BaseColor = new Vector4(BaseFrame.Color);
+            BaseColor = new Vector4(BaseFrame.BaseColor);
         }
 
         public void SetDefaultColor() 
         {
-            BaseColor = new Vector4(BaseFrame.Color);
+            BaseColor = new Vector4(BaseFrame.BaseColor);
         }
 
         public void SetDefaultTranslation() 

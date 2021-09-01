@@ -215,11 +215,6 @@ namespace MortalDungeon.Game.Abilities
 
                 TrimTiles(AffectedTiles, Units);
 
-                //AffectedTiles.ForEach(tile =>
-                //{
-                //    currentMap.SelectTile(tile);
-                //});
-
                 Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
             }
             else
@@ -408,7 +403,7 @@ namespace MortalDungeon.Game.Abilities
                     Action = (obj) =>
                     {
                         icon.SetPosition(icon.Position + new Vector3(xMovement, -10, 0.015f));
-                        icon.SetColor(icon.BaseObject.BaseFrame.Color - new Vector4(0, 0, 0, 0.02f));
+                        icon.SetColor(icon.BaseObject.BaseFrame.BaseColor - new Vector4(0, 0, 0, 0.02f));
                     }
                 };
 

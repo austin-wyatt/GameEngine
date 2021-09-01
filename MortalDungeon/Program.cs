@@ -7,6 +7,8 @@ namespace MortalDungeon
 {
     class Program
     {
+        public static Window Window;
+
         static void Main(string[] args)
         {
             var nativeWindowSettings = new NativeWindowSettings()
@@ -23,6 +25,8 @@ namespace MortalDungeon
 
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {
+                Window = game;
+
                 game.VSync = OpenTK.Windowing.Common.VSyncMode.Off;
                 game.Run();
             }

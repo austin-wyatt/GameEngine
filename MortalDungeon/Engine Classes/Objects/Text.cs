@@ -97,7 +97,7 @@ namespace MortalDungeon.Engine_Classes
 
         public override void SetColor(Vector4 color) 
         {
-            _display.Color = color;
+            _display.SetBaseColor(color);
         }
 
         private void SetKerning() 

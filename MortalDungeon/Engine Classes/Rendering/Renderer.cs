@@ -126,7 +126,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
             if (setColor)
             {
-                Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.Color);
+                Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.InterpolatedColor);
             }
 
             Display.ShaderReference.SetMatrix4("transform", transform);
@@ -172,10 +172,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
             currIndex += 16;
-            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.X;
-            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Y;
-            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.Z;
-            _instancedRenderArray[currIndex++] = obj.BaseFrame.Color.W;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.X;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.Y;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.Z;
+            _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.W;
 
             _instancedRenderArray[currIndex++] = obj.BaseFrame.CameraPerspective ? 1 : 0;
             _instancedRenderArray[currIndex++] = obj._currentAnimation.CurrentFrame.SpritesheetPosition;

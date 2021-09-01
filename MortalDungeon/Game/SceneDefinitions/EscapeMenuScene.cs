@@ -41,8 +41,19 @@ namespace MortalDungeon.Game.SceneDefinitions
             {
                 OnClickAction = () =>
                 {
-                //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
-                Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
+                    //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
+                    //Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
+                    if (Settings.VsyncEnabled)
+                    {
+                        Settings.VsyncEnabled = false;
+                        Program.Window.VSync = VSyncMode.Off;
+                    }
+                    else 
+                    {
+                        Settings.VsyncEnabled = true;
+                        Program.Window.VSync = VSyncMode.On;
+                    }
+
                 }
             };
 

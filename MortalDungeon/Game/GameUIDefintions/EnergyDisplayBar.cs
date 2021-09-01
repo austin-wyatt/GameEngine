@@ -84,34 +84,41 @@ namespace MortalDungeon.Game.UI
 
             PropertyAnimation hoverColorShift = new PropertyAnimation(GetBaseObject().BaseFrame) { Repeat = true };
 
-            Vector4 shiftedColor = new Vector4(0.11f, 0.48f, 0.11f, 1);
-            Vector4 baseColor = new Vector4(Pips[0].EnergizedColor);
+            Color shiftedColor = new Color(0.11f, 0.48f, 0.11f, 1);
+            Color color = new Color(Pips[0].EnergizedColor);
 
             int shiftDelay = 2;
             int shifts = 30;
 
-            Vector4 deltaColor = (baseColor - shiftedColor) / (shifts / 2);
+            Color deltaColor = (color - shiftedColor) / (shifts / 2);
+
+            for (int i = 0; i < Pips.Count; i++) 
+            {
+                Pips[i]._baseObject.BaseFrame.AddAppliedColor(color);
+            }
 
             for (int i = 0; i < shifts; i++) 
             {
                 Keyframe temp = new Keyframe(i * shiftDelay);
 
+
+
                 temp.Action = (_) =>
                 {
                     if (temp.ActivationTick < shiftDelay * shifts / 2)
                     {
-                        baseColor -= deltaColor;
+                        color.Sub(deltaColor);
                     }
                     else 
                     {
-                        baseColor += deltaColor;
+                        color.Sum(deltaColor);
                     }
 
                     for (int j = 0; j < Pips.Count; j++) 
                     {
                         if (Pips[j].HoverAnimation.Finished) 
                         {
-                            Pips[j].SetColor(baseColor);
+                            Pips[j]._baseObject.BaseFrame.CalculateInterpolatedColor();
                         }
                     }
                 };
@@ -295,15 +302,15 @@ namespace MortalDungeon.Game.UI
             switch (state)
             {
                 case EnergyStates.Empty:
-                    Pip.BaseFrame.SetColor(EmptyColor);
+                    Pip.BaseFrame.SetBaseColor(EmptyColor);
                     break;
                 case EnergyStates.Energized:
-                    Pip.BaseFrame.SetColor(EnergizedColor);
+                    Pip.BaseFrame.SetBaseColor(EnergizedColor);
                     break;
                 case EnergyStates.PartiallyEnergized:
                     Vector4 colorDif = EnergizedColor - EmptyColor;
 
-                    Pip.BaseFrame.SetColor(EnergizedColor - colorDif * (1 - percent));
+                    Pip.BaseFrame.SetBaseColor(EnergizedColor - colorDif * (1 - percent));
                     break;
             }
 
@@ -313,11 +320,13 @@ namespace MortalDungeon.Game.UI
         public void PlayHoverAnimation()
         {
             HoverAnimation.Playing = true;
+            _baseObject.BaseFrame.UseAppliedColors(true);
         }
 
         public void EndHoverAnimation()
         {
             //HoverAnimation.SetDefaultColor();
+            _baseObject.BaseFrame.UseAppliedColors(false);
             HoverAnimation.Reset();
         }
     }

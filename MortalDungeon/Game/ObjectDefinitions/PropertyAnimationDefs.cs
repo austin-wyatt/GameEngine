@@ -14,7 +14,7 @@ namespace MortalDungeon.Game.Objects
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
-                BaseColor = new Vector4(baseFrame.Color);
+                BaseColor = new Vector4(baseFrame.BaseColor);
 
                 Repeat = true;
                 Playing = false;
@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Objects
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
-                BaseColor = new Vector4(baseFrame.Color);
+                BaseColor = new Vector4(baseFrame.BaseColor);
 
                 Repeat = false;
                 Playing = false;

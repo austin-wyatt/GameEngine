@@ -163,7 +163,6 @@ namespace MortalDungeon
             };
             _cursorObject.BaseFrame.ScaleAll(0.1f);
 
-
             _sceneController = new SceneController(_camera);
 
             _gameTimer = new Stopwatch();
@@ -260,16 +259,6 @@ namespace MortalDungeon
                 GL.DrawArrays(PrimitiveType.Points, 0, 1);
             } //Points
 
-            Shaders.DEFAULT_SHADER.Use();
-            Shaders.DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
-            Shaders.DEFAULT_SHADER.SetFloat("alpha_threshold", RenderingConstants.DefaultAlphaThreshold);
-
-            _renderedItems.ForEach(obj =>
-            {
-                Renderer.RenderObject(obj);
-            }); //Old handling, used for lines
-            Renderer.RenderObject(_cursorObject);
-
 
             //all objects using the fast default shader are handled here
             Shaders.FAST_DEFAULT_SHADER.Use();
@@ -346,6 +335,20 @@ namespace MortalDungeon
             RenderingQueue.RenderQueue();
 
 
+            Shaders.DEFAULT_SHADER.Use();
+            Shaders.DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
+            Shaders.DEFAULT_SHADER.SetFloat("alpha_threshold", RenderingConstants.DefaultAlphaThreshold);
+
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+
+            _renderedItems.ForEach(obj =>
+            {
+                Renderer.RenderObject(obj);
+            }); //Old handling, used for lines
+            Renderer.RenderObject(_cursorObject);
+
+
+
             SwapBuffers();
 
             base.OnRenderFrame(args);
@@ -365,9 +368,6 @@ namespace MortalDungeon
 
             _sceneController.Scenes.ForEach(scene =>
             {
-                scene.MouseState = MouseState;
-                scene.KeyboardState = KeyboardState;
-
                 scene.OnUpdateFrame(args);
             });
 
@@ -575,7 +575,7 @@ namespace MortalDungeon
             BaseObject lineObject = new BaseObject(new LINE_ANIMATION(lineObj).List, 999, "line", line1);
             //lineObject.BaseFrame.ColorProportion = 1.0f;
             lineObject.BaseFrame.CameraPerspective = camPerspective;
-            lineObject.BaseFrame.Color = color;
+            lineObject.BaseFrame.SetBaseColor(color);
 
             if(camPerspective)
                 lineObject.MoveObject(-line1);
