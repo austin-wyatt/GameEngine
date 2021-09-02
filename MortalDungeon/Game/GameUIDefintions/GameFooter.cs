@@ -21,6 +21,7 @@ namespace MortalDungeon.Game.UI
         public Unit _currentUnit;
 
         public Button EndTurnButton;
+        public Button VentureForthButton;
 
         private ScrollableArea _scrollableArea;
 
@@ -108,32 +109,30 @@ namespace MortalDungeon.Game.UI
             endTurnButton.OnClickAction = () =>
             {
                 Scene.CompleteTurn();
-                Scene.DeselectUnits();
-
-                //TEMP
-                //Random rnd = new Random();
-                //float blue = (float)rnd.NextDouble();
-                //float green = (float)rnd.NextDouble();
-                //float red = (float)rnd.NextDouble();
-                //for (int i = 0; i < SceneDefinitions.BoundsTestScene.imageData.Length; i++) 
-                //{
-                //    if (i % 4 == 0) 
-                //    {
-                //        SceneDefinitions.BoundsTestScene.imageData[i] = red;
-                //    }
-                //    else if ((i + 2) % 4 == 0)
-                //    {
-                //        SceneDefinitions.BoundsTestScene.imageData[i] = green;
-                //    }
-                //    else if ((i + 3) % 4 == 0)
-                //    {
-                //        SceneDefinitions.BoundsTestScene.imageData[i] = blue;
-                //    }
-                //}
-                //SceneDefinitions.BoundsTestScene.tex.UpdateTextureArray();
+                //Scene.DeselectUnits();
             };
 
             AddChild(endTurnButton, 100);
+            #endregion
+
+            #region venture forth button
+            Button ventureForthButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "Venture Forth", 0.075f, default, default, false);
+
+            VentureForthButton = ventureForthButton;
+
+            textOffset = new UIDimensions(80, 100);
+
+            ventureForthButton.SetSize(ventureForthButton.TextBox.GetScale() + textOffset.ToScale());
+
+            ventureForthButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -10, 0), UIAnchorPosition.BottomRight);
+
+            ventureForthButton.OnClickAction = () =>
+            {
+                Scene._tileMapController.LoadSurroundingTileMaps(Scene.CurrentUnit.GetTileMap().TileMapCoords);
+                ventureForthButton.SetRender(false);
+            };
+
+            AddChild(ventureForthButton, 100);
             #endregion
 
             UIDimensions containingBlockDimensions = Size;
@@ -263,9 +262,9 @@ namespace MortalDungeon.Game.UI
 
             UIScale iconSize = new UIScale(0.25f, 0.25f);
             int count = 0;
-            foreach (Ability ability in Scene.CurrentUnit.Info.Abilities.Values) 
+            foreach (Ability ability in _currentUnit.Info.Abilities.Values) 
             {
-                Icon abilityIcon = ability.GenerateIcon(iconSize, true, Scene.CurrentUnit.AI.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
+                Icon abilityIcon = ability.GenerateIcon(iconSize, true, _currentUnit.AI.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
 
                 if (_currentIcons.Count == 0)
                 {
@@ -294,7 +293,10 @@ namespace MortalDungeon.Game.UI
 
                 abilityIcon.OnClickAction = () =>
                 {
-                    Scene.SelectAbility(ability);
+                    if (_currentUnit.AI.ControlType == ControlType.Controlled && _currentUnit == Scene.CurrentUnit) 
+                    {
+                        Scene.SelectAbility(ability);
+                    }
                 };
 
 
@@ -335,7 +337,10 @@ namespace MortalDungeon.Game.UI
                 Scene._onAbilityCastActions.Add(onAbilityCast);
 
                 Scene.EventActions[(EventAction)count] = () => {
-                    Scene.SelectAbility(ability);
+                    if (_currentUnit.AI.ControlType == ControlType.Controlled) 
+                    {
+                        Scene.SelectAbility(ability);
+                    }
                 };
 
                 UIHelpers.AddAbilityIconHoverEffect(abilityIcon, Scene, ability);
@@ -347,6 +352,15 @@ namespace MortalDungeon.Game.UI
                     Scene._onDeselectAbilityActions.Remove(onAbilityDeselected);
                     Scene._onAbilityCastActions.Remove(onAbilityCast);
                 };
+
+                void abilityHover()
+                {
+                    UIHelpers.CreateToolTip(Scene, ability.GenerateTooltip(), abilityIcon, Scene._tooltipBlock);
+                }
+
+                abilityIcon.HasTimedHoverEffect = true;
+                abilityIcon.Hoverable = true;
+                abilityIcon._onTimedHoverActions.Add(abilityHover);
 
                 _currentIcons.Add(abilityIcon);
                 AddChild(abilityIcon, 100);

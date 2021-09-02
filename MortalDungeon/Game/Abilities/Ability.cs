@@ -205,7 +205,10 @@ namespace MortalDungeon.Game.Abilities
             Duration--;
             EnactEffect();
         } 
-        public virtual void EnactEffect() { } //the actual effect of the skill
+        public virtual void EnactEffect() 
+        {
+            Scene.AbilityInProgress = true;
+        } //the actual effect of the skill
 
         public virtual void OnSelect(CombatScene scene, TileMap currentMap) 
         {
@@ -431,6 +434,7 @@ namespace MortalDungeon.Game.Abilities
             }
             EffectEndedAction?.Invoke();
 
+            Scene.AbilityInProgress = false;
             Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
         }
         public Action EffectEndedAction = null;
@@ -511,6 +515,14 @@ namespace MortalDungeon.Game.Abilities
                     AffectedUnits.Add(units[j]);
                 }
             }
+        }
+
+
+        public virtual Tooltip GenerateTooltip()
+        {
+            Tooltip tooltip = new Tooltip();
+
+            return tooltip;
         }
     }
 }

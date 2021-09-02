@@ -19,10 +19,11 @@ namespace MortalDungeon.Game.Structures
             BaseObject.BaseFrame.SetScaleAll(1 + (float)TileMap._randomNumberGen.NextDouble() / 2);
 
             VisibleThroughFog = true;
-            Info.TileMapPosition = tile;
             SetTileMapPosition(tile);
             Name = "Tree";
             Pathable = false;
+
+            HasContextMenu = true;
 
             SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
 

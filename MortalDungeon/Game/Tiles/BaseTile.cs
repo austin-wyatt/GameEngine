@@ -71,6 +71,8 @@ namespace MortalDungeon.Game.Tiles
 
         public BaseTile AttachedTile; //for selection tiles 
         public Structure Structure;
+        public Unit UnitOnTile;
+
         public Cliff Cliff;
 
         public HeightIndicatorTile HeightIndicator;
@@ -78,13 +80,16 @@ namespace MortalDungeon.Game.Tiles
 
         public TileChunk Chunk;
 
+
+        public new bool HasContextMenu = true;
+
         public BaseTile()
         {
             FillExploredDictionary();
         }
         public BaseTile(Vector3 position, TilePoint point)
         {
-            Name = "BaseTile";
+            Name = "Tile";
             TilePoint = point;
 
             BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, ObjectID, "Base Tile " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
@@ -296,6 +301,7 @@ namespace MortalDungeon.Game.Tiles
                 tooltip = $"Type: {tile.Properties.Type.Name()} \n";
                 tooltip += $"Coordinates: {coordX}, {coordY} \n";
                 tooltip += $"Elevation: {tile.Properties.Height}\n";
+                tooltip += $"Movement Cost: {tile.Properties.MovementCost}\n";
 
                 if (tile.Structure != null) 
                 {
@@ -332,22 +338,50 @@ namespace MortalDungeon.Game.Tiles
         {
             CombatScene scene = GetScene();
 
-            if (Structure != null)
-            {
-                Tooltip structContextMenu = Structure.CreateContextMenu();
+            int distance = TileMap.GetDistanceBetweenPoints(scene.CurrentUnit.Info.Point, TilePoint);
+            bool isCurrentUnit = scene.CurrentUnit.AI.Team == UnitTeam.Ally && scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
 
-                if (structContextMenu != null)
-                {
-                    scene.OpenContextMenu(structContextMenu);
-                }
-                else
-                {
-                    scene.OpenContextMenu(CreateContextMenu());
-                }
-            }
-            else 
+            int interactDistance = 5;
+            int inspectDistance = 10;
+
+            List<GameObject> objects = new List<GameObject>();
+
+            if (Structure != null && Structure.HasContextMenu && distance <= interactDistance && isCurrentUnit) 
             {
-                scene.OpenContextMenu(CreateContextMenu());
+                objects.Add(Structure);
+            }
+
+            if (UnitOnTile != null && UnitOnTile.HasContextMenu && distance <= inspectDistance && isCurrentUnit) 
+            {
+                objects.Add(UnitOnTile);
+            }
+
+            if (HasContextMenu && isCurrentUnit) 
+            {
+                Name = Properties.Type.Name();
+                objects.Add(this);
+            }
+
+            if (objects.Count > 1)
+            {
+                (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList("Options");
+
+                for (int i = 0; i < objects.Count; i++)
+                {
+                    int index = i;
+                    list.AddItem(objects[i].Name, (item) =>
+                    {
+                        scene.CloseContextMenu();
+                        scene.OpenContextMenu(objects[index].CreateContextMenu());
+                    });
+                }
+
+                scene.OpenContextMenu(menu);
+            }
+            else if (objects.Count == 1) 
+            {
+                scene.CloseContextMenu();
+                scene.OpenContextMenu(objects[0].CreateContextMenu());
             }
         }
 

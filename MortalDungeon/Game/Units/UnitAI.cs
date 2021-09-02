@@ -37,6 +37,7 @@ namespace MortalDungeon.Game.Units
         private TilePoint TilePosition => _unit.Info.TileMapPosition.TilePoint;
         private BaseTile Tile => _unit.Info.TileMapPosition;
 
+        public bool Fighting = true; //if a unit surrenders they will no longer be considered fighting
 
         public UnitAI(Unit unit) 
         {

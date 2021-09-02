@@ -228,6 +228,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _UI.HandleQueuedItems();
             _units.HandleQueuedItems();
             _lowPriorityObjects.HandleQueuedItems();
+
+            for (int i = 0; i < _tileMapController.TileMaps.Count; i++) 
+            {
+                _tileMapController.TileMaps[i].SelectionTiles.HandleQueuedItems();
+            }
         }
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
@@ -303,7 +308,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
-                if (!GetBit(_interceptClicks, ObjectType.Unit))
+                if (!GetBit(_interceptClicks, ObjectType.Unit) && e.Button == MouseButton.Left)
                     ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
                     {
                         OnUnitClicked(foundObj, e.Button);

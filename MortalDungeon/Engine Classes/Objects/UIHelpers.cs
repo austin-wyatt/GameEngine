@@ -178,6 +178,8 @@ namespace MortalDungeon.Engine_Classes
             }
 
             param.HoverParent._onHoverEndActions.Add(temp);
+
+            CheckTooltipPlacement(tooltip, param.Scene);
         }
 
 
@@ -200,6 +202,8 @@ namespace MortalDungeon.Engine_Classes
             }
 
             tooltipParent._onHoverEndActions.Add(temp);
+
+            CheckTooltipPlacement(tooltip, scene);
         }
 
         /// <summary>
@@ -227,6 +231,8 @@ namespace MortalDungeon.Engine_Classes
             }
 
             scene._closeContextMenu = temp;
+
+            CheckTooltipPlacement(tooltip, scene);
         }
 
         public static (Tooltip tooltip, UIList itemList) GenerateContextMenuWithList(string headerText)
@@ -268,6 +274,43 @@ namespace MortalDungeon.Engine_Classes
             menu.BaseComponent.BaseObject.OutlineParameters.SetAllInline(0);
 
             return (menu, list);
+        }
+
+        public static void CheckTooltipPlacement(UIObject tooltip, Scene scene) 
+        {
+            Vector3 topLeft = tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft);
+            Vector3 botRight = tooltip.GetAnchorPosition(UIAnchorPosition.BottomRight);
+
+            bool bot = false;
+            bool top = false;
+
+            if (botRight.X > WindowConstants.ScreenUnits.X) 
+            {
+                bot = true;
+            }
+
+            if (topLeft.Y < 0) 
+            {
+                top = true;
+            }
+
+            if (!(bot || top))
+                return;
+
+            Vector3 mousePos = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position);
+
+            if (bot && top)
+            {
+                tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.TopRight);
+            }
+            else if (bot)
+            {
+                tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.BottomRight);
+            }
+            else if (top) 
+            {
+                tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.TopLeft);
+            }
         }
     }
 

@@ -116,6 +116,12 @@ namespace MortalDungeon.Engine_Classes
             Finished = true;
         }
 
+        public void Finish() 
+        {
+            Stop();
+            OnFinish?.Invoke();
+        }
+
         public void SetStartDelay(int delay) 
         {
             tick = -delay;

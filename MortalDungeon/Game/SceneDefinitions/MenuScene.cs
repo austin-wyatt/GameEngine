@@ -43,18 +43,28 @@ namespace MortalDungeon.Game.SceneDefinitions
             _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
 
 
-            RiverParams riverParams = new RiverParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
+            PathParams riverParams = new PathParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
             riverParams.AddStop(new FeaturePoint(25, 45));
             riverParams.AddStop(new FeaturePoint(40, 30));
             riverParams.AddStop(new FeaturePoint(80, 35));
 
             River_1 river = new River_1(riverParams);
 
+
+            PathParams pathParams = new PathParams(new FeaturePoint(-45, -3000), new FeaturePoint(0, 1000), 3);
+            pathParams.AddMeanderingPoints(20, 0.25f, 1, 0, 123456);
+
+            Path_1 path = new Path_1(pathParams);
+            
+
             ForestParams forestParams = new ForestParams(new FeaturePoint(0, 0), 100, 0.1);
             Forest_1 forest = new Forest_1(forestParams);
 
             river.GenerateFeature();
             _tileMapController.LoadedFeatures.Add(river);
+
+            path.GenerateFeature();
+            _tileMapController.LoadedFeatures.Add(path);
 
             forest.GenerateFeature();
             _tileMapController.LoadedFeatures.Add(forest);
@@ -195,7 +205,16 @@ namespace MortalDungeon.Game.SceneDefinitions
             {
                 return false;
             }
-           
+
+            switch (e.Key) 
+            {
+                case Keys.F11:
+                    if (CurrentUnit != null) 
+                    {
+                        CurrentUnit.Info._movementAbility.CancelMovement();
+                    }
+                    break;
+            }
 
             return true;
         }
@@ -390,7 +409,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 else if (KeyboardState.IsKeyDown(Keys.KeyPadDivide))
                 {
 
-                    RiverParams riverParams = new RiverParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
+                    PathParams riverParams = new PathParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
                     riverParams.AddStop(new FeaturePoint(25, 45));
                     riverParams.AddStop(new FeaturePoint(40, 30));
                     riverParams.AddStop(new FeaturePoint(80, 35));

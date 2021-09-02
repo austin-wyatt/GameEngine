@@ -56,7 +56,7 @@ namespace MortalDungeon.Game.Units
 
             AI.Dispositions.Add(disp);
 
-            Info.Stealth.Skill = 10;
+            Info.Stealth.Skill = 0;
 
             //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
             //Abilities.Add(melee.AbilityID, melee);

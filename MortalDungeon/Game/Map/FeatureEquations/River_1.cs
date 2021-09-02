@@ -9,9 +9,9 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 {
     public class River_1 : FeatureEquation
     {
-        RiverParams RiverParams;
+        PathParams RiverParams;
 
-        public River_1(RiverParams riverParams)
+        public River_1(PathParams riverParams)
         {
             RiverParams = riverParams;
         }
@@ -95,27 +95,6 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         internal override void UpdatePoint(FeaturePoint point)
         {
             AffectedPoints.TryAdd(point, TileMap._randomNumberGen.NextDouble() > 0.3 ? Feature.Water_1 : Feature.Water_2);
-        }
-    }
-
-
-    public struct RiverParams
-    {
-        public FeaturePoint Start;
-        public List<FeaturePoint> Stops;
-        public int Width;
-
-        public RiverParams(FeaturePoint start, FeaturePoint end, int width = 1)
-        {
-            Start = start;
-            Stops = new List<FeaturePoint>() { end };
-
-            Width = width;
-        }
-
-        public void AddStop(FeaturePoint stop)
-        {
-            Stops.Insert(Stops.Count - 1, stop);
         }
     }
 }

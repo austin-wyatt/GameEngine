@@ -31,6 +31,7 @@ namespace MortalDungeon.Game.Units
         public bool Selected = false;
         public bool Targeted = false;
 
+
         public UnitSelectionTile SelectionTile;
 
 
@@ -146,24 +147,17 @@ namespace MortalDungeon.Game.Units
         public virtual void SetTileMapPosition(BaseTile baseTile) 
         {
             BaseTile prevTile = Info.TileMapPosition;
-            Info.TileMapPosition = baseTile;
 
             if (prevTile != null)
-            {
-                if (baseTile.TileMap.TileMapCoords != prevTile.TileMap.TileMapCoords)
-                {
-                    OnTileMapChanged();
-                }
-            }
+                prevTile.UnitOnTile = null;
+
+            baseTile.UnitOnTile = this;
+
+            Info.TileMapPosition = baseTile;
+
+            Scene.OnUnitMoved(this);
         }
 
-        private void OnTileMapChanged() 
-        {
-            if (Info.PrimaryUnit) 
-            {
-                //GetTileMap().Controller.LoadSurroundingTileMaps(GetTileMap().TileMapCoords);
-            }
-        }
 
         public virtual float GetBuffResistanceModifier(DamageType damageType) 
         {
@@ -373,7 +367,7 @@ namespace MortalDungeon.Game.Units
 
         public void Deselect()
         {
-            Scene.Footer.UpdateFooterInfo(Scene.CurrentUnit);
+            Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
             SelectionTile.Deselect();
             Selected = false;
         }

@@ -46,6 +46,8 @@ namespace MortalDungeon.Game.Structures
             Type = StructureEnum.Wall_Wood_Door;
             WallType = WallType.Door;
 
+            HasContextMenu = true;
+
             BaseObject.BaseFrame.SpritesheetPosition = (int)StructureEnum.Wall_Wood_Door;
             SetColor(Colors.Transparent);
 

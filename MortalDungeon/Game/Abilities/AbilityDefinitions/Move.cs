@@ -116,9 +116,16 @@ namespace MortalDungeon.Game.Abilities
                     {
                         CastingUnit.SetTileMapPosition(currentTile);
 
+                        ApplyTileEnergyCost(currentTile);
+
                         Task.Run(() => Scene.FillInTeamFog());
 
                         Scene.Controller.CullObjects();
+
+                        if (_moveCanceled) 
+                        {
+                            moveAnimation.Finish();
+                        }
                     };
 
                     moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
@@ -128,18 +135,31 @@ namespace MortalDungeon.Game.Abilities
 
                 CastingUnit.AddPropertyAnimation(moveAnimation);
                 moveAnimation.Play();
+                Moving = true;
 
                 moveAnimation.OnFinish = () =>
                 {
                     CastingUnit.RemovePropertyAnimation(moveAnimation.AnimationID);
                     EffectEnded();
+
+                    Moving = false;
+                    _moveCanceled = false;
                 };
             }
 
             Casted();
             
-            //CastingUnit.TileMapPosition = SelectedTile.TileIndex;
             SelectedTile = null;
+        }
+
+        public bool Moving = false;
+        private bool _moveCanceled = false;
+        public void CancelMovement() 
+        {
+            if (Moving) 
+            {
+                _moveCanceled = true;
+            }
         }
 
         public override void OnCast()
@@ -160,17 +180,38 @@ namespace MortalDungeon.Game.Abilities
 
         public override void ApplyEnergyCost()
         {
+            //if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            //{
+            //    Scene.EnergyDisplayBar.HoverAmount(0);
+
+            //    float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
+
+            //    Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+            //}
+            //else 
+            //{
+            //    float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
+
+            //    CastingUnit.Info.Energy -= energyCost;
+            //}
+        }
+
+        protected void ApplyTileEnergyCost(BaseTile tile) 
+        {
+            if (!Scene.InCombat)
+                return;
+
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
                 Scene.EnergyDisplayBar.HoverAmount(0);
 
-                float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
+                float energyCost = tile.Properties.MovementCost * GetEnergyCost();
 
                 Scene.EnergyDisplayBar.AddEnergy(-energyCost);
             }
-            else 
+            else
             {
-                float energyCost = GetPathMovementCost(CurrentTiles) * GetEnergyCost();
+                float energyCost = tile.Properties.MovementCost * GetEnergyCost();
 
                 CastingUnit.Info.Energy -= energyCost;
             }
@@ -178,7 +219,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnTileClicked(TileMap map, BaseTile tile)
         {
-            if (AffectedTiles.Exists(t => t.TilePoint == tile.TilePoint))
+            if (_path.Count > 0)
             {
                 SelectedTile = tile;
                 EnactEffect();
@@ -192,6 +233,7 @@ namespace MortalDungeon.Game.Abilities
         private Vector4 _baseSelectionColor = new Vector4();
         private List<BaseTile> _path = new List<BaseTile>();
         private List<int> _pathTilesToDelete = new List<int>();
+        private bool _evaluatingPath = false;
         public override void OnHover(BaseTile tile, TileMap map)
         {
             if (tile.TilePoint == CastingUnit.Info.TileMapPosition) 
@@ -202,153 +244,172 @@ namespace MortalDungeon.Game.Abilities
                 return;
             }
 
-
             if (SelectedTile == null || tile.ObjectID != SelectedTile.ObjectID)
             {
-                SelectedTile = tile;
-                List<BaseTile> tiles = new List<BaseTile>();
-                TileMap.PathToPointParameters param;
-
-                //attempt to extend the selection from the current path
-                if (_path.Count > 0)
+                if (!_evaluatingPath) 
                 {
-                    bool selectedTileInPath = _path.Exists(p => p.AttachedTile != null && p.AttachedTile.ObjectID == tile.ObjectID);
+                    Task.Run(() => EvaluateHoverPath(tile, map));
+                }
+            }
+        }
 
-                    //get the path from the last tile to the hovered point
-                    param = new TileMap.PathToPointParameters(_path[^1].AttachedTile.TilePoint, SelectedTile.TilePoint, Range - _path.Count + 1)
-                    {
-                        TraversableTypes = TraversableTypes,
-                        Units = Units,
-                        CastingUnit = CastingUnit,
-                        AbilityType = Type,
-                        CheckTileLower = true
-                    };
+        public void EvaluateHoverPath(BaseTile tile, TileMap map) 
+        {
+            _evaluatingPath = true;
+
+            SelectedTile = tile;
+            List<BaseTile> tiles = new List<BaseTile>();
+            TileMap.PathToPointParameters param;
+
+            //attempt to extend the selection from the current path
+            if (_path.Count > 0)
+            {
+                bool selectedTileInPath = _path.Exists(p => p.AttachedTile != null && p.AttachedTile.ObjectID == tile.ObjectID);
+
+                //get the path from the last tile to the hovered point
+                param = new TileMap.PathToPointParameters(_path[^1].AttachedTile.TilePoint, SelectedTile.TilePoint, Range - _path.Count + 1)
+                {
+                    TraversableTypes = TraversableTypes,
+                    Units = Units,
+                    CastingUnit = CastingUnit,
+                    AbilityType = Type,
+                    CheckTileLower = true
+                };
+                tiles = TileMap.GetPathToPoint(param);
+
+                if (tiles.Count == 0 && _path.Count - 1 == Range && _path.Count > 1 && !selectedTileInPath)
+                {
+                    param.StartingPoint = _path[^2].AttachedTile.TilePoint;
+                    param.Depth = Range - _path.Count + 2;
+
                     tiles = TileMap.GetPathToPoint(param);
-
-                    if (tiles.Count == 0 && _path.Count - 1 == Range && _path.Count > 1 && !selectedTileInPath)
+                    if (tiles.Count != 0)
                     {
-                        param.StartingPoint = _path[^2].AttachedTile.TilePoint;
-                        param.Depth = Range - _path.Count + 2;
-
-                        tiles = TileMap.GetPathToPoint(param);
-                        if (tiles.Count != 0)
+                        for (int i = 0; i < _path.Count - 2; i++)
                         {
-                            for (int i = 0; i < _path.Count - 2; i++)
-                            {
-                                tiles.Insert(i, _path[i].AttachedTile);
-                            }
-                        }
-                        else
-                        {
-                            //the path is too long so we use the default case here
-                            param.StartingPoint = CastingUnit.Info.TileMapPosition;
-                            param.Depth = Range;
-
-                            tiles = TileMap.GetPathToPoint(param);
-                        }
-                    }
-                    else if (tiles.Count != 0 || (_path.Count > 1 && _path[^2].AttachedTile.TilePoint == tile.TilePoint))
-                    {
-                        bool backtracking = false;
-                        for (int i = 0; i < _path.Count - 1; i++)
-                        {
-                            //if the path does exist make sure we aren't backtracking
-                            if (tiles.Exists(t => t.ObjectID == _path[i].AttachedTile.ObjectID))
-                            {
-                                tiles.Clear();
-                                //remove the last tile since we are backtracking
-                                for (int j = _path.Count - 1; j > i; j--)
-                                {
-                                    if (_pathTilesToDelete.Contains(j))
-                                    {
-                                        _pathTilesToDelete.Remove(j);
-                                        _path[j].TilePoint.ParentTileMap.DeselectTile(_path[j]);
-                                    }
-                                    ClearTile(_path[j]);
-                                    _path.Remove(_path[j]);
-                                }
-
-
-                                //if backtracking, fill the tiles list with the path up to that point
-                                for (int j = 0; j < _path.Count; j++)
-                                {
-                                    tiles.Add(_path[j].AttachedTile);
-                                }
-
-                                backtracking = true;
-                            }
-                        }
-
-                        if (!backtracking)
-                        {
-                            //if we aren't backtracking then fill in the tiles we need
-                            for (int i = 0; i < _path.Count - 1; i++)
-                            {
-                                tiles.Insert(i, _path[i].AttachedTile);
-                            }
+                            tiles.Insert(i, _path[i].AttachedTile);
                         }
                     }
                     else
                     {
-                        //if a path doesn't exist attempt to get one normally
+                        //the path is too long so we use the default case here
                         param.StartingPoint = CastingUnit.Info.TileMapPosition;
                         param.Depth = Range;
 
                         tiles = TileMap.GetPathToPoint(param);
                     }
+                }
+                else if (tiles.Count != 0 || (_path.Count > 1 && _path[^2].AttachedTile.TilePoint == tile.TilePoint))
+                {
+                    bool backtracking = false;
+                    for (int i = 0; i < _path.Count - 1; i++)
+                    {
+                        //if the path does exist make sure we aren't backtracking
+                        if (tiles.Exists(t => t.ObjectID == _path[i].AttachedTile.ObjectID))
+                        {
+                            tiles.Clear();
+                            //remove the last tile since we are backtracking
+                            for (int j = _path.Count - 1; j > i; j--)
+                            {
+                                if (_pathTilesToDelete.Contains(j))
+                                {
+                                    _pathTilesToDelete.Remove(j);
+                                    _path[j].TilePoint.ParentTileMap.DeselectTile(_path[j]);
+                                }
+                                ClearTile(_path[j]);
+                                _path.Remove(_path[j]);
+                            }
 
+
+                            //if backtracking, fill the tiles list with the path up to that point
+                            for (int j = 0; j < _path.Count; j++)
+                            {
+                                tiles.Add(_path[j].AttachedTile);
+                            }
+
+                            backtracking = true;
+                        }
+                    }
+
+                    if (!backtracking)
+                    {
+                        //if we aren't backtracking then fill in the tiles we need
+                        for (int i = 0; i < _path.Count - 1; i++)
+                        {
+                            tiles.Insert(i, _path[i].AttachedTile);
+                        }
+                    }
                 }
                 else
                 {
-                    param = new TileMap.PathToPointParameters(CastingUnit.Info.TileMapPosition, SelectedTile.TilePoint, Range)
-                    {
-                        TraversableTypes = TraversableTypes,
-                        Units = Units,
-                        CastingUnit = CastingUnit,
-                        AbilityType = Type,
-                        CheckTileLower = true
-                    };
+                    //if a path doesn't exist attempt to get one normally
+                    param.StartingPoint = CastingUnit.Info.TileMapPosition;
+                    param.Depth = Range;
 
                     tiles = TileMap.GetPathToPoint(param);
                 }
 
-                ClearSelectedTiles();
-
-                if (tiles.Count > 0)
-                {
-                    tiles.ForEach(t =>
-                    {
-                        if (t.AttachedTile != null)
-                        {
-                            _path.Add(t.AttachedTile);
-                        }
-                        else
-                        {
-                            map.SelectTile(t);
-                            _path.Add(t.AttachedTile);
-                            _pathTilesToDelete.Add(_path.Count - 1);
-                        }
-                    });
-
-                    _path.ForEach(p =>
-                    {
-                        _baseSelectionColor = p._tileObject.OutlineParameters.InlineColor;
-
-                        p._tileObject.OutlineParameters.InlineColor = _pathColor;
-                        p._tileObject.OutlineParameters.InlineThickness = 5;
-                    });
-                }
-
-                float energyCost = GetPathMovementCost(tiles) * GetEnergyCost();
-
-                if (energyCost > Scene.EnergyDisplayBar.CurrentEnergy) 
-                {
-                    tiles.Clear();
-                    ClearSelectedTiles();
-                }
-
-                Scene.EnergyDisplayBar.HoverAmount(GetPathMovementCost(tiles) * GetEnergyCost());
             }
+            else
+            {
+                param = new TileMap.PathToPointParameters(CastingUnit.Info.TileMapPosition, SelectedTile.TilePoint, Range)
+                {
+                    TraversableTypes = TraversableTypes,
+                    Units = Units,
+                    CastingUnit = CastingUnit,
+                    AbilityType = Type,
+                    CheckTileLower = true
+                };
+
+                tiles = TileMap.GetPathToPoint(param);
+            }
+
+            ClearSelectedTiles();
+
+            if (tiles.Count > 0)
+            {
+                tiles.ForEach(t =>
+                {
+                    if (t.AttachedTile != null)
+                    {
+                        _path.Add(t.AttachedTile);
+                    }
+                    else
+                    {
+                        map.SelectTile(t);
+                        _path.Add(t.AttachedTile);
+                        _pathTilesToDelete.Add(_path.Count - 1);
+                    }
+                });
+
+                for (int i = 0; i < _path.Count; i++) 
+                {
+                    _baseSelectionColor = _path[i]._tileObject.OutlineParameters.InlineColor;
+
+                    _path[i]._tileObject.OutlineParameters.InlineColor = _pathColor;
+                    _path[i]._tileObject.OutlineParameters.InlineThickness = 5;
+                }
+
+                //_path.ForEach(p =>
+                //{
+                //    _baseSelectionColor = p._tileObject.OutlineParameters.InlineColor;
+
+                //    p._tileObject.OutlineParameters.InlineColor = _pathColor;
+                //    p._tileObject.OutlineParameters.InlineThickness = 5;
+                //});
+            }
+
+            float energyCost = GetPathMovementCost(tiles) * GetEnergyCost();
+
+            if (energyCost > Scene.EnergyDisplayBar.CurrentEnergy)
+            {
+                tiles.Clear();
+                ClearSelectedTiles();
+            }
+
+            Scene.EnergyDisplayBar.HoverAmount(GetPathMovementCost(tiles) * GetEnergyCost());
+
+            _evaluatingPath = false;
         }
 
         public (float cost, int moves) GetCostToPoint(TilePoint point, float customRange = -1) 
@@ -399,18 +460,25 @@ namespace MortalDungeon.Game.Abilities
 
         private void ClearSelectedTiles()
         {
-            _path.ForEach(t =>
+            try
             {
-                ClearTile(t);
-            });
+                for (int i = 0; i < _path.Count; i++)
+                {
+                    ClearTile(_path[i]);
+                }
 
-            _pathTilesToDelete.ForEach(i =>
+                _pathTilesToDelete.ForEach(i =>
+                {
+                    _path[i].TilePoint.ParentTileMap.DeselectTile(_path[i]);
+                });
+
+                _path.Clear();
+                _pathTilesToDelete.Clear();
+            }
+            catch (Exception e) 
             {
-                _path[i].TilePoint.ParentTileMap.DeselectTile(_path[i]);
-            });
-
-            _path.Clear();
-            _pathTilesToDelete.Clear();
+                Console.WriteLine($"Exception caught in Move.ClearSelectedTiles: {e.Message}");
+            }
         }
 
         private void ClearTile(BaseTile tile)

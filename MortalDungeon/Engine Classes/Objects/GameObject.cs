@@ -33,6 +33,8 @@ namespace MortalDungeon.Engine_Classes
         public bool Hovered = false;
         public bool Grabbed = false;
 
+        public bool HasContextMenu = false;
+
         public int ObjectID => _objectID;
         protected int _objectID = currentObjectID++;
         protected static int currentObjectID = 0;

@@ -12,6 +12,15 @@ using System.Diagnostics;
 
 namespace MortalDungeon.Game.Tiles
 {
+    public enum MapPosition
+    {
+        None = 0,
+        Top = 1,
+        Left = 2,
+        Bot = 4,
+        Right = 8,
+    }
+
     public class TileMapController
     {
         public List<TileMap> TileMaps = new List<TileMap>();
@@ -25,18 +34,6 @@ namespace MortalDungeon.Game.Tiles
 
         public TileMapController(CombatScene scene = null) 
         {
-            //Bitmap tempMap = new Bitmap("Resources/TileSpritesheet.png");
-
-            //TileBitmap = new StaticBitmap(tempMap.Width, tempMap.Height);
-
-            //for (int y = 0; y < tempMap.Height; y++) 
-            //{
-            //    for (int x = 0; x < tempMap.Width; x++)
-            //    {
-            //        TileBitmap.SetPixel(x, y, tempMap.GetPixel(x, y));
-            //    }
-            //}
-
             Scene = scene;
         }
 
@@ -104,16 +101,17 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        public void LoadSurroundingTileMaps(TileMapPoint point, int width = 3) 
+        const int LOADED_MAP_DIMENSIONS = 3;
+        public void LoadSurroundingTileMaps(TileMapPoint point) 
         {
             TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
 
             List<TileMapPoint> loadedPoints = new List<TileMapPoint>();
             List<TileMapPoint> mapsToAdd = new List<TileMapPoint>();
 
-            for (int i = 0; i < width; i++) 
+            for (int i = 0; i < LOADED_MAP_DIMENSIONS; i++) 
             {
-                for (int j = 0; j < width; j++) 
+                for (int j = 0; j < LOADED_MAP_DIMENSIONS; j++) 
                 {
                     TileMap map = TileMaps.Find(m => m.TileMapCoords == currPoint);
 
@@ -123,7 +121,11 @@ namespace MortalDungeon.Game.Tiles
                         
                     }
 
-                    loadedPoints.Add(new TileMapPoint(currPoint.X, currPoint.Y));
+                    TileMapPoint mapPoint = new TileMapPoint(currPoint.X, currPoint.Y);
+
+                    mapPoint.MapPosition = GetMapPosition(i * LOADED_MAP_DIMENSIONS + j);
+
+                    loadedPoints.Add(mapPoint);
 
                     currPoint.Y++;
                 }
@@ -151,9 +153,83 @@ namespace MortalDungeon.Game.Tiles
 
                 ApplyLoadedFeaturesToMaps();
 
+                TileMaps.ForEach(m =>
+                {
+                    m.TileMapCoords.MapPosition = loadedPoints.Find(p => p == m.TileMapCoords).MapPosition;
+                });
+
                 Scene.PostTickAction = null;
+
+                Scene.FillInTeamFog();
             };
         }
+
+        public bool PointAtEdge(TilePoint point) 
+        {
+            TileMapPoint mapPoint = point.ParentTileMap.TileMapCoords;
+
+            if ((int)(mapPoint.MapPosition & MapPosition.Top) > 0) 
+            {
+                if (point.Y < 5) 
+                {
+                    return true;
+                }
+            }
+
+            if ((int)(mapPoint.MapPosition & MapPosition.Left) > 0)
+            {
+                if (point.X < 5)
+                {
+                    return true;
+                }
+            }
+
+            if ((int)(mapPoint.MapPosition & MapPosition.Bot) > 0)
+            {
+                if (point.Y >= point.ParentTileMap.Height - 5)
+                {
+                    return true;
+                }
+            }
+
+            if ((int)(mapPoint.MapPosition & MapPosition.Right) > 0)
+            {
+                if (point.X >= point.ParentTileMap.Width - 5)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal MapPosition GetMapPosition(int index) 
+        {
+            MapPosition pos = MapPosition.None;
+
+            if (index % LOADED_MAP_DIMENSIONS == 0) 
+            {
+                pos |= MapPosition.Top;
+            }
+
+            if ((index + 1) % LOADED_MAP_DIMENSIONS == 0)
+            {
+                pos |= MapPosition.Bot;
+            }
+
+            if (index < LOADED_MAP_DIMENSIONS) 
+            {
+                pos |= MapPosition.Left;
+            }
+
+            if (index >= LOADED_MAP_DIMENSIONS * (LOADED_MAP_DIMENSIONS - 1))
+            {
+                pos |= MapPosition.Right;
+            }
+
+            return pos;
+        }
+
 
         internal bool IsValidTile(int xIndex, int yIndex, TileMap map)
         {

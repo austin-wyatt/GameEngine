@@ -53,7 +53,7 @@ namespace MortalDungeon.Game.Tiles
         public TileMapController Controller;
 
         public List<BaseTile> Tiles = new List<BaseTile>();
-        public List<BaseTile> SelectionTiles = new List<BaseTile>(); //these tiles will be place above the currently selected tiles
+        public QueuedList<BaseTile> SelectionTiles = new QueuedList<BaseTile>(); //these tiles will be place above the currently selected tiles
         public BaseTile HoveredTile;
 
         public List<GameObject> Structures = new List<GameObject>();
@@ -511,13 +511,16 @@ namespace MortalDungeon.Game.Tiles
 
         public void DeselectTile(BaseTile selectionTile)
         {
-            if (SelectionTiles.Remove(selectionTile))
+            SelectionTiles.Remove(selectionTile);
+
+            if (selectionTile.AttachedTile != null) 
             {
                 selectionTile.SetRender(false);
                 selectionTile.AttachedTile.AttachedTile = null;
                 selectionTile.AttachedTile = null;
                 _amountOfSelectionTiles--;
             }
+            
         }
 
         public void DeselectTiles()
@@ -1048,7 +1051,7 @@ namespace MortalDungeon.Game.Tiles
                 return returnList; //if the ending tile is inside of a unit then immediately return
             }
 
-            if (GetDistanceBetweenPoints(param.StartingPoint, param.EndingPoint) > param.Depth)
+            if (GetDistanceBetweenPoints(param.StartingPoint, param.EndingPoint) > param.Depth * 1.5f)
             {
                 return returnList;
             }
@@ -1181,13 +1184,11 @@ namespace MortalDungeon.Game.Tiles
                     return returnList;
                 }
 
-                if(currentTile.F > param.Depth)
+                if (currentTile.F > param.Depth * 1.5f)
                 {
                     return returnList;
                 }
             }
-
-            //return returnList;
         }
 
         /// <summary>
@@ -1342,6 +1343,8 @@ namespace MortalDungeon.Game.Tiles
     {
         public int X;
         public int Y;
+
+        public MapPosition MapPosition = MapPosition.None;
 
         public TileMapPoint(int x, int y)
         {

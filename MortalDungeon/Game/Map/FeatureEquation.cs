@@ -365,6 +365,14 @@ namespace MortalDungeon.Game.Map
             return angle;
         }
 
+        public static int GetDistanceBetweenPoints(FeaturePoint pointA, FeaturePoint pointB)
+        {
+            Vector3i a = CubeMethods.OffsetToCube(pointA);
+            Vector3i b = CubeMethods.OffsetToCube(pointB);
+
+            return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
+        }
+
         public static int AngleOfDirection(Direction dir)
         {
             return ((int)dir + 2) * 60; //subtract 2 from the direction so that the default direction is north
@@ -441,6 +449,14 @@ namespace MortalDungeon.Game.Map
             _visited = false;
         }
 
+        public FeaturePoint(FeaturePoint coords)
+        {
+            X = coords.X;
+            Y = coords.Y;
+
+            _visited = false;
+        }
+
         public static bool operator ==(FeaturePoint a, FeaturePoint b) => a.X == b.X && a.Y == b.Y;
         public static bool operator !=(FeaturePoint a, FeaturePoint b) => !(a == b);
 
@@ -482,6 +498,7 @@ namespace MortalDungeon.Game.Map
         Water_1,
         Water_2,
         Tree_1,
-        Tree_2
+        Tree_2,
+        StonePath
     }
 }

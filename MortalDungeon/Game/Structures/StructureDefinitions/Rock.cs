@@ -25,6 +25,8 @@ namespace MortalDungeon.Game.Structures
             SetTileMapPosition(tile);
             Name = "Rock";
 
+            HasContextMenu = true;
+
             SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
 
             SetTeam(UnitTeam.Neutral);

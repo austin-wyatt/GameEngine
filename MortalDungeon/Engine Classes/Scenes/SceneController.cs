@@ -250,7 +250,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         ObjectCulling.CullTileChunk(chunk);
                     });
 
-                    ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
+                    //ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
                 });
 
                 ObjectCulling.CullListOfGameObjects(scene._units);

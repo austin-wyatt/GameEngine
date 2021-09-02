@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -43,6 +44,18 @@ namespace MortalDungeon.Game.Structures
             Name = "Structure";
 
             Type = (StructureEnum)spritesheetPos;
+        }
+
+        public override void SetTileMapPosition(BaseTile baseTile)
+        {
+            BaseTile prevTile = Info.TileMapPosition;
+
+            if(prevTile != null)
+                prevTile.Structure = null;
+
+            baseTile.Structure = this;
+
+            Info.TileMapPosition = baseTile;
         }
     }
 }

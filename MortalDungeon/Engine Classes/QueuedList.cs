@@ -14,7 +14,7 @@ namespace MortalDungeon.Engine_Classes
 
         public new void Add(T item)
         {
-            _itemsToAdd.Add(item);
+            _itemsToAdd[_currentQueue].Add(item);
 
             Rendering.Renderer.LoadTextureFromGameObj(item);
         }
@@ -26,31 +26,16 @@ namespace MortalDungeon.Engine_Classes
         {
 
         }
-
-        public new void HandleQueuedItems()
-        {
-
-            AddQueuedItems();
-            ClearQueuedItems();
-
-            //ForEach(item =>
-            //{
-            //    bool hasChanges = item.Children.HasQueuedItems();
-
-            //    item.Children.HandleQueuedItems();
-
-            //    if (hasChanges)
-            //    {
-            //        item.ForceTreeRegeneration();
-            //    }
-            //});
-        }
     }
 
     public class QueuedList<T> : List<T>
     {
-        protected List<T> _itemsToAdd = new List<T>();
-        protected List<T> _itemsToRemove = new List<T>();
+        protected List<List<T>> _itemsToAdd = CreateQueue();
+        protected List<List<T>> _itemsToRemove = CreateQueue();
+
+        protected int _currentQueue = 0;
+
+        protected const int INTERNAL_QUEUES = 2;
 
         public QueuedList()
         {
@@ -60,8 +45,9 @@ namespace MortalDungeon.Engine_Classes
         public QueuedList(List<T> list)
         {
             Clear();
-            _itemsToAdd.Clear();
-            _itemsToRemove.Clear();
+
+            _itemsToAdd = CreateQueue();
+            _itemsToRemove = CreateQueue();
 
             list.ForEach(i => AddImmediate(i));
         }
@@ -69,13 +55,26 @@ namespace MortalDungeon.Engine_Classes
         public QueuedList(IOrderedEnumerable<T> list)
         {
             Clear();
-            _itemsToAdd.Clear();
-            _itemsToRemove.Clear();
 
-            foreach(T i in list) 
+            _itemsToAdd = CreateQueue();
+            _itemsToRemove = CreateQueue();
+
+            foreach (T i in list) 
             {
                 AddImmediate(i);
             }
+        }
+
+        protected static List<List<T>> CreateQueue() 
+        {
+            List<List<T>> temp = new List<List<T>>();
+
+            for (int i = 0; i < INTERNAL_QUEUES; i++) 
+            {
+                temp.Add(new List<T>());
+            }
+
+            return temp;
         }
 
         public static QueuedList<T> FromEnumerable(IOrderedEnumerable<T> list) 
@@ -93,17 +92,17 @@ namespace MortalDungeon.Engine_Classes
 
         public new void Add(T item)
         {
-            _itemsToAdd.Add(item);
+            _itemsToAdd[_currentQueue].Add(item);
         }
 
-        public void AddQueuedItems()
+        public void AddQueuedItems(int queue)
         {
-            for (int i = 0; i < _itemsToAdd.Count; i++)
+            for (int i = 0; i < _itemsToAdd[queue].Count; i++)
             {
-                base.Add(_itemsToAdd[i]);
+                base.Add(_itemsToAdd[queue][i]);
             }
 
-            _itemsToAdd.Clear();
+            _itemsToAdd[queue].Clear();
         }
 
         public void RemoveImmediate(T item)
@@ -112,28 +111,31 @@ namespace MortalDungeon.Engine_Classes
         }
         public new void Remove(T item)
         {
-            _itemsToRemove.Add(item);
+            _itemsToRemove[_currentQueue].Add(item);
         }
 
-        public void ClearQueuedItems()
+        public void ClearQueuedItems(int queue)
         {
-            for (int i = 0; i < _itemsToRemove.Count; i++) 
+            for (int i = 0; i < _itemsToRemove[queue].Count; i++) 
             {
-                base.Remove(_itemsToRemove[i]);
+                base.Remove(_itemsToRemove[queue][i]);
             }
 
-            _itemsToRemove.Clear();
+            _itemsToRemove[queue].Clear();
         }
 
         public void HandleQueuedItems()
         {
-            AddQueuedItems();
-            ClearQueuedItems();
+            int queue = _currentQueue;
+            _currentQueue = (_currentQueue + 1) % INTERNAL_QUEUES;
+
+            AddQueuedItems(queue);
+            ClearQueuedItems(queue);
         }
 
         public bool HasQueuedItems() 
         {
-            return _itemsToAdd.Count > 0 || _itemsToRemove.Count > 0;
+            return _itemsToAdd[_currentQueue].Count > 0 || _itemsToRemove[_currentQueue].Count > 0;
         }
     }
 }

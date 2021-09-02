@@ -45,6 +45,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool InCombat = false;
 
+        public bool AbilityInProgress = false;
+
         public bool DisplayUnitStatuses = true;
 
         protected const AbilityTypes DefaultAbilityType = AbilityTypes.Move;
@@ -159,12 +161,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             //max energy displayed is the larger between current energy with buffs and default max energy.
             //If buffs are reducing energy the max will still be the default max for the unit.
-            if (CurrentUnit.AI.ControlType == ControlType.Controlled) 
+            if (CurrentUnit.AI.ControlType == ControlType.Controlled)
             {
                 SetCurrentUnitEnergy();
 
                 Footer.UpdateFooterInfo(CurrentUnit);
+                Footer.EndTurnButton.SetRender(true);
+
                 Task.Run(() => FillInTeamFog(CurrentUnit.AI.Team, prevTeam, true));
+            }
+            else 
+            {
+                Footer.EndTurnButton.SetRender(false);
             }
 
             TurnDisplay.SetCurrentUnit(UnitTakingTurn);
@@ -232,6 +240,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             EnergyDisplayBar.SetRender(true);
             //Footer.EndTurnButton.SetDisabled(false);
             Footer.EndTurnButton.SetRender(true);
+
             TurnDisplay.SetRender(true);
             TurnDisplay.SetUnits(InitiativeOrder);
 
@@ -239,6 +248,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InCombat = true;
 
             Round = 0;
+
+
+            EvaluateVentureButton();
 
             StartRound();
         }
@@ -249,8 +261,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InCombat = false;
 
             EnergyDisplayBar.SetRender(false);
-            //Footer.EndTurnButton.SetDisabled(true);
             Footer.EndTurnButton.SetRender(false);
+
+            EvaluateVentureButton();
 
             TurnDisplay.SetRender(false);
             TurnDisplay.SetUnits(InitiativeOrder);
@@ -260,6 +273,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void SelectAbility(Ability ability)
         {
+            if (CurrentUnit.AI.ControlType != ControlType.Controlled || AbilityInProgress)
+                return;
+
             if(_selectedAbility != null) 
             {
                 DeselectAbility();
@@ -452,7 +468,17 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         }
                     });
 
+                    //if a unit is being revealed from stealth then we want to stop the current movement ability
+                    if (team == CurrentTeam && !_units[i].Info.Stealth.Revealed[team] && couldSee) 
+                    {
+                        if (CurrentUnit.AI.ControlType == ControlType.Controlled && CurrentUnit.Info._movementAbility.Moving) 
+                        {
+                            CurrentUnit.Info._movementAbility.CancelMovement();
+                        }
+                    }
+
                     _units[i].Info.Stealth.SetRevealed(team, couldSee);
+
                 }
             }
         }
@@ -470,6 +496,35 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     unit.SetRender(false);
                 }
             });
+        }
+
+        public void EvaluateVentureButton() 
+        {
+            if (Footer == null)
+                return;
+
+            if(CurrentUnit == null || CurrentUnit.AI.Team != UnitTeam.Ally || CurrentUnit.AI.ControlType != ControlType.Controlled) 
+            {
+                Footer.VentureForthButton.SetRender(false);
+                return;
+            }
+
+            if (!InCombat && _tileMapController.PointAtEdge(CurrentUnit.Info.Point))
+            {
+                Footer.VentureForthButton.SetRender(true);
+            }
+            else 
+            {
+                Footer.VentureForthButton.SetRender(false);
+            }
+        }
+
+        public void OnUnitMoved(Unit unit) 
+        {
+            if (CurrentUnit == unit && CurrentUnit.AI.Team == UnitTeam.Ally && CurrentUnit.AI.ControlType == ControlType.Controlled) 
+            {
+                EvaluateVentureButton();
+            }
         }
 
         public override void OnRender()
@@ -667,8 +722,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 }
             }
 
-            InitiativeOrder.Remove(unit);
+            InitiativeOrder.RemoveImmediate(unit);
             TurnDisplay.SetUnits(InitiativeOrder);
+
+            if (InitiativeOrder.All(unit => unit.AI.Team == UnitTeam.Ally || !unit.AI.Fighting)) 
+            {
+                EndCombat();
+            }
         }
 
         public override void OnUnitClicked(Unit unit, MouseButton button)
