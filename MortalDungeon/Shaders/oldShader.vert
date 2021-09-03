@@ -8,21 +8,17 @@ out vec2 texCoord;
 out vec4 appliedColor;
 out float mixPercent;
 
-//uniform mat4 view;
-//uniform mat4 projection;
 uniform mat4 camera;
 uniform int enable_cam;
 
 uniform mat4 transform;
 
 uniform vec4 aColor;
-//uniform float fMixPercent;
 
 void main(void)
 {
-	texCoord = aTexCoord;
+	texCoord = vec2(aTexCoord);
 	appliedColor = aColor;
-//	mixPercent = fMixPercent;
 	mixPercent = 0;
 
 	if(enable_cam == 1)

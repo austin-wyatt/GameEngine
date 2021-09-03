@@ -12,9 +12,6 @@ in vec2 texCoord;
 
 in vec2 texCoord2;
 
-in vec2 xTexBounds;
-in vec2 yTexBounds;
-
 in float inlineThickness;
 in float outlineThickness;
 in vec4 inlineColor;
@@ -97,8 +94,8 @@ void DoWork(in sampler2D primaryTexture)
 	if(outputColor.a < alpha_threshold)
 		discard;
 
-	if(gl_FrontFacing)  //discard if we are looking at the back of an object
-		discard;
+//	if(gl_FrontFacing)  //discard if we are looking at the back of an object
+//		discard;
 }
 
 void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)

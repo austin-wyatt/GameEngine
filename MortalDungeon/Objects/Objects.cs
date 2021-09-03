@@ -16,6 +16,7 @@ namespace MortalDungeon.Objects
         StructureSpritesheet,
 
         FogTexture,
+        TestTexture,
 
         DynamicTexture
     }
@@ -87,7 +88,7 @@ namespace MortalDungeon.Objects
 
         private bool _centerVertices;
 
-        public ObjectIDs ID = ObjectIDs.Unknown;
+        public int VerticeType = 0;
 
         public float SpritesheetPosition = 0;
         public Vector2 SideLengths = new Vector2(1, 1);

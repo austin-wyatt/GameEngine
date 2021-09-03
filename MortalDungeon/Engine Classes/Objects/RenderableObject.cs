@@ -100,9 +100,10 @@ namespace MortalDungeon.Engine_Classes
 
         public bool CameraPerspective = false;
 
-        public ObjectIDs ObjectID = ObjectIDs.Unknown;
         public float SpritesheetPosition = 0;
         public Vector2 SideLengths = new Vector2(1, 1);
+
+        public int VerticeType = 0;
 
         public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
         {
@@ -119,32 +120,6 @@ namespace MortalDungeon.Engine_Classes
             Stride = GetVerticesSize(vertices) / Points;
         }
 
-        public RenderableObject(ObjectDefinition def, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
-        {
-            Center = def.Center;
-            Points = def.Points;
-            Textures = textures;
-            RenderType = renderType;
-            VerticesDrawOrder = def.Indices;
-            ShaderReference = shaderReference;
-            ObjectID = def.ID;
-            SpritesheetPosition = def.SpritesheetPosition;
-            SideLengths = def.SideLengths;
-
-            if (def.ShouldCenter())
-            {
-                Vertices = CenterVertices(def.Vertices);
-            }
-            else
-            {
-                Vertices = def.Vertices;
-            }
-
-            SetBaseColor(color);
-
-            Stride = GetVerticesSize(def.Vertices) / Points;
-        }
-
         public RenderableObject(ObjectDefinition def, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
         {
             Center = def.Center;
@@ -153,9 +128,11 @@ namespace MortalDungeon.Engine_Classes
             RenderType = renderType;
             VerticesDrawOrder = def.Indices;
             ShaderReference = shaderReference;
-            ObjectID = def.ID;
             SpritesheetPosition = def.SpritesheetPosition;
             SideLengths = def.SideLengths;
+
+            VerticeType = def.VerticeType;
+
             if (def.ShouldCenter())
             {
                 Vertices = CenterVertices(def.Vertices);
@@ -179,10 +156,11 @@ namespace MortalDungeon.Engine_Classes
             RenderType = oldObj.RenderType;
             VerticesDrawOrder = oldObj.VerticesDrawOrder;
             ShaderReference = oldObj.ShaderReference;
-            ObjectID = oldObj.ObjectID;
             SpritesheetPosition = oldObj.SpritesheetPosition;
             SideLengths = oldObj.SideLengths;
             Vertices = oldObj.Vertices;
+
+            VerticeType = oldObj.VerticeType;
 
             SetBaseColor(new Vector4(oldObj.BaseColor));
 
@@ -195,6 +173,32 @@ namespace MortalDungeon.Engine_Classes
             Scale = new Matrix4(new Vector4(oldObj.Scale.Row0), new Vector4(oldObj.Scale.Row1), new Vector4(oldObj.Scale.Row2), new Vector4(oldObj.Scale.Row3));
 
             Position = new Vector4(oldObj.Position);
+        }
+
+        public RenderableObject(ObjectDefinition def, Vector4 color, Shader shaderReference)
+        {
+            Center = def.Center;
+            Points = def.Points;
+            Textures = def.Textures;
+            VerticesDrawOrder = def.Indices;
+            ShaderReference = shaderReference;
+            SpritesheetPosition = def.SpritesheetPosition;
+            SideLengths = def.SideLengths;
+
+            VerticeType = def.VerticeType;
+
+            if (def.ShouldCenter())
+            {
+                Vertices = CenterVertices(def.Vertices);
+            }
+            else
+            {
+                Vertices = def.Vertices;
+            }
+
+            SetBaseColor(color);
+
+            Stride = GetVerticesSize(def.Vertices) / Points;
         }
 
         public int GetRenderDataOffset(ObjectRenderType renderType = ObjectRenderType.Unknown) 

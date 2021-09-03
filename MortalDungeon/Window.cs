@@ -108,7 +108,7 @@ namespace MortalDungeon
 
         BaseObject _cursorObject;
 
-        private List<BaseObject> _renderedItems = new List<BaseObject>();
+        public static List<BaseObject> _renderedItems = new List<BaseObject>();
 
         private List<Vector2> _points = new List<Vector2>();
         private List<Vector3> _lines = new List<Vector3>();
@@ -374,7 +374,7 @@ namespace MortalDungeon
             //TickAllObjects();
 
             var mouse = MouseState;
-            //float sensitivity = 0.2f;
+            float sensitivity = 0.2f;
 
             // Calculate the offset of the mouse position
             var deltaX = mouse.X - _lastPos.X;
@@ -389,12 +389,12 @@ namespace MortalDungeon
                 _firstMove = false;
             }
 
-            //if (mouse.IsButtonDown(MouseButton.Left))
-            //{
-            //    // Apply the camera pitch and yaw (we clamp the pitch in the camera class)
-            //    _camera.Yaw += deltaX * sensitivity;
-            //    _camera.Pitch -= deltaY * sensitivity; // reversed since y-coordinates range from bottom to top
-            //}
+            if (mouse.IsButtonDown(MouseButton.Left))
+            {
+                // Apply the camera pitch and yaw (we clamp the pitch in the camera class)
+                _camera.Yaw += deltaX * sensitivity;
+                _camera.Pitch -= deltaY * sensitivity; // reversed since y-coordinates range from bottom to top
+            }
 
             _lastPos = new Vector2(mouse.X, mouse.Y);
 

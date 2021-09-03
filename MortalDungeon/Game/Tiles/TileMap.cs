@@ -866,14 +866,14 @@ namespace MortalDungeon.Game.Tiles
                 {
                     _BaseTileTemp = this[currentOffset.X, currentOffset.Y];
 
-                    if (currentTile != null && _BaseTileTemp.GetPathableHeight() - currentTile.GetPathableHeight() > 1)
+                    if (currentTile != null && _BaseTileTemp.Properties.Height - currentTile.Properties.Height > 1)
                     {
                         return; //if the height difference is due to the tile we can't see the tile
                     }
 
                     outputList.Add(_BaseTileTemp);
 
-                    if (currentTile != null && _BaseTileTemp.GetVisionHeight() - currentTile.GetPathableHeight() > 1)
+                    if (currentTile != null && _BaseTileTemp.GetVisionHeight() - currentTile.GetVisionHeight() > 1)
                     {
                         return; //if the height difference is due to the structure then we can see the tile
                     }

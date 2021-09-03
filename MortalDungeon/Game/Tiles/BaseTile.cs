@@ -316,7 +316,7 @@ namespace MortalDungeon.Game.Tiles
 
         public int GetVisionHeight() 
         {
-            return Structure != null && !Structure.Passable ? Structure.Info.Height + Properties.Height : Properties.Height;
+            return Structure != null && !Structure.Passable && !Structure.Info.Transparent ? Structure.Info.Height + Properties.Height : Properties.Height;
         }
 
         public int GetPathableHeight()

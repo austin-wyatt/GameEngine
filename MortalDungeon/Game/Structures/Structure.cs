@@ -24,6 +24,8 @@ namespace MortalDungeon.Game.Structures
         Wall_Wood_1 = 40,
         Wall_Wood_Corner = 41,
         Wall_Wood_Door = 42,
+        Wall_Iron_1 = 50,
+        Wall_Iron_Corner = 51,
 
         Cliff_1 = 90,
         Cliff_2 = 91,

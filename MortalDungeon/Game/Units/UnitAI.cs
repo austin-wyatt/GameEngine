@@ -12,6 +12,7 @@ namespace MortalDungeon.Game.Units
     public enum UnitTeam
     {
         Ally,
+        Friendly,
         Enemy,
         Neutral,
         Unknown

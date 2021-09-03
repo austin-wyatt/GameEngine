@@ -17,9 +17,6 @@ out vec4 appliedColor;
 out float mixPercent;
 out float twoTextures;
 
-out vec2 xTexBounds;
-out vec2 yTexBounds;
-
 out float inlineThickness;
 out float outlineThickness;
 out vec4 inlineColor;
@@ -54,17 +51,20 @@ void main(void)
     float row =  floor(compositeType[1] / rows);
 	float column = compositeType[1] - row * rows;
 
-    
-	texCoord = setTexCoord(texCoord, columns, rows, column, row);
+//    if(rows != 2){
+//		texCoord = setTexCoord(texCoord, columns, rows, column, row);
+//	}
+
+	texCoord = vec2(setTexCoord(texCoord, columns, rows, column, row));
 
 	//Multi texture handling
-	//going to hardcode values here for the time being (using fog spritesheet)
-	columns = 2;
-	rows = 2;
-	row = floor(abs(goldNoise(vec2(transform[0][3], transform[1][3]), fract(transform[2][2]) + 1)) * 2);
-	column = floor(abs(goldNoise(vec2(transform[0][3], transform[1][3]), fract(transform[1][2]) + 2)) * 2);
-
-	texCoord2 = vec2(aTexCoord.x * compositeType_2[1] / columns + (column / columns), aTexCoord.y * compositeType_2[0] * -1 / rows + (row / rows));
+//	//going to hardcode values here for the time being (using fog spritesheet)
+//	columns = 2;
+//	rows = 2;
+//	row = floor(abs(goldNoise(vec2(transform[0][3], transform[1][3]), fract(transform[2][2]) + 1)) * 2);
+//	column = floor(abs(goldNoise(vec2(transform[0][3], transform[1][3]), fract(transform[1][2]) + 2)) * 2);
+//
+//	texCoord2 = vec2(aTexCoord.x * compositeType_2[1] / columns + (column / columns), aTexCoord.y * compositeType_2[0] * -1 / rows + (row / rows));
 
 	//Outline handling
 	inlineColor = aInlineColor;
@@ -97,7 +97,7 @@ void main(void)
 	InstanceID = gl_InstanceID; 
 }
 
-vec2 setTexCoord(vec2 texCoord, float columns, float rows, float column, float row)
+vec2 setTexCoord(vec2 texCoords, float columns, float rows, float column, float row)
 {
 	float minBoundX = column / columns;
     float maxBoundX = (column + compositeType[2]) / columns;
@@ -105,39 +105,20 @@ vec2 setTexCoord(vec2 texCoord, float columns, float rows, float column, float r
     float maxBoundY = row / rows;
     float minBoundY = (row + compositeType[3]) / rows;
 
-    if (maxBoundX > 1)
-    {
-        minBoundX = (column - compositeType[2]) / columns;
-        maxBoundX = 1;
-    }
 
-    if (maxBoundY > 1) 
-    {
-        maxBoundY = (row - compositeType[3]) / rows;
-        minBoundY = 1;
-    }
+	float xDiff = maxBoundX - minBoundX;
+	float yDiff = maxBoundY - minBoundY;
 
-	if(texCoord[0] == 0)
-	{
-		texCoord[0] = minBoundX;
-	}
-	else
-	{
-		texCoord[0] = maxBoundX;
-	}
 
-	if(texCoord[1] == 0)
-	{
-		texCoord[1] = minBoundY;
-	}
-	else
-	{
-		texCoord[1] = maxBoundY;
-	}
+	vec2 outTex = vec2(0, 0);
 
-	xTexBounds = vec2(minBoundX, maxBoundX);
-	yTexBounds = vec2(minBoundY, maxBoundY);
+	outTex[0] = minBoundX;
+	outTex[1] = minBoundY;
 
-	return texCoord;
+
+	outTex[0] += (texCoords[0] * xDiff);
+	outTex[1] += (texCoords[1] * yDiff);
+
+	return outTex;
 }
 

@@ -10,23 +10,11 @@ in float twoTextures;
 
 in vec2 texCoord;
 
-in vec2 texCoord2;
-
-in vec2 xTexBounds;
-in vec2 yTexBounds;
-
-in float inlineThickness;
-in float outlineThickness;
-in vec4 inlineColor;
-in vec4 outlineColor;
 
 uniform float alpha_threshold;
 
 uniform sampler2D texture0;
 
-
-void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness);
-void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness);
 
 void main()
 {
@@ -34,49 +22,10 @@ void main()
 
 	outputColor = texColor * appliedColor;
 
-
-	//Handle outline and inline
-	CreateOutline(texColor, outlineColor, outlineThickness);
-
-	CreateInline(texColor, inlineColor, inlineThickness);
-	
-	
 	//if the alpha is below the alpha threshold the pixel is discarded
 	if(outputColor.a < alpha_threshold)
 		discard;
 
-	if(gl_FrontFacing)  //discard if we are looking at the back of an object
-		discard;
-}
-
-void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness)
-{
-	float dx = dFdx(texCoord.x);
-	float dy = dFdy(texCoord.y);
-
-
-	vec4 colorU = texture2D(texture0, vec2(texCoord.x, texCoord.y - dy * thickness));
-    vec4 colorD = texture2D(texture0, vec2(texCoord.x, texCoord.y + dy * thickness));
-    vec4 colorL = texture2D(texture0, vec2(texCoord.x + dx * thickness, texCoord.y));
-    vec4 colorR = texture2D(texture0, vec2(texCoord.x - dx * thickness, texCoord.y));
-                
-	
-	outputColor = textureColor.a == 0.0 && (colorU.a != 0.0 || colorD.a != 0.0 || colorL.a != 0.0 || colorR.a != 0.0) ? outlineColor : outputColor;
-//	outputColor = textureColor.a == 0.0 && (colorU.a != 0.0 || colorD.a != 0.0 || colorL.a != 0.0 || colorR.a != 0.0) 
-//		&& (texCoord.x != xTexBounds[0] || texCoord.x != xTexBounds[1] || texCoord.y != yTexBounds[0] || texCoord.y != yTexBounds[1]) ? outlineColor : outputColor;
-}
-
-void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness)
-{
-	float dx = dFdx(texCoord.x);
-	float dy = dFdy(texCoord.y);
-
-
-	vec4 colorU = texture2D(texture0, vec2(texCoord.x, texCoord.y - dy * thickness));
-    vec4 colorD = texture2D(texture0, vec2(texCoord.x, texCoord.y + dy * thickness));
-    vec4 colorL = texture2D(texture0, vec2(texCoord.x + dx * thickness, texCoord.y));
-    vec4 colorR = texture2D(texture0, vec2(texCoord.x - dx * thickness, texCoord.y));
-                
-
-	outputColor = textureColor.a != 0.0 && (colorU.a == 0.0 || colorD.a == 0.0 || colorL.a == 0.0 || colorR.a == 0.0) ? outlineColor : outputColor;
+//	if(gl_FrontFacing)  //discard if we are looking at the back of an object
+//		discard;
 }

@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -28,7 +29,7 @@ namespace MortalDungeon.Game.Structures
         public bool Openable = true;
         public bool Opened = false;
 
-        public Wall(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position, WallType type) : base(scene, spritesheet, spritesheetPos, position) 
+        public Wall(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position, WallType type) : base(scene, spritesheet, spritesheetPos, position)
         {
             WallType = type;
         }
@@ -64,9 +65,9 @@ namespace MortalDungeon.Game.Structures
             Console.WriteLine(MathHelper.RadiansToDegrees(rotation.Z));
         }
 
-        public void OpenDoor() 
+        public void OpenDoor()
         {
-            if (!Opened && Openable) 
+            if (!Opened && Openable)
             {
                 BaseObjects[1].BaseFrame.RotateZ(60);
                 BaseObjects[2].BaseFrame.RotateZ(-60);
@@ -75,7 +76,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public void CloseDoor() 
+        public void CloseDoor()
         {
             if (Opened && Openable)
             {
@@ -86,19 +87,26 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public void ToggleDoor() 
+        public void ToggleDoor()
         {
             if (!Opened)
             {
                 OpenDoor();
             }
-            else 
+            else
             {
                 CloseDoor();
             }
         }
 
-        public static void CreateWalls(TileMap map, TilePoint startPoint, TilePoint endPoint)
+
+        public enum Walls
+        {
+            Wood,
+            Stone,
+            Iron
+        }
+        public static void CreateWalls(TileMap map, TilePoint startPoint, TilePoint endPoint, Walls walls)
         {
             PathToPointParameters param = new PathToPointParameters(startPoint, endPoint, 100)
             {
@@ -113,8 +121,23 @@ namespace MortalDungeon.Game.Structures
 
             for (int i = 0; i < tiles.Count; i++)
             {
-                StructureEnum wallType = StructureEnum.Wall_Wood_1;
+                StructureEnum wallType;
+
+                switch (walls)
+                {
+                    case Walls.Iron:
+                        wallType = StructureEnum.Wall_Iron_1;
+                        break;
+                    case Walls.Stone:
+                        wallType = StructureEnum.Wall_1;
+                        break;
+                    default:
+                        wallType = StructureEnum.Wall_Wood_1;
+                        break;
+                }
                 type = WallType.Wall;
+
+
 
                 if (direction == Direction.None)
                 {
@@ -132,8 +155,21 @@ namespace MortalDungeon.Game.Structures
 
                 if (i != 0 && nextDirection != direction)
                 {
-                    wallType = StructureEnum.Wall_Wood_Corner;
-                    type = WallType.Corner;
+                    switch (walls)
+                    {
+                        case Walls.Iron:
+                            wallType = StructureEnum.Wall_Iron_1;
+                            type = WallType.Corner;
+                            break;
+                        case Walls.Stone:
+                            wallType = StructureEnum.Wall_Corner;
+                            type = WallType.Corner;
+                            break;
+                        default:
+                            wallType = StructureEnum.Wall_Wood_Corner;
+                            type = WallType.Corner;
+                            break;
+                    }
 
                     Direction prevDirection = FeatureEquation.DirectionBetweenTiles(tiles[i].TilePoint, tiles[i - 1].TilePoint);
 
@@ -141,34 +177,81 @@ namespace MortalDungeon.Game.Structures
                     rotation = AngledWallDirectionsToRotation(prevDirection, nextDirection);
                 }
 
+                bool pathable = true;
+                bool transparent = false;
 
-                CreateWall(map, tiles[i], wallType, rotation, type);
+                switch (walls)
+                {
+                    case Walls.Iron:
+                        transparent = true;
+                        break;
+                }
+
+                CreateWall(map, tiles[i], wallType, rotation, type, pathable, transparent, walls);
 
                 direction = nextDirection;
             }
         }
 
-        public static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type)
+        public static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, Walls walls = Walls.Wood)
         {
             Wall wall = new Wall(map.Controller.Scene, Spritesheets.StructureSheet, (int)wallType, tile.Position + new Vector3(0, 0, 0.01f), type);
 
-            if (wallType == StructureEnum.Wall_Corner || wallType == StructureEnum.Wall_Wood_Corner)
+
+            //if (type == WallType.Corner && walls != Walls.Iron)
+            //{
+            //    wall.SetScale(2);
+            //}
+
+            if (type == WallType.Corner)
             {
-                wall.SetScale(2);
+                wall.BaseObjects.Clear();
+                wall.BaseObjects.Add(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallCornerObj, tile.Position + new Vector3(0, 0, 0.3f)));
+
+                wall.BaseObject.BaseFrame.RotateX(90);
+            }
+            else
+            {
+                wall.BaseObjects.Clear();
+                wall.BaseObjects.Add(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallObj, tile.Position + new Vector3(0, 0, 0.3f)));
+
+                wall.BaseObject.BaseFrame.RotateX(90);
             }
 
-            wall.BaseObject.BaseFrame.RotateZ(rotation);
+            wall.SetColor(new Vector4(0.329f, 0.333f, 0.349f, 1));
+
+            wall.SetScale(0.5f);
+            
+            wall.BaseObject.BaseFrame.RotateZ(rotation - 90);
 
             wall.VisibleThroughFog = true;
             wall.SetTileMapPosition(tile);
             wall.Name = "Wall";
             wall.Pathable = true;
+            wall.Info.Transparent = transparent;
 
             wall.SetTeam(UnitTeam.Neutral);
             wall.Info.Height = 4;
 
             tile.Chunk.Structures.Add(wall);
             tile.Structure = wall;
+
+
+            //if (walls == Walls.Iron)
+            //{
+            //    Random rand = new Random();
+
+            //    wall.BaseObject.BaseFrame.RotateZ(-rotation);
+            //    wall.BaseObject.BaseFrame.RotateY(110);
+            //    wall.SetPosition(wall.Position + new Vector3(0, -100, 0.30f));
+
+            //    if (type == WallType.Corner)
+            //    {
+            //        wall.BaseObject.BaseFrame.RotateZ(60);
+            //    }
+
+            //    //Console.WriteLine($"Rotation: {rot}");
+            //}
         }
 
         //theres definitely a formula for this but this works just as well and is readable so whatev
@@ -207,7 +290,7 @@ namespace MortalDungeon.Game.Structures
                 checkOpenOptionDisabled();
             });
 
-            void checkOpenOptionDisabled() 
+            void checkOpenOptionDisabled()
             {
                 if (!Openable)
                 {

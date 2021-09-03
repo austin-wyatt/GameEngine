@@ -37,7 +37,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "TEST")
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "Toggle Vsync", 0.05f)
             {
                 OnClickAction = () =>
                 {

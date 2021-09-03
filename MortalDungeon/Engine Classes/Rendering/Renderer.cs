@@ -105,15 +105,15 @@ namespace MortalDungeon.Engine_Classes.Rendering
             if (setVertexData)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-                GL.BufferData(BufferTarget.ArrayBuffer, Display.GetVerticesSize(), Display.Vertices, BufferUsageHint.StreamDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw);
                 GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0);
 
-                GL.BufferData(BufferTarget.ElementArrayBuffer, Display.GetVerticesDrawOrderSize(), Display.VerticesDrawOrder, BufferUsageHint.StreamDraw);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, Display.VerticesDrawOrder.Length * sizeof(uint), Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
             }
 
             if (setTextureData)
             {
-                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, Display.GetRenderDataOffset());
+                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float));
                 Display.TextureReference.Use(TextureUnit.Texture0);
             }
 
@@ -129,11 +129,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.InterpolatedColor);
             }
 
+
             Display.ShaderReference.SetMatrix4("transform", transform);
 
             //Display.ShaderReference.SetFloat("fMixPercent", obj._baseFrame.ColorProportion);
 
-            GL.DrawElements(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr());
 
             DrawCount++;
         }
@@ -143,9 +144,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
             EnableInstancedShaderAttributes();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
 
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.StreamDraw); //take the raw vertices
-
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
+            GL.BufferData(BufferTarget.ElementArrayBuffer, Display.VerticesDrawOrder.Length * sizeof(uint), Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
 
             //Whenever this data is changed the instanceDataOffset parameter needs to be updated
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
@@ -224,8 +226,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             TextureName currTexture = Display.Textures.Textures[0];
             Display.TextureReference.Use(TextureUnit.Texture0);
 
-            if (instantiateRenderFunc)
-                PrepareInstancedRenderFunc(Display);
+            PrepareInstancedRenderFunc(Display);
 
             int currIndex = 0;
 
@@ -245,11 +246,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             TextureUnit currentTextureUnit = TextureUnit.Texture2;
 
-            static void draw(int itemCount, float[] renderDataArray) 
+            void draw(int itemCount, float[] renderDataArray) 
             {
-                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.StreamDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.DynamicDraw);
 
-                GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, itemCount);
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
 
                 DrawCount++;
             }
@@ -299,9 +300,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         }
 
                         GL.Disable(EnableCap.ScissorTest);
-
+ 
                         scissorCallList.Clear();
 
+                        EnableInstancedShaderAttributes();
                     }
                     else if (objects[i].ScissorData._scissorFlag)
                     {
@@ -314,6 +316,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         {
                             if (objects[i].BaseObjects[j].Render)
                             {
+                                if (objects[i].BaseObjects[j].BaseFrame.VerticeType != Display.VerticeType) 
+                                {
+                                    recursiveCallList.Add(objects[i]);
+                                    continue;
+                                }
+
                                 obj = objects[i].BaseObjects[j];
                                 tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
 
@@ -349,12 +357,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
             draw(count, _instancedRenderDataArray);
 
             //if (instantiateRenderFunc)
-            //    DisableInstancedShaderAttributes();
+            DisableInstancedShaderAttributes();
 
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, Display);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray);
             }
         }
 

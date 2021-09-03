@@ -466,7 +466,11 @@ namespace MortalDungeon.Game.Units
         public bool Dead = false;
         public bool BlocksSpace = true;
         public bool PhasedMovement = false;
-        public bool BlocksVision = false;
+
+        /// <summary>
+        /// If true, this unit/structure can always be seen through
+        /// </summary>
+        public bool Transparent = false;
 
         public bool Visible(UnitTeam team) 
         {

@@ -75,6 +75,42 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(position);
         }
 
+        public BaseObject(RenderableObject obj, int id, string name, Vector3 position, float[] bounds = null)
+        {
+            ID = id;
+            Name = name;
+            Position = new Vector3(position);
+
+            Animation temp = new Animation()
+            {
+                Frames = new List<RenderableObject>() { obj },
+                Frequency = 0,
+                Repeats = -1
+            };
+
+            temp.CurrentFrame = obj;
+
+            Animations[AnimationType.Idle] = temp;
+
+            _currentAnimation = Animations[AnimationType.Idle];
+            BaseFrame = _currentAnimation.Frames[0];
+
+            if (bounds == null)
+            {
+                Bounds = new Bounds(BaseFrame.GetPureVertexData(), BaseFrame);
+            }
+            else
+            {
+                Bounds = new Bounds(bounds, BaseFrame);
+            }
+
+            _dimensions = Bounds.GetDimensionData();
+
+            _localSpacePosition = new Vector3(position);
+
+            SetPosition(position);
+        }
+
         public BaseObject() { } //don't use this for creating objects
 
         //sets the position using units (1 thousandth of the width/height of the screen

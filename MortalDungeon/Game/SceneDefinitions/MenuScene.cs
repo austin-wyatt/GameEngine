@@ -408,17 +408,27 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else if (KeyboardState.IsKeyDown(Keys.KeyPadDivide))
                 {
+                    Window._renderedItems.Clear();
 
-                    PathParams riverParams = new PathParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
-                    riverParams.AddStop(new FeaturePoint(25, 45));
-                    riverParams.AddStop(new FeaturePoint(40, 30));
-                    riverParams.AddStop(new FeaturePoint(80, 35));
+                    Object3D obj = OBJParser.ParseOBJ("Resources/Wall.obj");
 
-                    River_1 river = new River_1(riverParams);
+                    //SpritesheetObject spritesheetObject = new SpritesheetObject(50, Spritesheets.StructureSheet);
+                    SpritesheetObject spritesheetObject = new SpritesheetObject(50, Spritesheets.StructureSheet, 1, 1);
 
-                    river.GenerateFeature();
+                    RenderableObject testObj = new RenderableObject(spritesheetObject.Create3DObjectDefinition(obj), new Vector4(1, 1, 1, 1), Shaders.DEFAULT_SHADER);
 
-                    _tileMapController.ApplyFeatureEquationToMaps(river);
+                    //BaseObject baseObject = new BaseObject(testObj, 0, "test", WindowConstants.CenterScreen + new Vector3(0, 0, 4f));
+                    BaseObject baseObject = _3DObjects.CreateBaseObject(spritesheetObject, _3DObjects.WallCornerObj, WindowConstants.CenterScreen + new Vector3(0, 0, 4f));
+                    baseObject.BaseFrame.CameraPerspective = true;
+
+                    //Engine_Classes.Rendering.Renderer.LoadTextureFromBaseObject(baseObject);
+
+                    //Window._renderedItems.Add(baseObject);
+
+                    GameObject gameObj = new GameObject();
+                    gameObj.BaseObjects.Add(baseObject);
+
+                    _genericObjects.Add(gameObj);
                 }
                 else if (KeyboardState.IsKeyDown(Keys.GraveAccent))
                 {
@@ -430,7 +440,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         TestTileMap temp = map as TestTileMap;
 
-                        Wall.CreateWalls(map, _wallTemp, tile.TilePoint);
+                        Wall.CreateWalls(map, _wallTemp, tile.TilePoint, Wall.Walls.Iron);
                         _wallTemp = null;
                     }
                 }

@@ -143,6 +143,8 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             FeaturePoint lastPoint = Start;
             FeaturePoint currentPoint = new FeaturePoint();
 
+            //TODO, add support for multiple end points when calculating meandering points
+
             for (float i = 0; i < length; i++) 
             {
                 if (rand.NextDouble() < density) 
