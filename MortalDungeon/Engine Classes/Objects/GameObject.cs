@@ -47,6 +47,7 @@ namespace MortalDungeon.Engine_Classes
 
         public ObjectType ObjectType = ObjectType.GenericObject;
 
+
         public Vector3 _grabbedDeltaPos = default;
 
         //public Stats Stats; //contains game parameters for the object
@@ -67,7 +68,7 @@ namespace MortalDungeon.Engine_Classes
             BaseObject baseObj = new BaseObject(new List<Animation>() { anim }, ObjectID, "Game object " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
             baseObj.BaseFrame.CameraPerspective = true;
 
-            BaseObjects.Add(baseObj);
+            AddBaseObject(baseObj);
 
             SetPosition(position);
 
@@ -110,6 +111,16 @@ namespace MortalDungeon.Engine_Classes
         public virtual void SetDragPosition(Vector3 position)
         {
             SetPosition(position);
+        }
+
+        public virtual void AddBaseObject(BaseObject obj) 
+        {
+            BaseObjects.Add(obj);
+        }
+
+        public virtual void RemoveBaseObject(BaseObject obj) 
+        {
+            BaseObjects.Remove(obj);
         }
 
         public virtual void Tick() 
@@ -344,6 +355,8 @@ namespace MortalDungeon.Engine_Classes
             }
             
         }
+
+        public virtual void OnCull() { }
 
         public virtual Tooltip CreateContextMenu() 
         {

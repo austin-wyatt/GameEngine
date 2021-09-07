@@ -27,8 +27,10 @@ namespace MortalDungeon.Game.Structures
 
             SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
 
-            SetTeam(UnitTeam.Neutral);
+            SetTeam(UnitTeam.Unknown);
             Info.Height = 2;
+
+            LightObstruction.ObstructionType = Lighting.LightObstructionType.Tree;
         }
 
         private static int GetTreeType(int treeType) 

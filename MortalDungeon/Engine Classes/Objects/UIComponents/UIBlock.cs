@@ -37,7 +37,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BaseObject windowObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "UIWindow", position, EnvironmentObjects.UIBlockBounds);
             windowObj.BaseFrame.CameraPerspective = CameraPerspective;
 
-            BaseObjects.Add(windowObj);
+            AddBaseObject(windowObj);
             _baseObject = windowObj;
 
             windowObj.OutlineParameters.SetAllInline(2);

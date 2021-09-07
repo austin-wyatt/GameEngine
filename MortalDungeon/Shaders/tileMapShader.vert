@@ -27,25 +27,6 @@ const int tile_width_partial = 92; //stacked width
 const int tile_height = 108; //individual tile height
 const int tile_height_partial = 54; //stacked height
 
-//const int tile_width = 128; //individual tile width
-//const int tile_width_partial = 96; //stacked width
-//const int tile_height = 128; //individual tile height
-//const int tile_height_partial = 96; //stacked height
-
-//
-//const int tile_width = 248; //individual tile width
-//const int tile_width_partial = 184; //stacked width
-//const int tile_height = 216; //individual tile height
-//const int tile_height_partial = 108; //stacked height
-//
-//const int xTilePlacementOffset = 6;
-//const int yTilePlacementOffset = 34;
-//const int yOffsetAmount = 18;
-
-//const int xTilePlacementOffset = 3;
-//const int yTilePlacementOffset = 17;
-//const int yOffsetAmount = 9;
-
 const int xTilePlacementOffset = 0;
 const int yTilePlacementOffset = 0;
 const int yOffsetAmount = 0;

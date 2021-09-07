@@ -368,10 +368,10 @@ namespace MortalDungeon.Game.Abilities
 
             switch (CastingUnit.AI.Team) 
             {
-                case UnitTeam.Ally:
+                case UnitTeam.PlayerUnits:
                     backgroundType = Icon.BackgroundType.BuffBackground;
                     break;
-                case UnitTeam.Enemy:
+                case UnitTeam.BadGuys:
                     backgroundType = Icon.BackgroundType.DebuffBackground;
                     break;
             }
@@ -490,7 +490,7 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.Ally) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.Enemy))
+                if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.PlayerUnits) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.BadGuys))
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;

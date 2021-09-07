@@ -24,6 +24,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         private static readonly List<List<GameObject>> _LowPriorityQueue = new List<List<GameObject>>();
 
+        private static readonly List<GameObject> _LightQueue = new List<GameObject>();
+
 
         /// <summary>
         /// Render all queued objects
@@ -47,12 +49,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderTileQuadQueue();
 
-            RenderQueuedStructures();
+            //RenderQueuedStructures();
             RenderQueuedUnits();
             RenderQueuedObjects();
 
             RenderLowPriorityQueue();
 
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            RenderLightQueue();
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
             RenderQueuedUI();
@@ -295,6 +299,22 @@ namespace MortalDungeon.Engine_Classes.Rendering
             });
 
             _LowPriorityQueue.Clear();
+        }
+        #endregion
+
+        #region Light queue
+        public static void QueueLightObjectsForRender(List<GameObject> objList)
+        {
+            if (objList.Count == 0)
+                return;
+
+            objList.ForEach(obj => _LightQueue.Add(obj));
+        }
+        public static void RenderLightQueue()
+        {
+            Renderer.RenderObjectsInstancedGeneric(_LightQueue, ref Renderer._instancedRenderArray);
+
+            _LightQueue.Clear();
         }
         #endregion
     }

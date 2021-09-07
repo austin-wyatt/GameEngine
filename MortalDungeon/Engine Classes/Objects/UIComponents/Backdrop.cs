@@ -45,7 +45,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BaseObject backdropObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "UIWindow", position, EnvironmentObjects.UIBlockBounds);
             backdropObj.BaseFrame.CameraPerspective = CameraPerspective;
 
-            BaseObjects.Add(backdropObj);
+            AddBaseObject(backdropObj);
             _baseObject = backdropObj;
 
             SetOrigin(aspectRatio, ScaleFactor);

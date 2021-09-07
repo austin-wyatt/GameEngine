@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -18,6 +19,10 @@ namespace MortalDungeon.Game.Structures
         Rock_2 = 11,
         Rock_3 = 12,
 
+        Grave_1 = 20,
+        Grave_2 = 21,
+        Grave_3 = 22,
+
         Wall_1 = 30,
         Wall_Corner = 31,
         Wall_Door = 32,
@@ -25,7 +30,7 @@ namespace MortalDungeon.Game.Structures
         Wall_Wood_Corner = 41,
         Wall_Wood_Door = 42,
         Wall_Iron_1 = 50,
-        Wall_Iron_Corner = 51,
+        Wall_Iron_Door = 51,
 
         Cliff_1 = 90,
         Cliff_2 = 91,
@@ -41,6 +46,8 @@ namespace MortalDungeon.Game.Structures
         public bool Pathable = false;
         public bool Passable = false; //when passable the height of the object is not factored into the pathable height
 
+        public LightObstruction LightObstruction = new LightObstruction();
+
         public Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
         {
             Name = "Structure";
@@ -52,12 +59,14 @@ namespace MortalDungeon.Game.Structures
         {
             BaseTile prevTile = Info.TileMapPosition;
 
-            if(prevTile != null)
-                prevTile.Structure = null;
+            if (prevTile != null)
+                prevTile.RemoveStructure(this);
 
-            baseTile.Structure = this;
+            baseTile.AddStructure(this);
 
             Info.TileMapPosition = baseTile;
+
+            LightObstruction.SetPosition(baseTile);
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using MortalDungeon.Engine_Classes.UIComponents;
+﻿using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
@@ -22,7 +24,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
         ContextMenuOpen,
         AbilitySelected,
         TabMenuOpen,
-        EnableTileMapUpdate
+        EnableTileMapUpdate,
+
+        UpdateLighting,
+        UpdateLightObstructionMap,
+
+        UnitCollationRequired
     }
     public class CombatScene : Scene
     {
@@ -35,19 +42,25 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public QueuedList<TemporaryVision> TemporaryVision = new QueuedList<TemporaryVision>();
 
+        public static Color EnvironmentColor = new Color(0.25f, 0.25f, 0.25f, 0.25f);
+        public static int Time = 0;
+
         public static TabMenu TabMenu = new TabMenu();
 
         public Ability _selectedAbility = null;
         public List<Unit> _selectedUnits = new List<Unit>();
 
+       
+
         public Unit CurrentUnit;
-        public UnitTeam CurrentTeam = UnitTeam.Ally;
+        public UnitTeam CurrentTeam = UnitTeam.PlayerUnits;
 
         public bool InCombat = false;
 
         public bool AbilityInProgress = false;
 
         public bool DisplayUnitStatuses = true;
+
 
         protected const AbilityTypes DefaultAbilityType = AbilityTypes.Move;
 
@@ -79,6 +92,87 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             TabMenu.AddToScene(this);
             TabMenu.Display(false);
+        }
+
+        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        {
+            base.Load(camera, cursorObject, mouseRay);
+
+
+            DayNightCycle dayNightCycle = new DayNightCycle(90, 450);
+            TickableObjects.Add(dayNightCycle);
+
+            Lighting.InitializeFramebuffers();
+
+            LightObject = Lighting.CreateTexturedQuad(Lighting.LightTexture, TextureName.Lighting);
+            LightObject.SetPosition(new Vector3(0, 0, 1f));
+            LightObject.BaseObject.BaseFrame.ScaleX(0.8975f);
+            LightObject.BaseObject.BaseFrame.ScaleY(1.047f);
+            LightObject.ScaleAll(147.1f);
+            LightObject.BaseObject.RenderData.AlphaThreshold = 0;
+            EnvironmentColor.OnChange.Add(() =>
+            {
+                ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, true);
+            });
+
+            #region Light modals
+            UIBlock leftModal = new UIBlock(new Vector3(-66025, 10697f, -0f), new UIScale(300, 154f));
+            leftModal.BaseObject.BaseFrame.CameraPerspective = true;
+            leftModal.BaseObject.RenderData.AlphaThreshold = 0;
+            leftModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            leftModal.MultiTextureData.MixTexture = false;
+            leftModal.BaseObject.OutlineParameters.SetAllInline(0);
+
+            EnvironmentColor.OnChange.Add(() =>
+            {
+                leftModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            });
+
+            _lowPriorityObjects.Add(leftModal);
+
+            UIBlock rightModal = new UIBlock(new Vector3(84360.5f, 10697f, -0f), new UIScale(300, 154f));
+            rightModal.BaseObject.BaseFrame.CameraPerspective = true;
+            rightModal.BaseObject.RenderData.AlphaThreshold = 0;
+            rightModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            rightModal.MultiTextureData.MixTexture = false;
+            rightModal.BaseObject.OutlineParameters.SetAllInline(0);
+
+            EnvironmentColor.OnChange.Add(() =>
+            {
+                rightModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            });
+
+            _lowPriorityObjects.Add(rightModal);
+
+            UIBlock topModal = new UIBlock(new Vector3(0, -102802.5f, -0f), new UIScale(750, 300f));
+            topModal.BaseObject.BaseFrame.CameraPerspective = true;
+            topModal.BaseObject.RenderData.AlphaThreshold = 0;
+            topModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            topModal.MultiTextureData.MixTexture = false;
+            topModal.BaseObject.OutlineParameters.SetAllInline(0);
+
+            EnvironmentColor.OnChange.Add(() =>
+            {
+                topModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            });
+
+            _lowPriorityObjects.Add(topModal);
+
+            UIBlock botModal = new UIBlock(new Vector3(0, 124203.5f, -0f), new UIScale(750, 300f));
+            botModal.BaseObject.BaseFrame.CameraPerspective = true;
+            botModal.BaseObject.RenderData.AlphaThreshold = 0;
+            botModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            botModal.MultiTextureData.MixTexture = false;
+            botModal.BaseObject.OutlineParameters.SetAllInline(0);
+
+            EnvironmentColor.OnChange.Add(() =>
+            {
+                botModal.BaseObject.BaseFrame.SetBaseColor(EnvironmentColor.ToVector());
+            });
+
+            _lowPriorityObjects.Add(botModal);
+
+            #endregion
         }
 
         /// <summary>
@@ -168,7 +262,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Footer.UpdateFooterInfo(CurrentUnit);
                 Footer.EndTurnButton.SetRender(true);
 
-                Task.Run(() => FillInTeamFog(CurrentUnit.AI.Team, prevTeam, true));
+                Task.Run(() => FillInTeamFog(true));
             }
             else 
             {
@@ -252,6 +346,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             EvaluateVentureButton();
 
+            FillInTeamFog(true);
+
             StartRound();
         }
 
@@ -269,6 +365,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             TurnDisplay.SetUnits(InitiativeOrder);
 
             SetCurrentUnitEnergy();
+
+            FillInTeamFog(true);
         }
 
         public virtual void SelectAbility(Ability ability)
@@ -333,21 +431,21 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _selectedUnits.Clear();
         }
 
-        public virtual void FillInTeamFog(UnitTeam currentTeam = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Unknown, bool updateAll = false) 
+        public virtual void FillInTeamFog(bool updateAll = false) 
         {
             //don't allow the tilemap to be re-rendered until all of the changes are applied
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, false);
 
-            FillInAllFog(currentTeam, previousTeam, false, updateAll);
+            FillInAllFog(false, updateAll);
 
-
+            
             _units.ForEach(unit =>
             {
                 List<BaseTile> tiles = unit.GetTileMap().GetVisionInRadius(unit.Info.TileMapPosition, unit.Info.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.Info.TileMapPosition != unit.Info.TileMapPosition));
 
                 tiles.ForEach(tile =>
                 {
-                    tile.SetExplored(true, unit.AI.Team, UnitTeam.Unknown);
+                    tile.SetExplored(true, unit.AI.Team);
                     tile.SetFog(false, unit.AI.Team);
                 });
             });
@@ -361,9 +459,24 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 });
             });
 
+            if (!InCombat && !DayNightCycle.IsNight())
+            {
+                _tileMapController.TileMaps.ForEach(map =>
+                {
+                    map.Tiles.ForEach(tile =>
+                    {
+                        if (!tile.Properties.MustExplore) 
+                        {
+                            tile.SetExplored(true, UnitTeam.PlayerUnits);
+                            tile.SetFog(false, UnitTeam.PlayerUnits);
+                        }
+                    });
+                });
+            }
+
             CalculateRevealedUnits();
 
-            HideNonVisibleObjects();
+            Task.Run(HideNonVisibleObjects);
 
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, true);
         }
@@ -397,7 +510,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
 
-        public void FillInAllFog(UnitTeam currentTeam, UnitTeam previousTeam = UnitTeam.Unknown, bool reveal = false, bool updateAll = false)
+        public void FillInAllFog(bool reveal = false, bool updateAll = false)
         {
             foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
             {
@@ -415,12 +528,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                         if (reveal)
                         {
-                            tile.SetExplored(true, team, UnitTeam.Unknown);
+                            tile.SetExplored(true, team);
                             tile.SetFog(false, team);
                         }
                         else
                         {
-                            tile.SetExplored(tile.Explored[team], team, UnitTeam.Unknown);
+                            tile.SetExplored(tile.Explored[team], team);
                             tile.SetFog(true, team);
                         }
 
@@ -496,6 +609,26 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     unit.SetRender(false);
                 }
             });
+
+            for (int i = 0; i < _tileMapController.TileMaps.Count; i++) 
+            {
+                for (int j = 0; j < _tileMapController.TileMaps[i].TileChunks.Count; j++) 
+                {
+                    for (int k = 0; k < _tileMapController.TileMaps[i].TileChunks[j].Structures.Count; k++) 
+                    {
+                        Game.Structures.Structure structure = _tileMapController.TileMaps[i].TileChunks[j].Structures[k];
+
+                        if (structure.Info.Visible(CurrentTeam))
+                        {
+                            structure.SetRender(true);
+                        }
+                        else
+                        {
+                            structure.SetRender(false);
+                        }
+                    }
+                }
+            }
         }
 
         public void EvaluateVentureButton() 
@@ -503,7 +636,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (Footer == null)
                 return;
 
-            if(CurrentUnit == null || CurrentUnit.AI.Team != UnitTeam.Ally || CurrentUnit.AI.ControlType != ControlType.Controlled) 
+            if(CurrentUnit == null || CurrentUnit.AI.Team != UnitTeam.PlayerUnits || CurrentUnit.AI.ControlType != ControlType.Controlled) 
             {
                 Footer.VentureForthButton.SetRender(false);
                 return;
@@ -519,9 +652,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
+        public virtual void RemoveUnit(Unit unit)
+        {
+            _units.Remove(unit);
+            InitiativeOrder.Remove(unit);
+
+            FillInTeamFog();
+            Footer.UpdateFooterInfo();
+        }
+
+
+        #region Event handlers
         public void OnUnitMoved(Unit unit) 
         {
-            if (CurrentUnit == unit && CurrentUnit.AI.Team == UnitTeam.Ally && CurrentUnit.AI.ControlType == ControlType.Controlled) 
+            if (CurrentUnit == unit && CurrentUnit.AI.Team == UnitTeam.PlayerUnits && CurrentUnit.AI.ControlType == ControlType.Controlled) 
             {
                 EvaluateVentureButton();
             }
@@ -600,7 +744,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             }, notFound => notFound.HoverEnd());
         }
-
 
         public override void OnMouseUp(MouseButtonEventArgs e)
         {
@@ -725,7 +868,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InitiativeOrder.RemoveImmediate(unit);
             TurnDisplay.SetUnits(InitiativeOrder);
 
-            if (InitiativeOrder.All(unit => unit.AI.Team == UnitTeam.Ally || !unit.AI.Fighting)) 
+            if (InitiativeOrder.All(unit => unit.AI.Team == UnitTeam.PlayerUnits || !unit.AI.Fighting)) 
             {
                 EndCombat();
             }
@@ -764,6 +907,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Action> _onDeselectAbilityActions = new List<Action>();
         public List<Action<Ability>> _onAbilityCastActions = new List<Action<Ability>>();
 
+        #endregion
 
         public void OpenContextMenu(Tooltip menu) 
         {
@@ -802,6 +946,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 TemporaryVision.HandleQueuedItems();
                 FillInTeamFog();
             }
+        }
+
+        public override void UpdateLightObstructionMap()
+        {
+            base.UpdateLightObstructionMap();
+
+            //BaseTile centerTile = _tileMapController.GetCenterTile();
+
+            //LightObject.SetPosition(centerTile.Position + new Vector3(0, 220, 0f));
+            LightObject.SetPosition(new Vector3(9168.026f, 220 + 10480.5537f, 0f));
         }
     }
 }

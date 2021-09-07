@@ -20,14 +20,14 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
-            if (AffectedPoints.TryGetValue(affectedPoint, out Feature value)) 
+            if (AffectedPoints.TryGetValue(affectedPoint, out int value)) 
             {
                 switch (value) 
                 {
-                    case Feature.Water_1:
+                    case (int)Feature.Water_1:
                         tile.Properties.Type = TileType.Water;
                         break;
-                    case Feature.Water_2:
+                    case (int)Feature.Water_2:
                         tile.Properties.Type = TileType.AltWater;
                         break;
                 }
@@ -83,18 +83,9 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             return true;
         }
 
-
-        public override void ApplyToMap(TileMap map)
-        {
-            map.Tiles.ForEach(t =>
-            {
-                ApplyToTile(t);
-            });
-        }
-
         internal override void UpdatePoint(FeaturePoint point)
         {
-            AffectedPoints.TryAdd(point, TileMap._randomNumberGen.NextDouble() > 0.3 ? Feature.Water_1 : Feature.Water_2);
+            AffectedPoints.TryAdd(point, TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)Feature.Water_1 : (int)Feature.Water_2);
         }
     }
 }

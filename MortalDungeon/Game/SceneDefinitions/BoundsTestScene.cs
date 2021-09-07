@@ -63,7 +63,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             //GameObject temp = new GameObject();
-            //temp.BaseObjects.Add(baseObj);
+            //temp.AddBaseObject(baseObj);
 
             //temp.BaseObjects[0].BaseFrame.CameraPerspective = false;
 
@@ -99,7 +99,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             GameObject temp = new GameObject();
-            temp.BaseObjects.Add(baseObj);
+            temp.AddBaseObject(baseObj);
 
             temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
             temp.BaseObjects[0].BaseFrame.ScaleAll(50);

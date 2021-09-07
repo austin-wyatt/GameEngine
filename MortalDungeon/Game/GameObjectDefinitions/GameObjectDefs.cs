@@ -18,7 +18,7 @@ namespace MortalDungeon.Game.GameObjects
             BaseObject FireBaseObject = new BaseObject(FIRE_BASE_ANIMATION.List, 0, "", new Vector3(0, 0, 0.2f), EnvironmentObjects.FIRE_BASE.Bounds);
             FireBaseObject.BaseFrame.CameraPerspective = true;
             FireBaseObject.BaseFrame.RotateX(25);
-            BaseObjects.Add(FireBaseObject);
+            AddBaseObject(FireBaseObject);
 
             FireGen fireGenerator = new FireGen(new Vector3(0, 0, 0.12f), 0.01f);
             fireGenerator.PositionalOffset = new Vector3(0, 100, -0.01f);
@@ -42,7 +42,7 @@ namespace MortalDungeon.Game.GameObjects
             Mountain.BaseFrame.CameraPerspective = true;
             Mountain.BaseFrame.ScaleAll(20);
 
-            BaseObjects.Add(Mountain);
+            AddBaseObject(Mountain);
 
             SetPosition(position);
         }
@@ -59,7 +59,7 @@ namespace MortalDungeon.Game.GameObjects
             Cave.BaseFrame.CameraPerspective = true;
             Cave.BaseFrame.ScaleAll(20);
 
-            BaseObjects.Add(Cave);
+            AddBaseObject(Cave);
 
             SetPosition(position);
         }
@@ -76,7 +76,7 @@ namespace MortalDungeon.Game.GameObjects
             Mountain.BaseFrame.CameraPerspective = true;
             Mountain.BaseFrame.ScaleAll(20);
 
-            BaseObjects.Add(Mountain);
+            AddBaseObject(Mountain);
 
             SetPosition(position);
         }

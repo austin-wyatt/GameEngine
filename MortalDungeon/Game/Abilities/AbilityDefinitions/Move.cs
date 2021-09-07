@@ -85,6 +85,7 @@ namespace MortalDungeon.Game.Abilities
                 Vector3 tileBPosition;
 
                 int moveIncrements = (int)(20 * speed);
+
                 int moveDelay = 1; //in ticks
 
                 for (int i = 1; i < CurrentTiles.Count; i++)
@@ -129,6 +130,19 @@ namespace MortalDungeon.Game.Abilities
                     };
 
                     moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
+
+
+                    if (Settings.MovementTurbo && i == CurrentTiles.Count - 1) 
+                    {
+                        moveAnimation.Keyframes.RemoveRange(0, moveAnimation.Keyframes.Count - 1);
+                        moveAnimation.Keyframes[0].ActivationTick = 5;
+
+                        tileAPosition = CastingUnit.Info.TileMapPosition.Position;
+                        tileBPosition = CurrentTiles[^1].Position;
+
+                        distanceToTravel = tileAPosition - tileBPosition;
+                        CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
+                    }
 
                     tileAPosition = tileBPosition;
                 }

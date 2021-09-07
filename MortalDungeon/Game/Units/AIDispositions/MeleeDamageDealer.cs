@@ -29,7 +29,7 @@ namespace MortalDungeon.Game.Units.AI
             switch (action) 
             {
                 case AIAction.MoveCloser:
-                    target = GetClosestUnit(_unit.AI.EnemyTeam, _unit, _unitSeekRange);
+                    target = GetClosestUnit(_unit, _unitSeekRange, new UnitSearchParams() { IsHostile = CheckEnum.True, Dead = CheckEnum.False });
 
                     if (target != null)
                     {
@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.Units.AI
                     }
                     break;
                 case AIAction.AttackEnemyMelee:
-                    target = GetClosestUnit(_unit.AI.EnemyTeam, _unit, _unitSeekRange);
+                    target = GetClosestUnit(_unit, _unitSeekRange, new UnitSearchParams() { IsHostile = CheckEnum.True, Dead = CheckEnum.False });
 
                     if (target != null)
                     {

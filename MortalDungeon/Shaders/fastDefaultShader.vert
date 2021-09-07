@@ -9,7 +9,7 @@ layout(location = 8) in vec4 compositeType_2; //composite vector of spritesheet 
 
 layout(location = 9) in vec4 compositeType_3; //composite vector of inline thickness, outline thickness, alpha threshold, primary texture target
 layout(location = 10) in vec4 aInlineColor;
-layout(location = 11) in vec4 aOutlineColor;
+//layout(location = 11) in vec4 aOutlineColor;
 
 out vec2 texCoord;
 out vec2 texCoord2;
@@ -20,7 +20,7 @@ out float twoTextures;
 out float inlineThickness;
 out float outlineThickness;
 out vec4 inlineColor;
-out vec4 outlineColor;
+//out vec4 outlineColor;
 
 out float alpha_threshold;
 
@@ -68,7 +68,7 @@ void main(void)
 
 	//Outline handling
 	inlineColor = aInlineColor;
-	outlineColor = aOutlineColor;
+//	outlineColor = aOutlineColor;
 	inlineThickness = compositeType_3[0];
 	outlineThickness = compositeType_3[1];
 

@@ -38,6 +38,9 @@
     <None Update="Resources\IconSpritesheet.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\LightObstructionSheet.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\SpritesheetTest.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -62,7 +65,22 @@
     <None Update="Resources\WallCorner.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\WallCorner_2.obj">
+    <None Update="Shaders\colorShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\colorShader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\lightObstructionShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\lightObstructionShader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\lightShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\lightShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\tileMapShader.frag">
@@ -71,7 +89,7 @@
     <None Update="Shaders\tileMapShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\oldShader.frag">
+    <None Update="Shaders\OldShaders\oldShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\simpleShader.frag">
@@ -83,28 +101,28 @@
     <None Update="Shaders\fastDefaultShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\particleShader.frag">
+    <None Update="Shaders\OldShaders\particleShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\particleShader.vert">
+    <None Update="Shaders\OldShaders\particleShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\pointShader.vert">
+    <None Update="Shaders\OldShaders\pointShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\pointShader.frag">
+    <None Update="Shaders\OldShaders\pointShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\lineShader.frag">
+    <None Update="Shaders\OldShaders\lineShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\lineShader.vert">
+    <None Update="Shaders\OldShaders\lineShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\shader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\oldShader.vert">
+    <None Update="Shaders\OldShaders\oldShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

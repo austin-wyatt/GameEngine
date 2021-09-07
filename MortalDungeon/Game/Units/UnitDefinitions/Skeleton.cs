@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Units
             Skeleton.BaseFrame.CameraPerspective = true;
             Skeleton.BaseFrame.RotateX(25);
 
-            BaseObjects.Add(Skeleton);
+            AddBaseObject(Skeleton);
 
             SetPosition(position);
 

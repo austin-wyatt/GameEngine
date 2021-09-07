@@ -37,6 +37,13 @@ namespace MortalDungeon.Objects
             Rows = 2,
             Columns = 2
         };
-        
+
+        public static Spritesheet LightObstructionSheet = new Spritesheet("Resources/LightObstructionSheet.png", TextureName.LightObstructionSheet)
+        {
+            Rows = 10,
+            Columns = 10,
+            Offset = 32
+        };
+
     }
 }

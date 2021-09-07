@@ -13,7 +13,7 @@ namespace MortalDungeon.Game.Map
         internal const int MAP_WIDTH = 50;
         internal const int MAP_HEIGHT = 50;
 
-        public Dictionary<FeaturePoint, Feature> AffectedPoints = new Dictionary<FeaturePoint, Feature>();
+        public Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
         public HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
 
         public virtual void ApplyToTile(BaseTile tile)
@@ -28,14 +28,22 @@ namespace MortalDungeon.Game.Map
 
         public virtual bool AffectsPoint(TilePoint point)
         {
-            return AffectedPoints.TryGetValue(new FeaturePoint(PointToMapCoords(point)), out Feature feature);
+            return AffectedPoints.TryGetValue(new FeaturePoint(PointToMapCoords(point)), out int feature);
         }
         public virtual bool AffectsPoint(FeaturePoint point)
         {
-            return AffectedPoints.TryGetValue(point, out Feature feature);
+            return AffectedPoints.TryGetValue(point, out int feature);
         }
 
         public virtual void ApplyToMap(TileMap map)
+        {
+            map.Tiles.ForEach(t =>
+            {
+                ApplyToTile(t);
+            });
+        }
+
+        public virtual void OnAppliedToMaps() 
         {
 
         }
@@ -412,7 +420,12 @@ namespace MortalDungeon.Game.Map
         /// </summary>
         internal virtual void UpdatePoint(FeaturePoint point)
         {
-            AffectedPoints.TryAdd(point, Feature.None);
+            AffectedPoints.TryAdd(point, (int)Feature.None);
+        }
+
+        protected bool GetBit(int num, int bitNumber)
+        {
+            return (num & (1 << bitNumber)) != 0;
         }
     }
 

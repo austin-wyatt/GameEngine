@@ -264,7 +264,7 @@ namespace MortalDungeon.Game.UI
             int count = 0;
             foreach (Ability ability in _currentUnit.Info.Abilities.Values) 
             {
-                Icon abilityIcon = ability.GenerateIcon(iconSize, true, _currentUnit.AI.Team == UnitTeam.Ally ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
+                Icon abilityIcon = ability.GenerateIcon(iconSize, true, _currentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
 
                 if (_currentIcons.Count == 0)
                 {

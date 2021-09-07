@@ -59,7 +59,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BaseObject windowObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
             windowObj.BaseFrame.CameraPerspective = CameraPerspective;
 
-            BaseObjects.Add(windowObj);
+            AddBaseObject(windowObj);
             _baseObject = windowObj;
 
             //windowObj.OutlineParameters.SetAllInline(2);
@@ -77,11 +77,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 };
 
                 BaseObject backgroundObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
-                BaseObjects.Add(backgroundObj);
+                AddBaseObject(backgroundObj);
                 //UIObject iconBackground = new UIObject();
                 //iconBackground.Name = "IconBackground";
                 //iconBackground._baseObject = backgroundObj;
-                //iconBackground.BaseObjects.Add(backgroundObj);
+                //iconBackground.AddBaseObject(backgroundObj);
 
                 //BaseComponent = iconBackground;
                 //_baseObject = null;

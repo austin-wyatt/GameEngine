@@ -21,11 +21,11 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
-            if (AffectedPoints.TryGetValue(affectedPoint, out Feature value))
+            if (AffectedPoints.TryGetValue(affectedPoint, out int value))
             {
                 switch (value)
                 {
-                    case Feature.StonePath:
+                    case (int)Feature.StonePath:
                         tile.Properties.Type = TileType.Stone_1 + TileMap._randomNumberGen.Next() % 3;
                         break;
                 }
@@ -89,17 +89,9 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         }
 
 
-        public override void ApplyToMap(TileMap map)
-        {
-            map.Tiles.ForEach(t =>
-            {
-                ApplyToTile(t);
-            });
-        }
-
         internal override void UpdatePoint(FeaturePoint point)
         {
-            AffectedPoints.TryAdd(point, Feature.StonePath);
+            AffectedPoints.TryAdd(point, (int)Feature.StonePath);
         }
     }
 

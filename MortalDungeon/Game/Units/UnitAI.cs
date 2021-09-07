@@ -11,11 +11,17 @@ namespace MortalDungeon.Game.Units
 {
     public enum UnitTeam
     {
-        Ally,
+        Unknown,
+        PlayerUnits,
+        BadGuys,
+        Skeletons,
+    }
+
+    public enum Relation 
+    {
         Friendly,
-        Enemy,
-        Neutral,
-        Unknown
+        Hostile,
+        Neutral
     }
 
     public enum ControlType 
@@ -27,8 +33,7 @@ namespace MortalDungeon.Game.Units
 
     public class UnitAI
     {
-        public UnitTeam Team = UnitTeam.Neutral;
-        public UnitTeam EnemyTeam = UnitTeam.Ally;
+        public UnitTeam Team = UnitTeam.Skeletons;
         public ControlType ControlType = ControlType.Controlled;
         public Dispositions Dispositions;
 
@@ -49,16 +54,6 @@ namespace MortalDungeon.Game.Units
         public void SetTeam(UnitTeam team) 
         {
             Team = team;
-
-            switch (Team) 
-            {
-                case UnitTeam.Ally:
-                    EnemyTeam = UnitTeam.Enemy;
-                    break;
-                case UnitTeam.Enemy:
-                    EnemyTeam = UnitTeam.Ally;
-                    break;
-            }
         }
 
         public void TakeTurn() 
@@ -164,6 +159,24 @@ namespace MortalDungeon.Game.Units
 
             return selectedAction;
         }
+
+        private static Dictionary<int, Relation> TeamRelations = new Dictionary<int, Relation>();
+        public static void SetTeamRelation(UnitTeam a, UnitTeam b, Relation relation) 
+        {
+            TeamRelations.Add(a.Hash(b), relation);
+        }
+
+        public static Relation GetTeamRelation(UnitTeam a, UnitTeam b) 
+        {
+            if (TeamRelations.TryGetValue(a.Hash(b), out Relation value))
+            {
+                return value;
+            }
+            else 
+            {
+                return Relation.Neutral;
+            }
+        }
     }
 
 
@@ -252,13 +265,86 @@ namespace MortalDungeon.Game.Units
             return ability;
         }
 
-        public static Unit GetClosestUnit(UnitTeam team, Unit castingUnit, float seekRange = -1)
+        public enum CheckEnum
+        {
+            NotSet,
+            True,
+            False
+        }
+        public class UnitSearchParams 
+        {
+            public CheckEnum Dead = CheckEnum.NotSet;
+            public CheckEnum IsHostile = CheckEnum.NotSet;
+            public CheckEnum IsFriendly = CheckEnum.NotSet;
+            public CheckEnum IsNeutral = CheckEnum.NotSet;
+
+            public UnitSearchParams() { }
+
+            public bool CheckUnit(Unit unit, Unit castingUnit) 
+            {
+                if (Dead != CheckEnum.NotSet) 
+                {
+                    if (unit.Info.Dead != Dead.BoolValue()) 
+                    {
+                        return false;
+                    }
+                }
+
+                Relation relation = unit.AI.Team.GetRelation(castingUnit.AI.Team);
+
+                if (IsHostile != CheckEnum.NotSet) 
+                {
+                    if (relation == Relation.Hostile && !IsHostile.BoolValue())
+                    {
+                        return false;
+                    }
+                    else if (relation != Relation.Hostile && IsHostile.BoolValue()) 
+                    {
+                        return false;
+                    }
+                }
+
+                if (IsFriendly != CheckEnum.NotSet)
+                {
+                    if (relation == Relation.Friendly && !IsFriendly.BoolValue())
+                    {
+                        return false;
+                    }
+                    else if (relation != Relation.Friendly && IsFriendly.BoolValue())
+                    {
+                        return false;
+                    }
+                }
+
+                if (IsNeutral != CheckEnum.NotSet)
+                {
+                    if (relation == Relation.Neutral && !IsNeutral.BoolValue())
+                    {
+                        return false;
+                    }
+                    else if (relation != Relation.Neutral && IsNeutral.BoolValue())
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            public static UnitSearchParams _ = new UnitSearchParams();
+        }
+        public static Unit GetClosestUnit(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
         {
             Unit unit = null;
 
+            if (searchParams == null) 
+            {
+                searchParams = UnitSearchParams._;
+            }
+
             castingUnit.Scene._units.ForEach(u =>
             {
-                if (u.AI.Team == castingUnit.AI.EnemyTeam)
+                if (searchParams.CheckUnit(u, castingUnit))
                 {
                     (float moveCost, int moves) = castingUnit.Info._movementAbility.GetCostToPoint(u.Info.TileMapPosition.TilePoint, seekRange);
 

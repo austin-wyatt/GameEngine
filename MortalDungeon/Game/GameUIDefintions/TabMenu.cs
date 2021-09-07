@@ -154,7 +154,7 @@ namespace MortalDungeon.Game.UI
 
                 Scene.SelectUnit(Scene._units[0]);
 
-                Scene.FillInTeamFog(Scene._units[0].AI.Team, Units.UnitTeam.Unknown, true);
+                Scene.FillInTeamFog(true);
             };
 
             unitButton.SetPositionFromAnchor(button.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -171,7 +171,7 @@ namespace MortalDungeon.Game.UI
 
                 Scene.SelectUnit(Scene._units[2]);
 
-                Scene.FillInTeamFog(Scene._units[2].AI.Team, Units.UnitTeam.Unknown, true);
+                Scene.FillInTeamFog(true);
             };
 
             unitButton2.SetPositionFromAnchor(unitButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -191,18 +191,73 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].AddChild(toggleAI);
 
-            Button updateMaps = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Update Maps", 0.043f, Colors.UILightGray, Colors.UITextBlack);
-            updateMaps.BaseComponent.MultiTextureData.MixTexture = false;
-
-
-            updateMaps.OnClickAction = () =>
+            Button updateMaps = CreateButton("Show Chunks", () =>
             {
-                Scene.FillInTeamFog();
-            };
+                Scene._tileMapController.TileMaps.ForEach(map =>
+                {
+                    map.TileChunks.ForEach(chunk =>
+                    {
+                        chunk.Tiles.ForEach(t =>
+                        {
+                            if (chunk.Cull)
+                            {
+                                t.Color = Colors.White;
+                            }
+                            else
+                            {
+                                t.Color = Colors.Red;
+                            }
 
-            updateMaps.SetPositionFromAnchor(toggleAI.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
+                            t.Update();
+                        });
+                    });
+                });
+            }, toggleAI.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
-            Tabs[0].AddChild(updateMaps);
+            Button turboButton = null;
+            turboButton = CreateButton("Enable Turbo", () =>
+            {
+                if (!Settings.MovementTurbo)
+                {
+                    turboButton.TextBox.SetText("Disable Turbo");
+                }
+                else
+                {
+                    turboButton.TextBox.SetText("Enable Turbo");
+                }
+                Settings.MovementTurbo = !Settings.MovementTurbo;
+            }, updateMaps.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+
+            Button plusButton = CreateButton("Calc Lighting", () =>
+            {
+                Scene.RefillLightObstructions();
+            }, turboButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            //Button minusColor = CreateButton("Fill Obstructions", () =>
+            //{
+                
+            //}, plusButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            //Button minusBlue = CreateButton("- Blue", () =>
+            //{
+            //    CombatScene.EnvironmentColor.Sub(new Color(0, 0, 0.05f, 0));
+            //    Scene.FillInTeamFog(true);
+            //}, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+        }
+
+        private Button CreateButton(string text, Action action, Vector3 prevButtonPos) 
+        {
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), text, 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            button.BaseComponent.MultiTextureData.MixTexture = false;
+
+            button.OnClickAction = action;
+
+            button.SetPositionFromAnchor(prevButtonPos, UIAnchorPosition.TopLeft);
+
+            Tabs[0].AddChild(button);
+
+            return button;
         }
     }
 }

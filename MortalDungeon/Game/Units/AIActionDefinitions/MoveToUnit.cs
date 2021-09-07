@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Units.AI
             {
                 Scene._units.ForEach(u =>
                 {
-                    if (u.AI.Team == CastingUnit.AI.EnemyTeam)
+                    if (u.AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Hostile)
                     {
                         TileMap.PathToPointParameters param = new TileMap.PathToPointParameters(TilePosition, u.Info.TileMapPosition.TilePoint, CastingUnit.Info.Energy / CastingUnit.Info._movementAbility.GetEnergyCost())
                         {

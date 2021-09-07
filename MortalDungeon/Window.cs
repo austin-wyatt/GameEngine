@@ -152,6 +152,7 @@ namespace MortalDungeon
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
             _camera.Pitch += 7;
+            //_camera.Yaw += 2;
 
             _camera.UpdateProjectionMatrix();
 
@@ -266,7 +267,25 @@ namespace MortalDungeon
             _sceneController.Scenes.ForEach(scene =>
             {
                 scene.OnRender();
-                
+
+                if (scene.Lighting.Initialized && scene.ContextManager.GetFlag(GeneralContextFlags.UpdateLightObstructionMap)) 
+                {
+                    scene.UpdateLightObstructionMap();
+
+                    scene.ContextManager.SetFlag(GeneralContextFlags.UpdateLightObstructionMap, false);
+                    scene.ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, true);
+                }
+
+                if (scene.Lighting.Initialized && scene.ContextManager.GetFlag(GeneralContextFlags.UpdateLighting)) 
+                {
+                    scene.UpdateLightTexture();
+                    scene.ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, false);
+                }
+
+                if (scene.ContextManager.GetFlag(GeneralContextFlags.UnitCollationRequired)) 
+                {
+                    scene.CollateUnits();
+                }
 
                 RenderingQueue.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
                 RenderingQueue.QueueLowPriorityObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.LowPriorityObject));
@@ -277,14 +296,14 @@ namespace MortalDungeon
                 scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
                 {
                     //Renderer.QueueTileObjectsForRender(tileMap.Tiles);
-                    tileMap.TileChunks.ForEach(chunk =>
-                    {
-                        if (!chunk.Cull)
-                        {
-                            RenderingQueue.QueueStructuresForRender(chunk.Structures);
-                            RenderingQueue.QueueObjectsForRender(chunk.GenericObjects);
-                        }
-                    });
+                    //tileMap.TileChunks.ForEach(chunk =>
+                    //{
+                    //    if (!chunk.Cull)
+                    //    {
+                    //        RenderingQueue.QueueStructuresForRender(chunk.Structures);
+                    //        RenderingQueue.QueueObjectsForRender(chunk.GenericObjects);
+                    //    }
+                    //});
 
                     if (tileMap.DynamicTextureInfo.Initialize) 
                     {
@@ -330,6 +349,10 @@ namespace MortalDungeon
 
             });
 
+            if (Scene.LightObject != null && Scene.RenderLight) 
+            {
+                RenderingQueue.QueueLightObjectsForRender(new List<GameObject>() { Scene.LightObject });
+            }
 
 
             RenderingQueue.RenderQueue();
@@ -374,7 +397,7 @@ namespace MortalDungeon
             //TickAllObjects();
 
             var mouse = MouseState;
-            float sensitivity = 0.2f;
+            float sensitivity = 0.04f;
 
             // Calculate the offset of the mouse position
             var deltaX = mouse.X - _lastPos.X;
@@ -389,11 +412,32 @@ namespace MortalDungeon
                 _firstMove = false;
             }
 
-            if (mouse.IsButtonDown(MouseButton.Left))
+            if (mouse.IsButtonDown(MouseButton.Left) && KeyboardState.IsKeyDown(Keys.LeftControl))
             {
                 // Apply the camera pitch and yaw (we clamp the pitch in the camera class)
+                _sceneController.Scenes.ForEach(scene => scene.OnCameraMoved());
+
                 _camera.Yaw += deltaX * sensitivity;
+
+                if (_camera.Yaw < -120)
+                {
+                    _camera.Yaw = -120;
+                }
+                else if (_camera.Yaw > -60)
+                {
+                    _camera.Yaw = -60;
+                }
+
                 _camera.Pitch -= deltaY * sensitivity; // reversed since y-coordinates range from bottom to top
+
+                if (_camera.Pitch < -40)
+                {
+                    _camera.Pitch = -40;
+                }
+                else if (_camera.Pitch > 40)
+                {
+                    _camera.Pitch = 40;
+                }
             }
 
             _lastPos = new Vector2(mouse.X, mouse.Y);

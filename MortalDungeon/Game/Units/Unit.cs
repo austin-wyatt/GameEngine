@@ -63,7 +63,12 @@ namespace MortalDungeon.Game.Units
             Scene = scene;
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
-            AI.Team = UnitTeam.Neutral;
+            AI.Team = UnitTeam.Unknown;
+        }
+
+        public override void AddBaseObject(BaseObject obj)
+        {
+            base.AddBaseObject(obj);
         }
 
         public Ability GetFirstAbilityOfType(AbilityTypes type)
@@ -218,15 +223,15 @@ namespace MortalDungeon.Game.Units
         {
             AI.Team = team;
 
-            switch (team) 
+            switch (UnitTeam.PlayerUnits.GetRelation(team)) 
             {
-                case UnitTeam.Ally:
+                case Relation.Friendly:
                     SelectionTile.SetColor(new Vector4(0, 0.75f, 0, 1));
                     break;
-                case UnitTeam.Enemy:
+                case Relation.Hostile:
                     SelectionTile.SetColor(new Vector4(0.75f, 0, 0, 1));
                     break;
-                case UnitTeam.Neutral:
+                case Relation.Neutral:
                     SelectionTile.SetColor(Colors.Tan);
                     break;
             }
@@ -356,6 +361,18 @@ namespace MortalDungeon.Game.Units
         public override void OnTimedHover()
         {
             base.OnTimedHover();
+        }
+
+        public override void OnCull()
+        {
+            if (Cull)
+            {
+                Scene.DecollateUnit(this);
+            }
+            else 
+            {
+                Scene.CollateUnit(this);
+            }
         }
 
         public void Select() 

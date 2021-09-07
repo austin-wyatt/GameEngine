@@ -15,7 +15,7 @@ in vec2 texCoord2;
 in float inlineThickness;
 in float outlineThickness;
 in vec4 inlineColor;
-in vec4 outlineColor;
+//in vec4 outlineColor;
 
 in float alpha_threshold;
 
@@ -30,7 +30,7 @@ layout (binding = 4) uniform sampler2D texture4;
 const float OUTLINE_ALPHA_STEP_WIDTH = 0.125;
 const float OUTLINE_ALPHA_STEPS = 8;
 
-void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
+//void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
 void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
 void DoWork(in sampler2D primaryTexture);
 
@@ -79,10 +79,10 @@ void DoWork(in sampler2D primaryTexture)
 
 
 	//Handle outline and inline
-	if(outlineThickness > 0)
-	{
-		CreateOutline(texColor, outlineColor, outlineThickness, primaryTexture);
-	}
+//	if(outlineThickness > 0)
+//	{
+//		CreateOutline(texColor, outlineColor, outlineThickness, primaryTexture);
+//	}
 	
 
 	if(inlineThickness > 0)
@@ -98,16 +98,16 @@ void DoWork(in sampler2D primaryTexture)
 //		discard;
 }
 
-void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
-{
-	if(textureColor.w < 1)
-	{
-		if(textureColor.w > OUTLINE_ALPHA_STEP_WIDTH * (OUTLINE_ALPHA_STEPS - thickness))
-		{
-			outputColor = outlineColor;
-		}
-	}
-}
+//void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
+//{
+//	if(textureColor.w < 1)
+//	{
+//		if(textureColor.w > OUTLINE_ALPHA_STEP_WIDTH * (OUTLINE_ALPHA_STEPS - thickness))
+//		{
+//			outputColor = outlineColor;
+//		}
+//	}
+//}
 
 void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
 {

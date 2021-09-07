@@ -14,11 +14,15 @@ namespace MortalDungeon.Objects
         IconSpritesheet,
         TileSpritesheet,
         StructureSpritesheet,
+        LightObstructionSheet,
 
         FogTexture,
         TestTexture,
 
-        DynamicTexture
+        DynamicTexture,
+
+        Lighting,
+        LightObstructionMap
     }
     public class TextureInfo
     {

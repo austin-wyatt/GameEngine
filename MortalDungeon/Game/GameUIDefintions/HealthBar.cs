@@ -13,7 +13,7 @@ namespace MortalDungeon.Game.UI
         public float _healthPercent = 1;
         private UIObject _healthBar;
 
-        private UnitTeam _team = UnitTeam.Ally;
+        private UnitTeam _team = UnitTeam.PlayerUnits;
 
         public Vector4 BarColor = new Vector4(0, 0.5f, 0, 1f);
 
@@ -51,18 +51,28 @@ namespace MortalDungeon.Game.UI
                 _team = team;
             }
 
+            Relation relation = UnitTeam.PlayerUnits.GetRelation(team);
 
-            switch (team) 
+
+            switch (relation) 
             {
-                case UnitTeam.Ally:
-                    BarColor = new Vector4(0, 0.5f, 0, 1f);
+                case Relation.Friendly:
+                    if(team == UnitTeam.PlayerUnits)
+                    {
+                        BarColor = new Vector4(0, 0.5f, 0, 1f);
+                    }
+                    else
+                    {
+                        BarColor = new Vector4(0, 0.75f, 0, 1f);
+                    }
+                        
                     _healthBar.SetColor(BarColor);
                     break;
-                case UnitTeam.Enemy:
+                case Relation.Hostile:
                     BarColor = new Vector4(0.5f, 0, 0, 1f);
                     _healthBar.SetColor(BarColor);
                     break;
-                case UnitTeam.Neutral:
+                case Relation.Neutral:
                     BarColor = new Vector4(0.93f, 0.83f, 0.56f, 1f);
                     _healthBar.SetColor(BarColor);
                     break;

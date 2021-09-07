@@ -53,6 +53,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     obj.Cull = true;
                 }
+
+                obj.OnCull();
             });
         }
 
@@ -79,6 +81,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             scaleMax *= obj.LocalRadius;
 
             WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+
+            bool prevCull = obj.Cull;
+
             if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
             {
                 obj.Cull = false;
@@ -87,6 +92,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 obj.Cull = true;
                 _culledChunks++;
+            }
+
+            if (prevCull != obj.Cull) 
+            {
+                obj.OnCull();
             }
         }
 

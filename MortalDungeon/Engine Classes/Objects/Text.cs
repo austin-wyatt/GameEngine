@@ -49,7 +49,7 @@ namespace MortalDungeon.Engine_Classes
             LetterObject = letter;
             _display = letter.BaseFrame;
 
-            BaseObjects.Add(letter);
+            AddBaseObject(letter);
 
             letter.RenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold };
 

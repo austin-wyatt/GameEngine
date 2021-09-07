@@ -200,7 +200,7 @@ namespace MortalDungeon.Game.Tiles
         public void InitializeTileChunks() 
         {
             TileChunks.Clear();
-            FillTileChunks(5, 5);
+            FillTileChunks(10, 10);
         }
         private void FillTileChunks(int width = TileChunk.DefaultChunkWidth, int height = TileChunk.DefaultChunkHeight)
         {
@@ -263,7 +263,7 @@ namespace MortalDungeon.Game.Tiles
             BaseObject baseObj = new BaseObject(new List<Animation>() { Idle }, 0, "", new Vector3());
 
             GameObject temp = new GameObject();
-            temp.BaseObjects.Add(baseObj);
+            temp.AddBaseObject(baseObj);
 
             temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
 
@@ -407,6 +407,21 @@ namespace MortalDungeon.Game.Tiles
             Tiles.ForEach(t =>
             {
                 t.SetPosition(t.Position - offset);
+
+                if (t.UnitOnTile != null)
+                {
+                    t.UnitOnTile.SetPosition(t.UnitOnTile.Position - offset);
+                }
+
+                if (t.Structure != null)
+                {
+                    t.Structure.SetPosition(t.Structure.Position - offset);
+                }
+            });
+
+            TileChunks.ForEach(chunk =>
+            {
+                chunk.Center -= offset;
             });
 
             base.SetPosition(position);

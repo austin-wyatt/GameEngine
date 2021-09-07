@@ -14,6 +14,8 @@ namespace MortalDungeon.Engine_Classes
 
         public bool Use = true;
 
+        public List<Action> OnChange = new List<Action>();
+
         public Color() { }
 
         public Color(float r, float g, float b, float a) 
@@ -30,6 +32,14 @@ namespace MortalDungeon.Engine_Classes
             R = color.X;
             G = color.Y;
             B = color.Z;
+        }
+
+        public Color(Color color)
+        {
+            A = color.A;
+            R = color.R;
+            G = color.G;
+            B = color.B;
         }
 
         public static Color operator -(Color color1, Color color2) 
@@ -76,13 +86,14 @@ namespace MortalDungeon.Engine_Classes
             return newCol;
         }
 
-        public Color Sum(Color color) 
+        public Color Add(Color color) 
         {
             A += color.A;
             R += color.R;
             G += color.G;
             B += color.B;
 
+            _onChange();
             return this;
         }
 
@@ -93,7 +104,21 @@ namespace MortalDungeon.Engine_Classes
             G -= color.G;
             B -= color.B;
 
+            _onChange();
             return this;
+        }
+
+        public void _onChange() 
+        {
+            for (int i = 0; i < OnChange.Count; i++) 
+            {
+                OnChange[i].Invoke();
+            }
+        }
+
+        public Vector4 ToVector() 
+        {
+            return new Vector4(R, G, B, A);
         }
     }
 }

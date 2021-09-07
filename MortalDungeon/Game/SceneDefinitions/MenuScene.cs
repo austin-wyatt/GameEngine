@@ -20,6 +20,8 @@ using MortalDungeon.Game.Tiles.TileMaps;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Map.FeatureEquations;
 using MortalDungeon.Game.Structures;
+using MortalDungeon.Game.Objects.PropertyAnimations;
+using MortalDungeon.Game.Lighting;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -30,18 +32,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             InitializeFields();
         }
 
-        
-
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             base.Load(camera, cursorObject, mouseRay);
-
-
-            TestTileMap tileMap = new TestTileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-            tileMap.PopulateTileMap();
-
-            _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
-
 
             PathParams riverParams = new PathParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
             riverParams.AddStop(new FeaturePoint(25, 45));
@@ -55,26 +48,44 @@ namespace MortalDungeon.Game.SceneDefinitions
             pathParams.AddMeanderingPoints(20, 0.25f, 1, 0, 123456);
 
             Path_1 path = new Path_1(pathParams);
-            
 
-            ForestParams forestParams = new ForestParams(new FeaturePoint(0, 0), 100, 0.1);
+
+            ForestParams forestParams = new ForestParams(new FeaturePoint(0, 0), 200, 0.1);
             Forest_1 forest = new Forest_1(forestParams);
 
+            GraveyardParams graveyardParams = new GraveyardParams(new FeaturePoint(0, 100), 30, 15, 0.1f);
+            Graveyard_1 graveyard = new Graveyard_1(graveyardParams);
+
             river.GenerateFeature();
-            _tileMapController.LoadedFeatures.Add(river);
+            _tileMapController.AddFeature(river);
 
             path.GenerateFeature();
-            _tileMapController.LoadedFeatures.Add(path);
+            _tileMapController.AddFeature(path);
+
+            graveyard.GenerateFeature();
+            _tileMapController.AddFeature(graveyard);
 
             forest.GenerateFeature();
-            _tileMapController.LoadedFeatures.Add(forest);
+            _tileMapController.AddFeature(forest);
+
+
+
+            TestTileMap tileMap = new TestTileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
+            tileMap.PopulateTileMap();
+
+            _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
+            _tileMapController.ApplyLoadedFeaturesToMap(tileMap);
 
             _tileMapController.LoadSurroundingTileMaps(tileMap.TileMapCoords);
 
 
+            UnitTeam.PlayerUnits.SetRelation(UnitTeam.Skeletons, Relation.Hostile);
+            UnitTeam.PlayerUnits.SetRelation(UnitTeam.PlayerUnits, Relation.Friendly);
+            UnitTeam.PlayerUnits.SetRelation(UnitTeam.BadGuys, Relation.Neutral);
+
 
             Guy guy = new Guy(tileMap[0, 0].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 0]) { Clickable = true };
-            guy.SetTeam(UnitTeam.Ally);
+            guy.SetTeam(UnitTeam.PlayerUnits);
             guy.Info._movementAbility.EnergyCost = 0.3f;
             CurrentUnit = guy;
 
@@ -86,7 +97,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             Guy badGuy = new Guy(tileMap[0, 3].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 3]) { Clickable = true };
-            badGuy.SetTeam(UnitTeam.Enemy);
+            badGuy.SetTeam(UnitTeam.BadGuys);
             badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
             badGuy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
@@ -108,7 +119,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             _genericObjects.Add(mountainBackground);
             mountainBackground.SetPosition(new Vector3(guy.Position.X, guy.Position.Y - 200, -50));
             _camera.SetPosition(new Vector3(guy.Position.X / WindowConstants.ScreenUnits.X * 2, guy.Position.Y / WindowConstants.ScreenUnits.Y * -2, _camera.Position.Z));
-
 
 
             float footerHeight = 300;
@@ -139,7 +149,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             guy.SetShields(5);
 
             Skeleton skeleton = new Skeleton(tileMap[1, 5].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[1, 5]) { };
-            skeleton.SetTeam(UnitTeam.Neutral);
+            skeleton.SetTeam(UnitTeam.Skeletons);
             UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
 
             skeleton.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
@@ -148,9 +158,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             skeleton.AI.ControlType = ControlType.Basic_AI;
 
             _units.Add(skeleton);
-
-
-            StartCombat();
 
 
             UIBlock statusBarContainer = new UIBlock(new Vector3());
@@ -165,30 +172,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             AddUI(statusBarContainer);
 
 
-
-
-            //TextComponent description = new TextComponent();
-            //description.SetTextScale(0.2f);
-            //description.SetColor(Colors.UITextBlack);
-            //description.SetText("description 1");
-
-            //description.SetPositionFromAnchor(WindowConstants.CenterScreen, UIAnchorPosition.Center);
-
-            //TextComponent desc2 = new TextComponent();
-            //desc2.SetTextScale(0.2f);
-            //desc2.SetColor(Colors.UITextBlack);
-            //desc2.SetText("description 2");
-
-            //desc2.SetPositionFromAnchor(description.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.TopCenter);
-
-
-            //AddUI(description);
-            //AddUI(desc2);
-
             EndCombat();
-            FillInTeamFog(UnitTeam.Ally);
+            FillInTeamFog();
         }
-
 
         public override void OnMouseUp(MouseButtonEventArgs e)
         {
@@ -278,14 +264,16 @@ namespace MortalDungeon.Game.SceneDefinitions
                 if (KeyboardState.IsKeyDown(Keys.A))
                 {
                     //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
-                    _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
+                    //_camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
+                    _camera.SetPosition(_camera.Position - Vector3.UnitX * _cameraSpeed * (float)args.Time);
                     OnMouseMove();
                     OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.D))
                 {
                     //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
-                    _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
+                    //_camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
+                    _camera.SetPosition(_camera.Position + Vector3.UnitX * _cameraSpeed * (float)args.Time);
                     OnMouseMove();
                     OnCameraMoved();
                 }
@@ -334,10 +322,6 @@ namespace MortalDungeon.Game.SceneDefinitions
                 else if (KeyboardState.IsKeyDown(Keys.LeftShift))
                 {
                     map.GenerateCliff(tile);
-                }
-                else if (KeyboardState.IsKeyDown(Keys.LeftControl))
-                {
-                    tile.Properties.MovementCost += 1f;
                 }
                 else if (KeyboardState.IsKeyDown(Keys.F))
                 {
@@ -426,7 +410,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //Window._renderedItems.Add(baseObject);
 
                     GameObject gameObj = new GameObject();
-                    gameObj.BaseObjects.Add(baseObject);
+                    gameObj.AddBaseObject(baseObject);
 
                     _genericObjects.Add(gameObj);
                 }
@@ -439,19 +423,34 @@ namespace MortalDungeon.Game.SceneDefinitions
                     else 
                     {
                         TestTileMap temp = map as TestTileMap;
+                        List<BaseTile> tiles = new List<BaseTile>();
 
-                        Wall.CreateWalls(map, _wallTemp, tile.TilePoint, Wall.Walls.Iron);
+                        //TileMap.PathToPointParameters param = new TileMap.PathToPointParameters(_wallTemp, tile.TilePoint, 100)
+                        //{
+                        //    TraversableTypes = new List<TileClassification>() { TileClassification.Ground, TileClassification.Terrain, TileClassification.Water }
+                        //};
+
+                        //List<BaseTile> tiles = map.GetPathToPoint(param);
+
+                        map.GetRingOfTiles(_wallTemp, tiles, 10);
+
+                        tiles.Insert(tiles.Count, tiles[0]);
+                        tiles.Remove(tiles[0]);
+                        tiles.Insert(tiles.Count, tiles[0]);
+                        tiles.Remove(tiles[0]);
+
+                        Wall.CreateWalls(map, tiles, Wall.WallMaterial.Iron);
                         _wallTemp = null;
                     }
                 }
-                else if (KeyboardState.IsKeyDown(Keys.Tab))
-                {
-                    if (tile.Structure != null && (tile.Structure.Type == StructureEnum.Wall_Wood_1 || tile.Structure.Type == StructureEnum.Wall_1)) 
-                    {
-                        Wall wall = tile.Structure as Wall;
-                        wall.CreateDoor(tile);
-                    }
-                }
+                //else if (KeyboardState.IsKeyDown(Keys.LeftControl))
+                //{
+                //    if (tile.Structure != null) 
+                //    {
+                //        Wall wall = tile.Structure as Wall;
+                //        wall.CreateDoor(tile);
+                //    }
+                //}
                 else if (KeyboardState.IsKeyDown(Keys.F1))
                 {
                     List<BaseTile> tiles = new List<BaseTile>();

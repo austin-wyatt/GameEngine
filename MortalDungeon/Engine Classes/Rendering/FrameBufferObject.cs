@@ -79,18 +79,24 @@ namespace MortalDungeon.Engine_Classes.Rendering
         /// Color buffer should be cleared before subsequent uses of the frame buffer
         /// </summary>
         /// <param name="active"></param>
-        public void ClearColorBuffer(bool active = false) 
+        public void ClearColorBuffer(bool active = false, Vector4 color = default) 
         {
+            GL.ClearColor(color.X, color.Y, color.Z, color.W);
+
             if (!active)
             {
                 BindFrameBuffer();
-                GL.ClearBuffer(ClearBuffer.Color, 0, new float[1]);
+                //GL.ClearBuffer(ClearBuffer.Color, 0, new float[1]);
+                GL.Clear(ClearBufferMask.ColorBufferBit);
                 UnbindFrameBuffer();
             }
             else 
             {
                 GL.ClearBuffer(ClearBuffer.Color, 0, new float[1]);
+                GL.Clear(ClearBufferMask.ColorBufferBit);
             }
+
+            GL.ClearColor(Renderer.ClearColor.X, Renderer.ClearColor.Y, Renderer.ClearColor.Z, Renderer.ClearColor.W);
         }
 
         private void CreateTexture() 

@@ -2,7 +2,9 @@
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
@@ -25,7 +27,7 @@ namespace MortalDungeon.Game.Units
             Guy.BaseFrame.CameraPerspective = true;
             Guy.BaseFrame.RotateX(25);
 
-            BaseObjects.Add(Guy);
+            AddBaseObject(Guy);
 
             SetPosition(position);
 
@@ -55,7 +57,27 @@ namespace MortalDungeon.Game.Units
             };
 
             //AI.Dispositions.Add(disp);
+
+            LightGenerator = new LightGenerator() { Radius = 10, Brightness = 0.1f, LightColor = new Vector3(0.75f, 0.6f, 0.2f) };
+            Scene.LightGenerators.Add(LightGenerator);
+
+            _lightGenChangeFunc = () =>
+            {
+                if (DayNightCycle.IsNight())
+                {
+                    LightGenerator.On = true;
+                }
+                else
+                {
+                    LightGenerator.On = false;
+                }
+            };
+
+            CombatScene.EnvironmentColor.OnChange.Add(_lightGenChangeFunc);
         }
+
+        private Action _lightGenChangeFunc;
+        private LightGenerator LightGenerator;
 
         public override void OnKill()
         {
@@ -74,6 +96,25 @@ namespace MortalDungeon.Game.Units
             }
 
             return obj;
+        }
+
+        public override void SetTileMapPosition(BaseTile baseTile)
+        {
+            base.SetTileMapPosition(baseTile);
+
+            if (LightGenerator != null) 
+            {
+                LightGenerator.Position = Map.FeatureEquation.PointToMapCoords(Info.Point);
+                Scene.QueueLightUpdate();
+            }
+        }
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            CombatScene.EnvironmentColor.OnChange.Remove(_lightGenChangeFunc);
+            Scene.LightGenerators.RemoveImmediate(LightGenerator);
         }
     }
 }

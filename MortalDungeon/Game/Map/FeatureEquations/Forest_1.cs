@@ -24,20 +24,20 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
-            if (AffectedPoints.TryGetValue(affectedPoint, out Feature value))
+            if (AffectedPoints.TryGetValue(affectedPoint, out int value))
             {
                 switch (value)
                 {
-                    case Feature.Tree_1:
+                    case (int)Feature.Tree_1:
                         if ((tile.Properties.Type == TileType.Grass || tile.Properties.Type == TileType.Grass_2) && tile.Structure == null) 
                         {
-                            tile.AddStructure(new Tree(tile.TileMap, tile, 0));
+                            new Tree(tile.TileMap, tile, 0);
                         }
                         break;
-                    case Feature.Tree_2:
+                    case (int)Feature.Tree_2:
                         if ((tile.Properties.Type == TileType.Grass || tile.Properties.Type == TileType.Grass_2) && tile.Structure == null)
                         {
-                            tile.AddStructure(new Tree(tile.TileMap, tile, 1));
+                            new Tree(tile.TileMap, tile, 1);
                         }
                         break;
                 }
@@ -73,20 +73,11 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             return true;
         }
 
-
-        public override void ApplyToMap(TileMap map)
-        {
-            map.Tiles.ForEach(t =>
-            {
-                ApplyToTile(t);
-            });
-        }
-
         internal override void UpdatePoint(FeaturePoint point)
         {
             if (NumberGen.NextDouble() > 1 - ForestParams.Density) 
             {
-                AffectedPoints.TryAdd(point, NumberGen.NextDouble() > 0.5 ? Feature.Tree_1 : Feature.Tree_2);
+                AffectedPoints.TryAdd(point, NumberGen.NextDouble() > 0.5 ? (int)Feature.Tree_1 : (int)Feature.Tree_2);
             }
         }
     }

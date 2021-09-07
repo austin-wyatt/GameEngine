@@ -22,7 +22,7 @@ namespace MortalDungeon.Game.Abilities
 
         public Unit TargetUnit = null;
 
-        public UnitTeam Team = UnitTeam.Ally;
+        public UnitTeam Team = UnitTeam.PlayerUnits;
 
         public void ClearTiles() 
         {

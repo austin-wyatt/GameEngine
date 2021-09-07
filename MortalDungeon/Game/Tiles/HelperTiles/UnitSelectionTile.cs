@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.GameObjects
 
 
 
-            BaseObjects.Add(unitSelection);
+            AddBaseObject(unitSelection);
 
             SetPosition(unit.Position + UnitOffset);
         }

@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Tiles.HelperTiles
             tile.BaseFrame.CameraPerspective = true;
             tile.BaseFrame.TextureReference = attachedTile.BaseObjects[0].BaseFrame.TextureReference;
 
-            BaseObjects.Add(tile);
+            AddBaseObject(tile);
 
             MultiTextureData.MixTexture = false;
 

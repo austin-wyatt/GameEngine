@@ -29,7 +29,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
         private const int ObjectBufferCount = 15000;
-        private const int instanceDataOffset = 40;
+        private const int instanceDataOffset = 36;
         public static float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
         private const int instanceDataLength = instanceDataOffset * sizeof(float);
 
@@ -45,10 +45,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static int FPSCount = 0;
         public static Stopwatch _internalTimer = new Stopwatch();
 
+        public static readonly Vector4 ClearColor = new Vector4(0.2f, 0.3f, 0.3f, 1);
+
         static Renderer() { }
         public static void Load() //initialization of renderer
         {
-            GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            GL.ClearColor(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc((BlendingFactor)BlendingFactorSrc.SrcAlpha, (BlendingFactor)BlendingFactorDest.OneMinusSrcAlpha);
             GL.Enable(EnableCap.ProgramPointSize);
@@ -166,7 +168,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + alpha threshold + primary texture target
             GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
-            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
+            //GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Outline color
         }
         public static void InsertDataIntoInstancedRenderArray(BaseObject obj, MultiTextureData renderingData, ref float[] _instancedRenderArray, ref int currIndex, int textureTarget)
         {
@@ -198,11 +200,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Y;
             _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.Z;
             _instancedRenderArray[currIndex++] = obj.OutlineParameters.InlineColor.W;
-
-            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.X;
-            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Y;
-            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.Z;
-            _instancedRenderArray[currIndex++] = obj.OutlineParameters.OutlineColor.W;
         }
 
 
@@ -223,6 +220,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Display = display;
             }
+
             TextureName currTexture = Display.Textures.Textures[0];
             Display.TextureReference.Use(TextureUnit.Texture0);
 
@@ -800,7 +798,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.EnableVertexAttribArray(8);
             GL.EnableVertexAttribArray(9);
             GL.EnableVertexAttribArray(10);
-            GL.EnableVertexAttribArray(11);
+            //GL.EnableVertexAttribArray(11);
             GL.VertexAttribDivisor(2, 1);
             GL.VertexAttribDivisor(3, 1);
             GL.VertexAttribDivisor(4, 1);
@@ -810,7 +808,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribDivisor(8, 1);
             GL.VertexAttribDivisor(9, 1);
             GL.VertexAttribDivisor(10, 1);
-            GL.VertexAttribDivisor(11, 1);
+            //GL.VertexAttribDivisor(11, 1);
         }
         public static void DisableInstancedShaderAttributes()
         {
@@ -823,7 +821,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.DisableVertexAttribArray(8);
             GL.DisableVertexAttribArray(9);
             GL.DisableVertexAttribArray(10);
-            GL.DisableVertexAttribArray(11);
+            //GL.DisableVertexAttribArray(11);
             GL.VertexAttribDivisor(2, 0);
             GL.VertexAttribDivisor(3, 0);
             GL.VertexAttribDivisor(4, 0);
@@ -833,7 +831,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribDivisor(8, 0);
             GL.VertexAttribDivisor(9, 0);
             GL.VertexAttribDivisor(10, 0);
-            GL.VertexAttribDivisor(11, 0);
+
+            //GL.VertexAttribDivisor(11, 0);
         }
 
         public static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)

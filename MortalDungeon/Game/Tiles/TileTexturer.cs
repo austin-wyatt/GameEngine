@@ -8,6 +8,7 @@ using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using System.Linq;
+using MortalDungeon.Engine_Classes.Scenes;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -103,6 +104,7 @@ namespace MortalDungeon.Game.Tiles
             if (objects.Count == 0)
                 return;
 
+
             Shaders.TILE_MAP_SHADER.Use();
 
             RenderableObject Display = objects.First().BaseObjects[0]._currentAnimation.CurrentFrame;
@@ -135,6 +137,8 @@ namespace MortalDungeon.Game.Tiles
             float mixPercent;
             int overlayPosition = 0;
 
+            Vector4 color;
+
             foreach (BaseTile tile in objects) 
             {
                 if (tile.Render)
@@ -155,7 +159,7 @@ namespace MortalDungeon.Game.Tiles
 
                         if (tile.InFog[map.Controller.Scene.CurrentTeam] && tile.Explored[map.Controller.Scene.CurrentTeam])
                         {
-                            mixPercent = 0.5f;
+                            mixPercent = 0.33f;
                         }
                         else if (tile.InFog[map.Controller.Scene.CurrentTeam])
                         {
@@ -171,6 +175,13 @@ namespace MortalDungeon.Game.Tiles
                     {
                         mixPercent = 0;
                     }
+
+                    color = new Vector4(tile.Color);
+
+                    //color.X = (color.X + CombatScene.EnvironmentColor.R) / 2;
+                    //color.Y = (color.Y + CombatScene.EnvironmentColor.G) / 2;
+                    //color.Z = (color.Z + CombatScene.EnvironmentColor.B) / 2;
+                    //color.W = (color.W + CombatScene.EnvironmentColor.A) / 2;
 
                     if (Settings.HeightmapEnabled)
                     {
@@ -204,10 +215,10 @@ namespace MortalDungeon.Game.Tiles
                     {
                         if (tile.BaseObjects[j].Render)
                         {
-                            _instancedRenderDataArray[currIndex++] = tile.Color.X - heightColorCorrection.X;
-                            _instancedRenderDataArray[currIndex++] = tile.Color.Y - heightColorCorrection.Y;
-                            _instancedRenderDataArray[currIndex++] = tile.Color.Z - heightColorCorrection.Z;
-                            _instancedRenderDataArray[currIndex++] = tile.Color.W - heightColorCorrection.W;
+                            _instancedRenderDataArray[currIndex++] = color.X - heightColorCorrection.X;
+                            _instancedRenderDataArray[currIndex++] = color.Y - heightColorCorrection.Y;
+                            _instancedRenderDataArray[currIndex++] = color.Z - heightColorCorrection.Z;
+                            _instancedRenderDataArray[currIndex++] = color.W - heightColorCorrection.W;
 
                             _instancedRenderDataArray[currIndex++] = (int)tile.Properties.Type;
                             _instancedRenderDataArray[currIndex++] = overlayPosition;

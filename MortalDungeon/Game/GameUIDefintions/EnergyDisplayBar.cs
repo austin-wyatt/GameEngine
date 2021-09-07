@@ -111,7 +111,7 @@ namespace MortalDungeon.Game.UI
                     }
                     else 
                     {
-                        color.Sum(deltaColor);
+                        color.Add(deltaColor);
                     }
 
                     for (int j = 0; j < Pips.Count; j++) 
@@ -278,7 +278,7 @@ namespace MortalDungeon.Game.UI
             BaseObject pipObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "EnergyPip", position, EnvironmentObjects.BASE_TILE.Bounds);
             pipObj.BaseFrame.CameraPerspective = CameraPerspective;
 
-            BaseObjects.Add(pipObj);
+            AddBaseObject(pipObj);
 
             _baseObject = pipObj;
 

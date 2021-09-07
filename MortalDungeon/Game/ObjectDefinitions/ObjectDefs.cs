@@ -118,7 +118,7 @@ namespace MortalDungeon.Game.Objects
     public static class _3DObjects 
     {
         public static Object3D WallObj = OBJParser.ParseOBJ("Resources/Wall.obj");
-        public static Object3D WallCornerObj = OBJParser.ParseOBJ("Resources/WallCorner_2.obj");
+        public static Object3D WallCornerObj = OBJParser.ParseOBJ("Resources/WallCorner.obj");
 
         public static RenderableObject CreateObject(SpritesheetObject spritesheet, Object3D obj) 
         {

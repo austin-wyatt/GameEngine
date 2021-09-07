@@ -20,14 +20,19 @@ namespace MortalDungeon.Objects
     }
     public static class Shaders 
     {
-        public static readonly Shader DEFAULT_SHADER = new Shader("Shaders/oldShader.vert", "Shaders/oldShader.frag");
+        public static readonly Shader DEFAULT_SHADER = new Shader("Shaders/OldShaders/oldShader.vert", "Shaders/OldShaders/oldShader.frag");
         public static readonly Shader FAST_DEFAULT_SHADER = new Shader("Shaders/fastDefaultShader.vert", "Shaders/shader.frag");
-        public static readonly Shader POINT_SHADER = new Shader("Shaders/pointShader.vert", "Shaders/pointShader.frag");
-        public static readonly Shader LINE_SHADER = new Shader("Shaders/lineShader.vert", "Shaders/lineShader.frag");
+        public static readonly Shader POINT_SHADER = new Shader("Shaders/OldShaders/pointShader.vert", "Shaders/OldShaders/pointShader.frag");
+        public static readonly Shader LINE_SHADER = new Shader("Shaders/OldShaders/lineShader.vert", "Shaders/OldShaders/lineShader.frag");
         public static readonly Shader TILE_MAP_SHADER = new Shader("Shaders/tileMapShader.vert", "Shaders/tileMapShader.frag");
 
 
         //Image transformation shaders
         public static readonly Shader SIMPLE_SHADER = new Shader("Shaders/simpleShader.vert", "Shaders/simpleShader.frag");
+
+        public static readonly Shader LIGHT_OBSTRUCTION_SHADER = new Shader("Shaders/lightObstructionShader.vert", "Shaders/lightObstructionShader.frag");
+        public static readonly Shader LIGHT_SHADER = new Shader("Shaders/lightShader.vert", "Shaders/lightShader.frag");
+
+        public static readonly Shader COLOR_SHADER = new Shader("Shaders/colorShader.vert", "Shaders/colorShader.frag");
     } 
 }

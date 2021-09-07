@@ -25,7 +25,7 @@ namespace MortalDungeon.Engine_Classes
         public Action OnFinish = null;
 
         public int CurrentKeyframe = 0;
-        private int tick = 0;
+        protected int tick = 0;
 
         public int AnimationID => _animationID;
         protected int _animationID = currentAnimationID++;

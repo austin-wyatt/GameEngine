@@ -38,12 +38,22 @@ namespace MortalDungeon.Game.Tiles
 
         Dirt = 63,
         Grass_2 = 64,
+        Dead_Grass = 65,
 
         Fog_1 = 160,
         Fog_2 = 161,
         Fog_3 = 180,
         Fog_4 = 181,
     }
+
+    public enum SimplifiedTileType 
+    {
+        Unknown,
+        Grass,
+        Water,
+        Stone,
+    }
+
     public class BaseTile : GameObject
     {
         public Vector4 DefaultColor = default;
@@ -103,7 +113,7 @@ namespace MortalDungeon.Game.Tiles
             Hoverable = true;
             Clickable = true;
 
-            BaseObjects.Add(BaseTile);
+            AddBaseObject(BaseTile);
             _tileObject = BaseTile;
 
             Properties = new TileProperties() 
@@ -149,7 +159,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        public void SetFog(bool inFog, UnitTeam team = UnitTeam.Ally)
+        public void SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
         {
             if (inFog != InFog[team]) 
             {
@@ -182,9 +192,9 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.Ally, UnitTeam previousTeam = UnitTeam.Ally)
+        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.PlayerUnits)
         {
-            if (explored != Explored[team] || Explored[team] != Explored[previousTeam])
+            if (explored != Explored[team])
             {
                 Explored[team] = explored;
 
@@ -257,8 +267,31 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            if (Structure != null) 
+            {
+                RemoveStructure(Structure);
+                Structure.CleanUp();
+            }
+
+            if (UnitOnTile != null) 
+            {
+                GetScene().RemoveUnit(UnitOnTile);
+                UnitOnTile.CleanUp();
+            }
+        }
+
         public void AddStructure<T>(T structure) where T : Structure 
         {
+            if (Structure != null) 
+            {
+                RemoveStructure(Structure);
+                //return;
+            }
+
             Chunk.Structures.Add(structure);
             Structure = structure;
         }
@@ -339,7 +372,7 @@ namespace MortalDungeon.Game.Tiles
             CombatScene scene = GetScene();
 
             int distance = TileMap.GetDistanceBetweenPoints(scene.CurrentUnit.Info.Point, TilePoint);
-            bool isCurrentUnit = scene.CurrentUnit.AI.Team == UnitTeam.Ally && scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
+            bool isCurrentUnit = scene.CurrentUnit.AI.Team == UnitTeam.PlayerUnits && scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
 
             int interactDistance = 5;
             int inspectDistance = 10;
@@ -481,6 +514,9 @@ namespace MortalDungeon.Game.Tiles
     {
         public TileType Type;
         public TileClassification Classification;
+
+        public bool MustExplore = false;
+
         public float DamageOnEnter = 0;
         public float Slow = 0;
         public bool BlocksVision = false;
