@@ -148,6 +148,8 @@ namespace MortalDungeon
             KeyDown += Window_KeyDown;
 
             Renderer.Load();
+
+            VisionMap.Initialize();
             
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);

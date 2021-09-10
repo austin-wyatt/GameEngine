@@ -249,6 +249,28 @@ namespace MortalDungeon.Game.Tiles
             return new Vector2i(0, 0);
         }
 
+        public Vector2i PointToClusterPosition(TilePoint point) 
+        {
+            Vector2i globalPoint = FeatureEquation.PointToMapCoords(point);
+
+            Vector2i zeroPoint = GetTopLeftTilePosition();
+
+            return globalPoint - zeroPoint;
+        }
+
+        public TileMap GetTopLeftMap()
+        {
+            for (int i = 0; i < TileMaps.Count; i++)
+            {
+                if ((TileMaps[i].TileMapCoords.MapPosition & MapPosition.Top) > 0 && (TileMaps[i].TileMapCoords.MapPosition & MapPosition.Left) > 0)
+                {
+                    return TileMaps[i];
+                }
+            }
+
+            return null;
+        }
+
         public BaseTile GetCenterTile()
         {
             for (int i = 0; i < TileMaps.Count; i++)
@@ -350,6 +372,24 @@ namespace MortalDungeon.Game.Tiles
 
         internal BaseTile GetTile(int xIndex, int yIndex, TileMap map)
         {
+            int currX;
+            int currY;
+            for (int i = 0; i < TileMaps.Count; i++)
+            {
+                currX = xIndex + TileMaps[i].Width * (map.TileMapCoords.X - TileMaps[i].TileMapCoords.X);
+                currY = yIndex + TileMaps[i].Height * (map.TileMapCoords.Y - TileMaps[i].TileMapCoords.Y);
+
+                if (currX >= 0 && currY >= 0 && currX < map.Width && currY < map.Height)
+                    return TileMaps[i].GetLocalTile(currX, currY);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        internal BaseTile GetTile(int xIndex, int yIndex)
+        {
+            TileMap map = GetTopLeftMap();
+
             int currX;
             int currY;
             for (int i = 0; i < TileMaps.Count; i++)

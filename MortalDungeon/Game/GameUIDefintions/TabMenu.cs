@@ -1,10 +1,14 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Tiles;
+using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.UI
 {
@@ -184,7 +188,8 @@ namespace MortalDungeon.Game.UI
 
             toggleAI.OnClickAction = () =>
             {
-                Scene._units[2].AI.ControlType = Scene._units[2].AI.ControlType == Units.ControlType.Basic_AI ? Units.ControlType.Controlled : Units.ControlType.Basic_AI;
+                Unit unit = Scene._units.Find(u => u.Name == "John");
+                unit.AI.ControlType = unit.AI.ControlType == ControlType.Basic_AI ? ControlType.Controlled : ControlType.Basic_AI;
             };
 
             toggleAI.SetPositionFromAnchor(unitButton2.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -234,16 +239,40 @@ namespace MortalDungeon.Game.UI
                 Scene.RefillLightObstructions();
             }, turboButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
-            //Button minusColor = CreateButton("Fill Obstructions", () =>
-            //{
-                
-            //}, plusButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+            Button visionTestButton = CreateButton("Vision test", () =>
+            {
+                VisionGenerator gen = new VisionGenerator() { Radius = 10, Team = UnitTeam.PlayerUnits };
+                gen.SetPosition(Scene.CurrentUnit.Info.TileMapPosition);
 
-            //Button minusBlue = CreateButton("- Blue", () =>
-            //{
-            //    CombatScene.EnvironmentColor.Sub(new Color(0, 0, 0.05f, 0));
-            //    Scene.FillInTeamFog(true);
-            //}, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+
+                VisionMap.SetObstructions(Scene.LightObstructions, Scene);
+
+                Console.WriteLine($"Obstructions: {stopwatch.ElapsedMilliseconds}");
+
+                stopwatch.Restart();
+                VisionMap.CalculateVision(new List<VisionGenerator>() { gen }, Scene);
+
+                Console.WriteLine($"Vision: {stopwatch.ElapsedMilliseconds}");
+
+            }, plusButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            Button minusColor = CreateButton("Initialize", () =>
+            {
+                VisionMap.Initialize();
+            }, visionTestButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            Button minusBlue = CreateButton("Save BMP", () =>
+            {
+                VisionMap.SaveObstructionMap();
+
+                VisionMap._saveToBitmap = true;
+                Scene.UpdateVisionMap();
+                Scene.VisionMapTask.Wait();
+
+                VisionMap.SaveOperationMap();
+            }, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
         }
 
         private Button CreateButton(string text, Action action, Vector3 prevButtonPos) 

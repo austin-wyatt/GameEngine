@@ -7,6 +7,9 @@ using System.Text;
 using System.Linq;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
+using OpenTK.Mathematics;
+using MortalDungeon.Game.Map;
+using System.Diagnostics;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -30,50 +33,33 @@ namespace MortalDungeon.Game.Abilities
         {
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
-            List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-
-           
-            TrimTiles(validTiles, units, false, MinRange);
+            //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
+            List<Unit> validUnits = VisionMap.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
+            
+            TrimUnits(validUnits, false, MinRange);
 
             TargetAffectedUnits();
 
-            return validTiles;
+            return new List<BaseTile>();
         }
 
         public override bool UnitInRange(Unit unit, BaseTile position = null)
         {
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
             
-            bool inRange;
-            List<BaseTile> validTiles;
-            //if (position == null)
-            //{
-            //    validTiles = GetValidTileTargets(unit.GetTileMap(), null, position);
-            //}
-            //else 
-            //{
-            //    validTiles = unit.GetTileMap().GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), new List<Unit> { unit });
-            //    unit.Info.TemporaryPosition = point;
-            //}
+            bool inRange = false;
 
-            validTiles = unit.GetTileMap().GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), new List<Unit> { unit });
-            unit.Info.TemporaryPosition = point;
+            CastingUnit.Info.TemporaryPosition = point;
 
-            TileMap map = unit.GetTileMap();
+            List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene);
 
+            Vector2i clusterPos = Scene._tileMapController.PointToClusterPosition(unit.Info.TileMapPosition);
+            
 
-            List<BaseTile> teamVision = Scene.GetTeamVision(unit.AI.Team);
-
-            unit.Info.TemporaryPosition = null;
-
-            BaseTile tile = validTiles.Find(t => t.TilePoint == unit.Info.Point);
-            if (tile == null)
+            if (teamVision.Exists(p => p == clusterPos)
+                && VisionMap.TargetInVision(point, unit.Info.TileMapPosition, (int)Range, Scene)) 
             {
-                inRange = false;
-            }
-            else 
-            {
-                inRange = teamVision.Exists(t => t.TilePoint == tile.TilePoint) && map.GetDistanceBetweenPoints(unit.Info.Point, point) >= MinRange;
+                return true;
             }
 
             return inRange;
@@ -84,7 +70,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
 
-            if (unit.AI.Team != CastingUnit.AI.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
+            if (unit.AI.Team != CastingUnit.AI.Team && AffectedUnits.FindIndex(u => u.ObjectID == unit.ObjectID) != -1)
             {
                 SelectedUnit = unit;
                 EnactEffect();

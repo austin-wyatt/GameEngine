@@ -293,9 +293,9 @@ namespace MortalDungeon.Game.UI
 
                 abilityIcon.OnClickAction = () =>
                 {
-                    if (_currentUnit.AI.ControlType == ControlType.Controlled && _currentUnit == Scene.CurrentUnit) 
+                    if (_currentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ?_currentUnit == Scene.CurrentUnit : true)) 
                     {
-                        Scene.SelectAbility(ability);
+                        Scene.SelectAbility(ability, _currentUnit);
                     }
                 };
 
@@ -339,7 +339,7 @@ namespace MortalDungeon.Game.UI
                 Scene.EventActions[(EventAction)count] = () => {
                     if (_currentUnit.AI.ControlType == ControlType.Controlled) 
                     {
-                        Scene.SelectAbility(ability);
+                        Scene.SelectAbility(ability, _currentUnit);
                     }
                 };
 

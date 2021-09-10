@@ -30,23 +30,25 @@ void main(void)
 
 	outputColor = vec4(color);
 
-//	outputColor = vec4( dist / (32 * 5), 0, 0, 1);
+	 
 
-//	if(texel.x == int(centerTexel.x)){
-//		outputColor = vec4( 0, 0, 1, 1);
-//	}
-
-	
+	bool hitRed = false;
 	for(int i = 0; i < dist; i++){
-		currTexel = lerp(texel, centerTexel, step_length * i);
-//		currTexel = lerp(centerTexel, gl_FragCoord.xy, step_length * i);
+//		currTexel = lerp(texel, centerTexel, step_length * i);
+		currTexel = lerp(centerTexel, texel, step_length * i);
 
 		obstructionColor = texelFetch(texture0, ivec2(currTexel), 0);
 
 		if(obstructionColor[0] > 0.9 && obstructionColor[3] > 0){
-			outputColor[3] = 0;
-			discard;
+//			outputColor[3] = 0;
+//			discard;
+//			hitRed = true;
+			outputColor[3] -= alpha_falloff * 5;
 		}
+
+//		if(hitRed && obstructionColor[0] < 0.9){
+//			discard;
+//		}
 			
 
 		outputColor[3] -= alpha_falloff;

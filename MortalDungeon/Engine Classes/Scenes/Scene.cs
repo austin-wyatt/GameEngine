@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading.Tasks;
 using static MortalDungeon.Engine_Classes.Scenes.CombatScene;
 
 namespace MortalDungeon.Engine_Classes.Scenes
@@ -91,6 +92,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public Lighting Lighting;
         public QueuedList<LightObstruction> LightObstructions = new QueuedList<LightObstruction>();
         public QueuedList<LightGenerator> LightGenerators = new QueuedList<LightGenerator>();
+        public QueuedList<VisionGenerator> UnitVisionGenerators = new QueuedList<VisionGenerator>();
 
         public Camera _camera;
         public BaseObject _cursorObject;
@@ -238,6 +240,36 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
         #endregion
 
+
+        private bool _updatingVisionMap = false;
+        private bool _shouldRepeatVisionMap = false;
+        public Task VisionMapTask = null;
+        public void UpdateVisionMap()
+        {
+            if (ContextManager.GetFlag(GeneralContextFlags.DisableVisionMapUpdate))
+                return;
+
+            if (_updatingVisionMap) 
+            {
+                _shouldRepeatVisionMap = true;
+                return;
+            }
+
+            VisionMapTask = Task.Run(() =>
+            {
+                _updatingVisionMap = true;
+                VisionMap.SetObstructions(LightObstructions, this);
+                VisionMap.CalculateVision(UnitVisionGenerators, this);
+                _updatingVisionMap = false;
+
+                if (_shouldRepeatVisionMap)
+                {
+                    _shouldRepeatVisionMap = false;
+                    UpdateVisionMap();
+                }
+            });
+        }
+
         #region Event handlers
 
         public virtual void OnRender()
@@ -251,6 +283,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 LightObstructions.HandleQueuedItems();
                 ContextManager.SetFlag(GeneralContextFlags.UpdateLightObstructionMap, true);
+                //UpdateVisionMapObstructions();
+                UpdateVisionMap();
             }
 
             if (LightGenerators.HasQueuedItems())
@@ -259,6 +293,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, true);
             }
 
+            if (UnitVisionGenerators.HasQueuedItems())
+            {
+                UnitVisionGenerators.HandleQueuedItems();
+                UpdateVisionMap();
+            }
 
             for (int i = 0; i < _tileMapController.TileMaps.Count; i++)
             {

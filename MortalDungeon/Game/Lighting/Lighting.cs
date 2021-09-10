@@ -24,8 +24,9 @@ namespace MortalDungeon.Game.Lighting
     public class LightObstruction 
     {
         //public BitArray ObstructedLexels = new BitArray(Lighting.LEXEL_PER_TILE_WIDTH * Lighting.LEXEL_PER_TILE_HEIGHT);
-        public LightObstructionType ObstructionType = LightObstructionType.Full;
-        public Vector2i Position;
+        public LightObstructionType ObstructionType = LightObstructionType.None;
+        private Vector2i _position = new Vector2i();
+        public Vector2i Position => _position;
 
         public bool Valid = false;
 
@@ -33,17 +34,17 @@ namespace MortalDungeon.Game.Lighting
 
         public LightObstruction(BaseTile mapPosition) 
         {
-            Position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
+            _position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
         }
 
         public LightObstruction(Vector2i mapPosition)
         {
-            Position = mapPosition;
+            _position = mapPosition;
         }
 
         public void SetPosition(BaseTile mapPosition) 
         {
-            Position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
+            _position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
 
             Valid = true;
         }

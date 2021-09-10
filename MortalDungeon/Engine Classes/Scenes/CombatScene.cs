@@ -12,6 +12,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,6 +26,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         AbilitySelected,
         TabMenuOpen,
         EnableTileMapUpdate,
+
+        DisableVisionMapUpdate,
 
         UpdateLighting,
         UpdateLightObstructionMap,
@@ -44,6 +47,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public static Color EnvironmentColor = new Color(0.25f, 0.25f, 0.25f, 0.25f);
         public static int Time = 0;
+        public static DayNightCycle DayNightCycle;
 
         public static TabMenu TabMenu = new TabMenu();
 
@@ -99,8 +103,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             base.Load(camera, cursorObject, mouseRay);
 
 
-            DayNightCycle dayNightCycle = new DayNightCycle(90, 450);
-            TickableObjects.Add(dayNightCycle);
+            DayNightCycle = new DayNightCycle(90, 450);
+            TickableObjects.Add(DayNightCycle);
 
             Lighting.InitializeFramebuffers();
 
@@ -369,9 +373,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             FillInTeamFog(true);
         }
 
-        public virtual void SelectAbility(Ability ability)
+        public virtual void SelectAbility(Ability ability, Unit unit)
         {
-            if (CurrentUnit.AI.ControlType != ControlType.Controlled || AbilityInProgress)
+            if (unit.AI.ControlType != ControlType.Controlled || AbilityInProgress)
                 return;
 
             if(_selectedAbility != null) 
@@ -435,20 +439,46 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             //don't allow the tilemap to be re-rendered until all of the changes are applied
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, false);
+            ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, true);
+
+            if (VisionMapTask != null) 
+            {
+                VisionMapTask.Wait();
+                VisionMapTask = null;
+            }
 
             FillInAllFog(false, updateAll);
 
-            
-            _units.ForEach(unit =>
-            {
-                List<BaseTile> tiles = unit.GetTileMap().GetVisionInRadius(unit.Info.TileMapPosition, unit.Info.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.Info.TileMapPosition != unit.Info.TileMapPosition));
 
-                tiles.ForEach(tile =>
+            //_units.ForEach(unit =>
+            //{
+            //    List<BaseTile> tiles = unit.GetTileMap().GetVisionInRadius(unit.Info.TileMapPosition, unit.Info.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.Info.TileMapPosition != unit.Info.TileMapPosition));
+
+            //    tiles.ForEach(tile =>
+            //    {
+            //        tile.SetExplored(true, unit.AI.Team);
+            //        tile.SetFog(false, unit.AI.Team);
+            //    });
+            //});
+
+            
+
+            for (int i = 0; i < VisionMap.DIMENSIONS; i++) 
+            {
+                for (int j = 0; j < VisionMap.DIMENSIONS; j++)
                 {
-                    tile.SetExplored(true, unit.AI.Team);
-                    tile.SetFog(false, unit.AI.Team);
-                });
-            });
+                    foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
+                    {
+                        if (VisionMap.InVision(i, j, team)) 
+                        {
+                            BaseTile tile = _tileMapController.GetTile(i, j);
+
+                            tile.SetExplored(true, team);
+                            tile.SetFog(false, team);
+                        }
+                    }
+                }
+            }
 
             TemporaryVision.ForEach(vision =>
             {
@@ -476,35 +506,29 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             CalculateRevealedUnits();
 
-            Task.Run(HideNonVisibleObjects);
+            HideNonVisibleObjects();
+            //Task.Run(HideNonVisibleObjects);
 
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, true);
+            ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, false);
         }
 
-        public List<BaseTile> GetTeamVision(UnitTeam team) 
+        public List<BaseTile> GetTeamVision(UnitTeam team)
         {
             List<BaseTile> returnList = new List<BaseTile>();
 
-            _units.ForEach(unit =>
+            for (int i = 0; i < VisionMap.DIMENSIONS; i++)
             {
-                if (unit.AI.Team == team)
+                for (int j = 0; j < VisionMap.DIMENSIONS; j++)
                 {
-                    List<BaseTile> tiles;
+                    if (VisionMap.InVision(i, j, team))
+                    {
+                        BaseTile tile = _tileMapController.GetTile(i, j);
 
-                    if (unit.Info.TemporaryPosition != null)
-                    {
-                        tiles = unit.GetTileMap().GetVisionInRadius(unit.Info.TemporaryPosition, unit.Info.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.Info.TileMapPosition != unit.Info.TileMapPosition));
-                    }
-                    else 
-                    {
-                        tiles = unit.GetTileMap().GetVisionInRadius(unit.Info.TileMapPosition, unit.Info.VisionRadius, new List<TileClassification>() { TileClassification.Terrain }, _units.FindAll(u => u.Info.TileMapPosition != unit.Info.TileMapPosition));
-                    }
-                    tiles.ForEach(tile =>
-                    {
                         returnList.Add(tile);
-                    });
+                    }
                 }
-            });
+            }
 
             return returnList;
         }
@@ -521,9 +545,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                     m.Tiles.ForEach(tile =>
                     {
-                        tile.MultiTextureData.MixedTexture = _normalFogTexture;
-                        tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
-                        tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
+                        //tile.MultiTextureData.MixedTexture = _normalFogTexture;
+                        //tile.MultiTextureData.MixedTextureLocation = TextureUnit.Texture1;
+                        //tile.MultiTextureData.MixedTextureName = TextureName.FogTexture;
 
 
                         if (reveal)
@@ -598,36 +622,43 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void HideNonVisibleObjects() 
         {
-            _units.ForEach(unit =>
+            try
             {
-                if (unit.Info.Visible(CurrentTeam))
+                _units.ForEach(unit =>
                 {
-                    unit.SetRender(true);
-                }
-                else 
-                {
-                    unit.SetRender(false);
-                }
-            });
-
-            for (int i = 0; i < _tileMapController.TileMaps.Count; i++) 
-            {
-                for (int j = 0; j < _tileMapController.TileMaps[i].TileChunks.Count; j++) 
-                {
-                    for (int k = 0; k < _tileMapController.TileMaps[i].TileChunks[j].Structures.Count; k++) 
+                    if (unit.Info.Visible(CurrentTeam))
                     {
-                        Game.Structures.Structure structure = _tileMapController.TileMaps[i].TileChunks[j].Structures[k];
+                        unit.SetRender(true);
+                    }
+                    else
+                    {
+                        unit.SetRender(false);
+                    }
+                });
 
-                        if (structure.Info.Visible(CurrentTeam))
+                for (int i = 0; i < _tileMapController.TileMaps.Count; i++)
+                {
+                    for (int j = 0; j < _tileMapController.TileMaps[i].TileChunks.Count; j++)
+                    {
+                        for (int k = 0; k < _tileMapController.TileMaps[i].TileChunks[j].Structures.Count; k++)
                         {
-                            structure.SetRender(true);
-                        }
-                        else
-                        {
-                            structure.SetRender(false);
+                            Game.Structures.Structure structure = _tileMapController.TileMaps[i].TileChunks[j].Structures[k];
+
+                            if (structure.Info.Visible(CurrentTeam))
+                            {
+                                structure.SetRender(true);
+                            }
+                            else
+                            {
+                                structure.SetRender(false);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception e) 
+            {
+                Console.WriteLine($"Error in HideNonVisibleObjects: {e.Message}");
             }
         }
 
@@ -669,6 +700,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 EvaluateVentureButton();
             }
+
+            UpdateVisionMap();
         }
 
         public override void OnRender()
@@ -944,7 +977,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (TemporaryVision.HasQueuedItems()) 
             {
                 TemporaryVision.HandleQueuedItems();
-                FillInTeamFog();
+                Task.Run(() => FillInTeamFog());
             }
         }
 

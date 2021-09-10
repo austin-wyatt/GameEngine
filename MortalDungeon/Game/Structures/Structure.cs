@@ -46,8 +46,6 @@ namespace MortalDungeon.Game.Structures
         public bool Pathable = false;
         public bool Passable = false; //when passable the height of the object is not factored into the pathable height
 
-        public LightObstruction LightObstruction = new LightObstruction();
-
         public Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
         {
             Name = "Structure";
@@ -67,6 +65,14 @@ namespace MortalDungeon.Game.Structures
             Info.TileMapPosition = baseTile;
 
             LightObstruction.SetPosition(baseTile);
+            VisionGenerator.SetPosition(baseTile.TilePoint);
+
+            Scene.OnUnitMoved(this);
+        }
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
         }
     }
 }

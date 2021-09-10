@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Objects;
@@ -16,7 +17,10 @@ namespace MortalDungeon.Game.Units
     {
         public UnitAI AI;
         public UnitInfo Info;
-        
+
+
+        public VisionGenerator VisionGenerator = new VisionGenerator();
+        public LightObstruction LightObstruction = new LightObstruction();
 
         public bool VisibleThroughFog = false;
         
@@ -44,7 +48,8 @@ namespace MortalDungeon.Game.Units
 
             Hoverable = true;
 
-            Info._visionRadius = 12;
+            //Info._visionRadius = 12;
+            VisionGenerator.Radius = 12;
 
             Move movement = new Move(this);
             Info.Abilities.Add(movement.AbilityID, movement);
@@ -53,6 +58,8 @@ namespace MortalDungeon.Game.Units
 
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
             Scene._genericObjects.Add(SelectionTile);
+
+            Scene.UnitVisionGenerators.Add(VisionGenerator);
         }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
@@ -63,7 +70,9 @@ namespace MortalDungeon.Game.Units
             Scene = scene;
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
-            AI.Team = UnitTeam.Unknown;
+            SetTeam(UnitTeam.Unknown);
+
+            Scene.UnitVisionGenerators.Add(VisionGenerator);
         }
 
         public override void AddBaseObject(BaseObject obj)
@@ -160,6 +169,9 @@ namespace MortalDungeon.Game.Units
 
             Info.TileMapPosition = baseTile;
 
+            VisionGenerator.SetPosition(baseTile.TilePoint);
+            LightObstruction.SetPosition(baseTile);
+
             Scene.OnUnitMoved(this);
         }
 
@@ -235,6 +247,8 @@ namespace MortalDungeon.Game.Units
                     SelectionTile.SetColor(Colors.Tan);
                     break;
             }
+
+            VisionGenerator.Team = team;
         }
 
         public virtual void SetShields(int shields) 
@@ -341,6 +355,9 @@ namespace MortalDungeon.Game.Units
             //remove the objects that are related to the unit but not created by the unit
             Scene._genericObjects.Remove(SelectionTile);
             Scene.RemoveUI(StatusBarComp);
+
+            Scene.LightObstructions.Remove(LightObstruction);
+            Scene.UnitVisionGenerators.Remove(VisionGenerator);
         }
 
         public override void HoverEnd()
@@ -368,10 +385,20 @@ namespace MortalDungeon.Game.Units
             if (Cull)
             {
                 Scene.DecollateUnit(this);
+
+                if (StatusBarComp != null) 
+                {
+                    StatusBarComp.Cull = Cull;
+                }
             }
             else 
             {
                 Scene.CollateUnit(this);
+
+                if (StatusBarComp != null)
+                {
+                    StatusBarComp.Cull = Cull;
+                }
             }
         }
 
@@ -475,8 +502,8 @@ namespace MortalDungeon.Game.Units
         public bool PrimaryUnit = false;
 
         public int Height = 1;
-        public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
-        public int _visionRadius = 6;
+        //public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
+        //public int _visionRadius = 6;
 
         public Direction Facing = Direction.North;
 

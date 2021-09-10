@@ -517,6 +517,46 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
+        protected void TrimUnits(List<Unit> units, bool trimFog = false, int minRange = 0)
+        {
+            for (int j = 0; j < units?.Count; j++)
+            {
+                BaseTile tile = units[j].Info.TileMapPosition;
+
+                if (units[j] == CastingUnit && !CanTargetSelf)
+                {
+                    continue;
+                }
+
+                if (minRange > 0 && minRange >= TileMap.GetDistanceBetweenPoints(tile.TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
+                {
+                    continue;
+                }
+
+                if ((!CanTargetAlly && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Friendly) 
+                    || (!CanTargetEnemy && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Hostile))
+                {
+                    continue;
+                }
+                else if (units[j].Info.Dead && !CanTargetDeadUnits)
+                {
+                    continue;
+                }
+                else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team])
+                {
+                    continue;
+                }
+                else if ((tile.InFog[CastingUnit.AI.Team] && !tile.Explored[CastingUnit.AI.Team] && trimFog) || (tile.InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
+                {
+                    continue;
+                }
+                else
+                {
+                    AffectedUnits.Add(units[j]);
+                }
+            }
+        }
+
 
         public virtual Tooltip GenerateTooltip()
         {

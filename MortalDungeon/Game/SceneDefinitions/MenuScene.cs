@@ -107,6 +107,35 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             _units.Add(badGuy);
 
+            UIBlock statusBarContainer = new UIBlock(new Vector3());
+            statusBarContainer.MultiTextureData.MixTexture = false;
+            statusBarContainer.SetAllInline(0);
+            statusBarContainer.SetColor(Colors.Transparent);
+
+            //for (int j = 0; j < 20; j++)
+            //{
+            //    for (int i = 0; i < 10; i++)
+            //    {
+            //        Skeleton skele = new Skeleton(tileMap[10 + j, i * 2].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[10 + j, i * 2]) { Clickable = true };
+            //        //Skeleton skele = new Skeleton(tileMap[10, i * 2].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[10, i * 2]) { Clickable = true };
+            //        //skele.SetTeam(UnitTeam.PlayerUnits);
+            //        skele.SetTeam((UnitTeam)(new Random().Next() % 3 + 1));
+            //        skele.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
+
+            //        skele.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
+            //        skele.SelectionTile.SetPosition(skele.Position);
+
+            //        skele.AI.ControlType = ControlType.Controlled;
+
+
+            //        //UnitStatusBar skeleStatusBar = new UnitStatusBar(skele, _camera);
+
+            //        //statusBarContainer.AddChild(skeleStatusBar);
+
+            //        _units.Add(skele);
+            //    }
+            //}
+
             for (int i = 0; i < 1; i++)
             {
                 Fire fire = new Fire(new Vector3(1150 + i * 250, 950, 0.2f));
@@ -149,6 +178,8 @@ namespace MortalDungeon.Game.SceneDefinitions
             guy.SetShields(5);
 
             Skeleton skeleton = new Skeleton(tileMap[1, 5].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[1, 5]) { };
+            skeleton.Name = "John";
+
             skeleton.SetTeam(UnitTeam.Skeletons);
             UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
 
@@ -157,13 +188,9 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             skeleton.AI.ControlType = ControlType.Basic_AI;
 
+
             _units.Add(skeleton);
 
-
-            UIBlock statusBarContainer = new UIBlock(new Vector3());
-            statusBarContainer.MultiTextureData.MixTexture = false;
-            statusBarContainer.SetAllInline(0);
-            statusBarContainer.SetColor(Colors.Transparent);
 
             statusBarContainer.AddChild(skeletonStatusBar);
             statusBarContainer.AddChild(guyStatusBar2);
@@ -432,14 +459,17 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                         //List<BaseTile> tiles = map.GetPathToPoint(param);
 
-                        map.GetRingOfTiles(_wallTemp, tiles, 10);
+                        //map.GetRingOfTiles(_wallTemp, tiles, 10);
 
-                        tiles.Insert(tiles.Count, tiles[0]);
-                        tiles.Remove(tiles[0]);
-                        tiles.Insert(tiles.Count, tiles[0]);
-                        tiles.Remove(tiles[0]);
+                        //tiles.Insert(tiles.Count, tiles[0]);
+                        //tiles.Remove(tiles[0]);
+                        //tiles.Insert(tiles.Count, tiles[0]);
+                        //tiles.Remove(tiles[0]);
 
-                        Wall.CreateWalls(map, tiles, Wall.WallMaterial.Iron);
+                        //Wall.CreateWalls(map, tiles, Wall.WallMaterial.Iron);
+
+                        Console.WriteLine(VisionMap.TargetInVision(_wallTemp, tile.TilePoint, 10, this));
+
                         _wallTemp = null;
                     }
                 }

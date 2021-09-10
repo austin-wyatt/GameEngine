@@ -273,14 +273,15 @@ namespace MortalDungeon.Game.Tiles
 
             if (Structure != null) 
             {
-                RemoveStructure(Structure);
                 Structure.CleanUp();
+                RemoveStructure(Structure);
             }
 
             if (UnitOnTile != null) 
             {
                 GetScene().RemoveUnit(UnitOnTile);
                 UnitOnTile.CleanUp();
+                UnitOnTile = null;
             }
         }
 

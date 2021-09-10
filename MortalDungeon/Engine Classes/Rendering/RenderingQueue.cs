@@ -120,7 +120,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 for (int i = 0; i < uiObjects.Count; i++)
                 {
-                    if (uiObjects[i].Render)
+                    if (uiObjects[i].Render && !uiObjects[i].Cull)
                     {
                         if (uiObjects[i].ScissorData.Scissor == true)
                         {

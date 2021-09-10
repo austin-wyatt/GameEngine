@@ -304,9 +304,20 @@ namespace MortalDungeon.Game.Tiles
             DynamicTextureInfo.TextureChanged = _tilesToUpdate[_currentTileQueue].Count > 0;
         }
 
+        private ActionQueue _tileActionQueue = new ActionQueue();
         internal void UpdateTile(BaseTile tile) 
         {
+            if (_tileActionQueue.UpdateInProgress()) 
+            {
+                _tileActionQueue.AddAction(() => UpdateTile(tile));
+                return;
+            }
+
+            _tileActionQueue.StartUpdate();
+
             _tilesToUpdate[_currentTileQueue].Add(tile);
+
+            _tileActionQueue.EndUpdate();
         }
 
         public override void CleanUp()

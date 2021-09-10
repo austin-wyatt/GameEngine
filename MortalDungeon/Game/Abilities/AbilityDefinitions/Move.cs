@@ -58,6 +58,12 @@ namespace MortalDungeon.Game.Abilities
             return AffectedTiles;
         }
 
+        public override void OnSelect(CombatScene scene, TileMap currentMap)
+        {
+            Units = scene._units;
+            Range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost(); //special case for general move ability
+        }
+
         public override void EnactEffect()
         {
             base.EnactEffect();
