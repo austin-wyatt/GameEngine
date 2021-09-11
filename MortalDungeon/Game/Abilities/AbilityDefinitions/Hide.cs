@@ -101,6 +101,7 @@ namespace MortalDungeon.Game.Abilities
             }
 
             Casted();
+            EffectEnded();
         }
     }
 }

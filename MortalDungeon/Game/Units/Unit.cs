@@ -358,6 +358,8 @@ namespace MortalDungeon.Game.Units
 
             Scene.LightObstructions.Remove(LightObstruction);
             Scene.UnitVisionGenerators.Remove(VisionGenerator);
+
+            Scene.DecollateUnit(this);
         }
 
         public override void HoverEnd()

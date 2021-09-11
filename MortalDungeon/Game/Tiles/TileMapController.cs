@@ -9,6 +9,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles.TileMaps;
 using System.Diagnostics;
+using MortalDungeon.Game.Units;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -176,6 +177,8 @@ namespace MortalDungeon.Game.Tiles
             List<TileMapPoint> loadedPoints = new List<TileMapPoint>();
             List<TileMapPoint> mapsToAdd = new List<TileMapPoint>();
 
+            Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, true);
+
             for (int i = 0; i < LOADED_MAP_DIMENSIONS; i++) 
             {
                 for (int j = 0; j < LOADED_MAP_DIMENSIONS; j++) 
@@ -226,13 +229,17 @@ namespace MortalDungeon.Game.Tiles
 
                 PositionTileMaps();
 
-                Scene.PostTickAction = null;
 
-                Scene.FillInTeamFog();
+                Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, false);
+
+                Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
+                //Scene.FillInTeamFog();
 
                 Scene.Controller.CullObjects();
 
                 Scene.QueueLightObstructionUpdate();
+
+                Scene.PostTickAction = null;
             };
         }
 
@@ -383,7 +390,7 @@ namespace MortalDungeon.Game.Tiles
                     return TileMaps[i].GetLocalTile(currX, currY);
             }
 
-            throw new NotImplementedException();
+            throw new Exception("Tile not found");
         }
 
         internal BaseTile GetTile(int xIndex, int yIndex)
@@ -397,11 +404,14 @@ namespace MortalDungeon.Game.Tiles
                 currX = xIndex + TileMaps[i].Width * (map.TileMapCoords.X - TileMaps[i].TileMapCoords.X);
                 currY = yIndex + TileMaps[i].Height * (map.TileMapCoords.Y - TileMaps[i].TileMapCoords.Y);
 
-                if (currX >= 0 && currY >= 0 && currX < map.Width && currY < map.Height)
+                if (currX >= 0 && currY >= 0 && currX < map.Width && currY < map.Height) 
+                {
                     return TileMaps[i].GetLocalTile(currX, currY);
+                }
+                    
             }
 
-            throw new NotImplementedException();
+            throw new Exception("Tile not found");
         }
 
         internal void ClearAllVisitedTiles()

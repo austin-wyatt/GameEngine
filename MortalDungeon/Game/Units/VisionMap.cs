@@ -167,10 +167,18 @@ namespace MortalDungeon.Game.Units
 
         const int OBSTRUCTIONS_TEXELS_PER_TILE = 2;
         const int TEXELS_PER_TILE_APPROX = 2;
+        const int REQUIRED_SUCCESSES = 2;
         const int TEXELS_PER_TILE_IDEAL = 32;
         public static void CalculateVision(List<VisionGenerator> visionGenerators, Scene scene) 
         {
             Clear();
+
+            List<VisionGenerator> generatorsCopied = new List<VisionGenerator>();
+
+            for (int i = 0; i < visionGenerators.Count; i++) 
+            {
+                generatorsCopied.Add(visionGenerators[i]);
+            }
 
             //Calculate vision for each tile in a box determined by the VisionGenerator's radius
 
@@ -186,13 +194,13 @@ namespace MortalDungeon.Game.Units
             List<Task> generatorTasks = new List<Task>();
 
             const int BATCH_SIZE = 10;
-            for (int i = 0; i < visionGenerators.Count; i += BATCH_SIZE) 
+            for (int i = 0; i < generatorsCopied.Count; i += BATCH_SIZE) 
             {
                 int val = i;
 
-                if (val + BATCH_SIZE >= visionGenerators.Count)
+                if (val + BATCH_SIZE >= generatorsCopied.Count)
                 {
-                    generatorTasks.Add(new Task(() => calculateVision(val, visionGenerators.Count)));
+                    generatorTasks.Add(new Task(() => calculateVision(val, generatorsCopied.Count)));
                 }
                 else 
                 {
@@ -206,7 +214,7 @@ namespace MortalDungeon.Game.Units
                 for (int m = start; m < end; m++)
                 //visionGenerators.ForEach(generator =>
                 {
-                    VisionGenerator generator = visionGenerators[m];
+                    VisionGenerator generator = generatorsCopied[m];
 
                     //if (generator.Team == UnitTeam.Unknown)
                     //    return;
@@ -291,12 +299,17 @@ namespace MortalDungeon.Game.Units
 
                                         if (obstructionColor.X > 250 && obstructionColor.Y > 250)
                                         {
-                                            //alphaValue -= alpha_falloff * 5;
+                                            //alphaValue -= alpha_falloff * 10;
                                             if (_saveToBitmap) 
                                             {
                                                 OperationBitmap.SetPixel((int)workingTileTexel.X, (int)workingTileTexel.Y, Color.FromArgb(255, 255, 0, 0));
                                             }
-                                        
+
+                                            if ((int)currTileTexel.X == (int)workingTileTexel.X && (int)currTileTexel.Y == (int)workingTileTexel.Y) 
+                                            {
+                                                successes += REQUIRED_SUCCESSES;
+                                                q = (int)dist + 1;
+                                            }
                                             alphaValue = 0;
                                             break;
                                         }
@@ -325,7 +338,7 @@ namespace MortalDungeon.Game.Units
                             //if (successes > 128) //out of 256 (256 being 100% vision coverage of a tile (16x16 samples))
                             //if (successes > 32) //out of 64 (64 being 100% vision coverage of a tile (8x8 samples))
                             //if (successes >= 8) //out of 16
-                            if (successes >= 2) //out of 4
+                            if (successes >= REQUIRED_SUCCESSES) //out of 4
                             {
                                 Vision[(int)currTile.X, (int)currTile.Y] |= BitFromUnitTeam(generator.Team);
                                 counter++;
@@ -359,7 +372,7 @@ namespace MortalDungeon.Game.Units
                 generatorTasks[i].Wait();
             }
 
-            //Console.WriteLine($"VisionMap updated in {stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine($"VisionMap updated in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private static Vector2 lerp(Vector2 a, Vector2 b, float t)
@@ -467,7 +480,7 @@ namespace MortalDungeon.Game.Units
             //if (successes > 128) //out of 256 (256 being 100% vision coverage of a tile (16x16 samples))
             //if (successes > 32) //out of 64 (64 being 100% vision coverage of a tile (8x8 samples))
             //if (successes >= 8) //out of 16
-            if (successes >= 2) //out of 4
+            if (successes >= REQUIRED_SUCCESSES) //out of 4
             {
                 return true;
             }
@@ -616,7 +629,7 @@ namespace MortalDungeon.Game.Units
                             }
                         }
 
-                        if (successes >= 2) //out of 4
+                        if (successes >= REQUIRED_SUCCESSES) //out of 4
                         {
                             returnList.Add(new Vector2i((int)currTile.X, (int)currTile.Y));
                         }

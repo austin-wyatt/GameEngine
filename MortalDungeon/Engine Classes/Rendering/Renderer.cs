@@ -48,7 +48,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static readonly Vector4 ClearColor = new Vector4(0.2f, 0.3f, 0.3f, 1);
 
         static Renderer() { }
-        public static void Load() //initialization of renderer
+        public static void Initialize() //initialization of renderer
         {
             GL.ClearColor(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
             GL.Enable(EnableCap.Blend);

@@ -136,7 +136,7 @@ namespace MortalDungeon.Game.UI
                 {
                     Scene.EndCombat();
                 }
-                else 
+                else
                 {
                     Scene._units[0].Info.Health = 100;
                     Scene._units[0].SetShields(5);

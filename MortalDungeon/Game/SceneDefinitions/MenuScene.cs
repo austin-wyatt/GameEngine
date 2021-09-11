@@ -319,7 +319,11 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             if (button == MouseButton.Left)
             {
-                if (_selectedAbility != null)
+                if (tile.UnitOnTile != null)
+                {
+                    OnUnitClicked(tile.UnitOnTile, button);
+                }
+                else if (_selectedAbility != null)
                 {
                     _selectedAbility.OnTileClicked(map, tile);
                 }
@@ -447,7 +451,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         _wallTemp = tile.TilePoint;
                     }
-                    else 
+                    else
                     {
                         TestTileMap temp = map as TestTileMap;
                         List<BaseTile> tiles = new List<BaseTile>();
@@ -491,7 +495,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         tile.Properties.Type = (TileType)(rand.Next(3) + (int)TileType.Stone_1);
 
-                        if (rand.NextDouble() > 0.9) 
+                        if (rand.NextDouble() > 0.9)
                         {
                             tile.Properties.Type = TileType.Gravel;
                         }
@@ -507,7 +511,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                     tiles.ForEach(tile =>
                     {
-                        if (rand.NextDouble() > 0.8) 
+                        if (rand.NextDouble() > 0.8)
                         {
                             tile.Properties.Type = TileType.Dirt;
                         }
@@ -533,7 +537,14 @@ namespace MortalDungeon.Game.SceneDefinitions
             }
             else
             {
-                tile.OnRightClick(flags);
+                if (_selectedUnits.Count != 0)
+                {
+                    DeselectUnits();
+                }
+                else 
+                {
+                    tile.OnRightClick(flags);
+                }
             }
         }
 

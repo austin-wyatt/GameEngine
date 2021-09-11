@@ -23,7 +23,17 @@ namespace MortalDungeon.Game.Map
 
         public virtual bool AffectsMap(TileMap map)
         {
-            return true;
+            for (int i = 0; i < map.Tiles.Count; i++) 
+            {
+                FeaturePoint point = new FeaturePoint(map.Tiles[i]);
+
+                if (AffectedPoints.ContainsKey(point)) 
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public virtual bool AffectsPoint(TilePoint point)

@@ -57,6 +57,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public static GameObject LightObstructionObject = null;
         public static GameObject LightObject = null;
+        //public static List<GameObject> LightObjects = new List<GameObject>();
         public static bool RenderLight = true;
 
 
@@ -244,7 +245,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         private bool _updatingVisionMap = false;
         private bool _shouldRepeatVisionMap = false;
         public Task VisionMapTask = null;
-        public void UpdateVisionMap()
+        public void UpdateVisionMap(Action onFinish = null)
         {
             if (ContextManager.GetFlag(GeneralContextFlags.DisableVisionMapUpdate))
                 return;
@@ -255,17 +256,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 return;
             }
 
+            _updatingVisionMap = true;
+
             VisionMapTask = Task.Run(() =>
             {
                 _updatingVisionMap = true;
                 VisionMap.SetObstructions(LightObstructions, this);
                 VisionMap.CalculateVision(UnitVisionGenerators, this);
+
                 _updatingVisionMap = false;
 
                 if (_shouldRepeatVisionMap)
                 {
                     _shouldRepeatVisionMap = false;
                     UpdateVisionMap();
+
+                    onFinish?.Invoke();
                 }
             });
         }
@@ -378,12 +384,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
                 Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
-                if (!GetBit(_interceptClicks, ObjectType.Unit) && e.Button == MouseButton.Left)
-                    ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
-                    {
-                        OnUnitClicked(foundObj, e.Button);
-                        MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
-                    });
+                //if (!GetBit(_interceptClicks, ObjectType.Unit) && e.Button == MouseButton.Left)
+                //    ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                //    {
+                //        OnUnitClicked(foundObj, e.Button);
+                //        MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                //    });
 
                 if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
                     return; //stop further clicks from being processed

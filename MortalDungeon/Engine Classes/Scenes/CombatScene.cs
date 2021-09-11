@@ -28,6 +28,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         EnableTileMapUpdate,
 
         DisableVisionMapUpdate,
+        TileMapLoadInProgress,
 
         UpdateLighting,
         UpdateLightObstructionMap,
@@ -103,7 +104,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             base.Load(camera, cursorObject, mouseRay);
 
 
-            DayNightCycle = new DayNightCycle(90, 450);
+            DayNightCycle = new DayNightCycle(90, 200);
             TickableObjects.Add(DayNightCycle);
 
             Lighting.InitializeFramebuffers();
@@ -437,6 +438,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void FillInTeamFog(bool updateAll = false) 
         {
+            if (ContextManager.GetFlag(GeneralContextFlags.TileMapLoadInProgress)) 
+            {
+                return;
+            }
+
             //don't allow the tilemap to be re-rendered until all of the changes are applied
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, false);
             ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, true);
@@ -473,6 +479,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             BaseTile tile = _tileMapController.GetTile(i, j);
 
+                            if (tile == null)
+                                continue;
+
                             tile.SetExplored(true, team);
                             tile.SetFog(false, team);
                         }
@@ -489,25 +498,25 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 });
             });
 
-            if (!InCombat && !DayNightCycle.IsNight())
-            {
-                _tileMapController.TileMaps.ForEach(map =>
-                {
-                    map.Tiles.ForEach(tile =>
-                    {
-                        if (!tile.Properties.MustExplore) 
-                        {
-                            tile.SetExplored(true, UnitTeam.PlayerUnits);
-                            tile.SetFog(false, UnitTeam.PlayerUnits);
-                        }
-                    });
-                });
-            }
+            //if (!InCombat && !DayNightCycle.IsNight())
+            //{
+            //    _tileMapController.TileMaps.ForEach(map =>
+            //    {
+            //        map.Tiles.ForEach(tile =>
+            //        {
+            //            if (!tile.Properties.MustExplore) 
+            //            {
+            //                tile.SetExplored(true, UnitTeam.PlayerUnits);
+            //                tile.SetFog(false, UnitTeam.PlayerUnits);
+            //            }
+            //        });
+            //    });
+            //}
 
             CalculateRevealedUnits();
 
-            HideNonVisibleObjects();
-            //Task.Run(HideNonVisibleObjects);
+            //HideNonVisibleObjects();
+            Task.Run(HideNonVisibleObjects);
 
             ContextManager.SetFlag(GeneralContextFlags.EnableTileMapUpdate, true);
             ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, false);
@@ -524,6 +533,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     if (VisionMap.InVision(i, j, team))
                     {
                         BaseTile tile = _tileMapController.GetTile(i, j);
+
+                        if (tile == null)
+                            continue;
 
                         returnList.Add(tile);
                     }
@@ -788,8 +800,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     CloseContextMenu();
                 }
-
-                DeselectUnits();
 
                 if (_selectedAbility != null)
                 {

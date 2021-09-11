@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
@@ -147,10 +148,12 @@ namespace MortalDungeon
             KeyUp += Window_KeyUp;
             KeyDown += Window_KeyDown;
 
-            Renderer.Load();
+            Renderer.Initialize();
 
             VisionMap.Initialize();
-            
+
+            SoundPlayer.Initialize();
+
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
             _camera.Pitch += 7;
@@ -171,14 +174,14 @@ namespace MortalDungeon
             _gameTimer = new Stopwatch();
             _gameTimer.Start();
 
-            if (WindowConstants.EnableBoundsTestingTools) 
+            if (WindowConstants.EnableBoundsTestingTools)
             {
                 Scene boundScene = new BoundsTestScene();
 
                 int boundSceneID = _sceneController.AddScene(boundScene, 1);
                 _sceneController.LoadScene(boundSceneID, _camera, _cursorObject, _mouseRay);
             }
-            else 
+            else
             {
                 Scene menuScene = new MenuScene();
 

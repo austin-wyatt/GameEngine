@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
@@ -58,6 +59,43 @@ namespace MortalDungeon.Game.SceneDefinitions
             };
 
             escapeMenu.AddChild(testButton);
+
+            AudioBuffer buffer = new AudioBuffer();
+            
+
+            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Load Audio", 0.05f)
+            {
+                OnClickAction = () =>
+                {
+                    SoundPlayer.LoadOggToBuffer("Resources/Sound/test.ogg", buffer);
+                }
+            };
+
+            escapeMenu.AddChild(loadButton);
+
+            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Play", 0.05f)
+            {
+                OnClickAction = () =>
+                {
+                    Sound testSound = new Sound(buffer);
+
+                    testSound.Prepare();
+                    testSound.Play();
+
+                }
+            };
+
+            escapeMenu.AddChild(playButton);
+
+            //Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Dispose", 0.05f)
+            //{
+            //    OnClickAction = () =>
+            //    {
+            //        testSound.Dispose();
+            //    }
+            //};
+
+            //escapeMenu.AddChild(disposeButton);
 
 
             UIBlock backdropModal = new UIBlock(new Vector3(0, 0, 0), new UIScale(WindowConstants.ScreenUnits.X * 5f, WindowConstants.ScreenUnits.Y * 5f));

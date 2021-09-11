@@ -83,11 +83,6 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        public override bool AffectsMap(TileMap map)
-        {
-            return true;
-        }
-
 
         internal override void UpdatePoint(FeaturePoint point)
         {

@@ -54,6 +54,7 @@ namespace MortalDungeon.Game.Structures
                 Scene.CloseContextMenu();
 
                 Info.TileMapPosition.RemoveStructure(this);
+                CleanUp();
             });
 
             return menu;

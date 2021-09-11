@@ -157,11 +157,6 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             WallPoints.Clear();
         }
 
-        public override bool AffectsMap(TileMap map)
-        {
-            return true;
-        }
-
         public override void OnAppliedToMaps()
         {
             base.OnAppliedToMaps();
