@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
@@ -37,16 +38,16 @@ namespace MortalDungeon.Game.Units
             shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
             Slow slowAbility = new Slow(this, 5, 0.1f, 3);
-            Info.Abilities.Add(slowAbility.AbilityID, slowAbility);
+            Info.Abilities.Add(slowAbility);
 
             Bleed bleedAbility = new Bleed(this, 2, 15, 5);
-            Info.Abilities.Add(bleedAbility.AbilityID, bleedAbility);
+            Info.Abilities.Add(bleedAbility);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 20) { EnergyCost = 2 };
-            Info.Abilities.Add(shootAbility.AbilityID, shootAbility);
+            Shoot shootAbility = new Shoot(this, 15, 4, 5) { EnergyCost = 4 };
+            Info.Abilities.Add(shootAbility);
 
             Hide hideAbility = new Hide(this);
-            Info.Abilities.Add(hideAbility.AbilityID, hideAbility);
+            Info.Abilities.Add(hideAbility);
 
             AI.RangedDamageDealer disp = new AI.RangedDamageDealer(this)
             {
@@ -67,6 +68,12 @@ namespace MortalDungeon.Game.Units
             base.OnKill();
 
             BaseObjects[0].SetAnimation(AnimationType.Die);
+        }
+
+        public override void OnHurt()
+        {
+            Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(1.2f, 1.4f) };
+            sound.Play();
         }
 
         public override BaseObject CreateBaseObject()

@@ -67,7 +67,7 @@ namespace MortalDungeon.Game.Structures
             LightObstruction.SetPosition(baseTile);
             VisionGenerator.SetPosition(baseTile.TilePoint);
 
-            Scene.OnUnitMoved(this);
+            Scene.OnStructureMoved();
         }
 
         public override void CleanUp()

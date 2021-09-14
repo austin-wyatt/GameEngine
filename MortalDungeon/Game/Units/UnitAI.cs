@@ -107,7 +107,7 @@ namespace MortalDungeon.Game.Units
             float cost = 0;
             for(int i = 0; i < tiles.Count; i++)
             {
-                if (cost + tiles[i].Properties.MovementCost > _unit.Info.Energy)
+                if (cost + tiles[i].Properties.MovementCost > _unit.Info.CurrentEnergy)
                 {
                     return returnList;
                 }

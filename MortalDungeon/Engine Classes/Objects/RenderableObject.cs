@@ -446,9 +446,11 @@ namespace MortalDungeon.Engine_Classes
         //{
         //    Translation = Matrix4.CreateTranslation(translations);
         //}
+        public Vector3 CurrentScale = new Vector3(1, 1, 1);
         public void SetScale(Vector3 scale)
         {
             Scale = Matrix4.CreateScale(scale);
+            CurrentScale = scale;
 
             CalculateTransformationMatrix();
         }

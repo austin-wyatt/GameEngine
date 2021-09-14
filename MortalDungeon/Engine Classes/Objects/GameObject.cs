@@ -306,31 +306,22 @@ namespace MortalDungeon.Engine_Classes
             {
                 Hovered = true;
 
-                for (int i = 0; i < _onHoverActions.Count; i++)
-                {
-                    _onHoverActions[i]?.Invoke();
-                }
+                HoverEvent(this);
             }
         }
-        public virtual void HoverEnd() 
+        public virtual void OnHoverEnd() 
         {
             if (Hovered) 
             {
                 Hovered = false;
-                
-                for (int i = 0; i < _onHoverEndActions.Count; i++) 
-                {
-                    _onHoverEndActions[i]?.Invoke();
-                }
+
+                HoverEndEvent(this);
             }
         }
 
         public virtual void OnTimedHover() 
         {
-            for (int i = 0; i < _onTimedHoverActions.Count; i++)
-            {
-                _onTimedHoverActions[i]?.Invoke();
-            }
+            TimedHoverEvent(this);
         }
 
         public virtual void OnMouseDown() { }
@@ -365,14 +356,38 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void CleanUp() 
         {
-            _cleanUpAction?.Invoke();
+            OnCleanUp?.Invoke(this);
         }
 
-        public Action _cleanUpAction = null;
+        #region Event actions
+        public delegate void GameObjectEventHandler(GameObject obj);
 
-        public List<Action> _onHoverEndActions = new List<Action>();
-        public List<Action> _onTimedHoverActions = new List<Action>();
-        public List<Action> _onHoverActions = new List<Action>();
+        public event GameObjectEventHandler OnCleanUp;
+        public event GameObjectEventHandler OnHoverEndEvent;
+        public event GameObjectEventHandler OnHoverEvent;
+        public event GameObjectEventHandler OnTimedHoverEvent;
+
+        protected void HoverEndEvent(GameObject obj) 
+        {
+            OnHoverEndEvent?.Invoke(obj);
+        }
+
+        protected void CleanUpEvent(GameObject obj)
+        {
+            OnCleanUp?.Invoke(obj);
+        }
+
+        protected void HoverEvent(GameObject obj)
+        {
+            OnHoverEvent?.Invoke(obj);
+        }
+
+        protected void TimedHoverEvent(GameObject obj)
+        {
+            OnTimedHoverEvent?.Invoke(obj);
+        }
+
+        #endregion
 
 
         protected virtual void LoadTexture<T>(T obj) where T : GameObject 

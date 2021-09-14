@@ -63,11 +63,18 @@ namespace MortalDungeon.Game.UI
 
                 UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentEnergy.ToString("n1") + " Energy", energyPip, this);
 
-                energyPip._onTimedHoverActions.Add(() =>
+                void timedHover(GameObject obj)
                 {
                     param.Text = CurrentEnergy.ToString("n1") + " Energy";
                     UIHelpers.CreateToolTip(param);
-                });
+                }
+
+                energyPip.OnTimedHoverEvent += timedHover;
+
+                energyPip.OnCleanUp += (_) =>
+                {
+                    energyPip.OnTimedHoverEvent -= timedHover;
+                };
 
                 Pips.Add(energyPip);
 
@@ -103,7 +110,7 @@ namespace MortalDungeon.Game.UI
 
 
 
-                temp.Action = (_) =>
+                temp.Action = () =>
                 {
                     if (temp.ActivationTick < shiftDelay * shifts / 2)
                     {

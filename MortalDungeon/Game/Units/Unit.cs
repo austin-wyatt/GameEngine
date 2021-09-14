@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
@@ -52,14 +53,12 @@ namespace MortalDungeon.Game.Units
             VisionGenerator.Radius = 12;
 
             Move movement = new Move(this);
-            Info.Abilities.Add(movement.AbilityID, movement);
+            Info.Abilities.Add(movement);
 
             Info._movementAbility = movement;
 
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
             Scene._genericObjects.Add(SelectionTile);
-
-            Scene.UnitVisionGenerators.Add(VisionGenerator);
         }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
@@ -71,8 +70,6 @@ namespace MortalDungeon.Game.Units
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
             SetTeam(UnitTeam.Unknown);
-
-            Scene.UnitVisionGenerators.Add(VisionGenerator);
         }
 
         public override void AddBaseObject(BaseObject obj)
@@ -82,7 +79,7 @@ namespace MortalDungeon.Game.Units
 
         public Ability GetFirstAbilityOfType(AbilityTypes type)
         {
-            foreach (Ability ability in Info.Abilities.Values) 
+            foreach (Ability ability in Info.Abilities) 
             {
                 if (ability.Type == type)
                     return ability;
@@ -95,7 +92,7 @@ namespace MortalDungeon.Game.Units
         {
             List<Ability> abilities = new List<Ability>();
 
-            foreach (Ability ability in Info.Abilities.Values) 
+            foreach (Ability ability in Info.Abilities) 
             {
                 if (ability.Type == type)
                     abilities.Add(ability);
@@ -106,7 +103,7 @@ namespace MortalDungeon.Game.Units
 
         public bool HasAbilityOfType(AbilityTypes type) 
         {
-            foreach (Ability ability in Info.Abilities.Values)
+            foreach (Ability ability in Info.Abilities)
             {
                 if (ability.Type == type)
                     return true;
@@ -172,7 +169,7 @@ namespace MortalDungeon.Game.Units
             VisionGenerator.SetPosition(baseTile.TilePoint);
             LightObstruction.SetPosition(baseTile);
 
-            Scene.OnUnitMoved(this);
+            Scene.OnUnitMoved(this, prevTile);
         }
 
 
@@ -248,6 +245,15 @@ namespace MortalDungeon.Game.Units
                     break;
             }
 
+            if (VisionGenerator.Team != UnitTeam.Unknown && team == UnitTeam.Unknown)
+            {
+                Scene.UnitVisionGenerators.Remove(VisionGenerator);
+            }
+            else if (VisionGenerator.Team == UnitTeam.Unknown && team != UnitTeam.Unknown) 
+            {
+                Scene.UnitVisionGenerators.Add(VisionGenerator);
+            }
+
             VisionGenerator.Team = team;
         }
 
@@ -257,14 +263,31 @@ namespace MortalDungeon.Game.Units
             StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
         }
 
-        public virtual void ApplyDamage(float damage, DamageType damageType)
-        {
-            Info.BaseDamageResistances.TryGetValue(damageType, out float baseResistance);
 
-            float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(damageType)) - 1);
+        public struct DamageParams 
+        {
+            public float Damage;
+            public DamageType DamageType;
+            public Ability Ability;
+            public Buff Buff;
+
+            public DamageParams(float damage, DamageType damageType)
+            {
+                Damage = damage;
+                DamageType = damageType;
+
+                Ability = null;
+                Buff = null;
+            }
+        }
+        public virtual void ApplyDamage(DamageParams damageParams)
+        {
+            Info.BaseDamageResistances.TryGetValue(damageParams.DamageType, out float baseResistance);
+
+            float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(damageParams.DamageType)) - 1);
 
             
-            float actualDamage = damage * damageMultiplier + Info.DamageAddition;
+            float actualDamage = damageParams.Damage * damageMultiplier + Info.DamageAddition;
 
             if (actualDamage > Info.Stealth.Skill && Info.Stealth.Hiding)
             {
@@ -272,7 +295,7 @@ namespace MortalDungeon.Game.Units
             }
 
             //shield piercing exceptions should go here
-            if (GetPierceShields(damageType))
+            if (GetPierceShields(damageParams.DamageType))
             {
 
             }
@@ -282,18 +305,37 @@ namespace MortalDungeon.Game.Units
 
                 Info.DamageBlockedByShields += actualDamage;
 
-                if (Info.CurrentShields < 0 && GetAmplifiedByNegativeShields(damageType))
+                if (Info.CurrentShields < 0 && GetAmplifiedByNegativeShields(damageParams.DamageType))
                 {
                     actualDamage *= 1 + (0.25f * Math.Abs(Info.CurrentShields));
                 }
                 else if (Info.CurrentShields > 0)
                 {
                     shieldDamageBlocked = Info.CurrentShields * Info.ShieldBlock;
+
                     actualDamage -= shieldDamageBlocked;
 
-                    if (actualDamage < 0)
+                    if (actualDamage <= 0)
                     {
                         actualDamage = 0;
+
+                        OnShieldsHit();
+                    }
+
+                    if (damageParams.DamageType == DamageType.Piercing)
+                    {
+                        float piercingDamage = 1;
+                        if(damageParams.Ability != null) 
+                        {
+                            piercingDamage += damageParams.Ability.Grade;
+                        }
+
+                        if(damageParams.Buff != null) 
+                        {
+                            piercingDamage += damageParams.Buff.Grade;
+                        }
+
+                        actualDamage += piercingDamage;
                     }
                 }
 
@@ -306,6 +348,11 @@ namespace MortalDungeon.Game.Units
 
 
             Info.Health -= actualDamage;
+
+            if (actualDamage > 0) 
+            {
+                OnHurt();
+            }
 
 
             StatusBarComp.HealthBar.SetHealthPercent(Info.Health / UnitInfo.MaxHealth, AI.Team);
@@ -330,6 +377,21 @@ namespace MortalDungeon.Game.Units
             {
                 Scene.OnUnitKilled(this);
             }
+
+            Sound sound = new Sound(Sounds.Die) { Gain = 0.2f, Pitch = 1 };
+            sound.Play();
+        }
+
+        public virtual void OnHurt() 
+        {
+            Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+            sound.Play();
+        }
+
+        public virtual void OnShieldsHit() 
+        {
+            Sound sound = new Sound(Sounds.ArmorHit) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+            sound.Play();
         }
 
         public override void OnHover()
@@ -362,7 +424,7 @@ namespace MortalDungeon.Game.Units
             Scene.DecollateUnit(this);
         }
 
-        public override void HoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
@@ -373,7 +435,7 @@ namespace MortalDungeon.Game.Units
                     StatusBarComp.Parent.Children.Sort();
                 }
 
-                base.HoverEnd();
+                base.OnHoverEnd();
             }
         }
 
@@ -466,7 +528,7 @@ namespace MortalDungeon.Game.Units
         public CombatScene Scene => TileMapPosition.GetScene();
         public TileMap Map => TileMapPosition.TileMap;
 
-        public Dictionary<int, Ability> Abilities = new Dictionary<int, Ability>();
+        public List<Ability> Abilities = new List<Ability>();
         public List<Buff> Buffs = new List<Buff>();
 
         public Move _movementAbility = null;

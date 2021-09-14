@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Tiles;
@@ -7,7 +8,9 @@ using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Abilities
@@ -26,6 +29,8 @@ namespace MortalDungeon.Game.Abilities
             CanTargetThroughFog = true;
             BreakStealth = false;
 
+            DamageType = DamageType.NonDamaging;
+
             EnergyCost = 1;
 
             HasHoverEffect = true;
@@ -40,7 +45,15 @@ namespace MortalDungeon.Game.Abilities
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
-            Range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost(); //special case for general move ability
+            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            {
+                Range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost(); //special case for general move ability
+            }
+            else 
+            {
+                Range = CastingUnit.Info.CurrentEnergy / GetEnergyCost(); //special case for general move ability
+            }
+            
 
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
@@ -80,95 +93,110 @@ namespace MortalDungeon.Game.Abilities
                 ClearSelectedTiles();
             }
 
-
-            if (CurrentTiles.Count > 0)
+            try
             {
-                PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
-
-                float speed = CastingUnit.Info.Speed;
-
-                Vector3 tileAPosition = CurrentTiles[0].Position;
-                Vector3 tileBPosition;
-
-                int moveIncrements = (int)(20 * speed);
-
-                int moveDelay = 1; //in ticks
-
-                for (int i = 1; i < CurrentTiles.Count; i++)
+                if (CurrentTiles.Count > 0)
                 {
-                    tileBPosition = CurrentTiles[i].Position;
+                    //Task.Run(() =>
+                    //{
+                    PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
 
-                    Vector3 distanceToTravel = tileAPosition - tileBPosition;
-                    distanceToTravel.X /= moveIncrements;
-                    distanceToTravel.Y /= moveIncrements;
-                    distanceToTravel.Z /= moveIncrements;
+                    float speed = CastingUnit.Info.Speed;
 
-                    for (int j = 0; j < moveIncrements; j++)
+                    Vector3 tileAPosition = CurrentTiles[0].Position;
+                    Vector3 tileBPosition;
+
+                    int moveIncrements = (int)(20 * speed);
+
+                    int moveDelay = 1; //in ticks
+
+                    for (int i = 1; i < CurrentTiles.Count; i++)
                     {
-                        Keyframe frame = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * j)
+                        tileBPosition = CurrentTiles[i].Position;
+
+                        Vector3 distanceToTravel = tileAPosition - tileBPosition;
+                        distanceToTravel.X /= moveIncrements;
+                        distanceToTravel.Y /= moveIncrements;
+                        distanceToTravel.Z /= moveIncrements;
+
+                        for (int j = 0; j < moveIncrements; j++)
                         {
-                            Action = (display) =>
+                            Keyframe frame = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * j)
                             {
-                                CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
+                                Action = () =>
+                                {
+                                    CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
+                                }
+                            };
+
+                            moveAnimation.Keyframes.Add(frame);
+                        }
+
+                        Keyframe endOfTileMoveKeyframe = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * moveIncrements);
+
+                        BaseTile currentTile = CurrentTiles[i];
+                        endOfTileMoveKeyframe.Action = () =>
+                        {
+                            Task.Run(() =>
+                            {
+                                CastingUnit.SetTileMapPosition(currentTile);
+
+                                Scene.Controller.CullObjects();
+                            });
+
+                            ApplyTileEnergyCost(currentTile);
+
+                            currentTile.Properties.Type.SimplifiedType().FootstepSound().Play();
+
+                            if (_moveCanceled)
+                            {
+                                moveAnimation.Finish();
                             }
                         };
 
-                        moveAnimation.Keyframes.Add(frame);
-                    }
+                        moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
 
-                    Keyframe endOfTileMoveKeyframe = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * moveIncrements);
 
-                    BaseTile currentTile = CurrentTiles[i];
-                    endOfTileMoveKeyframe.Action = ( display) =>
-                    {
-                        CastingUnit.SetTileMapPosition(currentTile);
-
-                        ApplyTileEnergyCost(currentTile);
-
-                        Task.Run(() => Scene.FillInTeamFog());
-
-                        Scene.Controller.CullObjects();
-
-                        if (_moveCanceled) 
+                        if (Settings.MovementTurbo && i == CurrentTiles.Count - 1)
                         {
-                            moveAnimation.Finish();
+                            moveAnimation.Keyframes.RemoveRange(0, moveAnimation.Keyframes.Count - 1);
+                            moveAnimation.Keyframes[0].ActivationTick = 5;
+
+                            tileAPosition = CastingUnit.Info.TileMapPosition.Position;
+                            tileBPosition = CurrentTiles[^1].Position;
+
+                            distanceToTravel = tileAPosition - tileBPosition;
+                            CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
                         }
-                    };
 
-                    moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
-
-
-                    if (Settings.MovementTurbo && i == CurrentTiles.Count - 1) 
-                    {
-                        moveAnimation.Keyframes.RemoveRange(0, moveAnimation.Keyframes.Count - 1);
-                        moveAnimation.Keyframes[0].ActivationTick = 5;
-
-                        tileAPosition = CastingUnit.Info.TileMapPosition.Position;
-                        tileBPosition = CurrentTiles[^1].Position;
-
-                        distanceToTravel = tileAPosition - tileBPosition;
-                        CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
+                        tileAPosition = tileBPosition;
                     }
 
-                    tileAPosition = tileBPosition;
+                    CastingUnit.AddPropertyAnimation(moveAnimation);
+                    moveAnimation.Play();
+                    Moving = true;
+
+                    moveAnimation.OnFinish = () =>
+                    {
+                        CastingUnit.RemovePropertyAnimation(moveAnimation.AnimationID);
+                        EffectEnded();
+
+                        Moving = false;
+                        _moveCanceled = false;
+                    };
+                    //});
                 }
+            }
+            catch (Exception e)
+            {
+                EffectEnded();
 
-                CastingUnit.AddPropertyAnimation(moveAnimation);
-                moveAnimation.Play();
-                Moving = true;
-
-                moveAnimation.OnFinish = () =>
-                {
-                    CastingUnit.RemovePropertyAnimation(moveAnimation.AnimationID);
-                    EffectEnded();
-
-                    Moving = false;
-                    _moveCanceled = false;
-                };
+                Console.WriteLine($"Error in Move.EnactEffect: {e.Message}");
+                return;
             }
 
             Casted();
-            
+
             SelectedTile = null;
         }
 
@@ -285,6 +313,8 @@ namespace MortalDungeon.Game.Abilities
             if (_path.Count > 0)
             {
                 bool selectedTileInPath = _path.Exists(p => p.AttachedTile != null && p.AttachedTile.ObjectID == tile.ObjectID);
+
+                if (_path[^1].AttachedTile == null) return;
 
                 //get the path from the last tile to the hovered point
                 param = new TileMap.PathToPointParameters(_path[^1].AttachedTile.TilePoint, SelectedTile.TilePoint, Range - _path.Count + 1)

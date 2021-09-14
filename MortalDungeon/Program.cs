@@ -2,6 +2,8 @@
 using OpenTK.Mathematics;
 using System;
 using System.Resources;
+using MortalDungeon.Engine_Classes.Audio;
+using System.Threading;
 
 namespace MortalDungeon
 {
@@ -11,6 +13,9 @@ namespace MortalDungeon
 
         static void Main(string[] args)
         {
+            InitializeSoundPlayer();
+
+            
             var nativeWindowSettings = new NativeWindowSettings()
             {
                 Size = new Vector2i(1280, 720),
@@ -22,7 +27,6 @@ namespace MortalDungeon
 
             var gameWindowSettings = GameWindowSettings.Default;
 
-
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {
                 Window = game;
@@ -30,6 +34,13 @@ namespace MortalDungeon
                 game.VSync = OpenTK.Windowing.Common.VSyncMode.Off;
                 game.Run();
             }
+        }
+
+        static void InitializeSoundPlayer() 
+        {
+            Thread soundThread = new Thread(SoundPlayer.Initialize);
+
+            soundThread.Start();
         }
     }
 }

@@ -35,11 +35,13 @@ namespace MortalDungeon.Engine_Classes
 
         protected int _currentQueue = 0;
 
-        protected const int INTERNAL_QUEUES = 2;
+        protected const int INTERNAL_QUEUES = 5;
+
+        public int CHANGE_TOKEN { get; private set; }
 
         public QueuedList()
         {
-
+            CHANGE_TOKEN = 0;
         }
 
         public QueuedList(List<T> list)
@@ -92,17 +94,21 @@ namespace MortalDungeon.Engine_Classes
 
         public new void Add(T item)
         {
+            lock(_itemsToAdd[_currentQueue])
             _itemsToAdd[_currentQueue].Add(item);
         }
 
         public void AddQueuedItems(int queue)
         {
-            for (int i = 0; i < _itemsToAdd[queue].Count; i++)
+            lock (_itemsToAdd[_currentQueue])
             {
-                base.Add(_itemsToAdd[queue][i]);
-            }
+                for (int i = 0; i < _itemsToAdd[queue].Count; i++)
+                {
+                    base.Add(_itemsToAdd[queue][i]);
+                }
 
-            _itemsToAdd[queue].Clear();
+                _itemsToAdd[queue].Clear();
+            }
         }
 
         public void RemoveImmediate(T item)
@@ -111,23 +117,31 @@ namespace MortalDungeon.Engine_Classes
         }
         public new void Remove(T item)
         {
+            lock (_itemsToRemove[_currentQueue])
             _itemsToRemove[_currentQueue].Add(item);
         }
 
         public void ClearQueuedItems(int queue)
         {
-            for (int i = 0; i < _itemsToRemove[queue].Count; i++) 
+            lock (_itemsToRemove[_currentQueue])
             {
-                base.Remove(_itemsToRemove[queue][i]);
-            }
+                for (int i = 0; i < _itemsToRemove[queue].Count; i++)
+                {
+                    base.Remove(_itemsToRemove[queue][i]);
+                }
 
-            _itemsToRemove[queue].Clear();
+                _itemsToRemove[queue].Clear();
+            }
         }
 
         public void HandleQueuedItems()
         {
+            if (!HasQueuedItems()) return;
+
+            CHANGE_TOKEN++;
+
             int queue = _currentQueue;
-            _currentQueue = (_currentQueue + 1) % INTERNAL_QUEUES;
+            _currentQueue = (queue + 1) % INTERNAL_QUEUES;
 
             AddQueuedItems(queue);
             ClearQueuedItems(queue);
@@ -136,6 +150,11 @@ namespace MortalDungeon.Engine_Classes
         public bool HasQueuedItems() 
         {
             return _itemsToAdd[_currentQueue].Count > 0 || _itemsToRemove[_currentQueue].Count > 0;
+        }
+
+        public void ManuallyIncrementChangeToken() 
+        {
+            CHANGE_TOKEN++;
         }
     }
 }

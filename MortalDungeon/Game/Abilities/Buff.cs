@@ -46,6 +46,8 @@ namespace MortalDungeon.Game.Abilities
         public string Name = "";
         public BuffType BuffType = BuffType.Neutral;
 
+        public int Grade = 1;
+
         public int BuffID => _buffID;
         protected int _buffID = _currentBuffID++;
         protected static int _currentBuffID = 0;

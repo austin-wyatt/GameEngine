@@ -69,6 +69,7 @@ namespace MortalDungeon.Engine_Classes
             {
                 base.Tick();
 
+                lock(Children)
                 for (int i = 0; i < Children.Count; i++) 
                 {
                     Children[i].Tick();
@@ -207,7 +208,7 @@ namespace MortalDungeon.Engine_Classes
                         }
                         else if (type == UIEventType.Hover)
                         {
-                            ReverseTree[i].UIObject.HoverEnd();
+                            ReverseTree[i].UIObject.OnHoverEnd();
                         }
                     }
                 }
@@ -574,6 +575,7 @@ namespace MortalDungeon.Engine_Classes
         public override void OnClick()
         {
             base.OnClick();
+
             OnClickAction?.Invoke();
         }
         public override void OnMouseDown()

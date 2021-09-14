@@ -63,7 +63,7 @@ namespace MortalDungeon.Game.Tiles
 
         public void Tick() 
         {
-            Tiles.ForEach(tile => tile.Tick());
+            //Tiles.ForEach(tile => tile.Tick());
             Structures.ForEach(structure => structure.Tick());
         }
 

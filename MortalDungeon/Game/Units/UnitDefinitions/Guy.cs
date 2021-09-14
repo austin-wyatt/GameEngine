@@ -43,10 +43,15 @@ namespace MortalDungeon.Game.Units
             {
                 EnergyCost = 7
             };
-            Info.Abilities.Add(melee.AbilityID, melee);
+            Info.Abilities.Add(melee);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 20);
-            Info.Abilities.Add(shootAbility.AbilityID, shootAbility);
+            Shoot shootAbility = new Shoot(this, 15, 4, 5) { EnergyCost = 4 };
+            Info.Abilities.Add(shootAbility);
+
+            shootAbility.AddCombo(new Shoot(this, 15, 4, 10) { EnergyCost = 5 }, null);
+            shootAbility.Next.AddCombo(new Shoot(this, 15, 4, 15) { EnergyCost = 6 }, shootAbility);
+
+
 
             Info.MaxEnergy = 15;
 
@@ -61,7 +66,7 @@ namespace MortalDungeon.Game.Units
             LightGenerator = new LightGenerator() { Radius = 10, Brightness = 0.1f, LightColor = new Vector3(0.75f, 0.6f, 0.2f) };
             Scene.LightGenerators.Add(LightGenerator);
 
-            _lightGenChangeFunc = () =>
+            _lightGenChangeFunc = (_, __) =>
             {
                 if (DayNightCycle.IsNight())
                 {
@@ -73,10 +78,10 @@ namespace MortalDungeon.Game.Units
                 }
             };
 
-            CombatScene.EnvironmentColor.OnChange.Add(_lightGenChangeFunc);
+            CombatScene.EnvironmentColor.OnChangeEvent += _lightGenChangeFunc;
         }
 
-        private Action _lightGenChangeFunc;
+        private EventHandler _lightGenChangeFunc;
         private LightGenerator LightGenerator;
 
         public override void OnKill()
@@ -113,7 +118,7 @@ namespace MortalDungeon.Game.Units
         {
             base.CleanUp();
 
-            CombatScene.EnvironmentColor.OnChange.Remove(_lightGenChangeFunc);
+            CombatScene.EnvironmentColor.OnChangeEvent -= _lightGenChangeFunc;
             Scene.LightGenerators.RemoveImmediate(LightGenerator);
         }
     }

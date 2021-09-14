@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
@@ -23,7 +24,8 @@ namespace MortalDungeon.Game.UI
         public Button EndTurnButton;
         public Button VentureForthButton;
 
-        private ScrollableArea _scrollableArea;
+        private ScrollableArea _scrollableAreaBuff;
+        private ScrollableArea _scrollableAreaAbility;
 
         public GameFooter(float height, CombatScene scene) : base(height)
         {
@@ -164,19 +166,19 @@ namespace MortalDungeon.Game.UI
             #region health and shield bar
             _unitHealthBar = new HealthBar(new Vector3(), new UIScale(0.5f, 0.1f)) { Hoverable = true, HasTimedHoverEffect = true };
 
-            void healthBarHover() 
+            void healthBarHover(GameObject obj) 
             {
                 UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Health + "/" + UnitInfo.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
                 UIHelpers.CreateToolTip(param);
             }
 
-            _unitHealthBar._onTimedHoverActions.Add(healthBarHover);
+            _unitHealthBar.OnTimedHoverEvent += healthBarHover;
 
             _containingBlock.AddChild(_unitHealthBar, 100);
 
             _unitShieldBar = new ShieldBar(new Vector3(), new UIScale(0.5f, 0.1f)) { Hoverable = true, HasTimedHoverEffect = true };
 
-            void shieldBarHover()
+            void shieldBarHover(GameObject obj)
             {
                 if (_currentUnit.Info.CurrentShields >= 0)
                 {
@@ -196,12 +198,13 @@ namespace MortalDungeon.Game.UI
                 }
             }
 
-            _unitShieldBar._onTimedHoverActions.Add(shieldBarHover);
+            _unitShieldBar.OnTimedHoverEvent += shieldBarHover;
 
             _containingBlock.AddChild(_unitShieldBar, 100);
             #endregion
 
-            InitializeScrollableArea();
+            InitializeScrollableAreaBuff();
+            InitializeScrollableAreaAbility();
 
             UpdateFooterInfo(Scene.CurrentUnit);
         }
@@ -262,123 +265,147 @@ namespace MortalDungeon.Game.UI
 
             UIScale iconSize = new UIScale(0.25f, 0.25f);
             int count = 0;
-            foreach (Ability ability in _currentUnit.Info.Abilities.Values) 
+
+            lock (_currentUnit.Info.Abilities)
             {
-                Icon abilityIcon = ability.GenerateIcon(iconSize, true, _currentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, true);
-
-                if (_currentIcons.Count == 0)
+                foreach (Ability ability in _currentUnit.Info.Abilities)
                 {
-                    abilityIcon.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(20, 0, 0), UIAnchorPosition.LeftCenter);
-                }
-                else 
-                {
-                    abilityIcon.SetPositionFromAnchor(
-                        _currentIcons[_currentIcons.Count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
-                }
-
-                void checkAbilityClickable() 
-                {
-                    if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() <= Scene.EnergyDisplayBar.CurrentEnergy)
+                    string hotkey = null;
+                    if (_currentUnit.AI.ControlType == ControlType.Controlled) 
                     {
-                        abilityIcon.Clickable = true;
-                        abilityIcon.Hoverable = true;
+                        hotkey = (count + 1).ToString();
+                    }
+
+                    Icon abilityIcon = ability.GenerateIcon(iconSize, true, 
+                        _currentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, 
+                        true, null, hotkey);
+
+                    int currIndex = count;
+
+                    if (_currentIcons.Count == 0)
+                    {
+                        abilityIcon.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(20, 0, 0), UIAnchorPosition.LeftCenter);
                     }
                     else
                     {
-                        abilityIcon.SetColor(Colors.IconDisabled);
+                        abilityIcon.SetPositionFromAnchor(
+                            _currentIcons[_currentIcons.Count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
                     }
+
+                    void checkAbilityClickable()
+                    {
+                        if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() <= Scene.EnergyDisplayBar.CurrentEnergy)
+                        {
+                            abilityIcon.Clickable = true;
+                            abilityIcon.Hoverable = true;
+                        }
+                        else
+                        {
+                            abilityIcon.SetColor(Colors.IconDisabled);
+                        }
+                    }
+
+                    checkAbilityClickable();
+
+                    abilityIcon.OnClickAction = () =>
+                    {
+                        if (_currentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ? _currentUnit == Scene.CurrentUnit : true))
+                        {
+                            Scene.SelectAbility(ability, _currentUnit);
+                        }
+                    };
+
+
+                    void onAbilitySelected(Ability selectedAbility)
+                    {
+                        if (selectedAbility.AbilityID == ability.AbilityID)
+                        {
+                            abilityIcon.SetColor(Colors.IconSelected);
+
+                            Sound sound = new Sound(Sounds.Select) { Gain = 0.1f, Pitch = 0.5f + currIndex * 0.05f };
+                            sound.Play();
+                        }
+                    }
+
+                    void onAbilityDeselected()
+                    {
+                        if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy)
+                        {
+                            abilityIcon.Clickable = false;
+                            abilityIcon.Hoverable = false;
+                            abilityIcon.SetColor(Colors.IconDisabled);
+                        }
+                        else
+                        {
+                            abilityIcon.SetColor(Colors.White);
+                        }
+                    }
+
+                    void onAbilityCast(Ability castAbility)
+                    {
+                        if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy)
+                        {
+                            abilityIcon.Clickable = false;
+                            abilityIcon.Hoverable = false;
+                            abilityIcon.SetColor(Colors.IconDisabled);
+                        }
+                    }
+
+                    Scene._onSelectAbilityActions.Add(onAbilitySelected);
+                    Scene._onDeselectAbilityActions.Add(onAbilityDeselected);
+                    Scene._onAbilityCastActions.Add(onAbilityCast);
+
+                    void selectAbilityByNum(SceneEventArgs args) 
+                    {
+                        if ((int)args.EventAction == currIndex && _currentUnit.AI.ControlType == ControlType.Controlled)
+                        {
+                            Scene.SelectAbility(ability, _currentUnit);
+                        }
+                    }
+
+                    Scene.OnNumberPressed += selectAbilityByNum;
+
+
+                    UIHelpers.AddAbilityIconHoverEffect(abilityIcon, Scene, ability);
+
+                    void cleanUp(GameObject obj) 
+                    {
+                        Scene._onSelectAbilityActions.Remove(onAbilitySelected);
+                        Scene._onDeselectAbilityActions.Remove(onAbilityDeselected);
+                        Scene._onAbilityCastActions.Remove(onAbilityCast);
+
+                        Scene.OnNumberPressed -= selectAbilityByNum;
+                        abilityIcon.OnCleanUp -= cleanUp;
+                    }
+                    abilityIcon.OnCleanUp += cleanUp;
+
+                    void abilityHover(GameObject obj)
+                    {
+                        UIHelpers.CreateToolTip(Scene, ability.GenerateTooltip(), abilityIcon, Scene._tooltipBlock);
+                    }
+
+                    abilityIcon.HasTimedHoverEffect = true;
+                    abilityIcon.Hoverable = true;
+                    abilityIcon.OnTimedHoverEvent += abilityHover;
+
+                    _currentIcons.Add(abilityIcon);
+                    AddChild(abilityIcon, 100);
+
+                    count++;
                 }
-
-                checkAbilityClickable();
-
-                abilityIcon.OnClickAction = () =>
-                {
-                    if (_currentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ?_currentUnit == Scene.CurrentUnit : true)) 
-                    {
-                        Scene.SelectAbility(ability, _currentUnit);
-                    }
-                };
-
-
-                void onAbilitySelected(Ability selectedAbility) 
-                {
-                    if (selectedAbility.AbilityID == ability.AbilityID) 
-                    {
-                        abilityIcon.SetColor(Colors.IconSelected);
-                    }
-                }
-
-                void onAbilityDeselected() 
-                {
-                    if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy)
-                    {
-                        abilityIcon.Clickable = false;
-                        abilityIcon.Hoverable = false;
-                        abilityIcon.SetColor(Colors.IconDisabled);
-                    }
-                    else 
-                    {
-                        abilityIcon.SetColor(Colors.White);
-                    }
-                }
-
-                void onAbilityCast(Ability castAbility) 
-                {
-                    if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy) 
-                    {
-                        abilityIcon.Clickable = false;
-                        abilityIcon.Hoverable = false;
-                        abilityIcon.SetColor(Colors.IconDisabled);
-                    }
-                }
-
-                Scene._onSelectAbilityActions.Add(onAbilitySelected);
-                Scene._onDeselectAbilityActions.Add(onAbilityDeselected);
-                Scene._onAbilityCastActions.Add(onAbilityCast);
-
-                Scene.EventActions[(EventAction)count] = () => {
-                    if (_currentUnit.AI.ControlType == ControlType.Controlled) 
-                    {
-                        Scene.SelectAbility(ability, _currentUnit);
-                    }
-                };
-
-                UIHelpers.AddAbilityIconHoverEffect(abilityIcon, Scene, ability);
-
-
-                abilityIcon._cleanUpAction = () =>
-                {
-                    Scene._onSelectAbilityActions.Remove(onAbilitySelected);
-                    Scene._onDeselectAbilityActions.Remove(onAbilityDeselected);
-                    Scene._onAbilityCastActions.Remove(onAbilityCast);
-                };
-
-                void abilityHover()
-                {
-                    UIHelpers.CreateToolTip(Scene, ability.GenerateTooltip(), abilityIcon, Scene._tooltipBlock);
-                }
-
-                abilityIcon.HasTimedHoverEffect = true;
-                abilityIcon.Hoverable = true;
-                abilityIcon._onTimedHoverActions.Add(abilityHover);
-
-                _currentIcons.Add(abilityIcon);
-                AddChild(abilityIcon, 100);
-
-                count++;
             }
             #endregion
 
 
             #region buff icons
-            _scrollableArea.BaseComponent.RemoveChildren();
+            _scrollableAreaBuff.BaseComponent.RemoveChildren();
 
             UIScale buffSize = new UIScale(0.09f, 0.09f);
 
             List<Icon> icons = new List<Icon>();
             count = 0;
             int delimiter = -1;
-            _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea.Size.X, _scrollableArea.Size.Y));
+            _scrollableAreaBuff.SetBaseAreaSize(new UIScale(_scrollableAreaBuff.Size.X, _scrollableAreaBuff.Size.Y));
             foreach (Buff buff in _currentUnit.Info.Buffs) 
             {
                 if (buff.Hidden)
@@ -389,14 +416,14 @@ namespace MortalDungeon.Game.UI
 
                 if (count == 0)
                 {
-                    icon.SetPositionFromAnchor(_scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+                    icon.SetPositionFromAnchor(_scrollableAreaBuff.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
                 }
                 else 
                 {
                     icon.SetPositionFromAnchor(icons[count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
                 }
 
-                if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X) 
+                if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableAreaBuff.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X) 
                 {
                     if (delimiter == -1) 
                     {
@@ -404,9 +431,9 @@ namespace MortalDungeon.Game.UI
                     }
                     icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
 
-                    if (icon.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y > _scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y) 
+                    if (icon.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y > _scrollableAreaBuff.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y) 
                     {
-                        _scrollableArea.SetBaseAreaSize(new UIScale(_scrollableArea._baseAreaSize.X, _scrollableArea._baseAreaSize.Y + icon.GetDimensions().ToScale().Y * 3));
+                        _scrollableAreaBuff.SetBaseAreaSize(new UIScale(_scrollableAreaBuff._baseAreaSize.X, _scrollableAreaBuff._baseAreaSize.Y + icon.GetDimensions().ToScale().Y * 3));
 
                         icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
                     }
@@ -414,17 +441,17 @@ namespace MortalDungeon.Game.UI
                     //_scrollableArea.BaseComponent.SetSize(_scrollableArea._baseAreaSize);
                 }
 
-                void buffHover() 
+                void buffHover(GameObject obj) 
                 {
                     UIHelpers.CreateToolTip(Scene, buff.GenerateTooltip(), icon, Scene._tooltipBlock);
                 }
 
                 icon.HasTimedHoverEffect = true;
                 icon.Hoverable = true;
-                icon._onTimedHoverActions.Add(buffHover);
+                icon.OnTimedHoverEvent += buffHover;
 
 
-                _scrollableArea.BaseComponent.AddChild(icon, 1000);
+                _scrollableAreaBuff.BaseComponent.AddChild(icon, 1000);
                 count++;
             }
 
@@ -442,31 +469,72 @@ namespace MortalDungeon.Game.UI
         {
             base.OnResize();
 
-            RemoveChild(_scrollableArea);
-            InitializeScrollableArea();
+            RemoveChild(_scrollableAreaBuff);
+            InitializeScrollableAreaBuff();
+            InitializeScrollableAreaAbility();
         }
 
-        private void InitializeScrollableArea() 
+        private void InitializeScrollableAreaBuff() 
         {
+            if(_scrollableAreaBuff != null)
+                RemoveChild(_scrollableAreaBuff);
+
             UIScale scrollableAreaSize = new UIScale(_containingBlock.Size);
             scrollableAreaSize.X /= 1.8f;
             scrollableAreaSize.Y -= .02f;
 
             //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
-            _scrollableArea = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
+            _scrollableAreaBuff = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
 
             float scrollbarWidth = 0;
-            if (_scrollableArea.Scrollbar != null)
+            if (_scrollableAreaBuff.Scrollbar != null)
             {
-                scrollbarWidth = _scrollableArea.Scrollbar.GetDimensions().X;
+                scrollbarWidth = _scrollableAreaBuff.Scrollbar.GetDimensions().X;
             }
 
-            _scrollableArea.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopRight);
-            _scrollableArea.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
+            _scrollableAreaBuff.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopRight);
+            _scrollableAreaBuff.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
 
-            _scrollableArea.BaseComponent.SetColor(new Vector4(0, 0, 0, 0));
+            _scrollableAreaBuff.BaseComponent.SetColor(new Vector4(0, 0, 0, 0));
 
-            AddChild(_scrollableArea, 1000);
+            AddChild(_scrollableAreaBuff, 1000);
+        }
+
+        private void InitializeScrollableAreaAbility()
+        {
+            if (_scrollableAreaAbility != null)
+                RemoveChild(_scrollableAreaAbility);
+
+            UIScale scrollableAreaSize = new UIScale(_containingBlock.Size);
+            //scrollableAreaSize.X /= 2f;
+            scrollableAreaSize.Y -= .02f;
+
+            //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
+            _scrollableAreaAbility = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
+
+            
+
+            float scrollbarWidth = 0;
+            if (_scrollableAreaAbility.Scrollbar != null)
+            {
+                scrollbarWidth = _scrollableAreaAbility.Scrollbar.GetDimensions().X;
+            }
+
+            _scrollableAreaAbility.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopLeft);
+            _scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
+
+           
+            //_scrollableAreaAbility.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopLeft);
+            //_scrollableAreaAbility.SetVisibleAreaPosition(Position + new Vector3(80, 0, 0));
+            ////_scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
+            //_scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(Position + new Vector3(80, 0, 0));
+
+            _scrollableAreaAbility.BaseComponent.SetColor(new Vector4(1, 0, 0, 1f));
+
+            AddChild(_scrollableAreaAbility, 1500);
+
+            //_scrollableAreaAbility.SetBaseAreaSize(scrollableAreaSize);
+            //_scrollableAreaAbility.SetVisibleAreaSize(scrollableAreaSize);
         }
     }
 }

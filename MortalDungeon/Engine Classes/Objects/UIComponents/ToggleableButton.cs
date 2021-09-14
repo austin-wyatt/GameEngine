@@ -28,14 +28,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.OnHover();
         }
 
-        public override void HoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
                 SetColor(BaseColor);
             }
 
-            base.HoverEnd();
+            base.OnHoverEnd();
         }
 
         public override void OnMouseDown()

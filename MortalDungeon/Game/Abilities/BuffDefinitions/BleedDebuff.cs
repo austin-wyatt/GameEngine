@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnTurnStart()
         {
-            Unit.ApplyDamage(Damage, DamageType.Bleed);
+            Unit.ApplyDamage(new Unit.DamageParams(Damage, DamageType.Bleed) { Buff = this });
 
             base.OnTurnStart();
         }

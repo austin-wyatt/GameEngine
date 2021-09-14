@@ -16,6 +16,62 @@ namespace MortalDungeon.Engine_Classes.Audio
             set => AL.Source(Handle, ALSourcef.Gain, value);
         }
 
+        public float Pitch
+        {
+            get
+            {
+                AL.GetSource(Handle, ALSourcef.Pitch, out var value);
+                return value;
+            }
+            set => AL.Source(Handle, ALSourcef.Pitch, value);
+        }
+
+        public bool Loop
+        {
+            get 
+            {
+                AL.GetSource(Handle, ALSourceb.Looping, out bool value);
+                return value;
+            }
+            set => AL.Source(Handle, ALSourceb.Looping, value);
+        }
+
+        public float PlaybackPosition
+        {
+            get 
+            {
+                AL.GetSource(Handle, ALSourcef.SecOffset, out float value);
+                return value;
+            }
+            set 
+            {
+                AL.Source(Handle, ALSourcef.SecOffset, value);
+            }
+        }
+
+        public float Duration 
+        {
+            get
+            {
+                if (ActiveSound != null)
+                {
+                    AL.GetBuffer(ActiveSound.Buffer.Handle, ALGetBufferi.Size, out int size);
+                    AL.GetBuffer(ActiveSound.Buffer.Handle, ALGetBufferi.Channels, out int channels);
+                    AL.GetBuffer(ActiveSound.Buffer.Handle, ALGetBufferi.Bits, out int bits);
+                    AL.GetBuffer(ActiveSound.Buffer.Handle, ALGetBufferi.Frequency, out int frequency);
+
+                    int lengthInSamples = size * 8 / (channels * bits);
+
+                    return (float)lengthInSamples / frequency;
+
+                }
+                else 
+                {
+                    return 0;
+                }
+            }
+        }
+
         public ALSourceState State
         {
             get
@@ -26,6 +82,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         }
 
         public bool KeepAlive = false;
+        public float EndTime = float.MaxValue;
 
         public Sound ActiveSound = null;
 
@@ -61,9 +118,14 @@ namespace MortalDungeon.Engine_Classes.Audio
         }
 
 
+
         public void ApplyDefaultValues()
         {
-            AL.Source(Handle, ALSourcef.Gain, 1);
+            Gain = 1;
+            Pitch = 1;
+
+            KeepAlive = false;
+            EndTime = float.MaxValue;
         }
 
         public override bool Equals(object obj)

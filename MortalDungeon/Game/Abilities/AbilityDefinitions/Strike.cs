@@ -15,6 +15,7 @@ namespace MortalDungeon.Game.Abilities
         public Strike(Unit castingUnit, int range = 1, float damage = 10)
         {
             Type = AbilityTypes.MeleeAttack;
+            DamageType = DamageType.Slashing;
             Range = range;
             CastingUnit = castingUnit;
             Damage = damage;
@@ -80,7 +81,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(GetDamage(), DamageType);
+            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamage(), DamageType) { Ability = this });
 
             Casted();
             EffectEnded();

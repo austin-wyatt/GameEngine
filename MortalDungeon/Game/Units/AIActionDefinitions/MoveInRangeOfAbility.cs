@@ -98,7 +98,7 @@ namespace MortalDungeon.Game.Units.AI
                 fullPathToUnit = true;
             }
 
-            path.RemoveAt(path.Count - 1);
+            //path.RemoveAt(path.Count - 1);
 
             //if (fullPathToUnit && path.Count > Ability.MinRange + 1)
             //{

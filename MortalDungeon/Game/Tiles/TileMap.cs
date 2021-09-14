@@ -9,6 +9,7 @@ using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -63,11 +64,11 @@ namespace MortalDungeon.Game.Tiles
         public Texture DynamicTexture;
         public FrameBufferObject FrameBuffer;
         public DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
-        public HashSet<BaseTile> TilesToUpdate = new HashSet<BaseTile>();
+        public ConcurrentBag<BaseTile> TilesToUpdate = new ConcurrentBag<BaseTile>();
 
-        private const int TILE_QUEUES = 2;
+        private const int TILE_QUEUES = 5;
         protected int _currentTileQueue = 0;
-        protected List<HashSet<BaseTile>> _tilesToUpdate = new List<HashSet<BaseTile>>();
+        protected List<ConcurrentBag<BaseTile>> _tilesToUpdate = new List<ConcurrentBag<BaseTile>>();
 
         public GameObject TexturedQuad;
 
@@ -86,8 +87,13 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i < TILE_QUEUES; i++) 
             {
-                _tilesToUpdate.Add(new HashSet<BaseTile>());
+                _tilesToUpdate.Add(new ConcurrentBag<BaseTile>());
             }
+        }
+
+        ~TileMap() 
+        {
+            Console.WriteLine($"TileMap {TileMapCoords.X}, {TileMapCoords.Y} disposed");
         }
 
         public BaseTile this[int x, int y]
@@ -307,17 +313,7 @@ namespace MortalDungeon.Game.Tiles
         private ActionQueue _tileActionQueue = new ActionQueue();
         internal void UpdateTile(BaseTile tile) 
         {
-            if (_tileActionQueue.UpdateInProgress()) 
-            {
-                _tileActionQueue.AddAction(() => UpdateTile(tile));
-                return;
-            }
-
-            _tileActionQueue.StartUpdate();
-
             _tilesToUpdate[_currentTileQueue].Add(tile);
-
-            _tileActionQueue.EndUpdate();
         }
 
         public override void CleanUp()
@@ -620,7 +616,7 @@ namespace MortalDungeon.Game.Tiles
         {
             if (HoveredTile.AttachedTile != null) 
             {
-                HoveredTile.AttachedTile.HoverEnd();
+                HoveredTile.AttachedTile.OnHoverEnd();
                 HoveredTile.AttachedTile = null;
             }
 

@@ -28,8 +28,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             AddChild(block);
 
             PropertyAnimation animation = new PropertyAnimation(block._baseObject.BaseFrame);
-            Keyframe offFrame = new Keyframe(25, (_) => SetRender(false));
-            Keyframe onFrame = new Keyframe(50, (_) => SetRender(true));
+            Keyframe offFrame = new Keyframe(25, () => SetRender(false));
+            Keyframe onFrame = new Keyframe(50, () => SetRender(true));
 
             animation.Repeat = true;
 

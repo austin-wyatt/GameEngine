@@ -8,10 +8,12 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static MortalDungeon.Engine_Classes.Scenes.CombatScene;
 
@@ -38,6 +40,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
         SixKeyDown,
         SevenKeyDown,
         EightKeyDown,
+
+        CloseTooltip
+    }
+
+    public class SceneEventArgs
+    {
+        public Scene Scene;
+        public EventAction EventAction;
+        public SceneEventArgs(Scene scene, EventAction action) 
+        {
+            Scene = scene;
+            EventAction = action;
+        }
     }
 
     public class Scene
@@ -51,6 +66,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
 
         public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
+
+        public HashSet<UnitTeam> ActiveTeams = new HashSet<UnitTeam>();
 
         public List<Unit> _collatedUnits = new List<Unit>();
         private HashSet<Unit> _renderedUnits = new HashSet<Unit>();
@@ -88,8 +105,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #endregion
 
 
-        public Dictionary<EventAction, Action> EventActions = new Dictionary<EventAction, Action>();
-
         public Lighting Lighting;
         public QueuedList<LightObstruction> LightObstructions = new QueuedList<LightObstruction>();
         public QueuedList<LightGenerator> LightGenerators = new QueuedList<LightGenerator>();
@@ -108,6 +123,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         private Stopwatch _mouseTimer = new Stopwatch();
         protected Stopwatch _hoverTimer = new Stopwatch();
         protected GameObject _hoveredObject;
+
         protected virtual void InitializeFields()
         {
             _genericObjects = new QueuedObjectList<GameObject>();
@@ -125,6 +141,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             Lighting = new Lighting(this);
         }
+
+
         public virtual void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) //all object initialization should be handled here
         {
             Loaded = true;
@@ -203,8 +221,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     break;
             }
 
+            OnMessageRecieved?.Invoke(msg);
+
             MessageCenter.SendMessage(msg.CreateAffirmativeResponse(SceneID));
         }
+        public delegate void MessageEventHandler(Message msg);
+        public event MessageEventHandler OnMessageRecieved;
 
         private void InterceptClicks(bool intercept, MessageTarget target)
         {
@@ -245,10 +267,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
         private bool _updatingVisionMap = false;
         private bool _shouldRepeatVisionMap = false;
         public Task VisionMapTask = null;
-        public void UpdateVisionMap(Action onFinish = null)
+
+        public void UpdateVisionMap(Action onFinish = null, UnitTeam teamToUpdate = UnitTeam.Unknown)
         {
-            if (ContextManager.GetFlag(GeneralContextFlags.DisableVisionMapUpdate))
+            if (ContextManager.GetFlag(GeneralContextFlags.DisableVisionMapUpdate)) 
+            {
+                onFinish?.Invoke();
                 return;
+            }
 
             if (_updatingVisionMap) 
             {
@@ -258,22 +284,45 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             _updatingVisionMap = true;
 
-            VisionMapTask = Task.Run(() =>
+            VisionMapTask = new Task(() =>
             {
                 _updatingVisionMap = true;
+
                 VisionMap.SetObstructions(LightObstructions, this);
-                VisionMap.CalculateVision(UnitVisionGenerators, this);
+
+                VisionMap.CalculateVision(UnitVisionGenerators, this, teamToUpdate);
 
                 _updatingVisionMap = false;
 
                 if (_shouldRepeatVisionMap)
                 {
                     _shouldRepeatVisionMap = false;
-                    UpdateVisionMap();
+
+                    UpdateVisionMap(null, teamToUpdate);
 
                     onFinish?.Invoke();
+                    OnVisionMapUpdated();
+                }
+                else 
+                {
+                    onFinish?.Invoke();
+                    OnVisionMapUpdated();
                 }
             });
+
+            VisionMapTask.Start();
+        }
+
+
+        public virtual void OnVisionMapUpdated() { }
+
+        public void CalculateActiveTeams() 
+        {
+            ActiveTeams.Clear();
+            foreach (var unit in _units) 
+            {
+                ActiveTeams.Add(unit.AI.Team);
+            }
         }
 
         #region Event handlers
@@ -282,14 +331,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             _genericObjects.HandleQueuedItems();
             _UI.HandleQueuedItems();
-            _units.HandleQueuedItems();
+            if (_units.HasQueuedItems()) 
+            {
+                _units.HandleQueuedItems();
+                CalculateActiveTeams();
+            }
+            
             _lowPriorityObjects.HandleQueuedItems();
 
             if (LightObstructions.HasQueuedItems())
             {
                 LightObstructions.HandleQueuedItems();
                 ContextManager.SetFlag(GeneralContextFlags.UpdateLightObstructionMap, true);
-                //UpdateVisionMapObstructions();
                 UpdateVisionMap();
             }
 
@@ -458,7 +511,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected UIObject _grabbedObj = null;
         public virtual bool OnMouseMove()
         {
-            if (_mouseTimer.ElapsedMilliseconds > 20) //check every 20 ms
+            if (_mouseTimer.ElapsedMilliseconds > 50) //check every 20 ms
             {
                 _mouseTimer.Restart();
                 _hoverTimer.Reset();
@@ -559,28 +612,28 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     switch (e.Key)
                     {
                         case Keys.D1:
-                            GetEventAction(EventAction.OneKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.OneKeyDown));
                             break;
                         case Keys.D2:
-                            GetEventAction(EventAction.TwoKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.TwoKeyDown));
                             break;
                         case Keys.D3:
-                            GetEventAction(EventAction.ThreeKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.ThreeKeyDown));
                             break;
                         case Keys.D4:
-                            GetEventAction(EventAction.FourKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.FourKeyDown));
                             break;
                         case Keys.D5:
-                            GetEventAction(EventAction.FiveKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.FiveKeyDown));
                             break;
                         case Keys.D6:
-                            GetEventAction(EventAction.SixKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.SixKeyDown));
                             break;
                         case Keys.D7:
-                            GetEventAction(EventAction.SevenKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.SevenKeyDown));
                             break;
                         case Keys.D8:
-                            GetEventAction(EventAction.EightKeyDown)?.Invoke();
+                            NumberPressed(new SceneEventArgs(this, EventAction.EightKeyDown));
                             break;
                     }
                 }
@@ -653,9 +706,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void OnRenderEnd() { }
         #endregion
 
-        #region event action lists
+        #region event actions
 
+        public delegate void SceneEventHandler(SceneEventArgs args);
 
+        public event SceneEventHandler OnNumberPressed;
+
+        public event SceneEventHandler OnUIForceClose;
+
+        protected void NumberPressed(SceneEventArgs args)
+        {
+            OnNumberPressed?.Invoke(args);
+        }
+        protected void UIForceClose(SceneEventArgs args) 
+        {
+            OnUIForceClose?.Invoke(args);
+        }
 
 
         #endregion
@@ -711,13 +777,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             return (b & (1 << (int)bitNumber)) != 0;
         }
-
-        protected Action GetEventAction(EventAction action)
-        {
-            EventActions.TryGetValue(action, out Action val);
-
-            return val;
-        }
         #endregion
 
         #region Render helper functions
@@ -743,6 +802,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void CollateUnit(Unit unit)
         {
+            lock(_renderedUnits)
             if (!_renderedUnits.TryGetValue(unit, out Unit found))
             {
                 _renderedUnits.Add(unit);
@@ -752,6 +812,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void DecollateUnit(Unit unit)
         {
+            lock (_renderedUnits)
             if (_renderedUnits.TryGetValue(unit, out Unit found))
             {
                 _renderedUnits.Remove(unit);

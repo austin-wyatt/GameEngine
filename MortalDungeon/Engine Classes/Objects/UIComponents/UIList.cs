@@ -260,7 +260,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        public override void HoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered && !Disabled)
             {
@@ -271,7 +271,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 _textBox.SetColor(_textColor);
                 _backdrop.SetColor(_itemColor);
 
-                base.HoverEnd();
+                base.OnHoverEnd();
             }
         }
 

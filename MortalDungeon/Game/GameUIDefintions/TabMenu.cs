@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Tiles;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.UI
@@ -200,23 +202,26 @@ namespace MortalDungeon.Game.UI
             {
                 Scene._tileMapController.TileMaps.ForEach(map =>
                 {
-                    map.TileChunks.ForEach(chunk =>
-                    {
-                        chunk.Tiles.ForEach(t =>
-                        {
-                            if (chunk.Cull)
-                            {
-                                t.Color = Colors.White;
-                            }
-                            else
-                            {
-                                t.Color = Colors.Red;
-                            }
+                    //map.TileChunks.ForEach(chunk =>
+                    //{
+                    //    chunk.Tiles.ForEach(t =>
+                    //    {
+                    //        if (chunk.Cull)
+                    //        {
+                    //            t.Color = Colors.White;
+                    //        }
+                    //        else
+                    //        {
+                    //            t.Color = Colors.Red;
+                    //        }
 
-                            t.Update();
-                        });
-                    });
+                    //        t.Update();
+                    //    });
+                    //});
                 });
+
+
+                Console.WriteLine($"Threadpool info {ThreadPool.ThreadCount}");
             }, toggleAI.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button turboButton = null;
@@ -239,23 +244,10 @@ namespace MortalDungeon.Game.UI
                 Scene.RefillLightObstructions();
             }, turboButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
-            Button visionTestButton = CreateButton("Vision test", () =>
+            Button visionTestButton = CreateButton("Music test", () =>
             {
-                VisionGenerator gen = new VisionGenerator() { Radius = 10, Team = UnitTeam.PlayerUnits };
-                gen.SetPosition(Scene.CurrentUnit.Info.TileMapPosition);
-
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-
-                VisionMap.SetObstructions(Scene.LightObstructions, Scene);
-
-                Console.WriteLine($"Obstructions: {stopwatch.ElapsedMilliseconds}");
-
-                stopwatch.Restart();
-                VisionMap.CalculateVision(new List<VisionGenerator>() { gen }, Scene);
-
-                Console.WriteLine($"Vision: {stopwatch.ElapsedMilliseconds}");
-
+                Sound music = new Sound(Music.HopefulMusic) { Gain = 0.02f, Loop = true, EndTime = 215 };
+                music.Play();
             }, plusButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button minusColor = CreateButton("Initialize", () =>

@@ -26,6 +26,31 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MortalDungeon
 {
+    public static class GlobalRandom 
+    {
+        private static Random _random = new Random();
+
+        public static int Next() 
+        {
+            return _random.Next();
+        }
+
+        public static float NextFloat() 
+        {
+            return (float)_random.NextDouble();
+        }
+
+        public static float NextFloat(float minValue, float maxValue)
+        {
+            float val = (float)_random.NextDouble();
+
+            val *= maxValue - minValue;
+            val += minValue;
+
+            return val;
+        }
+
+    }
     public static class WindowConstants
     {
         public static readonly Vector2 ScreenUnits = new Vector2(1000, 1000);
@@ -111,6 +136,8 @@ namespace MortalDungeon
 
         public static List<BaseObject> _renderedItems = new List<BaseObject>();
 
+        public static Task GameLoop;
+
         private List<Vector2> _points = new List<Vector2>();
         private List<Vector3> _lines = new List<Vector3>();
 
@@ -151,8 +178,7 @@ namespace MortalDungeon
             Renderer.Initialize();
 
             VisionMap.Initialize();
-
-            SoundPlayer.Initialize();
+            
 
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
@@ -209,9 +235,32 @@ namespace MortalDungeon
             TickAllObjects();
 
             base.OnLoad();
+
+
+            GameLoop = new Task(() =>
+            {
+                double timeValue;
+
+                int waitTime = (int)(tickRate * 500);
+                while (true) 
+                {
+                    timeValue = _gameTimer.Elapsed.TotalSeconds;
+
+                    if (timeValue > tickRate)
+                    {
+                        _gameTimer.Restart();
+                        tick++;
+                    }
+
+                    Thread.Sleep(waitTime);
+                }
+            }, TaskCreationOptions.LongRunning);
+
+            GameLoop.Start();
         }
 
-        
+        double time = 0;
+        int frames = 0;
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             TickAllObjects();
@@ -222,6 +271,21 @@ namespace MortalDungeon
             //Texture.UsedTextures.Clear();
 
             double timeValue;
+
+            //if (frames > 10000)
+            //{
+            //    frames = 0;
+            //    time = args.Time;
+            //}
+
+            //frames++;
+            //time = (time + args.Time) * 0.5;
+
+            //if (args.Time / time > 1.75)
+            //{
+            //    Console.WriteLine($"75% variation in FPS detected. Average time {time}. Detected time {args.Time}.");
+            //}
+
 
             ////FPS
             timeValue = _timer.Elapsed.TotalSeconds;
@@ -241,13 +305,18 @@ namespace MortalDungeon
             }
 
             //Tick counter
-            timeValue = _gameTimer.Elapsed.TotalSeconds;
+            //timeValue = _gameTimer.Elapsed.TotalSeconds;
 
-            if (timeValue > tickRate)
-            {
-                _gameTimer.Restart();
-                tick++;
-            }
+            //if (timeValue > tickRate)
+            //{
+            //    _gameTimer.Restart();
+            //    tick++;
+
+            //    if (tick % 100 == 0) 
+            //    {
+            //        Console.WriteLine($"{tickRate}    {timeValue}");
+            //    }
+            //}
 
             Matrix4 viewMatrix = _camera.GetViewMatrix();
             Matrix4 projectionMatrix = _camera.ProjectionMatrix;
@@ -340,6 +409,7 @@ namespace MortalDungeon
                         RenderingQueue.QueueLettersForRender(text.Letters);
                     };
                 }); //Text
+
 
                 //scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
                 //{
@@ -463,7 +533,7 @@ namespace MortalDungeon
         private void TickAllObjects() 
         {
             if (tick != lastTick)
-            {
+            {             
                 lastTick = tick;
                 _sceneController.Scenes.ForEach(scene =>
                 {

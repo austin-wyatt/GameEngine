@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Objects;
@@ -52,6 +53,7 @@ namespace MortalDungeon.Game.Tiles
         Grass,
         Water,
         Stone,
+        Wood
     }
 
     public class BaseTile : GameObject
@@ -89,6 +91,8 @@ namespace MortalDungeon.Game.Tiles
         public TileMap TileMap;
 
         public TileChunk Chunk;
+
+        public bool Updating = false;
 
 
         public new bool HasContextMenu = true;
@@ -161,34 +165,20 @@ namespace MortalDungeon.Game.Tiles
 
         public void SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
         {
-            if (inFog != InFog[team]) 
+            if (inFog != InFog[team])
             {
                 InFog[team] = inFog;
 
                 Update();
-            }
 
-            //TileMap.RemoveHeightIndicatorTile(this);
-
-            if (inFog && !Explored[team])
-            {
-                Outline = false;
-            }
-            else
-            {
-                Outline = !NeverOutline;
-            }
-
-            InFog[team] = inFog;
-            MultiTextureData.MixTexture = inFog;
-
-            if (inFog && !Explored[team] && !Selected && !Hovered) //Outline the tile if it's not in fog (with some exceptions)
-            {
-                _tileObject.OutlineParameters.InlineThickness = 0;
-            }
-            else
-            {
-                _tileObject.OutlineParameters.InlineThickness = _tileObject.OutlineParameters.BaseInlineThickness;
+                if (inFog && !Explored[team])
+                {
+                    Outline = false;
+                }
+                else
+                {
+                    Outline = !NeverOutline;
+                }
             }
         }
 
@@ -199,16 +189,6 @@ namespace MortalDungeon.Game.Tiles
                 Explored[team] = explored;
 
                 Update();
-            }
-
-            Explored[team] = explored;
-            if (explored)
-            {
-                MultiTextureData.MixPercent = 0.5f;
-            }
-            else
-            {
-                MultiTextureData.MixPercent = 1f;
             }
         }
 
@@ -252,18 +232,15 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public override void HoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
-                base.HoverEnd();
+                base.OnHoverEnd();
 
                 SetHovered(false);
 
-                for (int i = 0; i < _onHoverEndActions.Count; i++)
-                {
-                    _onHoverEndActions[i]?.Invoke();
-                }
+                HoverEndEvent(this);
             }
         }
 
@@ -305,6 +282,9 @@ namespace MortalDungeon.Game.Tiles
 
         public void Update()
         {
+            if (Updating) return;
+
+            Updating = true;
             TileMap.UpdateTile(this);
 
             TileMap.DynamicTextureInfo.TextureChanged = true;
@@ -407,6 +387,9 @@ namespace MortalDungeon.Game.Tiles
                     {
                         scene.CloseContextMenu();
                         scene.OpenContextMenu(objects[index].CreateContextMenu());
+
+                        Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.75f, 0.75f) };
+                        sound.Play();
                     });
                 }
 
@@ -417,6 +400,9 @@ namespace MortalDungeon.Game.Tiles
                 scene.CloseContextMenu();
                 scene.OpenContextMenu(objects[0].CreateContextMenu());
             }
+
+            Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
+            sound.Play();
         }
 
         public override Tooltip CreateContextMenu()

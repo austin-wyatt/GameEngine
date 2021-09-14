@@ -71,7 +71,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             float scaleMax;
 
-            Vector3 scale = obj.Tiles[0].BaseObjects[0].BaseFrame.Scale.ExtractScale();
+            Vector3 scale = obj.Tiles[0].BaseObjects[0].BaseFrame.CurrentScale;
 
             scaleMax = scale.X;
             scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;

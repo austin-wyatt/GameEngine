@@ -72,6 +72,8 @@ namespace MortalDungeon.Game.Tiles
 
             foreach (BaseTile tile in map.TilesToUpdate)
             {
+                if (tile == null) continue;
+
                 if (tile.Outline)
                     outlineTiles.Add(tile);
                 else
@@ -141,6 +143,8 @@ namespace MortalDungeon.Game.Tiles
 
             foreach (BaseTile tile in objects) 
             {
+                tile.Updating = false;
+
                 if (tile.Render)
                 {
                     Vector4 heightColorCorrection = new Vector4(0, 0, 0, 0);

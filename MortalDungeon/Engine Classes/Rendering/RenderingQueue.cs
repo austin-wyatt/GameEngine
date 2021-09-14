@@ -59,7 +59,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
             RenderLightQueue();
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
+            //GL.BlendEquationSeparate(BlendEquationMode.FuncAdd, BlendEquationMode.FuncAdd);
+            //GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.One, BlendingFactorDest.OneMinusSrcAlpha);
+
             RenderQueuedUI();
+
+            //GL.BlendEquation(BlendEquationMode.FuncAdd);
+            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             //RenderFrameBuffer(MainFBO);
         }
@@ -116,6 +122,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
         {
+            lock (uiObjects) { }
             if (uiObjects.Count > 0)
             {
                 for (int i = 0; i < uiObjects.Count; i++)

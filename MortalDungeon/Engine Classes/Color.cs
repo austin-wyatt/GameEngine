@@ -14,8 +14,7 @@ namespace MortalDungeon.Engine_Classes
 
         public bool Use = true;
 
-        public List<Action> OnChange = new List<Action>();
-
+        public event EventHandler OnChangeEvent;
         public Color() { }
 
         public Color(float r, float g, float b, float a) 
@@ -94,6 +93,9 @@ namespace MortalDungeon.Engine_Classes
             B += color.B;
 
             _onChange();
+
+
+
             return this;
         }
 
@@ -110,10 +112,7 @@ namespace MortalDungeon.Engine_Classes
 
         public void _onChange() 
         {
-            for (int i = 0; i < OnChange.Count; i++) 
-            {
-                OnChange[i].Invoke();
-            }
+            OnChangeEvent?.Invoke(this, EventArgs.Empty);
         }
 
         public Vector4 ToVector() 

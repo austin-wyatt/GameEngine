@@ -88,6 +88,7 @@ namespace MortalDungeon.Game
                 case TileType.Gravel:
                     return SimplifiedTileType.Stone;
                 case TileType.WoodPlank:
+                    return SimplifiedTileType.Wood;
                 default:
                     return SimplifiedTileType.Unknown;
             }

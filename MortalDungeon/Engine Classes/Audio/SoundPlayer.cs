@@ -27,7 +27,9 @@ namespace MortalDungeon.Engine_Classes.Audio
         }
 
         private static Source[] Sources = new Source[MAX_SOURCES];
-        public static HashSet<Source> ActiveSources = new HashSet<Source>(MAX_SOURCES);
+        public static List<Source> ActiveSources = new List<Source>(MAX_SOURCES);
+        public static List<AudioBuffer> LoadedBuffers = new List<AudioBuffer>();
+
 
         public static bool DISPLAY_DEBUG_MESSAGES = true;
 
@@ -40,20 +42,28 @@ namespace MortalDungeon.Engine_Classes.Audio
 
             ALC.MakeContextCurrent(context);
 
-            Volume = 0.02f;
+            Volume = 2f;
 
             for (int i = 0; i < Sources.Length; i++) 
             {
                 Sources[i] = new Source();
             }
 
+
+            StartSourceWatchdog();
+            StartBufferWatchdog();
+        }
+
+        private static void StartSourceWatchdog() 
+        {
             Task sourceWatchdog = new Task(() =>
             {
                 List<Source> sourcesToRemove = new List<Source>();
-                while (true) 
+                while (true)
                 {
-                    foreach (Source source in ActiveSources) 
+                    for(int i = 0; i < ActiveSources.Count; i++)
                     {
+                        Source source = ActiveSources[i];
                         if (source.State == ALSourceState.Stopped && !source.KeepAlive)
                         {
                             sourcesToRemove.Add(source);
@@ -63,15 +73,19 @@ namespace MortalDungeon.Engine_Classes.Audio
                             if (DISPLAY_DEBUG_MESSAGES)
                                 Console.WriteLine($"Freed source {source.Handle}");
 
-                            if (source.ActiveSound != null) 
+                            if (source.ActiveSound != null)
                             {
-                                source.ActiveSound.Source = null;
-                                source.ActiveSound = null;
+                                source.ActiveSound.Dispose();
                             }
+                        }
+
+                        if (ActiveSources[i].EndTime < ActiveSources[i].PlaybackPosition) 
+                        {
+                            ActiveSources[i].PlaybackPosition = ActiveSources[i].Duration;
                         }
                     }
 
-                    for (int i = 0; i < sourcesToRemove.Count; i++) 
+                    for (int i = 0; i < sourcesToRemove.Count; i++)
                     {
                         ActiveSources.Remove(sourcesToRemove[i]);
                     }
@@ -83,6 +97,46 @@ namespace MortalDungeon.Engine_Classes.Audio
             }, TaskCreationOptions.LongRunning);
 
             sourceWatchdog.Start();
+        }
+
+        private static void StartBufferWatchdog() 
+        {
+            List<AudioBuffer> buffersToUnload = new List<AudioBuffer>();
+            Task bufferWatchdog = new Task(() =>
+            {
+                while (true)
+                {
+                    foreach (var buffer in LoadedBuffers)
+                    {
+                        if (buffer.AttachedSounds.Count == 0)
+                        {
+                            buffersToUnload.Add(buffer);
+                        }
+                    }
+
+                    foreach (var buffer in buffersToUnload)
+                    {
+                        if (DISPLAY_DEBUG_MESSAGES)
+                            Console.WriteLine($"Unloaded buffer {buffer.Name}");
+
+                        buffer.Unload();
+                    }
+
+                    buffersToUnload.Clear();
+
+                    Thread.Sleep(1000 * 30); //check every 30 seconds
+                }
+            }, TaskCreationOptions.LongRunning);
+
+            bufferWatchdog.Start();
+        }
+
+        public static void FreeAllSources() 
+        {
+            foreach (var source in Sources) 
+            {
+                FreeSource(source);
+            }
         }
 
         public static void LoadOggToBuffer(string filename, AudioBuffer buffer, Action onFinish = null) 
@@ -141,13 +195,20 @@ namespace MortalDungeon.Engine_Classes.Audio
         {
             source.Stop();
             source.KeepAlive = false;
+
+            if (source.ActiveSound != null)
+            {
+                source.ActiveSound.Source = null;
+                source.ActiveSound = null;
+            }
         }
 
         private static Source GetAvailableSource()
         {
             for (int i = 0; i < Sources.Length; i++)
             {
-                if (!ActiveSources.TryGetValue(Sources[i], out var _))
+                //if (!ActiveSources.TryGetValue(Sources[i], out var _))
+                if (!ActiveSources.Exists(s => s == Sources[i]))
                 {
                     return Sources[i];
                 }

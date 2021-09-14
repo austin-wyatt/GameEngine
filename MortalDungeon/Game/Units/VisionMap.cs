@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Tiles;
@@ -45,34 +46,32 @@ namespace MortalDungeon.Game.Units
     {
         public const int DIMENSIONS = 150;
         public static int[,] Vision = new int[DIMENSIONS, DIMENSIONS];
-        public static Dictionary<Vector2i, LightObstruction> Obstructions = new Dictionary<Vector2i, LightObstruction>();
 
         public static Vector2[,] ObstructionMap = new Vector2[DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE];
 
-        public static StaticBitmap ObstructionSheet;
+        public static List<LightObstruction> LightObstructions;
+
 
         public static void Initialize() 
         {
-            Bitmap tempMap = new Bitmap("Resources/LightObstructionSheet.png");
 
-            ObstructionSheet = new StaticBitmap(tempMap.Width, tempMap.Height);
-
-            for (int y = 0; y < tempMap.Height; y++)
-            {
-                for (int x = 0; x < tempMap.Width; x++)
-                {
-                    ObstructionSheet.SetPixel(x, y, tempMap.GetPixel(x, y));
-                }
-            }
         }
 
-        public static void Clear() 
+        public static void Clear(UnitTeam teamToUpdate) 
         {
+            int bitMask = 0;
+
+            if (teamToUpdate != UnitTeam.Unknown) 
+            {
+                bitMask = int.MaxValue;
+                bitMask -= BitFromUnitTeam(teamToUpdate);
+            }
+
             for (int i = 0; i < DIMENSIONS; i++) 
             {
                 for (int j = 0; j < DIMENSIONS; j++)
                 {
-                    Vision[i, j] = 0;
+                    Vision[i, j] = Vision[i, j] & bitMask;
                 }
             }
         }
@@ -104,64 +103,121 @@ namespace MortalDungeon.Game.Units
             return GetBit(Vision[x, y], (int)team);
         }
 
-        public static void SetObstructions(List<LightObstruction> obstructions, Scene scene) 
+        private static int _obstructionsChangeToken = -1;
+        public static void SetObstructions(QueuedList<LightObstruction> obstructions, Scene scene) 
         {
+            if (_obstructionsChangeToken == obstructions.CHANGE_TOKEN) return;
+
+            _obstructionsChangeToken = obstructions.CHANGE_TOKEN;
+
             ClearObstructionMap();
+
+            List<LightObstruction> obstructionsCopied = new List<LightObstruction>();
+            List<Task> obstructionsTasks = new List<Task>();
+
+            for (int i = 0; i < obstructions.Count; i++)
+            {
+                obstructionsCopied.Add(obstructions[i]);
+            }
 
             Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
 
-            obstructions.ForEach(obstruction =>
+
+            const int BATCH_SIZE = 100;
+            for (int i = 0; i < obstructionsCopied.Count; i += BATCH_SIZE)
             {
-                Vector2 obstructorCoordinates = obstruction.Position - zeroPoint;
+                int val = i;
 
-                if (Math.Abs((int)obstructorCoordinates.X % 2) == 1)
+                if (val + BATCH_SIZE >= obstructionsCopied.Count)
                 {
-                    obstructorCoordinates.Y -= 0.5f;
+                    obstructionsTasks.Add(new Task(() => calculateObstructions(val, obstructionsCopied.Count)));
                 }
-
-                const float rows = 10;
-
-                //int row = (int)Math.Floor((int)obstruction.ObstructionType / rows);
-                //int column = (int)((int)obstruction.ObstructionType - row * rows);
-
-                if (obstruction.ObstructionType == LightObstructionType.None)
-                    return;
-
-                int row = (int)Math.Floor((int)LightObstructionType.Full / rows);
-                int column = (int)((int)LightObstructionType.Full - row * rows);
-
-                Vector2i firstTexel = new Vector2i((int)(obstructorCoordinates.X * OBSTRUCTIONS_TEXELS_PER_TILE), (int)(obstructorCoordinates.Y * OBSTRUCTIONS_TEXELS_PER_TILE));
-
-                firstTexel.X = Math.Clamp(firstTexel.X, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
-                firstTexel.Y = Math.Clamp(firstTexel.Y, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
-
-                Vector2i currentTexel = new Vector2i(firstTexel.X, firstTexel.Y);
-
-                for (int i = 0; i < OBSTRUCTIONS_TEXELS_PER_TILE; i++) 
+                else
                 {
-                    for (int j = 0; j < OBSTRUCTIONS_TEXELS_PER_TILE; j++)
+                    //calculateVision(i, i + 20);
+                    obstructionsTasks.Add(new Task(() => calculateObstructions(val, val + BATCH_SIZE)));
+                }
+            }
+
+            //calculateObstructions(0, obstructionsCopied.Count);
+
+            void calculateObstructions(int start, int end)
+            {
+                for (int m = start; m < end; m++)
+                {
+                    LightObstruction obstruction = obstructionsCopied[m];
+
+                    Vector2 obstructorCoordinates = obstruction.Position - zeroPoint;
+
+                    if (Math.Abs((int)obstructorCoordinates.X % 2) == 1)
                     {
-                        currentTexel.X = firstTexel.X + i;
-                        currentTexel.Y = firstTexel.Y + j;
+                        obstructorCoordinates.Y -= 0.5f;
+                    }
 
-                        currentTexel.X = Math.Clamp(currentTexel.X, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
-                        currentTexel.Y = Math.Clamp(currentTexel.Y, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
+                    const float rows = 10;
 
-                        Color obstructionColor = ObstructionSheet.GetPixel(column * TEXELS_PER_TILE_IDEAL + i * TEXELS_PER_TILE_IDEAL / OBSTRUCTIONS_TEXELS_PER_TILE
-                            , row * TEXELS_PER_TILE_IDEAL + j * TEXELS_PER_TILE_IDEAL / OBSTRUCTIONS_TEXELS_PER_TILE);
+                    //int row = (int)Math.Floor((int)obstruction.ObstructionType / rows);
+                    //int column = (int)((int)obstruction.ObstructionType - row * rows);
 
-                        if (ObstructionMap[currentTexel.X, currentTexel.Y].X > 0 || ObstructionMap[currentTexel.X, currentTexel.Y].Y > 0)
+                    if (obstruction.ObstructionType == LightObstructionType.None)
+                        continue;
+
+
+                    int row = (int)Math.Floor((int)LightObstructionType.Full / rows);
+                    int column = (int)((int)LightObstructionType.Full - row * rows);
+
+                    Vector2i firstTexel = new Vector2i((int)(obstructorCoordinates.X * OBSTRUCTIONS_TEXELS_PER_TILE), (int)(obstructorCoordinates.Y * OBSTRUCTIONS_TEXELS_PER_TILE));
+
+                    firstTexel.X = Math.Clamp(firstTexel.X, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
+                    firstTexel.Y = Math.Clamp(firstTexel.Y, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
+
+                    Vector2i currentTexel = new Vector2i(firstTexel.X, firstTexel.Y);
+
+                    for (int i = 0; i < OBSTRUCTIONS_TEXELS_PER_TILE; i++)
+                    {
+                        for (int j = 0; j < OBSTRUCTIONS_TEXELS_PER_TILE; j++)
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            ObstructionMap[currentTexel.X, currentTexel.Y].X = obstructionColor.R;
-                            ObstructionMap[currentTexel.X, currentTexel.Y].Y = obstructionColor.A;
+                            currentTexel.X = firstTexel.X + i;
+                            currentTexel.Y = firstTexel.Y + j;
+
+                            currentTexel.X = Math.Clamp(currentTexel.X, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
+                            currentTexel.Y = Math.Clamp(currentTexel.Y, 0, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE - 1);
+
+                            //Color obstructionColor = ObstructionSheet.GetPixel(column * TEXELS_PER_TILE_IDEAL + i * TEXELS_PER_TILE_IDEAL / OBSTRUCTIONS_TEXELS_PER_TILE
+                            //    , row * TEXELS_PER_TILE_IDEAL + j * TEXELS_PER_TILE_IDEAL / OBSTRUCTIONS_TEXELS_PER_TILE);
+
+
+                            if (ObstructionMap[currentTexel.X, currentTexel.Y].X > 0 || ObstructionMap[currentTexel.X, currentTexel.Y].Y > 0)
+                            {
+                                continue;
+                            }
+                            //else
+                            //{
+                            //    ObstructionMap[currentTexel.X, currentTexel.Y].X = obstructionColor.R;
+                            //    ObstructionMap[currentTexel.X, currentTexel.Y].Y = obstructionColor.A;
+                            //}
+
+                            ObstructionMap[currentTexel.X, currentTexel.Y].X = 255;
+                            ObstructionMap[currentTexel.X, currentTexel.Y].Y = 255;
                         }
                     }
                 }
-            });
+            }
+
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
+
+            for (int i = 0; i < obstructionsTasks.Count; i++)
+            {
+                obstructionsTasks[i].Start();
+            }
+
+            for (int i = 0; i < obstructionsTasks.Count; i++)
+            {
+                obstructionsTasks[i].Wait();
+            }
+
+            //Console.WriteLine($"Obstructions updated in {stopwatch.ElapsedMilliseconds}ms");
         }
 
 
@@ -169,9 +225,16 @@ namespace MortalDungeon.Game.Units
         const int TEXELS_PER_TILE_APPROX = 2;
         const int REQUIRED_SUCCESSES = 2;
         const int TEXELS_PER_TILE_IDEAL = 32;
-        public static void CalculateVision(List<VisionGenerator> visionGenerators, Scene scene) 
+
+        private static int _visionChangeToken = -1;
+        public static void CalculateVision(QueuedList<VisionGenerator> visionGenerators, Scene scene, UnitTeam teamToUpdate = UnitTeam.Unknown) 
         {
-            Clear();
+            if (_visionChangeToken == visionGenerators.CHANGE_TOKEN) return;
+
+            _visionChangeToken = visionGenerators.CHANGE_TOKEN;
+
+
+            Clear(teamToUpdate);
 
             List<VisionGenerator> generatorsCopied = new List<VisionGenerator>();
 
@@ -180,20 +243,17 @@ namespace MortalDungeon.Game.Units
                 generatorsCopied.Add(visionGenerators[i]);
             }
 
-            //Calculate vision for each tile in a box determined by the VisionGenerator's radius
-
-            //If we see that the team we're checking already has vision of a tile then we can skip it
 
             Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
 
             int counter = 0;
 
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
 
             List<Task> generatorTasks = new List<Task>();
 
-            const int BATCH_SIZE = 10;
+            const int BATCH_SIZE = 100;
             for (int i = 0; i < generatorsCopied.Count; i += BATCH_SIZE) 
             {
                 int val = i;
@@ -219,6 +279,9 @@ namespace MortalDungeon.Game.Units
                     //if (generator.Team == UnitTeam.Unknown)
                     //    return;
                     if (generator.Team == UnitTeam.Unknown || generator.Radius == 0)
+                        continue;
+
+                    if (teamToUpdate != UnitTeam.Unknown && generator.Team != teamToUpdate)
                         continue;
 
                     Vector2 currTile = new Vector2();
@@ -302,13 +365,14 @@ namespace MortalDungeon.Game.Units
                                             //alphaValue -= alpha_falloff * 10;
                                             if (_saveToBitmap) 
                                             {
-                                                OperationBitmap.SetPixel((int)workingTileTexel.X, (int)workingTileTexel.Y, Color.FromArgb(255, 255, 0, 0));
+                                                OperationBitmap.SetPixel((int)workingTileTexel.X, (int)workingTileTexel.Y, System.Drawing.Color.FromArgb(255, 255, 0, 0));
                                             }
 
                                             if ((int)currTileTexel.X == (int)workingTileTexel.X && (int)currTileTexel.Y == (int)workingTileTexel.Y) 
                                             {
                                                 successes += REQUIRED_SUCCESSES;
-                                                q = (int)dist + 1;
+                                                x = TEXELS_PER_TILE_APPROX;
+                                                //q = (int)dist + 2;
                                             }
                                             alphaValue = 0;
                                             break;
@@ -324,11 +388,11 @@ namespace MortalDungeon.Game.Units
 
                                     if (alphaValue > 0)
                                     {
-                                        if (!(currTileTexel.X < 0 || currTileTexel.Y < 0
+                                        if (_saveToBitmap && !(currTileTexel.X < 0 || currTileTexel.Y < 0
                                             || currTileTexel.X >= DIMENSIONS * TEXELS_PER_TILE_APPROX
-                                            || currTileTexel.Y >= DIMENSIONS * TEXELS_PER_TILE_APPROX) && _saveToBitmap)
+                                            || currTileTexel.Y >= DIMENSIONS * TEXELS_PER_TILE_APPROX))
                                         {
-                                            OperationBitmap.SetPixel((int)currTileTexel.X, (int)currTileTexel.Y, Color.FromArgb(255, 0, 0, 255));
+                                            OperationBitmap.SetPixel((int)currTileTexel.X, (int)currTileTexel.Y, System.Drawing.Color.FromArgb(255, 0, 0, 255));
                                         }
                                     
                                         successes++;
@@ -362,6 +426,9 @@ namespace MortalDungeon.Game.Units
                 //});
             }
 
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
+
             for (int i = 0; i < generatorTasks.Count; i++)
             {
                 generatorTasks[i].Start();
@@ -372,8 +439,67 @@ namespace MortalDungeon.Game.Units
                 generatorTasks[i].Wait();
             }
 
-            Console.WriteLine($"VisionMap updated in {stopwatch.ElapsedMilliseconds}ms");
+            //Console.WriteLine($"Vision updated in {stopwatch.ElapsedMilliseconds}ms");
         }
+
+        //public static void CalculateVision2(QueuedList<VisionGenerator> visionGenerators, Scene scene, UnitTeam teamToUpdate = UnitTeam.Unknown) 
+        //{
+
+        //    if (_visionChangeToken == visionGenerators.CHANGE_TOKEN) return;
+
+        //    _visionChangeToken = visionGenerators.CHANGE_TOKEN;
+
+        //    LightObstructions = scene.LightObstructions;
+
+        //    Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
+            
+        //    //I might wanna try and make this work but the fact that it's a hex grid complicates everything a lot.
+
+        //    //lock (LightObstructions)
+        //    lock (visionGenerators)
+        //    {
+        //        foreach (var generator in visionGenerators)
+        //        {
+        //            List<LightObstruction> obstructions = new List<LightObstruction>();
+
+        //            float radiusTest = generator.Radius * generator.Radius;
+
+        //            Vector2 generatorPos = generator.Position - zeroPoint;
+
+        //            bool genOnOddTile = generatorPos.X % 2 == 1;
+        //            if (genOnOddTile) 
+        //            {
+        //                generatorPos.Y -= 0.5f;
+        //            }
+
+        //            foreach (var obstruction in LightObstructions)
+        //            {
+        //                double dist = Math.Pow(generator.Position.X - obstruction.Position.X, 2) + Math.Pow(generator.Position.Y - obstruction.Position.Y, 2);
+
+        //                if (dist <= radiusTest)
+        //                {
+        //                    obstructions.Add(obstruction);
+        //                }
+        //            }
+
+        //            byte[,] vision = new byte[(int)generator.Radius, (int)generator.Radius];
+
+        //            foreach (var obstruction in obstructions)
+        //            {
+        //                Vector2 obstructionPos = obstruction.Position - generator.Position + new Vector2(generator.Radius, generator.Radius);
+
+        //                if (obstruction.Position.X % 2 == 1) 
+        //                {
+        //                    obstructionPos.Y -= 0.5f;
+        //                }
+
+
+
+        //            }
+
+        //        }
+        //    }
+        //}
 
         private static Vector2 lerp(Vector2 a, Vector2 b, float t)
         {
@@ -648,7 +774,7 @@ namespace MortalDungeon.Game.Units
             {
                 for (int j = 0; j < DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE; j++) 
                 {
-                    Color col = Color.FromArgb(Math.Clamp((int)ObstructionMap[i, j].Y, 0, 255), Math.Clamp((int)ObstructionMap[i, j].X, 0, 255), 0, 0);
+                    var col = System.Drawing.Color.FromArgb(Math.Clamp((int)ObstructionMap[i, j].Y, 0, 255), Math.Clamp((int)ObstructionMap[i, j].X, 0, 255), 0, 0);
 
                     bitmap.SetPixel(i, j, col);
                 }

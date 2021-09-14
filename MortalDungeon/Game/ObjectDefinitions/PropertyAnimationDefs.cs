@@ -28,11 +28,11 @@ namespace MortalDungeon.Game.Objects
 
                     if (i < 13)
                     {
-                        temp.Action = (baseFrame) => baseFrame.TranslateY(0.0005f);
+                        temp.Action = () => BaseFrame.TranslateY(0.0005f);
                     }
                     else  
                     {
-                        temp.Action = (baseFrame) => baseFrame.TranslateY(-0.0005f);
+                        temp.Action = () => BaseFrame.TranslateY(-0.0005f);
                     }
 
                     Keyframes.Add(temp);
@@ -52,7 +52,7 @@ namespace MortalDungeon.Game.Objects
                 Playing = false;
 
                 Keyframe temp = new Keyframe(0);
-                temp.Action = (baseFrame) => baseFrame.TranslateY(0.02f);
+                temp.Action = () => BaseFrame.TranslateY(0.02f);
 
                 Keyframes.Add(temp);
             }
@@ -120,7 +120,7 @@ namespace MortalDungeon.Game.Objects
                         startColor.Add(colorDif);
                     }
 
-                    frame.Action = (_) =>
+                    frame.Action = () =>
                     {
                         CombatScene.EnvironmentColor.Add(colorDif);
                         CombatScene.Time = (CombatScene.Time + 1) % DAY_PERIOD;

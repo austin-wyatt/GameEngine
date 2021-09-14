@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using System;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
@@ -72,14 +73,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.OnHover();
         }
 
-        public override void HoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
                 SetColor(BaseColor);
             }
 
-            base.HoverEnd();
+            base.OnHoverEnd();
         }
 
         public override void OnMouseDown()
@@ -95,6 +96,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Vector4 hoveredColor = new Vector4(BaseColor.X - 0.1f, BaseColor.Y - 0.1f, BaseColor.Z - 0.1f, BaseColor.W);
 
             SetColor(hoveredColor);
+        }
+
+        public override void OnClick()
+        {
+            base.OnClick();
+
+            Audio.Sound sound = new Audio.Sound(Game.Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(1f, 1f) };
+            sound.Play();
         }
 
         public override void SetColor(Vector4 color)

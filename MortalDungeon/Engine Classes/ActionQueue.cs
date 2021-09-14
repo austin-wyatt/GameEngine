@@ -24,16 +24,23 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        private bool _invokeInProgress = false;
         private void InvokeActions() 
         {
+            if (_invokeInProgress) return;
+
+            _invokeInProgress = true;
+            queuedActions.Clear();
+
             queuedActions.HandleQueuedItems();
 
-            for (int i = 0; i < queuedActions.Count; i++) 
+            int count = queuedActions.Count - 1;
+            for (int i = count; i >= 0; i--) 
             {
                 queuedActions[i]?.Invoke();
             }
 
-            queuedActions.Clear();
+            _invokeInProgress = false;
         }
 
         public bool UpdateInProgress() 
@@ -54,13 +61,13 @@ namespace MortalDungeon.Engine_Classes
 
         public void EndUpdate() 
         {
-            Updating = false;
-
-            if (ShouldUpdate) 
+            if (ShouldUpdate)
             {
-                ShouldUpdate = false;
                 InvokeActions();
+                ShouldUpdate = false;
             }
+
+            Updating = false;
         }
     }
 }

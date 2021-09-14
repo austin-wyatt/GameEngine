@@ -232,7 +232,7 @@ namespace MortalDungeon.Game.Tiles
 
                 Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, false);
 
-                Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
+                //Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
                 //Scene.FillInTeamFog();
 
                 Scene.Controller.CullObjects();

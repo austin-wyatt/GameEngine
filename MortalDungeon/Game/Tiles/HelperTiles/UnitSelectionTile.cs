@@ -143,7 +143,7 @@ namespace MortalDungeon.Game.GameObjects
             {
                 Keyframe temp = new Keyframe(i * shiftDelay);
 
-                temp.Action = _ =>
+                temp.Action = () =>
                 {
                     if (temp.ActivationTick == 0) 
                     {
@@ -186,7 +186,7 @@ namespace MortalDungeon.Game.GameObjects
             {
                 Keyframe temp = new Keyframe(i * shiftDelayTarget);
 
-                temp.Action = _ =>
+                temp.Action = () =>
                 {
                     if (temp.ActivationTick == 0)
                     {

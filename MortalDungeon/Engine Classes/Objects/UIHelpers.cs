@@ -75,12 +75,12 @@ namespace MortalDungeon.Engine_Classes
 
         public static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability)
         {
-            void onHover()
+            void onHover(GameObject obj)
             {
                 obj.SetColor(Colors.IconHover);
             }
 
-            void hoverEnd()
+            void hoverEnd(GameObject obj)
             {
                 if (scene._selectedAbility != null && scene._selectedAbility.AbilityID == ability.AbilityID)
                 {
@@ -92,8 +92,8 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
 
-            obj._onHoverActions.Add(onHover);
-            obj._onHoverEndActions.Add(hoverEnd);
+            obj.OnHoverEvent += onHover;
+            obj.OnHoverEndEvent += hoverEnd;
         }
 
         public struct StringTooltipParameters 
@@ -169,15 +169,31 @@ namespace MortalDungeon.Engine_Classes
             param.TooltipParent.AddChild(tooltip, 100000);
             param.TooltipParent.AddChild(tooltipBackground, 99999);
 
-            void temp()
+            void tempScene(SceneEventArgs args)
+            {
+                if (args.EventAction != EventAction.CloseTooltip) return;
+
+                param.TooltipParent.RemoveChild(tooltip.ObjectID);
+                param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
+                param.HoverParent.OnHoverEndEvent -= tempGameObj;
+                param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
+
+                param.Scene.OnUIForceClose -= tempScene;
+            }
+
+            void tempGameObj(GameObject obj)
             {
                 param.TooltipParent.RemoveChild(tooltip.ObjectID);
                 param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
-                param.HoverParent._onHoverEndActions.Remove(temp);
+                param.HoverParent.OnHoverEndEvent -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
-            }
 
-            param.HoverParent._onHoverEndActions.Add(temp);
+                param.Scene.OnUIForceClose -= tempScene;
+            }
+            
+
+            param.HoverParent.OnHoverEndEvent += tempGameObj;
+            param.Scene.OnUIForceClose += tempScene;
 
             CheckTooltipPlacement(tooltip, param.Scene);
         }
@@ -194,16 +210,63 @@ namespace MortalDungeon.Engine_Classes
 
             baseObject.AddChild(tooltip, 100000);
 
-            void temp()
+            void tempScene(SceneEventArgs args)
             {
+                if (args.EventAction != EventAction.CloseTooltip) return;
+
                 baseObject.RemoveChild(tooltip.ObjectID);
-                tooltipParent._onHoverEndActions.Remove(temp);
+                tooltipParent.OnHoverEndEvent -= tempGameObj;
                 scene.ContextManager.SetFlag(tooltipFlag, false);
+
+                scene.OnUIForceClose -= tempScene;
             }
 
-            tooltipParent._onHoverEndActions.Add(temp);
+            void tempGameObj(GameObject args)
+            {
+                baseObject.RemoveChild(tooltip.ObjectID);
+                tooltipParent.OnHoverEndEvent -= tempGameObj;
+                scene.ContextManager.SetFlag(tooltipFlag, false);
+
+                scene.OnUIForceClose -= tempScene;
+            }
+
+            tooltipParent.OnHoverEndEvent += tempGameObj;
+            scene.OnUIForceClose += tempScene;
 
             CheckTooltipPlacement(tooltip, scene);
+        }
+
+        public static Tooltip GenerateTooltipWithHeader(string headerText, string bodyText)
+        {
+            Tooltip tooltip = new Tooltip();
+
+            TextComponent header = new TextComponent();
+            header.SetTextScale(0.1f);
+            header.SetColor(Colors.UITextBlack);
+            header.SetText(headerText);
+
+            TextComponent description = new TextComponent();
+            description.SetTextScale(0.05f);
+            description.SetColor(Colors.UITextBlack);
+            description.SetText(bodyText);
+
+            tooltip.AddChild(header);
+            tooltip.AddChild(description);
+
+            UIDimensions letterScale = header._textField.Letters[0].GetDimensions();
+
+            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+
+            tooltip.Margins = new UIDimensions(0, 30);
+
+            tooltip.FitContents();
+            tooltip.BaseComponent.SetPosition(tooltip.Position);
+
+            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+
+            return tooltip;
         }
 
         /// <summary>
@@ -281,10 +344,16 @@ namespace MortalDungeon.Engine_Classes
             Vector3 topLeft = tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft);
             Vector3 botRight = tooltip.GetAnchorPosition(UIAnchorPosition.BottomRight);
 
-            bool bot = false;
+            bool right = false;
             bool top = false;
+            bool bot = false;
 
             if (botRight.X > WindowConstants.ScreenUnits.X) 
+            {
+                right = true;
+            }
+
+            if (botRight.Y > WindowConstants.ScreenUnits.Y)
             {
                 bot = true;
             }
@@ -294,22 +363,22 @@ namespace MortalDungeon.Engine_Classes
                 top = true;
             }
 
-            if (!(bot || top))
+            if (!(right || top || bot))
                 return;
 
             Vector3 mousePos = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position);
 
-            if (bot && top)
+            if (right && top)
             {
                 tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.TopRight);
             }
-            else if (bot)
-            {
-                tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.BottomRight);
-            }
-            else if (top) 
+            else if (right && bot || top)
             {
                 tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.TopLeft);
+            }
+            else if (right)
+            {
+                tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.BottomRight);
             }
         }
     }

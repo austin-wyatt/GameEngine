@@ -43,7 +43,7 @@ namespace MortalDungeon.Engine_Classes
         public PropertyAnimation() { }
 
 
-        public static PropertyAnimation CreateSingleFrameAnimation(RenderableObject baseFrame, Action<RenderableObject> action, int delay) 
+        public static PropertyAnimation CreateSingleFrameAnimation(RenderableObject baseFrame, Action action, int delay) 
         {
             PropertyAnimation temp = new PropertyAnimation(baseFrame);
             temp.Play();
@@ -73,7 +73,7 @@ namespace MortalDungeon.Engine_Classes
 
                 if (tick >= Keyframes[CurrentKeyframe].ActivationTick)
                 {
-                    Keyframes[CurrentKeyframe].Action?.Invoke(BaseFrame);
+                    Keyframes[CurrentKeyframe].Action?.Invoke();
 
                     CurrentKeyframe++;
                 }
@@ -160,13 +160,13 @@ namespace MortalDungeon.Engine_Classes
     public class Keyframe
     {
         public int ActivationTick = 0; //the tick to activate on. 
-        public Action<RenderableObject> Action = null;
+        public Action Action = null;
 
         public Keyframe(int tick)
         {
             ActivationTick = tick;
         }
-        public Keyframe(int tick, Action<RenderableObject> action)
+        public Keyframe(int tick, Action action)
         {
             ActivationTick = tick;
             Action = action;

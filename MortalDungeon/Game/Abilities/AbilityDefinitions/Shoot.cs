@@ -10,6 +10,7 @@ using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using MortalDungeon.Game.Map;
 using System.Diagnostics;
+using MortalDungeon.Engine_Classes.Audio;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -18,6 +19,7 @@ namespace MortalDungeon.Game.Abilities
         public Shoot(Unit castingUnit, int range = 6, int minRange = 2, float damage = 10)
         {
             Type = AbilityTypes.RangedAttack;
+            DamageType = DamageType.Piercing;
             Range = range;
             MinRange = minRange;
             CastingUnit = castingUnit;
@@ -25,6 +27,8 @@ namespace MortalDungeon.Game.Abilities
             EnergyCost = 7;
 
             Name = "Shoot";
+
+            _description = "Fire an arrow at a target within range. \nA direct line to the target must be present.";
 
             Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
@@ -54,7 +58,11 @@ namespace MortalDungeon.Game.Abilities
             List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene);
 
             Vector2i clusterPos = Scene._tileMapController.PointToClusterPosition(unit.Info.TileMapPosition);
-            
+
+            if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange) 
+            {
+                return false;
+            }
 
             if (teamVision.Exists(p => p == clusterPos)
                 && VisionMap.TargetInVision(point, unit.Info.TileMapPosition, (int)Range, Scene)) 
@@ -95,7 +103,10 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(GetDamage(), DamageType);
+            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamage(), DamageType) { Ability = this });
+
+            Sound sound = new Sound(Sounds.Shoot) { Gain = 0.75f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+            sound.Play();
 
             Casted();
             EffectEnded();

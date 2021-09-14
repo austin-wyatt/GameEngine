@@ -52,8 +52,8 @@ namespace MortalDungeon.Game.Abilities
     public class Ability
     {
         public AbilityTypes Type = AbilityTypes.Empty;
-        public DamageType DamageType = DamageType.Slashing;
-        public int Grade = 0;
+        public DamageType DamageType = DamageType.NonDamaging;
+        public int Grade = 1;
 
         public Unit CastingUnit;
         public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
@@ -67,6 +67,20 @@ namespace MortalDungeon.Game.Abilities
         public Unit SelectedUnit;
 
         public ContextManager<AbilityContext> Context = new ContextManager<AbilityContext>();
+
+        #region Combo ability variables
+        public bool IsComboAbility = false;
+
+        public Ability Previous;
+        public Ability Next;
+
+        public bool DecayToFirst = false;
+        public int ComboAdvanceCost = 1;
+        public int ComboDecayCost = 2;
+
+        public int ComboDecayCount = 0;
+        public int ComboAdvanceCount = 0;
+        #endregion
 
         public int AbilityID => _abilityID;
         protected int _abilityID = _currentAbilityID++;
@@ -114,7 +128,7 @@ namespace MortalDungeon.Game.Abilities
             return new List<BaseTile>();
         }
 
-        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false, Icon passedIcon = null) 
+        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null) 
         {
             Icon icon;
             if (passedIcon == null)
@@ -160,8 +174,41 @@ namespace MortalDungeon.Game.Abilities
 
                 icon.AddChild(energyCostBox, 50);
                 icon.AddChild(energyCostBackground, 49);
+            }
 
-                
+            if (hotkey != null)
+            {
+                UIScale textBoxSize = icon.Size;
+                textBoxSize *= 0.2f;
+
+                float textScale = 0.03f;
+
+
+                TextComponent hotkeyBox = new TextComponent();
+                hotkeyBox.SetColor(Colors.UILightGray);
+                hotkeyBox.SetText(hotkey);
+                hotkeyBox.SetTextScale(textScale);
+
+                UIScale textDimensions = hotkeyBox.GetDimensions();
+
+                if (textDimensions.X > textDimensions.Y)
+                {
+                    hotkeyBox.SetTextScale((textScale - 0.004f) * textDimensions.Y / textDimensions.X);
+                }
+
+                UIBlock hotkeyBackground = new UIBlock();
+                hotkeyBackground.SetColor(Colors.UITextBlack);
+                hotkeyBackground.MultiTextureData.MixTexture = false;
+
+                hotkeyBackground.SetSize(textBoxSize);
+
+                hotkeyBackground.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+                hotkeyBox.SetPositionFromAnchor(hotkeyBackground.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+
+                //energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
+
+                icon.AddChild(hotkeyBox, 50);
+                icon.AddChild(hotkeyBackground, 49);
             }
 
             return icon;
@@ -403,7 +450,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 Keyframe frame = new Keyframe(i * 2)
                 {
-                    Action = (obj) =>
+                    Action = () =>
                     {
                         icon.SetPosition(icon.Position + new Vector3(xMovement, -10, 0.015f));
                         icon.SetColor(icon.BaseObject.BaseFrame.BaseColor - new Vector4(0, 0, 0, 0.02f));
@@ -435,6 +482,12 @@ namespace MortalDungeon.Game.Abilities
             EffectEndedAction?.Invoke();
 
             Scene.AbilityInProgress = false;
+
+            if (IsComboAbility) 
+            {
+                AdvanceCombo();
+            }
+
             Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
         }
         public Action EffectEndedAction = null;
@@ -558,11 +611,142 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
+        protected string _description = "ability description text";
         public virtual Tooltip GenerateTooltip()
         {
-            Tooltip tooltip = new Tooltip();
+            string body = _description;
+
+            body += $"\n\n";
+            if(DamageType != DamageType.NonDamaging) body += $"{Damage} {DamageType} damage\n";
+            body += $"{GetEnergyCost()} Energy\n";
+            body += $"{MinRange}-{Range} Range";
+
+            if (IsComboAbility) 
+            {
+                body += $"\n\nNext in combo: {(Next != null ? Next.Name : "")}";
+            }
+
+            Tooltip tooltip = UIHelpers.GenerateTooltipWithHeader(Name, body);
 
             return tooltip;
+        }
+
+        public virtual bool DecayCombo(int decayAmount = 1) 
+        {
+            if (IsComboAbility && Previous != null) 
+            {
+                ComboDecayCount += decayAmount;
+
+                if (ComboDecayCount >= ComboDecayCost) 
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public virtual void CompleteDecay() 
+        {
+            if (Previous != null)
+            {
+                if (DecayToFirst) ReturnToFirst();
+                else SwapOutAbility(Previous);
+            }
+        }
+
+        public virtual void AdvanceCombo(int advanceAmount = 1) 
+        {
+            if (IsComboAbility)
+            {
+                ComboAdvanceCount += advanceAmount;
+
+                if(ComboAdvanceCount >= ComboAdvanceCost) 
+                {
+                    CompleteAdvance();
+                }
+            }
+        }
+
+        public virtual void CompleteAdvance() 
+        {
+            if (Next != null)
+            {
+                SwapOutAbility(Next);
+            }
+            else
+            {
+                ReturnToFirst();
+            }
+        }
+
+        public virtual void OnSwappedTo() 
+        {
+            ComboDecayCount = 0;
+            ComboAdvanceCount = 0;
+
+            if (Scene.Footer._currentUnit == CastingUnit) 
+            {
+                Scene.Footer.UpdateFooterInfo(CastingUnit);
+            }
+        }
+
+        public virtual void SwapOutAbility(Ability ability) 
+        {
+            lock (CastingUnit.Info.Abilities)
+            {
+                CastingUnit.Info.Abilities.Replace(this, ability);
+                ability.OnSwappedTo();
+            }
+        }
+
+        public virtual void ReturnToFirst()
+        {
+            Ability ability = this;
+
+            while (ability.Previous != null) 
+            {
+                ability = ability.Previous;
+
+                if (ability == this)
+                {
+                    SwapOutAbility(ability.Previous);
+                    return;
+                }
+            }
+
+            SwapOutAbility(ability);
+        }
+
+        public virtual void AddCombo(Ability next, Ability previous) 
+        {
+            Next = next;
+            Previous = previous;
+
+            if(previous != null) 
+            {
+                previous.Next = this;
+                previous.IsComboAbility = true;
+            }
+
+            if(next != null) 
+            {
+                next.Previous = this;
+                next.IsComboAbility = true;
+            }
+
+            IsComboAbility = true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Ability ability &&
+                   _abilityID == ability._abilityID;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(_abilityID);
         }
     }
 }

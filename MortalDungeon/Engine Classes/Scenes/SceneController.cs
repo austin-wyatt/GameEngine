@@ -168,6 +168,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 case MessageBody.StartRendering:
                 case MessageBody.InterceptClicks:
                 case MessageBody.EndClickInterception:
+                case MessageBody.Flag:
                     ForwardMessage(msg);
                     break;
                 case MessageBody.LoadScene:
@@ -282,7 +283,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         InterceptKeyStrokes,
         EndKeyStrokeInterception,
         UnloadScene,
-        LoadScene
+        LoadScene,
+
+        Flag
     }
 
     public enum MessageTarget
@@ -303,6 +306,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
         Some //currently unsupported
     }
 
+    public enum MessageFlag 
+    {
+        None,
+        OpenEscapeMenu
+    }
+
     public class Message
     {
         public MessageType MessageType;
@@ -315,6 +324,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public int[] TargetIDs = new int[0]; //if specified, integer ids of the object type you are trying to affect
         public int[] SceneTargets = new int[0]; //if no scene targets are passed then the message will be sent to every scene besides the sender
 
+        public MessageFlag Flag = MessageFlag.None;
         public Message(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All) 
         {
             MessageType = msgType;
