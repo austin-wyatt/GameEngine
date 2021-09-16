@@ -34,5 +34,7 @@ namespace MortalDungeon.Objects
         public static readonly Shader LIGHT_SHADER = new Shader("Shaders/lightShader.vert", "Shaders/lightShader.frag");
 
         public static readonly Shader COLOR_SHADER = new Shader("Shaders/colorShader.vert", "Shaders/colorShader.frag");
+
+        public static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");
     } 
 }

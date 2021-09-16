@@ -44,7 +44,6 @@ namespace MortalDungeon.Game.Structures
             Vector3 topPos = tile.Structure.Position - new Vector3(tileDim.Y * (float)Math.Sin(rot) / 2, tileDim.Y * (float)Math.Cos(rot) / 2, 0);
             Vector3 botPos = tile.Structure.Position + new Vector3(tileDim.Y * (float)Math.Sin(rot) / 2, tileDim.Y * (float)Math.Cos(rot) / 2, 0);
 
-
             Name = "Door";
             //Type = StructureEnum.Wall_Wood_Door;
             Type = StructureEnum.Wall_Iron_1;
@@ -70,8 +69,6 @@ namespace MortalDungeon.Game.Structures
             door_2.BaseFrame.VerticeType = _3DObjects.WallObj.ObjectID;
             AddBaseObject(door_2);
 
-
-            
             door_2.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
             door_1.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
 

@@ -44,10 +44,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderQueuedLetters();
 
-            RenderQueuedParticles();
             RenderTileQueue();
 
             RenderTileQuadQueue();
+
+            RenderQueuedParticles();
 
             //RenderQueuedStructures();
             RenderQueuedUnits();
@@ -122,7 +123,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
         {
-            lock (uiObjects) { }
+            lock (uiObjects)
             if (uiObjects.Count > 0)
             {
                 for (int i = 0; i < uiObjects.Count; i++)

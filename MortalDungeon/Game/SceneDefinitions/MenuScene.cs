@@ -137,12 +137,12 @@ namespace MortalDungeon.Game.SceneDefinitions
             //    }
             //}
 
-            for (int i = 0; i < 1; i++)
-            {
-                Fire fire = new Fire(new Vector3(1150 + i * 250, 950, 0.2f));
+            //for (int i = 0; i < 1; i++)
+            //{
+            //    Fire fire = new Fire(new Vector3(1150 + i * 250, 950, 0.2f));
 
-                _genericObjects.Add(fire);
-            }
+            //    _genericObjects.Add(fire);
+            //}
 
             MountainTwo mountainBackground = new MountainTwo(new Vector3(30000, 0, -50));
             mountainBackground.BaseObjects[0].GetDisplay().ScaleAll(10);
@@ -483,14 +483,14 @@ namespace MortalDungeon.Game.SceneDefinitions
                             _wallTemp = null;
                         }
                     }
-                    //else if (KeyboardState.IsKeyDown(Keys.LeftControl))
-                    //{
-                    //    if (tile.Structure != null) 
-                    //    {
-                    //        Wall wall = tile.Structure as Wall;
-                    //        wall.CreateDoor(tile);
-                    //    }
-                    //}
+                    else if (KeyboardState.IsKeyDown(Keys.LeftControl))
+                    {
+                        if (tile.Structure != null)
+                        {
+                            Wall wall = tile.Structure as Wall;
+                            wall.CreateDoor(tile);
+                        }
+                    }
                     else if (KeyboardState.IsKeyDown(Keys.F1))
                     {
                         List<BaseTile> tiles = new List<BaseTile>();

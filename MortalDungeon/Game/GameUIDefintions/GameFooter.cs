@@ -502,39 +502,31 @@ namespace MortalDungeon.Game.UI
 
         private void InitializeScrollableAreaAbility()
         {
-            if (_scrollableAreaAbility != null)
-                RemoveChild(_scrollableAreaAbility);
+            //if (_scrollableAreaAbility != null)
+            //    RemoveChild(_scrollableAreaAbility);
 
-            UIScale scrollableAreaSize = new UIScale(_containingBlock.Size);
-            //scrollableAreaSize.X /= 2f;
-            scrollableAreaSize.Y -= .02f;
+            //UIScale scrollableAreaSize = new UIScale(_containingBlock.Size);
+            ////scrollableAreaSize.X /= 2f;
+            //scrollableAreaSize.Y -= .02f;
 
-            //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
-            _scrollableAreaAbility = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
+            ////_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);
+            //_scrollableAreaAbility = new ScrollableArea(new Vector3(), scrollableAreaSize, new Vector3(), new UIScale(scrollableAreaSize.X, scrollableAreaSize.Y), 0.05f);
 
             
 
-            float scrollbarWidth = 0;
-            if (_scrollableAreaAbility.Scrollbar != null)
-            {
-                scrollbarWidth = _scrollableAreaAbility.Scrollbar.GetDimensions().X;
-            }
+            //float scrollbarWidth = 0;
+            //if (_scrollableAreaAbility.Scrollbar != null)
+            //{
+            //    scrollbarWidth = _scrollableAreaAbility.Scrollbar.GetDimensions().X;
+            //}
 
-            _scrollableAreaAbility.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopLeft);
-            _scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
-
-           
             //_scrollableAreaAbility.SetVisibleAreaPosition(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-3 - scrollbarWidth, 5, 0), UIAnchorPosition.TopLeft);
-            //_scrollableAreaAbility.SetVisibleAreaPosition(Position + new Vector3(80, 0, 0));
-            ////_scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
-            //_scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(Position + new Vector3(80, 0, 0));
+            //_scrollableAreaAbility.BaseComponent.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
 
-            _scrollableAreaAbility.BaseComponent.SetColor(new Vector4(1, 0, 0, 1f));
 
-            AddChild(_scrollableAreaAbility, 1500);
+            //_scrollableAreaAbility.BaseComponent.SetColor(new Vector4(1, 0, 0, 1f));
 
-            //_scrollableAreaAbility.SetBaseAreaSize(scrollableAreaSize);
-            //_scrollableAreaAbility.SetVisibleAreaSize(scrollableAreaSize);
+            //AddChild(_scrollableAreaAbility, 1500);
         }
     }
 }

@@ -86,6 +86,7 @@ namespace MortalDungeon.Game.Abilities
             SlowDebuff slowDebuff = new SlowDebuff(SelectedUnit, _slowDuration, _slowMultiplier);
 
             Casted();
+            EffectEnded();
         }
     }
 }

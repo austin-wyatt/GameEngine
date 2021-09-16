@@ -173,8 +173,6 @@ namespace MortalDungeon.Game.Tiles
 
                 //SelectionTiles.Add(baseTile);
                 _selectionTilePool.Add(baseTile);
-
-                LoadTexture(baseTile);
             }
 
             tilePosition.Z += 0.001f;
@@ -192,6 +190,8 @@ namespace MortalDungeon.Game.Tiles
             HoveredTile._tileObject.OutlineParameters.SetAllInline(0);
 
             LoadTexture(HoveredTile);
+
+            LoadTextures(_selectionTilePool);
 
             _hoveredTileList = new List<BaseTile>() { HoveredTile };
         }

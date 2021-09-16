@@ -69,12 +69,12 @@ namespace MortalDungeon.Engine_Classes
         {
             BaseObjects.ForEach(obj =>
             {
-                obj.SetPosition(position + PositionalOffset + new Vector3(XCorrection, YCorrection, 0));
+                obj.SetPosition(position + new Vector3(XCorrection, YCorrection, 0));
             });
 
             ParticleGenerators.ForEach(particleGen =>
             {
-                particleGen.SetPosition(position + PositionalOffset);
+                particleGen.SetPosition(position);
             });
 
             Position = position;

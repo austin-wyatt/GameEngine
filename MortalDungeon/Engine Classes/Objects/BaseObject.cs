@@ -25,7 +25,6 @@ namespace MortalDungeon.Engine_Classes
         public bool Clickable = true;
         private Vector3 _dimensions;
         public Animation _currentAnimation;
-        public Vector3 _localSpacePosition = new Vector3();
 
         public RenderableObject BaseFrame;
 
@@ -70,8 +69,6 @@ namespace MortalDungeon.Engine_Classes
 
             _dimensions = Bounds.GetDimensionData();
 
-            _localSpacePosition = new Vector3(position);
-
             SetPosition(position);
         }
 
@@ -106,8 +103,6 @@ namespace MortalDungeon.Engine_Classes
 
             _dimensions = Bounds.GetDimensionData();
 
-            _localSpacePosition = new Vector3(position);
-
             SetPosition(position);
         }
 
@@ -126,8 +121,6 @@ namespace MortalDungeon.Engine_Classes
                 position.X = Math.Clamp(position.X, -1.0f, 1.0f);
                 position.Y = Math.Clamp(position.Y, -1.0f, 1.0f);
             }
-
-            _localSpacePosition = new Vector3(position);
 
             BaseFrame.SetTranslation(position);
         }

@@ -17,7 +17,6 @@ namespace MortalDungeon.Engine_Classes
         public Vector3 Position = new Vector3();
         public List<BaseObject> BaseObjects = new List<BaseObject>();
         public List<ParticleGenerator> ParticleGenerators = new List<ParticleGenerator>();
-        public Vector3 PositionalOffset = new Vector3();
         public Vector3 Scale = new Vector3(1, 1, 1);
         public BaseObject BaseObject => BaseObjects.Count > 0 ? BaseObjects[0] : null;
 
@@ -97,12 +96,16 @@ namespace MortalDungeon.Engine_Classes
         {
             BaseObjects.ForEach(obj =>
             {
-                obj.SetPosition(position + PositionalOffset);
+                Vector3 deltaPos = Position - obj.Position;
+
+                obj.SetPosition(position - deltaPos);
             });
 
             ParticleGenerators.ForEach(particleGen =>
             {
-                particleGen.SetPosition(position + PositionalOffset);
+                Vector3 deltaPos = Position - particleGen.Position;
+
+                particleGen.SetPosition(position - deltaPos);
             });
 
             Position = position;
@@ -233,6 +236,16 @@ namespace MortalDungeon.Engine_Classes
             int animIndex = PropertyAnimations.FindIndex(p => p.AnimationID == animationID);
 
             if (animIndex != -1) 
+            {
+                _properyAnimationsToDestroy.Add(animIndex);
+            }
+        }
+
+        public void RemovePropertyAnimation(PropertyAnimation animation)
+        {
+            int animIndex = PropertyAnimations.FindIndex(p => p.AnimationID == animation.AnimationID);
+
+            if (animIndex != -1)
             {
                 _properyAnimationsToDestroy.Add(animIndex);
             }
@@ -390,9 +403,33 @@ namespace MortalDungeon.Engine_Classes
         #endregion
 
 
-        protected virtual void LoadTexture<T>(T obj) where T : GameObject 
+        public static void LoadTexture<T>(T obj) where T : GameObject 
         {
-            Renderer.LoadTextureFromGameObj(obj);
+            void loadTex()
+            {
+                Renderer.LoadTextureFromGameObj(obj);
+                Renderer.OnRender -= loadTex;
+            };
+
+            Renderer.OnRender += loadTex;
+        }
+
+        public static void LoadTextures<T>(List<T> obj) where T : GameObject
+        {
+            void loadTex()
+            {
+                lock (obj) 
+                {
+                    obj.ForEach(item =>
+                    {
+                        Renderer.LoadTextureFromGameObj(item);
+                    });
+
+                    Renderer.OnRender -= loadTex;
+                }
+            };
+
+            Renderer.OnRender += loadTex;
         }
 
         public override bool Equals(object obj)

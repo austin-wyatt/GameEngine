@@ -15,17 +15,13 @@ namespace MortalDungeon.Engine_Classes
         public bool Playing = false;
         protected bool Priming = false;
 
-        public OutlineParameters OutlineParameters = new OutlineParameters();
+        public bool RefreshParticles = true;
 
+        public bool Repeat = true;
+
+        public Action OnFinish = null;
 
         protected int _currentParticle = 0; //the index of the current particle
-        public Particle CurrentParticle 
-        {
-            get 
-            {
-                return Particles[_currentParticle];
-            }
-        }
 
         protected int _tickCount = 0;
         public ParticleGenerator() { }
@@ -43,23 +39,55 @@ namespace MortalDungeon.Engine_Classes
         public virtual void GenerateParticle()
         {
             _currentParticle++;
-            if(_currentParticle == ParticleCount)
+            if(_currentParticle >= ParticleCount && RefreshParticles)
             {
                 _currentParticle = 0;
+            }
+
+            if (_currentParticle == 0 && !Repeat)
+            {
+                RefreshParticles = false;
             }
         }
 
         public virtual void DecayParticles()
         {
+            bool hasLivingParticle = false;
+
             Particles.ForEach(particle =>
             {
                 particle.Tick();
+                UpdateParticle(particle);
+
+                if (particle.Life > 0)
+                    hasLivingParticle = true;
             });
+
+            if (!hasLivingParticle && !Repeat) 
+            {
+                Playing = false;
+                OnFinish?.Invoke();
+            }
+        }
+
+        public virtual void UpdateParticle(Particle particle) 
+        {
+
         }
 
         public void SetPosition(Vector3 position) 
         {
             Position = position + PositionalOffset;
+        }
+
+        public virtual void PrimeParticles()
+        {
+            Priming = true;
+            for (int i = 0; i < ParticleCount; i++)
+            {
+                Tick();
+            }
+            Priming = false;
         }
     }
     public class Particle

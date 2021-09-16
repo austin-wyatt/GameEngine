@@ -20,7 +20,7 @@ namespace MortalDungeon.Game.GameObjects
             FireBaseObject.BaseFrame.RotateX(25);
             AddBaseObject(FireBaseObject);
 
-            FireGen fireGenerator = new FireGen(new Vector3(0, 0, 0.12f), 0.01f);
+            var fireGenerator = new Particles.FireGen(new Vector3(0, 0, 0.12f), 0.01f);
             fireGenerator.PositionalOffset = new Vector3(0, 100, -0.01f);
             fireGenerator.Playing = true;
             ParticleGenerators.Add(fireGenerator);

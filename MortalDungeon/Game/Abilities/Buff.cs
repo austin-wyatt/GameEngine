@@ -135,6 +135,11 @@ namespace MortalDungeon.Game.Abilities
 
         }
 
+        public virtual DamageInstance GetDamageInstance()
+        {
+            return new DamageInstance();
+        }
+
         public class BuffModifier
         {
             public float Additive = 0;

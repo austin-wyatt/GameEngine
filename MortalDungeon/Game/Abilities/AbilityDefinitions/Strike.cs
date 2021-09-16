@@ -81,10 +81,19 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamage(), DamageType) { Ability = this });
+            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
 
             Casted();
             EffectEnded();
+        }
+
+        public override DamageInstance GetDamageInstance()
+        {
+            DamageInstance instance = new DamageInstance();
+
+            instance.Damage.Add(DamageType, GetDamage());
+
+            return instance;
         }
     }
 }

@@ -22,7 +22,6 @@ namespace MortalDungeon.Game.Units
             Selectable = true;
 
             BaseObject Skeleton = CreateBaseObject();
-            Skeleton.SetPosition(position);
             Skeleton.BaseFrame.CameraPerspective = true;
             Skeleton.BaseFrame.RotateX(25);
 
@@ -74,6 +73,14 @@ namespace MortalDungeon.Game.Units
         {
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(1.2f, 1.4f) };
             sound.Play();
+
+            var bloodExplosion = new Particles.Explosion(Position, new Vector4(0.8f, 0.8f, 0.776f, 1));
+            bloodExplosion.OnFinish = () =>
+            {
+                Scene._particleGenerators.Remove(bloodExplosion);
+            };
+
+            Scene._particleGenerators.Add(bloodExplosion);
         }
 
         public override BaseObject CreateBaseObject()

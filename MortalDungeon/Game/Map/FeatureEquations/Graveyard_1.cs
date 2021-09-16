@@ -176,7 +176,8 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             {
                 GateTiles.ForEach(tile =>
                 {
-                    if (tile.Structure is Wall wall && wall.WallType == WallType.Wall)
+                    Wall wall = tile.Structure as Wall;
+                    if (wall != null && wall.WallType == WallType.Wall)
                     {
                         wall.CreateDoor(tile);
                     }

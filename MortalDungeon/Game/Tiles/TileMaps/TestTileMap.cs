@@ -36,8 +36,6 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                     baseTile.TileMap = this;
                     baseTile.Outline = true;
 
-                    LoadTexture(baseTile);
-
                     Tiles.Add(baseTile);
 
                     if (_randomNumberGen.NextDouble() > 0.9) 
@@ -60,6 +58,8 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                 tilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X / 1.34f; //1.29 before outlining changes
                 tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y / -2f); //2 before outlining changes
             }
+
+            LoadTextures(Tiles);
 
             tilePosition.Z += 0.03f;
             InitializeHelperTiles(tilePosition);

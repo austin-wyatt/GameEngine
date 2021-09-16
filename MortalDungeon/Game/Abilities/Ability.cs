@@ -118,29 +118,29 @@ namespace MortalDungeon.Game.Abilities
 
         public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
 
-        public Ability() 
+        public Ability()
         {
 
         }
 
-        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null) 
+        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             return new List<BaseTile>();
         }
 
-        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null) 
+        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null)
         {
             Icon icon;
             if (passedIcon == null)
             {
                 icon = new Icon(Icon, scale, withBackground, backgroundType);
             }
-            else 
+            else
             {
                 icon = new Icon(passedIcon, scale, withBackground, backgroundType);
             }
 
-            if (showEnergyCost) 
+            if (showEnergyCost)
             {
                 UIScale textBoxSize = icon.Size;
                 textBoxSize *= 0.333f;
@@ -156,7 +156,7 @@ namespace MortalDungeon.Game.Abilities
 
                 UIScale textDimensions = energyCostBox.GetDimensions();
 
-                if (textDimensions.X > textDimensions.Y) 
+                if (textDimensions.X > textDimensions.Y)
                 {
                     energyCostBox.SetTextScale((textScale - 0.004f) * textDimensions.Y / textDimensions.X);
                 }
@@ -224,7 +224,7 @@ namespace MortalDungeon.Game.Abilities
             return EnergyCost;
         }
 
-        public float GetDamage() 
+        public float GetDamage()
         {
             if (CastingUnit != null)
             {
@@ -234,7 +234,7 @@ namespace MortalDungeon.Game.Abilities
             return Damage;
         }
 
-        public virtual bool UnitInRange(Unit unit, BaseTile position = null) 
+        public virtual bool UnitInRange(Unit unit, BaseTile position = null)
         {
             return false;
         }
@@ -247,17 +247,17 @@ namespace MortalDungeon.Game.Abilities
             return MinRange > TileMap.GetDistanceBetweenPoints(unit.Info.TileMapPosition.TilePoint, CastingUnit.Info.TileMapPosition.TilePoint);
         }
 
-        public virtual void AdvanceDuration() 
+        public virtual void AdvanceDuration()
         {
             Duration--;
             EnactEffect();
-        } 
-        public virtual void EnactEffect() 
+        }
+        public virtual void EnactEffect()
         {
             Scene.AbilityInProgress = true;
         } //the actual effect of the skill
 
-        public virtual void OnSelect(CombatScene scene, TileMap currentMap) 
+        public virtual void OnSelect(CombatScene scene, TileMap currentMap)
         {
             if (Scene.EnergyDisplayBar.CurrentEnergy >= GetEnergyCost())
             {
@@ -273,9 +273,9 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public void TargetAffectedUnits() 
+        public void TargetAffectedUnits()
         {
-            if (CastingUnit.AI.ControlType == ControlType.Controlled) 
+            if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
                 AffectedUnits.ForEach(u =>
                 {
@@ -306,7 +306,7 @@ namespace MortalDungeon.Game.Abilities
             Scene.DeselectAbility();
         }
 
-        public virtual void OnAbilityDeselect() 
+        public virtual void OnAbilityDeselect()
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
             AffectedUnits.ForEach(u => u.Untarget());
@@ -319,7 +319,7 @@ namespace MortalDungeon.Game.Abilities
 
         public virtual void ApplyEnergyCost()
         {
-            if (Context.GetFlag(AbilityContext.SkipEnergyCost)) 
+            if (Context.GetFlag(AbilityContext.SkipEnergyCost))
             {
                 Context.SetFlag(AbilityContext.SkipEnergyCost, false);
                 return;
@@ -344,9 +344,9 @@ namespace MortalDungeon.Game.Abilities
         /// <summary>
         /// Apply the energy cost and clean up and effects here.
         /// </summary>
-        public virtual void OnCast() 
+        public virtual void OnCast()
         {
-            if (Scene.InCombat) 
+            if (Scene.InCombat)
             {
                 ApplyEnergyCost();
             }
@@ -355,7 +355,7 @@ namespace MortalDungeon.Game.Abilities
             Scene.OnAbilityCast(this);
         }
 
-        public virtual void OnAICast() 
+        public virtual void OnAICast()
         {
             if (Scene.InCombat)
             {
@@ -363,13 +363,13 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public void Casted() 
+        public void Casted()
         {
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
                 OnCast();
             }
-            else 
+            else
             {
                 OnAICast();
             }
@@ -377,7 +377,7 @@ namespace MortalDungeon.Game.Abilities
             CreateIconHoverEffect();
             CreateTemporaryVision();
 
-            if (BreakStealth && CastingUnit.Info.Stealth.Hiding) 
+            if (BreakStealth && CastingUnit.Info.Stealth.Hiding)
             {
                 CastingUnit.Info.Stealth.SetHiding(false);
             }
@@ -386,7 +386,7 @@ namespace MortalDungeon.Game.Abilities
             AffectedTiles.Clear();
         }
 
-        public void CreateTemporaryVision() 
+        public void CreateTemporaryVision()
         {
             if (SelectedUnit == null)
                 return;
@@ -402,9 +402,9 @@ namespace MortalDungeon.Game.Abilities
             Scene.TemporaryVision.Add(vision);
         }
 
-        public void CreateIconHoverEffect(Icon passedIcon = null) 
+        public void CreateIconHoverEffect(Icon passedIcon = null)
         {
-            if (Context.GetFlag(AbilityContext.SkipIconAnimation)) 
+            if (Context.GetFlag(AbilityContext.SkipIconAnimation))
             {
                 Context.SetFlag(AbilityContext.SkipIconAnimation, false);
                 return;
@@ -413,7 +413,7 @@ namespace MortalDungeon.Game.Abilities
 
             Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
 
-            switch (CastingUnit.AI.Team) 
+            switch (CastingUnit.AI.Team)
             {
                 case UnitTeam.PlayerUnits:
                     backgroundType = Icon.BackgroundType.BuffBackground;
@@ -423,21 +423,21 @@ namespace MortalDungeon.Game.Abilities
                     break;
             }
 
-            Icon icon = GenerateIcon(new UIScale(1 * WindowConstants.AspectRatio, 1), true, backgroundType, false, passedIcon);
-            
+            Icon icon = GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType, false, passedIcon);
+
 
             icon.SetCameraPerspective(true);
             if (SelectedUnit != null)
             {
-                icon.SetPosition(SelectedUnit.Position + Vector3.UnitZ * 0.3f);
+                icon.SetPosition(SelectedUnit.Position + new Vector3(0, -400, 0.3f));
             }
-            else if (SelectedTile != null) 
+            else if (SelectedTile != null)
             {
-                icon.SetPosition(SelectedTile.Position + Vector3.UnitZ * 0.3f);
+                icon.SetPosition(SelectedTile.Position + new Vector3(0, -400, 0.3f));
             }
             else
             {
-                icon.SetPosition(CastingUnit.Position + Vector3.UnitZ * 0.3f);
+                icon.SetPosition(CastingUnit.Position + new Vector3(0, -400, 0.3f));
             }
 
             Scene._genericObjects.Add(icon);
@@ -446,7 +446,7 @@ namespace MortalDungeon.Game.Abilities
 
             float xMovement = (float)(new Random().NextDouble() - 1) * 10f;
 
-            for (int i = 0; i < 50; i++) 
+            for (int i = 0; i < 50; i++)
             {
                 Keyframe frame = new Keyframe(i * 2)
                 {
@@ -473,27 +473,31 @@ namespace MortalDungeon.Game.Abilities
         /// <summary>
         /// Called once all skill effects have been resolved and another skill can be used.
         /// </summary>
-        public virtual void EffectEnded() 
+        public virtual void EffectEnded()
         {
-            if (CastingUnit.AI.ControlType != ControlType.Controlled && Type != AbilityTypes.Move) 
+            //since this method can be called from the main thread via a ticking property animation we need to spawn a task to avoid sleeping the main thread
+            Task.Run(() =>
             {
-                Thread.Sleep(750);
-            }
-            EffectEndedAction?.Invoke();
+                if (CastingUnit.AI.ControlType != ControlType.Controlled && Type != AbilityTypes.Move)
+                {
+                    Thread.Sleep(750);
+                }
+                EffectEndedAction?.Invoke();
 
-            Scene.AbilityInProgress = false;
+                Scene.AbilityInProgress = false;
 
-            if (IsComboAbility) 
-            {
-                AdvanceCombo();
-            }
+                if (IsComboAbility)
+                {
+                    AdvanceCombo();
+                }
 
-            Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
+                Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
+            });
         }
         public Action EffectEndedAction = null;
 
         //remove invalid tiles from the list
-        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0) 
+        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0)
         {
             for (int i = 0; i < validTiles.Count; i++)
             {
@@ -514,12 +518,12 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if (CanTargetSelf) 
+                if (CanTargetSelf)
                 {
                     AffectedUnits.Add(CastingUnit);
                 }
 
-                if ((validTiles[i].InFog[CastingUnit.AI.Team] && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog[CastingUnit.AI.Team] && !CanTargetThroughFog)) 
+                if ((validTiles[i].InFog[CastingUnit.AI.Team] && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
                 {
                     validTiles.RemoveAt(i);
                     i--;
@@ -531,13 +535,13 @@ namespace MortalDungeon.Game.Abilities
             {
                 BaseTile tile = units[j].Info.TileMapPosition;
 
-                if (units[j] == CastingUnit && !CanTargetSelf) 
+                if (units[j] == CastingUnit && !CanTargetSelf)
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;
                 }
 
-                if (!validTiles.Contains(units[j].Info.TileMapPosition)) 
+                if (!validTiles.Contains(units[j].Info.TileMapPosition))
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;
@@ -553,7 +557,7 @@ namespace MortalDungeon.Game.Abilities
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;
                 }
-                else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team]) 
+                else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team])
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;
@@ -586,7 +590,7 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if ((!CanTargetAlly && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Friendly) 
+                if ((!CanTargetAlly && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Friendly)
                     || (!CanTargetEnemy && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Hostile))
                 {
                     continue;
@@ -617,11 +621,13 @@ namespace MortalDungeon.Game.Abilities
             string body = _description;
 
             body += $"\n\n";
-            if(DamageType != DamageType.NonDamaging) body += $"{Damage} {DamageType} damage\n";
+
+            body += GetDamageInstance().GetTooltipStrings(CastingUnit);
+            //if (DamageType != DamageType.NonDamaging) body += $"{Damage} {DamageType} damage\n";
             body += $"{GetEnergyCost()} Energy\n";
             body += $"{MinRange}-{Range} Range";
 
-            if (IsComboAbility) 
+            if (IsComboAbility)
             {
                 body += $"\n\nNext in combo: {(Next != null ? Next.Name : "")}";
             }
@@ -631,13 +637,13 @@ namespace MortalDungeon.Game.Abilities
             return tooltip;
         }
 
-        public virtual bool DecayCombo(int decayAmount = 1) 
+        public virtual bool DecayCombo(int decayAmount = 1)
         {
-            if (IsComboAbility && Previous != null) 
+            if (IsComboAbility && Previous != null)
             {
                 ComboDecayCount += decayAmount;
 
-                if (ComboDecayCount >= ComboDecayCost) 
+                if (ComboDecayCount >= ComboDecayCost)
                 {
                     return true;
                 }
@@ -646,7 +652,7 @@ namespace MortalDungeon.Game.Abilities
             return false;
         }
 
-        public virtual void CompleteDecay() 
+        public virtual void CompleteDecay()
         {
             if (Previous != null)
             {
@@ -655,20 +661,20 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void AdvanceCombo(int advanceAmount = 1) 
+        public virtual void AdvanceCombo(int advanceAmount = 1)
         {
             if (IsComboAbility)
             {
                 ComboAdvanceCount += advanceAmount;
 
-                if(ComboAdvanceCount >= ComboAdvanceCost) 
+                if (ComboAdvanceCount >= ComboAdvanceCost)
                 {
                     CompleteAdvance();
                 }
             }
         }
 
-        public virtual void CompleteAdvance() 
+        public virtual void CompleteAdvance()
         {
             if (Next != null)
             {
@@ -680,18 +686,18 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void OnSwappedTo() 
+        public virtual void OnSwappedTo()
         {
             ComboDecayCount = 0;
             ComboAdvanceCount = 0;
 
-            if (Scene.Footer._currentUnit == CastingUnit) 
+            if (Scene.Footer._currentUnit == CastingUnit)
             {
                 Scene.Footer.UpdateFooterInfo(CastingUnit);
             }
         }
 
-        public virtual void SwapOutAbility(Ability ability) 
+        public virtual void SwapOutAbility(Ability ability)
         {
             lock (CastingUnit.Info.Abilities)
             {
@@ -704,7 +710,7 @@ namespace MortalDungeon.Game.Abilities
         {
             Ability ability = this;
 
-            while (ability.Previous != null) 
+            while (ability.Previous != null)
             {
                 ability = ability.Previous;
 
@@ -718,24 +724,29 @@ namespace MortalDungeon.Game.Abilities
             SwapOutAbility(ability);
         }
 
-        public virtual void AddCombo(Ability next, Ability previous) 
+        public virtual void AddCombo(Ability next, Ability previous)
         {
             Next = next;
             Previous = previous;
 
-            if(previous != null) 
+            if (previous != null)
             {
                 previous.Next = this;
                 previous.IsComboAbility = true;
             }
 
-            if(next != null) 
+            if (next != null)
             {
                 next.Previous = this;
                 next.IsComboAbility = true;
             }
 
             IsComboAbility = true;
+        }
+
+        public virtual DamageInstance GetDamageInstance() 
+        {
+            return new DamageInstance();
         }
 
         public override bool Equals(object obj)

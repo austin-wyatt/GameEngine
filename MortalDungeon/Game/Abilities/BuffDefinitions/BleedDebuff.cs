@@ -30,9 +30,18 @@ namespace MortalDungeon.Game.Abilities
 
         public override void OnTurnStart()
         {
-            Unit.ApplyDamage(new Unit.DamageParams(Damage, DamageType.Bleed) { Buff = this });
+            Unit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Buff = this });
 
             base.OnTurnStart();
+        }
+
+        public override DamageInstance GetDamageInstance()
+        {
+            DamageInstance instance = new DamageInstance();
+
+            instance.Damage.Add(DamageType.Bleed, Damage);
+
+            return instance;
         }
 
         public override Tooltip GenerateTooltip()

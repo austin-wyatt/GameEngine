@@ -266,15 +266,13 @@ namespace MortalDungeon.Game.Units
 
         public struct DamageParams 
         {
-            public float Damage;
-            public DamageType DamageType;
+            public DamageInstance Instance;
             public Ability Ability;
             public Buff Buff;
 
-            public DamageParams(float damage, DamageType damageType)
+            public DamageParams(DamageInstance instance)
             {
-                Damage = damage;
-                DamageType = damageType;
+                Instance = instance;
 
                 Ability = null;
                 Buff = null;
@@ -282,74 +280,94 @@ namespace MortalDungeon.Game.Units
         }
         public virtual void ApplyDamage(DamageParams damageParams)
         {
-            Info.BaseDamageResistances.TryGetValue(damageParams.DamageType, out float baseResistance);
+            float preShieldDamage = 0;
+            float finalDamage = 0;
 
-            float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(damageParams.DamageType)) - 1);
+            DamageInstance instance = damageParams.Instance;
 
+            foreach (DamageType type in instance.Damage.Keys)
+            {
+                Info.BaseDamageResistances.TryGetValue(type, out float baseResistance);
+
+                float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(type)) - 1);
+
+                float actualDamage = instance.Damage[type] * damageMultiplier + Info.DamageAddition;
+
+                preShieldDamage += actualDamage;
             
-            float actualDamage = damageParams.Damage * damageMultiplier + Info.DamageAddition;
 
-            if (actualDamage > Info.Stealth.Skill && Info.Stealth.Hiding)
+                //shield piercing exceptions should go here
+                if (GetPierceShields(type))
+                {
+
+                }
+                else
+                {
+                    if (type == DamageType.Piercing)
+                    {
+                        float piercingDamage = damageParams.Instance.PiercingPercent * actualDamage;
+
+                        actualDamage -= piercingDamage;
+                        finalDamage += piercingDamage;
+                    }
+
+
+                    float shieldDamageBlocked;
+
+                    Info.DamageBlockedByShields += actualDamage;
+
+                    if (Info.CurrentShields < 0 && GetAmplifiedByNegativeShields(type))
+                    {
+                        actualDamage *= 1 + (0.25f * Math.Abs(Info.CurrentShields));
+                    }
+                    else if (Info.CurrentShields > 0)
+                    {
+                        shieldDamageBlocked = Info.CurrentShields * Info.ShieldBlock;
+
+                        actualDamage -= shieldDamageBlocked;
+
+                        if (actualDamage <= 0)
+                        {
+                            actualDamage = 0;
+
+                            OnShieldsHit();
+                        }
+                    }
+
+                    if (Info.DamageBlockedByShields > Info.ShieldBlock)
+                    {
+                        Info.CurrentShields--;
+                        Info.DamageBlockedByShields = 0;
+                    }
+                }
+
+                //if (type == DamageType.Piercing)
+                //{
+                //    float piercingDamage = damageParams.Instance.PierceAmount;
+                //    //if (damageParams.Ability != null)
+                //    //{
+                //    //    piercingDamage += damageParams.Ability.Grade;
+                //    //}
+
+                //    //if (damageParams.Buff != null)
+                //    //{
+                //    //    piercingDamage += damageParams.Buff.Grade;
+                //    //}
+
+                //    actualDamage += piercingDamage;
+                //}
+
+                finalDamage += actualDamage;
+            }
+
+            if (preShieldDamage > Info.Stealth.Skill && Info.Stealth.Hiding)
             {
                 Info.Stealth.SetHiding(false);
             }
 
-            //shield piercing exceptions should go here
-            if (GetPierceShields(damageParams.DamageType))
-            {
+            Info.Health -= finalDamage;
 
-            }
-            else 
-            {
-                float shieldDamageBlocked;
-
-                Info.DamageBlockedByShields += actualDamage;
-
-                if (Info.CurrentShields < 0 && GetAmplifiedByNegativeShields(damageParams.DamageType))
-                {
-                    actualDamage *= 1 + (0.25f * Math.Abs(Info.CurrentShields));
-                }
-                else if (Info.CurrentShields > 0)
-                {
-                    shieldDamageBlocked = Info.CurrentShields * Info.ShieldBlock;
-
-                    actualDamage -= shieldDamageBlocked;
-
-                    if (actualDamage <= 0)
-                    {
-                        actualDamage = 0;
-
-                        OnShieldsHit();
-                    }
-
-                    if (damageParams.DamageType == DamageType.Piercing)
-                    {
-                        float piercingDamage = 1;
-                        if(damageParams.Ability != null) 
-                        {
-                            piercingDamage += damageParams.Ability.Grade;
-                        }
-
-                        if(damageParams.Buff != null) 
-                        {
-                            piercingDamage += damageParams.Buff.Grade;
-                        }
-
-                        actualDamage += piercingDamage;
-                    }
-                }
-
-                if (Info.DamageBlockedByShields > Info.ShieldBlock) 
-                {
-                    Info.CurrentShields--;
-                    Info.DamageBlockedByShields = 0;
-                }
-            }
-
-
-            Info.Health -= actualDamage;
-
-            if (actualDamage > 0) 
+            if (finalDamage > 0) 
             {
                 OnHurt();
             }
@@ -386,12 +404,36 @@ namespace MortalDungeon.Game.Units
         {
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
             sound.Play();
+
+            var bloodExplosion = new Particles.Explosion(Position, new Vector4(1, 0, 0, 1));
+            bloodExplosion.OnFinish = () =>
+            {
+                Scene._particleGenerators.Remove(bloodExplosion);
+            };
+
+            Scene._particleGenerators.Add(bloodExplosion);
         }
 
         public virtual void OnShieldsHit() 
         {
-            Sound sound = new Sound(Sounds.ArmorHit) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
-            sound.Play();
+            if (Info.DamageBlockedByShields > Info.ShieldBlock)
+            {
+                Sound sound = new Sound(Sounds.ArmorHit) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.6f, 0.7f) };
+                sound.Play();
+            }
+            else 
+            {
+                Sound sound = new Sound(Sounds.ArmorHit) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+                sound.Play();
+            }
+
+            var bloodExplosion = new Particles.Explosion(Position, new Vector4(0.592f, 0.631f, 0.627f, 1));
+            bloodExplosion.OnFinish = () =>
+            {
+                Scene._particleGenerators.Remove(bloodExplosion);
+            };
+
+            Scene._particleGenerators.Add(bloodExplosion);
         }
 
         public override void OnHover()

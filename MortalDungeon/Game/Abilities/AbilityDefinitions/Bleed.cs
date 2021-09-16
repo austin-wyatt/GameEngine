@@ -79,6 +79,7 @@ namespace MortalDungeon.Game.Abilities
             BleedDebuff bleedDebuff = new BleedDebuff(SelectedUnit, _bleedDuration, _bleedDamage);
 
             Casted();
+            EffectEnded();
         }
     }
 }

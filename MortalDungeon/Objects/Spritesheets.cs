@@ -32,6 +32,8 @@ namespace MortalDungeon.Objects
             Columns = 20
         };
         public static Spritesheet StructureSheet = new Spritesheet("Resources/StructureSpritesheet.png", TextureName.StructureSpritesheet);
+        public static Spritesheet ObjectSheet = new Spritesheet("Resources/ObjectSheet.png", TextureName.ObjectSpritesheet);
+
         public static Spritesheet TextureTestSheet = new Spritesheet("Resources/TestTexture.png", TextureName.TestTexture) 
         {
             Rows = 2,

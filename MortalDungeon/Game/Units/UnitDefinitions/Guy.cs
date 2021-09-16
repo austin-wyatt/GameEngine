@@ -23,7 +23,6 @@ namespace MortalDungeon.Game.Units
             Selectable = true;
 
             BaseObject Guy = CreateBaseObject();
-            Guy.SetPosition(position);
             Guy.BaseFrame.CameraPerspective = true;
             Guy.BaseFrame.RotateX(25);
 

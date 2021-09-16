@@ -73,15 +73,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 if (Scenes[u].Loaded)
                 {
-                    for (int i = 0; i < Scenes[u]._genericObjects.Count; i++)
-                    {
-                        Renderer.LoadTextureFromGameObj(Scenes[u]._genericObjects[i]);
+                    //for (int i = 0; i < Scenes[u]._genericObjects.Count; i++)
+                    //{
+                    //    Renderer.LoadTextureFromGameObj(Scenes[u]._genericObjects[i]);
 
-                        Scenes[u]._genericObjects[i].ParticleGenerators.ForEach(particleGen => //Load ParticleGenerator textures
-                        {
-                            Renderer.LoadTextureFromParticleGen(particleGen);
-                        });
-                    }
+                    //    Scenes[u]._genericObjects[i].ParticleGenerators.ForEach(particleGen => //Load ParticleGenerator textures
+                    //    {
+                    //        Renderer.LoadTextureFromParticleGen(particleGen);
+                    //    });
+                    //}
 
                     Scenes[u]._text.ForEach(text => //Load Text textures
                     {

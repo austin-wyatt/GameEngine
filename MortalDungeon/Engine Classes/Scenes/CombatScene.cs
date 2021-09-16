@@ -943,7 +943,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             UIForceClose(new SceneEventArgs(this, EventAction.CloseTooltip));
                         }
-                        else 
+                        else if (Footer._currentUnit != CurrentUnit)
+                        {
+                            Footer.UpdateFooterInfo(CurrentUnit);
+                            DeselectUnits();
+                        }
+                        else if (_selectedUnits.Count > 0) 
+                        {
+                            DeselectUnits();
+                        }
+                        else
                         {
                             MessageCenter.SendMessage(new Message(MessageType.Request, MessageBody.Flag, MessageTarget.All) { Flag = MessageFlag.OpenEscapeMenu });
                         }
@@ -999,7 +1008,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 if (_selectedAbility == null)
                 {
-                    if (unit.Selectable && unit.Info.Visible(CurrentTeam))
+                    if (!AbilityInProgress && unit.Selectable && unit.Info.Visible(CurrentTeam))
                         SelectUnit(unit);
                 }
                 else

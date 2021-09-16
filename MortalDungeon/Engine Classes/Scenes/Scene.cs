@@ -64,6 +64,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public TileMapController _tileMapController = new TileMapController();
         public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
         public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
+        public QueuedList<ParticleGenerator> _particleGenerators = new QueuedList<ParticleGenerator>();
 
         public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
 
@@ -310,7 +311,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 }
             });
 
-            VisionMapTask.Start();
+            if(VisionMapTask.Status == TaskStatus.Created)
+                VisionMapTask.Start();
         }
 
 
@@ -336,7 +338,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _units.HandleQueuedItems();
                 CalculateActiveTeams();
             }
-            
+
+            _particleGenerators.HandleQueuedItems();
             _lowPriorityObjects.HandleQueuedItems();
 
             if (LightObstructions.HasQueuedItems())

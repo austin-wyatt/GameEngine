@@ -23,6 +23,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 namespace MortalDungeon
 {
@@ -268,7 +269,7 @@ namespace MortalDungeon
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
-            //Texture.UsedTextures.Clear();
+            Renderer.RenderStart();
 
             double timeValue;
 
@@ -411,23 +412,33 @@ namespace MortalDungeon
                 }); //Text
 
 
-                //scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
-                //{
-                //    gameObject.ParticleGenerators.ForEach(generator =>
-                //    {
-                //        if (generator.Playing)
-                //        {
-                //            RenderingQueue.QueueParticlesForRender(generator);
-                //        }
-                //    });
-                //});
+                scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
+                {
+                    gameObject.ParticleGenerators.ForEach(generator =>
+                    {
+                        if (generator.Playing)
+                        {
+                            RenderingQueue.QueueParticlesForRender(generator);
+                        }
+                    });
+                });
 
+                scene._particleGenerators.ForEach(g =>
+                {
+                    if (g.Playing)
+                    {
+                        RenderingQueue.QueueParticlesForRender(g);
+                    }
+                });
             });
 
             if (Scene.LightObject != null && Scene.RenderLight) 
             {
                 RenderingQueue.QueueLightObjectsForRender(new List<GameObject>() { Scene.LightObject });
             }
+
+            Shaders.PARTICLE_SHADER.Use();
+            Shaders.PARTICLE_SHADER.SetMatrix4("camera", cameraMatrix);
 
 
             RenderingQueue.RenderQueue();
@@ -455,6 +466,8 @@ namespace MortalDungeon
             {
                 scene.OnRenderEnd();
             });
+
+            Renderer.RenderEnd();
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
@@ -583,8 +596,13 @@ namespace MortalDungeon
                         {
                             obj.Tick();
                         });
+
+                        scene._particleGenerators.ForEach(gen =>
+                        {
+                            gen.Tick();
+                        });
                     });
-                    
+
 
                     renderedObjectTask.Start();
                     unitTask.Start();
