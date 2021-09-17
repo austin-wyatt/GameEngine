@@ -187,15 +187,51 @@ namespace MortalDungeon.Game.Particles
 
     public class Explosion : ParticleGenerator
     {
+        public struct ExplosionParams 
+        {
+            public Vector3 Acceleration;
+            public Vector3 MultiplicativeAcceleration;
+            public Vector4 ColorDelta;
+            public Vector3 BaseVelocity;
+            public int ParticleCount;
+            public int Life;
+
+            public float ParticleSize;
+
+            public ExplosionParams(ExplosionParams @params) 
+            {
+                Acceleration = @params.Acceleration;
+                ColorDelta = @params.ColorDelta;
+                BaseVelocity = @params.BaseVelocity;
+                ParticleCount = @params.ParticleCount;
+                Life = @params.Life;
+                MultiplicativeAcceleration = @params.MultiplicativeAcceleration;
+                ParticleSize = @params.ParticleSize;
+            }
+
+            public static ExplosionParams Default = new ExplosionParams()
+            {
+                Acceleration = new Vector3(0, 1, -0.005f),
+                MultiplicativeAcceleration = new Vector3(1, 1, 1),
+                BaseVelocity = new Vector3(15, 15, 0.03f),
+                ParticleCount = 30,
+                Life = 15,
+                ParticleSize = 0.05f
+            };
+        }
+
         private Random rand = new Random();
         public int DefaultLife = 15;
 
-        public Vector3 baseVelocity = new Vector3(15, 15, 0.03f);
+        ExplosionParams Params;
 
-        public Explosion(Vector3 position, Vector4 color)
+        public Explosion(Vector3 position, Vector4 color, ExplosionParams explosionParams)
         {
-            ParticleCount = 30;
+            ParticleCount = explosionParams.ParticleCount;
+            DefaultLife = explosionParams.Life;
             Position = position;
+
+            Params = explosionParams;
 
             SpritesheetObject particleObj = new SpritesheetObject((int)Tiles.TileType.Default, Spritesheets.TileSheet);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
@@ -211,9 +247,11 @@ namespace MortalDungeon.Game.Particles
             {
                 Particle fillParticle = new Particle();
                 fillParticle.Position = Position;
-                fillParticle.Velocity = new Vector3(GlobalRandom.NextFloat(-1, 1) * baseVelocity.X, GlobalRandom.NextFloat(-1f, 1) * baseVelocity.Y, (float)Math.Abs(rand.NextDouble() * baseVelocity.Z));
+
+                fillParticle.Velocity = new Vector3(GlobalRandom.NextFloat(-1, 1) * Params.BaseVelocity.X, 
+                    GlobalRandom.NextFloat(-1f, 1) * Params.BaseVelocity.Y, (float)Math.Abs(rand.NextDouble() * Params.BaseVelocity.Z));
                 fillParticle.Color = color;
-                fillParticle.ScaleAll(0.05f);
+                fillParticle.ScaleAll(Params.ParticleSize);
                 fillParticle.SpritesheetPosition = ParticleDisplay.SpritesheetPosition;
                 fillParticle.SideLengths = ParticleDisplay.SideLengths;
 
@@ -221,8 +259,6 @@ namespace MortalDungeon.Game.Particles
 
                 Particles.Add(fillParticle);
             }
-
-            GenerateParticle();
         }
 
 
@@ -231,26 +267,29 @@ namespace MortalDungeon.Game.Particles
             base.Tick();
             if (Playing || Priming)
             {
-                if (_tickCount % 1 == 0)
-                {
-                    DecayParticles();
+                //if (_tickCount % 1 == 0)
+                //{
                     for (int i = 0; i < 6; i++)
                         GenerateParticle();
-                }
+
+                    DecayParticles();
+                //}
             }
         }
 
         public override void UpdateParticle(Particle particle)
         {
-            particle.Velocity.Z -= 0.005f;
-            particle.Velocity.Y += 1f;
+            particle.Velocity += Params.Acceleration;
+            particle.Color += Params.ColorDelta;
+
+            particle.Velocity *= Params.MultiplicativeAcceleration;
         }
 
         public override void GenerateParticle()
         {
             if (RefreshParticles && Particles[_currentParticle].Life == 0)
             {
-                Particles[_currentParticle].Life = DefaultLife;
+                Particles[_currentParticle].Life = Params.Life;
                 Particles[_currentParticle].SetPosition(Position);
             }
 

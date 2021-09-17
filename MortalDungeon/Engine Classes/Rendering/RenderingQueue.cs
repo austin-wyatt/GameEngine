@@ -124,44 +124,49 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
         {
             lock (uiObjects)
-            if (uiObjects.Count > 0)
             {
-                for (int i = 0; i < uiObjects.Count; i++)
+                if (uiObjects.Count > 0)
                 {
-                    if (uiObjects[i].Render && !uiObjects[i].Cull)
+                    for (int i = 0; i < uiObjects.Count; i++)
                     {
-                        if (uiObjects[i].ScissorData.Scissor == true)
+                        if (uiObjects[i].Render && !uiObjects[i].Cull)
                         {
-                            scissorData = uiObjects[i].ScissorData;
-                            scissorData._startingDepth = depth;
-                        }
+                            //lock (uiObjects[i])
+                            //{
+                            if (uiObjects[i].ScissorData.Scissor == true)
+                            {
+                                scissorData = uiObjects[i].ScissorData;
+                                scissorData._startingDepth = depth;
+                            }
 
-                        bool scissorFlag = false;
-                        if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
-                        {
-                            scissorFlag = true;
-                        }
-                        else
-                        {
-                            scissorData = null;
-                        }
+                            bool scissorFlag = false;
+                            if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
+                            {
+                                scissorFlag = true;
+                            }
+                            else
+                            {
+                                scissorData = null;
+                            }
 
-                        QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
+                            QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
 
-                        if (uiObjects[i].Children.Count > 0)
-                        {
-                            QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
+                            if (uiObjects[i].Children.Count > 0)
+                            {
+                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
+                            }
+
+                            QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
+                            //}
                         }
-
-                        QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
                     }
+
+
+                    //RenderableObject display = uiObjects[0].GetDisplay();
+
+                    //RenderObjectsInstancedGeneric(uiObjects, display);
+                    //QueueUIForRender(uiObjects);
                 }
-
-
-                //RenderableObject display = uiObjects[0].GetDisplay();
-
-                //RenderObjectsInstancedGeneric(uiObjects, display);
-                //QueueUIForRender(uiObjects);
             }
         }
         public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject

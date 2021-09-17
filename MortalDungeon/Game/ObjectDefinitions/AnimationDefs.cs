@@ -100,15 +100,30 @@ namespace MortalDungeon.Game.Objects
         };
     }
 
+    public enum TestSheetItems 
+    {
+        Guy_Idle_1 = 30,
+        Guy_Idle_2,
+        Guy_Idle_3,
+        Guy_Die_1,
+        Guy_Die_2,
+        Guy_Die_3,
+        Skeleton_Idle_1 = 40,
+        Skeleton_Idle_2,
+        Skeleton_Idle_3,
+        Skeleton_Die_1,
+        Skeleton_Die_2
+    }
+
     public static class BAD_GUY_ANIMATION
     {
-        private static RenderableObject guy_Idle_1 = new RenderableObject(new SpritesheetObject(30, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Idle_2 = new RenderableObject(new SpritesheetObject(31, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Idle_3 = new RenderableObject(new SpritesheetObject(32, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_1 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Idle_1, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_2 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Idle_2, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Idle_3 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Idle_3, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-        private static RenderableObject guy_Die_1 = new RenderableObject(new SpritesheetObject(33, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Die_2 = new RenderableObject(new SpritesheetObject(34, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject guy_Die_3 = new RenderableObject(new SpritesheetObject(35, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_1 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Die_1, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_2 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Die_2, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject guy_Die_3 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Die_3, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         //private static RenderableObject guy_Die_4 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation Idle = new Animation()
@@ -136,12 +151,12 @@ namespace MortalDungeon.Game.Objects
 
     public static class SKELETON_ANIMATION
     {
-        private static RenderableObject idle1 = new RenderableObject(new SpritesheetObject(40, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject idle2 = new RenderableObject(new SpritesheetObject(41, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject idle3 = new RenderableObject(new SpritesheetObject(42, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject idle1 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject idle2 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Idle_2, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject idle3 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Idle_3, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-        private static RenderableObject die1 = new RenderableObject(new SpritesheetObject(43, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-        private static RenderableObject die2 = new RenderableObject(new SpritesheetObject(44, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject die1 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Die_1, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+        private static RenderableObject die2 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Die_2, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         //private static RenderableObject die3 = new RenderableObject(new SpritesheetObject(36, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
         private static Animation Idle = new Animation()

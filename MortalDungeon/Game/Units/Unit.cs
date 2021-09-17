@@ -4,6 +4,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Lighting;
+using MortalDungeon.Game.Particles;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Objects;
@@ -389,6 +390,16 @@ namespace MortalDungeon.Game.Units
             OnKill();
         }
 
+        public virtual void Revive()
+        {
+            Info.Dead = false;
+            Info.Health = 1;
+
+            StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
+
+            OnRevive();
+        }
+
         public virtual void OnKill() 
         {
             if (StatusBarComp != null) 
@@ -400,12 +411,17 @@ namespace MortalDungeon.Game.Units
             sound.Play();
         }
 
+        public virtual void OnRevive() 
+        {
+            BaseObject.SetAnimation(0);
+        }
+
         public virtual void OnHurt() 
         {
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
             sound.Play();
 
-            var bloodExplosion = new Particles.Explosion(Position, new Vector4(1, 0, 0, 1));
+            var bloodExplosion = new Explosion(Position, new Vector4(1, 0, 0, 1), Explosion.ExplosionParams.Default);
             bloodExplosion.OnFinish = () =>
             {
                 Scene._particleGenerators.Remove(bloodExplosion);
@@ -427,7 +443,7 @@ namespace MortalDungeon.Game.Units
                 sound.Play();
             }
 
-            var bloodExplosion = new Particles.Explosion(Position, new Vector4(0.592f, 0.631f, 0.627f, 1));
+            var bloodExplosion = new Explosion(Position, new Vector4(0.592f, 0.631f, 0.627f, 1), Explosion.ExplosionParams.Default);
             bloodExplosion.OnFinish = () =>
             {
                 Scene._particleGenerators.Remove(bloodExplosion);

@@ -8,34 +8,30 @@ using System.Linq;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Particles;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Hide : Ability
+    public class Channel : Ability
     {
-        private Icon BrokenMaskIcon;
-        public Hide(Unit castingUnit)
+        public Channel(Unit castingUnit, string name, string description, Enum icon = null, Spritesheet spritesheet = null)
         {
-            Type = AbilityTypes.Buff;
-            Range = 1;
             CastingUnit = castingUnit;
             EnergyCost = 5;
 
-            Name = "Hide";
-
             CanTargetGround = false;
             CanTargetSelf = true;
-
             UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
             UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
             UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
 
-            BreakStealth = false;
+            Name = name;
+            _description = description;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
-            BrokenMaskIcon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
+            var iconPos = icon == null ? Icon.IconSheetIcons.Channel : icon;
+            Spritesheet iconSpritesheet = spritesheet == null ? Spritesheets.IconSheet : spritesheet;
+
+            Icon = new Icon(Icon.DefaultIconSize, iconPos, iconSpritesheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
@@ -63,6 +59,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
+
         public override void OnCast()
         {
             TileMap.DeselectTiles();
@@ -74,33 +71,23 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            CastingUnit.Info.Stealth.SetHiding(true);
-            StealthBuff stealthBuff = new StealthBuff(CastingUnit, -1);
-
-            Color stealthColor = new Color(1, 1, 1, 0.5f);
-
-            void hidingBroken() 
+            Explosion.ExplosionParams parameters = new Explosion.ExplosionParams(Explosion.ExplosionParams.Default)
             {
-                CastingUnit.Info.Stealth.HidingBrokenActions.Remove(hidingBroken);
-                CastingUnit.Info.Buffs.Remove(stealthBuff);
-                Scene.Footer.UpdateFooterInfo();
+                Acceleration = new Vector3(),
+                MultiplicativeAcceleration = new Vector3(0.95f, 0.95f, 0.5f),
+                ParticleCount = 200,
+                BaseVelocity = new Vector3(30, 30, 0.03f),
+                ColorDelta = new Vector4(0.02f, 0.02f, 0.02f, 0),
+                ParticleSize = 0.1f
+            };
 
-                CastingUnit.BaseObject.BaseFrame.RemoveAppliedColor(stealthColor);
-
-                CreateIconHoverEffect(BrokenMaskIcon);
-            }
-
-            CastingUnit.Info.Stealth.HidingBrokenActions.Add(hidingBroken);
-            CastingUnit.BaseObject.BaseFrame.AddAppliedColor(stealthColor);
-
-            Scene.Footer.UpdateFooterInfo();
-
-            if (CastingUnit.Info.Stealth.EnemyHasVision()) 
+            var castParticles = new Explosion(CastingUnit.Position + new Vector3(0, 0, 0.2f), new Vector4(0.3f, 0.87f, 0.81f, 1), parameters);
+            castParticles.OnFinish = () =>
             {
-                hidingBroken();
-                Context.SetFlag(AbilityContext.SkipIconAnimation, true);
-                Context.SetFlag(AbilityContext.SkipEnergyCost, true);
-            }
+                Scene._particleGenerators.Remove(castParticles);
+            };
+
+            Scene._particleGenerators.Add(castParticles);
 
             Casted();
             EffectEnded();

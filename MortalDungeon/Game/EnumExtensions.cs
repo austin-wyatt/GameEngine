@@ -96,7 +96,24 @@ namespace MortalDungeon.Game
 
         public static bool BoolValue(this Disposition.CheckEnum val)
         {
-            if (val == Disposition.CheckEnum.True)
+            if (val == Disposition.CheckEnum.True || val == Disposition.CheckEnum.SoftTrue)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns whether the check is for a "soft" true or false. Softness of a value indicates values 
+        /// where only one of them is required whereas a normal true or false would cause the check to be 
+        /// false if they did not match.
+        /// </summary>
+        public static bool IsSoft(this Disposition.CheckEnum val)
+        {
+            if (val == Disposition.CheckEnum.SoftFalse || val == Disposition.CheckEnum.SoftTrue)
             {
                 return true;
             }

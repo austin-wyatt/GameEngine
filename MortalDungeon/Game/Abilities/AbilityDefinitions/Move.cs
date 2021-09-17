@@ -24,10 +24,12 @@ namespace MortalDungeon.Game.Abilities
             Type = AbilityTypes.Move;
             Range = range;
             CastingUnit = castingUnit;
-            CanTargetEnemy = false;
-            CanTargetAlly = false;
             CanTargetThroughFog = true;
             BreakStealth = false;
+
+            UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
+            UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
+            UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
 
             DamageType = DamageType.NonDamaging;
 

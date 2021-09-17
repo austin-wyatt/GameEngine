@@ -51,6 +51,10 @@ namespace MortalDungeon.Game.Units
             shootAbility.Next.AddCombo(new Shoot(this, 15, 4, 15) { EnergyCost = 6 }, shootAbility);
 
 
+            SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);
+            Info.Abilities.Add(spawnSkeleton);
+            spawnSkeleton.ReturnToFirst();
+
 
             Info.MaxEnergy = 15;
 

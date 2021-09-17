@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static MortalDungeon.Game.Units.Disposition;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -24,9 +25,10 @@ namespace MortalDungeon.Game.Abilities
         DamagingSpell, //an ability that does damage to an enemy (and maybe applies a secondary effect)
         Debuff, //an ability that applies a debuff to the target
         Buff, //an ability that applies a buff to the target
-        Utility, //an ability that provides utility to 
+        Utility, //an ability that provides utility
         Heal, //an ability that heals
-        Repositioning //an ability that repositions a unit
+        Repositioning, //an ability that repositions a unit
+        Summoning
     }
     public enum DamageType //main effect (extra effects provided by abilities)
     {
@@ -97,16 +99,21 @@ namespace MortalDungeon.Game.Abilities
 
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
 
-        public bool CanTargetAlly = true;
-        public bool CanTargetEnemy = true;
         public bool CanTargetSelf = false;
         public bool CanTargetGround = true;
         public bool CanTargetTerrain = false;
 
+        public UnitSearchParams UnitTargetParams = new UnitSearchParams()
+        {
+            Dead = CheckEnum.False,
+            IsFriendly = CheckEnum.SoftTrue,
+            IsHostile = CheckEnum.SoftTrue,
+            IsNeutral = CheckEnum.SoftTrue,
+        };
+
         public bool BreakStealth = true;
 
         public bool CanTargetThroughFog = false;
-        public bool CanTargetDeadUnits = false;
 
         public float EnergyCost = 0;
         public float Range = 0;
@@ -535,10 +542,18 @@ namespace MortalDungeon.Game.Abilities
             {
                 BaseTile tile = units[j].Info.TileMapPosition;
 
-                if (units[j] == CastingUnit && !CanTargetSelf)
+                if (units[j] == CastingUnit)
                 {
-                    validTiles.Remove(units[j].Info.TileMapPosition);
-                    continue;
+                    if (!CanTargetSelf)
+                    {
+                        validTiles.Remove(units[j].Info.TileMapPosition);
+                        continue;
+                    }
+                    else 
+                    {
+                        AffectedUnits.Add(units[j]);
+                        continue;
+                    }
                 }
 
                 if (!validTiles.Contains(units[j].Info.TileMapPosition))
@@ -547,12 +562,8 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if ((!CanTargetAlly && units[j].AI.Team == UnitTeam.PlayerUnits) || (!CanTargetEnemy && units[j].AI.Team == UnitTeam.BadGuys))
-                {
-                    validTiles.Remove(units[j].Info.TileMapPosition);
-                    continue;
-                }
-                else if (units[j].Info.Dead && !CanTargetDeadUnits)
+
+                if (!UnitTargetParams.CheckUnit(units[j], CastingUnit)) 
                 {
                     validTiles.Remove(units[j].Info.TileMapPosition);
                     continue;
@@ -590,12 +601,7 @@ namespace MortalDungeon.Game.Abilities
                     continue;
                 }
 
-                if ((!CanTargetAlly && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Friendly)
-                    || (!CanTargetEnemy && units[j].AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Hostile))
-                {
-                    continue;
-                }
-                else if (units[j].Info.Dead && !CanTargetDeadUnits)
+                if (!UnitTargetParams.CheckUnit(units[j], CastingUnit))
                 {
                     continue;
                 }
@@ -629,7 +635,17 @@ namespace MortalDungeon.Game.Abilities
 
             if (IsComboAbility)
             {
-                body += $"\n\nNext in combo: {(Next != null ? Next.Name : "")}";
+                if (Next != null)
+                {
+                    body += $"\n\nNext in combo: {Next.Name}";
+                }
+                else if (Previous != null) 
+                {
+                    Ability prev = Previous;
+                    while (prev.Previous != null) prev = prev.Previous;
+
+                    body += $"\n\nNext in combo: {prev.Name}";
+                }
             }
 
             Tooltip tooltip = UIHelpers.GenerateTooltipWithHeader(Name, body);
@@ -691,7 +707,7 @@ namespace MortalDungeon.Game.Abilities
             ComboDecayCount = 0;
             ComboAdvanceCount = 0;
 
-            if (Scene.Footer._currentUnit == CastingUnit)
+            if (Scene.Footer != null && Scene.Footer._currentUnit == CastingUnit)
             {
                 Scene.Footer.UpdateFooterInfo(CastingUnit);
             }

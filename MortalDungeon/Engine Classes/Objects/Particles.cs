@@ -56,11 +56,14 @@ namespace MortalDungeon.Engine_Classes
 
             Particles.ForEach(particle =>
             {
-                particle.Tick();
-                UpdateParticle(particle);
+                if (particle.Life > 0) 
+                {
+                    UpdateParticle(particle);
 
-                if (particle.Life > 0)
                     hasLivingParticle = true;
+                }
+
+                particle.Tick();
             });
 
             if (!hasLivingParticle && !Repeat) 
@@ -144,7 +147,7 @@ namespace MortalDungeon.Engine_Classes
         public void Translate()
         {
             Position += Velocity;
-            //Display.SetTranslation(WindowConstants.ConvertGlobalToLocalCoordinates(Position));
+
             SetPosition(Position);
         }
 

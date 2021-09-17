@@ -21,7 +21,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BandagedHand,
             BowAndArrow,
             MasqueradeMask,
-            BrokenMask = 12
+            BrokenMask = 12,
+            Channel
         }
 
         public enum BackgroundType 

@@ -4,6 +4,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Particles;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
@@ -74,7 +75,7 @@ namespace MortalDungeon.Game.Units
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(1.2f, 1.4f) };
             sound.Play();
 
-            var bloodExplosion = new Particles.Explosion(Position, new Vector4(0.8f, 0.8f, 0.776f, 1));
+            var bloodExplosion = new Explosion(Position, new Vector4(0.8f, 0.8f, 0.776f, 1), Explosion.ExplosionParams.Default);
             bloodExplosion.OnFinish = () =>
             {
                 Scene._particleGenerators.Remove(bloodExplosion);

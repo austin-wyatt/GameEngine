@@ -269,7 +269,9 @@ namespace MortalDungeon.Game.Units
         {
             NotSet,
             True,
-            False
+            False,
+            SoftTrue,
+            SoftFalse
         }
         public class UnitSearchParams 
         {
@@ -277,34 +279,67 @@ namespace MortalDungeon.Game.Units
             public CheckEnum IsHostile = CheckEnum.NotSet;
             public CheckEnum IsFriendly = CheckEnum.NotSet;
             public CheckEnum IsNeutral = CheckEnum.NotSet;
+            public CheckEnum Self = CheckEnum.NotSet;
 
             public UnitSearchParams() { }
 
             public bool CheckUnit(Unit unit, Unit castingUnit) 
             {
-                if (Dead != CheckEnum.NotSet) 
+                bool softCheck = false;
+
+                bool softCheckUsed = false;
+
+                #region Dead Check
+                if (Dead != CheckEnum.NotSet && !Dead.IsSoft()) 
                 {
                     if (unit.Info.Dead != Dead.BoolValue()) 
                     {
                         return false;
                     }
                 }
+                else if (Dead.IsSoft())
+                {
+                    if (unit.Info.Dead == Dead.BoolValue())
+                    {
+                        softCheck = true;
+                    }
+
+                    softCheckUsed = true;
+                }
 
                 Relation relation = unit.AI.Team.GetRelation(castingUnit.AI.Team);
+                #endregion
 
-                if (IsHostile != CheckEnum.NotSet) 
+                #region Hostile Check
+                if (IsHostile != CheckEnum.NotSet && !IsHostile.IsSoft()) 
                 {
                     if (relation == Relation.Hostile && !IsHostile.BoolValue())
                     {
                         return false;
+                        
                     }
                     else if (relation != Relation.Hostile && IsHostile.BoolValue()) 
                     {
                         return false;
                     }
                 }
+                else if (IsHostile.IsSoft()) 
+                {
+                    if (relation == Relation.Hostile && IsHostile.BoolValue())
+                    {
+                        softCheck = true;
+                    }
+                    else if (relation != Relation.Hostile && !IsHostile.BoolValue())
+                    {
+                        softCheck = true;
+                    }
 
-                if (IsFriendly != CheckEnum.NotSet)
+                    softCheckUsed = true;
+                }
+                #endregion
+
+                #region Friendly Check
+                if (IsFriendly != CheckEnum.NotSet && !IsFriendly.IsSoft())
                 {
                     if (relation == Relation.Friendly && !IsFriendly.BoolValue())
                     {
@@ -315,8 +350,23 @@ namespace MortalDungeon.Game.Units
                         return false;
                     }
                 }
+                else if (IsFriendly.IsSoft())
+                {
+                    if (relation == Relation.Friendly && IsFriendly.BoolValue())
+                    {
+                        softCheck = true;
+                    }
+                    else if (relation != Relation.Friendly && !IsFriendly.BoolValue())
+                    {
+                        softCheck = true;
+                    }
 
-                if (IsNeutral != CheckEnum.NotSet)
+                    softCheckUsed = true;
+                }
+                #endregion
+
+                #region Neutral Check
+                if (IsNeutral != CheckEnum.NotSet && !IsNeutral.IsSoft())
                 {
                     if (relation == Relation.Neutral && !IsNeutral.BoolValue())
                     {
@@ -327,12 +377,50 @@ namespace MortalDungeon.Game.Units
                         return false;
                     }
                 }
+                else if (IsNeutral.IsSoft())
+                {
+                    if (relation == Relation.Neutral && IsNeutral.BoolValue())
+                    {
+                        softCheck = true;
+                    }
+                    else if (relation != Relation.Neutral && !IsNeutral.BoolValue())
+                    {
+                        softCheck = true;
+                    }
 
-                return true;
+                    softCheckUsed = true;
+                }
+                #endregion
+
+                #region Self Check
+                if (Self != CheckEnum.NotSet && !Self.IsSoft())
+                {
+                    if (unit == castingUnit != Self.BoolValue())
+                    {
+                        return false;
+                    }
+                }
+                else if (Self.IsSoft())
+                {
+                    if (unit == castingUnit == Self.BoolValue())
+                    {
+                        softCheck = true;
+                    }
+
+                    softCheckUsed = true;
+                }
+                #endregion
+
+                if (!softCheckUsed) return true;
+                else return softCheck;
             }
 
             public static UnitSearchParams _ = new UnitSearchParams();
         }
+
+
+
+
         public static Unit GetClosestUnit(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
         {
             Unit unit = null;

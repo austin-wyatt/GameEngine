@@ -250,9 +250,13 @@ namespace MortalDungeon.Game.UI
                 music.Play();
             }, plusButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
-            Button minusColor = CreateButton("Initialize", () =>
+            Button minusColor = CreateButton("Heal All", () =>
             {
-                VisionMap.Initialize();
+                Scene._units.ForEach(u =>
+                {
+                    u.Revive();
+                    u.Info.Health = 100;
+                });
             }, visionTestButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button minusBlue = CreateButton("Save BMP", () =>
