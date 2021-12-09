@@ -113,6 +113,7 @@ namespace MortalDungeon.Game.Abilities
 
             GameObject arrow = new GameObject(Spritesheets.ObjectSheet, 0);
 
+            arrow.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
 
             Vector3 a = CastingUnit.Position;
             Vector3 b = SelectedUnit.Position;
@@ -122,8 +123,6 @@ namespace MortalDungeon.Game.Abilities
             angle *= -1;
 
             arrow.BaseObject.BaseFrame.RotateZ(angle);
-
-            GameObject.LoadTexture(arrow);
 
             Scene._genericObjects.Add(arrow);
 

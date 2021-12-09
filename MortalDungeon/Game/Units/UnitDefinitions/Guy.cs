@@ -3,6 +3,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Lighting;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Tiles;
@@ -15,20 +16,91 @@ namespace MortalDungeon.Game.Units
 {
     public class Guy : Unit
     {
-        public Guy(Vector3 position, CombatScene scene, BaseTile tileMapPosition, string name = "Guy") : base(scene)
+        public Guy(CombatScene scene) : base(scene) 
+        {
+            Clickable = true;
+            Selectable = true;
+
+            _createStatusBar = true;
+        }
+        public Guy(CombatScene scene, BaseTile tileMapPosition, string name = "Guy") : base(scene)
         {
             Name = name;
             SetTileMapPosition(tileMapPosition);
             Clickable = true;
             Selectable = true;
 
+            _createStatusBar = true;
+
+            //AI.MeleeDamageDealer disp = new AI.MeleeDamageDealer(this)
+            //{
+            //    Weight = 1,
+            //    Bloodthirsty = 1
+            //};
+
+            //AI.Dispositions.Add(disp);
+
+
+            //LightGenerator = new LightGenerator() { Radius = 10, Brightness = 0.1f, LightColor = new Vector3(0.75f, 0.6f, 0.2f) };
+            //Scene.LightGenerators.Add(LightGenerator);
+
+            //_lightGenChangeFunc = (_, __) =>
+            //{
+            //    if (DayNightCycle.IsNight())
+            //    {
+            //        LightGenerator.On = true;
+            //    }
+            //    else
+            //    {
+            //        LightGenerator.On = false;
+            //    }
+            //};
+
+            //CombatScene.EnvironmentColor.OnChangeEvent += _lightGenChangeFunc;
+        }
+
+        //private EventHandler _lightGenChangeFunc;
+        //private LightGenerator LightGenerator;
+
+        public override void InitializeUnitInfo()
+        {
+            base.InitializeUnitInfo();
+
+            VisionGenerator.Radius = 12;
+
+            Info.MaxEnergy = 15;
+        }
+
+        public override void InitializeVisualComponent()
+        {
+            base.InitializeVisualComponent();
+
+            BaseObjects.Clear();
+
             BaseObject Guy = CreateBaseObject();
             Guy.BaseFrame.CameraPerspective = true;
             Guy.BaseFrame.RotateX(25);
 
             AddBaseObject(Guy);
+        }
 
-            SetPosition(position);
+        public override void EntityLoad(FeaturePoint position)
+        {
+            base.EntityLoad(position);
+
+            SetPosition(Info.TileMapPosition.Position + new Vector3(0, -Info.TileMapPosition.GetDimensions().Y / 2, 0.2f));
+
+
+            SelectionTile.UnitOffset.Y += Info.TileMapPosition.GetDimensions().Y / 2;
+            SelectionTile.SetPosition(Position);
+
+
+            Move movement = new Move(this);
+            movement.EnergyCost = 0.3f;
+            Info.Abilities.Add(movement);
+
+            Info._movementAbility = movement;
+
 
             Buff shieldBlock = new Buff(this);
             shieldBlock.ShieldBlock.Additive = 10;
@@ -38,7 +110,7 @@ namespace MortalDungeon.Game.Units
             shieldBlock.DamageResistances[DamageType.Slashing] = 0;
 
 
-            Strike melee = new Strike(this, 1, 45) 
+            Strike melee = new Strike(this, 1, 45)
             {
                 EnergyCost = 7
             };
@@ -54,44 +126,6 @@ namespace MortalDungeon.Game.Units
             SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);
             Info.Abilities.Add(spawnSkeleton);
             spawnSkeleton.ReturnToFirst();
-
-
-            Info.MaxEnergy = 15;
-
-            AI.MeleeDamageDealer disp = new AI.MeleeDamageDealer(this)
-            {
-                Weight = 1,
-                Bloodthirsty = 1
-            };
-
-            //AI.Dispositions.Add(disp);
-
-            LightGenerator = new LightGenerator() { Radius = 10, Brightness = 0.1f, LightColor = new Vector3(0.75f, 0.6f, 0.2f) };
-            Scene.LightGenerators.Add(LightGenerator);
-
-            _lightGenChangeFunc = (_, __) =>
-            {
-                if (DayNightCycle.IsNight())
-                {
-                    LightGenerator.On = true;
-                }
-                else
-                {
-                    LightGenerator.On = false;
-                }
-            };
-
-            CombatScene.EnvironmentColor.OnChangeEvent += _lightGenChangeFunc;
-        }
-
-        private EventHandler _lightGenChangeFunc;
-        private LightGenerator LightGenerator;
-
-        public override void OnKill()
-        {
-            base.OnKill();
-
-            BaseObjects[0].SetAnimation(AnimationType.Die);
         }
 
         public override BaseObject CreateBaseObject()
@@ -110,19 +144,19 @@ namespace MortalDungeon.Game.Units
         {
             base.SetTileMapPosition(baseTile);
 
-            if (LightGenerator != null) 
-            {
-                LightGenerator.Position = Map.FeatureEquation.PointToMapCoords(Info.Point);
-                Scene.QueueLightUpdate();
-            }
+            //if (LightGenerator != null) 
+            //{
+            //    LightGenerator.Position = Map.FeatureEquation.PointToMapCoords(Info.Point);
+            //    Scene.QueueLightUpdate();
+            //}
         }
 
         public override void CleanUp()
         {
             base.CleanUp();
 
-            CombatScene.EnvironmentColor.OnChangeEvent -= _lightGenChangeFunc;
-            Scene.LightGenerators.RemoveImmediate(LightGenerator);
+            //CombatScene.EnvironmentColor.OnChangeEvent -= _lightGenChangeFunc;
+            //Scene.LightGenerators.RemoveImmediate(LightGenerator);
         }
     }
 }

@@ -160,6 +160,7 @@ namespace MortalDungeon.Engine_Classes
                 return;
 
             int count = ReverseTree.Count;
+
             try
             {
                 for (int i = 0; i < count; i++)
@@ -172,7 +173,11 @@ namespace MortalDungeon.Engine_Classes
 
                     if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
                     {
-                        if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
+                        if (type == UIEventType.HoverEnd)
+                        {
+                            ReverseTree[i].UIObject.OnHoverEnd();
+                        }
+                        else if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
                         {
                             optionalAction?.Invoke(ReverseTree[i].UIObject);
 
@@ -180,15 +185,19 @@ namespace MortalDungeon.Engine_Classes
                             {
                                 case UIEventType.Click:
                                     ReverseTree[i].UIObject.OnMouseUp();
-                                    break;
+                                    return;
                                 case UIEventType.RightClick:
                                     ReverseTree[i].UIObject.OnRightClick();
-                                    break;
+                                    return;
                                 case UIEventType.Hover:
                                     ReverseTree[i].UIObject.OnHover();
+
+                                    type = UIEventType.HoverEnd; //This ensures only 1 object can be hovered in any given reverse tree
                                     break;
                                 case UIEventType.TimedHover:
                                     optionalAction?.Invoke(ReverseTree[i].UIObject);
+
+                                    type = UIEventType.HoverEnd; //This ensures only 1 object can be hovered in any given reverse tree
                                     break;
                                 case UIEventType.MouseDown:
                                     ReverseTree[i].UIObject.OnMouseDown();
@@ -213,29 +222,49 @@ namespace MortalDungeon.Engine_Classes
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                Console.WriteLine("Error caught in BoundsCheck");
+                Console.WriteLine("Error caught in BoundsCheck: " + e.Message);
             }
         }
         
 
         public static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
         {
-            if (!obj.Render || obj.Disabled)
+            if (!IsRendered(obj) || obj.Disabled)
                 return false;
 
             return type switch
             {
                 UIEventType.Click => obj.Clickable,
+                UIEventType.RightClick => obj.Clickable,
                 UIEventType.Hover => obj.Hoverable,
                 UIEventType.TimedHover => obj.HasTimedHoverEffect,
                 UIEventType.MouseDown => obj.Clickable,
                 UIEventType.Grab => obj.Draggable,
                 UIEventType.KeyDown => obj.Focused,
                 UIEventType.Focus => obj.Focusable,
+                UIEventType.HoverEnd => obj.Hoverable,
                 _ => false,
             };
+        }
+
+        /// <summary>
+        /// Checks all the way up the tree for the passed UIObject to ascertain whether the ui element is being displayed
+        /// </summary>
+        public static bool IsRendered(UIObject obj) 
+        {
+            UIObject parent = obj;
+
+            while (parent != null) 
+            {
+                if (!parent.Render)
+                    return false;
+
+                parent = parent.Parent;
+            }
+
+            return true;
         }
 
 
@@ -354,35 +383,50 @@ namespace MortalDungeon.Engine_Classes
             return returnDim;
         }
 
+        /// <summary>
+        /// Actually a preorder search now but I'm leaving the breadth first search code commented out
+        /// </summary>
         public List<UITreeNode> BreadthFirstSearch() 
         {
             List<UITreeNode> tree = new List<UITreeNode>();
-            List<UIObject> nodesToTraverse = new List<UIObject>();
+            //List<UIObject> nodesToTraverse = new List<UIObject>();
 
-            List<UIObject> temp = new List<UIObject>();
+            //List<UIObject> temp = new List<UIObject>();
 
-            tree.Add(new UITreeNode(this, 0, GetBaseObject(this))); //root node
-            nodesToTraverse.Add(this);
+            //tree.Add(new UITreeNode(this, 0, GetBaseObject(this))); //root node
+            //nodesToTraverse.Add(this);
 
-            int depth = 0;
-            for (int i = 0; i < nodesToTraverse.Count; i++) 
+            //int depth = 0;
+            //for (int i = 0; i < nodesToTraverse.Count; i++) 
+            //{
+            //    nodesToTraverse[i].Children.ForEach(c =>
+            //    {
+            //        tree.Add(new UITreeNode(c, depth, GetBaseObject(c)));
+            //        temp.Add(c);
+            //    });
+
+            //    if (i == nodesToTraverse.Count - 1) 
+            //    {
+            //        temp.Reverse();
+            //        nodesToTraverse = new List<UIObject>(temp);
+            //        temp.Clear();
+            //        i = -1;
+
+            //        depth++;
+            //    }
+            //}
+
+            void queueChildren(UIObject parentObject) 
             {
-                nodesToTraverse[i].Children.ForEach(c =>
-                {
-                    tree.Add(new UITreeNode(c, depth, GetBaseObject(c)));
-                    temp.Add(c);
-                });
+                tree.Add(new UITreeNode(parentObject, 0, GetBaseObject(parentObject)));
 
-                if (i == nodesToTraverse.Count - 1) 
+                for (int i = parentObject.Children.Count - 1; i >= 0; i--) 
                 {
-                    temp.Reverse();
-                    nodesToTraverse = new List<UIObject>(temp);
-                    temp.Clear();
-                    i = -1;
-
-                    depth++;
+                    queueChildren(parentObject.Children[i]);
                 }
             }
+
+            queueChildren(this);
 
             return tree;
         }

@@ -1,0 +1,41 @@
+{
+	"Unit Prefab": {
+		"TYPE": "UNIT",
+		"UnitProfile": "Guy",
+		"UnitName": "Jerry",
+		"UnitTeam": "1",
+		"ControlType": "1",
+		"Health": "50",
+		"CurrentShields": "1"
+	},
+	"Test 2": {
+		"TYPE": "UNIT",
+		"UnitProfile": "Skeleton",
+		"UnitName": "Blah",
+		"UnitTeam": 3,
+		"ControlType": 1,
+		"Health": 75.0,
+		"CurrentShields": 3
+	},
+	"Bleed ability": {
+		"TYPE": "ABILITY",
+		"AbilityProfile": "Bleed",
+		"AbilityName": "Super Bleed",
+		"Damage": "20",
+		"Duration": "20",
+		"Range": "10",
+		"MinRange": "3"
+	},
+	"Basic Bleed": {
+		"TYPE": "ABILITY",
+		"AbilityProfile": "Bleed",
+	},
+	"Basic Strike": {
+		"TYPE": "ABILITY",
+		"AbilityProfile": "Strike",
+	},
+	"Basic Shoot": {
+		"TYPE": "ABILITY",
+		"AbilityProfile": "Shoot",
+	}
+}

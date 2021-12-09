@@ -168,7 +168,7 @@ namespace MortalDungeon.Game.UI
 
             void healthBarHover(GameObject obj) 
             {
-                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Health + "/" + UnitInfo.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Health + "/" + _currentUnit.Info.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
                 UIHelpers.CreateToolTip(param);
             }
 
@@ -249,7 +249,7 @@ namespace MortalDungeon.Game.UI
             nameBoxPos.Y = nameBoxPos.Y - _containingBlock.GetDimensions().Y / 4;
 
             _unitHealthBar.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
-            _unitHealthBar.SetHealthPercent(_currentUnit.Info.Health / UnitInfo.MaxHealth, _currentUnit.AI.Team);
+            _unitHealthBar.SetHealthPercent(_currentUnit.Info.Health / _currentUnit.Info.MaxHealth, _currentUnit.AI.Team);
 
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
             _unitShieldBar.SetCurrentShields(_currentUnit.Info.CurrentShields);
@@ -388,6 +388,8 @@ namespace MortalDungeon.Game.UI
                     abilityIcon.Hoverable = true;
                     abilityIcon.OnTimedHoverEvent += abilityHover;
 
+                    abilityIcon.Name = ability.Name + " Icon";
+
                     _currentIcons.Add(abilityIcon);
                     AddChild(abilityIcon, 100);
 
@@ -480,7 +482,7 @@ namespace MortalDungeon.Game.UI
                 RemoveChild(_scrollableAreaBuff);
 
             UIScale scrollableAreaSize = new UIScale(_containingBlock.Size);
-            scrollableAreaSize.X /= 1.8f;
+            scrollableAreaSize.X /= 3.3f;
             scrollableAreaSize.Y -= .02f;
 
             //_buffContainer = new UIBlock(new Vector3(), scrollableAreaSize);

@@ -464,6 +464,11 @@ namespace MortalDungeon.Game.Map
             _visited = false;
         }
 
+        public FeaturePoint(BaseTile tile) 
+        {
+            this = new FeaturePoint(tile.TilePoint);
+        }
+
         public FeaturePoint(Vector2i coords)
         {
             X = coords.X;

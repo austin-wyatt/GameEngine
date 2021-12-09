@@ -25,6 +25,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         private int _lineCount = 0;
 
+        public Action<string> OnTypeAction = null;
+
         public Input(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
             TextScale = textScale;
@@ -55,7 +57,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             AddChild(_cursorObject, 100);
 
 
-
+            SetCursorPosition();
             UpdateScissorBounds();
 
             ValidateObject(this);
@@ -69,6 +71,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             _cursorObject.SetRender(true);
             _cursorObject.PropertyAnimations[0].Restart();
+
 
             if (typedLetter.Length > 0)
             {
@@ -140,6 +143,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 }
             }
 
+            OnTypeAction?.Invoke(_textBox.TextField._textField.TextString);
+
             SetCursorPosition();
         }
 
@@ -185,7 +190,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void FocusEnd()
         {
             base.FocusEnd();
-            _cursorObject.PropertyAnimations[0].Stop();
+            _cursorObject.PropertyAnimations[0].Reset();
             _cursorObject.SetRender(false);
         }
     }

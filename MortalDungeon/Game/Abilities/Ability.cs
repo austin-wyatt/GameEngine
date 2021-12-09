@@ -90,8 +90,6 @@ namespace MortalDungeon.Game.Abilities
 
         public bool HasHoverEffect = false;
 
-        public int Tier = 0;
-
         public CombatScene Scene => CastingUnit.Scene;
 
         public string Name = "";
@@ -430,7 +428,7 @@ namespace MortalDungeon.Game.Abilities
                     break;
             }
 
-            Icon icon = GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType, false, passedIcon);
+            Icon icon = GenerateIcon(new UIScale(0.5f, 0.5f), true, backgroundType, false, passedIcon);
 
 
             icon.SetCameraPerspective(true);

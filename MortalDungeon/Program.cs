@@ -39,6 +39,7 @@ namespace MortalDungeon
         static void InitializeSoundPlayer() 
         {
             Thread soundThread = new Thread(SoundPlayer.Initialize);
+            soundThread.Priority = ThreadPriority.Highest;
 
             soundThread.Start();
         }

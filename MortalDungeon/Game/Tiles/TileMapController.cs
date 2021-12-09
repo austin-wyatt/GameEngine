@@ -10,6 +10,7 @@ using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles.TileMaps;
 using System.Diagnostics;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Game.Entities;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -49,6 +50,17 @@ namespace MortalDungeon.Game.Tiles
 
         public void RemoveTileMap(TileMap map) 
         {
+            lock (EntityManager.Entities) 
+            {
+                foreach (Entity entity in EntityManager.Entities)
+                {
+                    if (entity.Handle.OnTileMap(map)) 
+                    {
+                        entity.Unload();
+                    }
+                }
+            }
+
             map.SetRender(false);
             map.CleanUp();
             TileMaps.Remove(map);
@@ -170,6 +182,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
         const int LOADED_MAP_DIMENSIONS = 3;
+
         public void LoadSurroundingTileMaps(TileMapPoint point) 
         {
             TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
@@ -203,8 +216,8 @@ namespace MortalDungeon.Game.Tiles
                 currPoint.Y = point.Y - 1;
             }
 
-            Scene.PostTickAction = () =>
-            {
+            //Scene.PostTickAction = () =>
+            //{
                 for (int i = TileMaps.Count - 1; i >= 0; i--)
                 {
                     if (loadedPoints.Find(p => p == TileMaps[i].TileMapCoords) == null)
@@ -240,7 +253,7 @@ namespace MortalDungeon.Game.Tiles
                 Scene.QueueLightObstructionUpdate();
 
                 Scene.PostTickAction = null;
-            };
+            //};
         }
 
         public Vector2i GetTopLeftTilePosition()
@@ -377,6 +390,29 @@ namespace MortalDungeon.Game.Tiles
             return false;
         }
 
+        public bool IsValidTile(FeaturePoint point) 
+        {
+            Vector2i topLeftCoord = GetTopLeftTilePosition();
+            TileMap topleftMap = GetTopLeftMap();
+
+            Vector2i botRightCoord = topLeftCoord + new Vector2i(topleftMap.Width * LOADED_MAP_DIMENSIONS, topleftMap.Height * LOADED_MAP_DIMENSIONS);
+
+            return point.X >= topLeftCoord.X && point.X <= botRightCoord.X && point.Y >= topLeftCoord.Y && point.Y <= botRightCoord.Y;
+        }
+
+        
+
+        public static Vector2i PointToMapCoords(TilePoint point)
+        {
+            Vector2i coords = new Vector2i
+            {
+                X = point.X + point.ParentTileMap.TileMapCoords.X * point.ParentTileMap.Width,
+                Y = point.Y + point.ParentTileMap.TileMapCoords.Y * point.ParentTileMap.Height
+            };
+
+            return coords;
+        }
+
         internal BaseTile GetTile(int xIndex, int yIndex, TileMap map)
         {
             int currX;
@@ -412,6 +448,13 @@ namespace MortalDungeon.Game.Tiles
             }
 
             throw new Exception("Tile not found");
+        }
+
+        public BaseTile GetTile(FeaturePoint point)
+        {
+            Vector2i topLeftCoord = GetTopLeftTilePosition();
+
+            return GetTile(point.X - topLeftCoord.X, point.Y - topLeftCoord.Y);
         }
 
         internal void ClearAllVisitedTiles()

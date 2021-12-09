@@ -403,6 +403,8 @@ namespace MortalDungeon.Game.Tiles
 
             Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
             sound.Play();
+
+            scene._debugSelectedTile = this;
         }
 
         public override Tooltip CreateContextMenu()

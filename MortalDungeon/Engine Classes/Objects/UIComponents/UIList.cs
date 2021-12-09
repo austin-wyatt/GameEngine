@@ -80,65 +80,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
         }
 
-        //public ListItem AddItem(string text, Action onClickAction = null)
-        //{
-        //    Vector3 position;
-
-        //    if (Items.Count == 0)
-        //    {
-        //        position = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
-        //        position.X += BaseComponent.GetAnchorPosition(UIAnchorPosition.LeftCenter).X;
-        //        //position.X += Margin.X;
-        //        position.Y += Margin.Y;
-        //    }
-        //    else 
-        //    {
-        //        position = Items[Items.Count - 1].BaseComponent.Position;
-        //        position.Y += Items[Items.Count - 1].BaseComponent.GetDimensions().Y * (Ascending ? -1 : 1);
-        //        position.Y += ItemMargins.Y * WindowConstants.ScreenUnits.Y * (Ascending ? -1 : 1);
-        //    }
-
-        //    //ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
-        //    ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor);
-        //    Items.Add(newItem);
-        //    AddChild(newItem, 100);
-
-        //    //UIScale textScale = newItem._textBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2;
-        //    UIScale textScale = newItem._textBox.GetDimensions() * WindowConstants.AspectRatio * 2;
-
-        //    if (textScale.X > ListItemSize.X || textScale.Y > ListItemSize.Y) 
-        //    {
-        //        //ListItemSize.X = (textScale.X > ListItemSize.X ? textScale.X : ListItemSize.X) + newItem._textBox.TextOffset.ToScale().X + Margin.X * 2;
-        //        ListItemSize.X = (textScale.X > ListItemSize.X ? textScale.X : ListItemSize.X) + Margin.X * 2;
-        //        ListItemSize.Y = (textScale.Y > ListItemSize.Y ? textScale.Y : ListItemSize.Y);
-
-        //        Items.ForEach(item => item.SetSize(ListItemSize));
-        //        Console.WriteLine(ListItemSize);
-        //    }
-
-        //    newItem.OnClickAction = onClickAction;
-        //    newItem.Clickable = true;
-        //    newItem.Hoverable = true;
-
-
-        //    UIScale listSize = ListItemSize + new UIScale(0, ItemMargins.Y + Margin.Y / 4);
-        //    listSize.Y *= Items.Count;
-
-        //    listSize.Y += Margin.Y;
-        //    listSize.X += Margin.X;
-
-        //    BaseComponent.SetSize(listSize);
-        //    ListSize = listSize;
-
-        //    if (Items.Count > 0) 
-        //    {
-        //        Position = (Items[0].BaseComponent.Position + Items[Items.Count - 1].BaseComponent.Position) / 2;
-        //        //BaseComponent.SetPosition(Position);
-        //    }
-
-        //    return newItem;
-        //}
-
         public ListItem AddItem(string text, Action<ListItem> onClickAction = null)
         {
             Vector3 position;
@@ -175,7 +116,65 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 BaseComponent.SetPosition(Position);
             }
 
+            //RescaleList();
+
             return newItem;
+        }
+
+        private void RescaleList() 
+        {
+            UIScale listSize = new UIScale(ListItemSize);
+            listSize.Y *= Items.Count;
+
+            Vector3 topLeftPos = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+
+            BaseComponent.SetSize(listSize);
+            ListSize = listSize;
+
+            BaseComponent.SetPositionFromAnchor(topLeftPos, UIAnchorPosition.TopLeft);
+
+            for (int i = 0; i < Items.Count; i++) 
+            {
+                Vector3 position;
+
+                if (i == 0)
+                {
+                    position = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+                }
+                else
+                {
+                    position = Items[i - 1].BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
+                }
+
+                Items[i].SetPositionFromAnchor(position, UIAnchorPosition.TopLeft);
+            }
+
+            //if (Items.Count > 0)
+            //{
+            //    Position = (Items[0].BaseComponent.Position + Items[^1].BaseComponent.Position) / 2;
+            //    BaseComponent.SetPosition(Position);
+            //}
+        }
+
+        public void ClearItems() 
+        {
+            for (int i = 0; i < Items.Count; i++) 
+            {
+                RemoveChild(Items[i]);
+            }
+
+            Items.Clear();
+
+            RescaleList();
+        }
+
+        public void RemoveItem(ListItem item) 
+        {
+            RemoveChild(item);
+
+            Items.Remove(item);
+
+            RescaleList();
         }
     }
 

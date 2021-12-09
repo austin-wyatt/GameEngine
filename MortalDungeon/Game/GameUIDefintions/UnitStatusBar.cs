@@ -81,12 +81,17 @@ namespace MortalDungeon.Game.UI
 
             unit.StatusBarComp = this;
 
+            UpdateInfo();
+
             UpdateInfoBarScales(scale);
             UpdateUnitStatusPosition();
         }
 
         public void UpdateUnitStatusPosition() 
         {
+            if (_unit.BaseObjects.Count == 0)
+                return;
+
             Vector4 unitPos = new Vector4(0, 0, 0, 1) * _unit.GetDisplay().Transformations * _camera.GetViewMatrix() * _camera.ProjectionMatrix;
             unitPos.X /= unitPos.W;
             unitPos.Y /= unitPos.W;
@@ -177,6 +182,13 @@ namespace MortalDungeon.Game.UI
                 _turnDisplay.TextField._textField.SetTextString(" ");
                 _turnDisplay.TextField._textField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(0);
             }
+        }
+
+        public void UpdateInfo() 
+        {
+            HealthBar.SetHealthPercent(_unit.Info.Health / _unit.Info.MaxHealth, _unit.AI.Team);
+            ShieldBar.SetCurrentShields(_unit.Info.CurrentShields);
+            _mainTextBox.SetText(_unit.Name);
         }
 
         public override void OnCameraMove()

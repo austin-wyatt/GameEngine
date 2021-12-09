@@ -63,11 +63,10 @@ namespace MortalDungeon.Game.GameObjects
             BaseObject unitSelection = new BaseObject(List, 0, "UnitSelectionTile", unit.Position, EnvironmentObjects.BASE_TILE.Bounds);
             unitSelection.BaseFrame.CameraPerspective = true;
 
-
-
             AddBaseObject(unitSelection);
 
             SetPosition(unit.Position + UnitOffset);
+            base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
         }
 
         public override void SetPosition(Vector3 position)
@@ -139,6 +138,8 @@ namespace MortalDungeon.Game.GameObjects
 
             Vector4 currColor = new Vector4(_baseColor);
 
+            PropertyAnimations.Clear();
+
             for (int i = 0; i < shifts; i++)
             {
                 Keyframe temp = new Keyframe(i * shiftDelay);
@@ -148,7 +149,7 @@ namespace MortalDungeon.Game.GameObjects
                     if (temp.ActivationTick == 0) 
                     {
                         currColor = new Vector4(_selectAnimation.BaseColor);
-                        base.SetScale(1);
+                        base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
                     }
 
                     if (temp.ActivationTick < shiftDelay * shifts / 2)

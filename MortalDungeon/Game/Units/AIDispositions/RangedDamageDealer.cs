@@ -58,7 +58,7 @@ namespace MortalDungeon.Game.Units.AI
                         {
                             weight += 2 * Weight;
 
-                            weight += (1 - target.Info.Health / UnitInfo.MaxHealth) * Bloodthirsty;
+                            weight += (1 - target.Info.Health / target.Info.MaxHealth) * Bloodthirsty;
 
                             returnAction = new AttackEnemy(_unit, rangedAbility, null, target) { Weight = weight };
                             return returnAction;

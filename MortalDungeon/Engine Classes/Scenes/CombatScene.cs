@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MortalDungeon.Engine_Classes.Scenes
@@ -74,6 +75,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         Texture _normalFogTexture;
         public UIBlock _tooltipBlock;
         public Action _closeContextMenu;
+
+        public BaseTile _debugSelectedTile;
 
         public CombatScene() 
         {
@@ -279,8 +282,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             TurnDisplay.SetCurrentUnit(UnitTakingTurn);
 
-            CurrentUnit.OnTurnStart();
-
             lock (CurrentUnit.Info.Buffs)
             for (int i = 0; i < CurrentUnit.Info.Buffs.Count; i++)
             {
@@ -307,6 +308,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 Footer.UpdateFooterInfo(CurrentUnit);
             }
+
+            CurrentUnit.OnTurnStart();
         }
 
         public void SetCurrentUnitEnergy() 
@@ -895,7 +898,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     break;
                 case MouseUpFlags.TabMenuOpen:
                     MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
-                    TabMenu.Display(false);
+                    //TabMenu.Display(false); //We probably don't need to close the tab menu when a click happens
                     break;
             }
         }
@@ -1037,10 +1040,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void OpenContextMenu(Tooltip menu) 
         {
-            UIHelpers.CreateContextMenu(this, menu, _tooltipBlock);
+            Task.Run(() =>
+            {
+                Thread.Sleep(10);
+                UIHelpers.CreateContextMenu(this, menu, _tooltipBlock);
 
-            Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
-            MessageCenter.SendMessage(msg);
+                Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
+                MessageCenter.SendMessage(msg);
+            });
         }
 
         public void CloseContextMenu() 

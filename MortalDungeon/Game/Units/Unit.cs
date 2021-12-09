@@ -2,8 +2,10 @@
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Lighting;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Particles;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
@@ -15,7 +17,7 @@ using System.Linq;
 
 namespace MortalDungeon.Game.Units
 {
-    public class Unit : GameObject
+    public class Unit : GameObject, ILoadableEntity
     {
         public UnitAI AI;
         public UnitInfo Info;
@@ -26,7 +28,6 @@ namespace MortalDungeon.Game.Units
 
         public bool VisibleThroughFog = false;
         
-
         public CombatScene Scene;
 
         public UnitStatusBar StatusBarComp = null;
@@ -37,40 +38,114 @@ namespace MortalDungeon.Game.Units
         public bool Selected = false;
         public bool Targeted = false;
 
+        public Entity EntityHandle;
+        
 
         public UnitSelectionTile SelectionTile;
 
+        public bool _createStatusBar = false;
+        public Unit() { }
 
         public Unit(CombatScene scene) 
         {
-            AI = new UnitAI(this);
-            Info = new UnitInfo(this);
+            InitializeUnitInfo();
 
             Scene = scene;
 
             Hoverable = true;
 
-            //Info._visionRadius = 12;
-            VisionGenerator.Radius = 12;
-
-            Move movement = new Move(this);
-            Info.Abilities.Add(movement);
-
-            Info._movementAbility = movement;
-
-            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
-            Scene._genericObjects.Add(SelectionTile);
+            //SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+            //Scene._genericObjects.Add(SelectionTile);
         }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
         {
-            AI = new UnitAI(this);
-            Info = new UnitInfo(this);
+            InitializeUnitInfo();
 
             Scene = scene;
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
             SetTeam(UnitTeam.Unknown);
+        }
+
+        public virtual void InitializeUnitInfo() 
+        {
+            AI = new UnitAI(this);
+            Info = new UnitInfo(this);
+        }
+
+        /// <summary>
+        /// Create and add the base object to the unit
+        /// </summary>
+        public virtual void InitializeVisualComponent()
+        {
+
+        }
+
+        public virtual void EntityLoad(FeaturePoint position) 
+        {
+            Position = new Vector3();
+
+            
+            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+            SetSelectionTileColor();
+
+            if (VisionGenerator.Team != UnitTeam.Unknown && !Scene.UnitVisionGenerators.Contains(VisionGenerator)) 
+            {
+                Scene.UnitVisionGenerators.Add(VisionGenerator);
+            }
+
+            Scene._genericObjects.Add(SelectionTile);
+
+            InitializeVisualComponent();
+
+            if (StatusBarComp == null && _createStatusBar) 
+            {
+                new UnitStatusBar(this, Scene._camera);
+            }
+
+            if (StatusBarComp != null) 
+            {
+                Scene.AddUI(StatusBarComp, 10);
+            }
+
+
+            SetTileMapPosition(Scene._tileMapController.GetTile(position));
+        }
+
+        public virtual void EntityUnload() 
+        {
+            CleanUp();
+
+            Info.TileMapPosition = null;
+
+            //might not wanna clear buffs or abilities depending on how things shake out.
+            lock (Info.Abilities) 
+            {
+                Info.Abilities.Clear();
+            }
+            lock (Info.Buffs)
+            {
+                Info.Buffs.Clear();
+            }
+
+            BaseObjects.Clear();
+        }
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            //remove the objects that are related to the unit but not created by the unit
+            Scene._genericObjects.Remove(SelectionTile);
+            Scene.RemoveUI(StatusBarComp);
+
+            SelectionTile = null;
+
+            Scene.LightObstructions.Remove(LightObstruction);
+            Scene.UnitVisionGenerators.Remove(VisionGenerator);
+
+            Scene.DecollateUnit(this);
+            Scene.RemoveUnit(this);
         }
 
         public override void AddBaseObject(BaseObject obj)
@@ -118,6 +193,21 @@ namespace MortalDungeon.Game.Units
             return Info.TileMapPosition.TilePoint.ParentTileMap;
         }
 
+        public override void SetName(string name)
+        {
+            base.SetName(name);
+
+            UpdateStatusBarInfo();
+        }
+
+        public void UpdateStatusBarInfo() 
+        {
+            if (StatusBarComp != null)
+            {
+                StatusBarComp.UpdateInfo();
+            }
+        }
+
         public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
@@ -142,17 +232,20 @@ namespace MortalDungeon.Game.Units
                 StatusBarComp.SetWillDisplay(render && !Info.Dead && Scene.DisplayUnitStatuses);
             }
 
-            if (Targeted && render)
+            if (SelectionTile != null)
             {
-                SelectionTile.Target();
-            }
-            else if (Selected && render)
-            {
-                SelectionTile.Select();
-            }
-            else 
-            {
-                SelectionTile.SetRender(false);
+                if (Targeted && render)
+                {
+                    SelectionTile.Target();
+                }
+                else if (Selected && render)
+                {
+                    SelectionTile.Select();
+                }
+                else
+                {
+                    SelectionTile.SetRender(false);
+                }
             }
         }
 
@@ -233,18 +326,9 @@ namespace MortalDungeon.Game.Units
         {
             AI.Team = team;
 
-            switch (UnitTeam.PlayerUnits.GetRelation(team)) 
-            {
-                case Relation.Friendly:
-                    SelectionTile.SetColor(new Vector4(0, 0.75f, 0, 1));
-                    break;
-                case Relation.Hostile:
-                    SelectionTile.SetColor(new Vector4(0.75f, 0, 0, 1));
-                    break;
-                case Relation.Neutral:
-                    SelectionTile.SetColor(Colors.Tan);
-                    break;
-            }
+            SetSelectionTileColor();
+
+            UpdateStatusBarInfo();
 
             if (VisionGenerator.Team != UnitTeam.Unknown && team == UnitTeam.Unknown)
             {
@@ -258,10 +342,36 @@ namespace MortalDungeon.Game.Units
             VisionGenerator.Team = team;
         }
 
+        public void SetSelectionTileColor() 
+        {
+            if (SelectionTile == null)
+                return;
+
+            switch (UnitTeam.PlayerUnits.GetRelation(AI.Team))
+            {
+                case Relation.Friendly:
+                    SelectionTile.SetColor(new Vector4(0, 0.75f, 0, 1));
+                    break;
+                case Relation.Hostile:
+                    SelectionTile.SetColor(new Vector4(0.75f, 0, 0, 1));
+                    break;
+                case Relation.Neutral:
+                    SelectionTile.SetColor(Colors.Tan);
+                    break;
+                default:
+                    SelectionTile.SetColor(new Vector4(0, 0, 0.75f, 1));
+                    break;
+            }
+        }
+
         public virtual void SetShields(int shields) 
         {
             Info.CurrentShields = shields;
-            StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
+
+            if (StatusBarComp != null) 
+            {
+                StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
+            }
         }
 
 
@@ -374,7 +484,7 @@ namespace MortalDungeon.Game.Units
             }
 
 
-            StatusBarComp.HealthBar.SetHealthPercent(Info.Health / UnitInfo.MaxHealth, AI.Team);
+            StatusBarComp.HealthBar.SetHealthPercent(Info.Health / Info.MaxHealth, AI.Team);
             StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
             Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
 
@@ -402,6 +512,11 @@ namespace MortalDungeon.Game.Units
 
         public virtual void OnKill() 
         {
+            if (BaseObject != null) 
+            {
+                BaseObject.SetAnimation(AnimationType.Die);
+            }
+
             if (StatusBarComp != null) 
             {
                 Scene.OnUnitKilled(this);
@@ -461,25 +576,13 @@ namespace MortalDungeon.Game.Units
                 if (StatusBarComp != null && StatusBarComp.Render) 
                 {
                     StatusBarComp.ZIndex = BaseStatusBarZIndex + 1;
-                    StatusBarComp.Parent.Children.Sort();
+                    Scene.SortUIByZIndex();
+
+                    //StatusBarComp.Parent.Children.Sort();
                 }
 
                 //Scene.Footer.UpdateFooterInfo(this);
             }
-        }
-
-        public override void CleanUp()
-        {
-            base.CleanUp();
-
-            //remove the objects that are related to the unit but not created by the unit
-            Scene._genericObjects.Remove(SelectionTile);
-            Scene.RemoveUI(StatusBarComp);
-
-            Scene.LightObstructions.Remove(LightObstruction);
-            Scene.UnitVisionGenerators.Remove(VisionGenerator);
-
-            Scene.DecollateUnit(this);
         }
 
         public override void OnHoverEnd()
@@ -490,7 +593,8 @@ namespace MortalDungeon.Game.Units
                 if (StatusBarComp != null && StatusBarComp.Render)
                 {
                     StatusBarComp.ZIndex = BaseStatusBarZIndex;
-                    StatusBarComp.Parent.Children.Sort();
+                    Scene.SortUIByZIndex();
+                    //StatusBarComp.Parent.Children.Sort();
                 }
 
                 base.OnHoverEnd();
@@ -560,6 +664,11 @@ namespace MortalDungeon.Game.Units
             }
         }
 
+        public bool OnTileMap(TileMap map) 
+        {
+            return Info != null && Info.TileMapPosition != null && Info.TileMapPosition.TileMap == map;
+        }
+
         public virtual BaseObject CreateBaseObject() 
         {
             return null;
@@ -607,7 +716,7 @@ namespace MortalDungeon.Game.Units
         public float Speed => _movementAbility != null ? _movementAbility.GetEnergyCost() : 10;
 
         public float Health = 100;
-        public const float MaxHealth = 100;
+        public float MaxHealth = 100;
 
         public int CurrentShields = 0;
 
@@ -750,7 +859,7 @@ namespace MortalDungeon.Game.Units
 
         public const int DEFAULT_RANGE = 5;
 
-        public int Skill = 0;
+        public float Skill = 0;
 
         public Scouting(Unit unit) 
         {

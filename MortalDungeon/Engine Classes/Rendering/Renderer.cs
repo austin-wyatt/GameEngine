@@ -636,7 +636,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     {
                         for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
                         {
-                            if (entry.Value.Frames[o].TextureReference == null || entry.Value.Frames[o].TextureReference.ImageData == null) 
+                            if (entry.Value.Frames[o].TextureReference == null) 
                             {
                                 if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
                                 {

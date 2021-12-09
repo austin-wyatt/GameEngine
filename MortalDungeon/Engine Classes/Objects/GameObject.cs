@@ -92,6 +92,11 @@ namespace MortalDungeon.Engine_Classes
             return baseObj;
         }
 
+        public virtual void SetName(string name) 
+        {
+            Name = name;
+        }
+
         public virtual void SetPosition(Vector3 position) 
         {
             BaseObjects.ForEach(obj =>
@@ -173,6 +178,16 @@ namespace MortalDungeon.Engine_Classes
             });
 
             Scale = new Vector3(f, f, f);
+        }
+
+        public virtual void SetScale(float x, float y, float z)
+        {
+            BaseObjects.ForEach(obj =>
+            {
+                obj.BaseFrame.SetScale(x, y, z);
+            });
+
+            Scale = new Vector3(x, y, z);
         }
 
         public virtual void ScaleAddition(float f)

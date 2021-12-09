@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -18,7 +19,8 @@ namespace MortalDungeon.Game.UI
     {
         private CombatScene Scene;
 
-        public List<UIBlock> Tabs = new List<UIBlock>();
+        //public List<UIBlock> Tabs = new List<UIBlock>();
+        public List<ScrollableArea> Tabs = new List<ScrollableArea>();
         public List<Button> TabAccessButtons = new List<Button>();
 
         public int CurrentTab = 0;
@@ -52,11 +54,17 @@ namespace MortalDungeon.Game.UI
 
         public int CreateTab() 
         {
-            UIBlock tab = new UIBlock(default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 1.8f));
+            //UIBlock tab = new UIBlock(default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 1.8f));
+
+            ScrollableArea tab = new ScrollableArea(default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 1.8f), 
+                default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 3f));
+
             tab.SetColor(Colors.UILightGray);
             tab.MultiTextureData.MixTexture = false;
 
-            tab.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new UIScale(0.0125f, -0.0125f).ToDimensions(), UIAnchorPosition.BottomLeft);
+            //tab.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new UIScale(0.0125f, -0.0125f).ToDimensions(), UIAnchorPosition.BottomLeft);
+
+            tab.SetVisibleAreaPosition(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new UIScale(0.0125f, -0.0125f).ToDimensions(), UIAnchorPosition.BottomLeft);
 
             BaseComponent.AddChild(tab);
             tab.SetRender(false);
@@ -146,9 +154,9 @@ namespace MortalDungeon.Game.UI
                 }
             };
 
-            button.SetPositionFromAnchor(Tabs[0].GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+            button.SetPositionFromAnchor(Tabs[0].BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
 
-            Tabs[0].AddChild(button);
+            Tabs[0].BaseComponent.AddChild(button);
 
             Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Select Guy", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             unitButton.BaseComponent.MultiTextureData.MixTexture = false;
@@ -165,7 +173,7 @@ namespace MortalDungeon.Game.UI
 
             unitButton.SetPositionFromAnchor(button.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
-            Tabs[0].AddChild(unitButton);
+            Tabs[0].BaseComponent.AddChild(unitButton);
 
             Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Select Skeleton", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             unitButton2.BaseComponent.MultiTextureData.MixTexture = false;
@@ -182,7 +190,7 @@ namespace MortalDungeon.Game.UI
 
             unitButton2.SetPositionFromAnchor(unitButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
-            Tabs[0].AddChild(unitButton2);
+            Tabs[0].BaseComponent.AddChild(unitButton2);
 
             Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Skele AI", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             toggleAI.BaseComponent.MultiTextureData.MixTexture = false;
@@ -196,32 +204,20 @@ namespace MortalDungeon.Game.UI
 
             toggleAI.SetPositionFromAnchor(unitButton2.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
-            Tabs[0].AddChild(toggleAI);
+            Tabs[0].BaseComponent.AddChild(toggleAI);
 
-            Button updateMaps = CreateButton("Show Chunks", () =>
+            Button updateMaps = CreateButton("Open E.M.", () =>
             {
-                Scene._tileMapController.TileMaps.ForEach(map =>
-                {
-                    //map.TileChunks.ForEach(chunk =>
-                    //{
-                    //    chunk.Tiles.ForEach(t =>
-                    //    {
-                    //        if (chunk.Cull)
-                    //        {
-                    //            t.Color = Colors.White;
-                    //        }
-                    //        else
-                    //        {
-                    //            t.Color = Colors.Red;
-                    //        }
+                //long preObj = GC.GetTotalMemory(true);
+                //Guy guy = new Guy(Scene, Scene._tileMapController.TileMaps[0][10, 0], "test");
+                //Entities.Entity entity = new Entities.Entity(guy);
 
-                    //        t.Update();
-                    //    });
-                    //});
-                });
+                //long postObj = GC.GetTotalMemory(true);
 
+                //Console.WriteLine("Size of empty Unit is: " + (postObj - preObj) + " bytes");
+                Dev.EntityManagerUI ui = new Dev.EntityManagerUI(Scene);
 
-                Console.WriteLine($"Threadpool info {ThreadPool.ThreadCount}");
+                Scene.AddUI(ui.Window, 10000);
             }, toggleAI.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button turboButton = null;
@@ -269,6 +265,19 @@ namespace MortalDungeon.Game.UI
 
                 VisionMap.SaveOperationMap();
             }, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            Button removeEntity = CreateButton("Entity Parser", () =>
+            {
+                foreach (var prefab in EntityParser.Prefabs) 
+                {
+                    Console.WriteLine($"Prefab: {prefab.Type} {prefab.Name}");
+                }
+            }, minusBlue.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            Button loadEntity = CreateButton("Load Guy", () =>
+            {
+
+            }, removeEntity.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
         }
 
         private Button CreateButton(string text, Action action, Vector3 prevButtonPos) 
@@ -280,7 +289,7 @@ namespace MortalDungeon.Game.UI
 
             button.SetPositionFromAnchor(prevButtonPos, UIAnchorPosition.TopLeft);
 
-            Tabs[0].AddChild(button);
+            Tabs[0].BaseComponent.AddChild(button);
 
             return button;
         }

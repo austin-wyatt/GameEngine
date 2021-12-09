@@ -16,7 +16,13 @@ namespace MortalDungeon.Engine_Classes
         {
             _itemsToAdd[_currentQueue].Add(item);
 
-            Rendering.Renderer.LoadTextureFromGameObj(item);
+            void loadTex()
+            {
+                Rendering.Renderer.LoadTextureFromGameObj(item);
+                Rendering.Renderer.OnRender -= loadTex;
+            };
+
+            Rendering.Renderer.OnRender += loadTex;
         }
     }
 
@@ -35,7 +41,7 @@ namespace MortalDungeon.Engine_Classes
 
         protected int _currentQueue = 0;
 
-        protected const int INTERNAL_QUEUES = 5;
+        protected const int INTERNAL_QUEUES = 2;
 
         public int CHANGE_TOKEN { get; private set; }
 
@@ -89,7 +95,10 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         public void AddImmediate(T item)
         {
-            base.Add(item);
+            lock (this)
+            {
+                base.Add(item);
+            }
         }
 
         public new void Add(T item)
@@ -100,20 +109,26 @@ namespace MortalDungeon.Engine_Classes
 
         public void AddQueuedItems(int queue)
         {
-            lock (_itemsToAdd[_currentQueue])
+            lock (this)
             {
-                for (int i = 0; i < _itemsToAdd[queue].Count; i++)
+                lock (_itemsToAdd[_currentQueue])
                 {
-                    base.Add(_itemsToAdd[queue][i]);
-                }
+                    for (int i = 0; i < _itemsToAdd[queue].Count; i++)
+                    {
+                        base.Add(_itemsToAdd[queue][i]);
+                    }
 
-                _itemsToAdd[queue].Clear();
+                    _itemsToAdd[queue].Clear();
+                }
             }
         }
 
         public void RemoveImmediate(T item)
         {
-            base.Remove(item);
+            lock (this)
+            {
+                base.Remove(item);
+            }
         }
         public new void Remove(T item)
         {
@@ -123,14 +138,17 @@ namespace MortalDungeon.Engine_Classes
 
         public void ClearQueuedItems(int queue)
         {
-            lock (_itemsToRemove[_currentQueue])
+            lock (this)
             {
-                for (int i = 0; i < _itemsToRemove[queue].Count; i++)
+                lock (_itemsToRemove[_currentQueue])
                 {
-                    base.Remove(_itemsToRemove[queue][i]);
-                }
+                    for (int i = 0; i < _itemsToRemove[queue].Count; i++)
+                    {
+                        base.Remove(_itemsToRemove[queue][i]);
+                    }
 
-                _itemsToRemove[queue].Clear();
+                    _itemsToRemove[queue].Clear();
+                }
             }
         }
 

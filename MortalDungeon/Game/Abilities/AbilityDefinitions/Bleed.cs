@@ -12,9 +12,6 @@ namespace MortalDungeon.Game.Abilities
 {
     public class Bleed : Ability
     {
-        int _bleedDuration;
-        float _bleedDamage;
-
         public Bleed(Unit castingUnit, int range = 1, float bleedDamage = 15f, int duration = 3)
         {
             Type = AbilityTypes.Debuff;
@@ -22,8 +19,8 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit = castingUnit;
             EnergyCost = 1;
 
-            _bleedDuration = duration;
-            _bleedDamage = bleedDamage;
+            Duration = duration;
+            Damage = bleedDamage;
 
             Name = "Bleed";
 
@@ -76,7 +73,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            BleedDebuff bleedDebuff = new BleedDebuff(SelectedUnit, _bleedDuration, _bleedDamage);
+            BleedDebuff bleedDebuff = new BleedDebuff(SelectedUnit, Duration, Damage);
 
             Casted();
             EffectEnded();

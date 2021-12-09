@@ -172,14 +172,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _UI.Add(ui);
             }
 
+
             if (zIndex != -1)
             {
                 ui.ZIndex = zIndex;
             }
-            else
-            {
-                ui.ZIndex = 0;
-            }
+            //else
+            //{
+            //    ui.ZIndex = 0;
+            //}
 
             SortUIByZIndex();
         }
@@ -311,8 +312,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 }
             });
 
-            if(VisionMapTask.Status == TaskStatus.Created)
-                VisionMapTask.Start();
+
+            if (VisionMapTask.Status == TaskStatus.Created) 
+            {
+                try
+                {
+                    VisionMapTask.Start();
+                }
+                catch (Exception _) //this error doesn't matter
+                {
+
+                }
+            }
         }
 
 
@@ -374,7 +385,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             ClickProcessed,
             ContextMenuOpen,
             AbilitySelected,
-            TabMenuOpen
+            TabMenuOpen,
+            RightClick
         }
 
         protected ContextManager<MouseUpFlags> MouseUpStateFlags = new ContextManager<MouseUpFlags>();
@@ -394,33 +406,49 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if ((e.Button == MouseButton.Left || e.Button == MouseButton.Right) && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
             {
                 bool leftClick = e.Button == MouseButton.Left;
-
+                
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
 
                 if (!GetBit(_interceptClicks, ObjectType.UI))
-                    _UI.ForEach(uiObj =>
+                {
+                    //this is lazy but errors are minor enough that dumping them isn't a big deal
+                    try
                     {
-                        if (MouseUpStateFlags.GetFlag(MouseUpFlags.TabMenuOpen))
+                        bool clickProcessed = false;
+
+                        for (int i = 0; i < _UI.Count; i++)
                         {
-                            if (uiObj != TabMenu)
+                            if (MouseUpStateFlags.GetFlag(MouseUpFlags.TabMenuOpen))
                             {
-                                return;
+                                if (_UI[i] != TabMenu)
+                                {
+                                    return;
+                                }
+                            }
+
+                            if (_UI[i].Render && !_UI[i].Disabled)
+                            {
+                                _UI[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                                {
+                                    clickProcessed = true;
+
+                                    OnUIClicked(obj);
+                                    MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                                    MouseUpStateFlags.SetFlag(MouseUpFlags.RightClick, !leftClick);
+                                }, leftClick ? UIEventType.Click : UIEventType.RightClick);
+
+                                if (clickProcessed)
+                                    break;
                             }
                         }
-
-                        if (uiObj.Render && !uiObj.Disabled)
-                        {
-                            uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
-                            {
-                                OnUIClicked(obj);
-                                MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
-                            }, leftClick ? UIEventType.Click : UIEventType.RightClick);
-                        }
-                    });
-
-                if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
-                    return; //stop further clicks from being processed
-
+                    }
+                    catch (Exception err) 
+                    {
+                        Console.WriteLine("Error caught in CheckMouseUp: " + err.Message);
+                    }
+                }
+                //if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
+                //    return; //stop further clicks from being processed
 
                 #region UI MouseUpEvents
                 if (MouseUpStateFlags.GetFlag(MouseUpFlags.ContextMenuOpen))
@@ -514,7 +542,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected UIObject _grabbedObj = null;
         public virtual bool OnMouseMove()
         {
-            if (_mouseTimer.ElapsedMilliseconds > 50) //check every 20 ms
+            if (_mouseTimer.ElapsedMilliseconds > 30) //check every 30 ms
             {
                 _mouseTimer.Restart();
                 _hoverTimer.Reset();
@@ -544,9 +572,29 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     _grabbedObj = null;
                 } //resolve all grabbed effects
 
-                _UI.ForEach(uiObj =>
+
+                bool hovered = false;
+                //check hovered objects
+                foreach (var uiObj in _UI)
                 {
-                    uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.Hover);
+                    if (hovered)
+                    {
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
+                    }
+                    else 
+                    {
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                        {
+                            hovered = true;
+                        }, UIEventType.Hover);
+                    }
+                }
+
+                bool timedHover = false;
+                foreach (var uiObj in _UI)
+                {
+                    if (timedHover)
+                        break;
 
                     uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
                     {
@@ -554,9 +602,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             _hoverTimer.Restart();
                             _hoveredObject = obj;
+
+                            timedHover = true;
                         }
                     }, UIEventType.TimedHover);
-                }); //check hovered objects
+                }
 
 
 
@@ -805,6 +855,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void CollateUnit(Unit unit)
         {
+            if (unit.EntityHandle != null && !unit.EntityHandle.Loaded)
+                return;
+
             lock(_renderedUnits)
             if (!_renderedUnits.TryGetValue(unit, out Unit found))
             {

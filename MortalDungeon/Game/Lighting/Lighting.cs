@@ -233,8 +233,8 @@ namespace MortalDungeon.Game.Lighting
 
             LightTexture.BindFrameBuffer();
 
-            if (generators.Count == 0)
-                return;
+            //if (generators.Count == 0)
+            //    return;
 
             EnableLightShaderAttributes();
 

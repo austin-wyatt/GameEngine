@@ -1,7 +1,9 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
+﻿using MortalDungeon.Engine_Classes.Rendering;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
@@ -329,7 +331,13 @@ namespace MortalDungeon.Engine_Classes
             if (Letters.Count > 0) 
             {
                 tempTexture = Letters[0].LetterObject.BaseFrame.TextureReference; //hack, we know this texture is already loaded so we can hot swap characters
+
+                if (tempTexture == null)
+                {
+                    Renderer.LoadTextureFromBaseObject(Letters[0].LetterObject);
+                }
             }
+            
 
             TextString = textString;
             char[] arr = TextString.ToCharArray();

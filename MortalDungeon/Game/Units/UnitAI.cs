@@ -51,10 +51,6 @@ namespace MortalDungeon.Game.Units
             Dispositions = new Dispositions(_unit);
         }
 
-        public void SetTeam(UnitTeam team) 
-        {
-            Team = team;
-        }
 
         public void TakeTurn() 
         {
@@ -217,6 +213,8 @@ namespace MortalDungeon.Game.Units
     public class Dispositions 
     {
         public List<Disposition> DispositionList = new List<Disposition>();
+
+        public Dispositions() { }
 
         public Dispositions(Unit unit) 
         {

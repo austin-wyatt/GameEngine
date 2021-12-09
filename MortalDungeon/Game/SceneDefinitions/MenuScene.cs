@@ -23,11 +23,15 @@ using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Engine_Classes.Audio;
+using MortalDungeon.Game.Entities;
+using MortalDungeon.Game.UI.Dev;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
     class MenuScene : CombatScene
     {
+        private EntityManagerUI _entityManager;
+
         public MenuScene() : base()
         {
             InitializeFields();
@@ -36,6 +40,8 @@ namespace MortalDungeon.Game.SceneDefinitions
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             base.Load(camera, cursorObject, mouseRay);
+
+            _entityManager = new EntityManagerUI(this);
 
             PathParams riverParams = new PathParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
             riverParams.AddStop(new FeaturePoint(25, 45));
@@ -80,38 +86,33 @@ namespace MortalDungeon.Game.SceneDefinitions
             _tileMapController.LoadSurroundingTileMaps(tileMap.TileMapCoords);
 
 
+
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.Skeletons, Relation.Hostile);
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.PlayerUnits, Relation.Friendly);
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.BadGuys, Relation.Neutral);
 
 
-            Guy guy = new Guy(tileMap[0, 0].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 0]) { Clickable = true };
+            Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
             guy.SetTeam(UnitTeam.PlayerUnits);
-            guy.Info._movementAbility.EnergyCost = 0.3f;
             CurrentUnit = guy;
 
+            
+
             guy.Info.PrimaryUnit = true;
-            guy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
-            guy.SelectionTile.SetPosition(guy.Position);
-
-            _units.Add(guy);
 
 
-            Guy badGuy = new Guy(tileMap[0, 3].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[0, 3]) { Clickable = true };
+            Guy badGuy = new Guy(this, tileMap[0, 3]) { Clickable = true };
             badGuy.SetTeam(UnitTeam.BadGuys);
             badGuy.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
-            badGuy.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
-            badGuy.SelectionTile.SetPosition(badGuy.Position);
+            
 
             badGuy.AI.ControlType = ControlType.Basic_AI;
 
-            _units.Add(badGuy);
-
-            UIBlock statusBarContainer = new UIBlock(new Vector3());
-            statusBarContainer.MultiTextureData.MixTexture = false;
-            statusBarContainer.SetAllInline(0);
-            statusBarContainer.SetColor(Colors.Transparent);
+            //UIBlock statusBarContainer = new UIBlock(new Vector3());
+            //statusBarContainer.MultiTextureData.MixTexture = false;
+            //statusBarContainer.SetAllInline(0);
+            //statusBarContainer.SetColor(Colors.Transparent);
 
             //for (int j = 0; j < 20; j++)
             //{
@@ -169,39 +170,36 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             AddUI(TurnDisplay);
 
-            UnitStatusBar guyStatusBar = new UnitStatusBar(guy, _camera);
 
             badGuy.Name = "Other guy";
-            UnitStatusBar guyStatusBar2 = new UnitStatusBar(badGuy, _camera);
+
+
+            Skeleton skeleton = new Skeleton(this, tileMap[1, 5]) { };
+            skeleton.Name = "John";
+
+            skeleton.SetTeam(UnitTeam.Skeletons);
+            skeleton.AI.ControlType = ControlType.Basic_AI;
 
 
             badGuy.SetShields(5);
             guy.SetShields(5);
 
-            Skeleton skeleton = new Skeleton(tileMap[1, 5].Position + new Vector3(0, -tileMap.Tiles[0].GetDimensions().Y / 2, 0.2f), this, tileMap[1, 5]) { };
-            skeleton.Name = "John";
+            
+            Entity guyEntity = new Entity(guy);
+            guyEntity.Load(new FeaturePoint(guy.Info.TileMapPosition));
+            EntityManager.AddEntity(guyEntity);
 
-            skeleton.SetTeam(UnitTeam.Skeletons);
-            UnitStatusBar skeletonStatusBar = new UnitStatusBar(skeleton, _camera);
+            Entity badGuyEntity = new Entity(badGuy);
+            badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
+            EntityManager.AddEntity(badGuyEntity);
 
-            skeleton.SelectionTile.UnitOffset.Y += tileMap.Tiles[0].GetDimensions().Y / 2;
-            skeleton.SelectionTile.SetPosition(skeleton.Position);
-
-            skeleton.AI.ControlType = ControlType.Basic_AI;
-
-
-            _units.Add(skeleton);
-
-
-            statusBarContainer.AddChild(skeletonStatusBar);
-            statusBarContainer.AddChild(guyStatusBar2);
-            statusBarContainer.AddChild(guyStatusBar);
-
-            AddUI(statusBarContainer);
+            Entity skeletonEntity = new Entity(skeleton);
+            skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
+            EntityManager.AddEntity(skeletonEntity);
 
 
             EndCombat();
-            FillInTeamFog();
+            FillInTeamFog(); 
         }
 
         public override void OnMouseUp(MouseButtonEventArgs e)
@@ -213,6 +211,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             base.OnMouseDown(e);
         }
 
+        
         public override bool OnKeyUp(KeyboardKeyEventArgs e)
         {
             if (!base.OnKeyUp(e)) 
@@ -228,6 +227,20 @@ namespace MortalDungeon.Game.SceneDefinitions
                         CurrentUnit.Info._movementAbility.CancelMovement();
                     }
                     break;
+                case Keys.F1:
+                    if (_entityManager.Displayed)
+                    {
+                        RemoveUI(_entityManager.Window);
+                        _entityManager.Displayed = false;
+                    }
+                    else 
+                    {
+                        _entityManager.PopulateEntityList();
+                        AddUI(_entityManager.Window);
+                        _entityManager.Displayed = true;
+                    }
+                    
+                    break;
             }
 
             return true;
@@ -242,14 +255,14 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.OnUpdateFrame(args);
 
-            float _cameraSpeed = 4.0f;
+            float _cameraSpeed = 8.0f;
+            float _zoomSpeed = 1.0f;
 
             if (!GetBit(_interceptKeystrokes, ObjectType.All) && _focusedObj == null)
             {
-
                 if (MouseState.ScrollDelta[1] < 0)
                 {
-                    Vector3 movement = _camera.Front * _cameraSpeed / 2;
+                    Vector3 movement = _camera.Front * _zoomSpeed;
                     if (_camera.Position.Z - movement.Z < 26)
                     {
                         _camera.SetPosition(_camera.Position - movement); // Backwards
@@ -259,13 +272,26 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else if (MouseState.ScrollDelta[1] > 0)
                 {
-                    Vector3 movement = _camera.Front * _cameraSpeed / 2;
-                    if (_camera.Position.Z + movement.Z > 0)
+                    Vector3 movement = _camera.Front * _zoomSpeed;
+                    if (_camera.Position.Z + movement.Z > 1)
                     {
                         _camera.SetPosition(_camera.Position + movement); // Forward
                         OnMouseMove();
                         OnCameraMoved();
                     }
+                }
+
+                if (_camera.Position.Z > 20)
+                {
+                    _cameraSpeed += 16;
+                }
+                else if (_camera.Position.Z > 15)
+                {
+                    _cameraSpeed += 8;
+                }
+                else if (_camera.Position.Z <= 8)
+                {
+                    _cameraSpeed -= 2;
                 }
 
                 if (KeyboardState.IsKeyDown(Keys.LeftShift))
@@ -493,21 +519,21 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F1))
                     {
-                        List<BaseTile> tiles = new List<BaseTile>();
+                        //List<BaseTile> tiles = new List<BaseTile>();
 
-                        tiles = map.GetVisionInRadius(tile.TilePoint, 6);
+                        //tiles = map.GetVisionInRadius(tile.TilePoint, 6);
 
-                        tiles.ForEach(tile =>
-                        {
-                            tile.Properties.Type = (TileType)(rand.Next(3) + (int)TileType.Stone_1);
+                        //tiles.ForEach(tile =>
+                        //{
+                        //    tile.Properties.Type = (TileType)(rand.Next(3) + (int)TileType.Stone_1);
 
-                            if (rand.NextDouble() > 0.9)
-                            {
-                                tile.Properties.Type = TileType.Gravel;
-                            }
+                        //    if (rand.NextDouble() > 0.9)
+                        //    {
+                        //        tile.Properties.Type = TileType.Gravel;
+                        //    }
 
-                            tile.Update();
-                        });
+                        //    tile.Update();
+                        //});
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F2))
                     {

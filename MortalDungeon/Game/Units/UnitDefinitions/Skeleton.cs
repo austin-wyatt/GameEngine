@@ -3,6 +3,7 @@ using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Particles;
 using MortalDungeon.Game.Tiles;
@@ -15,22 +16,67 @@ namespace MortalDungeon.Game.Units
 {
     public class Skeleton : Unit
     {
-        public Skeleton(Vector3 position, CombatScene scene, BaseTile tileMapPosition, string name = "Skeleton") : base(scene)
+        public Skeleton(CombatScene scene) : base(scene)
+        {
+            Clickable = true;
+            Selectable = true;
+
+            _createStatusBar = true;
+        }
+
+        public Skeleton(CombatScene scene, BaseTile tileMapPosition, string name = "Skeleton") : base(scene)
         {
             Name = name;
             SetTileMapPosition(tileMapPosition);
             Clickable = true;
             Selectable = true;
 
+            _createStatusBar = true;
+        }
+
+        public override void InitializeUnitInfo()
+        {
+            base.InitializeUnitInfo();
+
+            VisionGenerator.Radius = 12;
+            Info.CurrentShields = 5;
+
+            Info.Stealth.Skill = 0;
+
+            AI.RangedDamageDealer disp = new AI.RangedDamageDealer(this)
+            {
+                Weight = 1,
+                Bloodthirsty = 1
+            };
+
+            AI.Dispositions.Add(disp);
+        }
+
+        public override void InitializeVisualComponent()
+        {
+            base.InitializeVisualComponent();
+
             BaseObject Skeleton = CreateBaseObject();
             Skeleton.BaseFrame.CameraPerspective = true;
             Skeleton.BaseFrame.RotateX(25);
 
             AddBaseObject(Skeleton);
+        }
 
-            SetPosition(position);
+        public override void EntityLoad(FeaturePoint position)
+        {
+            base.EntityLoad(position);
 
-            Info.CurrentShields = 5;
+            SetPosition(Info.TileMapPosition.Position + new Vector3(0, -Info.TileMapPosition.GetDimensions().Y / 2, 0.2f));
+
+            SelectionTile.UnitOffset.Y += Info.TileMapPosition.GetDimensions().Y / 2;
+            SelectionTile.SetPosition(Position);
+
+            Move movement = new Move(this);
+            Info.Abilities.Add(movement);
+
+            Info._movementAbility = movement;
+
 
             Buff shieldBlock = new Buff(this);
             shieldBlock.ShieldBlock.Additive = 3;
@@ -48,19 +94,6 @@ namespace MortalDungeon.Game.Units
 
             Hide hideAbility = new Hide(this);
             Info.Abilities.Add(hideAbility);
-
-            AI.RangedDamageDealer disp = new AI.RangedDamageDealer(this)
-            {
-                Weight = 1,
-                Bloodthirsty = 1
-            };
-
-            AI.Dispositions.Add(disp);
-
-            Info.Stealth.Skill = 0;
-
-            //Abilities.Strike melee = new Abilities.Strike(this, 1, 45);
-            //Abilities.Add(melee.AbilityID, melee);
         }
 
         public override void OnKill()

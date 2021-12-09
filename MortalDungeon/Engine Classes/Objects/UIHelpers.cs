@@ -18,7 +18,8 @@ namespace MortalDungeon.Engine_Classes
         Grab,
         KeyDown,
         Focus,
-        TimedHover
+        TimedHover,
+        HoverEnd
     }
 
     public enum UIAnchorPosition
@@ -380,6 +381,23 @@ namespace MortalDungeon.Engine_Classes
             {
                 tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.BottomRight);
             }
+        }
+
+        public static void AddTimedHoverTooltip(UIObject obj, string text, CombatScene scene)
+        {
+            obj.HasTimedHoverEffect = true;
+            obj.Hoverable = true;
+
+            void timedHover(GameObject obj)
+            {
+                StringTooltipParameters param = new StringTooltipParameters(scene, "", obj, scene._tooltipBlock)
+                {
+                    Text = text
+                };
+                CreateToolTip(param);
+            }
+
+            obj.OnTimedHoverEvent += timedHover;
         }
     }
 

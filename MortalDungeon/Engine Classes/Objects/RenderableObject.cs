@@ -381,6 +381,14 @@ namespace MortalDungeon.Engine_Classes
 
             SetScale(currentScale);
         }
+
+        public void SetScale(float x, float y, float z)
+        {
+            Vector3 currentScale = new Vector3(x, y, z);
+
+            SetScale(currentScale);
+        }
+
         public void ScaleAddition(float f)
         {
             Vector3 currentScale = Scale.ExtractScale();
@@ -502,7 +510,7 @@ namespace MortalDungeon.Engine_Classes
 
         private void CalculateTransformationMatrix() 
         {
-            Transformations = Rotation * Scale * Translation;
+            Transformations = Scale * Rotation * Translation;
         }
         
         private float[] CenterVertices(float[] vertices) 

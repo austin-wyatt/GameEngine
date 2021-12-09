@@ -22,9 +22,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Size = visibleAreaSize;
             Position = position;
             Name = "ScrollableArea";
-            Anchor = UIAnchorPosition.TopLeft;
+            Anchor = UIAnchorPosition.Center;
 
-            Focusable = true;
+            //Focusable = true;
 
             _baseAreaSize = baseAreaSize;
 
@@ -37,22 +37,30 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             VisibleArea = new UIBlock(Position, Size, default, 71, true);
             VisibleArea.Name = "VisibleArea";
 
-            UIBlock scrollableArea = new UIBlock(baseAreaPosition, baseAreaSize, default, 71, true);
+            VisibleArea.SetColor(new Vector4(0, 1, 0, 1));
+
+            UIBlock scrollableArea = new UIBlock(default, baseAreaSize, default, 71, true);
             scrollableArea.MultiTextureData.MixTexture = false;
             scrollableArea._baseObject.OutlineParameters.SetAllInline(0);
             scrollableArea.Name = "ScrollableAreaMainComp";
             scrollableArea.SetColor(new Vector4(0, 0, 0, 0));
+            //scrollableArea.SetColor(new Vector4(1, 0, 0, 1));
 
             BaseComponent = scrollableArea;
 
 
+            //scrollableArea.Draggable = true;
+
             SetVisibleAreaPosition(Position);
 
-            scrollableArea.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft),UIAnchorPosition.TopLeft);
 
             InitializeScrollbar();
 
             AddChild(scrollableArea);
+
+            //BaseComponent.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+
+            //AddChild(VisibleArea); //FOR DEBUGGING
         }
 
         public override void SetPosition(Vector3 position)
@@ -82,7 +90,10 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 Depth = 1000
             };
 
+
             UpdateScrollableAreaBounds();
+
+            BaseComponent.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
         }
 
         public void SetVisibleAreaSize(UIScale size) 
@@ -128,7 +139,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
             
         }
-
+        
         public void UpdateScrollableAreaBounds() 
         {
             AdditionalBounds = VisibleArea._baseObject.Bounds;
@@ -217,7 +228,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             Vector3 scrollableRange = new Vector3();
 
-            Vector3 pos = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopCenter);
+            Vector3 pos = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft);
 
             float J = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight).Y;
             float K = VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomRight).Y;
@@ -237,6 +248,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void OnResize() 
         {
             SetVisibleAreaSize(Size);
+        }
+
+        public override void OnFocus()
+        {
+            base.OnFocus();
         }
     }
 

@@ -140,5 +140,35 @@ namespace MortalDungeon.Game
         {
             return UnitAI.GetTeamRelation(team1, team2);
         }
+
+        public static string Name(this UnitTeam team) 
+        {
+            switch (team) 
+            {
+                case UnitTeam.Unknown:
+                    return "Unknown";
+                case UnitTeam.PlayerUnits:
+                    return "Player Units";
+                case UnitTeam.BadGuys:
+                    return "Bad Guys";
+                case UnitTeam.Skeletons:
+                    return "Skeletons";
+                default:
+                    return "<Unit Team>";
+            }
+        }
+
+        public static string Name(this ControlType controlType)
+        {
+            switch (controlType)
+            {
+                case ControlType.Basic_AI:
+                    return "Basic AI";
+                case ControlType.Controlled:
+                    return "Player Controlled";
+                default:
+                    return "<Control Type>";
+            }
+        }
     }
 }

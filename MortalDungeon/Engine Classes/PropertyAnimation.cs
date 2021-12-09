@@ -31,6 +31,8 @@ namespace MortalDungeon.Engine_Classes
         protected int _animationID = currentAnimationID++;
         protected static int currentAnimationID = 0;
 
+        public int DEBUG_ID = 0;
+
         public PropertyAnimation(RenderableObject baseFrame)
         {
             BaseFrame = baseFrame;
@@ -76,6 +78,11 @@ namespace MortalDungeon.Engine_Classes
                     Keyframes[CurrentKeyframe].Action?.Invoke();
 
                     CurrentKeyframe++;
+                }
+
+                if (DEBUG_ID == 1) 
+                {
+                    
                 }
 
                 tick++;
