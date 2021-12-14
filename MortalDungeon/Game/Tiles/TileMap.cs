@@ -277,6 +277,7 @@ namespace MortalDungeon.Game.Tiles
             temp.BaseObjects[0].BaseFrame.ScaleY(0.8727f);
             temp.BaseObjects[0].BaseFrame.ScaleAll(Width);
 
+            temp.TextureLoaded = true;
 
             TexturedQuad = temp;
             
@@ -1106,6 +1107,8 @@ namespace MortalDungeon.Game.Tiles
                 return returnList;
             }
 
+            HashSet<TilePoint> visitedPoints = new HashSet<TilePoint>() { currentTile.Tile.TilePoint };
+
             while(true)
             {
                 currentTile.Visited = true;
@@ -1158,12 +1161,19 @@ namespace MortalDungeon.Game.Tiles
                         }
                     }
 
-                    int tileIndex = tileList.FindIndex(0, t => t.Tile.TilePoint == newNeighbors[j].TilePoint);
-                    if (tileIndex > -1)
+                    //int tileIndex = tileList.FindIndex(0, t => t.Tile.TilePoint == newNeighbors[j].TilePoint);
+                    //if (tileIndex > -1)
+                    if (visitedPoints.TryGetValue(newNeighbors[j].TilePoint, out var _))
                     {
-                        tileList[tileIndex].Parent = currentTile;
-                        tileList[tileIndex].G = currentTile.G + tileList[tileIndex].Tile.Properties.MovementCost; //for different cost modifiers (such as height) an enum and switch statement can be employed
-                        tileList[tileIndex].H = GetDistanceBetweenPoints(newNeighbors[j].TilePoint, param.EndingPoint);
+                        continue;
+                        //tileList[tileIndex].Parent = currentTile;
+                        //tileList[tileIndex].G = currentTile.G + tileList[tileIndex].Tile.Properties.MovementCost; //for different cost modifiers (such as height) an enum and switch statement can be employed
+                        //tileList[tileIndex].H = GetDistanceBetweenPoints(newNeighbors[j].TilePoint, param.EndingPoint);
+
+                        //if (tileList[tileIndex].Parent.Parent == tileList[tileIndex])
+                        //{
+
+                        //}
                     }
                     else 
                     {
@@ -1174,7 +1184,9 @@ namespace MortalDungeon.Game.Tiles
                         };
 
                         tileList.Add(tile);
+                        visitedPoints.Add(tile.Tile.TilePoint);
                     }
+
 
                     if (tileList[^1].Tile.TilePoint == param.EndingPoint) 
                     {

@@ -8,14 +8,20 @@
 		"Health": "50",
 		"CurrentShields": "1"
 	},
-	"Test 2": {
+	"Grave Skele": {
 		"TYPE": "UNIT",
 		"UnitProfile": "Skeleton",
-		"UnitName": "Blah",
+		"UnitName": "Grave Skeleton",
 		"UnitTeam": 3,
 		"ControlType": 1,
-		"Health": 75.0,
-		"CurrentShields": 3
+		"CurrentShields": 1
+	},
+	"Spawned Skeleton": {
+		"TYPE": "UNIT",
+		"UnitProfile": "Skeleton",
+		"UnitName": "Spawned Skele",
+		"ControlType": 0,
+		"CurrentShields": 1
 	},
 	"Bleed ability": {
 		"TYPE": "ABILITY",

@@ -66,7 +66,7 @@ namespace MortalDungeon.Game.GameObjects
             AddBaseObject(unitSelection);
 
             SetPosition(unit.Position + UnitOffset);
-            base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
+            //base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
         }
 
         public override void SetPosition(Vector3 position)
@@ -149,7 +149,8 @@ namespace MortalDungeon.Game.GameObjects
                     if (temp.ActivationTick == 0) 
                     {
                         currColor = new Vector4(_selectAnimation.BaseColor);
-                        base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
+                        //base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
+                        base.SetScale(1, 1, 1);
                     }
 
                     if (temp.ActivationTick < shiftDelay * shifts / 2)

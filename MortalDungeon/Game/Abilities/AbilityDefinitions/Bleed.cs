@@ -17,7 +17,6 @@ namespace MortalDungeon.Game.Abilities
             Type = AbilityTypes.Debuff;
             Range = range;
             CastingUnit = castingUnit;
-            EnergyCost = 1;
 
             Duration = duration;
             Damage = bleedDamage;
@@ -26,7 +25,7 @@ namespace MortalDungeon.Game.Abilities
 
             CanTargetGround = false;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BleedingDagger, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BleedingDagger, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)

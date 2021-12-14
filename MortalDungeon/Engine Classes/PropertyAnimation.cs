@@ -139,8 +139,11 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         public void Reset()
         {
-            BaseFrame.SetTranslation(BaseTranslation);
-            BaseFrame.SetBaseColor(BaseColor);
+            if (BaseFrame != null) 
+            {
+                BaseFrame.SetTranslation(BaseTranslation);
+                BaseFrame.SetBaseColor(BaseColor);
+            }
 
             Playing = false;
             Finished = false;
@@ -149,18 +152,27 @@ namespace MortalDungeon.Engine_Classes
 
         public void SetDefaultValues()
         {
-            BaseTranslation = BaseFrame.Translation.ExtractTranslation();
-            BaseColor = new Vector4(BaseFrame.BaseColor);
+            if (BaseFrame != null) 
+            {
+                BaseTranslation = BaseFrame.Translation.ExtractTranslation();
+                BaseColor = new Vector4(BaseFrame.BaseColor);
+            }
         }
 
         public void SetDefaultColor() 
         {
-            BaseColor = new Vector4(BaseFrame.BaseColor);
+            if (BaseFrame != null) 
+            {
+                BaseColor = new Vector4(BaseFrame.BaseColor);
+            }
         }
 
         public void SetDefaultTranslation() 
         {
-            BaseTranslation = BaseFrame.Translation.ExtractTranslation();
+            if (BaseFrame != null)
+            {
+                BaseTranslation = BaseFrame.Translation.ExtractTranslation();
+            }
         }
     }
 
@@ -169,9 +181,9 @@ namespace MortalDungeon.Engine_Classes
         public int ActivationTick = 0; //the tick to activate on. 
         public Action Action = null;
 
-        public Keyframe(int tick)
+        public Keyframe(int activationTick)
         {
-            ActivationTick = tick;
+            ActivationTick = activationTick;
         }
         public Keyframe(int tick, Action action)
         {

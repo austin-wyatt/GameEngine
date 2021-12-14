@@ -27,7 +27,7 @@ namespace MortalDungeon.Game.Abilities
 
             Name = "AOE Ground Target";
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.QuestionMark, Spritesheets.IconSheet, true);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.QuestionMark, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)

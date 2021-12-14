@@ -551,8 +551,6 @@ namespace MortalDungeon
                 lastTick = tick;
                 _sceneController.Scenes.ForEach(scene =>
                 {
-                    scene.Logic();
-
                     //if (scene.PauseTicks)
                     //    return;
 
@@ -590,9 +588,6 @@ namespace MortalDungeon
 
                     Task tickableObjectsTask = new Task(() =>
                     {
-                        //scene.TickableObjects.AddQueuedItems();
-                        //scene.TickableObjects.ClearQueuedItems();
-
                         scene.TickableObjects.ForEach(obj =>
                         {
                             obj.Tick();
@@ -758,58 +753,59 @@ namespace MortalDungeon
                     _sceneController.Scenes[i].OnKeyUp(obj);
             }
 
-            //
 
-            //if(WindowConstants.EnableBoundsTestingTools)
-            switch (obj.Key) 
+            if (WindowConstants.EnableBoundsTestingTools)
             {
-                case (Keys.Q):
-                    _points.Add(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize));
+                switch (obj.Key)
+                {
+                    case (Keys.Q):
+                        _points.Add(NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize));
 
-                    if(_points.Count > 1)
-                    {
-                        CreateNewLine(new Vector3(_points[^2].X, _points[^2].Y, 0), new Vector3(_points[^1].X, _points[^1].Y, 0), new Vector4(0, 0, 1, 1), 0.02f, false);
-                    }
-
-                    var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
-                    //Console.WriteLine("Normalized cursor coordinates: " + temp.X + ", " + temp.Y);
-                    break;
-                case (Keys.R):
-                    _points.Clear();
-                    _renderedItems.Clear();
-
-                    //Console.WriteLine(_camera.Position.Z);
-                    break;
-                case (Keys.P):
-                    Console.Write("new float[]{\n");
-                    _points.ForEach(p =>
-                    {
-                        Console.Write(p.X + "f, " + p.Y + "f, 0.0f, \n");
-                    });
-                    Console.Write("}");
-                    break;
-                case (Keys.O):
-                    _lines.Clear();
-
-                    List<int> indexesToRemove = new List<int>();
-
-                    int index = 0;
-                    _renderedItems.ForEach(obj =>
-                    {
-                        if(obj.Name == "line") 
+                        if (_points.Count > 1)
                         {
-                            indexesToRemove.Add(index);
+                            CreateNewLine(new Vector3(_points[^2].X, _points[^2].Y, 0), new Vector3(_points[^1].X, _points[^1].Y, 0), new Vector4(0, 0, 1, 1), 0.02f, false);
                         }
-                        index++;
-                    });
 
-                    for(int i = indexesToRemove.Count - 1; i >= 0; i--)
-                    {
-                        _renderedItems.RemoveAt(indexesToRemove[i]);
-                    }
-                    break;
-                default:
-                    break;
+                        var temp = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
+                        //Console.WriteLine("Normalized cursor coordinates: " + temp.X + ", " + temp.Y);
+                        break;
+                    case (Keys.R):
+                        _points.Clear();
+                        _renderedItems.Clear();
+
+                        //Console.WriteLine(_camera.Position.Z);
+                        break;
+                    case (Keys.P):
+                        Console.Write("new float[]{\n");
+                        _points.ForEach(p =>
+                        {
+                            Console.Write(p.X + "f, " + p.Y + "f, 0.0f, \n");
+                        });
+                        Console.Write("}");
+                        break;
+                    case (Keys.O):
+                        _lines.Clear();
+
+                        List<int> indexesToRemove = new List<int>();
+
+                        int index = 0;
+                        _renderedItems.ForEach(obj =>
+                        {
+                            if (obj.Name == "line")
+                            {
+                                indexesToRemove.Add(index);
+                            }
+                            index++;
+                        });
+
+                        for (int i = indexesToRemove.Count - 1; i >= 0; i--)
+                        {
+                            _renderedItems.RemoveAt(indexesToRemove[i]);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 

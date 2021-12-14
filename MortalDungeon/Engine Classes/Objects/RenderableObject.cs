@@ -30,6 +30,8 @@ namespace MortalDungeon.Engine_Classes
         public static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.4f);
         public static Vector4 MoreTranslucentBlue = new Vector4(0, 0, 1, 0.35f);
 
+        public static Vector4 LessAggressiveRed = new Vector4(0.62f, 0.18f, 0.18f, 1);
+
         public static Vector4 UILightGray = new Vector4(0.85f, 0.85f, 0.85f, 1);
         public static Vector4 UIDefaultGray = new Vector4(0.5f, 0.5f, 0.5f, 1);
         public static Vector4 UIHoveredGray = new Vector4(0.4f, 0.4f, 0.4f, 1);
@@ -103,7 +105,7 @@ namespace MortalDungeon.Engine_Classes
         public float SpritesheetPosition = 0;
         public Vector2 SideLengths = new Vector2(1, 1);
 
-        public int VerticeType = 0;
+        public float VerticeType = 0;
 
         public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
         {

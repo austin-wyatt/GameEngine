@@ -40,7 +40,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
         private static readonly Dictionary<TextureName, int> _loadedTextures = new Dictionary<TextureName, int>();
 
 
-        private static FrameBufferObject MainFBO;
+        public static FrameBufferObject MainFBO;
+        public static FrameBufferObject StageOneFBO;
+        public static FrameBufferObject StageTwoFBO;
 
         public static List<FrameBufferObject> _fbos = new List<FrameBufferObject>();
 
@@ -75,6 +77,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
             MainFBO = new FrameBufferObject(WindowConstants.ClientSize);
 
             _fbos.Add(MainFBO);
+
+            StageOneFBO = new FrameBufferObject(WindowConstants.ClientSize);
+            _fbos.Add(StageOneFBO);
+
+            StageTwoFBO = new FrameBufferObject(WindowConstants.ClientSize);
+            _fbos.Add(StageTwoFBO);
 
             _elementBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
@@ -201,6 +209,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, particleDataLength, 20 * sizeof(float)); //empty + spritesheet position + side lengths X and Y
             GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, particleDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y
         }
+
         public static void InsertDataIntoInstancedRenderArray(BaseObject obj, MultiTextureData renderingData, ref float[] _instancedRenderArray, ref int currIndex, int textureTarget)
         {
             var transform = obj.BaseFrame.Transformations;
@@ -286,7 +295,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             for (int i = 0; i < objects.Count; i++)
             {
-                if (objects[i].Render && !objects[i].Cull)
+                if (objects[i].TextureLoaded && objects[i].Render && !objects[i].Cull)
                 {
                     if (objects[i].MultiTextureData.MixedTexture != null && objects[i].MultiTextureData.MixTexture)
                     {
@@ -499,8 +508,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, frameBuffer.RenderTexture);
 
+
             //empty out the depth buffer for when we reuse this frame buffer
-            frameBuffer.ClearBuffers();
+            //frameBuffer.ClearBuffers();
 
             //bind the current frame buffer to either the destination buffer if passed or the default buffer if not
             if (destinationBuffer != null)
@@ -540,7 +550,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Console.WriteLine("Error in RenderFrameBuffer: " + errorTest);
             }
-
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
@@ -657,6 +666,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     }
                 }
             });
+
+            gameObj.TextureLoaded = true;
         }
         public static void LoadTextureFromBaseObject(BaseObject obj, bool nearest = true)
         {
@@ -738,15 +749,18 @@ namespace MortalDungeon.Engine_Classes.Rendering
             });
             UIObj.TextObjects.ForEach(obj =>
             {
-                if (obj.Letters.Count > 0)
+                for (int i = 0; i < obj.Letters.Count; i++)
                 {
-                    LoadTextureFromBaseObject(obj.Letters[0].BaseObjects[0], false);
+                    LoadTextureFromBaseObject(obj.Letters[i].BaseObjects[0], false);
+                    obj.Letters[i].TextureLoaded = true;
                 }
             });
             UIObj.Children.ForEach(obj =>
             {
                 LoadTextureFromUIObject(obj);
             });
+
+            UIObj.TextureLoaded = true;
         }
 
         public static void LoadTextureFromTextureObj(Texture texture, TextureName textureName) 

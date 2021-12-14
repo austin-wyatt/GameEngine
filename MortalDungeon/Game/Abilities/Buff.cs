@@ -25,11 +25,15 @@ namespace MortalDungeon.Game.Abilities
 
         public BuffModifier EnergyCost = new BuffModifier();
 
+        public BuffModifier ActionEnergyCost = new BuffModifier();
+
         public BuffModifier SpeedModifier = new BuffModifier();
 
         public BuffModifier DamageReduction = new BuffModifier();
 
         public BuffModifier EnergyBoost = new BuffModifier();
+
+        public BuffModifier ActionEnergyBoost = new BuffModifier();
 
         public BuffModifier SoundModifier = new BuffModifier();
 

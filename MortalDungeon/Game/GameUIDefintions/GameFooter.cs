@@ -4,6 +4,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,11 @@ namespace MortalDungeon.Game.UI
         private HealthBar _unitHealthBar;
         private UIBlock _containingBlock;
         private ShieldBar _unitShieldBar;
+        private FocusBar _unitFocusBar;
+
         public Unit _currentUnit;
+
+        public Icon _meditationIcon;
 
         public Button EndTurnButton;
         public Button VentureForthButton;
@@ -176,6 +181,21 @@ namespace MortalDungeon.Game.UI
 
             _containingBlock.AddChild(_unitHealthBar, 100);
 
+
+            _unitFocusBar = new FocusBar(new Vector3(), new UIScale(0.25f, 0.05f)) { Hoverable = true, HasTimedHoverEffect = true };
+            void focusBarHover(GameObject obj)
+            {
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Focus + "/" + _currentUnit.Info.MaxFocus, _unitFocusBar, Scene._tooltipBlock);
+                UIHelpers.CreateToolTip(param);
+            }
+
+            _unitFocusBar.OnTimedHoverEvent += focusBarHover;
+
+            _containingBlock.AddChild(_unitFocusBar, 100);
+
+
+
+
             _unitShieldBar = new ShieldBar(new Vector3(), new UIScale(0.5f, 0.1f)) { Hoverable = true, HasTimedHoverEffect = true };
 
             void shieldBarHover(GameObject obj)
@@ -234,6 +254,8 @@ namespace MortalDungeon.Game.UI
             if (_currentUnit == null)
                 return;
 
+            bool isPlayerUnitTakingTurn = _currentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ? _currentUnit == Scene.CurrentUnit : true);
+
             #region unit status box
             _unitNameTextBox.SetText(_currentUnit.Name);
             
@@ -263,8 +285,25 @@ namespace MortalDungeon.Game.UI
 
             _currentIcons.Clear();
 
+
+            if (isPlayerUnitTakingTurn)
+            {
+                CreateMeditationIcon();
+
+                _unitFocusBar.SetPositionFromAnchor(_meditationIcon.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
+                _unitFocusBar.SetFocusPercent(_currentUnit.Info.Focus / _currentUnit.Info.MaxFocus);
+                _unitFocusBar.SetRender(true);
+            }
+            else 
+            {
+                RemoveMeditationIcon();
+                _unitFocusBar.SetRender(false);
+            }
+
+
             UIScale iconSize = new UIScale(0.25f, 0.25f);
             int count = 0;
+
 
             lock (_currentUnit.Info.Abilities)
             {
@@ -278,7 +317,7 @@ namespace MortalDungeon.Game.UI
 
                     Icon abilityIcon = ability.GenerateIcon(iconSize, true, 
                         _currentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, 
-                        true, null, hotkey);
+                        false, null, hotkey, ability.GetMaxCharges() > 0);
 
                     int currIndex = count;
 
@@ -294,13 +333,14 @@ namespace MortalDungeon.Game.UI
 
                     void checkAbilityClickable()
                     {
-                        if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() <= Scene.EnergyDisplayBar.CurrentEnergy)
+                        if (isPlayerUnitTakingTurn && ability.CanCast())
                         {
                             abilityIcon.Clickable = true;
                             abilityIcon.Hoverable = true;
                         }
                         else
                         {
+                            abilityIcon.Clickable = false;
                             abilityIcon.SetColor(Colors.IconDisabled);
                         }
                     }
@@ -309,7 +349,7 @@ namespace MortalDungeon.Game.UI
 
                     abilityIcon.OnClickAction = () =>
                     {
-                        if (_currentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ? _currentUnit == Scene.CurrentUnit : true))
+                        if (isPlayerUnitTakingTurn && ability.CanCast())
                         {
                             Scene.SelectAbility(ability, _currentUnit);
                         }
@@ -329,26 +369,24 @@ namespace MortalDungeon.Game.UI
 
                     void onAbilityDeselected()
                     {
-                        if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy)
+                        if (isPlayerUnitTakingTurn && ability.CanCast())
                         {
-                            abilityIcon.Clickable = false;
-                            abilityIcon.Hoverable = false;
-                            abilityIcon.SetColor(Colors.IconDisabled);
+                            abilityIcon.SetColor(Colors.White);
                         }
                         else
                         {
-                            abilityIcon.SetColor(Colors.White);
+                            abilityIcon.Clickable = false;
+                            abilityIcon.SetColor(Colors.IconDisabled);
                         }
                     }
 
                     void onAbilityCast(Ability castAbility)
                     {
-                        if (Scene.EnergyDisplayBar != null && ability.GetEnergyCost() > Scene.EnergyDisplayBar.CurrentEnergy)
-                        {
-                            abilityIcon.Clickable = false;
-                            abilityIcon.Hoverable = false;
-                            abilityIcon.SetColor(Colors.IconDisabled);
-                        }
+                        //if (Scene.EnergyDisplayBar != null && !ability.GetEnergyIsSufficient())
+                        //{
+                        //    abilityIcon.Clickable = false;
+                        //    abilityIcon.SetColor(Colors.IconDisabled);
+                        //}
                     }
 
                     Scene._onSelectAbilityActions.Add(onAbilitySelected);
@@ -529,6 +567,95 @@ namespace MortalDungeon.Game.UI
             //_scrollableAreaAbility.BaseComponent.SetColor(new Vector4(1, 0, 0, 1f));
 
             //AddChild(_scrollableAreaAbility, 1500);
+        }
+
+        private void CreateMeditationIcon() 
+        {
+            if (_meditationIcon != null) 
+            {
+                RemoveMeditationIcon();
+            }
+
+            _meditationIcon = new Icon(new UIScale(0.13f, 0.13f), IconSheetIcons.MonkBig, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
+
+            UIHelpers.AddAbilityIconHoverEffect(_meditationIcon, Scene);
+
+            UIHelpers.AddTimedHoverTooltip(_meditationIcon, "Meditate to regain ability uses.", Scene);
+
+            _meditationIcon.Hoverable = true;
+            _meditationIcon.Clickable = true;
+
+            _meditationIcon.OnClickAction = () =>
+            {
+                CreateMeditationWindow();
+
+                UpdateFooterInfo();
+            };
+
+            _meditationIcon.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(10, -GetDimensions().Y / 2, 0), UIAnchorPosition.TopLeft);
+            AddChild(_meditationIcon, 1000);
+        }
+
+        private void RemoveMeditationIcon()
+        {
+            if (_meditationIcon != null) 
+            {
+                RemoveChild(_meditationIcon);
+                UIHelpers.NukeTooltips(GeneralContextFlags.UITooltipOpen, Scene);
+            }
+        }
+
+        private void CreateMeditationWindow() 
+        {
+            UIObject window = UIHelpers.CreateWindow(new UIScale(0.75f, 0.6f), "meditation_window", this, Scene, true);
+
+            window.SetPosition(WindowConstants.CenterScreen);
+
+            ScrollableArea scrollableArea = new ScrollableArea(default, new UIScale(0.5f, 0.6f), default, new UIScale(0.5f, 1), 0.05f);
+
+            scrollableArea.SetVisibleAreaPosition(window.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
+
+            UIList uiList = new UIList(default, new UIScale(0.5f, 0.05f), 0.03f);
+
+            foreach (var ability in _currentUnit.Info.Abilities) 
+            {
+                ListItem listItem = uiList.AddItem(ability.Name, (_) =>
+                {
+                    if (ability.Charges < ability.MaxCharges && (ability.CastingUnit.Info.Focus >= ability.RechargeCost || ability.CastingUnit.Info.Health >= ability.RechargeCost)) 
+                    {
+                        if (ability.CastingUnit.Info.Focus >= ability.RechargeCost)
+                        {
+                            ability.CastingUnit.Info.Focus -= ability.RechargeCost;
+                        }
+                        else 
+                        {
+                            DamageInstance damage = new DamageInstance();
+                            damage.Damage.Add(DamageType.Focus, ability.RechargeCost);
+
+                            ability.CastingUnit.ApplyDamage(new Unit.DamageParams(damage));
+                        }
+
+                        ability.RestoreCharges(1);
+                        UpdateFooterInfo();
+                    }
+                });
+
+                TextComponent focusCostAdornment = new TextComponent();
+                focusCostAdornment.SetTextScale(0.03f);
+                focusCostAdornment.SetText(ability.RechargeCost.ToString());
+                focusCostAdornment.SetColor(Colors.UITextBlack);
+
+                focusCostAdornment.SetPositionFromAnchor(listItem.BaseComponent.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(-10, 0, 0), UIAnchorPosition.RightCenter);
+
+                listItem.BaseComponent.AddChild(focusCostAdornment);
+            }
+
+            uiList.SetPositionFromAnchor(scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+
+            scrollableArea.BaseComponent.AddChild(uiList);
+            window.AddChild(scrollableArea);
+
+            AddChild(window);
         }
     }
 }

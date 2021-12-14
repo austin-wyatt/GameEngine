@@ -8,6 +8,7 @@ using System.Text;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 
 namespace MortalDungeon.Game.UI
 {
@@ -32,7 +33,7 @@ namespace MortalDungeon.Game.UI
 
         //todo, add a onHover tooltip to display exact energy amount
 
-        public EnergyDisplayBar(CombatScene scene, Vector3 position, UIScale size, int maxEnergy = 10)
+        public EnergyDisplayBar(CombatScene scene, Vector3 position, UIScale size, int maxEnergy = 10, int spriteSheetPos = (int)IconSheetIcons.WalkingBoot, Spritesheet spriteSheet = null)
         {
             Position = position;
             Size = size;
@@ -53,9 +54,15 @@ namespace MortalDungeon.Game.UI
             float pipWidth = 0;
             float padding = 2;
 
+            if (spriteSheet == null) 
+            {
+                spriteSheet = Spritesheets.IconSheet;
+            }
+            
+
             for (int i = 0; i < MaxEnergy; i++)
             {
-                EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new UIScale(0.12f, 0.12f)) { Clickable = true };
+                EnergyPip energyPip = new EnergyPip(new Vector3(Position.X + (pipWidth + padding) * i, Position.Y, 0), new UIScale(0.12f, 0.12f), spriteSheetPos, spriteSheet) { Clickable = true };
                 pipWidth = energyPip.GetDimensions().X;
                 energyPip.HoverAnimation.SetDefaultValues();
 
@@ -254,7 +261,7 @@ namespace MortalDungeon.Game.UI
 
         public PropertyAnimation HoverAnimation;
 
-        public EnergyPip(Vector3 position, UIScale size = default)
+        public EnergyPip(Vector3 position, UIScale size = default, int spriteSheetPos = 21, Spritesheet spriteSheet = null)
         {
             Position = position;
             Size = size == null ? Size : size;
@@ -270,7 +277,14 @@ namespace MortalDungeon.Game.UI
 
             UIScale ScaleFactor = new UIScale(Size.X, Size.Y);
 
-            RenderableObject pip = new RenderableObject(new SpritesheetObject(21, Spritesheets.TestSheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            if(spriteSheet == null) 
+            {
+                spriteSheet = Spritesheets.TestSheet;
+            }
+
+            RenderableObject pip = new RenderableObject(new SpritesheetObject(spriteSheetPos, spriteSheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            EnergizedColor = new Vector4(1, 1, 1, 1);
+
 
             pip.ScaleX(aspectRatio);
             pip.ScaleX(ScaleFactor.X);

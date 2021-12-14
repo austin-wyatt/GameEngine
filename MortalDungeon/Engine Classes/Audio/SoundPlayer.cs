@@ -11,7 +11,7 @@ namespace MortalDungeon.Engine_Classes.Audio
 {
     public static class SoundPlayer
     {
-        private const int MAX_SOURCES = 16;
+        private const int MAX_SOURCES = 32;
 
         public static float Volume
         {
@@ -31,7 +31,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         public static List<AudioBuffer> LoadedBuffers = new List<AudioBuffer>();
 
 
-        public static bool DISPLAY_DEBUG_MESSAGES = true;
+        public static bool DISPLAY_DEBUG_MESSAGES = false;
 
         public static void Initialize() 
         {

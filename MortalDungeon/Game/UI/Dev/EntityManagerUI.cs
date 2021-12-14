@@ -33,6 +33,8 @@ namespace MortalDungeon.Game.UI.Dev
         public EntityManagerUI(CombatScene scene)
         {
             Scene = scene;
+
+
             Window = new UIBlock(new Vector3(500, 500, 0), new UIScale(1.5f, 1.5f));
 
             Window.MultiTextureData.MixTexture = false;
@@ -525,34 +527,7 @@ namespace MortalDungeon.Game.UI.Dev
 
         public void CreateUnitPrefabWindow(Entity entity)
         {
-            #region basic window
-            if (UnitPrefabWindow != null)
-            {
-                Window.RemoveChild(UnitPrefabWindow);
-                UnitPrefabWindow = null;
-            }
-
-            UnitPrefabWindow = new UIBlock(new Vector3(500, 500, 0), new UIScale(1f, 1f));
-            UnitPrefabWindow.MultiTextureData.MixTexture = false;
-            UnitPrefabWindow.Draggable = true;
-            UnitPrefabWindow.Clickable = true;
-            UnitPrefabWindow.Hoverable = true;
-
-            UnitPrefabWindow.Name = "UnitPrefabWindow";
-
-            Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
-            exit.Clickable = true;
-            exit.OnClickAction = () =>
-            {
-                Window.RemoveChild(UnitPrefabWindow);
-                exit.OnHoverEnd();
-            };
-            exit.SetPositionFromAnchor(UnitPrefabWindow.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
-
-            UIHelpers.AddTimedHoverTooltip(exit, "Exit", Scene);
-
-            UnitPrefabWindow.AddChild(exit);
-            #endregion
+            UnitPrefabWindow = UIHelpers.CreateWindow(new UIScale(1f, 1f), "UnitPrefabWindow", Window, Scene, true);
 
             Select prefabSelect = new Select(new UIScale(0.8f, 0.1f), 0.05f);
 

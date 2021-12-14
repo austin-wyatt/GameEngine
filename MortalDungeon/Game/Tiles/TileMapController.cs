@@ -233,12 +233,13 @@ namespace MortalDungeon.Game.Tiles
                     AddTileMap(p, newMap);
                 });
 
-                ApplyLoadedFeaturesToMaps(mapsToAdd);
-
                 TileMaps.ForEach(m =>
                 {
                     m.TileMapCoords.MapPosition = loadedPoints.Find(p => p == m.TileMapCoords).MapPosition;
                 });
+
+                ApplyLoadedFeaturesToMaps(mapsToAdd);
+
 
                 PositionTileMaps();
 

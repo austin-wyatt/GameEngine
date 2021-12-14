@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
@@ -17,7 +18,8 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             Gate = 4,
             DeadTree = 8,
             MustExplore = 16,
-            Grave = 32
+            Grave = 32,
+            Enemy = 64
         }
 
         private GraveyardParams GraveyardParams;
@@ -75,6 +77,18 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                         Grave grave = new Grave(tile.TileMap, tile, (int)StructureEnum.Grave_1 + NumberGen.Next() % 3);
                     }
                 }
+                if (GetBit(value, 6))
+                {
+                    if (tile.Structure == null)
+                    {
+                        Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
+                        EntityManager.AddEntity(skele);
+
+                        skele.DestroyOnUnload = true;
+
+                        skele.Load(affectedPoint);
+                    }
+                }
             }
         }
 
@@ -115,7 +129,14 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
                     if (NumberGen.NextDouble() < GraveyardParams.TreeDensity) 
                     {
-                        val |= (int)GraveyardFeatures.DeadTree;
+                        if (NumberGen.NextDouble() < 0.1) 
+                        {
+                            val |= (int)GraveyardFeatures.Enemy;
+                        }
+                        else 
+                        {
+                            val |= (int)GraveyardFeatures.DeadTree;
+                        }
                     }
 
                     if (i == GraveyardParams.GraveyardRadius) 

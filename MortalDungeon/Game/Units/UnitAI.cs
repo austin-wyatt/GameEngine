@@ -3,6 +3,7 @@ using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Tiles;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,8 +57,6 @@ namespace MortalDungeon.Game.Units
         {
             //List<BaseTile> tilesInVision = Scene.GetTeamVision(_unit.AI.Team);
 
-            _unit.Info.Energy = _unit.Info.CurrentEnergy;
-
             _depth = 0;
             BeginNextAction();
         }
@@ -72,8 +71,14 @@ namespace MortalDungeon.Game.Units
             }
             else 
             {
-                Task.Run(() => GetAction().EnactEffect());
-                //GetAction().EnactEffect();
+                Task.Run(() =>
+                {
+                    //Stopwatch timer = new Stopwatch();
+                    //timer.Start();
+                    GetAction().EnactEffect();
+
+                    //Console.WriteLine($"AI effect completed in {timer.ElapsedMilliseconds}ms");
+                });
                 _depth++;
             }
         }
@@ -100,10 +105,13 @@ namespace MortalDungeon.Game.Units
         {
             List<BaseTile> returnList = new List<BaseTile>();
 
+            if (tiles.Count > 0)
+                returnList.Add(tiles[0]);
+
             float cost = 0;
-            for(int i = 0; i < tiles.Count; i++)
+            for(int i = 1; i < tiles.Count; i++)
             {
-                if (cost + tiles[i].Properties.MovementCost > _unit.Info.CurrentEnergy)
+                if (cost + tiles[i].Properties.MovementCost > _unit.Info.Energy)
                 {
                     return returnList;
                 }
@@ -151,7 +159,7 @@ namespace MortalDungeon.Game.Units
                 }
             });
 
-            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Energy remaining.");
+            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Movement remaining. {_unit.Info.ActionEnergy} Actions remaining.");
 
             return selectedAction;
         }
@@ -251,10 +259,10 @@ namespace MortalDungeon.Game.Units
 
             abilities.ForEach(a =>
             {
-                if (ability == null && a.GetEnergyCost() < unit.Info.Energy)
+                if (ability == null && a.GetEnergyCost() <= unit.Info.Energy && a.GetActionEnergyCost() <= unit.Info.ActionEnergy)
                     ability = a;
 
-                if (ability != null && a.Grade > ability.Grade && a.GetEnergyCost() <= unit.Info.Energy)
+                if (ability != null && a.Grade > ability.Grade && a.GetEnergyCost() <= unit.Info.Energy && a.GetActionEnergyCost() <= unit.Info.ActionEnergy)
                 {
                     ability = a;
                 }

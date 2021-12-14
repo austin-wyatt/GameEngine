@@ -93,7 +93,7 @@ namespace MortalDungeon.Objects
 
         private bool _centerVertices;
 
-        public int VerticeType = 0;
+        public float VerticeType = 0;
 
         public float SpritesheetPosition = 0;
         public Vector2 SideLengths = new Vector2(1, 1);

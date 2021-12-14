@@ -8,6 +8,10 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Rendering
 {
+    public enum RenderingStates 
+    {
+        GuassianBlur
+    }
     public static class RenderingQueue
     {
         private static readonly List<Letter> _LettersToRender = new List<Letter>();
@@ -26,14 +30,19 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         private static readonly List<GameObject> _LightQueue = new List<GameObject>();
 
+        public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
+
 
         /// <summary>
         /// Render all queued objects
         /// </summary>
         public static void RenderQueue()
         {
-            //DrawToFrameBuffer(MainFBO); //Framebuffer should only be used when we want to do post processing
-
+            if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur)) 
+            {
+                Renderer.DrawToFrameBuffer(Renderer.MainFBO); //Framebuffer should only be used when we want to do post processing
+                Renderer.MainFBO.ClearBuffers();
+            }
 
             //RenderFrameBuffer(MainFBO);
 
@@ -51,20 +60,30 @@ namespace MortalDungeon.Engine_Classes.Rendering
             RenderQueuedParticles();
 
             //RenderQueuedStructures();
-            RenderQueuedUnits();
             RenderQueuedObjects();
+            RenderQueuedUnits();
 
             RenderLowPriorityQueue();
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
             RenderLightQueue();
 
+            if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur))
+            {
+                Renderer.RenderFrameBuffer(Renderer.MainFBO);
+                Renderer.MainFBO.UnbindFrameBuffer();
+            }
+
             GL.Clear(ClearBufferMask.DepthBufferBit);
+            //GL.Disable(EnableCap.DepthTest);
+            //GL.Disable(EnableCap.Blend);
             //GL.BlendEquationSeparate(BlendEquationMode.FuncAdd, BlendEquationMode.FuncAdd);
             //GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.One, BlendingFactorDest.OneMinusSrcAlpha);
 
             RenderQueuedUI();
 
+            //GL.Enable(EnableCap.DepthTest);
+            //GL.Enable(EnableCap.Blend);
             //GL.BlendEquation(BlendEquationMode.FuncAdd);
             //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
@@ -121,8 +140,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _LettersToRender.Clear();
         }
 
-        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null) where T : UIObject
+        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null, Action<List<UIObject>> renderAfterParent = null, bool overrideRender = false) where T : UIObject
         {
+            List<UIObject> renderAfterParentList = new List<UIObject>();
+
             try //This is a lazy solution for a random crash. If I can figure out why it's happening then I'll come back to this
             {
                 lock (uiObjects)
@@ -133,6 +154,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         {
                             if (uiObjects[i].Render && !uiObjects[i].Cull)
                             {
+                                if (uiObjects[i].RenderAfterParent && renderAfterParent != null && !overrideRender)
+                                {
+                                    renderAfterParentList.Add(uiObjects[i]);
+                                    continue;
+                                }
+
                                 if (uiObjects[i].ScissorData.Scissor == true)
                                 {
                                     scissorData = uiObjects[i].ScissorData;
@@ -151,12 +178,22 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                                 QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
 
+                                List<UIObject> objsToRenderAfterParent = new List<UIObject>();
+
                                 if (uiObjects[i].Children.Count > 0)
                                 {
-                                    QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
+                                    QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, (list) => 
+                                    {
+                                        objsToRenderAfterParent = list;
+                                    });
                                 }
 
                                 QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
+
+                                if (objsToRenderAfterParent.Count > 0) 
+                                {
+                                    QueueNestedUI(objsToRenderAfterParent, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, null, true);
+                                }
                             }
                         }
 
@@ -170,6 +207,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
             catch (Exception e) 
             {
                 Console.WriteLine("Exception in QueueNestedUI: " + e.Message);
+            }
+
+            if(renderAfterParentList.Count > 0 && renderAfterParent != null) 
+            {
+                renderAfterParent(renderAfterParentList);
             }
         }
         public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject

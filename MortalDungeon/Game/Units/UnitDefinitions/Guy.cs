@@ -105,22 +105,19 @@ namespace MortalDungeon.Game.Units
             Buff shieldBlock = new Buff(this);
             shieldBlock.ShieldBlock.Additive = 10;
             shieldBlock.IndefiniteDuration = true;
-            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
+            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
             shieldBlock.DamageResistances[DamageType.Slashing] = 0;
 
 
-            Strike melee = new Strike(this, 1, 45)
-            {
-                EnergyCost = 7
-            };
+            Strike melee = new Strike(this, 1, 45);
             Info.Abilities.Add(melee);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 5) { EnergyCost = 4 };
+            Shoot shootAbility = new Shoot(this, 15, 4, 20);
             Info.Abilities.Add(shootAbility);
 
-            shootAbility.AddCombo(new Shoot(this, 15, 4, 10) { EnergyCost = 5 }, null);
-            shootAbility.Next.AddCombo(new Shoot(this, 15, 4, 15) { EnergyCost = 6 }, shootAbility);
+            shootAbility.AddCombo(new Shoot(this, 15, 4, 10), null, false);
+            shootAbility.Next.AddCombo(new Shoot(this, 15, 4, 15), shootAbility, false);
 
 
             SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);

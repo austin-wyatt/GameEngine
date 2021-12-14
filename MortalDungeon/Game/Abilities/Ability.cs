@@ -43,7 +43,9 @@ namespace MortalDungeon.Game.Abilities
         Ice, //lowish damage but consistent debuffs (more extreme slow, freeze insta kill, AA shatter) 
 
         Bleed, //hurts positive shields but doesn't get amplified by negative shields
-        Poison //unaffected by shields
+        Poison, //unaffected by shields
+        Focus, //damage caused by using the meditation intrinsic ability
+        HealthRemoval //dota health removal
     }
 
     public enum AbilityContext 
@@ -82,6 +84,8 @@ namespace MortalDungeon.Game.Abilities
 
         public int ComboDecayCount = 0;
         public int ComboAdvanceCount = 0;
+
+        public bool ShouldDecay = true;
         #endregion
 
         public int AbilityID => _abilityID;
@@ -101,6 +105,8 @@ namespace MortalDungeon.Game.Abilities
         public bool CanTargetGround = true;
         public bool CanTargetTerrain = false;
 
+        public int ChargesLostOnUse = 1;
+
         public UnitSearchParams UnitTargetParams = new UnitSearchParams()
         {
             Dead = CheckEnum.False,
@@ -114,12 +120,19 @@ namespace MortalDungeon.Game.Abilities
         public bool CanTargetThroughFog = false;
 
         public float EnergyCost = 0;
+        public int ActionCost = 1;
+
         public float Range = 0;
         public int MinRange;
         public int CurrentRange = 0;
         public float Damage = 0;
         public int Duration = 0;
         public float Sound = 0;
+
+        public int MaxCharges = 3;
+        public int Charges = 3;
+
+        public float RechargeCost = 10;
 
         public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
 
@@ -133,7 +146,8 @@ namespace MortalDungeon.Game.Abilities
             return new List<BaseTile>();
         }
 
-        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground, bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null)
+        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground,
+            bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null, bool showCharges = false)
         {
             Icon icon;
             if (passedIcon == null)
@@ -145,12 +159,16 @@ namespace MortalDungeon.Game.Abilities
                 icon = new Icon(passedIcon, scale, withBackground, backgroundType);
             }
 
-            if (showEnergyCost)
+            if (showEnergyCost && ActionCost > 0)
             {
                 UIScale textBoxSize = icon.Size;
-                textBoxSize *= 0.333f;
+                textBoxSize *= 0.3333f;
 
-                string energyString = GetEnergyCost().ToString("n1").Replace(".0", "");
+                float energyCost = GetEnergyCost();
+                float actionCost = GetActionEnergyCost();
+
+                string energyString = (actionCost >= energyCost ? actionCost : energyCost).ToString("n1").Replace(".0", "");
+
                 float textScale = 0.05f;
 
 
@@ -158,6 +176,7 @@ namespace MortalDungeon.Game.Abilities
                 energyCostBox.SetColor(Colors.UITextBlack);
                 energyCostBox.SetText(energyString);
                 energyCostBox.SetTextScale(textScale);
+                
 
                 UIScale textDimensions = energyCostBox.GetDimensions();
 
@@ -166,8 +185,20 @@ namespace MortalDungeon.Game.Abilities
                     energyCostBox.SetTextScale((textScale - 0.004f) * textDimensions.Y / textDimensions.X);
                 }
 
-                UIBlock energyCostBackground = new UIBlock();
-                energyCostBackground.SetColor(Colors.UILightGray);
+                UIBlock energyCostBackground;
+
+                if (ActionCost > 0)
+                {
+                    energyCostBackground = new UIBlock(default, null, default, (int)IconSheetIcons.Channel, true, false, Spritesheets.IconSheet);
+                    energyCostBackground.SetColor(Colors.White);
+                }
+                else 
+                {
+                    energyCostBackground = new UIBlock();
+                    energyCostBackground.SetColor(Colors.UILightGray);
+                }
+
+
                 energyCostBackground.MultiTextureData.MixTexture = false;
 
                 energyCostBackground.SetSize(textBoxSize);
@@ -177,8 +208,20 @@ namespace MortalDungeon.Game.Abilities
 
                 //energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
 
-                icon.AddChild(energyCostBox, 50);
+                energyCostBackground.AddChild(energyCostBox);
+
                 icon.AddChild(energyCostBackground, 49);
+
+                energyCostBackground.RenderAfterParent = true;
+                Vector3 newPos = new Vector3(energyCostBackground.Position.X, energyCostBackground.Position.Y, icon.Position.Z - 0.001f);
+                energyCostBackground.SetPosition(newPos);
+                //energyCostBackground.SetAllInline(0);
+            }
+
+            if (showCharges) 
+            {
+                icon.AddChargeDisplay(this);
+                icon.AddActionCost(this);
             }
 
             if (hotkey != null)
@@ -229,6 +272,40 @@ namespace MortalDungeon.Game.Abilities
             return EnergyCost;
         }
 
+        public virtual float GetActionEnergyCost()
+        {
+            if (CastingUnit != null)
+            {
+                return ActionCost + CastingUnit.Info.ActionEnergyAddition;
+            }
+
+            return ActionCost;
+        }
+
+        public int GetMaxCharges() 
+        {
+            if(Previous == null) 
+            {
+                return MaxCharges;
+            }
+            else 
+            {
+                return Previous.GetMaxCharges();
+            }
+        }
+
+        public int GetCharges()
+        {
+            if (Previous == null)
+            {
+                return Charges;
+            }
+            else
+            {
+                return Previous.GetCharges();
+            }
+        }
+
         public float GetDamage()
         {
             if (CastingUnit != null)
@@ -259,23 +336,29 @@ namespace MortalDungeon.Game.Abilities
         }
         public virtual void EnactEffect()
         {
-            Scene.AbilityInProgress = true;
+            Scene.SetAbilityInProgress(true);
         } //the actual effect of the skill
 
         public virtual void OnSelect(CombatScene scene, TileMap currentMap)
         {
-            if (Scene.EnergyDisplayBar.CurrentEnergy >= GetEnergyCost())
+            if (CanCast())
             {
                 AffectedTiles = GetValidTileTargets(currentMap, scene._units);
 
                 TrimTiles(AffectedTiles, Units);
 
                 Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
+                Scene.ActionEnergyBar.HoverAmount(GetActionEnergyCost());
             }
             else
             {
                 Scene.DeselectAbility();
             }
+        }
+
+        public bool CanCast() 
+        {
+            return CastingUnit.Info.Energy >= GetEnergyCost() && CastingUnit.Info.ActionEnergy >= GetActionEnergyCost() && HasSufficientCharges();
         }
 
         public void TargetAffectedUnits()
@@ -314,10 +397,16 @@ namespace MortalDungeon.Game.Abilities
         public virtual void OnAbilityDeselect()
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
+            Scene.ActionEnergyBar.HoverAmount(0);
             AffectedUnits.ForEach(u => u.Untarget());
 
             AffectedUnits.Clear();
             AffectedTiles.Clear();
+        }
+
+        public bool GetEnergyIsSufficient() 
+        {
+            return GetEnergyCost() <= CastingUnit.Info.Energy && GetActionEnergyCost() <= CastingUnit.Info.ActionEnergy;
         }
 
         public virtual void UpdateEnergyCost() { }
@@ -333,17 +422,61 @@ namespace MortalDungeon.Game.Abilities
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
                 Scene.EnergyDisplayBar.HoverAmount(0);
+                Scene.ActionEnergyBar.HoverAmount(0);
 
                 float energyCost = GetEnergyCost();
+                float actionEnergyCost = GetActionEnergyCost();
 
                 Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+                Scene.ActionEnergyBar.AddEnergy(-actionEnergyCost);
+
+                CastingUnit.Info.Energy -= energyCost;
+                CastingUnit.Info.ActionEnergy -= actionEnergyCost;
             }
             else
             {
                 float energyCost = GetEnergyCost();
+                float actionEnergyCost = GetActionEnergyCost();
 
                 CastingUnit.Info.Energy -= energyCost;
+                CastingUnit.Info.ActionEnergy -= actionEnergyCost;
             }
+        }
+
+        public virtual void ApplyChargeCost(bool fromLast = false) 
+        {
+            if (Previous == null)
+            {
+                if (GetMaxCharges() > 0 && ChargesLostOnUse > 0)
+                {
+                    if(fromLast || !IsComboAbility) 
+                    {
+                        Charges -= ChargesLostOnUse;
+                    }
+                }
+            }
+            else
+            {
+                Previous.ApplyChargeCost(Next == null || fromLast);
+            }
+        }
+
+        public virtual void RestoreCharges(int amount) 
+        {
+            if (Previous == null)
+            {
+                Charges += amount;
+            }
+            else
+            {
+                Previous.RestoreCharges(amount);
+            }
+        }
+
+        public virtual bool HasSufficientCharges() 
+        {
+            int maxCharges = GetMaxCharges();
+            return maxCharges == 0 || GetCharges() > 0;
         }
 
         /// <summary>
@@ -356,6 +489,8 @@ namespace MortalDungeon.Game.Abilities
                 ApplyEnergyCost();
             }
 
+            ApplyChargeCost();
+
             Scene.DeselectAbility();
             Scene.OnAbilityCast(this);
         }
@@ -366,6 +501,8 @@ namespace MortalDungeon.Game.Abilities
             {
                 ApplyEnergyCost();
             }
+
+            ApplyChargeCost();
         }
 
         public void Casted()
@@ -428,7 +565,7 @@ namespace MortalDungeon.Game.Abilities
                     break;
             }
 
-            Icon icon = GenerateIcon(new UIScale(0.5f, 0.5f), true, backgroundType, false, passedIcon);
+            Icon icon = GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType, false, passedIcon);
 
 
             icon.SetCameraPerspective(true);
@@ -485,11 +622,11 @@ namespace MortalDungeon.Game.Abilities
             {
                 if (CastingUnit.AI.ControlType != ControlType.Controlled && Type != AbilityTypes.Move)
                 {
-                    Thread.Sleep(750);
+                    Thread.Sleep(200);
                 }
                 EffectEndedAction?.Invoke();
 
-                Scene.AbilityInProgress = false;
+                Scene.SetAbilityInProgress(false);
 
                 if (IsComboAbility)
                 {
@@ -653,7 +790,7 @@ namespace MortalDungeon.Game.Abilities
 
         public virtual bool DecayCombo(int decayAmount = 1)
         {
-            if (IsComboAbility && Previous != null)
+            if (IsComboAbility && Previous != null && ShouldDecay)
             {
                 ComboDecayCount += decayAmount;
 
@@ -738,7 +875,7 @@ namespace MortalDungeon.Game.Abilities
             SwapOutAbility(ability);
         }
 
-        public virtual void AddCombo(Ability next, Ability previous)
+        public virtual void AddCombo(Ability next, Ability previous, bool shouldDecay = true)
         {
             Next = next;
             Previous = previous;
@@ -747,15 +884,21 @@ namespace MortalDungeon.Game.Abilities
             {
                 previous.Next = this;
                 previous.IsComboAbility = true;
+
+                previous.ShouldDecay = shouldDecay;
             }
 
             if (next != null)
             {
                 next.Previous = this;
                 next.IsComboAbility = true;
+
+                next.ShouldDecay = shouldDecay;
             }
 
             IsComboAbility = true;
+
+            ShouldDecay = shouldDecay;
         }
 
         public virtual DamageInstance GetDamageInstance() 

@@ -370,6 +370,8 @@ namespace MortalDungeon.Engine_Classes
                         temp.LetterObject.BaseFrame.TextureReference = tempTexture; //hack, figure out a fix for this problem later (TextureReference of new renderable object is null)
                     }
 
+                    temp.TextureLoaded = true;
+
                     Letters.Add(temp);
                 }
 

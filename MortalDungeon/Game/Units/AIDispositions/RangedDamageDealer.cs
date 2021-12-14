@@ -24,7 +24,7 @@ namespace MortalDungeon.Game.Units.AI
             Ability rangedAbility = GetBestAbility(_unit.GetAbilitiesOfType(AbilityTypes.RangedAttack), _unit);
             Unit target;
 
-            if (rangedAbility == null)
+            if (rangedAbility == null || _unit.Info.Dead)
                 return null;
 
             UnitAIAction returnAction = null;
@@ -36,7 +36,7 @@ namespace MortalDungeon.Game.Units.AI
 
                     if (target != null)
                     {
-                        if (!rangedAbility.UnitInRange(target)) 
+                        if (!rangedAbility.UnitInRange(target) && _unit.Info.Energy >= _unit.Info._movementAbility.EnergyCost && rangedAbility.CanCast()) 
                         {
                             weight += 1.9f * Weight;
 
@@ -54,7 +54,7 @@ namespace MortalDungeon.Game.Units.AI
 
                     if (target != null)
                     {
-                        if (rangedAbility.UnitInRange(target))
+                        if (rangedAbility.UnitInRange(target) && rangedAbility.CanCast())
                         {
                             weight += 2 * Weight;
 

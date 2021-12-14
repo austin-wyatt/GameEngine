@@ -1,4 +1,6 @@
-﻿using MortalDungeon.Game.Objects;
+﻿using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -7,24 +9,25 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
+    public enum IconSheetIcons
+    {
+        CrossedSwords,
+        Shield,
+        BleedingDagger,
+        WalkingBoot,
+        QuestionMark,
+        SpiderWeb,
+        Poison,
+        BandagedHand,
+        BowAndArrow,
+        MasqueradeMask,
+        BrokenMask = 12,
+        Channel,
+        MonkSmall,
+        MonkBig
+    }
     public class Icon : UIObject
     {
-        public enum IconSheetIcons 
-        {
-            CrossedSwords,
-            Shield,
-            BleedingDagger,
-            WalkingBoot,
-            QuestionMark,
-            SpiderWeb,
-            Poison,
-            BandagedHand,
-            BowAndArrow,
-            MasqueradeMask,
-            BrokenMask = 12,
-            Channel
-        }
-
         public enum BackgroundType 
         {
             NeutralBackground = 10,
@@ -34,6 +37,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public Spritesheet _spritesheet;
         public Enum _spritesheetPosition;
+
+        public UIObject ChargeDisplay = null;
 
         public static UIScale DefaultIconSize = new UIScale(0.25f, 0.25f);
         public static IconSheetIcons DefaultIcon = IconSheetIcons.QuestionMark; //question mark icon
@@ -113,6 +118,113 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             {
                 b.BaseFrame.CameraPerspective = camPerspective;
             });
+        }
+
+        public void AddChargeDisplay(Ability ability) 
+        {
+            UIScale textBoxSize = new UIScale(Size);
+            textBoxSize *= 0.333f;
+
+            string energyString = $"({ability.GetCharges().ToString("n1").Replace(".0", "")})";
+
+            float textScale = 0.05f;
+
+
+            TextComponent energyCostBox = new TextComponent();
+            energyCostBox.SetColor(Colors.UITextBlack);
+            energyCostBox.SetText(energyString);
+            energyCostBox.SetTextScale(textScale);
+
+            UIScale textDimensions = energyCostBox.GetDimensions();
+
+            if (textDimensions.X > textDimensions.Y)
+            {
+                energyCostBox.SetTextScale((textScale - 0.004f) * textDimensions.Y / textDimensions.X);
+            }
+
+            UIBlock energyCostBackground = new UIBlock();
+            energyCostBackground.SetColor(Colors.UILightGray);
+            energyCostBackground.MultiTextureData.MixTexture = false;
+
+            energyCostBackground.SetSize(textBoxSize);
+
+            energyCostBackground.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.BottomLeft);
+            energyCostBox.SetPositionFromAnchor(energyCostBackground.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+
+            if (ability.GetCharges() == 0) 
+            {
+                energyCostBackground.SetColor(Colors.LessAggressiveRed);
+            }
+
+            energyCostBackground.Clickable = true;
+            energyCostBackground.OnClickAction = () =>
+            {
+                if (ability.Charges < ability.MaxCharges && (ability.CastingUnit.Info.Focus >= ability.RechargeCost || ability.CastingUnit.Info.Health >= ability.RechargeCost))
+                {
+                    if (ability.CastingUnit.Info.Focus >= ability.RechargeCost)
+                    {
+                        ability.CastingUnit.Info.Focus -= ability.RechargeCost;
+                    }
+                    else
+                    {
+                        DamageInstance damage = new DamageInstance();
+                        damage.Damage.Add(DamageType.Focus, ability.RechargeCost);
+
+                        ability.CastingUnit.ApplyDamage(new Unit.DamageParams(damage));
+                    }
+
+                    ability.RestoreCharges(1);
+                    ability.Scene.Footer.UpdateFooterInfo();
+                }
+            };
+
+            string chargeTooltip = $"{ability.Charges}/{ability.GetMaxCharges()} Charges";
+
+            if (ability.Charges < ability.GetMaxCharges()) 
+            {
+                chargeTooltip += $"\nRestore cost: {ability.RechargeCost}";
+            }
+
+            UIHelpers.AddTimedHoverTooltip(energyCostBackground, chargeTooltip, ability.Scene);
+
+
+            energyCostBackground.AddChild(energyCostBox);
+
+            AddChild(energyCostBackground, 50);
+
+            ChargeDisplay = energyCostBox;
+        }
+
+        /// <summary>
+        /// Creates a pattern of action point objects to indicate how many action points the ability costs
+        /// </summary>
+        public void AddActionCost(Ability ability) 
+        {
+            UIScale textBoxSize = new UIScale(Size);
+            textBoxSize *= 0.16f;
+
+            Vector3 pos = GetAnchorPosition(UIAnchorPosition.BottomRight) + new Vector3(-5, -10, -0.001f);
+
+            for (int i = 0; i < ability.ActionCost; i++) 
+            {
+                UIBlock actionCost = new UIBlock(default, null, default, (int)IconSheetIcons.Channel, true, false, Spritesheets.IconSheet);
+                actionCost.SetColor(Colors.White);
+
+
+                actionCost.MultiTextureData.MixTexture = false;
+
+                actionCost.SetSize(textBoxSize);
+
+                actionCost.SetPositionFromAnchor(pos, UIAnchorPosition.BottomRight);
+
+                actionCost.SetAllInline(1);
+
+                actionCost.RenderAfterParent = true;
+
+                AddChild(actionCost, 49);
+
+                pos = actionCost.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(0, -2, -0.001f);
+            }
         }
     }
 }

@@ -25,6 +25,8 @@ namespace MortalDungeon.Game.Entities
 
         public bool Loaded { get; private set; }
 
+        public bool DestroyOnUnload = false;
+
         public Entity(Unit handle)
         {
             Handle = handle;
@@ -50,6 +52,11 @@ namespace MortalDungeon.Game.Entities
             {
                 Loaded = false;
                 Handle.EntityUnload();
+
+                if (DestroyOnUnload) 
+                {
+                    EntityManager.RemoveEntity(this);
+                }
             }
         }
         

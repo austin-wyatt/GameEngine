@@ -252,6 +252,10 @@ namespace MortalDungeon.Game.UI
                 {
                     u.Revive();
                     u.Info.Health = 100;
+
+                    var instance = new Abilities.DamageInstance();
+                    instance.Damage.Add(Abilities.DamageType.HealthRemoval, -100);
+                    u.ApplyDamage(new Unit.DamageParams(instance));
                 });
             }, visionTestButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 

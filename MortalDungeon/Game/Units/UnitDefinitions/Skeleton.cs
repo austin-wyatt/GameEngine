@@ -81,7 +81,7 @@ namespace MortalDungeon.Game.Units
             Buff shieldBlock = new Buff(this);
             shieldBlock.ShieldBlock.Additive = 3;
             shieldBlock.IndefiniteDuration = true;
-            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
+            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
             Slow slowAbility = new Slow(this, 5, 0.1f, 3);
             Info.Abilities.Add(slowAbility);
@@ -89,7 +89,9 @@ namespace MortalDungeon.Game.Units
             Bleed bleedAbility = new Bleed(this, 2, 15, 5);
             Info.Abilities.Add(bleedAbility);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 5) { EnergyCost = 4 };
+            Shoot shootAbility = new Shoot(this, 15, 4, 3);
+            shootAbility.MaxCharges = 100;
+            shootAbility.Charges = 100;
             Info.Abilities.Add(shootAbility);
 
             Hide hideAbility = new Hide(this);

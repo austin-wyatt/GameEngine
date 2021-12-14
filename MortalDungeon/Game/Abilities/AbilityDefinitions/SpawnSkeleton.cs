@@ -9,6 +9,7 @@ using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
 using MortalDungeon.Game.Particles;
 using OpenTK.Mathematics;
+using MortalDungeon.Game.Entities;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -20,7 +21,6 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.NonDamaging;
             Range = range;
             CastingUnit = castingUnit;
-            EnergyCost = 5;
 
             CanTargetGround = true;
             UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
@@ -37,9 +37,9 @@ namespace MortalDungeon.Game.Abilities
             Channel second = new Channel(castingUnit, "Spawn Skeleton (2)", _description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
             Channel third = new Channel(castingUnit, "Spawn Skeleton (3)", _description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
 
-            first.AddCombo(second, null);
-            second.AddCombo(third, first);
-            third.AddCombo(this, second);
+            first.AddCombo(second, null, false);
+            second.AddCombo(third, first, false);
+            third.AddCombo(this, second, false);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
@@ -96,6 +96,14 @@ namespace MortalDungeon.Game.Abilities
             base.EnactEffect();
 
             //create skeleton unit
+
+            Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Spawned Skeleton"), Scene));
+            skele.Handle.SetTeam(CastingUnit.AI.Team);
+
+            EntityManager.AddEntity(skele);
+            skele.DestroyOnUnload = true;
+
+            skele.Load(SelectedTile.ToFeaturePoint());
 
 
             Explosion.ExplosionParams parameters = new Explosion.ExplosionParams(Explosion.ExplosionParams.Default)

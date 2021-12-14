@@ -154,8 +154,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             float footerHeight = 300;
 
-            Footer = new GameFooter(footerHeight, this); ;
-            AddUI(Footer, 100);
+            Footer = new GameFooter(footerHeight, this);
+            AddUI(Footer);
 
 
 
@@ -164,6 +164,14 @@ namespace MortalDungeon.Game.SceneDefinitions
             EnergyDisplayBar = energyDisplayBar;
 
             AddUI(energyDisplayBar);
+
+
+            EnergyDisplayBar actionEnergyBar = new EnergyDisplayBar(this, new Vector3(30, WindowConstants.ScreenUnits.Y - Footer.GetDimensions().Y - 100, 0), new UIScale(1, 1), 4, (int)IconSheetIcons.Channel, Spritesheets.IconSheet);
+
+            ActionEnergyBar = actionEnergyBar;
+
+            AddUI(actionEnergyBar);
+
 
             TurnDisplay = new TurnDisplay();
             TurnDisplay.SetPosition(WindowConstants.CenterScreen - new Vector3(0, WindowConstants.ScreenUnits.Y / 2 - 50, 0));
@@ -199,7 +207,8 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             EndCombat();
-            FillInTeamFog(); 
+            FillInTeamFog();
+            EvaluateCombat();
         }
 
         public override void OnMouseUp(MouseButtonEventArgs e)
@@ -239,7 +248,14 @@ namespace MortalDungeon.Game.SceneDefinitions
                         AddUI(_entityManager.Window);
                         _entityManager.Displayed = true;
                     }
-                    
+                    break;
+                case Keys.Q:
+                    if (CurrentUnit != null && CurrentUnit.AI.ControlType == ControlType.Controlled) 
+                    {
+                        Vector4 pos = CurrentUnit.BaseObject.BaseFrame.Position;
+                        
+                        SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
+                    }
                     break;
             }
 
@@ -299,41 +315,43 @@ namespace MortalDungeon.Game.SceneDefinitions
                     _cameraSpeed *= 20;
                 }
 
+                if (!ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
+                {
+                    if (KeyboardState.IsKeyDown(Keys.W))
+                    {
+                        _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                        OnMouseMove();
+                        OnCameraMoved();
+                    }
 
-                if (KeyboardState.IsKeyDown(Keys.W))
-                {
-                    _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
-                }
-
-                if (KeyboardState.IsKeyDown(Keys.S))
-                {
-                    //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
-                    //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
-                    _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
-                }
-                if (KeyboardState.IsKeyDown(Keys.A))
-                {
-                    //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
-                    //_camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
-                    _camera.SetPosition(_camera.Position - Vector3.UnitX * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
-                }
-                if (KeyboardState.IsKeyDown(Keys.D))
-                {
-                    //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
-                    //_camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
-                    _camera.SetPosition(_camera.Position + Vector3.UnitX * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
-                }
-                if (KeyboardState.IsKeyDown(Keys.Space))
-                {
-                    //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                    if (KeyboardState.IsKeyDown(Keys.S))
+                    {
+                        //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
+                        //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
+                        _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                        OnMouseMove();
+                        OnCameraMoved();
+                    }
+                    if (KeyboardState.IsKeyDown(Keys.A))
+                    {
+                        //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
+                        //_camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
+                        _camera.SetPosition(_camera.Position - Vector3.UnitX * _cameraSpeed * (float)args.Time);
+                        OnMouseMove();
+                        OnCameraMoved();
+                    }
+                    if (KeyboardState.IsKeyDown(Keys.D))
+                    {
+                        //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
+                        //_camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
+                        _camera.SetPosition(_camera.Position + Vector3.UnitX * _cameraSpeed * (float)args.Time);
+                        OnMouseMove();
+                        OnCameraMoved();
+                    }
+                    if (KeyboardState.IsKeyDown(Keys.Space))
+                    {
+                        //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                    }
                 }
             }
         }
@@ -564,6 +582,11 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                             tile.Update();
                         });
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.F5))
+                    {
+                        Console.WriteLine("Tile position: " + tile.BaseObject.BaseFrame.Position);
+                        Console.WriteLine("Camera position: " + _camera.Position);
                     }
                 }
             }

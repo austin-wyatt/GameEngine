@@ -129,6 +129,11 @@ namespace MortalDungeon.Game.Entities
             return foundObjs;
         }
 
+        public static Prefab FindPrefab(PrefabType type, string name) 
+        {
+            return Prefabs.Find(p => p.Type == type && p.Name == name);
+        }
+
         private static PrefabType StringToPrefabType(string val) 
         {
             switch (val) 

@@ -17,7 +17,6 @@ namespace MortalDungeon.Game.Abilities
         public Channel(Unit castingUnit, string name, string description, Enum icon = null, Spritesheet spritesheet = null)
         {
             CastingUnit = castingUnit;
-            EnergyCost = 5;
 
             CanTargetGround = false;
             CanTargetSelf = true;
@@ -28,7 +27,7 @@ namespace MortalDungeon.Game.Abilities
             Name = name;
             _description = description;
 
-            var iconPos = icon == null ? Icon.IconSheetIcons.Channel : icon;
+            var iconPos = icon == null ? IconSheetIcons.Channel : icon;
             Spritesheet iconSpritesheet = spritesheet == null ? Spritesheets.IconSheet : spritesheet;
 
             Icon = new Icon(Icon.DefaultIconSize, iconPos, iconSpritesheet, true);

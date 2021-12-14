@@ -5,6 +5,7 @@ using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles.HelperTiles;
@@ -442,6 +443,11 @@ namespace MortalDungeon.Game.Tiles
 
             return menu;
         }
+
+        public FeaturePoint ToFeaturePoint()
+        {
+            return new FeaturePoint(this);
+        }
     }
 
     public class TilePoint
@@ -496,6 +502,11 @@ namespace MortalDungeon.Game.Tiles
         public override int GetHashCode()
         {
             return HashCode.Combine(X, Y, ParentTileMap);
+        }
+
+        public FeaturePoint ToFeaturePoint() 
+        {
+            return new FeaturePoint(this);
         }
     }
 

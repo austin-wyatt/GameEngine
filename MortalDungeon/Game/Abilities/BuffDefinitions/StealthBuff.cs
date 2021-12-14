@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Abilities
             BuffType = BuffType.Neutral;
             IndefiniteDuration = true;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet);
         }
 
         public override Icon GenerateIcon(UIScale scale)

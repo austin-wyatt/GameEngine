@@ -14,7 +14,7 @@ namespace MortalDungeon.Game.Abilities
         public float Damage;
         public BleedDebuff(Unit affected, int duration, float damage) : base(affected, duration)
         {
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BleedingDagger, Spritesheets.IconSheet);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BleedingDagger, Spritesheets.IconSheet);
             Name = "Bleed";
             BuffType = BuffType.Debuff;
 

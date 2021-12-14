@@ -21,7 +21,6 @@ namespace MortalDungeon.Game.Abilities
             Type = AbilityTypes.Buff;
             Range = 1;
             CastingUnit = castingUnit;
-            EnergyCost = 5;
 
             Name = "Hide";
 
@@ -34,8 +33,8 @@ namespace MortalDungeon.Game.Abilities
 
             BreakStealth = false;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
-            BrokenMaskIcon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
+            BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)

@@ -9,7 +9,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class UIBlock : UIObject
     {
-        public UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        public UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
         {
             Position = position;
             Size = size == null ? Size : size;
@@ -23,7 +23,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Animation tempAnimation;
 
-            RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, Spritesheets.UISheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            if (spritesheet == null) 
+            {
+                spritesheet = Spritesheets.UISheet;
+            }
+
+            RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, spritesheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
             window.BaseColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
             window.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));

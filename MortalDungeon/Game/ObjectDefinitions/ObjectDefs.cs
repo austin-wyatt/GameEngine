@@ -209,7 +209,8 @@ namespace MortalDungeon.Game.Objects
                 -0.5f, 0.5f, 0.0f,
             };
 
-            float aspectRatio = SideLengths.X / SideLengths.Y;
+            //float aspectRatio = SideLengths.X / SideLengths.Y;
+            float aspectRatio = 1;
 
             float[] vertices;
 
@@ -249,6 +250,8 @@ namespace MortalDungeon.Game.Objects
 
             returnDef.SpritesheetPosition = SpritesheetPosition;
             returnDef.SideLengths = new Vector2(SideLengths.X, SideLengths.Y);
+
+            returnDef.VerticeType = -aspectRatio;
 
             return returnDef;
         }

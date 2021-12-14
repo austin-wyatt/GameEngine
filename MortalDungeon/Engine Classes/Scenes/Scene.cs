@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Tiles;
@@ -79,7 +80,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public static bool RenderLight = true;
 
 
-        public List<ITickable> TickableObjects = new List<ITickable>();
+        public QueuedList<ITickable> TickableObjects = new QueuedList<ITickable>();
 
         public ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
 
@@ -187,6 +188,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void RemoveUI(UIObject ui)
         {
+            if (ui == null)
+                return;
+
+            ui.CleanUp();
             _UI.Remove(ui);
         }
 
@@ -194,6 +199,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public void SortUIByZIndex()
         {
             _UI.Sort();
+
+            float count = 0;
+            foreach (var ui in _UI) 
+            {
+                Vector3 pos = new Vector3(ui.Position.X, ui.Position.Y, count);
+                ui.SetPosition(pos);
+
+                count += 0.001f; 
+            }
         }
 
         #region Messaging handlers
@@ -286,6 +300,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             _updatingVisionMap = true;
 
+            //Stopwatch timer = new Stopwatch();
+            //timer.Start();
+
             VisionMapTask = new Task(() =>
             {
                 _updatingVisionMap = true;
@@ -295,6 +312,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 VisionMap.CalculateVision(UnitVisionGenerators, this, teamToUpdate);
 
                 _updatingVisionMap = false;
+
+                //Console.WriteLine($"Vision map updated in {timer.ElapsedMilliseconds}ms");
 
                 if (_shouldRepeatVisionMap)
                 {
@@ -352,6 +371,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             _particleGenerators.HandleQueuedItems();
             _lowPriorityObjects.HandleQueuedItems();
+
+            TickableObjects.HandleQueuedItems();
 
             if (LightObstructions.HasQueuedItems())
             {
@@ -803,17 +824,51 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             return foundObjects;
         }
-        //Game logic goes here
-        public virtual void Logic()
-        {
 
-        }
 
 
 
         public Scene() { }
 
         #region Misc helper functions
+        public void SmoothPanCamera(Vector3 pos, int speed)
+        {
+            if (ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
+                return;
+
+            const int frames = 30;
+
+            Vector3 deltaPos = (_camera.Position - pos) / frames;
+
+            PropertyAnimation animation = new PropertyAnimation();
+            for (int i = 0; i < frames; i++) 
+            {
+                Keyframe frame = new Keyframe(speed * i);
+                frame.Action = () =>
+                {
+                    _camera.SetPosition(_camera.Position - deltaPos);
+                    OnMouseMove();
+                    OnCameraMoved();
+                };
+
+                animation.Keyframes.Add(frame);
+            }
+
+            RenderingQueue.RenderStateManager.SetFlag(RenderingStates.GuassianBlur, true);
+
+            ContextManager.SetFlag(GeneralContextFlags.CameraPanning, true);
+            animation.Playing = true;
+
+            TickableObjects.Add(animation);
+
+            animation.OnFinish = () =>
+            {
+                TickableObjects.Remove(animation);
+                ContextManager.SetFlag(GeneralContextFlags.CameraPanning, false);
+
+                RenderingQueue.RenderStateManager.SetFlag(RenderingStates.GuassianBlur, false);
+            };
+        }
         protected Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize)
         {
             float X = (vec.X / clientSize.X) * 2 - 1; //converts it into local opengl coordinates

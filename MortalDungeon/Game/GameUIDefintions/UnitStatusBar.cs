@@ -147,6 +147,8 @@ namespace MortalDungeon.Game.UI
 
                 Vector3 screenSpace = WindowConstants.ConvertLocalToScreenSpaceCoordinates(unitPos.Xy);
 
+                screenSpace.Z = 0.01f;
+
                 BaseComponent.SetPosition(screenSpace);
 
                 _mainTextBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);

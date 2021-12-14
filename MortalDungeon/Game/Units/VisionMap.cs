@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -640,24 +641,44 @@ namespace MortalDungeon.Game.Units
             return returnList;
         }
 
+
+        public struct TemporaryVisionParams 
+        {
+            public Unit Unit;
+            public TilePoint TemporaryPosition;
+        }
+
         /// <summary>
         /// Gets the team's vision (accounting for temporary position of units) and returns it in tile map cluster coordinates [0, 149]
         /// </summary>
-        public static List<Vector2i> GetTeamVision(UnitTeam team, Scene scene) 
+        public static List<Vector2i> GetTeamVision(UnitTeam team, Scene scene, List<TemporaryVisionParams> temporaryVisionParams = null) 
         {
             List<Vector2i> returnList = new List<Vector2i>();
 
-            for (int m = 0; m < scene._units.Count; m++) 
+            //for (int m = 0; m < scene._units.Count; m++) 
+            for (int m = 0; m < temporaryVisionParams.Count; m++) 
             {
-                VisionGenerator generator = new VisionGenerator(scene._units[m].VisionGenerator);
+                //var unit = scene._units[m];
+                var unit = temporaryVisionParams[m].Unit;
+
+                VisionGenerator generator = new VisionGenerator(unit.VisionGenerator);
 
                 if (generator.Team != team)
                     continue;
 
-                if (scene._units[m].Info.TemporaryPosition != null) 
+                if (temporaryVisionParams != null) 
                 {
-                    generator.SetPosition(scene._units[m].Info.TemporaryPosition);
+                    var tempVision = temporaryVisionParams.Find(v => v.Unit == unit);
+                    if (tempVision.Unit != null) 
+                    {
+                        generator.SetPosition(tempVision.TemporaryPosition);
+                    }
                 }
+
+                //if (scene._units[m].Info.TemporaryPosition != null) 
+                //{
+                //    generator.SetPosition(scene._units[m].Info.TemporaryPosition);
+                //}
 
                 Vector2 currTile = new Vector2();
                 Vector2 currTileTexel = new Vector2();

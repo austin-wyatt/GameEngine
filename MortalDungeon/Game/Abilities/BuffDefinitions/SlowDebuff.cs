@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Abilities
             SpeedModifier.Multiplier = slowMultiplier;
             BuffType = BuffType.Debuff;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.SpiderWeb, Spritesheets.IconSheet);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet);
         }
 
         public override Icon GenerateIcon(UIScale scale)

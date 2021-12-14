@@ -31,7 +31,7 @@ namespace MortalDungeon.Game.Units
         public CombatScene Scene;
 
         public UnitStatusBar StatusBarComp = null;
-        public static int BaseStatusBarZIndex = 100;
+        public static int BaseStatusBarZIndex = -10;
 
         public bool Selectable = false;
 
@@ -106,9 +106,11 @@ namespace MortalDungeon.Game.Units
 
             if (StatusBarComp != null) 
             {
-                Scene.AddUI(StatusBarComp, 10);
+                Scene.AddUI(StatusBarComp, Unit.BaseStatusBarZIndex);
             }
 
+            Info.Energy = Info.CurrentEnergy;
+            Info.ActionEnergy = Info.CurrentActionEnergy;
 
             SetTileMapPosition(Scene._tileMapController.GetTile(position));
         }
@@ -285,6 +287,8 @@ namespace MortalDungeon.Game.Units
             return damageType switch
             {
                 DamageType.Poison => true,
+                DamageType.HealthRemoval => true,
+                DamageType.Focus => true,
                 _ => false,
             };
         }
@@ -308,7 +312,10 @@ namespace MortalDungeon.Game.Units
                 StatusBarComp.SetIsTurn(true);
             }
 
-            if (AI.ControlType != ControlType.Controlled) 
+            Info.Energy = Info.CurrentEnergy;
+            Info.ActionEnergy = Info.CurrentActionEnergy;
+
+            if (AI.ControlType != ControlType.Controlled)
             {
                 AI.TakeTurn();
             }
@@ -510,6 +517,14 @@ namespace MortalDungeon.Game.Units
             OnRevive();
         }
 
+        public virtual void RefillAbilityCharges() 
+        {
+            foreach (var ability in Info.Abilities) 
+            {
+                ability.Charges = ability.Charges < ability.MaxCharges ? ability.MaxCharges : ability.Charges;
+            }
+        }
+
         public virtual void OnKill() 
         {
             if (BaseObject != null) 
@@ -630,6 +645,9 @@ namespace MortalDungeon.Game.Units
 
         public void Select() 
         {
+            if (SelectionTile == null)
+                return;
+
             Scene.Footer.UpdateFooterInfo(this);
             SelectionTile.Select();
             Selected = true;
@@ -637,6 +655,9 @@ namespace MortalDungeon.Game.Units
 
         public void Deselect()
         {
+            if (SelectionTile == null)
+                return;
+
             Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
             SelectionTile.Deselect();
             Selected = false;
@@ -644,12 +665,18 @@ namespace MortalDungeon.Game.Units
 
         public void Target() 
         {
+            if (SelectionTile == null)
+                return;
+
             SelectionTile.Target();
             Targeted = true;
         }
 
         public void Untarget() 
         {
+            if (SelectionTile == null)
+                return;
+
             SelectionTile.Untarget();
             Targeted = false;
         }
@@ -702,10 +729,19 @@ namespace MortalDungeon.Game.Units
 
         public float MaxEnergy = 10;
         public float CurrentEnergy => MaxEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyBoost.Additive + seed); //Energy at the start of the turn
-        public float Energy = 0; //internal unit energy tracker
+        public float Energy = 10; //internal unit energy tracker
+
+        public float MaxActionEnergy = 4;
+
+        public float MaxFocus = 40;
+        public float Focus = 40;
+
+        public float CurrentActionEnergy => MaxActionEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ActionEnergyBoost.Additive + seed); //Energy at the start of the turn
+        public float ActionEnergy = 0;
 
         public float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
         public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
+        public float ActionEnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
         public float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
         public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
         public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.SpeedModifier.Multiplier * seed);

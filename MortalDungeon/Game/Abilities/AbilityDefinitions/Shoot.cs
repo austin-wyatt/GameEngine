@@ -25,15 +25,15 @@ namespace MortalDungeon.Game.Abilities
             MinRange = minRange;
             CastingUnit = castingUnit;
             Damage = damage;
-            EnergyCost = 7;
 
+            ActionCost = 2;
             
 
             Name = "Shoot";
 
             _description = "Fire an arrow at a target within range. \nA direct line to the target must be present.";
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
@@ -56,9 +56,13 @@ namespace MortalDungeon.Game.Abilities
             
             bool inRange = false;
 
-            CastingUnit.Info.TemporaryPosition = point;
+            var tempVision = new VisionMap.TemporaryVisionParams()
+            {
+                Unit = CastingUnit,
+                TemporaryPosition = point
+            };
 
-            List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene);
+            List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene, new List<VisionMap.TemporaryVisionParams>() { tempVision });
 
             Vector2i clusterPos = Scene._tileMapController.PointToClusterPosition(unit.Info.TileMapPosition);
 
@@ -67,7 +71,7 @@ namespace MortalDungeon.Game.Abilities
                 return false;
             }
 
-            if (teamVision.Exists(p => p == clusterPos)
+            if ((teamVision.Exists(p => p == clusterPos) || VisionMap.InVision(clusterPos.X, clusterPos.Y, CastingUnit.AI.Team))
                 && VisionMap.TargetInVision(point, unit.Info.TileMapPosition, (int)Range, Scene)) 
             {
                 return true;
@@ -113,7 +117,9 @@ namespace MortalDungeon.Game.Abilities
 
             GameObject arrow = new GameObject(Spritesheets.ObjectSheet, 0);
 
-            arrow.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
+            //arrow.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
+
+
 
             Vector3 a = CastingUnit.Position;
             Vector3 b = SelectedUnit.Position;
@@ -123,6 +129,8 @@ namespace MortalDungeon.Game.Abilities
             angle *= -1;
 
             arrow.BaseObject.BaseFrame.RotateZ(angle);
+
+            GameObject.LoadTexture(arrow);
 
             Scene._genericObjects.Add(arrow);
 

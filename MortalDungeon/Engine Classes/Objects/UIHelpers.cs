@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -74,7 +75,7 @@ namespace MortalDungeon.Engine_Classes
         public static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
         public static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
 
-        public static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability)
+        public static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability = null)
         {
             void onHover(GameObject obj)
             {
@@ -83,7 +84,7 @@ namespace MortalDungeon.Engine_Classes
 
             void hoverEnd(GameObject obj)
             {
-                if (scene._selectedAbility != null && scene._selectedAbility.AbilityID == ability.AbilityID)
+                if (ability != null && scene._selectedAbility != null && scene._selectedAbility.AbilityID == ability.AbilityID)
                 {
                     obj.SetColor(Colors.IconSelected);
                 }
@@ -125,8 +126,19 @@ namespace MortalDungeon.Engine_Classes
         }
         public static void CreateToolTip(StringTooltipParameters param)
         {
-            if (param.Scene.ContextManager.GetFlag(param.TooltipFlag))
-                return;
+            string tooltipName = "Tooltip" + param.TooltipFlag;
+
+            if (param.Scene.ContextManager.GetFlag(param.TooltipFlag)) 
+            {
+                for (int i = param.Scene._tooltipBlock.Children.Count - 1; i >= 0; i--)
+                {
+                    if (param.Scene._tooltipBlock.Children[i].Name == tooltipName) 
+                    {
+                        param.Scene._tooltipBlock.RemoveChild(param.Scene._tooltipBlock.Children[i]);
+                    }
+                }
+            }
+                
 
             param.Scene.ContextManager.SetFlag(param.TooltipFlag, true);
 
@@ -167,14 +179,19 @@ namespace MortalDungeon.Engine_Classes
             tooltipBackground.SetSize(tooltipScale);
             tooltipBackground.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + backgroundOffset, UIAnchorPosition.TopLeft);
 
-            param.TooltipParent.AddChild(tooltip, 100000);
+            tooltipBackground.AddChild(tooltip);
+
+            tooltipBackground.Name = tooltipName;
+
+            //param.TooltipParent.AddChild(tooltip, 100000);
             param.TooltipParent.AddChild(tooltipBackground, 99999);
+
 
             void tempScene(SceneEventArgs args)
             {
                 if (args.EventAction != EventAction.CloseTooltip) return;
 
-                param.TooltipParent.RemoveChild(tooltip.ObjectID);
+                //param.TooltipParent.RemoveChild(tooltip.ObjectID);
                 param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
                 param.HoverParent.OnHoverEndEvent -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
@@ -184,14 +201,13 @@ namespace MortalDungeon.Engine_Classes
 
             void tempGameObj(GameObject obj)
             {
-                param.TooltipParent.RemoveChild(tooltip.ObjectID);
+                //param.TooltipParent.RemoveChild(tooltip.ObjectID);
                 param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
                 param.HoverParent.OnHoverEndEvent -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
 
                 param.Scene.OnUIForceClose -= tempScene;
             }
-            
 
             param.HoverParent.OnHoverEndEvent += tempGameObj;
             param.Scene.OnUIForceClose += tempScene;
@@ -235,6 +251,19 @@ namespace MortalDungeon.Engine_Classes
             scene.OnUIForceClose += tempScene;
 
             CheckTooltipPlacement(tooltip, scene);
+        }
+
+        public static void NukeTooltips(GeneralContextFlags tooltipFlag, CombatScene scene) 
+        {
+            string tooltipName = "Tooltip" + tooltipFlag;
+
+            for (int i = scene._tooltipBlock.Children.Count - 1; i >= 0; i--)
+            {
+                if (scene._tooltipBlock.Children[i].Name == tooltipName)
+                {
+                    scene._tooltipBlock.RemoveChild(scene._tooltipBlock.Children[i]);
+                }
+            }
         }
 
         public static Tooltip GenerateTooltipWithHeader(string headerText, string bodyText)
@@ -398,6 +427,51 @@ namespace MortalDungeon.Engine_Classes
             }
 
             obj.OnTimedHoverEvent += timedHover;
+
+            void onCleanUp(GameObject _) 
+            {
+                obj.OnTimedHoverEvent -= timedHover;
+            }
+
+            obj.OnCleanUp += onCleanUp;
+        }
+
+        public static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, bool enforceUniqueness = false) 
+        {
+            if (enforceUniqueness) 
+            {
+                for (int i = parent.Children.Count - 1; i >= 0; i--) 
+                {
+                    if (parent.Children[i].Name == name)
+                    {
+                        parent.RemoveChild(parent.Children[i]);
+                    }
+                }
+                
+            }
+
+            UIBlock window = new UIBlock(new Vector3(500, 500, 0), size);
+            window.MultiTextureData.MixTexture = false;
+            window.Draggable = true;
+            window.Clickable = true;
+            window.Hoverable = true;
+
+            window.Name = name;
+
+            Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
+            exit.Clickable = true;
+            exit.OnClickAction = () =>
+            {
+                parent.RemoveChild(window);
+                exit.OnHoverEnd();
+            };
+            exit.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
+
+            AddTimedHoverTooltip(exit, "Exit", scene);
+
+            window.AddChild(exit);
+
+            return window;
         }
     }
 

@@ -34,12 +34,18 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.NonDamaging;
 
             EnergyCost = 1;
+            ActionCost = 0;
+
+            MaxCharges = 0;
+            Charges = 0;
+
+            ChargesLostOnUse = 0;
 
             HasHoverEffect = true;
 
             Name = "Move";
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.WalkingBoot, Spritesheets.IconSheet, true);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.WalkingBoot, Spritesheets.IconSheet, true);
 
             TraversableTypes.Add(TileClassification.Ground);
         }
@@ -47,14 +53,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
-            if (CastingUnit.AI.ControlType == ControlType.Controlled)
-            {
-                Range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost(); //special case for general move ability
-            }
-            else 
-            {
-                Range = CastingUnit.Info.CurrentEnergy / GetEnergyCost(); //special case for general move ability
-            }
+            Range = CastingUnit.Info.Energy / GetEnergyCost(); //special case for general move ability
             
 
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
@@ -76,7 +75,7 @@ namespace MortalDungeon.Game.Abilities
         public override void OnSelect(CombatScene scene, TileMap currentMap)
         {
             Units = scene._units;
-            Range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost(); //special case for general move ability
+            Range = CastingUnit.Info.Energy / GetEnergyCost(); //special case for general move ability
         }
 
         public override void EnactEffect()
@@ -103,7 +102,8 @@ namespace MortalDungeon.Game.Abilities
                     //{
                     PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
 
-                    float speed = CastingUnit.Info.Speed;
+                    //float speed = CastingUnit.Info.Speed;
+                    float speed = 0.1f;
 
                     Vector3 tileAPosition = CurrentTiles[0].Position;
                     Vector3 tileBPosition;
@@ -139,14 +139,18 @@ namespace MortalDungeon.Game.Abilities
                         BaseTile currentTile = CurrentTiles[i];
                         endOfTileMoveKeyframe.Action = () =>
                         {
+                            if (!ApplyTileEnergyCost(currentTile)) 
+                            {
+                                moveAnimation.Finish();
+                                return;
+                            }
+
                             Task.Run(() =>
                             {
                                 CastingUnit.SetTileMapPosition(currentTile);
 
                                 Scene.Controller.CullObjects();
                             });
-
-                            ApplyTileEnergyCost(currentTile);
 
                             currentTile.Properties.Type.SimplifiedType().FootstepSound().Play();
 
@@ -246,10 +250,10 @@ namespace MortalDungeon.Game.Abilities
             //}
         }
 
-        protected void ApplyTileEnergyCost(BaseTile tile) 
+        protected bool ApplyTileEnergyCost(BaseTile tile) 
         {
             if (!Scene.InCombat)
-                return;
+                return true;
 
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
@@ -257,14 +261,27 @@ namespace MortalDungeon.Game.Abilities
 
                 float energyCost = tile.Properties.MovementCost * GetEnergyCost();
 
+                if (CastingUnit.Info.Energy - energyCost < 0) 
+                {
+                    return false;
+                }
+
                 Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+                CastingUnit.Info.Energy -= energyCost;
             }
             else
             {
                 float energyCost = tile.Properties.MovementCost * GetEnergyCost();
 
+                if (CastingUnit.Info.Energy - energyCost < 0)
+                {
+                    return false;
+                }
+
                 CastingUnit.Info.Energy -= energyCost;
             }
+
+            return true;
         }
 
         public override void OnTileClicked(TileMap map, BaseTile tile)
@@ -453,7 +470,7 @@ namespace MortalDungeon.Game.Abilities
 
             float energyCost = GetPathMovementCost(tiles) * GetEnergyCost();
 
-            if (energyCost > Scene.EnergyDisplayBar.CurrentEnergy)
+            if (energyCost > CastingUnit.Info.Energy)
             {
                 tiles.Clear();
                 ClearSelectedTiles();
@@ -468,14 +485,7 @@ namespace MortalDungeon.Game.Abilities
         {
             float range;
 
-            if (CastingUnit.AI.ControlType == ControlType.Controlled)
-            {
-                range = Scene.EnergyDisplayBar.CurrentEnergy / GetEnergyCost();
-            }
-            else 
-            {
-                range = CastingUnit.Info.Energy / GetEnergyCost();
-            }
+            range = CastingUnit.Info.Energy / GetEnergyCost();
 
             if (customRange != -1) 
             {

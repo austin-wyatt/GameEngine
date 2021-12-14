@@ -20,7 +20,6 @@ namespace MortalDungeon.Game.Abilities
             Type = AbilityTypes.Debuff;
             Range = range;
             CastingUnit = castingUnit;
-            EnergyCost = 1;
 
             _slowDuration = duration;
             _slowMultiplier = 1 + slowAmount;
@@ -29,7 +28,7 @@ namespace MortalDungeon.Game.Abilities
 
             CanTargetGround = false;
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
@@ -67,12 +66,15 @@ namespace MortalDungeon.Game.Abilities
         public override void OnCast()
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
+            Scene.ActionEnergyBar.HoverAmount(0);
 
             float energyCost = GetEnergyCost();
+            float actionEnergyCost = GetActionEnergyCost();
 
             //special cases for energy reduction go here
 
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
+            Scene.ActionEnergyBar.AddEnergy(-actionEnergyCost);
 
             TileMap.DeselectTiles();
 

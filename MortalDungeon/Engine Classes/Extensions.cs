@@ -18,5 +18,19 @@ namespace MortalDungeon.Engine_Classes
 
             return true;
         }
+
+        private static Random rng = new Random();
+        public static void Randomize<T>(this IList<T> source)
+        {
+            int n = source.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rng.Next(n + 1);
+                T value = source[k];
+                source[k] = source[n];
+                source[n] = value;
+            }
+        }
     }
 }

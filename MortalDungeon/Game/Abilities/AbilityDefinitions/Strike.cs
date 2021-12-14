@@ -19,11 +19,11 @@ namespace MortalDungeon.Game.Abilities
             Range = range;
             CastingUnit = castingUnit;
             Damage = damage;
-            EnergyCost = 5;
+            ActionCost = 2;
 
             Name = "Strike";
 
-            Icon = new Icon(Icon.DefaultIconSize, Icon.IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
+            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)

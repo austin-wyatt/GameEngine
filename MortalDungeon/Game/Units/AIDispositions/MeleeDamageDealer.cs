@@ -23,7 +23,7 @@ namespace MortalDungeon.Game.Units.AI
             Ability meleeAbility = GetBestAbility(_unit.GetAbilitiesOfType(AbilityTypes.MeleeAttack), _unit);
             Unit target;
 
-            if (meleeAbility == null)
+            if (meleeAbility == null || _unit.Info.Dead)
                 return null;
 
             switch (action) 
@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.Units.AI
 
                     if (target != null)
                     {
-                        if (!meleeAbility.UnitInRange(target))
+                        if (!meleeAbility.UnitInRange(target) && _unit.Info.Energy >= _unit.Info._movementAbility.EnergyCost && meleeAbility.CanCast())
                         {
                             weight += 2 * Weight;
 
@@ -47,7 +47,7 @@ namespace MortalDungeon.Game.Units.AI
 
                     if (target != null)
                     {
-                        if (meleeAbility.UnitInRange(target))
+                        if (meleeAbility.UnitInRange(target) && meleeAbility.CanCast())
                         {
                             weight += 2 * Weight;
 

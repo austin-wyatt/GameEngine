@@ -34,6 +34,8 @@ namespace MortalDungeon.Engine_Classes
 
         public bool HasContextMenu = false;
 
+        public bool TextureLoaded = false;
+
         public int ObjectID => _objectID;
         protected int _objectID = currentObjectID++;
         protected static int currentObjectID = 0;

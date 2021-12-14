@@ -53,6 +53,8 @@ namespace MortalDungeon.Engine_Classes
         public BoundingArea ScissorBounds = new BoundingArea();
         public Bounds AdditionalBounds = null;
 
+        public bool RenderAfterParent = false;
+
         public UIObject() { }
 
         public void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
@@ -477,6 +479,16 @@ namespace MortalDungeon.Engine_Classes
                     return;
                 }
             }
+        }
+
+        public override void CleanUp()
+        {
+            Children.ForEach(child =>
+            {
+                child.CleanUp();
+            });
+
+            base.CleanUp();
         }
 
         public virtual void AddChild(UIObject uiObj, int zIndex = -1) 
