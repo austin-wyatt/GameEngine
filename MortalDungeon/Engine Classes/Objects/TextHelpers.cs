@@ -6,7 +6,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public enum Character
+    internal enum Character
     {
         A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,
         Period, QuestionMark, ExclamationPoint, Comma, QuotationMark, Apostrophe, LeftBracket, RightBracket, Plus, Minus, Equals, Underscore, Colon, Semicolon,
@@ -15,7 +15,7 @@ namespace MortalDungeon.Engine_Classes
     }
     static class CharacterConstants
     {
-        public static Dictionary<char, Character> _characterMap = new Dictionary<char, Character>()
+        internal static Dictionary<char, Character> _characterMap = new Dictionary<char, Character>()
         {
             {'A', Character.A }, {'B', Character.B },{'C', Character.C },{'D', Character.D },{'E', Character.E },{'F', Character.F },{'G', Character.G },{'H', Character.H },{'I', Character.I },{'J', Character.J },
             {'K', Character.K },{'L', Character.L },{'M', Character.M },{'N', Character.N },{'O', Character.O },{'P', Character.P },{'Q', Character.Q },{'R', Character.R },{'S', Character.S },{'T', Character.T },
@@ -30,7 +30,7 @@ namespace MortalDungeon.Engine_Classes
             {'0', Character.Zero }, {' ', Character.Space }, {'\n', Character.NewLine }, {'\r', Character.Return }
         };
 
-        public static Dictionary<Character, char> _characterMapToChar = new Dictionary<Character, char>()
+        internal static Dictionary<Character, char> _characterMapToChar = new Dictionary<Character, char>()
         {
             {Character.A, 'A' }, {Character.B, 'B' },{Character.C,'C' },{ Character.D, 'D' },{Character.E, 'E' },{Character.F, 'F' },{Character.G, 'G' },{Character.H, 'H' },{Character.I,'I' },{Character.J,'J' },
             {Character.K, 'K' },{Character.L, 'L' },{Character.M, 'M' },{Character.N, 'N' },{Character.O, 'O' },{Character.P, 'P' },{Character.Q, 'Q' },{Character.R, 'R' },{Character.S, 'S' },{Character.T, 'T' },
@@ -48,7 +48,7 @@ namespace MortalDungeon.Engine_Classes
 
     static class TextHelper 
     {
-        public static string KeyStrokeToString(KeyboardKeyEventArgs e) 
+        internal static string KeyStrokeToString(KeyboardKeyEventArgs e) 
         {
             string outStr;
             bool shift = e.Shift;

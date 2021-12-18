@@ -3,12 +3,12 @@ using System;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
-    public class Frustum
+    internal class Frustum
     {
         private float[] clip_matrix = new float[16];
         private float[,] frustum = new float[6, 4];
 
-        public enum ClippingPlanes
+        internal enum ClippingPlanes
         {
             Right,
             Left,
@@ -27,7 +27,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             frustum[side, 3] /= magnitude;
         }
 
-        public bool TestPoint(float x, float y, float z)
+        internal bool TestPoint(float x, float y, float z)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -39,7 +39,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return true;
         }
 
-        public bool TestSphere(float x, float y, float z, float radius)
+        internal bool TestSphere(float x, float y, float z, float radius)
         {
             for (int p = 0; p < 6; p++)
             {
@@ -52,7 +52,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return true;
         }
 
-        public bool TestCube(float x, float y, float z, float size)
+        internal bool TestCube(float x, float y, float z, float size)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -78,7 +78,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
 
-        public void CalculateFrustum(Matrix4 projectionMatrix, Matrix4 modelViewMatrix)
+        internal void CalculateFrustum(Matrix4 projectionMatrix, Matrix4 modelViewMatrix)
         {
             clip_matrix[0] = (modelViewMatrix.M11 * projectionMatrix.M11) + (modelViewMatrix.M12 * projectionMatrix.M21) + (modelViewMatrix.M13 * projectionMatrix.M31) + (modelViewMatrix.M14 * projectionMatrix.M41);
             clip_matrix[1] = (modelViewMatrix.M11 * projectionMatrix.M12) + (modelViewMatrix.M12 * projectionMatrix.M22) + (modelViewMatrix.M13 * projectionMatrix.M32) + (modelViewMatrix.M14 * projectionMatrix.M42);

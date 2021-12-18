@@ -3,11 +3,11 @@ using System;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public class ToggleableButton : Button
+    internal class ToggleableButton : Button
     {
-        public Action OnSelectAction = null;
-        public Action OnDeselectAction = null;
-        public ToggleableButton(Vector3 pos, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = false) 
+        internal Action OnSelectAction = null;
+        internal Action OnDeselectAction = null;
+        internal ToggleableButton(Vector3 pos, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = false) 
             : base(pos, size, text, textScale, boxColor, textColor, centerText)
         {
             Name = "ToggleableButton";
@@ -16,7 +16,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetColor(BaseColor);
         }
 
-        public override void OnHover()
+        internal override void OnHover()
         {
             if (!Hovered)
             {
@@ -28,7 +28,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.OnHover();
         }
 
-        public override void OnHoverEnd()
+        internal override void OnHoverEnd()
         {
             if (Hovered)
             {
@@ -38,14 +38,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.OnHoverEnd();
         }
 
-        public override void OnMouseDown()
+        internal override void OnMouseDown()
         {
             base.OnMouseDown();
             Vector4 mouseDownColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
 
             SetColor(mouseDownColor);
         }
-        public override void OnMouseUp()
+        internal override void OnMouseUp()
         {
             Selected = !Selected;
 
@@ -60,7 +60,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        public override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color)
         {
             if (!Selected)
                 TextBox.SetColor(color);

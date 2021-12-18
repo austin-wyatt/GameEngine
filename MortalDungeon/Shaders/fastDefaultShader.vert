@@ -2,14 +2,15 @@
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec2 aTexCoord;
-layout(location = 2) in mat4 transform;
-layout(location = 6) in vec4 aColor;
-layout(location = 7) in vec4 compositeType; //composite vector of whether to enable the cam (0), the spritesheet position (1), the X and Y lengths of the spritesheet (2, 3)
-layout(location = 8) in vec4 compositeType_2; //composite vector of spritesheet width, spritesheet height, use second texture, mix percent
+layout(location = 2) in vec3 aNormal;
+layout(location = 3) in mat4 transform;
+layout(location = 7) in vec4 aColor;
+layout(location = 8) in vec4 compositeType; //composite vector of whether to enable the cam (0), the spritesheet position (1), the X and Y lengths of the spritesheet (2, 3)
+layout(location = 9) in vec4 compositeType_2; //composite vector of spritesheet width, spritesheet height, use second texture, mix percent
 
-layout(location = 9) in vec4 compositeType_3; //composite vector of inline thickness, outline thickness, alpha threshold, primary texture target
-layout(location = 10) in vec4 aInlineColor;
-//layout(location = 11) in vec4 aOutlineColor;
+layout(location = 10) in vec4 compositeType_3; //composite vector of inline thickness, outline thickness, alpha threshold, primary texture target
+layout(location = 11) in vec4 aInlineColor;
+layout(location = 12) in vec4 lightingCompositeType; //composite vector of whether the object should recieve lighting
 
 out vec2 texCoord;
 out vec2 texCoord2;
@@ -26,9 +27,15 @@ out float alpha_threshold;
 
 out float primaryTextureTarget;
 
+out float enableLighting;
+out vec3 Normal;
+out vec3 FragPos;
+
+
 uniform mat4 camera;
 
 flat out int InstanceID; 
+
 
 vec2 setTexCoord(vec2 texCoord, float columns, float rows, float column, float row);
 
@@ -82,6 +89,8 @@ void main(void)
 	alpha_threshold = compositeType_3[2];
 	primaryTextureTarget = compositeType_3[3];
 
+	enableLighting = lightingCompositeType[0];
+	Normal = (vec4(aNormal, 0) * transform).xyz;
 
 	if(compositeType[0] == 1)
 	{
@@ -93,6 +102,7 @@ void main(void)
 	}
 
 
+	FragPos = vec3(vec4(pos, 1.0) * transform);
 
 	InstanceID = gl_InstanceID; 
 }

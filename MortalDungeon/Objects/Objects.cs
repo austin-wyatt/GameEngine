@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Objects
 {
-    public enum TextureName 
+    internal enum TextureName 
     {
         Unknown,
         SpritesheetTest,
@@ -19,21 +19,23 @@ namespace MortalDungeon.Objects
 
         FogTexture,
         TestTexture,
+        SphereTexture,
+        CubeTexture,
 
         DynamicTexture,
 
         Lighting,
         LightObstructionMap
     }
-    public class TextureInfo
+    internal class TextureInfo
     {
-        public TextureName[] Textures;
-        public string[] TextureFilenames; //filename of texture/spritesheet
-        public int[] TexturePositions; //which index of the spritesheet a texture resides in
+        internal TextureName[] Textures;
+        internal string[] TextureFilenames; //filename of texture/spritesheet
+        internal int[] TexturePositions; //which index of the spritesheet a texture resides in
 
-        public Spritesheet Spritesheet;
+        internal Spritesheet Spritesheet;
 
-        public TextureInfo(string texture, Spritesheet spritesheet = null)
+        internal TextureInfo(string texture, Spritesheet spritesheet = null)
         {
             Textures = new TextureName[] { TextureName.Unknown };
             TexturePositions = new int[] { 0 };
@@ -41,14 +43,14 @@ namespace MortalDungeon.Objects
 
             Spritesheet = spritesheet;
         }
-        public TextureInfo(TextureName texture, Spritesheet spritesheet = null) 
+        internal TextureInfo(TextureName texture, Spritesheet spritesheet = null) 
         {
             Textures = new TextureName[] { texture };
             TexturePositions = new int[] { 0 };
 
             Spritesheet = spritesheet;
         }
-        public TextureInfo(TextureName[] textures, int[] positions, Spritesheet spritesheet = null)
+        internal TextureInfo(TextureName[] textures, int[] positions, Spritesheet spritesheet = null)
         {
             Textures = textures;
             TexturePositions = positions;
@@ -56,7 +58,7 @@ namespace MortalDungeon.Objects
             Spritesheet = spritesheet;
         }
 
-        public TextureInfo(TextureName texture, int position, Spritesheet spritesheet = null)
+        internal TextureInfo(TextureName texture, int position, Spritesheet spritesheet = null)
         {
             Textures = new TextureName[] { texture };
             TexturePositions = new int[] { position };
@@ -64,7 +66,7 @@ namespace MortalDungeon.Objects
             Spritesheet = spritesheet;
         }
 
-        public TextureInfo(Spritesheet spritesheet, int[] positions )
+        internal TextureInfo(Spritesheet spritesheet, int[] positions )
         {
             TextureName[] textures = new TextureName[positions.Length];
             string[] textureFilename = new string[positions.Length];
@@ -81,23 +83,23 @@ namespace MortalDungeon.Objects
         }
     }
 
-    public class ObjectDefinition
+    internal class ObjectDefinition
     {
-        public float[] Vertices;
-        public uint[] Indices;
-        public int Points;
-        public TextureInfo Textures;
-        public Vector3 Center;
-        public float[] Bounds;
-        public float[] fastVertices;
+        internal float[] Vertices;
+        internal uint[] Indices;
+        internal int Points;
+        internal TextureInfo Textures;
+        internal Vector3 Center;
+        internal float[] Bounds;
+        internal float[] fastVertices;
 
         private bool _centerVertices;
 
-        public float VerticeType = 0;
+        internal float VerticeType = 0;
 
-        public float SpritesheetPosition = 0;
-        public Vector2 SideLengths = new Vector2(1, 1);
-        public ObjectDefinition(float[] vertices, uint[] indexes, int points, TextureInfo textures, Vector3 center = new Vector3(), float[] bounds = null, bool centerVertices = true)
+        internal float SpritesheetPosition = 0;
+        internal Vector2 SideLengths = new Vector2(1, 1);
+        internal ObjectDefinition(float[] vertices, uint[] indexes, int points, TextureInfo textures, Vector3 center = new Vector3(), float[] bounds = null, bool centerVertices = true)
         {
             Indices = indexes;
             Points = points;
@@ -129,9 +131,9 @@ namespace MortalDungeon.Objects
             }
 
         }
-        public ObjectDefinition() { }
+        internal ObjectDefinition() { }
         //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point)
-        public float[] CenterVertices(float[] vertices)
+        internal float[] CenterVertices(float[] vertices)
         {
             //vertices will be stored in [x, y, z, textureX, textureY] format
             int stride = vertices.Length / Points;
@@ -163,7 +165,7 @@ namespace MortalDungeon.Objects
             return vertices;
         }
 
-        public bool ShouldCenter() 
+        internal bool ShouldCenter() 
         {
             return _centerVertices;
         }

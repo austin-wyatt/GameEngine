@@ -10,8 +10,10 @@ using System.Text;
 
 namespace MortalDungeon.Game.Structures
 {
-    public enum StructureEnum 
+    internal enum StructureEnum 
     {
+        Unknown = 0,
+
         Tree_1 = 2,
         Tree_2 = 3,
 
@@ -38,22 +40,39 @@ namespace MortalDungeon.Game.Structures
         Cliff_4 = 93,
         Cliff_5 = 94,
         Cliff_6 = 95,
+
+        Tent = 1000
     }
-    public class Structure : Unit
+    internal class Structure : Unit
     {
-        public StructureEnum Type;
+        internal StructureEnum Type;
 
-        public bool Pathable = false;
-        public bool Passable = false; //when passable the height of the object is not factored into the pathable height
+        internal bool Pathable = false;
+        internal bool Passable = false; //when passable the height of the object is not factored into the pathable height
 
-        public Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
+        /// <summary>
+        /// This will initialize nothing. Any structures created with this must create a valid GameObject before attempting to be rendered.
+        /// </summary>
+        internal Structure() 
+        {
+            Name = "Structure";
+
+            Type = StructureEnum.Unknown;
+        }
+        internal Structure(CombatScene scene) : base(scene)
+        {
+            Name = "Structure";
+
+            Type = StructureEnum.Unknown;
+        }
+        internal Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
         {
             Name = "Structure";
 
             Type = (StructureEnum)spritesheetPos;
         }
 
-        public override void SetTileMapPosition(BaseTile baseTile)
+        internal override void SetTileMapPosition(BaseTile baseTile)
         {
             BaseTile prevTile = Info.TileMapPosition;
 
@@ -70,9 +89,12 @@ namespace MortalDungeon.Game.Structures
             Scene.OnStructureMoved();
         }
 
-        public override void CleanUp()
+        internal override void CleanUp()
         {
             base.CleanUp();
+
+            Info = null;
+            AI = null;
         }
     }
 }

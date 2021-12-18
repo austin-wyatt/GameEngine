@@ -9,9 +9,9 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class StealthBuff : Buff
+    internal class StealthBuff : Buff
     {
-        public StealthBuff(Unit affected, int duration) : base(affected, duration)
+        internal StealthBuff(Unit affected, int duration) : base(affected, duration)
         {
             Name = "Stealth";
             BuffType = BuffType.Neutral;
@@ -20,14 +20,14 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet);
         }
 
-        public override Icon GenerateIcon(UIScale scale)
+        internal override Icon GenerateIcon(UIScale scale)
         {
             Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.NeutralBackground);
 
             return icon;
         }
 
-        public override Tooltip GenerateTooltip()
+        internal override Tooltip GenerateTooltip()
         {
             Tooltip tooltip = new Tooltip();
 

@@ -11,9 +11,9 @@ namespace MortalDungeon.Game.Units.AI
 {
     class MoveInRangeOfAbility : UnitAIAction
     {
-        public MoveInRangeOfAbility(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, ability, tile, unit) { }
+        internal MoveInRangeOfAbility(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.MoveCloser, ability, tile, unit) { }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
@@ -23,6 +23,8 @@ namespace MortalDungeon.Game.Units.AI
             List<BaseTile> path = null;
 
             List<BaseTile> validTiles = CastingUnit.Info._movementAbility.GetValidTileTargets(Map, Scene._units);
+
+            validTiles = validTiles.FindAll(tile => tile.TileMap.GetDistanceBetweenPoints(tile, TargetedUnit.Info.TileMapPosition) <= Ability.Range);
 
             float pathCost = -1;
 
@@ -36,6 +38,7 @@ namespace MortalDungeon.Game.Units.AI
             int sampleCount = 3;
             int sampleSize = validTiles.Count / sampleCount > MAX_SAMPLES ? MAX_SAMPLES : validTiles.Count / sampleCount;
 
+            Console.WriteLine("ValidTiles size: " + validTiles.Count);
 
             List<BaseTile>[] presumptivePaths = new List<BaseTile>[sampleCount];
             List<Task> pathTasks = new List<Task>();
@@ -166,6 +169,7 @@ namespace MortalDungeon.Game.Units.AI
             if (path.Count == pathLength)
             {
                 fullPathToUnit = true;
+                path.RemoveAt(path.Count - 1);
             }
 
             //if (pathLength > 0) 

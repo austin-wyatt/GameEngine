@@ -4,19 +4,19 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class ActionQueue
+    internal class ActionQueue
     {
         private QueuedList<Action> queuedActions = new QueuedList<Action>();
 
         private bool Updating = false;
         private bool ShouldUpdate = false;
 
-        public void AddAction(Action action) 
+        internal void AddAction(Action action) 
         {
             queuedActions.Add(action);
         }
 
-        public void AddActionSingle(Action action) 
+        internal void AddActionSingle(Action action) 
         {
             if (!queuedActions.HasQueuedItems()) 
             {
@@ -43,7 +43,7 @@ namespace MortalDungeon.Engine_Classes
             _invokeInProgress = false;
         }
 
-        public bool UpdateInProgress() 
+        internal bool UpdateInProgress() 
         {
             if (Updating) 
             {
@@ -54,12 +54,12 @@ namespace MortalDungeon.Engine_Classes
             return false;
         }
 
-        public void StartUpdate() 
+        internal void StartUpdate() 
         {
             Updating = true;
         }
 
-        public void EndUpdate() 
+        internal void EndUpdate() 
         {
             if (ShouldUpdate)
             {

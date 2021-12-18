@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public enum UIEventType
+    internal enum UIEventType
     {
         None,
         Click,
@@ -23,7 +23,7 @@ namespace MortalDungeon.Engine_Classes
         HoverEnd
     }
 
-    public enum UIAnchorPosition
+    internal enum UIAnchorPosition
     {
         Center,
         TopCenter,
@@ -36,46 +36,46 @@ namespace MortalDungeon.Engine_Classes
         RightCenter
     }
 
-    public static class UIHelpers
+    internal static class UIHelpers
     {
-        public struct UIBorders
+        internal struct UIBorders
         {
-            public bool Left;
-            public bool Right;
-            public bool Top;
-            public bool Bottom;
+            internal bool Left;
+            internal bool Right;
+            internal bool Top;
+            internal bool Bottom;
         }
 
-        public const int BLOCK_WIDTH = 500;
-        public const int BLOCK_HEIGHT = 500;
+        internal const int BLOCK_WIDTH = 500;
+        internal const int BLOCK_HEIGHT = 500;
 
-        public static class Borders
+        internal static class Borders
         {
-            public static readonly UIBorders None = new UIBorders();
-            public static readonly UIBorders All = new UIBorders { Bottom = true, Top = true, Left = true, Right = true };
-            public static readonly UIBorders LeftOnly = new UIBorders { Left = true };
-            public static readonly UIBorders RightOnly = new UIBorders { Right = true };
-            public static readonly UIBorders TopOnly = new UIBorders { Top = true };
-            public static readonly UIBorders BottomOnly = new UIBorders { Bottom = true };
-            public static readonly UIBorders TopLeft = new UIBorders { Top = true, Left = true };
-            public static readonly UIBorders BottomLeft = new UIBorders { Bottom = true, Left = true };
-            public static readonly UIBorders TopRight = new UIBorders { Top = true, Right = true };
-            public static readonly UIBorders BottomRight = new UIBorders { Bottom = true, Right = true };
-            public static readonly UIBorders TopBottom = new UIBorders { Top = true, Bottom = true };
+            internal static readonly UIBorders None = new UIBorders();
+            internal static readonly UIBorders All = new UIBorders { Bottom = true, Top = true, Left = true, Right = true };
+            internal static readonly UIBorders LeftOnly = new UIBorders { Left = true };
+            internal static readonly UIBorders RightOnly = new UIBorders { Right = true };
+            internal static readonly UIBorders TopOnly = new UIBorders { Top = true };
+            internal static readonly UIBorders BottomOnly = new UIBorders { Bottom = true };
+            internal static readonly UIBorders TopLeft = new UIBorders { Top = true, Left = true };
+            internal static readonly UIBorders BottomLeft = new UIBorders { Bottom = true, Left = true };
+            internal static readonly UIBorders TopRight = new UIBorders { Top = true, Right = true };
+            internal static readonly UIBorders BottomRight = new UIBorders { Bottom = true, Right = true };
+            internal static readonly UIBorders TopBottom = new UIBorders { Top = true, Bottom = true };
 
-            public static readonly UIBorders OpenTop = new UIBorders { Bottom = true, Left = true, Right = true };
-            public static readonly UIBorders OpenLeft = new UIBorders { Bottom = true, Top = true, Right = true };
-            public static readonly UIBorders OpenBottom = new UIBorders { Top = true, Left = true, Right = true };
-            public static readonly UIBorders OpenRight = new UIBorders { Bottom = true, Top = true, Left = true };
+            internal static readonly UIBorders OpenTop = new UIBorders { Bottom = true, Left = true, Right = true };
+            internal static readonly UIBorders OpenLeft = new UIBorders { Bottom = true, Top = true, Right = true };
+            internal static readonly UIBorders OpenBottom = new UIBorders { Top = true, Left = true, Right = true };
+            internal static readonly UIBorders OpenRight = new UIBorders { Bottom = true, Top = true, Left = true };
         }
 
-        public static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
+        internal static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
 
-        public static readonly Vector3 BaseMargin = new Vector3(10, 10, 0);
-        public static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
-        public static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
+        internal static readonly Vector3 BaseMargin = new Vector3(10, 10, 0);
+        internal static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
+        internal static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
 
-        public static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability = null)
+        internal static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability = null)
         {
             void onHover(GameObject obj)
             {
@@ -98,19 +98,21 @@ namespace MortalDungeon.Engine_Classes
             obj.OnHoverEndEvent += hoverEnd;
         }
 
-        public struct StringTooltipParameters 
+        internal struct StringTooltipParameters 
         {
-            public CombatScene Scene;
-            public string Text;
-            public GameObject HoverParent;
-            public UIObject TooltipParent;
-            public GeneralContextFlags TooltipFlag;
-            public Vector3 Position;
-            public UIAnchorPosition Anchor;
-            public Vector4 BackgroundColor;
-            public float TextScale;
+            internal CombatScene Scene;
+            internal string Text;
+            internal GameObject HoverParent;
+            internal UIObject TooltipParent;
+            internal GeneralContextFlags TooltipFlag;
+            internal Vector3 Position;
+            internal UIAnchorPosition Anchor;
+            internal Vector4 BackgroundColor;
+            internal float TextScale;
 
-            public StringTooltipParameters(CombatScene scene, string text, GameObject hoverParent, UIObject baseObject) 
+            internal bool EnforceScreenBounds;
+
+            internal StringTooltipParameters(CombatScene scene, string text, GameObject hoverParent, UIObject baseObject) 
             {
                 Scene = scene;
                 Text = text;
@@ -122,9 +124,11 @@ namespace MortalDungeon.Engine_Classes
                 Anchor = UIAnchorPosition.BottomLeft;
                 BackgroundColor = Colors.UILightGray;
                 TextScale = 0.05f;
+
+                EnforceScreenBounds = true;
             }
         }
-        public static void CreateToolTip(StringTooltipParameters param)
+        internal static void CreateToolTip(StringTooltipParameters param)
         {
             string tooltipName = "Tooltip" + param.TooltipFlag;
 
@@ -142,7 +146,7 @@ namespace MortalDungeon.Engine_Classes
 
             param.Scene.ContextManager.SetFlag(param.TooltipFlag, true);
 
-            Vector3 backgroundOffset = new Vector3(-5, -10, 0);
+            Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
             TextComponent tooltip = new TextComponent();
             tooltip.SetColor(Colors.UITextBlack);
@@ -178,6 +182,7 @@ namespace MortalDungeon.Engine_Classes
 
             tooltipBackground.SetSize(tooltipScale);
             tooltipBackground.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + backgroundOffset, UIAnchorPosition.TopLeft);
+            tooltip.SetPosition(new Vector3(tooltip.Position.X, tooltip.Position.Y, tooltipBackground.Position.Z - 0.001f));
 
             tooltipBackground.AddChild(tooltip);
 
@@ -212,11 +217,14 @@ namespace MortalDungeon.Engine_Classes
             param.HoverParent.OnHoverEndEvent += tempGameObj;
             param.Scene.OnUIForceClose += tempScene;
 
-            CheckTooltipPlacement(tooltip, param.Scene);
+            if (param.EnforceScreenBounds) 
+            {
+                CheckTooltipPlacement(tooltipBackground, param.Scene);
+            }
         }
 
 
-        public static void CreateToolTip(CombatScene scene, Tooltip tooltip, UIObject tooltipParent, UIObject baseObject, GeneralContextFlags tooltipFlag = GeneralContextFlags.UITooltipOpen)
+        internal static void CreateToolTip(CombatScene scene, Tooltip tooltip, UIObject tooltipParent, UIObject baseObject, GeneralContextFlags tooltipFlag = GeneralContextFlags.UITooltipOpen)
         {
             if (scene.ContextManager.GetFlag(tooltipFlag))
                 return;
@@ -253,7 +261,7 @@ namespace MortalDungeon.Engine_Classes
             CheckTooltipPlacement(tooltip, scene);
         }
 
-        public static void NukeTooltips(GeneralContextFlags tooltipFlag, CombatScene scene) 
+        internal static void NukeTooltips(GeneralContextFlags tooltipFlag, CombatScene scene) 
         {
             string tooltipName = "Tooltip" + tooltipFlag;
 
@@ -266,7 +274,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public static Tooltip GenerateTooltipWithHeader(string headerText, string bodyText)
+        internal static Tooltip GenerateTooltipWithHeader(string headerText, string bodyText)
         {
             Tooltip tooltip = new Tooltip();
 
@@ -302,7 +310,7 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Creates a context menu based on the passed Tooltip object. Returns an action that will delete the context menu when invoked (or null if a context menu is open already)
         /// </summary>
-        public static void CreateContextMenu(CombatScene scene, Tooltip tooltip, UIObject baseObject, GeneralContextFlags contextFlag = GeneralContextFlags.ContextMenuOpen)
+        internal static void CreateContextMenu(CombatScene scene, Tooltip tooltip, UIObject baseObject, GeneralContextFlags contextFlag = GeneralContextFlags.ContextMenuOpen)
         {
             if (scene.ContextManager.GetFlag(contextFlag))
                 return;
@@ -328,7 +336,7 @@ namespace MortalDungeon.Engine_Classes
             CheckTooltipPlacement(tooltip, scene);
         }
 
-        public static (Tooltip tooltip, UIList itemList) GenerateContextMenuWithList(string headerText)
+        internal static (Tooltip tooltip, UIList itemList) GenerateContextMenuWithList(string headerText)
         {
             Tooltip menu = new Tooltip();
 
@@ -369,7 +377,7 @@ namespace MortalDungeon.Engine_Classes
             return (menu, list);
         }
 
-        public static void CheckTooltipPlacement(UIObject tooltip, Scene scene) 
+        internal static void CheckTooltipPlacement(UIObject tooltip, Scene scene) 
         {
             Vector3 topLeft = tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft);
             Vector3 botRight = tooltip.GetAnchorPosition(UIAnchorPosition.BottomRight);
@@ -398,6 +406,8 @@ namespace MortalDungeon.Engine_Classes
 
             Vector3 mousePos = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position);
 
+            mousePos.Z = tooltip.Position.Z;
+
             if (right && top)
             {
                 tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.TopRight);
@@ -412,7 +422,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public static void AddTimedHoverTooltip(UIObject obj, string text, CombatScene scene)
+        internal static void AddTimedHoverTooltip(UIObject obj, string text, CombatScene scene)
         {
             obj.HasTimedHoverEffect = true;
             obj.Hoverable = true;
@@ -436,7 +446,7 @@ namespace MortalDungeon.Engine_Classes
             obj.OnCleanUp += onCleanUp;
         }
 
-        public static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, bool enforceUniqueness = false) 
+        internal static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, bool enforceUniqueness = false, bool createExitButton = true) 
         {
             if (enforceUniqueness) 
             {
@@ -458,28 +468,32 @@ namespace MortalDungeon.Engine_Classes
 
             window.Name = name;
 
-            Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
-            exit.Clickable = true;
-            exit.OnClickAction = () =>
+            if (createExitButton) 
             {
-                parent.RemoveChild(window);
-                exit.OnHoverEnd();
-            };
-            exit.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
+                Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
+                exit.Clickable = true;
+                exit.OnClickAction = () =>
+                {
+                    parent.RemoveChild(window);
+                    exit.OnHoverEnd();
+                };
+                exit.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
 
-            AddTimedHoverTooltip(exit, "Exit", scene);
+                AddTimedHoverTooltip(exit, "Exit", scene);
 
-            window.AddChild(exit);
+                window.AddChild(exit);
+            }
+            
 
             return window;
         }
     }
 
-    public class UIDimensions
+    internal class UIDimensions
     {
-        public Vector2 _dimensions;
-        public float X { get { return _dimensions.X; } set { _dimensions.X = value; } }
-        public float Y { get { return _dimensions.Y; } set { _dimensions.Y = value; } }
+        internal Vector2 _dimensions;
+        internal float X { get { return _dimensions.X; } set { _dimensions.X = value; } }
+        internal float Y { get { return _dimensions.Y; } set { _dimensions.Y = value; } }
 
         public static UIDimensions operator +(UIDimensions a, UIDimensions b) => new UIDimensions(a.X + b.X, a.Y + b.Y);
         public static Vector3 operator +(Vector3 b, UIDimensions a) => new Vector3(a.X + b.X, a.Y + b.Y, b.Z);
@@ -503,27 +517,27 @@ namespace MortalDungeon.Engine_Classes
             return new UIDimensions(vec.X, vec.Y);
         }
 
-        public UIDimensions()
+        internal UIDimensions()
         {
             _dimensions = new Vector2();
         }
 
-        public UIDimensions(Vector2 dimensions)
+        internal UIDimensions(Vector2 dimensions)
         {
             _dimensions = dimensions;
         }
 
-        public UIDimensions(Vector3 dimensions)
+        internal UIDimensions(Vector3 dimensions)
         {
             _dimensions = new Vector2(dimensions.X, dimensions.Y);
         }
 
-        public UIDimensions(float x, float y)
+        internal UIDimensions(float x, float y)
         {
             _dimensions = new Vector2(x, y);
         }
 
-        public UIScale ToScale()
+        internal UIScale ToScale()
         {
             return new UIScale(_dimensions.X / WindowConstants.ScreenUnits.X, _dimensions.Y / WindowConstants.ScreenUnits.Y);
         }
@@ -534,11 +548,11 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class UIScale
+    internal class UIScale
     {
-        public Vector2 _scale;
-        public float X { get { return _scale.X; } set { _scale.X = value; } }
-        public float Y { get { return _scale.Y; } set { _scale.Y = value; } }
+        internal Vector2 _scale;
+        internal float X { get { return _scale.X; } set { _scale.X = value; } }
+        internal float Y { get { return _scale.Y; } set { _scale.Y = value; } }
 
 
         public static UIScale operator +(UIScale a, UIScale b) => new UIScale(a.X + b.X, a.Y + b.Y);
@@ -551,32 +565,32 @@ namespace MortalDungeon.Engine_Classes
             return self.ToDimensions();
         }
 
-        public UIScale()
+        internal UIScale()
         {
             _scale = new Vector2();
         }
 
-        public UIScale(Vector2 scale)
+        internal UIScale(Vector2 scale)
         {
             _scale = scale;
         }
 
-        public UIScale(UIScale scale)
+        internal UIScale(UIScale scale)
         {
             _scale = new Vector2(scale.X, scale.Y);
         }
 
-        public UIScale(float x, float y)
+        internal UIScale(float x, float y)
         {
             _scale = new Vector2(x, y);
         }
 
-        public UIDimensions ToDimensions()
+        internal UIDimensions ToDimensions()
         {
             return new UIDimensions(_scale.X * WindowConstants.ScreenUnits.X, _scale.Y * WindowConstants.ScreenUnits.Y);
         }
 
-        public static float CoordToScale(float coord)
+        internal static float CoordToScale(float coord)
         {
             return coord / WindowConstants.ScreenUnits.X;
         }
@@ -587,19 +601,19 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class BoundingArea
+    internal class BoundingArea
     {
-        public float MinX = 0;
-        public float MaxX = 0;
-        public float MinY = 0;
-        public float MaxY = 0;
+        internal float MinX = 0;
+        internal float MaxX = 0;
+        internal float MinY = 0;
+        internal float MaxY = 0;
 
-        public bool InBoundingArea(Vector3 position) 
+        internal bool InBoundingArea(Vector3 position) 
         {
             return !(position.X < MinX || position.X > MaxX || position.Y > MinY || position.Y < MaxY);
         }
 
-        public void UpdateBoundingArea(float minX, float maxX, float minY, float maxY) 
+        internal void UpdateBoundingArea(float minX, float maxX, float minY, float maxY) 
         {
             MinX = minX;
             MaxX = maxX;

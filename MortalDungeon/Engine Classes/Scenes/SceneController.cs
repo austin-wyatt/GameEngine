@@ -10,13 +10,13 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
-    public class SceneController
+    internal class SceneController
     {
-        public List<Scene> Scenes = new List<Scene>();
+        internal List<Scene> Scenes = new List<Scene>();
 
-        public Camera Camera;
+        internal Camera Camera;
 
-        public SceneController(Camera camera) 
+        internal SceneController(Camera camera) 
         {
             Camera = camera;
 
@@ -30,7 +30,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             };
         }
 
-        public int AddScene(Scene scene, int priority) 
+        internal int AddScene(Scene scene, int priority) 
         {
             scene.MessageCenter._sendMessage = ParseMessage;
             scene.Priority = priority;
@@ -43,14 +43,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return scene.SceneID;
         }
 
-        public void LoadScene(int id, Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
+        internal void LoadScene(int id, Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             GetScene(id)?.Load(camera, cursorObject, mouseRay);
 
             CullObjectsInScene();
         }
 
-        public void UnloadScene(int id) 
+        internal void UnloadScene(int id) 
         {
             Scene scene = GetScene(id);
 
@@ -67,7 +67,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public void LoadTextures() 
+        internal void LoadTextures() 
         {
             for (int u = 0; u < Scenes.Count; u++)
             {
@@ -123,7 +123,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public void RemoveScene(int id)
+        internal void RemoveScene(int id)
         {
             int sceneIndex = GetSceneIndex(id);
 
@@ -134,19 +134,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public Scene GetScene(int id) 
+        internal Scene GetScene(int id) 
         {
             return Scenes.Find(s => s.SceneID == id);
         }
 
-        public int GetSceneIndex(int id)
+        internal int GetSceneIndex(int id)
         {
             return Scenes.FindIndex(s => s.SceneID == id);
         }
 
         
 
-        public void ParseMessage(Message msg)
+        internal void ParseMessage(Message msg)
         {
             switch (msg.MessageType) 
             {
@@ -231,8 +231,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return returnList;
         }
 
-        //separate public method for this just so we can easily keep track of where this functionality gets used
-        public void CullObjects() 
+        //separate internal method for this just so we can easily keep track of where this functionality gets used
+        internal void CullObjects() 
         {
             CullObjectsInScene();
         }
@@ -269,13 +269,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
     }
 
-    public enum MessageType 
+    internal enum MessageType 
     {
         Request,
         Response
     }
 
-    public enum MessageBody
+    internal enum MessageBody
     {
         Negative,
         Affirmative,
@@ -291,7 +291,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         Flag
     }
 
-    public enum MessageTarget
+    internal enum MessageTarget
     {
         All               = 0b10000000,
         UI                = 0b00000001,
@@ -302,33 +302,33 @@ namespace MortalDungeon.Engine_Classes.Scenes
         LowPriorityObject = 0b00100000,
     }
 
-    public enum TargetAmount 
+    internal enum TargetAmount 
     {
         All,
         None, //currently unsupported
         Some //currently unsupported
     }
 
-    public enum MessageFlag 
+    internal enum MessageFlag 
     {
         None,
         OpenEscapeMenu
     }
 
-    public class Message
+    internal class Message
     {
-        public MessageType MessageType;
-        public MessageBody MessageBody;
-        public MessageTarget MessageTarget;
-        public TargetAmount TargetAmount;
+        internal MessageType MessageType;
+        internal MessageBody MessageBody;
+        internal MessageTarget MessageTarget;
+        internal TargetAmount TargetAmount;
 
-        public int Sender = -1;
+        internal int Sender = -1;
 
-        public int[] TargetIDs = new int[0]; //if specified, integer ids of the object type you are trying to affect
-        public int[] SceneTargets = new int[0]; //if no scene targets are passed then the message will be sent to every scene besides the sender
+        internal int[] TargetIDs = new int[0]; //if specified, integer ids of the object type you are trying to affect
+        internal int[] SceneTargets = new int[0]; //if no scene targets are passed then the message will be sent to every scene besides the sender
 
-        public MessageFlag Flag = MessageFlag.None;
-        public Message(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All) 
+        internal MessageFlag Flag = MessageFlag.None;
+        internal Message(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All) 
         {
             MessageType = msgType;
             MessageBody = msgBody;
@@ -336,11 +336,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             TargetAmount = targetAmount;
         }
 
-        public Message CreateAffirmativeResponse(int senderID) 
+        internal Message CreateAffirmativeResponse(int senderID) 
         {
             return new Message(MessageType.Response, MessageBody.Affirmative, MessageTarget, TargetAmount) { Sender = senderID };
         }
-        public Message CreateNegativeResponse(int senderID)
+        internal Message CreateNegativeResponse(int senderID)
         {
             return new Message(MessageType.Response, MessageBody.Negative, MessageTarget, TargetAmount) { Sender = senderID };
         }

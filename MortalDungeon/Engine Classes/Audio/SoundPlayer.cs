@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Engine_Classes.Audio
 {
-    public static class SoundPlayer
+    internal static class SoundPlayer
     {
         private const int MAX_SOURCES = 32;
 
-        public static float Volume
+        internal static float Volume
         {
             get 
             {
@@ -27,13 +27,13 @@ namespace MortalDungeon.Engine_Classes.Audio
         }
 
         private static Source[] Sources = new Source[MAX_SOURCES];
-        public static List<Source> ActiveSources = new List<Source>(MAX_SOURCES);
-        public static List<AudioBuffer> LoadedBuffers = new List<AudioBuffer>();
+        internal static List<Source> ActiveSources = new List<Source>(MAX_SOURCES);
+        internal static List<AudioBuffer> LoadedBuffers = new List<AudioBuffer>();
 
 
-        public static bool DISPLAY_DEBUG_MESSAGES = false;
+        internal static bool DISPLAY_DEBUG_MESSAGES = false;
 
-        public static void Initialize() 
+        internal static void Initialize() 
         {
             int[] empty = new int[1];
 
@@ -131,7 +131,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             bufferWatchdog.Start();
         }
 
-        public static void FreeAllSources() 
+        internal static void FreeAllSources() 
         {
             foreach (var source in Sources) 
             {
@@ -139,7 +139,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        public static void LoadOggToBuffer(string filename, AudioBuffer buffer, Action onFinish = null) 
+        internal static void LoadOggToBuffer(string filename, AudioBuffer buffer, Action onFinish = null) 
         {
             Task.Run(() =>
             {
@@ -180,7 +180,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             });
         }
 
-        public static void PlaySound(Sound sound) 
+        internal static void PlaySound(Sound sound) 
         {
             if (sound.Source == null && !AssignSourceToSound(sound))
                 return;
@@ -191,7 +191,7 @@ namespace MortalDungeon.Engine_Classes.Audio
                 Console.WriteLine($"Playing {sound.Name} on source {sound.Source.Handle}");
         }
 
-        public static void FreeSource(Source source) 
+        internal static void FreeSource(Source source) 
         {
             source.Stop();
             source.KeepAlive = false;
@@ -217,7 +217,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             return null;
         }
 
-        public static bool AssignSourceToSound(Sound sound) 
+        internal static bool AssignSourceToSound(Sound sound) 
         {
             Source foundSource = GetAvailableSource();
 
@@ -240,7 +240,7 @@ namespace MortalDungeon.Engine_Classes.Audio
     }
 
    
-    //public void PlayWave() 
+    //internal void PlayWave() 
     //{
     //    int[] empty = new int[1];
 

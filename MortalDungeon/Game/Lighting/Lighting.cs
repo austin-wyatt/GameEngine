@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Lighting;
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Map;
@@ -14,35 +15,35 @@ using System.Text;
 
 namespace MortalDungeon.Game.Lighting
 {
-    public enum LightObstructionType 
+    internal enum LightObstructionType 
     {
         Full = 99,
         None = 0,
         Tree,
         Grate
     }
-    public class LightObstruction 
+    internal class LightObstruction 
     {
-        //public BitArray ObstructedLexels = new BitArray(Lighting.LEXEL_PER_TILE_WIDTH * Lighting.LEXEL_PER_TILE_HEIGHT);
-        public LightObstructionType ObstructionType = LightObstructionType.None;
+        //internal BitArray ObstructedLexels = new BitArray(Lighting.LEXEL_PER_TILE_WIDTH * Lighting.LEXEL_PER_TILE_HEIGHT);
+        internal LightObstructionType ObstructionType = LightObstructionType.None;
         private Vector2i _position = new Vector2i();
-        public Vector2i Position => _position;
+        internal Vector2i Position => _position;
 
-        public bool Valid = false;
+        internal bool Valid = false;
 
-        public LightObstruction() { }
+        internal LightObstruction() { }
 
-        public LightObstruction(BaseTile mapPosition) 
+        internal LightObstruction(BaseTile mapPosition) 
         {
             _position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
         }
 
-        public LightObstruction(Vector2i mapPosition)
+        internal LightObstruction(Vector2i mapPosition)
         {
             _position = mapPosition;
         }
 
-        public void SetPosition(BaseTile mapPosition) 
+        internal void SetPosition(BaseTile mapPosition) 
         {
             _position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
 
@@ -50,20 +51,20 @@ namespace MortalDungeon.Game.Lighting
         }
     }
 
-    public class LightGenerator 
+    internal class LightGenerator 
     {
-        public Vector3 LightColor = new Vector3(1f, 1f, 1f);
-        public float Brightness = 0.5f; //initial alpha color
-        public float Radius = 1; //how far this light should extend in tiles
-        public Vector2i Position = new Vector2i(0, 0); //tilemap position
-        public Vector2i LightOffset = new Vector2i(); //how many lexels removed from the tilemap position this generator should be
+        internal Vector3 LightColor = new Vector3(1f, 1f, 1f);
+        internal float Brightness = 0.5f; //initial alpha color
+        internal float Radius = 1; //how far this light should extend in tiles
+        internal Vector2i Position = new Vector2i(0, 0); //tilemap position
+        internal Vector2i LightOffset = new Vector2i(); //how many lexels removed from the tilemap position this generator should be
 
-        public bool On = true;
+        internal bool On = true;
 
-        public float AlphaFalloff => Brightness / (Radius * Lighting.LEXEL_PER_TILE_WIDTH);
+        internal float AlphaFalloff => Brightness / (Radius * Lighting.LEXEL_PER_TILE_WIDTH);
     }
 
-    public class Lighting
+    internal class Lighting
     {
         //600x600 (or possibly more precise after proof of concept) Framebuffer texture for saving where light obstructions are using color values
 
@@ -74,14 +75,14 @@ namespace MortalDungeon.Game.Lighting
 
         private static readonly Texture ObstructionSpritesheet = Texture.LoadFromFile("Resources/LightObstructionSheet.png");
 
-        public FrameBufferObject ObstructionMap;
-        public FrameBufferObject LightTexture;
+        internal FrameBufferObject ObstructionMap;
+        internal FrameBufferObject LightTexture;
 
-        public Scene Scene;
+        internal Scene Scene;
 
-        public bool Initialized = false;
+        internal bool Initialized = false;
 
-        public Lighting(Scene scene) 
+        internal Lighting(Scene scene) 
         {
             Scene = scene;
         }
@@ -89,8 +90,8 @@ namespace MortalDungeon.Game.Lighting
         const int TILE_OFFSET = 30; //also set it in the shaders
 
 
-        public const int LEXEL_PER_TILE_WIDTH = 32;
-        public const int LEXEL_PER_TILE_HEIGHT = 32;
+        internal const int LEXEL_PER_TILE_WIDTH = 32;
+        internal const int LEXEL_PER_TILE_HEIGHT = 32;
 
         private static readonly float[] SquareBounds = new float[]
         {
@@ -100,7 +101,7 @@ namespace MortalDungeon.Game.Lighting
             1f, -1f, 0.0f,
         };
 
-        public void InitializeFramebuffers(int loadedTileDimensions = 150) 
+        internal void InitializeFramebuffers(int loadedTileDimensions = 150) 
         {
             loadedTileDimensions += TILE_OFFSET;
 
@@ -124,7 +125,7 @@ namespace MortalDungeon.Game.Lighting
         /// <summary>
         /// Draw the light obstructions onto the obstruction map
         /// </summary>
-        public void UpdateObstructionMap(List<LightObstruction> objects, ref float[] _instancedRenderDataArray) 
+        internal void UpdateObstructionMap(List<LightObstruction> objects, ref float[] _instancedRenderDataArray) 
         {
             GL.Viewport(0, 0, ObstructionMap.FBODimensions.X, ObstructionMap.FBODimensions.Y);
 
@@ -213,7 +214,7 @@ namespace MortalDungeon.Game.Lighting
         /// <summary>
         /// Redraw the light texture using the current light obstruction map
         /// </summary>
-        public void UpdateLightTexture(List<LightGenerator> generators, ref float[] _instancedRenderDataArray) 
+        internal void UpdateLightTexture(List<LightGenerator> generators, ref float[] _instancedRenderDataArray) 
         {
             ClearBuffer(LightTexture, CombatScene.EnvironmentColor.ToVector());
 
@@ -334,18 +335,20 @@ namespace MortalDungeon.Game.Lighting
         }
 
 
-        public GameObject CreateTexturedQuad(FrameBufferObject fbo, TextureName texName)
+        internal GameObject CreateTexturedQuad(FrameBufferObject fbo, TextureName texName)
         {
             Texture texture = new Texture(fbo.RenderTexture, texName);
 
             RenderableObject obj = new RenderableObject(new SpritesheetObject(0, Spritesheets.TestSheet, 10, 10).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER)
             {
-                TextureReference = texture
+                Material = new Material() { Diffuse = texture }
             };
-            obj.TextureReference.TextureName = texName;
+
+
+            obj.Material.Diffuse.TextureName = texName;
             obj.Textures.Textures[0] = texName;
 
-            Renderer.LoadTextureFromTextureObj(obj.TextureReference, texName);
+            Renderer.LoadTextureFromTextureObj(obj.Material.Diffuse, texName);
 
             Animation Idle = new Animation()
             {
@@ -374,7 +377,7 @@ namespace MortalDungeon.Game.Lighting
             1.0f,  1.0f, 0.0f,
         };
 
-        public void ClearBuffer(FrameBufferObject buffer, Vector4 color) 
+        internal void ClearBuffer(FrameBufferObject buffer, Vector4 color) 
         {
             Shaders.COLOR_SHADER.Use();
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public enum AnimationType
+    internal enum AnimationType
     {
         Idle,
         Misc_One,
@@ -17,18 +17,18 @@ namespace MortalDungeon.Engine_Classes
         Grass,
         Misc
     }
-    public class Animation : ITickable
+    internal class Animation : ITickable
     {
-        public bool Repeat = true;
-        public bool Reverse = false;
-        public bool Playing = true;
+        internal bool Repeat = true;
+        internal bool Reverse = false;
+        internal bool Playing = true;
 
-        public List<RenderableObject> Frames = new List<RenderableObject>();
-        public int Frequency = 6; //in ticks (1/45th of a second)
-        public AnimationType Type = AnimationType.Idle;
-        public RenderableObject CurrentFrame;
+        internal List<RenderableObject> Frames = new List<RenderableObject>();
+        internal int Frequency = 6; //in ticks (1/45th of a second)
+        internal AnimationType Type = AnimationType.Idle;
+        internal RenderableObject CurrentFrame;
 
-        public int GenericType 
+        internal int GenericType 
         {
             get 
             {
@@ -40,18 +40,18 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public int Repeats = 0;
+        internal int Repeats = 0;
         private int _repeatCount = 0;
 
-        public Action OnFinish = null;
-        public bool Finished = false;
+        internal Action OnFinish = null;
+        internal bool Finished = false;
 
         private uint tick = 0;
         private int _currentFrame;
 
-        public Animation() { }
+        internal Animation() { }
 
-        public Animation(Animation anim) {
+        internal Animation(Animation anim) {
             Repeat = anim.Repeat;
             Reverse = anim.Reverse;
 
@@ -70,7 +70,7 @@ namespace MortalDungeon.Engine_Classes
 
             CurrentFrame = Frames[_currentFrame];
         }
-        public void AdvanceFrame()
+        internal void AdvanceFrame()
         {
             if (Frames.Count > 1 && !Finished)
             {
@@ -97,7 +97,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void RewindFrame()
+        internal void RewindFrame()
         {
             if (Frames.Count > 1 && !Finished)
             {
@@ -124,7 +124,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void Tick()
+        internal void Tick()
         {
             if (!Playing)
                 return;
@@ -146,23 +146,23 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void Stop()
+        internal void Stop()
         {
             OnFinish?.Invoke();
             OnFinish = null;
         }
 
-        public void Pause() 
+        internal void Pause() 
         {
             Playing = false;
         }
 
-        public void Play() 
+        internal void Play() 
         {
             Playing = true;
         }
 
-        public void Reset()
+        internal void Reset()
         {
             _currentFrame = 0;
             _repeatCount = 0;

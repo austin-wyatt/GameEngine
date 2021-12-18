@@ -13,12 +13,12 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Hide : Ability
+    internal class Hide : Ability
     {
         private Icon BrokenMaskIcon;
-        public Hide(Unit castingUnit)
+        internal Hide(Unit castingUnit)
         {
-            Type = AbilityTypes.Buff;
+            Type = AbilityTypes.BuffDefensive;
             Range = 1;
             CastingUnit = castingUnit;
 
@@ -27,9 +27,9 @@ namespace MortalDungeon.Game.Abilities
             CanTargetGround = false;
             CanTargetSelf = true;
 
-            UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
-            UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
-            UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
+            UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             BreakStealth = false;
 
@@ -37,8 +37,10 @@ namespace MortalDungeon.Game.Abilities
             BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
 
             AffectedUnits.Add(CastingUnit);
@@ -48,7 +50,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        public override bool OnUnitClicked(Unit unit)
+        internal override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -62,14 +64,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        public override void OnCast()
-        {
-            TileMap.DeselectTiles();
-
-            base.OnCast();
-        }
-
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 

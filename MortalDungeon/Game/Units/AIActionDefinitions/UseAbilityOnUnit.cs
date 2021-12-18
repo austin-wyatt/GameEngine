@@ -6,11 +6,11 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units.AI
 {
-    class AttackEnemy : UnitAIAction
+    class UseAbilityOnUnit : UnitAIAction
     {
-        public AttackEnemy(Unit castingUnit, Ability ability, BaseTile tile = null, Unit unit = null) : base(castingUnit, ability, tile, unit) { }
+        internal UseAbilityOnUnit(Unit castingUnit, AIAction actionType, Ability ability, BaseTile tile = null, Unit unit = null) : base(castingUnit, actionType, ability, tile, unit) { }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             Ability.EffectEndedAction = () =>
             {
@@ -25,6 +25,12 @@ namespace MortalDungeon.Game.Units.AI
             else if (TargetedUnit != null) 
             {
                 Ability.SelectedUnit = TargetedUnit;
+
+                if (!Ability.UnitInRange(TargetedUnit)) 
+                {
+                    Console.WriteLine("How did this happen?");
+                }
+
                 Ability.EnactEffect();
             }
         }

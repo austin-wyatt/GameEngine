@@ -5,10 +5,10 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public class TextComponent : UIObject
+    internal class TextComponent : UIObject
     {
-        public Text _textField;
-        public TextComponent() 
+        internal Text _textField;
+        internal TextComponent() 
         {
             UIBlock mainBlock = new UIBlock(new Vector3(0,0,0));
             mainBlock.MultiTextureData.MixPercent = 0.1f;
@@ -30,27 +30,27 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetTextPosition(mainBlock.Position);
         }
 
-        public void SetTextScale(float textScale) 
+        internal void SetTextScale(float textScale) 
         {
             _textField.SetTextScale(textScale);
 
             RescaleBaseComponent();
         }
 
-        public void SetText(string text) 
+        internal void SetText(string text) 
         {
             _textField.SetTextString(text);
 
             RescaleBaseComponent();
         }
 
-        public void RescaleBaseComponent() 
+        internal void RescaleBaseComponent() 
         {
             BaseComponent.SetSize(GetScale());
             BaseComponent.SetPositionFromAnchor(_textField.Position, UIAnchorPosition.LeftCenter);
         }
 
-        public UIScale GetScale() 
+        internal UIScale GetScale() 
         {
             UIDimensions dim = _textField.GetTextDimensions();
             dim.Y *= 2;
@@ -59,7 +59,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             return dim;
         }
 
-        public override void SetPosition(Vector3 position)
+        internal override void SetPosition(Vector3 position)
         {
             Position = position;
 
@@ -77,7 +77,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BaseComponent.SetPositionFromAnchor(pos, UIAnchorPosition.TopLeft);
         }
 
-        public override void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center)
+        internal override void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center)
         {
             if (anchor == UIAnchorPosition.Center)
                 anchor = Anchor;
@@ -90,7 +90,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetPosition(position - anchorOffset);
         }
 
-        public override UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
+        internal override UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
         {
             UIDimensions dimensions = _textField.GetTextDimensions();
             UIDimensions returnDim = new UIDimensions();
@@ -146,7 +146,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             return returnDim;
         }
 
-        public override Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
+        internal override Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
         {
             //Vector3 temp = base.GetAnchorPosition(anchorPosition, position);
 
@@ -156,12 +156,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             return BaseComponent.GetAnchorPosition(anchorPosition);
         }
 
-        public void SetTextPosition(Vector3 position) 
+        internal void SetTextPosition(Vector3 position) 
         {
             _textField.SetPosition(position);
         }
 
-        public new void SetColor(Vector4 color) 
+        internal new void SetColor(Vector4 color) 
         {
             _textField.SetColor(color);
         }

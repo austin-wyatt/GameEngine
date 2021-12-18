@@ -8,19 +8,19 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    public class UnitStatusBar : UIObject
+    internal class UnitStatusBar : UIObject
     {
-        public Camera _camera;
-        public Unit _unit;
+        internal Camera _camera;
+        internal Unit _unit;
 
-        public TextComponent _mainTextBox;
-        public TextBox _turnDisplay;
-        public HealthBar HealthBar;
-        public ShieldBar ShieldBar;
+        internal TextComponent _mainTextBox;
+        internal TextBox _turnDisplay;
+        internal HealthBar HealthBar;
+        internal ShieldBar ShieldBar;
 
-        public bool WillDisplay = true;
+        internal bool WillDisplay = true;
 
-        public UnitStatusBar(Unit unit, Camera camera) 
+        internal UnitStatusBar(Unit unit, Camera camera) 
         {
             Vector4 unitPos = new Vector4(unit.Position, 1) * unit.GetDisplay().Transformations * camera.GetViewMatrix() * camera.ProjectionMatrix;
             unitPos.X /= unitPos.W;
@@ -87,7 +87,7 @@ namespace MortalDungeon.Game.UI
             UpdateUnitStatusPosition();
         }
 
-        public void UpdateUnitStatusPosition() 
+        internal void UpdateUnitStatusPosition() 
         {
             if (_unit.BaseObjects.Count == 0)
                 return;
@@ -99,6 +99,10 @@ namespace MortalDungeon.Game.UI
 
             if (WillDisplay)
             {
+                _mainTextBox.SetRender(true);
+                BaseComponent.SetColor(Colors.UILightGray);
+                BaseComponent.SetAllInline(2);
+
                 if (_camera.Position.Z < 2)
                 {
                     SetRender(false);
@@ -109,6 +113,7 @@ namespace MortalDungeon.Game.UI
                 }
 
                 UIScale zoomScale = Size;
+
 
                 if (_camera.Position.Z < 4 && _camera.Position.Z > 2)
                 {
@@ -139,6 +144,17 @@ namespace MortalDungeon.Game.UI
                 }
                 else if (_camera.Position.Z >= 10)
                 {
+                    zoomScale = new UIScale(0.1f, 0.04f);
+
+                    SetSize(zoomScale);
+
+                    _mainTextBox.SetRender(false);
+                    BaseComponent.SetColor(Colors.Transparent);
+                    BaseComponent.SetAllInline(0);
+                    //SetRender(false);
+                }
+                else if (_camera.Position.Z >= 10)
+                {
                     SetRender(false);
                 }
 
@@ -158,7 +174,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void SetWillDisplay(bool display) 
+        internal void SetWillDisplay(bool display) 
         {
             if(WillDisplay != display) 
             {
@@ -172,7 +188,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void SetIsTurn(bool isTurn) 
+        internal void SetIsTurn(bool isTurn) 
         {
             if (isTurn)
             {
@@ -186,14 +202,14 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void UpdateInfo() 
+        internal void UpdateInfo() 
         {
             HealthBar.SetHealthPercent(_unit.Info.Health / _unit.Info.MaxHealth, _unit.AI.Team);
             ShieldBar.SetCurrentShields(_unit.Info.CurrentShields);
             _mainTextBox.SetText(_unit.Name);
         }
 
-        public override void OnCameraMove()
+        internal override void OnCameraMove()
         {
             base.OnCameraMove();
 

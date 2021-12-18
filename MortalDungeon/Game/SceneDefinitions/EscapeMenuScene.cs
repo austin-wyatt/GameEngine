@@ -15,14 +15,14 @@ namespace MortalDungeon.Game.SceneDefinitions
     {
 
         private UIObject _backdrop;
-        public EscapeMenuScene(Action exitFunc)
+        internal EscapeMenuScene(Action exitFunc)
         {
             InitializeFields();
 
             ExitFunc = exitFunc;
         }
 
-        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        internal override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
         {
             base.Load(camera, cursorObject, mouseRay);
            
@@ -102,10 +102,11 @@ namespace MortalDungeon.Game.SceneDefinitions
             Vector4 slightlyTransparentBackdropColor = new Vector4(0.25f, 0.25f, 0.25f, 0.75f);
             backdropModal.SetColor(slightlyTransparentBackdropColor);
 
-            _lowPriorityObjects.Add(backdropModal);
+            //_lowPriorityObjects.Add(backdropModal);
             _backdrop = backdropModal;
 
             AddUI(escapeMenu, 100);
+            AddUI(backdropModal, 99);
 
             
             escapeMenu.SetRender(false);
@@ -128,7 +129,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
         private bool MenuOpen = false;
 
-        public override bool OnKeyDown(KeyboardKeyEventArgs e)
+        internal override bool OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (!base.OnKeyDown(e))
             {

@@ -15,7 +15,7 @@ using static MortalDungeon.Engine_Classes.Scenes.Scene;
 
 namespace MortalDungeon.Game.Tiles
 {
-    public enum TileClassification //ground, terrain, etc 
+    internal enum TileClassification //ground, terrain, etc 
     {
         Ground, //doesn't inhibit movement in any way
         Terrain, //inhibits movement, cannot be attacked
@@ -23,7 +23,7 @@ namespace MortalDungeon.Game.Tiles
         Water //inhibits movement, cannot be attacked
     }
 
-    public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
+    internal enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
         Stone_1 = 20,
         Stone_2 = 21,
@@ -48,7 +48,7 @@ namespace MortalDungeon.Game.Tiles
         Fog_4 = 181,
     }
 
-    public enum SimplifiedTileType 
+    internal enum SimplifiedTileType 
     {
         Unknown,
         Grass,
@@ -57,52 +57,52 @@ namespace MortalDungeon.Game.Tiles
         Wood
     }
 
-    public class BaseTile : GameObject
+    internal class BaseTile : GameObject
     {
-        public Vector4 DefaultColor = default;
-        public BaseTileAnimationType DefaultAnimation = BaseTileAnimationType.SolidWhite;
-        public BaseTileAnimationType CurrentAnimation = BaseTileAnimationType.SolidWhite;
-        public TilePoint TilePoint;
+        internal Vector4 DefaultColor = default;
+        internal BaseTileAnimationType DefaultAnimation = BaseTileAnimationType.SolidWhite;
+        internal BaseTileAnimationType CurrentAnimation = BaseTileAnimationType.SolidWhite;
+        internal TilePoint TilePoint;
 
-        public new ObjectType ObjectType = ObjectType.Tile;
+        internal new ObjectType ObjectType = ObjectType.Tile;
 
-        public TileProperties Properties;
+        internal TileProperties Properties;
 
-        public Vector4 Color = Colors.White; //color that will be applied to the tile on the dynamic texture
-        public Vector4 OutlineColor = Colors.Black; //outline color that will be applied to the dynamic texture
-        public bool Outline = false; //whether the tile should be outline on the dynamic texture
-        public bool NeverOutline = false; //whether this tile should never be outlined (used for contiguous tiles like water)
+        internal Vector4 Color = Colors.White; //color that will be applied to the tile on the dynamic texture
+        internal Vector4 OutlineColor = Colors.Black; //outline color that will be applied to the dynamic texture
+        internal bool Outline = false; //whether the tile should be outline on the dynamic texture
+        internal bool NeverOutline = false; //whether this tile should never be outlined (used for contiguous tiles like water)
 
-        public Dictionary<UnitTeam, bool> InFog = new Dictionary<UnitTeam, bool>();
-        public bool Selected = false;
+        internal Dictionary<UnitTeam, bool> InFog = new Dictionary<UnitTeam, bool>();
+        internal bool Selected = false;
 
-        public Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
+        internal Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
 
         private Vector4 _fogColorOffset = new Vector4(0.5f, 0.5f, 0.5f, 0);
 
-        public BaseObject _tileObject;
+        internal BaseObject _tileObject;
 
-        public BaseTile AttachedTile; //for selection tiles 
-        public Structure Structure;
-        public Unit UnitOnTile;
+        internal BaseTile AttachedTile; //for selection tiles 
+        internal Structure Structure;
+        internal Unit UnitOnTile;
 
-        public Cliff Cliff;
+        internal Cliff Cliff;
 
-        public HeightIndicatorTile HeightIndicator;
-        public TileMap TileMap;
+        internal HeightIndicatorTile HeightIndicator;
+        internal TileMap TileMap;
 
-        public TileChunk Chunk;
+        internal TileChunk Chunk;
 
-        public bool Updating = false;
+        internal bool Updating = false;
 
 
-        public new bool HasContextMenu = true;
+        internal new bool HasContextMenu = true;
 
-        public BaseTile()
+        internal BaseTile()
         {
             FillExploredDictionary();
         }
-        public BaseTile(Vector3 position, TilePoint point)
+        internal BaseTile(Vector3 position, TilePoint point)
         {
             Name = "Tile";
             TilePoint = point;
@@ -135,19 +135,19 @@ namespace MortalDungeon.Game.Tiles
 
         public static implicit operator TilePoint(BaseTile tile) => tile.TilePoint;
 
-        public void SetAnimation(AnimationType type, Action onFinish = null)
+        internal void SetAnimation(AnimationType type, Action onFinish = null)
         {
             BaseObjects[0].SetAnimation(type, onFinish);
             CurrentAnimation = (BaseTileAnimationType)type;
         }
 
-        public void SetAnimation(BaseTileAnimationType type, Action onFinish = null)
+        internal void SetAnimation(BaseTileAnimationType type, Action onFinish = null)
         {
             BaseObjects[0].SetAnimation((int)type, onFinish);
             CurrentAnimation = type;
         }
 
-        public Vector4 SetFogColor()
+        internal Vector4 SetFogColor()
         {
             SetColor(DefaultColor - _fogColorOffset);
             return DefaultColor - _fogColorOffset;
@@ -164,7 +164,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        public void SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
+        internal void SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
         {
             if (inFog != InFog[team])
             {
@@ -183,7 +183,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.PlayerUnits)
+        internal void SetExplored(bool explored = true, UnitTeam team = UnitTeam.PlayerUnits)
         {
             if (explored != Explored[team])
             {
@@ -193,7 +193,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public void SetHovered(bool hovered)
+        internal void SetHovered(bool hovered)
         {
             Hovered = hovered;
 
@@ -208,7 +208,7 @@ namespace MortalDungeon.Game.Tiles
             //}
         }
 
-        public void SetSelected(bool selected)
+        internal void SetSelected(bool selected)
         {
             Selected = selected;
 
@@ -223,7 +223,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public override void OnHover()
+        internal override void OnHover()
         {
             if (!Hovered)
             {
@@ -233,7 +233,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public override void OnHoverEnd()
+        internal override void OnHoverEnd()
         {
             if (Hovered)
             {
@@ -245,7 +245,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public override void CleanUp()
+        internal override void CleanUp()
         {
             base.CleanUp();
 
@@ -263,7 +263,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public void AddStructure<T>(T structure) where T : Structure 
+        internal void AddStructure<T>(T structure) where T : Structure 
         {
             if (Structure != null) 
             {
@@ -275,13 +275,13 @@ namespace MortalDungeon.Game.Tiles
             Structure = structure;
         }
 
-        public void RemoveStructure<T>(T structure) where T : Structure
+        internal void RemoveStructure<T>(T structure) where T : Structure
         {
             Chunk.Structures.Remove(structure);
             Structure = null;
         }
 
-        public void Update()
+        internal void Update()
         {
             if (Updating) return;
 
@@ -291,7 +291,7 @@ namespace MortalDungeon.Game.Tiles
             TileMap.DynamicTextureInfo.TextureChanged = true;
         }
 
-        public void ClearCliff() 
+        internal void ClearCliff() 
         {
             if (Cliff != null) 
             {
@@ -300,7 +300,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public static string GetTooltipString(BaseTile tile, CombatScene scene) 
+        internal static string GetTooltipString(BaseTile tile, CombatScene scene) 
         {
             string tooltip;
 
@@ -313,10 +313,17 @@ namespace MortalDungeon.Game.Tiles
                 int coordX = tile.TilePoint.X + tile.TilePoint.ParentTileMap.TileMapCoords.X * tile.TilePoint.ParentTileMap.Width;
                 int coordY = tile.TilePoint.Y + tile.TilePoint.ParentTileMap.TileMapCoords.Y * tile.TilePoint.ParentTileMap.Height;
 
+                Vector3 cubeCoord = tile.TileMap.OffsetToCube(tile.TilePoint);
+
+                var tileMapPos = FeatureEquation.FeaturePointToTileMapCoords(new FeaturePoint(tile));
+
                 tooltip = $"Type: {tile.Properties.Type.Name()} \n";
                 tooltip += $"Coordinates: {coordX}, {coordY} \n";
-                tooltip += $"Elevation: {tile.Properties.Height}\n";
-                tooltip += $"Movement Cost: {tile.Properties.MovementCost}\n";
+                tooltip += $"Offset: {cubeCoord.X}, {cubeCoord.Y}, {cubeCoord.Z} \n";
+                tooltip += $"Tile Map: {tileMapPos.X}, {tileMapPos.Y} \n";
+                tooltip += $"Position: {tile.BaseObject.BaseFrame.Position.X}, {tile.BaseObject.BaseFrame.Position.Y}, {tile.BaseObject.BaseFrame.Position.Z} \n";
+                //tooltip += $"Elevation: {tile.Properties.Height}\n";
+                //tooltip += $"Movement Cost: {tile.Properties.MovementCost}\n";
 
                 if (tile.Structure != null) 
                 {
@@ -329,12 +336,12 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        public int GetVisionHeight() 
+        internal int GetVisionHeight() 
         {
             return Structure != null && !Structure.Passable && !Structure.Info.Transparent ? Structure.Info.Height + Properties.Height : Properties.Height;
         }
 
-        public int GetPathableHeight()
+        internal int GetPathableHeight()
         {
             return Structure != null && Structure.Pathable && !Structure.Passable ? Structure.Info.Height + Properties.Height : Properties.Height;
         }
@@ -349,7 +356,7 @@ namespace MortalDungeon.Game.Tiles
             return TilePoint.ParentTileMap.Controller.Scene;
         }
 
-        public void OnRightClick(ContextManager<MouseUpFlags> flags)
+        internal void OnRightClick(ContextManager<MouseUpFlags> flags)
         {
             CombatScene scene = GetScene();
 
@@ -408,7 +415,7 @@ namespace MortalDungeon.Game.Tiles
             scene._debugSelectedTile = this;
         }
 
-        public override Tooltip CreateContextMenu()
+        internal override Tooltip CreateContextMenu()
         {
             Tooltip menu = new Tooltip();
 
@@ -444,41 +451,41 @@ namespace MortalDungeon.Game.Tiles
             return menu;
         }
 
-        public FeaturePoint ToFeaturePoint()
+        internal FeaturePoint ToFeaturePoint()
         {
             return new FeaturePoint(this);
         }
     }
 
-    public class TilePoint
+    internal class TilePoint
     {
-        public int X;
-        public int Y;
+        internal int X;
+        internal int Y;
 
-        public TileMap ParentTileMap;
+        internal TileMap ParentTileMap;
 
-        public bool _visited = false; //using for pathing
+        internal bool _visited = false; //using for pathing
 
-        public TilePoint(int x, int y, TileMap map) 
+        internal TilePoint(int x, int y, TileMap map) 
         {
             X = x;
             Y = y;
             ParentTileMap = map;
         }
 
-        public TilePoint(Vector2i coords, TileMap map)
+        internal TilePoint(Vector2i coords, TileMap map)
         {
             X = coords.X;
             Y = coords.Y;
             ParentTileMap = map;
         }
 
-        public BaseTile GetTile() 
+        internal BaseTile GetTile() 
         {
             return ParentTileMap[this];
         }
 
-        public bool IsValidTile() 
+        internal bool IsValidTile() 
         {
             return ParentTileMap.IsValidTile(X, Y);
         }
@@ -504,26 +511,26 @@ namespace MortalDungeon.Game.Tiles
             return HashCode.Combine(X, Y, ParentTileMap);
         }
 
-        public FeaturePoint ToFeaturePoint() 
+        internal FeaturePoint ToFeaturePoint() 
         {
             return new FeaturePoint(this);
         }
     }
 
-    public class TileProperties 
+    internal class TileProperties 
     {
-        public TileType Type;
-        public TileClassification Classification;
+        internal TileType Type;
+        internal TileClassification Classification;
 
-        public bool MustExplore = false;
+        internal bool MustExplore = false;
 
-        public float DamageOnEnter = 0;
-        public float Slow = 0;
-        public bool BlocksVision = false;
-        public int Height = 0; //the tile's height for vision and movement purposes
-        public float MovementCost = 1; //how expensive this tile is to move across compared to normal
+        internal float DamageOnEnter = 0;
+        internal float Slow = 0;
+        internal bool BlocksVision = false;
+        internal int Height = 0; //the tile's height for vision and movement purposes
+        internal float MovementCost = 1; //how expensive this tile is to move across compared to normal
 
-        public TileProperties() 
+        internal TileProperties() 
         {
         }
     }

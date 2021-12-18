@@ -13,9 +13,9 @@ using MortalDungeon.Game.Entities;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class SpawnSkeleton : Ability
+    internal class SpawnSkeleton : Ability
     {
-        public SpawnSkeleton(Unit castingUnit, int range = 3)
+        internal SpawnSkeleton(Unit castingUnit, int range = 3)
         {
             Type = AbilityTypes.Summoning;
             DamageType = DamageType.NonDamaging;
@@ -23,9 +23,9 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit = castingUnit;
 
             CanTargetGround = true;
-            UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
-            UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
-            UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
+            UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             Name = "Spawn Skeleton";
 
@@ -42,8 +42,10 @@ namespace MortalDungeon.Game.Abilities
             third.AddCombo(this, second, false);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
                 TraversableTypes = TileMapConstants.AllTileClassifications,
@@ -66,7 +68,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        internal override void OnTileClicked(TileMap map, BaseTile tile)
         {
             if (AffectedTiles.Exists(t => t == tile))
             {
@@ -79,19 +81,19 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        public override void OnCast()
+        internal override void OnCast()
         {
             ClearSelectedTiles();
 
             base.OnCast();
         }
 
-        public override void OnAICast()
+        internal override void OnAICast()
         {
             base.OnAICast();
         }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -128,7 +130,7 @@ namespace MortalDungeon.Game.Abilities
             EffectEnded();
         }
 
-        public override void OnAbilityDeselect()
+        internal override void OnAbilityDeselect()
         {
             ClearSelectedTiles();
 
@@ -137,7 +139,7 @@ namespace MortalDungeon.Game.Abilities
             SelectedTile = null;
         }
 
-        public void ClearSelectedTiles() 
+        internal void ClearSelectedTiles() 
         {
             lock(AffectedTiles)
             AffectedTiles.ForEach(tile =>

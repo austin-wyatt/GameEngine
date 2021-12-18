@@ -6,11 +6,11 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.MiscOperations
 {
-    public static class MiscOperations
+    internal static class MiscOperations
     {
-        public static class GFG
+        internal static class GFG
         {
-            public static bool get_line_intersection(float p0_x, float p0_y, float p1_x, float p1_y,
+            internal static bool get_line_intersection(float p0_x, float p0_y, float p1_x, float p1_y,
                     float p2_x, float p2_y, float p3_x, float p3_y)
             {
                 float s1_x, s1_y, s2_x, s2_y;

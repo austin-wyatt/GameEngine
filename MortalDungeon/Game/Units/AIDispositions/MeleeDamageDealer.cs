@@ -7,16 +7,16 @@ namespace MortalDungeon.Game.Units.AI
 {
     class MeleeDamageDealer : Disposition
     {
-        public float Bloodthirsty;
+        internal float Bloodthirsty;
 
 
         private float _unitSeekRange = 50;
-        public MeleeDamageDealer(Unit unit) : base(unit) 
+        internal MeleeDamageDealer(Unit unit) : base(unit) 
         {
             
         }
 
-        public override UnitAIAction GetAction(AIAction action)
+        internal override UnitAIAction GetAction(AIAction action)
         {
             float weight = 0;
 
@@ -29,31 +29,31 @@ namespace MortalDungeon.Game.Units.AI
             switch (action) 
             {
                 case AIAction.MoveCloser:
-                    target = GetClosestUnit(_unit, _unitSeekRange, new UnitSearchParams() { IsHostile = CheckEnum.True, Dead = CheckEnum.False });
+                    target = GetClosestUnit(_unit, _unitSeekRange, new UnitSearchParams() { IsHostile = UnitCheckEnum.True, Dead = UnitCheckEnum.False });
 
                     if (target != null)
                     {
                         if (!meleeAbility.UnitInRange(target) && _unit.Info.Energy >= _unit.Info._movementAbility.EnergyCost && meleeAbility.CanCast())
                         {
-                            weight += 2 * Weight;
+                            weight += 1.9f * Weight;
 
-                            MoveToUnit returnAction = new MoveToUnit(_unit, _unit.Info._movementAbility, null, target) { Weight = weight };
+                            MoveInRangeOfAbility returnAction = new MoveInRangeOfAbility(_unit, meleeAbility, null, target) { Weight = weight };
                             return returnAction;
                         }
                     }
                     break;
                 case AIAction.AttackEnemyMelee:
-                    target = GetClosestUnit(_unit, _unitSeekRange, new UnitSearchParams() { IsHostile = CheckEnum.True, Dead = CheckEnum.False });
+                    target = GetClosestUnit(_unit, _unitSeekRange, new UnitSearchParams() { IsHostile = UnitCheckEnum.True, Dead = UnitCheckEnum.False });
 
                     if (target != null)
                     {
                         if (meleeAbility.UnitInRange(target) && meleeAbility.CanCast())
                         {
-                            weight += 2 * Weight;
+                            weight += 2.5f * Weight;
 
                             weight += (1 - target.Info.Health / target.Info.MaxHealth) * Bloodthirsty;
 
-                            AttackEnemy returnAction = new AttackEnemy(_unit, meleeAbility, null, target) { Weight = weight };
+                            UseAbilityOnUnit returnAction = new UseAbilityOnUnit(_unit, AIAction.AttackEnemyMelee, meleeAbility, null, target) { Weight = weight };
                             return returnAction;
                         }
                     }

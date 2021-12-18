@@ -8,16 +8,16 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    public class HealthBar : UIObject
+    internal class HealthBar : UIObject
     {
-        public float _healthPercent = 1;
+        internal float _healthPercent = 1;
         private UIObject _healthBar;
 
         private UnitTeam _team = UnitTeam.PlayerUnits;
 
-        public Vector4 BarColor = new Vector4(0, 0.5f, 0, 1f);
+        internal Vector4 BarColor = new Vector4(0, 0.5f, 0, 1f);
 
-        public HealthBar(Vector3 position, UIScale scale) 
+        internal HealthBar(Vector3 position, UIScale scale) 
         {
             Size = scale;
             Position = position;
@@ -40,7 +40,7 @@ namespace MortalDungeon.Game.UI
             AddChild(BaseComponent);
         }
 
-        public void SetHealthPercent(float percent, UnitTeam team = UnitTeam.Unknown) 
+        internal void SetHealthPercent(float percent, UnitTeam team = UnitTeam.Unknown) 
         {
             if (team == UnitTeam.Unknown)
             {
@@ -92,7 +92,7 @@ namespace MortalDungeon.Game.UI
             _healthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
         }
 
-        public override void SetSize(UIScale size)
+        internal override void SetSize(UIScale size)
         {
             base.SetSize(size);
 
@@ -100,7 +100,7 @@ namespace MortalDungeon.Game.UI
 
         }
 
-        public override void SetInlineColor(Vector4 color)
+        internal override void SetInlineColor(Vector4 color)
         {
             base.SetInlineColor(color);
             _healthBar.SetInlineColor(color);

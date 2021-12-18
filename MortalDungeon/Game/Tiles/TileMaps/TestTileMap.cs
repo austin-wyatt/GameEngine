@@ -13,12 +13,12 @@ namespace MortalDungeon.Game.Tiles.TileMaps
 {
     class TestTileMap : TileMap
     {
-        public TestTileMap(Vector3 position, TileMapPoint point, TileMapController controller) : base(position, point, controller, "TestTileMap")
+        internal TestTileMap(Vector3 position, TileMapPoint point, TileMapController controller) : base(position, point, controller, "TestTileMap")
         {
 
         }
 
-        public override void PopulateTileMap(float zTilePlacement = 0)
+        internal override void PopulateTileMap(float zTilePlacement = 0)
         {
             BaseTile baseTile = new BaseTile();
             Vector3 tilePosition = new Vector3(Position);
@@ -69,12 +69,12 @@ namespace MortalDungeon.Game.Tiles.TileMaps
         }
 
 
-        public override void OnAddedToController()
+        internal override void OnAddedToController()
         {
             base.OnAddedToController();
         }
 
-        public override void PopulateFeatures()
+        internal override void PopulateFeatures()
         {
             base.PopulateFeatures();
 

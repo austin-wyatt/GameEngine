@@ -12,7 +12,7 @@ namespace MortalDungeon.Game.Structures
 {
     class Rock : Structure
     {
-        public Rock(TileMap map, BaseTile tile) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetRockType(), tile.Position + new Vector3(0, -200, 0.12f))
+        internal Rock(TileMap map, BaseTile tile) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetRockType(), tile.Position + new Vector3(0, -200, 0.12f))
         {
             if (tile.Structure != null)
                 return;
@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Structures
             return TileMap._randomNumberGen.Next() % 3 + (int)StructureEnum.Rock_1;
         }
 
-        public override Tooltip CreateContextMenu()
+        internal override Tooltip CreateContextMenu()
         {
             (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(Type.Name());
 

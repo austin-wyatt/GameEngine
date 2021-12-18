@@ -12,7 +12,7 @@ using MortalDungeon.Engine_Classes.UIComponents;
 
 namespace MortalDungeon.Game.UI
 {
-    public enum EnergyStates
+    internal enum EnergyStates
     {
         Empty,
         Energized,
@@ -20,20 +20,20 @@ namespace MortalDungeon.Game.UI
         PartiallyEnergized
     }
 
-    public class EnergyDisplayBar : UIObject
+    internal class EnergyDisplayBar : UIObject
     {
         private const int MaxEnergy = 25;
 
-        public float CurrentMaxEnergy = 10;
-        public float CurrentEnergy = 10;
-        public float EnergyHovered = 0;
-        public List<EnergyPip> Pips = new List<EnergyPip>(MaxEnergy);
+        internal float CurrentMaxEnergy = 10;
+        internal float CurrentEnergy = 10;
+        internal float EnergyHovered = 0;
+        internal List<EnergyPip> Pips = new List<EnergyPip>(MaxEnergy);
 
         CombatScene Scene;
 
         //todo, add a onHover tooltip to display exact energy amount
 
-        public EnergyDisplayBar(CombatScene scene, Vector3 position, UIScale size, int maxEnergy = 10, int spriteSheetPos = (int)IconSheetIcons.WalkingBoot, Spritesheet spriteSheet = null)
+        internal EnergyDisplayBar(CombatScene scene, Vector3 position, UIScale size, int maxEnergy = 10, int spriteSheetPos = (int)IconSheetIcons.WalkingBoot, Spritesheet spriteSheet = null)
         {
             Position = position;
             Size = size;
@@ -144,7 +144,7 @@ namespace MortalDungeon.Game.UI
             hoverColorShift.Play();
         }
 
-        public void SetActiveEnergy(float newEnergy)
+        internal void SetActiveEnergy(float newEnergy)
         {
             CurrentEnergy = newEnergy > CurrentMaxEnergy ? CurrentMaxEnergy : newEnergy < 0 ? 0 : newEnergy;
 
@@ -171,7 +171,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void SetMaxEnergy(float maxEnergy) 
+        internal void SetMaxEnergy(float maxEnergy) 
         {
             CurrentMaxEnergy = maxEnergy;
 
@@ -184,13 +184,13 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void AddEnergy(float energy)
+        internal void AddEnergy(float energy)
         {
             SetActiveEnergy(CurrentEnergy + (energy + 0.0001f));
         }
 
         private int _currentHoveredIndex = MaxEnergy;
-        public void HoverAmount(float energyToHover) 
+        internal void HoverAmount(float energyToHover) 
         {
             if (energyToHover == 0) 
             {
@@ -238,7 +238,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        //public void SetEnergyFromUnit(Unit unit) 
+        //internal void SetEnergyFromUnit(Unit unit) 
         //{
         //    CurrentMaxEnergy = unit.MaxEnergy;
         //    CurrentEnergy = unit.CurrentEnergy;
@@ -250,18 +250,18 @@ namespace MortalDungeon.Game.UI
     /// <summary>
     /// A hexagon energy pip
     /// </summary>
-    public class EnergyPip : UIObject
+    internal class EnergyPip : UIObject
     {
-        public BaseObject Pip;
-        //public BaseObject Backdrop;
-        public Vector4 EnergizedColor = new Vector4(0.13f, 0.69f, 0.13f, 1);
-        public Vector4 EmptyColor = new Vector4(0.20f, 0.28f, 0.20f, 1);
+        internal BaseObject Pip;
+        //internal BaseObject Backdrop;
+        internal Vector4 EnergizedColor = new Vector4(0.13f, 0.69f, 0.13f, 1);
+        internal Vector4 EmptyColor = new Vector4(0.20f, 0.28f, 0.20f, 1);
 
-        public EnergyStates EnergyState = EnergyStates.Energized;
+        internal EnergyStates EnergyState = EnergyStates.Energized;
 
-        public PropertyAnimation HoverAnimation;
+        internal PropertyAnimation HoverAnimation;
 
-        public EnergyPip(Vector3 position, UIScale size = default, int spriteSheetPos = 21, Spritesheet spriteSheet = null)
+        internal EnergyPip(Vector3 position, UIScale size = default, int spriteSheetPos = 21, Spritesheet spriteSheet = null)
         {
             Position = position;
             Size = size == null ? Size : size;
@@ -316,7 +316,7 @@ namespace MortalDungeon.Game.UI
             ChangeEnergyState(EnergyState);
         }
 
-        public void ChangeEnergyState(EnergyStates state, float percent = 1)
+        internal void ChangeEnergyState(EnergyStates state, float percent = 1)
         {
             EnergyState = state;
 
@@ -338,13 +338,13 @@ namespace MortalDungeon.Game.UI
             HoverAnimation.SetDefaultColor();
         }
 
-        public void PlayHoverAnimation()
+        internal void PlayHoverAnimation()
         {
             HoverAnimation.Playing = true;
             _baseObject.BaseFrame.UseAppliedColors(true);
         }
 
-        public void EndHoverAnimation()
+        internal void EndHoverAnimation()
         {
             //HoverAnimation.SetDefaultColor();
             _baseObject.BaseFrame.UseAppliedColors(false);

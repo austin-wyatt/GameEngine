@@ -5,29 +5,29 @@ using System;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public class Input : UIObject
+    internal class Input : UIObject
     {
-        public float TextScale = 1f;
-        public UIDimensions TextOffset = new UIDimensions(20, 30);
-        public bool CenterText = false;
+        internal float TextScale = 1f;
+        internal UIDimensions TextOffset = new UIDimensions(20, 30);
+        internal bool CenterText = false;
 
-        public int _cursorIndex = 0;
+        internal int _cursorIndex = 0;
 
-        public TextBox _textBox;
+        internal TextBox _textBox;
 
-        public Cursor _cursorObject;
+        internal Cursor _cursorObject;
 
-        public bool Scrollable = true;
+        internal bool Scrollable = true;
 
-        public bool WordWrap = false;
-        public int Lines = 1;
-        public int Columns = 25;
+        internal bool WordWrap = false;
+        internal int Lines = 1;
+        internal int Columns = 25;
 
         private int _lineCount = 0;
 
-        public Action<string> OnTypeAction = null;
+        internal Action<string> OnTypeAction = null;
 
-        public Input(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
+        internal Input(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
             TextScale = textScale;
             Size = size;
@@ -63,7 +63,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        public override void OnType(KeyboardKeyEventArgs e)
+        internal override void OnType(KeyboardKeyEventArgs e)
         {
             base.OnType(e);
             string typedLetter = TextHelper.KeyStrokeToString(e);
@@ -148,7 +148,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetCursorPosition();
         }
 
-        public void SetCursorPosition() 
+        internal void SetCursorPosition() 
         {
             if (_textBox.TextField._textField.Letters.Count > 0 && _cursorIndex != 0)
             {
@@ -178,7 +178,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         
 
-        public override void OnFocus()
+        internal override void OnFocus()
         {
             base.OnFocus();
             _cursorObject.SetRender(true);
@@ -187,7 +187,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetCursorPosition();
         }
 
-        public override void FocusEnd()
+        internal override void FocusEnd()
         {
             base.FocusEnd();
             _cursorObject.PropertyAnimations[0].Reset();

@@ -10,12 +10,12 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Slow : Ability
+    internal class Slow : Ability
     {
         float _slowMultiplier;
         int _slowDuration;
 
-        public Slow(Unit castingUnit, int range = 1, float slowAmount = 0.25f, int duration = 3)
+        internal Slow(Unit castingUnit, int range = 1, float slowAmount = 0.25f, int duration = 3)
         {
             Type = AbilityTypes.Debuff;
             Range = range;
@@ -31,8 +31,10 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
                 TraversableTypes = TileMapConstants.AllTileClassifications,
@@ -49,7 +51,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        public override bool OnUnitClicked(Unit unit)
+        internal override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -63,7 +65,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        public override void OnCast()
+        internal override void OnCast()
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
             Scene.ActionEnergyBar.HoverAmount(0);
@@ -81,7 +83,7 @@ namespace MortalDungeon.Game.Abilities
             base.OnCast();
         }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 

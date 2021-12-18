@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -8,12 +9,12 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    public class TurnDisplay : UIObject
+    internal class TurnDisplay : UIObject
     {
-        public List<Unit> Units = new List<Unit>();
+        internal List<Unit> Units = new List<Unit>();
         private List<UIObject> UnitObjects = new List<UIObject>();
 
-        public TurnDisplay() 
+        internal TurnDisplay() 
         {
             BaseComponent = new UIBlock();
             BaseComponent.SetColor(Colors.Transparent);
@@ -23,8 +24,14 @@ namespace MortalDungeon.Game.UI
             ValidateObject(this);
         }
 
-        public void SetUnits(List<Unit> units) 
+        private bool _settingUnits = false;
+        internal void SetUnits(List<Unit> units, CombatScene scene) 
         {
+            if (_settingUnits)
+                return;
+
+            _settingUnits = true;
+            
             Units = units;
 
             BaseComponent.RemoveChildren();
@@ -84,13 +91,30 @@ namespace MortalDungeon.Game.UI
                     uiObj.AddChild(chevron);
                 }
 
+                int index = i;
+                uiObj.Clickable = true;
+                uiObj.OnClickAction = () =>
+                {
+                    Vector2i clusterPos = scene._tileMapController.PointToClusterPosition(Units[index].Info.TileMapPosition);
+
+                    if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
+                    {
+                        Vector4 pos = Units[index].BaseObject.BaseFrame.Position;
+
+                        scene.SmoothPanCamera(new Vector3(pos.X, pos.Y - scene._camera.Position.Z / 5, scene._camera.Position.Z), 1);
+                    }
+                };
+
+
                 BaseComponent.AddChild(uiObj);
             }
 
             PositionUnits();
+
+            _settingUnits = false;
         }
 
-        public void PositionUnits() 
+        internal void PositionUnits() 
         {
             if (UnitObjects.Count <= 1)
                 return;
@@ -103,7 +127,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public void ClearUnits() 
+        internal void ClearUnits() 
         {
             Units = null;
 
@@ -112,7 +136,7 @@ namespace MortalDungeon.Game.UI
             UnitObjects.Clear();
         }
 
-        public void SetCurrentUnit(int currUnit) 
+        internal void SetCurrentUnit(int currUnit) 
         {
             for (int i = 0; i < UnitObjects.Count; i++) 
             {

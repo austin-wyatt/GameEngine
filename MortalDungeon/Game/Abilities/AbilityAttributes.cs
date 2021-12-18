@@ -5,18 +5,18 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    //public class AbilityAttributes
+    //internal class AbilityAttributes
     //{
-    //    public List<DamageInstance> DamageInstances = new List<DamageInstance>();
+    //    internal List<DamageInstance> DamageInstances = new List<DamageInstance>();
     //}
 
-    public class DamageInstance
+    internal class DamageInstance
     {
-        public Dictionary<DamageType, float> Damage = new Dictionary<DamageType, float>();
+        internal Dictionary<DamageType, float> Damage = new Dictionary<DamageType, float>();
 
-        public float PiercingPercent = 0.5f;
+        internal float PiercingPercent = 0.5f;
 
-        public string GetTooltipStrings(Unit castingUnit) 
+        internal string GetTooltipStrings(Unit castingUnit) 
         {
             string returnString = "";
 
@@ -27,6 +27,10 @@ namespace MortalDungeon.Game.Abilities
                 if (type == DamageType.Piercing)
                 {
                     returnString += $"{Damage[type]} {type} damage ({PiercingPercent.ToString("P0")})\n";
+                }
+                else if (type == DamageType.Healing) 
+                {
+                    returnString += $"{Damage[type]} healing\n";
                 }
                 else 
                 {

@@ -8,14 +8,14 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    public class FocusBar : UIObject
+    internal class FocusBar : UIObject
     {
-        public float _focusPercent = 1;
+        internal float _focusPercent = 1;
         private UIObject _focusBar;
 
-        public Vector4 BarColor = new Vector4(0.57f, 0, 1, 1f);
+        internal Vector4 BarColor = new Vector4(0.57f, 0, 1, 1f);
 
-        public FocusBar(Vector3 position, UIScale scale)
+        internal FocusBar(Vector3 position, UIScale scale)
         {
             Size = scale;
             Position = position;
@@ -35,7 +35,7 @@ namespace MortalDungeon.Game.UI
             AddChild(BaseComponent);
         }
 
-        public void SetFocusPercent(float percent)
+        internal void SetFocusPercent(float percent)
         {
             if (percent < 0)
             {
@@ -51,14 +51,14 @@ namespace MortalDungeon.Game.UI
             _focusBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
         }
 
-        public override void SetSize(UIScale size)
+        internal override void SetSize(UIScale size)
         {
             base.SetSize(size);
 
             SetFocusPercent(_focusPercent);
         }
 
-        public override void SetInlineColor(Vector4 color)
+        internal override void SetInlineColor(Vector4 color)
         {
             base.SetInlineColor(color);
             _focusBar.SetInlineColor(color);

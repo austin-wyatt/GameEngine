@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Entities
 {
-    public enum PrefabType 
+    internal enum PrefabType 
     {
         Unit, 
         Disposition,
@@ -17,23 +17,23 @@ namespace MortalDungeon.Game.Entities
         Buff,
         Unknown
     }
-    public class Prefab 
+    internal class Prefab 
     {
-        public PrefabType Type;
-        public string Name = "";
-        public string File = "";
-        public bool HasProfile = false;
+        internal PrefabType Type;
+        internal string Name = "";
+        internal string File = "";
+        internal bool HasProfile = false;
     }
-    public static class EntityParser
+    internal static class EntityParser
     {
-        public static List<Prefab> Prefabs = new List<Prefab>();
+        internal static List<Prefab> Prefabs = new List<Prefab>();
 
         static EntityParser() 
         {
             GatherPrefabs();
         }
 
-        public static void GatherPrefabs() 
+        internal static void GatherPrefabs() 
         {
             string[] fileList = Directory.GetFiles(@"Resources\Prefabs\");
 
@@ -129,7 +129,7 @@ namespace MortalDungeon.Game.Entities
             return foundObjs;
         }
 
-        public static Prefab FindPrefab(PrefabType type, string name) 
+        internal static Prefab FindPrefab(PrefabType type, string name) 
         {
             return Prefabs.Find(p => p.Type == type && p.Name == name);
         }
@@ -181,7 +181,7 @@ namespace MortalDungeon.Game.Entities
         /// <summary>
         /// 
         /// </summary>
-        public static Unit ApplyPrefabToUnit(Prefab prefab, CombatScene scene, Unit unit = null) 
+        internal static Unit ApplyPrefabToUnit(Prefab prefab, CombatScene scene, Unit unit = null) 
         {
             Dictionary<string, object> prefabToApply = GetPrefabObject(prefab);
 
@@ -217,7 +217,7 @@ namespace MortalDungeon.Game.Entities
             return returnUnit;
         }
 
-        public static void ParseDict(Dictionary<string, object> dict, Unit unit) 
+        internal static void ParseDict(Dictionary<string, object> dict, Unit unit) 
         {
             foreach (string key in dict.Keys)
             {
@@ -260,7 +260,7 @@ namespace MortalDungeon.Game.Entities
         }
 
 
-        public static Ability ApplyPrefabToAbility(Prefab prefab, Unit castingUnit, Ability ability = null)
+        internal static Ability ApplyPrefabToAbility(Prefab prefab, Unit castingUnit, Ability ability = null)
         {
             Dictionary<string, object> prefabToApply = GetPrefabObject(prefab);
 
@@ -296,7 +296,7 @@ namespace MortalDungeon.Game.Entities
             return returnAbility;
         }
 
-        public static void ParseDict(Dictionary<string, object> dict, Ability ability)
+        internal static void ParseDict(Dictionary<string, object> dict, Ability ability)
         {
             foreach (string key in dict.Keys)
             {

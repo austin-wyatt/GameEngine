@@ -7,18 +7,18 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Rendering
 {
-    public class FrameBufferObject
+    internal class FrameBufferObject
     {
-        public int FrameBuffer;
-        public int RenderTexture;
-        public int DepthBuffer;
+        internal int FrameBuffer;
+        internal int RenderTexture;
+        internal int DepthBuffer;
 
-        public IntPtr _texturePointer;
+        internal IntPtr _texturePointer;
 
-        public Vector2i FBODimensions;
+        internal Vector2i FBODimensions;
 
-        public Shader Shader;
-        public FrameBufferObject(Vector2i dimensions = default, Shader shader = null) 
+        internal Shader Shader;
+        internal FrameBufferObject(Vector2i dimensions = default, Shader shader = null) 
         {
             if (dimensions.X == 0)
             {
@@ -52,7 +52,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         /// Scales the texture and depth buffer associated with the frame buffer to the new width and height
         /// </summary>
         /// <param name="newSize"></param>
-        public void ResizeFBO(Vector2i newSize) 
+        internal void ResizeFBO(Vector2i newSize) 
         {
             FBODimensions.X = (int)(FBODimensions.X * (float)newSize.X / FBODimensions.X);
             FBODimensions.Y = (int)(FBODimensions.Y * (float)newSize.Y / FBODimensions.Y);
@@ -65,12 +65,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
             UnbindFrameBuffer();
         }
 
-        public void BindFrameBuffer() 
+        internal void BindFrameBuffer() 
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, FrameBuffer);
         }
 
-        public void UnbindFrameBuffer() 
+        internal void UnbindFrameBuffer() 
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
@@ -79,7 +79,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         /// Color buffer should be cleared before subsequent uses of the frame buffer
         /// </summary>
         /// <param name="active"></param>
-        public void ClearColorBuffer(bool active = false, Vector4 color = default) 
+        internal void ClearColorBuffer(bool active = false, Vector4 color = default) 
         {
             GL.ClearColor(color.X, color.Y, color.Z, color.W);
 
@@ -126,7 +126,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
         //TODO, this might need to be looked at later when post processing techniques begin to be incorporated
-        public void CreateDepthBuffer() 
+        internal void CreateDepthBuffer() 
         {
             //if (DepthBuffer != 0)
             //{
@@ -140,7 +140,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             //GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.RenderbufferExt, DepthBuffer);
         }
 
-        public void CreateFrameBuffer() 
+        internal void CreateFrameBuffer() 
         {
             if (FrameBuffer != 0) 
             {
@@ -156,7 +156,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             UnbindFrameBuffer();
         }
 
-        public void ClearBuffers() 
+        internal void ClearBuffers() 
         {
             BindFrameBuffer();
             GL.Clear(ClearBufferMask.DepthBufferBit);
@@ -166,7 +166,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         /// <summary>
         /// Deletes the depth buffer, texture, and the render buffer from the GPU
         /// </summary>
-        public void Dispose() 
+        internal void Dispose() 
         {
             if (DepthBuffer != 0)
             {

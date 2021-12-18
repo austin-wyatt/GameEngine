@@ -7,9 +7,9 @@ using System.Text;
 
 namespace MortalDungeon.Game
 {
-    public static class EnumExtensions
+    internal static class EnumExtensions
     {
-        public static string Name(this TileType type) 
+        internal static string Name(this TileType type) 
         {
             switch (type) 
             {
@@ -35,7 +35,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        public static string Name(this StructureEnum type)
+        internal static string Name(this StructureEnum type)
         {
             switch (type)
             {
@@ -69,7 +69,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        public static SimplifiedTileType SimplifiedType(this TileType type) 
+        internal static SimplifiedTileType SimplifiedType(this TileType type) 
         {
             switch (type)
             {
@@ -94,9 +94,9 @@ namespace MortalDungeon.Game
             }
         }
 
-        public static bool BoolValue(this Disposition.CheckEnum val)
+        internal static bool BoolValue(this UnitCheckEnum val)
         {
-            if (val == Disposition.CheckEnum.True || val == Disposition.CheckEnum.SoftTrue)
+            if (val == UnitCheckEnum.True || val == UnitCheckEnum.SoftTrue)
             {
                 return true;
             }
@@ -111,9 +111,9 @@ namespace MortalDungeon.Game
         /// where only one of them is required whereas a normal true or false would cause the check to be 
         /// false if they did not match.
         /// </summary>
-        public static bool IsSoft(this Disposition.CheckEnum val)
+        internal static bool IsSoft(this UnitCheckEnum val)
         {
-            if (val == Disposition.CheckEnum.SoftFalse || val == Disposition.CheckEnum.SoftTrue)
+            if (val == UnitCheckEnum.SoftFalse || val == UnitCheckEnum.SoftTrue)
             {
                 return true;
             }
@@ -123,7 +123,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        public static int Hash(this UnitTeam team1, UnitTeam team2) 
+        internal static int Hash(this UnitTeam team1, UnitTeam team2) 
         {
             List<int> teams = new List<int> { (int)team1, (int)team2 };
             teams.Sort();
@@ -131,17 +131,20 @@ namespace MortalDungeon.Game
             return HashCode.Combine(teams[0], teams[1]);
         }
 
-        public static void SetRelation(this UnitTeam team1, UnitTeam team2, Relation relation) 
+        internal static void SetRelation(this UnitTeam team1, UnitTeam team2, Relation relation) 
         {
             UnitAI.SetTeamRelation(team1, team2, relation);
         }
 
-        public static Relation GetRelation(this UnitTeam team1, UnitTeam team2)
+        internal static Relation GetRelation(this UnitTeam team1, UnitTeam team2)
         {
+            if (team1 == team2)
+                return Relation.Friendly;
+
             return UnitAI.GetTeamRelation(team1, team2);
         }
 
-        public static string Name(this UnitTeam team) 
+        internal static string Name(this UnitTeam team) 
         {
             switch (team) 
             {
@@ -158,7 +161,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        public static string Name(this ControlType controlType)
+        internal static string Name(this ControlType controlType)
         {
             switch (controlType)
             {

@@ -5,29 +5,29 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class ParticleGenerator : ITickable
+    internal class ParticleGenerator : ITickable
     {
-        public List<Particle> Particles = new List<Particle>();
-        public RenderableObject ParticleDisplay;
-        public Vector3 Position = default;
-        public Vector3 PositionalOffset = default;
-        public int ParticleCount = 0;
-        public bool Playing = false;
+        internal List<Particle> Particles = new List<Particle>();
+        internal RenderableObject ParticleDisplay;
+        internal Vector3 Position = default;
+        internal Vector3 PositionalOffset = default;
+        internal int ParticleCount = 0;
+        internal bool Playing = false;
         protected bool Priming = false;
 
-        public bool RefreshParticles = true;
+        internal bool RefreshParticles = true;
 
-        public bool Repeat = true;
+        internal bool Repeat = true;
 
-        public Action OnFinish = null;
+        internal Action OnFinish = null;
 
         protected int _currentParticle = 0; //the index of the current particle
 
         protected int _tickCount = 0;
-        public ParticleGenerator() { }
+        internal ParticleGenerator() { }
 
         //logic for when/where to create a particle is calculated here
-        public virtual void Tick()
+        internal virtual void Tick()
         {
             if(Playing || Priming)
             {
@@ -36,7 +36,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //generates a particle
-        public virtual void GenerateParticle()
+        internal virtual void GenerateParticle()
         {
             _currentParticle++;
             if(_currentParticle >= ParticleCount && RefreshParticles)
@@ -50,7 +50,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void DecayParticles()
+        internal virtual void DecayParticles()
         {
             bool hasLivingParticle = false;
 
@@ -73,17 +73,17 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void UpdateParticle(Particle particle) 
+        internal virtual void UpdateParticle(Particle particle) 
         {
 
         }
 
-        public void SetPosition(Vector3 position) 
+        internal void SetPosition(Vector3 position) 
         {
             Position = position + PositionalOffset;
         }
 
-        public virtual void PrimeParticles()
+        internal virtual void PrimeParticles()
         {
             Priming = true;
             for (int i = 0; i < ParticleCount; i++)
@@ -93,30 +93,30 @@ namespace MortalDungeon.Engine_Classes
             Priming = false;
         }
     }
-    public class Particle
+    internal class Particle
     {
-        public Vector3 Position = default;
-        public Vector3 Velocity = default;
-        public Vector4 Color = default;
-        public int Life = 0; //duration of the particle in ticks
+        internal Vector3 Position = default;
+        internal Vector3 Velocity = default;
+        internal Vector4 Color = default;
+        internal int Life = 0; //duration of the particle in ticks
 
-        public Matrix4 Translation = Matrix4.Identity;
-        public Matrix4 Rotation = Matrix4.Identity;
-        public Matrix4 Scale = Matrix4.Identity;
+        internal Matrix4 Translation = Matrix4.Identity;
+        internal Matrix4 Rotation = Matrix4.Identity;
+        internal Matrix4 Scale = Matrix4.Identity;
 
-        public Matrix4 Transformations = Matrix4.Identity;
+        internal Matrix4 Transformations = Matrix4.Identity;
 
-        public Vector3 RotationInfo = default;
+        internal Vector3 RotationInfo = default;
 
-        public float SpritesheetPosition;
-        public Vector2 SideLengths = new Vector2();
+        internal float SpritesheetPosition;
+        internal Vector2 SideLengths = new Vector2();
 
-        public bool Cull = false;
+        internal bool Cull = false;
 
 
-        public Particle() { }
+        internal Particle() { }
 
-        public void Tick() 
+        internal void Tick() 
         {
             if(Life != 0)
             {
@@ -126,7 +126,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         private static Vector3 _positionHelper = default;
-        public void SetPosition(Vector3 position)
+        internal void SetPosition(Vector3 position)
         {
             Position = position;
 
@@ -138,20 +138,20 @@ namespace MortalDungeon.Engine_Classes
 
             CalculateTransformationMatrix();
         }
-        public void Translate(Vector3 velocity)
+        internal void Translate(Vector3 velocity)
         {
             Position += velocity;
 
             SetPosition(Position);
         }
-        public void Translate()
+        internal void Translate()
         {
             Position += Velocity;
 
             SetPosition(Position);
         }
 
-        public void ScaleAll(float f)
+        internal void ScaleAll(float f)
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale.X *= f;
@@ -163,7 +163,7 @@ namespace MortalDungeon.Engine_Classes
             CalculateTransformationMatrix();
         }
 
-        public void ScaleAddition(float f)
+        internal void ScaleAddition(float f)
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale.X += f;
@@ -175,7 +175,7 @@ namespace MortalDungeon.Engine_Classes
             CalculateTransformationMatrix();
         }
 
-        public void RotateX(float degrees)//extremely expensive, research at some point maybe
+        internal void RotateX(float degrees)//extremely expensive, research at some point maybe
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(degrees));
             RotationInfo.X += degrees;
@@ -184,7 +184,7 @@ namespace MortalDungeon.Engine_Classes
 
             CalculateTransformationMatrix();
         }
-        public void RotateY(float degrees)//extremely expensive, research at some point maybe
+        internal void RotateY(float degrees)//extremely expensive, research at some point maybe
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(degrees));
             RotationInfo.Y += degrees;
@@ -193,7 +193,7 @@ namespace MortalDungeon.Engine_Classes
 
             CalculateTransformationMatrix();
         }
-        public void RotateZ(float degrees) //extremely expensive, research at some point maybe
+        internal void RotateZ(float degrees) //extremely expensive, research at some point maybe
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(degrees));
             RotationInfo.Z += degrees;

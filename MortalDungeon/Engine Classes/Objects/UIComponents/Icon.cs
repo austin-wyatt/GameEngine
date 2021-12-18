@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public enum IconSheetIcons
+    internal enum IconSheetIcons
     {
         CrossedSwords,
         Shield,
@@ -24,26 +24,27 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         BrokenMask = 12,
         Channel,
         MonkSmall,
-        MonkBig
+        MonkBig,
+        Circle
     }
-    public class Icon : UIObject
+    internal class Icon : UIObject
     {
-        public enum BackgroundType 
+        internal enum BackgroundType 
         {
             NeutralBackground = 10,
             BuffBackground = 30,
             DebuffBackground = 50
         }
 
-        public Spritesheet _spritesheet;
-        public Enum _spritesheetPosition;
+        internal Spritesheet _spritesheet;
+        internal Enum _spritesheetPosition;
 
-        public UIObject ChargeDisplay = null;
+        internal UIObject ChargeDisplay = null;
 
-        public static UIScale DefaultIconSize = new UIScale(0.25f, 0.25f);
-        public static IconSheetIcons DefaultIcon = IconSheetIcons.QuestionMark; //question mark icon
+        internal static UIScale DefaultIconSize = new UIScale(0.25f, 0.25f);
+        internal static IconSheetIcons DefaultIcon = IconSheetIcons.QuestionMark; //question mark icon
 
-        public Icon(UIScale size, Enum spritesheetPosition, Spritesheet spritesheet, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground)
+        internal Icon(UIScale size, Enum spritesheetPosition, Spritesheet spritesheet, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground)
         {
             Size = size;
             Name = "Icon";
@@ -104,15 +105,15 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             LoadTexture(this);
         }
 
-        public Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground) 
+        internal Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground) 
             : this(size, icon._spritesheetPosition, icon._spritesheet, withBackground, backgroundType) { }
 
-        public override void OnClick()
+        internal override void OnClick()
         {
             base.OnClick();
         }
 
-        public void SetCameraPerspective(bool camPerspective) 
+        internal void SetCameraPerspective(bool camPerspective) 
         {
             BaseObjects.ForEach(b =>
             {
@@ -120,7 +121,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             });
         }
 
-        public void AddChargeDisplay(Ability ability) 
+        internal void AddChargeDisplay(Ability ability) 
         {
             UIScale textBoxSize = new UIScale(Size);
             textBoxSize *= 0.333f;
@@ -159,30 +160,41 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             energyCostBackground.Clickable = true;
             energyCostBackground.OnClickAction = () =>
             {
-                if (ability.Charges < ability.MaxCharges && (ability.CastingUnit.Info.Focus >= ability.RechargeCost || ability.CastingUnit.Info.Health >= ability.RechargeCost))
+                if (ability.Scene._selectedAbility == null && ability.GetCharges() < ability.MaxCharges && ability.CanRecharge())
                 {
-                    if (ability.CastingUnit.Info.Focus >= ability.RechargeCost)
-                    {
-                        ability.CastingUnit.Info.Focus -= ability.RechargeCost;
-                    }
-                    else
-                    {
-                        DamageInstance damage = new DamageInstance();
-                        damage.Damage.Add(DamageType.Focus, ability.RechargeCost);
-
-                        ability.CastingUnit.ApplyDamage(new Unit.DamageParams(damage));
-                    }
+                    ability.ApplyChargeRechargeCost();
 
                     ability.RestoreCharges(1);
+                    ability.Scene.ActionEnergyBar.HoverAmount(0);
                     ability.Scene.Footer.UpdateFooterInfo();
+                }
+                else if (ability.Scene._selectedAbility != null) 
+                {
+                    ability.Scene.DeselectAbility();
                 }
             };
 
-            string chargeTooltip = $"{ability.Charges}/{ability.GetMaxCharges()} Charges";
-
-            if (ability.Charges < ability.GetMaxCharges()) 
+            energyCostBackground.OnHoverEvent += (_) =>
             {
-                chargeTooltip += $"\nRestore cost: {ability.RechargeCost}";
+                if (ability.Scene._selectedAbility == null && ability.GetCharges() < ability.MaxCharges && ability.CanRecharge())
+                {
+                    ability.Scene.ActionEnergyBar.HoverAmount(Ability.ChargeRechargeActionCost);
+                }
+            };
+
+            energyCostBackground.OnHoverEndEvent += (_) =>
+            {
+                if (ability.Scene._selectedAbility == null && ability.GetCharges() < ability.MaxCharges && ability.CanRecharge())
+                {
+                    ability.Scene.ActionEnergyBar.HoverAmount(0);
+                }
+            };
+
+            string chargeTooltip = $"{ability.GetCharges()}/{ability.GetMaxCharges()} Charges";
+
+            if (ability.GetCharges() < ability.GetMaxCharges()) 
+            {
+                chargeTooltip += $"\nRestore cost: {ability.ChargeRechargeCost}";
             }
 
             UIHelpers.AddTimedHoverTooltip(energyCostBackground, chargeTooltip, ability.Scene);
@@ -198,7 +210,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         /// <summary>
         /// Creates a pattern of action point objects to indicate how many action points the ability costs
         /// </summary>
-        public void AddActionCost(Ability ability) 
+        internal void AddActionCost(Ability ability) 
         {
             UIScale textBoxSize = new UIScale(Size);
             textBoxSize *= 0.16f;
@@ -224,6 +236,38 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 AddChild(actionCost, 49);
 
                 pos = actionCost.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(0, -2, -0.001f);
+            }
+        }
+
+        internal void AddComboIndicator(Ability ability) 
+        {
+            UIScale textBoxSize = new UIScale(Size);
+            textBoxSize *= 0.1f;
+
+            int comboSize = ability.GetComboSize();
+            int posInCombo = ability.GetPositionInCombo();
+
+            Vector3 pos = GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-5, 8, 0);
+
+            for (int i = comboSize - 1; i >= 0; i--) 
+            {
+                UIBlock comboIndicator = new UIBlock(default, null, default, (int)IconSheetIcons.Circle, true, false, Spritesheets.IconSheet);
+                if (i == posInCombo)
+                {
+                    comboIndicator.SetColor(Colors.LessAggressiveRed);
+                }
+                else 
+                {
+                    comboIndicator.SetColor(Colors.White);
+                }
+                
+                comboIndicator.MultiTextureData.MixTexture = false;
+                comboIndicator.SetSize(textBoxSize);
+                comboIndicator.SetPositionFromAnchor(pos, UIAnchorPosition.TopRight);
+
+                AddChild(comboIndicator, 49);
+
+                pos = comboIndicator.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(-2, 0, 0);
             }
         }
     }

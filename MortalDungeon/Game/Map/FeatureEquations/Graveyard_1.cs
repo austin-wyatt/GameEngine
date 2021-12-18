@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    public class Graveyard_1 : FeatureEquation
+    internal class Graveyard_1 : FeatureEquation
     {
         private enum GraveyardFeatures 
         {
@@ -30,15 +30,18 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         private List<BaseTile> WallTiles = new List<BaseTile>();
         private List<BaseTile> GateTiles = new List<BaseTile>();
 
-        public Graveyard_1(GraveyardParams @params)
+        internal Graveyard_1(GraveyardParams @params)
         {
             GraveyardParams = @params;
             NumberGen = new Random(HashCoordinates(@params.Origin.X, @params.Origin.Y));
         }
 
-        public override void ApplyToTile(BaseTile tile)
+        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
+
+            if (!freshGeneration)
+                return;
 
             if (AffectedPoints.TryGetValue(affectedPoint, out int value))
             {
@@ -84,17 +87,21 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                         Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
                         EntityManager.AddEntity(skele);
 
+                        skele.Handle.pack_name = "graveyard" + FeatureID;
+
                         skele.DestroyOnUnload = true;
 
                         skele.Load(affectedPoint);
+
+                        //Console.WriteLine("Skeleton spawned on point " + affectedPoint.ToString());
                     }
                 }
             }
         }
 
-        public override void GenerateFeature()
+        internal override void GenerateFeature()
         {
-            AffectedPoints.Clear();
+            ClearAffectedPoints();
 
             FeaturePoint startPoint = GraveyardParams.Origin;
 
@@ -160,6 +167,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     }
 
                     AffectedPoints[path[j]] = val;
+                    AffectedMaps.Add(FeaturePointToTileMapCoords(path[j]));
                 }
             }
 
@@ -178,7 +186,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             WallPoints.Clear();
         }
 
-        public override void OnAppliedToMaps()
+        internal override void OnAppliedToMaps()
         {
             base.OnAppliedToMaps();
 
@@ -197,11 +205,12 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             {
                 GateTiles.ForEach(tile =>
                 {
-                    Wall wall = tile.Structure as Wall;
-                    if (wall != null && wall.WallType == WallType.Wall)
-                    {
-                        wall.CreateDoor(tile);
-                    }
+                    //Wall wall = tile.Structure as Wall;
+                    //if (wall != null && wall.WallType == WallType.Wall)
+                    //{
+                    //    wall.CreateDoor(tile);
+                    //}
+                    tile.RemoveStructure(tile.Structure);
                 });
                 
             }
@@ -209,25 +218,19 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             WallTiles.Clear();
             GateTiles.Clear();
         }
-
-
-        internal override void UpdatePoint(FeaturePoint point)
-        {
-            
-        }
     }
 
 
-    public struct GraveyardParams
+    internal struct GraveyardParams
     {
-        public FeaturePoint Origin;
-        public int Radius;
-        public int GraveyardRadius;
-        public float TreeDensity;
-        public int GrassFalloffRadius;
-        public int Doors;
+        internal FeaturePoint Origin;
+        internal int Radius;
+        internal int GraveyardRadius;
+        internal float TreeDensity;
+        internal int GrassFalloffRadius;
+        internal int Doors;
 
-        public GraveyardParams(FeaturePoint origin, int radius = 10, int graveyardRadius = 5, float density = 0.3f)
+        internal GraveyardParams(FeaturePoint origin, int radius = 10, int graveyardRadius = 5, float density = 0.3f)
         {
             Origin = origin;
             Radius = radius;

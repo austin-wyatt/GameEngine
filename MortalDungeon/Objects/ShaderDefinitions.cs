@@ -6,9 +6,9 @@ using System.Text;
 namespace MortalDungeon.Objects
 {
 
-    public static class ShaderList
+    internal static class ShaderList
     {
-        public static readonly List<Shader> AllShaders = new List<Shader>() 
+        internal static readonly List<Shader> AllShaders = new List<Shader>() 
         { 
             Shaders.DEFAULT_SHADER, 
             Shaders.LINE_SHADER, 
@@ -18,23 +18,24 @@ namespace MortalDungeon.Objects
             //Shaders.TILE_MAP_SHADER
         };
     }
-    public static class Shaders 
+    internal static class Shaders 
     {
-        public static readonly Shader DEFAULT_SHADER = new Shader("Shaders/OldShaders/oldShader.vert", "Shaders/OldShaders/oldShader.frag");
-        public static readonly Shader FAST_DEFAULT_SHADER = new Shader("Shaders/fastDefaultShader.vert", "Shaders/shader.frag");
-        public static readonly Shader POINT_SHADER = new Shader("Shaders/OldShaders/pointShader.vert", "Shaders/OldShaders/pointShader.frag");
-        public static readonly Shader LINE_SHADER = new Shader("Shaders/OldShaders/lineShader.vert", "Shaders/OldShaders/lineShader.frag");
-        public static readonly Shader TILE_MAP_SHADER = new Shader("Shaders/tileMapShader.vert", "Shaders/tileMapShader.frag");
+        internal static readonly Shader DEFAULT_SHADER = new Shader("Shaders/OldShaders/oldShader.vert", "Shaders/OldShaders/oldShader.frag");
+        internal static readonly Shader FAST_DEFAULT_SHADER = new Shader("Shaders/fastDefaultShader.vert", "Shaders/shader.frag");
+        internal static readonly Shader POINT_SHADER = new Shader("Shaders/OldShaders/pointShader.vert", "Shaders/OldShaders/pointShader.frag");
+        internal static readonly Shader LINE_SHADER = new Shader("Shaders/OldShaders/lineShader.vert", "Shaders/OldShaders/lineShader.frag");
+        internal static readonly Shader TILE_MAP_SHADER = new Shader("Shaders/tileMapShader.vert", "Shaders/tileMapShader.frag");
 
 
         //Image transformation shaders
-        public static readonly Shader SIMPLE_SHADER = new Shader("Shaders/simpleShader.vert", "Shaders/simpleShader.frag");
+        internal static readonly Shader SIMPLE_SHADER = new Shader("Shaders/simpleShader.vert", "Shaders/simpleShader.frag");
+        internal static readonly Shader SKYBOX_SHADER = new Shader("Shaders/CubeMap/CubeMapShader.vert", "Shaders/CubeMap/CubeMapShader.frag");
 
-        public static readonly Shader LIGHT_OBSTRUCTION_SHADER = new Shader("Shaders/lightObstructionShader.vert", "Shaders/lightObstructionShader.frag");
-        public static readonly Shader LIGHT_SHADER = new Shader("Shaders/lightShader.vert", "Shaders/lightShader.frag");
+        internal static readonly Shader LIGHT_OBSTRUCTION_SHADER = new Shader("Shaders/lightObstructionShader.vert", "Shaders/lightObstructionShader.frag");
+        internal static readonly Shader LIGHT_SHADER = new Shader("Shaders/lightShader.vert", "Shaders/lightShader.frag");
 
-        public static readonly Shader COLOR_SHADER = new Shader("Shaders/colorShader.vert", "Shaders/colorShader.frag");
+        internal static readonly Shader COLOR_SHADER = new Shader("Shaders/colorShader.vert", "Shaders/colorShader.frag");
 
-        public static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");
+        internal static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");
     } 
 }

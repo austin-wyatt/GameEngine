@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MortalDungeon.Engine_Classes.Lighting;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Objects;
@@ -8,7 +9,7 @@ using OpenTK.Mathematics;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public enum ObjectRenderType 
+    internal enum ObjectRenderType 
     {
         Unknown,
         Color,
@@ -16,98 +17,98 @@ namespace MortalDungeon.Engine_Classes
         Particle
     }
 
-    public static class Colors 
+    internal static class Colors 
     {
-        public static Vector4 Black = new Vector4(0, 0, 0, 1);
-        public static Vector4 White = new Vector4(1, 1, 1, 1);
-        public static Vector4 Red = new Vector4(1, 0, 0, 1);
-        public static Vector4 Green = new Vector4(0, 1, 0, 1);
-        public static Vector4 Blue = new Vector4(0, 0, 1, 1);
-        public static Vector4 Tan = new Vector4(0.68f, 0.66f, 0.48f, 1);
+        internal static Vector4 Black = new Vector4(0, 0, 0, 1);
+        internal static Vector4 White = new Vector4(1, 1, 1, 1);
+        internal static Vector4 Red = new Vector4(1, 0, 0, 1);
+        internal static Vector4 Green = new Vector4(0, 1, 0, 1);
+        internal static Vector4 Blue = new Vector4(0, 0, 1, 1);
+        internal static Vector4 Tan = new Vector4(0.68f, 0.66f, 0.48f, 1);
 
-        public static Vector4 TranslucentRed = new Vector4(1, 0, 0, 0.5f);
-        public static Vector4 MoreTranslucentRed = new Vector4(1, 0, 0, 0.35f);
-        public static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.4f);
-        public static Vector4 MoreTranslucentBlue = new Vector4(0, 0, 1, 0.35f);
+        internal static Vector4 TranslucentRed = new Vector4(1, 0, 0, 0.5f);
+        internal static Vector4 MoreTranslucentRed = new Vector4(1, 0, 0, 0.35f);
+        internal static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.4f);
+        internal static Vector4 MoreTranslucentBlue = new Vector4(0, 0, 1, 0.35f);
 
-        public static Vector4 LessAggressiveRed = new Vector4(0.62f, 0.18f, 0.18f, 1);
+        internal static Vector4 LessAggressiveRed = new Vector4(0.62f, 0.18f, 0.18f, 1);
 
-        public static Vector4 UILightGray = new Vector4(0.85f, 0.85f, 0.85f, 1);
-        public static Vector4 UIDefaultGray = new Vector4(0.5f, 0.5f, 0.5f, 1);
-        public static Vector4 UIHoveredGray = new Vector4(0.4f, 0.4f, 0.4f, 1);
-        public static Vector4 UISelectedGray = new Vector4(0.3f, 0.3f, 0.3f, 1);
-        public static Vector4 UIDisabledGray = new Vector4(0.71f, 0.71f, 0.71f, 1);
-        public static Vector4 UITextBlack = new Vector4(0.1f, 0.1f, 0.1f, 1);
+        internal static Vector4 UILightGray = new Vector4(0.85f, 0.85f, 0.85f, 1);
+        internal static Vector4 UIDefaultGray = new Vector4(0.5f, 0.5f, 0.5f, 1);
+        internal static Vector4 UIHoveredGray = new Vector4(0.4f, 0.4f, 0.4f, 1);
+        internal static Vector4 UISelectedGray = new Vector4(0.3f, 0.3f, 0.3f, 1);
+        internal static Vector4 UIDisabledGray = new Vector4(0.71f, 0.71f, 0.71f, 1);
+        internal static Vector4 UITextBlack = new Vector4(0.1f, 0.1f, 0.1f, 1);
 
-        public static Vector4 IconHover = new Vector4(0.85f, 0.85f, 0.85f, 1);
-        public static Vector4 IconSelected = new Vector4(0.78f, 0.78f, 0.78f, 1);
-        public static Vector4 IconDisabled = new Vector4(0.7f, 0.7f, 0.7f, 1);
+        internal static Vector4 IconHover = new Vector4(0.85f, 0.85f, 0.85f, 1);
+        internal static Vector4 IconSelected = new Vector4(0.78f, 0.78f, 0.78f, 1);
+        internal static Vector4 IconDisabled = new Vector4(0.7f, 0.7f, 0.7f, 1);
 
-        public static Vector4 Transparent = new Vector4(0, 0, 0, 0);
+        internal static Vector4 Transparent = new Vector4(0, 0, 0, 0);
     }
 
-    //public struct ShaderInfo 
+    //internal struct ShaderInfo 
     //{
-    //    public ShaderInfo(string vertex, string fragment) 
+    //    internal ShaderInfo(string vertex, string fragment) 
     //    {
     //        Vertex = vertex;
     //        Fragment = fragment;
     //    }
-    //    public string Vertex;
-    //    public string Fragment;
+    //    internal string Vertex;
+    //    internal string Fragment;
     //}
 
-    public struct RotationData
+    internal struct RotationData
     {
-        public float X;
-        public float Y;
-        public float Z;
+        internal float X;
+        internal float Y;
+        internal float Z;
     }
 
-    public class RenderableObject
+    internal class RenderableObject
     {
-        public float[] Vertices;
-        public ObjectRenderType RenderType = ObjectRenderType.Color;
-        public uint[] VerticesDrawOrder;
-        public int Points;
-        public Vector3 Center;
+        internal float[] Vertices;
+        internal ObjectRenderType RenderType = ObjectRenderType.Color;
+        internal uint[] VerticesDrawOrder;
+        internal int Points;
+        internal Vector3 Center;
 
         //when a renderable object is loaded into a scene it's texture needs to be added to the texture list
-        public TextureInfo Textures;
+        internal TextureInfo Textures;
 
         //Every renderable object begins at the origin and is placed from there.
-        public Vector4 Position = new Vector4(0, 0, 0, 1.0f);
+        internal Vector4 Position = new Vector4(0, 0, 0, 1.0f);
 
-        public int Stride;
+        internal int Stride;
 
         //Textures and shaders will be loaded separately then assigned to the object
-        public Shader ShaderReference;
-        public Texture TextureReference;
+        internal Shader ShaderReference;
+        internal Material Material = new Material();
 
 
         //transformations
-        public Matrix4 Translation = Matrix4.Identity;
-        public Matrix4 Rotation = Matrix4.Identity;
-        public Matrix4 Scale = Matrix4.Identity;
+        internal Matrix4 Translation = Matrix4.Identity;
+        internal Matrix4 Rotation = Matrix4.Identity;
+        internal Matrix4 Scale = Matrix4.Identity;
 
-        public Matrix4 Transformations = Matrix4.Identity;
+        internal Matrix4 Transformations = Matrix4.Identity;
 
-        public RotationData RotationInfo = new RotationData() { X = 0, Y = 0, Z = 0 };
+        internal RotationData RotationInfo = new RotationData() { X = 0, Y = 0, Z = 0 };
 
-        public Vector4 BaseColor = new Vector4();
-        public Vector4 InterpolatedColor = new Vector4();
-        public float ColorProportion = 0;
+        internal Vector4 BaseColor = new Vector4();
+        internal Vector4 InterpolatedColor = new Vector4();
+        internal float ColorProportion = 0;
 
-        public List<Color> AppliedColors = new List<Color>(); 
+        internal List<Color> AppliedColors = new List<Color>(); 
 
-        public bool CameraPerspective = false;
+        internal bool CameraPerspective = false;
 
-        public float SpritesheetPosition = 0;
-        public Vector2 SideLengths = new Vector2(1, 1);
+        internal float SpritesheetPosition = 0;
+        internal Vector2 SideLengths = new Vector2(1, 1);
 
-        public float VerticeType = 0;
+        internal float VerticeType = 0;
 
-        public RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
+        internal RenderableObject(float[] vertices, uint[] verticesDrawOrder, int points, TextureInfo textures, Vector4 color, ObjectRenderType renderType, Shader shaderReference, Vector3 center = new Vector3()) 
         {
             Center = center;
             Points = points;
@@ -122,7 +123,7 @@ namespace MortalDungeon.Engine_Classes
             Stride = GetVerticesSize(vertices) / Points;
         }
 
-        public RenderableObject(ObjectDefinition def, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
+        internal RenderableObject(ObjectDefinition def, Vector4 color, ObjectRenderType renderType, Shader shaderReference)
         {
             Center = def.Center;
             Points = def.Points;
@@ -149,12 +150,12 @@ namespace MortalDungeon.Engine_Classes
             Stride = GetVerticesSize(def.Vertices) / Points;
         }
 
-        public RenderableObject(RenderableObject oldObj)
+        internal RenderableObject(RenderableObject oldObj)
         {
             Center = oldObj.Center;
             Points = oldObj.Points;
             Textures = oldObj.Textures;
-            TextureReference = oldObj.TextureReference;
+            Material = new Material(oldObj.Material);
             RenderType = oldObj.RenderType;
             VerticesDrawOrder = oldObj.VerticesDrawOrder;
             ShaderReference = oldObj.ShaderReference;
@@ -177,7 +178,7 @@ namespace MortalDungeon.Engine_Classes
             Position = new Vector4(oldObj.Position);
         }
 
-        public RenderableObject(ObjectDefinition def, Vector4 color, Shader shaderReference)
+        internal RenderableObject(ObjectDefinition def, Vector4 color, Shader shaderReference)
         {
             Center = def.Center;
             Points = def.Points;
@@ -203,7 +204,7 @@ namespace MortalDungeon.Engine_Classes
             Stride = GetVerticesSize(def.Vertices) / Points;
         }
 
-        public int GetRenderDataOffset(ObjectRenderType renderType = ObjectRenderType.Unknown) 
+        internal int GetRenderDataOffset(ObjectRenderType renderType = ObjectRenderType.Unknown) 
         {
             if(renderType == ObjectRenderType.Unknown)
             {
@@ -223,22 +224,22 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public int GetVerticesSize()
+        internal int GetVerticesSize()
         {
             return Vertices.Length * sizeof(float);
         }
 
-        public int GetVerticesSize(float[] vertices)
+        internal int GetVerticesSize(float[] vertices)
         {
             return vertices.Length * sizeof(float);
         }
 
-        public int GetVerticesDrawOrderSize()
+        internal int GetVerticesDrawOrderSize()
         {
             return VerticesDrawOrder.Length * sizeof(uint);
         }
 
-        public float[] GetPureVertexData()
+        internal float[] GetPureVertexData()
         {
             int stride = Vertices.Length / Points;
             float[] vertexData = new float[Vertices.Length - 2 * Points];
@@ -254,7 +255,7 @@ namespace MortalDungeon.Engine_Classes
             return vertexData;
         }
 
-        public void SetBaseColor(Vector4 color) 
+        internal void SetBaseColor(Vector4 color) 
         {
             BaseColor = color;
 
@@ -262,7 +263,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         private bool _useAppliedColors = true;
-        public void UseAppliedColors(bool use) 
+        internal void UseAppliedColors(bool use) 
         {
             if (_useAppliedColors != use)
             {
@@ -271,21 +272,21 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void AddAppliedColor(Color color) 
+        internal void AddAppliedColor(Color color) 
         {
             AppliedColors.Add(color);
 
             CalculateInterpolatedColor();
         }
 
-        public void RemoveAppliedColor(Color color) 
+        internal void RemoveAppliedColor(Color color) 
         {
             AppliedColors.Remove(color);
 
             CalculateInterpolatedColor();
         }
 
-        public void CalculateInterpolatedColor() 
+        internal void CalculateInterpolatedColor() 
         {
             InterpolatedColor = new Vector4(BaseColor);
 
@@ -329,7 +330,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //TRANSLATE FUNCTIONS
-        public void TranslateX(float f)
+        internal void TranslateX(float f)
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.X += f;
@@ -337,7 +338,7 @@ namespace MortalDungeon.Engine_Classes
 
             SetTranslation(currentTranslation);
         }
-        public void TranslateY(float f) 
+        internal void TranslateY(float f) 
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.Y += f;
@@ -345,7 +346,7 @@ namespace MortalDungeon.Engine_Classes
 
             SetTranslation(currentTranslation);
         }
-        public void TranslateZ(float f)
+        internal void TranslateZ(float f)
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.Z += f;
@@ -353,7 +354,7 @@ namespace MortalDungeon.Engine_Classes
 
             SetTranslation(currentTranslation);
         }
-        public void Translate(Vector3 translation)
+        internal void Translate(Vector3 translation)
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.X += translation.X;
@@ -368,7 +369,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //SCALE FUNCTIONS
-        public void ScaleAll (float f) 
+        internal void ScaleAll (float f) 
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale.X *= f;
@@ -377,21 +378,21 @@ namespace MortalDungeon.Engine_Classes
 
             SetScale(currentScale);
         }
-        public void SetScaleAll(float f)
+        internal void SetScaleAll(float f)
         {
             Vector3 currentScale = new Vector3(f, f, f);
 
             SetScale(currentScale);
         }
 
-        public void SetScale(float x, float y, float z)
+        internal void SetScale(float x, float y, float z)
         {
             Vector3 currentScale = new Vector3(x, y, z);
 
             SetScale(currentScale);
         }
 
-        public void ScaleAddition(float f)
+        internal void ScaleAddition(float f)
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale.X += f;
@@ -400,21 +401,21 @@ namespace MortalDungeon.Engine_Classes
 
             SetScale(currentScale);
         }
-        public void ScaleX (float f) 
+        internal void ScaleX (float f) 
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale[0] *= f;
 
             SetScale(currentScale);
         }
-        public void ScaleY(float f)
+        internal void ScaleY(float f)
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale[1] *= f;
 
             SetScale(currentScale);
         }
-        public void ScaleZ(float f)
+        internal void ScaleZ(float f)
         {
             Vector3 currentScale = Scale.ExtractScale();
             currentScale[2] *= f;
@@ -423,7 +424,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //ROTATE FUNCTIONS
-        public void RotateX(float degrees)
+        internal void RotateX(float degrees)
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(degrees));
             RotationInfo.X += degrees;
@@ -432,7 +433,7 @@ namespace MortalDungeon.Engine_Classes
 
             CalculateTransformationMatrix();
         }
-        public void RotateY(float degrees)
+        internal void RotateY(float degrees)
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(degrees));
             RotationInfo.Y += degrees;
@@ -441,7 +442,7 @@ namespace MortalDungeon.Engine_Classes
 
             CalculateTransformationMatrix();
         }
-        public void RotateZ(float degrees)
+        internal void RotateZ(float degrees)
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(degrees));
             RotationInfo.Z += degrees;
@@ -452,19 +453,19 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //TRANSFORMATION SETTERS
-        //public void SetRotation(Vector3 translations)
+        //internal void SetRotation(Vector3 translations)
         //{
         //    Translation = Matrix4.CreateTranslation(translations);
         //}
-        public Vector3 CurrentScale = new Vector3(1, 1, 1);
-        public void SetScale(Vector3 scale)
+        internal Vector3 CurrentScale = new Vector3(1, 1, 1);
+        internal void SetScale(Vector3 scale)
         {
             Scale = Matrix4.CreateScale(scale);
             CurrentScale = scale;
 
             CalculateTransformationMatrix();
         }
-        public void SetTranslation(Vector3 translations) 
+        internal void SetTranslation(Vector3 translations) 
         {
             Translation = Matrix4.CreateTranslation(translations);
             Position = new Vector4(Translation.ExtractTranslation(), Position.W);
@@ -474,19 +475,19 @@ namespace MortalDungeon.Engine_Classes
         
 
         //TRANSFORMATION RESETTERS
-        public void ResetRotation()
+        internal void ResetRotation()
         {
             Rotation = Matrix4.Identity;
 
             CalculateTransformationMatrix();
         }
-        public void ResetScale()
+        internal void ResetScale()
         {
             Scale = Matrix4.Identity;
 
             CalculateTransformationMatrix();
         }
-        public void ResetTranslation()
+        internal void ResetTranslation()
         {
             Translation = Matrix4.Identity;
             Position = new Vector4(0, 0, 0, Position.W);
@@ -494,7 +495,7 @@ namespace MortalDungeon.Engine_Classes
             CalculateTransformationMatrix();
         }
 
-        public Vector3 GetRotation() 
+        internal Vector3 GetRotation() 
         {
             Vector3 rotations = Transformations.ExtractRotation().ToEulerAngles();
 
@@ -505,7 +506,7 @@ namespace MortalDungeon.Engine_Classes
             return rotations;
         }
 
-        public Vector3 GetRotationRadians()
+        internal Vector3 GetRotationRadians()
         {
             return Transformations.ExtractRotation().ToEulerAngles();
         }

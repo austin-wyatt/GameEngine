@@ -5,15 +5,15 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class AbilityProfile
+    internal class AbilityProfile
     {
-        public string Name;
-        public Func<Unit, Ability> CreateAbility;
+        internal string Name;
+        internal Func<Unit, Ability> CreateAbility;
     }
 
-    public static class AbilityProfiles
+    internal static class AbilityProfiles
     {
-        public static List<AbilityProfile> Profiles = new List<AbilityProfile>();
+        internal static List<AbilityProfile> Profiles = new List<AbilityProfile>();
 
         static AbilityProfiles()
         {

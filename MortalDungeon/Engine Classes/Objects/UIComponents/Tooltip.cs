@@ -5,10 +5,10 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public class Tooltip : UIObject
+    internal class Tooltip : UIObject
     {
-        public UIDimensions Margins = new UIDimensions();
-        public Tooltip() 
+        internal UIDimensions Margins = new UIDimensions();
+        internal Tooltip() 
         {
             UIBlock mainBlock = new UIBlock();
             mainBlock.MultiTextureData.MixPercent = 0.1f;
@@ -19,14 +19,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             AddChild(BaseComponent, -10);
         }
 
-        public override void AddChild(UIObject uiObj, int zIndex = -1)
+        internal override void AddChild(UIObject uiObj, int zIndex = -1)
         {
             base.AddChild(uiObj, zIndex);
 
             FitContents();
         }
 
-        public void FitContents(bool useMargin = true, UIDimensions margin = default) 
+        internal void FitContents(bool useMargin = true, UIDimensions margin = default) 
         {
             UIDimensions dimTopLeft = new UIDimensions(9999,9999);
             UIDimensions dimBottomRight = new UIDimensions(-9999,-9999);

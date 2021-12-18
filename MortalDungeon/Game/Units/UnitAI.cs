@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Units
 {
-    public enum UnitTeam
+    internal enum UnitTeam
     {
         Unknown,
         PlayerUnits,
@@ -18,25 +18,25 @@ namespace MortalDungeon.Game.Units
         Skeletons,
     }
 
-    public enum Relation 
+    internal enum Relation 
     {
         Friendly,
         Hostile,
         Neutral
     }
 
-    public enum ControlType 
+    internal enum ControlType 
     {
         Controlled,
         Basic_AI,
     }
     
 
-    public class UnitAI
+    internal class UnitAI
     {
-        public UnitTeam Team = UnitTeam.Skeletons;
-        public ControlType ControlType = ControlType.Controlled;
-        public Dispositions Dispositions;
+        internal UnitTeam Team = UnitTeam.Skeletons;
+        internal ControlType ControlType = ControlType.Controlled;
+        internal Dispositions Dispositions;
 
         private Unit _unit;
         private CombatScene Scene => _unit.Scene;
@@ -44,25 +44,30 @@ namespace MortalDungeon.Game.Units
         private TilePoint TilePosition => _unit.Info.TileMapPosition.TilePoint;
         private BaseTile Tile => _unit.Info.TileMapPosition;
 
-        public bool Fighting = true; //if a unit surrenders they will no longer be considered fighting
+        internal bool Fighting = true; //if a unit surrenders they will no longer be considered fighting
 
-        public UnitAI(Unit unit) 
+        internal UnitAI(Unit unit) 
         {
             _unit = unit;
             Dispositions = new Dispositions(_unit);
         }
 
 
-        public void TakeTurn() 
+        internal void TakeTurn() 
         {
             //List<BaseTile> tilesInVision = Scene.GetTeamVision(_unit.AI.Team);
+
+            foreach (var disp in Dispositions.DispositionList) 
+            {
+                disp.TurnFatigue = 0;
+            }
 
             _depth = 0;
             BeginNextAction();
         }
 
         private int _depth = 0;
-        public void BeginNextAction() 
+        internal void BeginNextAction() 
         {
             if (_depth > 1000)
             {
@@ -83,13 +88,13 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        public void EndTurn() 
+        internal void EndTurn() 
         {
             new AI.EndTurn(_unit).EnactEffect();
         }
 
 
-        public float GetPathMovementCost(List<BaseTile> tiles)
+        internal float GetPathMovementCost(List<BaseTile> tiles)
         {
             float value = 0;
 
@@ -101,7 +106,7 @@ namespace MortalDungeon.Game.Units
             return value;
         }
 
-        public List<BaseTile> GetAffordablePath(List<BaseTile> tiles) 
+        internal List<BaseTile> GetAffordablePath(List<BaseTile> tiles) 
         {
             List<BaseTile> returnList = new List<BaseTile>();
 
@@ -126,51 +131,87 @@ namespace MortalDungeon.Game.Units
         }
 
 
-        public UnitAIAction GetAction()
+        internal UnitAIAction GetAction()
         {
             Dictionary<AIAction, UnitAIAction> actionValues = new Dictionary<AIAction, UnitAIAction>();
 
             UnitAIAction selectedAction = new AI.EndTurn(_unit) { Weight = 1 };
 
             List<UnitAIAction> actions = new List<UnitAIAction> { selectedAction };
+            List<Disposition> actionDispositions = new List<Disposition>() { new Disposition(_unit) };
 
             UnitAIAction tempAction;
             foreach (AIAction action in Enum.GetValues(typeof(AIAction)))
             {
-                UnitAIAction unitAction = new UnitAIAction(_unit);
-
                 Dispositions.DispositionList.ForEach(disp =>
                 {
                     tempAction = disp.GetAction(action);
 
                     if (tempAction != null)
                     {
+                        tempAction.Weight -= disp.Fatigue;
+                        tempAction.Weight -= disp.TurnFatigue;
+
                         actions.Add(tempAction);
+                        actionDispositions.Add(disp);
                     }
                 });
             }
 
-
-            actions.ForEach(a =>
+            int selectedActionIndex = 0;
+            for (int i = 0; i < actions.Count; i++)
             {
-                if (a.Weight > selectedAction.Weight) 
+                if (actions[i].Weight > selectedAction.Weight) 
                 {
-                    selectedAction = a;
+                    selectedAction = actions[i];
+                    selectedActionIndex = i;
                 }
-            });
+                if (actions[i].Weight == selectedAction.Weight) 
+                {
+                    if(GlobalRandom.NextFloat() >= 0.5f) 
+                    {
+                        selectedAction = actions[i];
+                        selectedActionIndex = i;
+                    }
+                }
+            }
 
             Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Movement remaining. {_unit.Info.ActionEnergy} Actions remaining.");
+
+
+            float fatigueBuildup = GlobalRandom.NextFloat(0.01f, 0.05f);
+
+            Disposition selectedDisposition = actionDispositions[selectedActionIndex];
+            selectedDisposition.OnActionSelected(selectedAction.ActionType);
+
+            selectedDisposition.Fatigue += fatigueBuildup;
+            var dispHashSet = actionDispositions.ToHashSet();
+
+            dispHashSet.Remove(selectedDisposition);
+
+            foreach (var item in dispHashSet) 
+            {
+                if (item.Fatigue > 0) 
+                {
+                    item.Fatigue -= 0.01f;
+                }
+                if (item.Fatigue < 0) 
+                {
+                    item.Fatigue = 0;
+                }
+            }
+
 
             return selectedAction;
         }
 
         private static Dictionary<int, Relation> TeamRelations = new Dictionary<int, Relation>();
-        public static void SetTeamRelation(UnitTeam a, UnitTeam b, Relation relation) 
+        internal static void SetTeamRelation(UnitTeam a, UnitTeam b, Relation relation) 
         {
             TeamRelations.Add(a.Hash(b), relation);
         }
 
-        public static Relation GetTeamRelation(UnitTeam a, UnitTeam b) 
+        internal static Relation GetTeamRelation(UnitTeam a, UnitTeam b) 
         {
             if (TeamRelations.TryGetValue(a.Hash(b), out Relation value))
             {
@@ -184,7 +225,7 @@ namespace MortalDungeon.Game.Units
     }
 
 
-    public enum AIAction 
+    internal enum AIAction 
     {
         MoveCloser,
         MoveFarther,
@@ -208,7 +249,7 @@ namespace MortalDungeon.Game.Units
     /// <summary>
     /// Determines the preferred strategy of the AI controlled unit
     /// </summary>
-    public enum AIDisposition
+    internal enum AIDisposition
     {
         MeleeDamageDealer,
         Healer,
@@ -218,51 +259,88 @@ namespace MortalDungeon.Game.Units
         Flanker,
         Assassin
     }
-    public class Dispositions 
+    internal class Dispositions 
     {
-        public List<Disposition> DispositionList = new List<Disposition>();
+        internal List<Disposition> DispositionList = new List<Disposition>();
 
-        public Dispositions() { }
+        internal Dispositions() { }
 
-        public Dispositions(Unit unit) 
+        internal Dispositions(Unit unit) 
         {
 
         }
 
-        public void Add<T>(T disposition) where T : Disposition
+        internal void Add<T>(T disposition) where T : Disposition
         {
             DispositionList.Add(disposition);
         }
     }
 
-    public class Disposition 
+    internal enum UnitCheckEnum
     {
-        public float Weight = 1;
+        /// <summary>
+        /// Value is not taken into account
+        /// </summary>
+        NotSet,
+        /// <summary>
+        /// Value must be true
+        /// </summary>
+        True,
+        /// <summary>
+        /// Value must be false
+        /// </summary>
+        False,
+        /// <summary>
+        /// At least one soft true or soft false value must match
+        /// </summary>
+        SoftTrue,
+        /// <summary>
+        /// At least one soft true or soft false value must match
+        /// </summary>
+        SoftFalse
+    }
+    internal class Disposition 
+    {
+        internal float Weight = 1;
+        /// <summary>
+        /// Fatigue makes the AI less likely to take a course of action the more often it is selected
+        /// </summary>
+        internal float Fatigue = 0;
+
+        /// <summary>
+        /// Turn fatigue generally builds up faster and will dissaude the AI from repeating the single "optimal" action in a single turn.
+        /// </summary>
+        internal float TurnFatigue = 0;
         protected Unit _unit;
 
         protected CombatScene Scene => _unit.Scene;
         protected TileMap Map => _unit.GetTileMap();
 
-        public Disposition(Unit unit) 
+        internal Disposition(Unit unit) 
         {
             _unit = unit;
         }
 
-        public virtual UnitAIAction GetAction(AIAction action) 
+        internal virtual UnitAIAction GetAction(AIAction action) 
         {
             return null;
         }
 
-        public static Ability GetBestAbility(List<Ability> abilities, Unit unit)
+        internal virtual void OnActionSelected(AIAction action) 
+        {
+
+        }
+
+        internal static Ability GetBestAbility(List<Ability> abilities, Unit unit)
         {
             Ability ability = null;
 
             abilities.ForEach(a =>
             {
-                if (ability == null && a.GetEnergyCost() <= unit.Info.Energy && a.GetActionEnergyCost() <= unit.Info.ActionEnergy)
+                if (ability == null && a.CanCast())
                     ability = a;
 
-                if (ability != null && a.Grade > ability.Grade && a.GetEnergyCost() <= unit.Info.Energy && a.GetActionEnergyCost() <= unit.Info.ActionEnergy)
+                if (ability != null && a.Grade > ability.Grade && a.CanCast())
                 {
                     ability = a;
                 }
@@ -271,32 +349,25 @@ namespace MortalDungeon.Game.Units
             return ability;
         }
 
-        public enum CheckEnum
+        
+        internal class UnitSearchParams 
         {
-            NotSet,
-            True,
-            False,
-            SoftTrue,
-            SoftFalse
-        }
-        public class UnitSearchParams 
-        {
-            public CheckEnum Dead = CheckEnum.NotSet;
-            public CheckEnum IsHostile = CheckEnum.NotSet;
-            public CheckEnum IsFriendly = CheckEnum.NotSet;
-            public CheckEnum IsNeutral = CheckEnum.NotSet;
-            public CheckEnum Self = CheckEnum.NotSet;
+            internal UnitCheckEnum Dead = UnitCheckEnum.NotSet;
+            internal UnitCheckEnum IsHostile = UnitCheckEnum.NotSet;
+            internal UnitCheckEnum IsFriendly = UnitCheckEnum.NotSet;
+            internal UnitCheckEnum IsNeutral = UnitCheckEnum.NotSet;
+            internal UnitCheckEnum Self = UnitCheckEnum.NotSet;
 
-            public UnitSearchParams() { }
+            internal UnitSearchParams() { }
 
-            public bool CheckUnit(Unit unit, Unit castingUnit) 
+            internal bool CheckUnit(Unit unit, Unit castingUnit) 
             {
                 bool softCheck = false;
 
                 bool softCheckUsed = false;
 
                 #region Dead Check
-                if (Dead != CheckEnum.NotSet && !Dead.IsSoft()) 
+                if (Dead != UnitCheckEnum.NotSet && !Dead.IsSoft()) 
                 {
                     if (unit.Info.Dead != Dead.BoolValue()) 
                     {
@@ -317,7 +388,7 @@ namespace MortalDungeon.Game.Units
                 #endregion
 
                 #region Hostile Check
-                if (IsHostile != CheckEnum.NotSet && !IsHostile.IsSoft()) 
+                if (IsHostile != UnitCheckEnum.NotSet && !IsHostile.IsSoft()) 
                 {
                     if (relation == Relation.Hostile && !IsHostile.BoolValue())
                     {
@@ -345,7 +416,7 @@ namespace MortalDungeon.Game.Units
                 #endregion
 
                 #region Friendly Check
-                if (IsFriendly != CheckEnum.NotSet && !IsFriendly.IsSoft())
+                if (IsFriendly != UnitCheckEnum.NotSet && !IsFriendly.IsSoft())
                 {
                     if (relation == Relation.Friendly && !IsFriendly.BoolValue())
                     {
@@ -372,7 +443,7 @@ namespace MortalDungeon.Game.Units
                 #endregion
 
                 #region Neutral Check
-                if (IsNeutral != CheckEnum.NotSet && !IsNeutral.IsSoft())
+                if (IsNeutral != UnitCheckEnum.NotSet && !IsNeutral.IsSoft())
                 {
                     if (relation == Relation.Neutral && !IsNeutral.BoolValue())
                     {
@@ -399,7 +470,7 @@ namespace MortalDungeon.Game.Units
                 #endregion
 
                 #region Self Check
-                if (Self != CheckEnum.NotSet && !Self.IsSoft())
+                if (Self != UnitCheckEnum.NotSet && !Self.IsSoft())
                 {
                     if (unit == castingUnit != Self.BoolValue())
                     {
@@ -421,13 +492,13 @@ namespace MortalDungeon.Game.Units
                 else return softCheck;
             }
 
-            public static UnitSearchParams _ = new UnitSearchParams();
+            internal static UnitSearchParams _ = new UnitSearchParams();
         }
 
 
 
 
-        public static Unit GetClosestUnit(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
+        internal static Unit GetClosestUnit(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
         {
             Unit unit = null;
 
@@ -465,23 +536,50 @@ namespace MortalDungeon.Game.Units
 
             return unit;
         }
+
+        internal static List<Unit> GetReasonablyCloseUnits(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
+        {
+            List<Unit> units = new List<Unit>();
+
+            if (searchParams == null)
+            {
+                searchParams = UnitSearchParams._;
+            }
+
+            castingUnit.Scene._units.ForEach(u =>
+            {
+                if (searchParams.CheckUnit(u, castingUnit))
+                {
+                    (float moveCost, int moves) = castingUnit.Info._movementAbility.GetCostToPoint(u.Info.TileMapPosition.TilePoint, seekRange);
+
+                    if (moves != 0)
+                    {
+                        units.Add(u);
+                    }
+                }
+            });
+
+            return units;
+        }
     }
 
-    public class UnitAIAction 
+    internal class UnitAIAction 
     {
-        public BaseTile TargetedTile;
-        public Unit TargetedUnit;
-        public Unit CastingUnit;
-        public Ability Ability;
+        internal BaseTile TargetedTile;
+        internal Unit TargetedUnit;
+        internal Unit CastingUnit;
+        internal Ability Ability;
 
-        public float Weight = 0;
+        internal AIAction ActionType;
+
+        internal float Weight = 0;
 
         protected CombatScene Scene => CastingUnit.Scene;
         protected TileMap Map => CastingUnit.GetTileMap();
         protected TilePoint TilePosition => CastingUnit.Info.TileMapPosition.TilePoint;
         protected BaseTile Tile => CastingUnit.Info.TileMapPosition;
 
-        public UnitAIAction(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) 
+        internal UnitAIAction(Unit castingUnit, AIAction actionType, Ability ability = null, BaseTile tile = null, Unit unit = null) 
         {
             CastingUnit = castingUnit;
 
@@ -489,8 +587,10 @@ namespace MortalDungeon.Game.Units
             TargetedUnit = unit;
 
             Ability = ability;
+
+            ActionType = actionType;
         }
-        public virtual void EnactEffect() 
+        internal virtual void EnactEffect() 
         {
             Scene.CompleteTurn();
         }

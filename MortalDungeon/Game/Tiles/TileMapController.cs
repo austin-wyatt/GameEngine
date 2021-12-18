@@ -11,10 +11,11 @@ using MortalDungeon.Game.Tiles.TileMaps;
 using System.Diagnostics;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Game.Entities;
+using System.Linq;
 
 namespace MortalDungeon.Game.Tiles
 {
-    public enum MapPosition
+    internal enum MapPosition
     {
         None = 0,
         Top = 1,
@@ -23,23 +24,23 @@ namespace MortalDungeon.Game.Tiles
         Right = 8,
     }
 
-    public class TileMapController
+    internal class TileMapController
     {
-        public List<TileMap> TileMaps = new List<TileMap>();
-        public static StaticBitmap TileBitmap;
+        internal List<TileMap> TileMaps = new List<TileMap>();
+        internal static StaticBitmap TileBitmap;
 
-        public int BaseElevation = 0; //base elevation for determining heightmap colors
+        internal int BaseElevation = 0; //base elevation for determining heightmap colors
 
-        public CombatScene Scene;
+        internal CombatScene Scene;
 
-        public List<FeatureEquation> LoadedFeatures = new List<FeatureEquation>();
+        internal List<FeatureEquation> LoadedFeatures = new List<FeatureEquation>();
 
-        public TileMapController(CombatScene scene = null) 
+        internal TileMapController(CombatScene scene = null) 
         {
             Scene = scene;
         }
 
-        public void AddTileMap(TileMapPoint point, TileMap map) 
+        internal void AddTileMap(TileMapPoint point, TileMap map) 
         {
             map.TileMapCoords = new TileMapPoint(point.X, point.Y);
             TileMaps.Add(map);
@@ -48,15 +49,15 @@ namespace MortalDungeon.Game.Tiles
             map.OnAddedToController();
         }
 
-        public void RemoveTileMap(TileMap map) 
+        internal void RemoveTileMap(TileMap map) 
         {
             lock (EntityManager.Entities) 
             {
-                foreach (Entity entity in EntityManager.Entities)
+                for (int i = EntityManager.Entities.Count - 1; i >= 0; i--) 
                 {
-                    if (entity.Handle.OnTileMap(map)) 
+                    if (EntityManager.Entities[i].Handle.OnTileMap(map))
                     {
-                        entity.Unload();
+                        EntityManager.Entities[i].Unload();
                     }
                 }
             }
@@ -66,7 +67,7 @@ namespace MortalDungeon.Game.Tiles
             TileMaps.Remove(map);
         }
 
-        public void PositionTileMaps() 
+        internal void PositionTileMaps() 
         {
             if (TileMaps.Count == 0)
                 return;
@@ -120,7 +121,7 @@ namespace MortalDungeon.Game.Tiles
             Scene._camera.SetPosition(Scene._camera.Position + offset * 2);
         }
 
-        public void RecreateTileChunks() 
+        internal void RecreateTileChunks() 
         {
             TileMaps.ForEach(map =>
             {
@@ -128,7 +129,7 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        public void ApplyFeatureEquationToMaps(FeatureEquation feature) 
+        internal void ApplyFeatureEquationToMaps(FeatureEquation feature) 
         {
             for (int i = 0; i < TileMaps.Count; i++) 
             {
@@ -141,7 +142,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
         //TODO, optimize so that it only loops through every tile once
-        public void ApplyLoadedFeaturesToMaps(List<TileMapPoint> points)
+        internal void ApplyLoadedFeaturesToMaps(List<TileMapPoint> points)
         {
             LoadedFeatures.ForEach(feature =>
             {
@@ -160,30 +161,53 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        public void ApplyLoadedFeaturesToMap(TileMap map) 
+        internal void ApplyLoadedFeaturesToMaps(List<TileMap> maps, List<TileMapPoint> addedMaps = null)
+        {
+            LoadedFeatures.ForEach(feature =>
+            {
+                for (int i = 0; i < maps.Count; i++)
+                {
+                    bool freshGen = true;
+
+                    if (addedMaps != null) 
+                    {
+                        freshGen = addedMaps.Exists(p => p == maps[i].TileMapCoords);
+                    }
+
+                    if (feature.AffectsMap(maps[i]))
+                    {
+                        feature.ApplyToMap(maps[i], freshGen);
+                    }
+                }
+
+                feature.OnAppliedToMaps();
+            });
+        }
+
+        internal void ApplyLoadedFeaturesToMap(TileMap map, bool freshGeneration = true) 
         {
             LoadedFeatures.ForEach(feature =>
             {
                 if (feature.AffectsMap(map))
                 {
-                    feature.ApplyToMap(map);
+                    feature.ApplyToMap(map, freshGeneration);
                 }
             });
         }
 
-        public void AddFeature(FeatureEquation feature) 
+        internal void AddFeature(FeatureEquation feature) 
         {
             LoadedFeatures.Add(feature);
         }
 
-        public void RemoveFeature(FeatureEquation feature) 
+        internal void RemoveFeature(FeatureEquation feature) 
         {
             LoadedFeatures.Remove(feature);
         }
 
         const int LOADED_MAP_DIMENSIONS = 3;
 
-        public void LoadSurroundingTileMaps(TileMapPoint point) 
+        internal void LoadSurroundingTileMaps(TileMapPoint point) 
         {
             TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
 
@@ -191,6 +215,10 @@ namespace MortalDungeon.Game.Tiles
             List<TileMapPoint> mapsToAdd = new List<TileMapPoint>();
 
             Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, true);
+
+
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
 
             for (int i = 0; i < LOADED_MAP_DIMENSIONS; i++) 
             {
@@ -216,48 +244,49 @@ namespace MortalDungeon.Game.Tiles
                 currPoint.Y = point.Y - 1;
             }
 
-            //Scene.PostTickAction = () =>
-            //{
-                for (int i = TileMaps.Count - 1; i >= 0; i--)
+            for (int i = TileMaps.Count - 1; i >= 0; i--)
+            {
+                if (loadedPoints.Find(p => p == TileMaps[i].TileMapCoords) == null)
                 {
-                    if (loadedPoints.Find(p => p == TileMaps[i].TileMapCoords) == null)
-                    {
-                        RemoveTileMap(TileMaps[i]);
-                    }
+                    RemoveTileMap(TileMaps[i]);
                 }
+            }
 
-                mapsToAdd.ForEach(p =>
-                {
-                    TestTileMap newMap = new TestTileMap(default, p, this) { Width = 50, Height = 50 };
-                    newMap.PopulateTileMap();
-                    AddTileMap(p, newMap);
-                });
+            GC.Collect();
 
-                TileMaps.ForEach(m =>
-                {
-                    m.TileMapCoords.MapPosition = loadedPoints.Find(p => p == m.TileMapCoords).MapPosition;
-                });
+            mapsToAdd.ForEach(p =>
+            {
+                TestTileMap newMap = new TestTileMap(default, p, this) { Width = 50, Height = 50 };
+                newMap.PopulateTileMap();
+                AddTileMap(p, newMap);
+            });
 
-                ApplyLoadedFeaturesToMaps(mapsToAdd);
+            TileMaps.ForEach(m =>
+            {
+                m.TileMapCoords.MapPosition = loadedPoints.Find(p => p == m.TileMapCoords).MapPosition;
+            });
+
+            //ApplyLoadedFeaturesToMaps(mapsToAdd);
+            ApplyLoadedFeaturesToMaps(TileMaps, mapsToAdd);
 
 
-                PositionTileMaps();
+            PositionTileMaps();
 
+            Console.WriteLine("LoadSurroundingTileMaps completed in " + timer.ElapsedMilliseconds + "ms");
 
-                Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, false);
+            Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, false);
 
-                //Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
-                //Scene.FillInTeamFog();
+            //Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
+            //Scene.FillInTeamFog();
 
-                Scene.Controller.CullObjects();
+            Scene.Controller.CullObjects();
 
-                Scene.QueueLightObstructionUpdate();
+            Scene.QueueLightObstructionUpdate();
 
-                Scene.PostTickAction = null;
-            //};
+            Scene.PostTickAction = null;
         }
 
-        public Vector2i GetTopLeftTilePosition()
+        internal Vector2i GetTopLeftTilePosition()
         {
             for (int i = 0; i < TileMaps.Count; i++) 
             {
@@ -270,7 +299,7 @@ namespace MortalDungeon.Game.Tiles
             return new Vector2i(0, 0);
         }
 
-        public Vector2i PointToClusterPosition(TilePoint point) 
+        internal Vector2i PointToClusterPosition(TilePoint point) 
         {
             Vector2i globalPoint = FeatureEquation.PointToMapCoords(point);
 
@@ -279,7 +308,7 @@ namespace MortalDungeon.Game.Tiles
             return globalPoint - zeroPoint;
         }
 
-        public TileMap GetTopLeftMap()
+        internal TileMap GetTopLeftMap()
         {
             for (int i = 0; i < TileMaps.Count; i++)
             {
@@ -292,7 +321,7 @@ namespace MortalDungeon.Game.Tiles
             return null;
         }
 
-        public BaseTile GetCenterTile()
+        internal BaseTile GetCenterTile()
         {
             for (int i = 0; i < TileMaps.Count; i++)
             {
@@ -305,7 +334,7 @@ namespace MortalDungeon.Game.Tiles
             throw new Exception("Tile not found");
         }
 
-        public bool PointAtEdge(TilePoint point) 
+        internal bool PointAtEdge(TilePoint point) 
         {
             TileMapPoint mapPoint = point.ParentTileMap.TileMapCoords;
 
@@ -391,7 +420,7 @@ namespace MortalDungeon.Game.Tiles
             return false;
         }
 
-        public bool IsValidTile(FeaturePoint point) 
+        internal bool IsValidTile(FeaturePoint point) 
         {
             Vector2i topLeftCoord = GetTopLeftTilePosition();
             TileMap topleftMap = GetTopLeftMap();
@@ -403,7 +432,7 @@ namespace MortalDungeon.Game.Tiles
 
         
 
-        public static Vector2i PointToMapCoords(TilePoint point)
+        internal static Vector2i PointToMapCoords(TilePoint point)
         {
             Vector2i coords = new Vector2i
             {
@@ -427,7 +456,7 @@ namespace MortalDungeon.Game.Tiles
                     return TileMaps[i].GetLocalTile(currX, currY);
             }
 
-            throw new Exception("Tile not found");
+            return null;
         }
 
         internal BaseTile GetTile(int xIndex, int yIndex)
@@ -448,10 +477,10 @@ namespace MortalDungeon.Game.Tiles
                     
             }
 
-            throw new Exception("Tile not found");
+            return null;
         }
 
-        public BaseTile GetTile(FeaturePoint point)
+        internal BaseTile GetTile(FeaturePoint point)
         {
             Vector2i topLeftCoord = GetTopLeftTilePosition();
 

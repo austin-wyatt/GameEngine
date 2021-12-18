@@ -12,7 +12,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 
 namespace MortalDungeon.Game.Tiles
 {
-    public static class TileTexturer
+    internal static class TileTexturer
     {
         private const int tile_width = 124; //individual tile width
         private const int tile_width_partial = 92; //stacked width
@@ -23,7 +23,7 @@ namespace MortalDungeon.Game.Tiles
 
         private static readonly Random random = new Random();
 
-        public static void InitializeTexture(TileMap map)
+        internal static void InitializeTexture(TileMap map)
         {
             TileSpritesheet.Use(TextureUnit.Texture0);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
@@ -49,10 +49,17 @@ namespace MortalDungeon.Game.Tiles
             map.Tiles.ForEach(tile => tile.Update());
             RenderTilesToFramebuffer(map);
 
+            var error = GL.GetError();
+            if (error != ErrorCode.NoError) 
+            {
+                Console.Write("OpenGL error in TileTexturer: " + error);
+            }
+
+
             map.TilesToUpdate.Clear();
         }
 
-        public static void UpdateTexture(TileMap map) 
+        internal static void UpdateTexture(TileMap map) 
         {
             RenderTilesToFramebuffer(map);
         }

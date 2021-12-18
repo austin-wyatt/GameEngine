@@ -5,17 +5,17 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map
 {
-    public static class FeatureGenerator
+    internal static class FeatureGenerator
     {
         
 
 
-        public static void GenerateFeatureFromEquation(FeatureEquation feature, TileMap map) 
+        internal static void GenerateFeatureFromEquation(FeatureEquation feature, TileMap map) 
         {
 
         }
 
-        public static void GenerateRiver(TilePoint origin, int width, int length)
+        internal static void GenerateRiver(TilePoint origin, int width, int length)
         {
             if (!origin.IsValidTile())
                 return;

@@ -15,9 +15,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Shoot : Ability
+    internal class Shoot : Ability
     {
-        public Shoot(Unit castingUnit, int range = 6, int minRange = 2, float damage = 10)
+        internal Shoot(Unit castingUnit, int range = 6, int minRange = 2, float damage = 10)
         {
             Type = AbilityTypes.RangedAttack;
             DamageType = DamageType.Piercing;
@@ -36,8 +36,10 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
             //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
@@ -50,7 +52,7 @@ namespace MortalDungeon.Game.Abilities
             return new List<BaseTile>();
         }
 
-        public override bool UnitInRange(Unit unit, BaseTile position = null)
+        internal override bool UnitInRange(Unit unit, BaseTile position = null)
         {
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
             
@@ -80,7 +82,7 @@ namespace MortalDungeon.Game.Abilities
             return inRange;
         }
 
-        public override bool OnUnitClicked(Unit unit)
+        internal override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -94,19 +96,19 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        public override void OnCast()
+        internal override void OnCast()
         {
             TileMap.DeselectTiles();
 
             base.OnCast();
         }
 
-        public override void OnAICast()
+        internal override void OnAICast()
         {
             base.OnAICast();
         }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -181,12 +183,13 @@ namespace MortalDungeon.Game.Abilities
             arrow.AddPropertyAnimation(shootAnimation);
         }
 
-        public override DamageInstance GetDamageInstance()
+        internal override DamageInstance GetDamageInstance()
         {
             DamageInstance instance = new DamageInstance();
 
             instance.Damage.Add(DamageType, Damage);
 
+            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
     }

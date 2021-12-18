@@ -4,16 +4,16 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes.Audio
 {
-    public class AudioBuffer
+    internal class AudioBuffer
     {
-        public int Handle;
+        internal int Handle;
 
-        public bool Loaded = false;
+        internal bool Loaded = false;
 
-        public string Name { get; private set; }
+        internal string Name { get; private set; }
 
         private int _bufferInstanceCount = 0;
-        public int BufferInstance
+        internal int BufferInstance
         {
             get => _bufferInstanceCount++;
         }
@@ -21,9 +21,9 @@ namespace MortalDungeon.Engine_Classes.Audio
         private string Filename = "";
 
 
-        public List<Sound> AttachedSounds = new List<Sound>();  
+        internal List<Sound> AttachedSounds = new List<Sound>();  
 
-        public AudioBuffer(string name = "default", string filename = "")
+        internal AudioBuffer(string name = "default", string filename = "")
         {
             Handle = AL.GenBuffer();
 
@@ -39,7 +39,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             AL.DeleteBuffer(Handle);
         }
 
-        public void Load(Action onFinish = null) 
+        internal void Load(Action onFinish = null) 
         {
             if (Filename != "") 
             {
@@ -54,7 +54,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        public void Unload() 
+        internal void Unload() 
         {
             ForceDetach();
 

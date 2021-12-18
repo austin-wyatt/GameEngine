@@ -6,30 +6,30 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public enum TickDurationTarget 
+    internal enum TickDurationTarget 
     {
         OnRoundStart,
         OnUnitTurnStart,
         OnUnitTurnEnd
     }
 
-    public class TemporaryVision
+    internal class TemporaryVision
     {
-        public List<BaseTile> TilesToReveal = new List<BaseTile>();
-        public int Duration = 0;
+        internal List<BaseTile> TilesToReveal = new List<BaseTile>();
+        internal int Duration = 0;
 
-        public TickDurationTarget TickTarget = TickDurationTarget.OnRoundStart;
+        internal TickDurationTarget TickTarget = TickDurationTarget.OnRoundStart;
 
-        public Unit TargetUnit = null;
+        internal Unit TargetUnit = null;
 
-        public UnitTeam Team = UnitTeam.PlayerUnits;
+        internal UnitTeam Team = UnitTeam.PlayerUnits;
 
-        public void ClearTiles() 
+        internal void ClearTiles() 
         {
             TilesToReveal.Clear();
         }
 
-        public void TickDuration() 
+        internal void TickDuration() 
         {
             Duration--;
         }

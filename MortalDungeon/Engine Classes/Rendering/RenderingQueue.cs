@@ -4,15 +4,16 @@ using MortalDungeon.Game.Units;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Rendering
 {
-    public enum RenderingStates 
+    internal enum RenderingStates 
     {
         GuassianBlur
     }
-    public static class RenderingQueue
+    internal static class RenderingQueue
     {
         private static readonly List<Letter> _LettersToRender = new List<Letter>();
         private static readonly List<GameObject> _UIToRender = new List<GameObject>();
@@ -30,19 +31,25 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         private static readonly List<GameObject> _LightQueue = new List<GameObject>();
 
-        public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
+        internal static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
 
+        internal static Action RenderSkybox = null;
 
         /// <summary>
         /// Render all queued objects
         /// </summary>
-        public static void RenderQueue()
+        internal static void RenderQueue()
         {
+            RenderSkybox?.Invoke();
+
+
             if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur)) 
             {
                 Renderer.DrawToFrameBuffer(Renderer.MainFBO); //Framebuffer should only be used when we want to do post processing
                 Renderer.MainFBO.ClearBuffers();
             }
+
+            GL.Enable(EnableCap.FramebufferSrgb);
 
             //RenderFrameBuffer(MainFBO);
 
@@ -65,14 +72,19 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderLowPriorityQueue();
 
+            //RenderSkybox?.Invoke();
+
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            RenderLightQueue();
+            //RenderLightQueue();
 
             if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur))
             {
                 Renderer.RenderFrameBuffer(Renderer.MainFBO);
                 Renderer.MainFBO.UnbindFrameBuffer();
             }
+
+            GL.Disable(EnableCap.FramebufferSrgb);
+
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
             //GL.Disable(EnableCap.DepthTest);
@@ -92,55 +104,55 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
         #region Particle queue
-        public static void QueueParticlesForRender(ParticleGenerator generator)
+        internal static void QueueParticlesForRender(ParticleGenerator generator)
         {
             _ParticleGeneratorsToRender.Add(generator);
         }
-        public static void RenderQueuedParticles()
+        internal static void RenderQueuedParticles()
         {
-            _ParticleGeneratorsToRender.ForEach(gen =>
+            for (int i = 0; i < _ParticleGeneratorsToRender.Count; i++)
             {
-                Renderer.RenderParticlesInstanced(gen);
-            });
+                Renderer.RenderParticlesInstanced(_ParticleGeneratorsToRender[i]);
+            }
 
             _ParticleGeneratorsToRender.Clear();
         }
         #endregion
 
         #region Text queue
-        public static void QueueLettersForRender(List<Letter> letters)
+        internal static void QueueLettersForRender(List<Letter> letters)
         {
-            letters.ForEach(letter =>
+            for (int i = 0; i < letters.Count; i++)
             {
-                _LettersToRender.Add(letter);
-            });
+                _LettersToRender.Add(letters[i]);
+            }
         }
-        public static void QueueTextForRender(List<Text> text)
+        internal static void QueueTextForRender(List<Text> text)
         {
-            text.ForEach(obj =>
+            for (int i = 0;i < text.Count; i++)
             {
-                if (obj.Render)
-                    QueueLettersForRender(obj.Letters);
-            });
+                if (text[i].Render)
+                    QueueLettersForRender(text[i].Letters);
+            }
         }
         #endregion
 
         #region UI queue
-        public static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
+        internal static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
         {
-            text.ForEach(obj =>
+            for(int i = 0; i < text.Count; i++)
             {
-                if (obj.Render)
-                    QueueUIForRender(obj.Letters, scissorFlag);
-            });
+                if (text[i].Render)
+                    QueueUIForRender(text[i].Letters, scissorFlag);
+            }
         }
-        public static void RenderQueuedLetters()
+        internal static void RenderQueuedLetters()
         {
             Renderer.RenderObjectsInstancedGeneric(_LettersToRender, ref Renderer._instancedRenderArray);
             _LettersToRender.Clear();
         }
 
-        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null, Action<List<UIObject>> renderAfterParent = null, bool overrideRender = false) where T : UIObject
+        internal static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null, Action<List<UIObject>> renderAfterParent = null, bool overrideRender = false) where T : UIObject
         {
             List<UIObject> renderAfterParentList = new List<UIObject>();
 
@@ -214,112 +226,83 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 renderAfterParent(renderAfterParentList);
             }
         }
-        public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
+        internal static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
         {
-            objList.ForEach(obj =>
+            for (int i = 0; i < objList.Count; i++)
             {
-                obj.ScissorData._scissorFlag = scissorFlag;
+                objList[i].ScissorData._scissorFlag = scissorFlag;
 
-                _UIToRender.Add(obj);
-            });
+                _UIToRender.Add(objList[i]);
+            }
         }
-        public static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
+        internal static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
         {
             obj.ScissorData._scissorFlag = scissorFlag;
 
             _UIToRender.Add(obj);
         }
-        public static void RenderQueuedUI()
+        internal static void RenderQueuedUI()
         {
-            Renderer.RenderObjectsInstancedGeneric(_UIToRender, ref Renderer._instancedRenderArray);
+            Renderer.RenderObjectsInstancedGeneric(_UIToRender, ref Renderer._instancedRenderArray, null, true, false);
             _UIToRender.Clear();
         }
 
         #endregion
 
         #region Object queue
-        public static void QueueObjectsForRender(List<GameObject> objList)
+        internal static void QueueObjectsForRender(List<GameObject> objList)
         {
             _ObjectsToRender.Add(objList);
         }
-        public static void RenderQueuedObjects()
+        internal static void RenderQueuedObjects()
         {
-            _ObjectsToRender.ForEach(obj =>
+            for(int i = 0; i < _ObjectsToRender.Count; i++)
             {
-                Renderer.RenderObjectsInstancedGeneric(obj, ref Renderer._instancedRenderArray);
-            });
+                Renderer.RenderObjectsInstancedGeneric(_ObjectsToRender[i], ref Renderer._instancedRenderArray);
+            }
             _ObjectsToRender.Clear();
         }
         #endregion
 
         #region Unit queue
-        public static void QueueUnitsForRender(List<Unit> objList)
+        internal static void QueueUnitsForRender(List<Unit> objList)
         {
             _UnitsToRender.Add(objList);
         }
-        public static void RenderQueuedUnits()
+
+        internal static void RenderQueuedUnits()
         {
-            _UnitsToRender.ForEach(obj =>
+            for(int i = 0; i < _UnitsToRender.Count; i ++)
             {
-                Renderer.RenderObjectsInstancedGeneric(obj, ref Renderer._instancedRenderArray);
-            });
+                Renderer.RenderObjectsInstancedGeneric(_UnitsToRender[i], ref Renderer._instancedRenderArray);
+            }
+
             _UnitsToRender.Clear();
         }
         #endregion
 
-        #region Structure queue
-        public static void QueueStructuresForRender(List<Structure> objList)
-        {
-            if (objList.Count == 0)
-                return;
-
-            _StructuresToRender.Add(objList);
-        }
-        public static void RenderQueuedStructures()
-        {
-            int i = 0;
-            bool instantiate = false;
-            _StructuresToRender.ForEach(obj =>
-            {
-                if (i == 0 || i == _StructuresToRender.Count - 1)
-                {
-                    instantiate = true;
-                }
-                else 
-                {
-                    instantiate = false;
-                }
-
-                Renderer.RenderObjectsInstancedGeneric(obj, ref Renderer._instancedRenderArray, null, instantiate);
-
-                i++;
-            });
-            _StructuresToRender.Clear();
-        }
-        #endregion
-
         #region Tile queue
-        public static void QueueTileObjectsForRender(List<BaseTile> objList)
+        internal static void QueueTileObjectsForRender(List<BaseTile> objList)
         {
             if (objList.Count == 0)
                 return;
 
             _TilesToRender.Add(objList);
         }
-        public static void RenderTileQueue()
-        {
 
-            _TilesToRender.ForEach(list =>
+        internal static void RenderTileQueue()
+        {
+            for(int i = 0; i < _TilesToRender.Count; i++)
             {
-                Renderer.RenderObjectsInstancedGeneric(list, ref Renderer._instancedRenderArray);
-            });
+                Renderer.RenderObjectsInstancedGeneric(_TilesToRender[i], ref Renderer._instancedRenderArray);
+            }
 
             _TilesToRender.Clear();
         }
         #endregion
 
         #region Tile quad queue
-        public static void QueueTileQuadForRender(GameObject obj)
+        internal static void QueueTileQuadForRender(GameObject obj)
         {
             if (obj == null)
                 return;
@@ -328,7 +311,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
         private static readonly List<GameObject> _tempGameObjList = new List<GameObject>();
-        public static void RenderTileQuadQueue()
+        internal static void RenderTileQuadQueue()
         {
             for (int i = 0; i < _TileQuadsToRender.Count; i++)
             {
@@ -342,37 +325,21 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Low priority object queue
-        public static void QueueLowPriorityObjectsForRender(List<GameObject> objList)
+        internal static void QueueLowPriorityObjectsForRender(List<GameObject> objList)
         {
             if (objList.Count == 0)
                 return;
 
             _LowPriorityQueue.Add(objList);
         }
-        public static void RenderLowPriorityQueue()
+        internal static void RenderLowPriorityQueue()
         {
-            _LowPriorityQueue.ForEach(list =>
+            for (int i = 0; i < _LowPriorityQueue.Count; i++)
             {
-                Renderer.RenderObjectsInstancedGeneric(list, ref Renderer._instancedRenderArray);
-            });
+                Renderer.RenderObjectsInstancedGeneric(_LowPriorityQueue[i], ref Renderer._instancedRenderArray);
+            }
 
             _LowPriorityQueue.Clear();
-        }
-        #endregion
-
-        #region Light queue
-        public static void QueueLightObjectsForRender(List<GameObject> objList)
-        {
-            if (objList.Count == 0)
-                return;
-
-            objList.ForEach(obj => _LightQueue.Add(obj));
-        }
-        public static void RenderLightQueue()
-        {
-            Renderer.RenderObjectsInstancedGeneric(_LightQueue, ref Renderer._instancedRenderArray);
-
-            _LightQueue.Clear();
         }
         #endregion
     }

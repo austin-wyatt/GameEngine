@@ -8,30 +8,30 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class Letter : GameObject
+    internal class Letter : GameObject
     {
-        public Character Character;
-        public new float Scale = 0.1f;
+        internal Character Character;
+        internal new float Scale = 0.1f;
         private float _scaleX = 1;
         private float _baseLetterOffset = 350f; 
         private float _baseYOffset = 0f;
-        public float LetterOffset = 350f; //how wide the character is
-        public float YOffset = 0f;
+        internal float LetterOffset = 350f; //how wide the character is
+        internal float YOffset = 0f;
 
         private float _baseXCorrection = 0f;
         private float _baseYCorrection = 0f;
-        public float XCorrection = 0f; //shift by this much in the X direction
-        public float YCorrection = 0f;
+        internal float XCorrection = 0f; //shift by this much in the X direction
+        internal float YCorrection = 0f;
 
-        public BaseObject LetterObject;
+        internal BaseObject LetterObject;
 
-        public new ObjectType ObjectType = ObjectType.Text;
+        internal new ObjectType ObjectType = ObjectType.Text;
 
         private bool CameraPerspective = false;
         private RenderableObject _display;
         private bool usingMonospace = true;
 
-        public Letter(Character character, Vector3 position, bool cameraPerspective, int ID = 0, float scale = 0.1f)
+        internal Letter(Character character, Vector3 position, bool cameraPerspective, int ID = 0, float scale = 0.1f)
         {
             Character = character;
 
@@ -47,9 +47,10 @@ namespace MortalDungeon.Engine_Classes
             BaseObject letter = new BaseObject(new List<Animation>() { Idle }, ID, "letter", position, EnvironmentObjects.BASE_TILE.Bounds);
             letter.BaseFrame.CameraPerspective = cameraPerspective;
             CameraPerspective = cameraPerspective;
-            letter.Clickable = false;
             LetterObject = letter;
             _display = letter.BaseFrame;
+
+            letter.EnableLighting = false;
 
             AddBaseObject(letter);
 
@@ -61,13 +62,13 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(position);
         }
 
-        public void ChangeCharacter(Character character) 
+        internal void ChangeCharacter(Character character) 
         {
             _display.SpritesheetPosition = (int)character;
             Character = character;
         }
 
-        public override void SetPosition(Vector3 position)
+        internal override void SetPosition(Vector3 position)
         {
             BaseObjects.ForEach(obj =>
             {
@@ -82,7 +83,7 @@ namespace MortalDungeon.Engine_Classes
             Position = position;
         }
 
-        public override void SetScale(float scale) 
+        internal override void SetScale(float scale) 
         {
             LetterObject.BaseFrame.SetScaleAll(scale);
 
@@ -97,7 +98,7 @@ namespace MortalDungeon.Engine_Classes
             SetKerning();
         }
 
-        public override void SetColor(Vector4 color) 
+        internal override void SetColor(Vector4 color) 
         {
             _display.SetBaseColor(color);
         }
@@ -293,26 +294,26 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class Text
+    internal class Text
     {
-        public List<Letter> Letters = new List<Letter>();
-        public string TextString = "";
-        public Vector3 Position = new Vector3();
+        internal List<Letter> Letters = new List<Letter>();
+        internal string TextString = "";
+        internal Vector3 Position = new Vector3();
 
-        public float TextScale = 0.1f;
-        public bool CameraPerspective = false;
+        internal float TextScale = 0.1f;
+        internal bool CameraPerspective = false;
         private float _baseLetterOffset = 300f;
-        public float LetterOffset = 300f;
-        public float YOffset = 0f;
+        internal float LetterOffset = 300f;
+        internal float YOffset = 0f;
 
-        public static float NewLineHeight = 700f;
+        internal static float NewLineHeight = 700f;
 
-        public Vector4 Color = Colors.White;
+        internal Vector4 Color = Colors.White;
 
-        public bool Render = true;
+        internal bool Render = true;
 
-        public Text() { }
-        public Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
+        internal Text() { }
+        internal Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
         {
             TextString = textString;
             Position = position;
@@ -322,7 +323,7 @@ namespace MortalDungeon.Engine_Classes
             SetTextString(textString);
         }
 
-        public void SetTextString(string textString) 
+        internal void SetTextString(string textString) 
         {
             //textString = textString.Replace("\r", "");
 
@@ -330,7 +331,7 @@ namespace MortalDungeon.Engine_Classes
 
             if (Letters.Count > 0) 
             {
-                tempTexture = Letters[0].LetterObject.BaseFrame.TextureReference; //hack, we know this texture is already loaded so we can hot swap characters
+                tempTexture = Letters[0].LetterObject.BaseFrame.Material.Diffuse; //hack, we know this texture is already loaded so we can hot swap characters
 
                 if (tempTexture == null)
                 {
@@ -367,7 +368,7 @@ namespace MortalDungeon.Engine_Classes
 
                     if (tempTexture != null)
                     {
-                        temp.LetterObject.BaseFrame.TextureReference = tempTexture; //hack, figure out a fix for this problem later (TextureReference of new renderable object is null)
+                        temp.LetterObject.BaseFrame.Material.Diffuse = tempTexture; //hack, figure out a fix for this problem later (TextureReference of new renderable object is null)
                     }
 
                     temp.TextureLoaded = true;
@@ -395,7 +396,7 @@ namespace MortalDungeon.Engine_Classes
 
             SetColor(Color);
         }
-        public void RecalculateTextPosition() 
+        internal void RecalculateTextPosition() 
         {
             Vector3 position = new Vector3(Position);
 
@@ -417,7 +418,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        public UIDimensions GetTextDimensions()
+        internal UIDimensions GetTextDimensions()
         {
             if (Letters.Count == 0)
                 return new UIDimensions();
@@ -441,7 +442,7 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
-        public static UIDimensions GetTextDimensions(int columns, int rows, float textScale)
+        internal static UIDimensions GetTextDimensions(int columns, int rows, float textScale)
         {
             if (columns == 0)
                 return new UIDimensions();
@@ -455,7 +456,7 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
-        public void AddCharacter(Character character, int index = -1)
+        internal void AddCharacter(Character character, int index = -1)
         {
 
             if (index > 0 || index >= TextString.Length)
@@ -493,7 +494,7 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
         }
-        public void AddCharacter(char character, int index = -1)
+        internal void AddCharacter(char character, int index = -1)
         {
             if (index < 0 || index >= TextString.Length)
             {
@@ -531,7 +532,7 @@ namespace MortalDungeon.Engine_Classes
             }
 
         }
-        public void RemoveCharacter(int index = -1)
+        internal void RemoveCharacter(int index = -1)
         {
             if (index < 0 || index >= TextString.Length)
             {
@@ -558,7 +559,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void SetTextScale(float scale) 
+        internal void SetTextScale(float scale) 
         {
             TextScale = scale;
             LetterOffset = TextScale * _baseLetterOffset;
@@ -571,7 +572,7 @@ namespace MortalDungeon.Engine_Classes
 
             RecalculateTextPosition();
         }
-        public void SetColor(Vector4 color) 
+        internal void SetColor(Vector4 color) 
         {
             Color = color;
 
@@ -581,7 +582,7 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        public void SetPosition(Vector3 position)
+        internal void SetPosition(Vector3 position)
         {
             Position = position;
             RecalculateTextPosition();

@@ -10,11 +10,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
     /// <summary>
     /// Functionally similar to the UIBlock class but only contains the backdrop as opposed to the backdrop + primary window
     /// </summary>
-    public class Backdrop : UIObject
+    internal class Backdrop : UIObject
     {
-        public Action _onClick;
+        internal Action _onClick;
 
-        public Backdrop(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true)
+        internal Backdrop(Vector3 position, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 90, bool scaleAspectRatio = true)
         {
             Position = position;
             Size = size == null ? Size : size;
@@ -53,27 +53,27 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        public override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color)
         {
             _baseObject.BaseFrame.SetBaseColor(color);
         }
 
-        public override void ScaleAddition(float f)
+        internal override void ScaleAddition(float f)
         {
             base.ScaleAddition(f);
         }
 
-        public override void ScaleAll(float f)
+        internal override void ScaleAll(float f)
         {
             base.ScaleAll(f);
         }
 
-        public override void OnClick()
+        internal override void OnClick()
         {
             _onClick?.Invoke();
         }
 
-        public override void SetPosition(Vector3 position)
+        internal override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
 

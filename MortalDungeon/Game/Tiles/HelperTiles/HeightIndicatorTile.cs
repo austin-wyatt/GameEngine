@@ -8,17 +8,17 @@ using System.Text;
 
 namespace MortalDungeon.Game.Tiles.HelperTiles
 {
-    public class HeightIndicatorTile : GameObject
+    internal class HeightIndicatorTile : GameObject
     {
-        public enum Animations 
+        internal enum Animations 
         {
             Up,
             Down
         }
 
-        public BaseTile AttachedTile;
+        internal BaseTile AttachedTile;
 
-        public HeightIndicatorTile(BaseTile attachedTile){
+        internal HeightIndicatorTile(BaseTile attachedTile){
             Name = "HeightIndicator";
             AttachedTile = attachedTile;
 
@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.Tiles.HelperTiles
 
             BaseObject tile = new BaseObject(new List<Animation>() { Up, Down }, ObjectID, "Height Indicator " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
             tile.BaseFrame.CameraPerspective = true;
-            tile.BaseFrame.TextureReference = attachedTile.BaseObjects[0].BaseFrame.TextureReference;
+            tile.BaseFrame.Material.Diffuse = attachedTile.BaseObjects[0].BaseFrame.Material.Diffuse;
 
             AddBaseObject(tile);
 

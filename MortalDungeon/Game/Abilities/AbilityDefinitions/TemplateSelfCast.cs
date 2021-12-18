@@ -10,26 +10,27 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class TemplateSelfCast : Ability
+    internal class TemplateSelfCast : Ability
     {
-        public TemplateSelfCast(Unit castingUnit)
+        internal TemplateSelfCast(Unit castingUnit)
         {
             CastingUnit = castingUnit;
-            EnergyCost = 5;
 
             CanTargetGround = false;
             CanTargetSelf = true;
-            UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
-            UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
-            UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
+            UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             Name = "Self Cast";
 
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.QuestionMark, Spritesheets.IconSheet, true);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
 
             AffectedUnits.Add(CastingUnit);
@@ -39,7 +40,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        public override bool OnUnitClicked(Unit unit)
+        internal override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -54,14 +55,14 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        public override void OnCast()
+        internal override void OnCast()
         {
             TileMap.DeselectTiles();
 
             base.OnCast();
         }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 

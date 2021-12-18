@@ -3,10 +3,10 @@ using System;
 
 namespace MortalDungeon.Engine_Classes.Audio
 {
-    public class Source
+    internal class Source
     {
-        public int Handle;
-        public float Gain
+        internal int Handle;
+        internal float Gain
         {
             get
             {
@@ -16,7 +16,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             set => AL.Source(Handle, ALSourcef.Gain, value);
         }
 
-        public float Pitch
+        internal float Pitch
         {
             get
             {
@@ -26,7 +26,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             set => AL.Source(Handle, ALSourcef.Pitch, value);
         }
 
-        public bool Loop
+        internal bool Loop
         {
             get 
             {
@@ -36,7 +36,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             set => AL.Source(Handle, ALSourceb.Looping, value);
         }
 
-        public float PlaybackPosition
+        internal float PlaybackPosition
         {
             get 
             {
@@ -49,7 +49,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        public float Duration 
+        internal float Duration 
         {
             get
             {
@@ -72,7 +72,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        public ALSourceState State
+        internal ALSourceState State
         {
             get
             {
@@ -81,12 +81,12 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        public bool KeepAlive = false;
-        public float EndTime = float.MaxValue;
+        internal bool KeepAlive = false;
+        internal float EndTime = float.MaxValue;
 
-        public Sound ActiveSound = null;
+        internal Sound ActiveSound = null;
 
-        public Source()
+        internal Source()
         {
             Handle = AL.GenSource();
         }
@@ -96,30 +96,30 @@ namespace MortalDungeon.Engine_Classes.Audio
             AL.DeleteSource(Handle);
         }
 
-        public void SetBuffer(AudioBuffer buffer)
+        internal void SetBuffer(AudioBuffer buffer)
         {
             AL.Source(Handle, ALSourcei.Buffer, buffer.Handle);
         }
 
-        public void Pause(bool unpause = false)
+        internal void Pause(bool unpause = false)
         {
             if (unpause && State == ALSourceState.Paused) Play();
             else AL.SourcePause(Handle);
         }
 
-        public void Play()
+        internal void Play()
         {
             AL.SourcePlay(Handle);
         }
 
-        public void Stop()
+        internal void Stop()
         {
             AL.SourceStop(Handle);
         }
 
 
 
-        public void ApplyDefaultValues()
+        internal void ApplyDefaultValues()
         {
             Gain = 1;
             Pitch = 1;

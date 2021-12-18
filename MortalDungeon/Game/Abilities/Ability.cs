@@ -16,7 +16,7 @@ using static MortalDungeon.Game.Units.Disposition;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public enum AbilityTypes //basic denominations for skills that can be used for categorizing and sorting
+    internal enum AbilityTypes //basic denominations for skills that can be used for categorizing and sorting
     {
         Empty,
         Move, //a basic movement
@@ -24,13 +24,25 @@ namespace MortalDungeon.Game.Abilities
         RangedAttack, //attacks that can be used from a distance
         DamagingSpell, //an ability that does damage to an enemy (and maybe applies a secondary effect)
         Debuff, //an ability that applies a debuff to the target
-        Buff, //an ability that applies a buff to the target
+        BuffDefensive,
+        BuffOffensive,
         Utility, //an ability that provides utility
         Heal, //an ability that heals
         Repositioning, //an ability that repositions a unit
-        Summoning
+        Summoning,
+        Passive
     }
-    public enum DamageType //main effect (extra effects provided by abilities)
+
+    /// <summary>
+    /// The classes of abilities. These will range from monster types to the standard classes such as "warrior"
+    /// </summary>
+    internal enum AbilityClass
+    {
+        Unknown,
+        Skeleton
+    }
+
+    internal enum DamageType //main effect (extra effects provided by abilities)
     {
         NonDamaging, //does no damage
         Slashing, 
@@ -45,108 +57,120 @@ namespace MortalDungeon.Game.Abilities
         Bleed, //hurts positive shields but doesn't get amplified by negative shields
         Poison, //unaffected by shields
         Focus, //damage caused by using the meditation intrinsic ability
-        HealthRemoval //dota health removal
+        HealthRemoval, //dota health removal
+        Healing
     }
 
-    public enum AbilityContext 
+    internal enum AbilityContext 
     {
         SkipEnergyCost,
         SkipIconAnimation
     }
-    public class Ability
+    internal class Ability
     {
-        public AbilityTypes Type = AbilityTypes.Empty;
-        public DamageType DamageType = DamageType.NonDamaging;
-        public int Grade = 1;
+        internal AbilityTypes Type = AbilityTypes.Empty;
+        internal DamageType DamageType = DamageType.NonDamaging;
+        internal AbilityClass AbilityClass = AbilityClass.Unknown;
 
-        public Unit CastingUnit;
-        public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
-        public List<BaseTile> AffectedTiles = new List<BaseTile>(); //tiles that need to be accessed frequently for the ability 
+        internal int Grade = 1;
+        /// <summary>
+        /// Denotes abilities that do not have charges and that act as a base ability in an ability tree.
+        /// </summary>
+        internal bool Basic = false;
 
-        public List<Unit> Units = new List<Unit>(); //relevant units
-        public List<BaseTile> CurrentTiles = new List<BaseTile>(); //the current set of tiles that is being worked with
+        internal Unit CastingUnit;
+        internal List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
+        internal List<BaseTile> AffectedTiles = new List<BaseTile>(); //tiles that need to be accessed frequently for the ability 
 
-        public TileMap TileMap => CastingUnit.GetTileMap();
-        public BaseTile SelectedTile;
-        public Unit SelectedUnit;
+        internal List<Unit> Units = new List<Unit>(); //relevant units
+        internal List<BaseTile> CurrentTiles = new List<BaseTile>(); //the current set of tiles that is being worked with
 
-        public ContextManager<AbilityContext> Context = new ContextManager<AbilityContext>();
+        internal TileMap TileMap => CastingUnit.GetTileMap();
+        internal BaseTile SelectedTile;
+        internal Unit SelectedUnit;
+
+        internal ContextManager<AbilityContext> Context = new ContextManager<AbilityContext>();
 
         #region Combo ability variables
-        public bool IsComboAbility = false;
+        internal bool IsComboAbility = false;
 
-        public Ability Previous;
-        public Ability Next;
+        internal Ability Previous;
+        internal Ability Next;
 
-        public bool DecayToFirst = false;
-        public int ComboAdvanceCost = 1;
-        public int ComboDecayCost = 2;
+        internal bool DecayToFirst = false;
+        internal int ComboAdvanceCost = 1;
+        internal int ComboDecayCost = 2;
 
-        public int ComboDecayCount = 0;
-        public int ComboAdvanceCount = 0;
+        internal int ComboDecayCount = 0;
+        internal int ComboAdvanceCount = 0;
 
-        public bool ShouldDecay = true;
+        internal bool ShouldDecay = true;
         #endregion
 
-        public int AbilityID => _abilityID;
+        internal int AbilityID => _abilityID;
         protected int _abilityID = _currentAbilityID++;
         protected static int _currentAbilityID = 0;
 
-        public bool HasHoverEffect = false;
+        internal bool HasHoverEffect = false;
 
-        public CombatScene Scene => CastingUnit.Scene;
+        internal CombatScene Scene => CastingUnit.Scene;
 
-        public string Name = "";
-        public string Description = "";
+        internal string Name = "";
+        internal string Description = "";
 
-        public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
+        internal bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
+        internal bool MustCast = false;
 
-        public bool CanTargetSelf = false;
-        public bool CanTargetGround = true;
-        public bool CanTargetTerrain = false;
+        internal bool CanTargetSelf = false;
+        internal bool CanTargetGround = true;
+        internal bool CanTargetTerrain = false;
 
-        public int ChargesLostOnUse = 1;
+        internal int ChargesLostOnUse = 1;
+        internal const int ChargeRechargeActionCost = 1;
 
-        public UnitSearchParams UnitTargetParams = new UnitSearchParams()
+        internal UnitSearchParams UnitTargetParams = new UnitSearchParams()
         {
-            Dead = CheckEnum.False,
-            IsFriendly = CheckEnum.SoftTrue,
-            IsHostile = CheckEnum.SoftTrue,
-            IsNeutral = CheckEnum.SoftTrue,
+            Dead = UnitCheckEnum.False,
+            IsFriendly = UnitCheckEnum.SoftTrue,
+            IsHostile = UnitCheckEnum.SoftTrue,
+            IsNeutral = UnitCheckEnum.SoftTrue,
         };
 
-        public bool BreakStealth = true;
+        internal bool BreakStealth = true;
 
-        public bool CanTargetThroughFog = false;
+        internal bool CanTargetThroughFog = false;
 
-        public float EnergyCost = 0;
-        public int ActionCost = 1;
+        internal float EnergyCost = 0;
+        internal int ActionCost = 1;
 
-        public float Range = 0;
-        public int MinRange;
-        public int CurrentRange = 0;
-        public float Damage = 0;
-        public int Duration = 0;
-        public float Sound = 0;
+        internal float Range = 0;
+        internal int MinRange;
+        internal int CurrentRange = 0;
+        internal float Damage = 0;
+        internal int Duration = 0;
+        internal float Sound = 0;
 
-        public int MaxCharges = 3;
-        public int Charges = 3;
+        internal int MaxCharges = 3;
+        internal int Charges = 3;
 
-        public float RechargeCost = 10;
+        internal float ChargeRechargeCost = 10;
 
-        public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
+        internal Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
 
-        public Ability()
+        internal Ability()
         {
 
         }
 
-        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            AffectedUnits.Clear();
+            AffectedTiles.Clear();
+
             return new List<BaseTile>();
         }
 
-        public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground,
+        internal Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground,
             bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null, bool showCharges = false)
         {
             Icon icon;
@@ -159,7 +183,7 @@ namespace MortalDungeon.Game.Abilities
                 icon = new Icon(passedIcon, scale, withBackground, backgroundType);
             }
 
-            if (showEnergyCost && ActionCost > 0)
+            if (showEnergyCost && ActionCost > 0 && Type != AbilityTypes.Passive)
             {
                 UIScale textBoxSize = icon.Size;
                 textBoxSize *= 0.3333f;
@@ -218,13 +242,18 @@ namespace MortalDungeon.Game.Abilities
                 //energyCostBackground.SetAllInline(0);
             }
 
-            if (showCharges) 
+            if (showCharges && Type != AbilityTypes.Passive) 
             {
                 icon.AddChargeDisplay(this);
                 icon.AddActionCost(this);
             }
 
-            if (hotkey != null)
+            if (IsComboAbility && Type != AbilityTypes.Passive) 
+            {
+                icon.AddComboIndicator(this);
+            }
+
+            if (hotkey != null && Type != AbilityTypes.Passive)
             {
                 UIScale textBoxSize = icon.Size;
                 textBoxSize *= 0.2f;
@@ -262,7 +291,7 @@ namespace MortalDungeon.Game.Abilities
             return icon;
         }
 
-        public virtual float GetEnergyCost()
+        internal virtual float GetEnergyCost()
         {
             if (CastingUnit != null)
             {
@@ -272,7 +301,7 @@ namespace MortalDungeon.Game.Abilities
             return EnergyCost;
         }
 
-        public virtual float GetActionEnergyCost()
+        internal virtual float GetActionEnergyCost()
         {
             if (CastingUnit != null)
             {
@@ -282,7 +311,7 @@ namespace MortalDungeon.Game.Abilities
             return ActionCost;
         }
 
-        public int GetMaxCharges() 
+        internal int GetMaxCharges() 
         {
             if(Previous == null) 
             {
@@ -294,7 +323,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public int GetCharges()
+        internal int GetCharges()
         {
             if (Previous == null)
             {
@@ -306,40 +335,48 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public float GetDamage()
+        internal float GetDamage()
         {
+            float damage;
             if (CastingUnit != null)
             {
-                return CastingUnit.Info.DamageMultiplier * Damage + CastingUnit.Info.DamageAddition;
+                damage = CastingUnit.Info.DamageMultiplier * Damage + CastingUnit.Info.DamageAddition;
+            }
+            else 
+            {
+                damage = Damage;
             }
 
             return Damage;
         }
 
-        public virtual bool UnitInRange(Unit unit, BaseTile position = null)
+        internal virtual bool UnitInRange(Unit unit, BaseTile position = null)
         {
+            if (CanTargetSelf && unit == CastingUnit)
+                return true;
+
             return false;
         }
 
         /// <summary>
         /// Will return false if a unit is closer than the minimum range
         /// </summary>
-        public virtual bool UnitUnderRange(Unit unit)
+        internal virtual bool UnitUnderRange(Unit unit)
         {
             return MinRange > TileMap.GetDistanceBetweenPoints(unit.Info.TileMapPosition.TilePoint, CastingUnit.Info.TileMapPosition.TilePoint);
         }
 
-        public virtual void AdvanceDuration()
+        internal virtual void AdvanceDuration()
         {
             Duration--;
             EnactEffect();
         }
-        public virtual void EnactEffect()
+        internal virtual void EnactEffect()
         {
             Scene.SetAbilityInProgress(true);
         } //the actual effect of the skill
 
-        public virtual void OnSelect(CombatScene scene, TileMap currentMap)
+        internal virtual void OnSelect(CombatScene scene, TileMap currentMap)
         {
             if (CanCast())
             {
@@ -356,12 +393,12 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public bool CanCast() 
+        internal bool CanCast() 
         {
             return CastingUnit.Info.Energy >= GetEnergyCost() && CastingUnit.Info.ActionEnergy >= GetActionEnergyCost() && HasSufficientCharges();
         }
 
-        public void TargetAffectedUnits()
+        internal void TargetAffectedUnits()
         {
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
@@ -372,9 +409,9 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void OnTileClicked(TileMap map, BaseTile tile) { }
+        internal virtual void OnTileClicked(TileMap map, BaseTile tile) { }
 
-        public virtual bool OnUnitClicked(Unit unit)
+        internal virtual bool OnUnitClicked(Unit unit)
         {
             if (CastingUnit.ObjectID == unit.ObjectID && !CanTargetSelf)
             {
@@ -385,16 +422,16 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        public virtual void OnHover() { }
-        public virtual void OnHover(BaseTile tile, TileMap map) { }
-        public virtual void OnHover(Unit unit) { }
+        internal virtual void OnHover() { }
+        internal virtual void OnHover(BaseTile tile, TileMap map) { }
+        internal virtual void OnHover(Unit unit) { }
 
-        public virtual void OnRightClick()
+        internal virtual void OnRightClick()
         {
             Scene.DeselectAbility();
         }
 
-        public virtual void OnAbilityDeselect()
+        internal virtual void OnAbilityDeselect()
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
             Scene.ActionEnergyBar.HoverAmount(0);
@@ -404,14 +441,14 @@ namespace MortalDungeon.Game.Abilities
             AffectedTiles.Clear();
         }
 
-        public bool GetEnergyIsSufficient() 
+        internal bool GetEnergyIsSufficient() 
         {
             return GetEnergyCost() <= CastingUnit.Info.Energy && GetActionEnergyCost() <= CastingUnit.Info.ActionEnergy;
         }
 
-        public virtual void UpdateEnergyCost() { }
+        internal virtual void UpdateEnergyCost() { }
 
-        public virtual void ApplyEnergyCost()
+        internal virtual void ApplyEnergyCost()
         {
             if (Context.GetFlag(AbilityContext.SkipEnergyCost))
             {
@@ -443,7 +480,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void ApplyChargeCost(bool fromLast = false) 
+        internal virtual void ApplyChargeCost(bool fromLast = false) 
         {
             if (Previous == null)
             {
@@ -461,7 +498,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void RestoreCharges(int amount) 
+        internal virtual void RestoreCharges(int amount) 
         {
             if (Previous == null)
             {
@@ -473,16 +510,41 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual bool HasSufficientCharges() 
+        internal virtual bool HasSufficientCharges() 
         {
             int maxCharges = GetMaxCharges();
             return maxCharges == 0 || GetCharges() > 0;
+        }
+        internal void ApplyChargeRechargeCost() 
+        {
+            CastingUnit.Info.ActionEnergy -= ChargeRechargeActionCost;
+            
+
+            if (CastingUnit.Info.Focus >= ChargeRechargeCost)
+            {
+                CastingUnit.Info.Focus -= ChargeRechargeCost;
+            }
+            else
+            {
+                float damageNum = ChargeRechargeCost - CastingUnit.Info.Focus;
+                CastingUnit.Info.Focus = 0;
+
+                DamageInstance damage = new DamageInstance();
+                damage.Damage.Add(DamageType.Focus, damageNum);
+
+                CastingUnit.ApplyDamage(new Unit.DamageParams(damage));
+            }
+        }
+
+        internal bool CanRecharge()
+        {
+            return CastingUnit.Info.Health + CastingUnit.Info.Focus >= ChargeRechargeCost && CastingUnit.Info.ActionEnergy >= ChargeRechargeActionCost;
         }
 
         /// <summary>
         /// Apply the energy cost and clean up and effects here.
         /// </summary>
-        public virtual void OnCast()
+        internal virtual void OnCast()
         {
             if (Scene.InCombat)
             {
@@ -495,7 +557,7 @@ namespace MortalDungeon.Game.Abilities
             Scene.OnAbilityCast(this);
         }
 
-        public virtual void OnAICast()
+        internal virtual void OnAICast()
         {
             if (Scene.InCombat)
             {
@@ -505,7 +567,7 @@ namespace MortalDungeon.Game.Abilities
             ApplyChargeCost();
         }
 
-        public void Casted()
+        internal void Casted()
         {
             if (CastingUnit.AI.ControlType == ControlType.Controlled)
             {
@@ -526,9 +588,11 @@ namespace MortalDungeon.Game.Abilities
 
             AffectedUnits.Clear();
             AffectedTiles.Clear();
+
+            TileMap.DeselectTiles();
         }
 
-        public void CreateTemporaryVision()
+        internal void CreateTemporaryVision()
         {
             if (SelectedUnit == null)
                 return;
@@ -544,7 +608,7 @@ namespace MortalDungeon.Game.Abilities
             Scene.TemporaryVision.Add(vision);
         }
 
-        public void CreateIconHoverEffect(Icon passedIcon = null)
+        internal void CreateIconHoverEffect(Icon passedIcon = null)
         {
             if (Context.GetFlag(AbilityContext.SkipIconAnimation))
             {
@@ -615,7 +679,7 @@ namespace MortalDungeon.Game.Abilities
         /// <summary>
         /// Called once all skill effects have been resolved and another skill can be used.
         /// </summary>
-        public virtual void EffectEnded()
+        internal virtual void EffectEnded()
         {
             //since this method can be called from the main thread via a ticking property animation we need to spawn a task to avoid sleeping the main thread
             Task.Run(() =>
@@ -636,11 +700,13 @@ namespace MortalDungeon.Game.Abilities
                 Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
             });
         }
-        public Action EffectEndedAction = null;
+        internal Action EffectEndedAction = null;
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0)
         {
+            HashSet<BaseTile> validTilesSet = validTiles.ToHashSet();
+
             for (int i = 0; i < validTiles.Count; i++)
             {
                 if (i < 0)
@@ -648,6 +714,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (validTiles[i].TilePoint == CastingUnit.Info.TileMapPosition && !CanTargetSelf)
                 {
+                    validTilesSet.Remove(validTiles[i]);
                     validTiles.RemoveAt(i);
                     i--;
                     continue;
@@ -655,6 +722,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (minRange > 0 && minRange >= TileMap.GetDistanceBetweenPoints(validTiles[i].TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
                 {
+                    validTilesSet.Remove(validTiles[i]);
                     validTiles.RemoveAt(i);
                     i--;
                     continue;
@@ -667,6 +735,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if ((validTiles[i].InFog[CastingUnit.AI.Team] && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
                 {
+                    validTilesSet.Remove(validTiles[i]);
                     validTiles.RemoveAt(i);
                     i--;
                     continue;
@@ -681,36 +750,41 @@ namespace MortalDungeon.Game.Abilities
                 {
                     if (!CanTargetSelf)
                     {
-                        validTiles.Remove(units[j].Info.TileMapPosition);
+                        validTiles.Remove(tile);
+                        validTilesSet.Remove(tile);
                         continue;
                     }
-                    else 
+                    else
                     {
                         AffectedUnits.Add(units[j]);
                         continue;
                     }
                 }
 
-                if (!validTiles.Contains(units[j].Info.TileMapPosition))
+                if (!validTilesSet.Contains(tile))
                 {
-                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    validTiles.Remove(tile);
+                    validTilesSet.Remove(tile);
                     continue;
                 }
 
 
                 if (!UnitTargetParams.CheckUnit(units[j], CastingUnit)) 
                 {
-                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    validTiles.Remove(tile);
+                    validTilesSet.Remove(tile);
                     continue;
                 }
                 else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team])
                 {
-                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    validTiles.Remove(tile);
+                    validTilesSet.Remove(tile);
                     continue;
                 }
                 else if ((tile.InFog[CastingUnit.AI.Team] && !tile.Explored[CastingUnit.AI.Team] && trimFog) || (tile.InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
                 {
-                    validTiles.Remove(units[j].Info.TileMapPosition);
+                    validTiles.Remove(tile);
+                    validTilesSet.Remove(tile);
                     continue;
                 }
                 else
@@ -757,14 +831,14 @@ namespace MortalDungeon.Game.Abilities
 
 
         protected string _description = "ability description text";
-        public virtual Tooltip GenerateTooltip()
+        internal virtual Tooltip GenerateTooltip()
         {
             string body = _description;
 
             body += $"\n\n";
 
             body += GetDamageInstance().GetTooltipStrings(CastingUnit);
-            //if (DamageType != DamageType.NonDamaging) body += $"{Damage} {DamageType} damage\n";
+
             body += $"{GetEnergyCost()} Energy\n";
             body += $"{MinRange}-{Range} Range";
 
@@ -788,7 +862,7 @@ namespace MortalDungeon.Game.Abilities
             return tooltip;
         }
 
-        public virtual bool DecayCombo(int decayAmount = 1)
+        internal virtual bool DecayCombo(int decayAmount = 1)
         {
             if (IsComboAbility && Previous != null && ShouldDecay)
             {
@@ -803,7 +877,7 @@ namespace MortalDungeon.Game.Abilities
             return false;
         }
 
-        public virtual void CompleteDecay()
+        internal virtual void CompleteDecay()
         {
             if (Previous != null)
             {
@@ -812,7 +886,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void AdvanceCombo(int advanceAmount = 1)
+        internal virtual void AdvanceCombo(int advanceAmount = 1)
         {
             if (IsComboAbility)
             {
@@ -825,7 +899,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void CompleteAdvance()
+        internal virtual void CompleteAdvance()
         {
             if (Next != null)
             {
@@ -837,7 +911,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void OnSwappedTo()
+        internal virtual void OnSwappedTo()
         {
             ComboDecayCount = 0;
             ComboAdvanceCount = 0;
@@ -848,7 +922,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void SwapOutAbility(Ability ability)
+        internal virtual void SwapOutAbility(Ability ability)
         {
             lock (CastingUnit.Info.Abilities)
             {
@@ -857,7 +931,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void ReturnToFirst()
+        internal virtual void ReturnToFirst()
         {
             Ability ability = this;
 
@@ -875,7 +949,7 @@ namespace MortalDungeon.Game.Abilities
             SwapOutAbility(ability);
         }
 
-        public virtual void AddCombo(Ability next, Ability previous, bool shouldDecay = true)
+        internal virtual void AddCombo(Ability next, Ability previous, bool shouldDecay = true)
         {
             Next = next;
             Previous = previous;
@@ -901,9 +975,54 @@ namespace MortalDungeon.Game.Abilities
             ShouldDecay = shouldDecay;
         }
 
-        public virtual DamageInstance GetDamageInstance() 
+        internal int GetComboSize() 
+        {
+            Ability root = this;
+
+            while (root.Previous != null)
+            {
+                root = root.Previous;
+            }
+
+            int count = 1;
+            while (root.Next != null) 
+            {
+                root = root.Next;
+                count++;
+            }
+
+            return count;
+        }
+
+        internal int GetPositionInCombo() 
+        {
+            int count = 0;
+
+            Ability root = this;
+
+            while (root.Previous != null)
+            {
+                root = root.Previous;
+                count++;
+            }
+
+            return count;
+        }
+
+        internal virtual DamageInstance GetDamageInstance() 
         {
             return new DamageInstance();
+        }
+
+        internal void ApplyBuffDamageInstanceModifications(DamageInstance instance) 
+        {
+            if (CastingUnit != null) 
+            {
+                foreach (var buff in CastingUnit.Info.Buffs) 
+                {
+                    buff.ModifyDamageInstance(instance, this);
+                }
+            }
         }
 
         public override bool Equals(object obj)

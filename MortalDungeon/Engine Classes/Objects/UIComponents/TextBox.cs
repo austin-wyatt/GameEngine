@@ -3,16 +3,16 @@ using OpenTK.Mathematics;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public class TextBox : UIObject
+    internal class TextBox : UIObject
     {
-        public float TextScale = 1f;
-        //public float TitleScale = 1.5f;
-        public UIDimensions TextOffset = new UIDimensions(20, 30);
-        public bool CenterText = false;
+        internal float TextScale = 1f;
+        //internal float TitleScale = 1.5f;
+        internal UIDimensions TextOffset = new UIDimensions(20, 30);
+        internal bool CenterText = false;
 
-        public TextComponent TextField;
+        internal TextComponent TextField;
 
-        public TextBox(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
+        internal TextBox(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
             TextScale = textScale;
             Size = size;
@@ -73,7 +73,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        public override void SetPosition(Vector3 position)
+        internal override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
             TextObjects.ForEach(obj =>
@@ -94,12 +94,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         }
 
 
-        public override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color)
         {
             BaseComponent.SetColor(color);
         }
 
-        public void SetTextColor(Vector4 color)
+        internal void SetTextColor(Vector4 color)
         {
             TextObjects.ForEach(obj => obj.SetColor(color));
         }

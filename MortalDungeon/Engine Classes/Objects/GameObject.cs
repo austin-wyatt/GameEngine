@@ -11,50 +11,50 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class GameObject : ITickable
+    internal class GameObject : ITickable
     {
-        public string Name = "";
-        public Vector3 Position = new Vector3();
-        public List<BaseObject> BaseObjects = new List<BaseObject>();
-        public List<ParticleGenerator> ParticleGenerators = new List<ParticleGenerator>();
-        public Vector3 Scale = new Vector3(1, 1, 1);
-        public BaseObject BaseObject => BaseObjects.Count > 0 ? BaseObjects[0] : null;
+        internal string Name = "";
+        internal Vector3 Position = new Vector3();
+        internal List<BaseObject> BaseObjects = new List<BaseObject>();
+        internal List<ParticleGenerator> ParticleGenerators = new List<ParticleGenerator>();
+        internal Vector3 Scale = new Vector3(1, 1, 1);
+        internal BaseObject BaseObject => BaseObjects.Count > 0 ? BaseObjects[0] : null;
 
-        public List<PropertyAnimation> PropertyAnimations = new List<PropertyAnimation>();
+        internal List<PropertyAnimation> PropertyAnimations = new List<PropertyAnimation>();
 
-        public bool Cull = false; //whether the object was determined to be outside of the camera's view and should be culled
-        public bool Render = true;
-        public bool Clickable = false; //Note: The BaseObject's Clickable property and this property must be true for UI objects
-        public bool Hoverable = false;
-        public bool Draggable = false;
-        public bool HasTimedHoverEffect = false;
+        internal bool Cull = false; //whether the object was determined to be outside of the camera's view and should be culled
+        internal bool Render = true;
+        internal bool Clickable = false; //Note: The BaseObject's Clickable property and this property must be true for UI objects
+        internal bool Hoverable = false;
+        internal bool Draggable = false;
+        internal bool HasTimedHoverEffect = false;
 
-        public bool Hovered = false;
-        public bool Grabbed = false;
+        internal bool Hovered = false;
+        internal bool Grabbed = false;
 
-        public bool HasContextMenu = false;
+        internal bool HasContextMenu = false;
 
-        public bool TextureLoaded = false;
+        internal bool TextureLoaded = false;
 
-        public int ObjectID => _objectID;
+        internal int ObjectID => _objectID;
         protected int _objectID = currentObjectID++;
         protected static int currentObjectID = 0;
 
 
-        public MultiTextureData MultiTextureData = new MultiTextureData();
+        internal MultiTextureData MultiTextureData = new MultiTextureData();
 
-        public ScissorData ScissorData = new ScissorData();
-
-
-        public ObjectType ObjectType = ObjectType.GenericObject;
+        internal ScissorData ScissorData = new ScissorData();
 
 
-        public Vector3 _grabbedDeltaPos = default;
+        internal ObjectType ObjectType = ObjectType.GenericObject;
 
-        //public Stats Stats; //contains game parameters for the object
-        public GameObject() { }
 
-        public GameObject(Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) 
+        internal Vector3 _grabbedDeltaPos = default;
+
+        //internal Stats Stats; //contains game parameters for the object
+        internal GameObject() { }
+
+        internal GameObject(Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) 
         {
             RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
@@ -76,7 +76,7 @@ namespace MortalDungeon.Engine_Classes
             LoadTexture(this);
         }
 
-        public BaseObject CreateBaseObjectFromSpritesheet(Spritesheet spritesheet, int spritesheetPos) 
+        internal BaseObject CreateBaseObjectFromSpritesheet(Spritesheet spritesheet, int spritesheetPos) 
         {
             RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
@@ -94,12 +94,12 @@ namespace MortalDungeon.Engine_Classes
             return baseObj;
         }
 
-        public virtual void SetName(string name) 
+        internal virtual void SetName(string name) 
         {
             Name = name;
         }
 
-        public virtual void SetPosition(Vector3 position) 
+        internal virtual void SetPosition(Vector3 position) 
         {
             BaseObjects.ForEach(obj =>
             {
@@ -118,22 +118,22 @@ namespace MortalDungeon.Engine_Classes
             Position = position;
         }
 
-        public virtual void SetDragPosition(Vector3 position)
+        internal virtual void SetDragPosition(Vector3 position)
         {
             SetPosition(position);
         }
 
-        public virtual void AddBaseObject(BaseObject obj) 
+        internal virtual void AddBaseObject(BaseObject obj) 
         {
             BaseObjects.Add(obj);
         }
 
-        public virtual void RemoveBaseObject(BaseObject obj) 
+        internal virtual void RemoveBaseObject(BaseObject obj) 
         {
             BaseObjects.Remove(obj);
         }
 
-        public virtual void Tick() 
+        internal virtual void Tick() 
         {
             BaseObjects.ForEach(obj =>
             {
@@ -162,7 +162,7 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        public virtual void ScaleAll(float f) 
+        internal virtual void ScaleAll(float f) 
         {
             BaseObjects.ForEach(obj =>
             {
@@ -172,7 +172,7 @@ namespace MortalDungeon.Engine_Classes
             Scale *= f;
         }
 
-        public virtual void SetScale(float f) 
+        internal virtual void SetScale(float f) 
         {
             BaseObjects.ForEach(obj =>
             {
@@ -182,7 +182,7 @@ namespace MortalDungeon.Engine_Classes
             Scale = new Vector3(f, f, f);
         }
 
-        public virtual void SetScale(float x, float y, float z)
+        internal virtual void SetScale(float x, float y, float z)
         {
             BaseObjects.ForEach(obj =>
             {
@@ -192,7 +192,7 @@ namespace MortalDungeon.Engine_Classes
             Scale = new Vector3(x, y, z);
         }
 
-        public virtual void ScaleAddition(float f)
+        internal virtual void ScaleAddition(float f)
         {
             BaseObjects.ForEach(obj =>
             {
@@ -204,7 +204,7 @@ namespace MortalDungeon.Engine_Classes
             Scale.Z += f;
         }
 
-        public virtual void SetColor(Vector4 color) 
+        internal virtual void SetColor(Vector4 color) 
         {
             BaseObjects.ForEach(obj =>
             {
@@ -212,7 +212,7 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        public virtual RenderableObject GetDisplay()
+        internal virtual RenderableObject GetDisplay()
         {
             RenderableObject display;
 
@@ -232,7 +232,7 @@ namespace MortalDungeon.Engine_Classes
             return display;
         }
 
-        public Vector3 GetDimensions()
+        internal Vector3 GetDimensions()
         {
             Vector3 dimensions = default;
             if (BaseObjects.Count > 0) 
@@ -243,12 +243,12 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
-        public PropertyAnimation GetPropertyAnimationByID(int id) 
+        internal PropertyAnimation GetPropertyAnimationByID(int id) 
         {
             return PropertyAnimations.Find(anim => anim.AnimationID == id);
         }
         private readonly List<int> _properyAnimationsToDestroy = new List<int>();
-        public void RemovePropertyAnimation(int animationID) 
+        internal void RemovePropertyAnimation(int animationID) 
         {
             int animIndex = PropertyAnimations.FindIndex(p => p.AnimationID == animationID);
 
@@ -258,7 +258,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void RemovePropertyAnimation(PropertyAnimation animation)
+        internal void RemovePropertyAnimation(PropertyAnimation animation)
         {
             int animIndex = PropertyAnimations.FindIndex(p => p.AnimationID == animation.AnimationID);
 
@@ -280,7 +280,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         private readonly List<PropertyAnimation> _properyAnimationsToAdd = new List<PropertyAnimation>();
-        public void AddPropertyAnimation(PropertyAnimation animation) 
+        internal void AddPropertyAnimation(PropertyAnimation animation) 
         {
             //PropertyAnimations.Add(animation);
             _properyAnimationsToAdd.Add(animation);
@@ -298,7 +298,7 @@ namespace MortalDungeon.Engine_Classes
 
 
 
-        public void AddSingleUsePropertyAnimation(PropertyAnimation animation) 
+        internal void AddSingleUsePropertyAnimation(PropertyAnimation animation) 
         {
             animation.OnFinish = () =>
             {
@@ -309,14 +309,14 @@ namespace MortalDungeon.Engine_Classes
             PropertyAnimations.Add(animation);
         }
 
-        public virtual void SetRender(bool render) 
+        internal virtual void SetRender(bool render) 
         {
             Render = render;
         }
 
 
         private int _animationID = 0;
-        public int NextAnimationID 
+        internal int NextAnimationID 
         {
             get 
             {
@@ -328,9 +328,9 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void OnClick() { }
-        public virtual void OnRightClick() { }
-        public virtual void OnHover() 
+        internal virtual void OnClick() { }
+        internal virtual void OnRightClick() { }
+        internal virtual void OnHover() 
         {
             if (Hoverable && !Hovered)
             {
@@ -339,7 +339,7 @@ namespace MortalDungeon.Engine_Classes
                 HoverEvent(this);
             }
         }
-        public virtual void OnHoverEnd() 
+        internal virtual void OnHoverEnd() 
         {
             if (Hovered) 
             {
@@ -349,14 +349,14 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void OnTimedHover() 
+        internal virtual void OnTimedHover() 
         {
             TimedHoverEvent(this);
         }
 
-        public virtual void OnMouseDown() { }
-        public virtual void OnMouseUp() { }
-        public virtual void OnGrab(Vector2 MouseCoordinates) 
+        internal virtual void OnMouseDown() { }
+        internal virtual void OnMouseUp() { }
+        internal virtual void OnGrab(Vector2 MouseCoordinates) 
         {
             if (Draggable && !Grabbed)
             {
@@ -367,7 +367,7 @@ namespace MortalDungeon.Engine_Classes
                 _grabbedDeltaPos = screenCoord - Position;
             }
         }
-        public virtual void GrabEnd() 
+        internal virtual void GrabEnd() 
         {
             if (Grabbed)
             {
@@ -377,25 +377,25 @@ namespace MortalDungeon.Engine_Classes
             
         }
 
-        public virtual void OnCull() { }
+        internal virtual void OnCull() { }
 
-        public virtual Tooltip CreateContextMenu() 
+        internal virtual Tooltip CreateContextMenu() 
         {
             return null;
         }
 
-        public virtual void CleanUp() 
+        internal virtual void CleanUp() 
         {
             OnCleanUp?.Invoke(this);
         }
 
         #region Event actions
-        public delegate void GameObjectEventHandler(GameObject obj);
+        internal delegate void GameObjectEventHandler(GameObject obj);
 
-        public event GameObjectEventHandler OnCleanUp;
-        public event GameObjectEventHandler OnHoverEndEvent;
-        public event GameObjectEventHandler OnHoverEvent;
-        public event GameObjectEventHandler OnTimedHoverEvent;
+        internal event GameObjectEventHandler OnCleanUp;
+        internal event GameObjectEventHandler OnHoverEndEvent;
+        internal event GameObjectEventHandler OnHoverEvent;
+        internal event GameObjectEventHandler OnTimedHoverEvent;
 
         protected void HoverEndEvent(GameObject obj) 
         {
@@ -420,7 +420,7 @@ namespace MortalDungeon.Engine_Classes
         #endregion
 
 
-        public static void LoadTexture<T>(T obj) where T : GameObject 
+        internal static void LoadTexture<T>(T obj) where T : GameObject 
         {
             void loadTex()
             {
@@ -431,7 +431,7 @@ namespace MortalDungeon.Engine_Classes
             Renderer.OnRender += loadTex;
         }
 
-        public static void LoadTextures<T>(List<T> obj) where T : GameObject
+        internal static void LoadTextures<T>(List<T> obj) where T : GameObject
         {
             void loadTex()
             {
@@ -461,26 +461,26 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class MultiTextureData
+    internal class MultiTextureData
     {
-        public bool MixTexture = false;
-        public TextureUnit MixedTextureLocation = TextureUnit.Texture1;
-        public float MixPercent = 0f;
-        public Texture MixedTexture = null;
-        public TextureName MixedTextureName = TextureName.Unknown;
+        internal bool MixTexture = false;
+        internal TextureUnit MixedTextureLocation = TextureUnit.Texture1;
+        internal float MixPercent = 0f;
+        internal Texture MixedTexture = null;
+        internal TextureName MixedTextureName = TextureName.Unknown;
     }
 
-    public class ScissorData
+    internal class ScissorData
     {
-        public int X = 0;
-        public int Y = 0;
-        public int Width = 0;
-        public int Height = 0;
-        public int Depth = 0;
+        internal int X = 0;
+        internal int Y = 0;
+        internal int Width = 0;
+        internal int Height = 0;
+        internal int Depth = 0;
 
-        public bool Scissor = false;
+        internal bool Scissor = false;
 
-        public bool _scissorFlag = false;
-        public int _startingDepth = 0;
+        internal bool _scissorFlag = false;
+        internal int _startingDepth = 0;
     }
 }

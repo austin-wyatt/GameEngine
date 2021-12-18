@@ -8,18 +8,21 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    public class Path_1 : FeatureEquation
+    internal class Path_1 : FeatureEquation
     {
         PathParams PathParams;
 
-        public Path_1(PathParams pathParams)
+        internal Path_1(PathParams pathParams)
         {
             PathParams = pathParams;
         }
 
-        public override void ApplyToTile(BaseTile tile)
+        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
+
+            if (!freshGeneration)
+                return;
 
             if (AffectedPoints.TryGetValue(affectedPoint, out int value))
             {
@@ -45,9 +48,9 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        public override void GenerateFeature()
+        internal override void GenerateFeature()
         {
-            AffectedPoints.Clear();
+            ClearAffectedPoints();
 
             FeaturePoint startPoint = PathParams.Start;
 
@@ -70,34 +73,28 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
                         ringList.ForEach(p =>
                         {
-                            UpdatePoint(p);
+                            AddAffectedPoint(p, (int)Feature.StonePath);
                         });
                     }
 
 
 
-                    UpdatePoint(path[j]);
+                    AddAffectedPoint(path[j], (int)Feature.StonePath);
                 }
 
                 startPoint = PathParams.Stops[i];
             }
         }
-
-
-        internal override void UpdatePoint(FeaturePoint point)
-        {
-            AffectedPoints.TryAdd(point, (int)Feature.StonePath);
-        }
     }
 
 
-    public struct PathParams
+    internal struct PathParams
     {
-        public FeaturePoint Start;
-        public List<FeaturePoint> Stops;
-        public int Width;
+        internal FeaturePoint Start;
+        internal List<FeaturePoint> Stops;
+        internal int Width;
 
-        public PathParams(FeaturePoint start, FeaturePoint end, int width = 1)
+        internal PathParams(FeaturePoint start, FeaturePoint end, int width = 1)
         {
             Start = start;
             Stops = new List<FeaturePoint>() { end };
@@ -105,7 +102,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             Width = width;
         }
 
-        public void AddStop(FeaturePoint stop)
+        internal void AddStop(FeaturePoint stop)
         {
             Stops.Insert(Stops.Count - 1, stop);
         }
@@ -118,7 +115,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         /// <param name="stepWidth">The maximum distance that a single meander can move.</param>
         /// <param name="seed">The number that will be used to seed the random number generator.</param>
         /// <param name="meanderProportion">A number [0:1] that represents the proportion of the meander that will apply to the X (0) or Y(1) value</param>
-        public void AddMeanderingPoints(int maxMeander, float density, int stepWidth, float meanderProportion, int seed)
+        internal void AddMeanderingPoints(int maxMeander, float density, int stepWidth, float meanderProportion, int seed)
         {
             float length = FeatureEquation.GetDistanceBetweenPoints(Start, Stops[^1]);
 

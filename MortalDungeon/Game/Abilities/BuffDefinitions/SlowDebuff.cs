@@ -9,9 +9,9 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class SlowDebuff : Buff
+    internal class SlowDebuff : Buff
     {
-        public SlowDebuff(Unit affected, int duration, float slowMultiplier) : base(affected, duration)
+        internal SlowDebuff(Unit affected, int duration, float slowMultiplier) : base(affected, duration)
         {
             Name = "Slow";
             SpeedModifier.Multiplier = slowMultiplier;
@@ -20,14 +20,14 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet);
         }
 
-        public override Icon GenerateIcon(UIScale scale)
+        internal override Icon GenerateIcon(UIScale scale)
         {
             Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.DebuffBackground);
 
             return icon;
         }
 
-        public override Tooltip GenerateTooltip()
+        internal override Tooltip GenerateTooltip()
         {
             Tooltip tooltip = new Tooltip();
 

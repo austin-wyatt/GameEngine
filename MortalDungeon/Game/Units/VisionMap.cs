@@ -14,51 +14,51 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Units
 {
-    public class VisionGenerator
+    internal class VisionGenerator
     {
         private Vector2i _position = new Vector2i();
-        public Vector2i Position => _position; //global tile position
+        internal Vector2i Position => _position; //global tile position
 
-        public float Radius = 6; //in tiles
+        internal float Radius = 6; //in tiles
 
-        public UnitTeam Team = UnitTeam.Unknown;
+        internal UnitTeam Team = UnitTeam.Unknown;
 
-        public VisionGenerator() { }
+        internal VisionGenerator() { }
 
-        public VisionGenerator(VisionGenerator gen)
+        internal VisionGenerator(VisionGenerator gen)
         {
             _position = gen._position;
             Radius = gen.Radius;
             Team = gen.Team;
         }
 
-        public void SetPosition(TilePoint point) 
+        internal void SetPosition(TilePoint point) 
         {
             _position = Map.FeatureEquation.PointToMapCoords(point);
         }
 
-        public void SetPosition(Vector2i point)
+        internal void SetPosition(Vector2i point)
         {
             _position = point;
         }
     }
 
-    public static class VisionMap
+    internal static class VisionMap
     {
-        public const int DIMENSIONS = 150;
-        public static int[,] Vision = new int[DIMENSIONS, DIMENSIONS];
+        internal const int DIMENSIONS = 150;
+        internal static int[,] Vision = new int[DIMENSIONS, DIMENSIONS];
 
-        public static Vector2[,] ObstructionMap = new Vector2[DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE];
+        internal static Vector2[,] ObstructionMap = new Vector2[DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE];
 
-        public static List<LightObstruction> LightObstructions;
+        internal static List<LightObstruction> LightObstructions;
 
 
-        public static void Initialize() 
+        internal static void Initialize() 
         {
 
         }
 
-        public static void Clear(UnitTeam teamToUpdate) 
+        internal static void Clear(UnitTeam teamToUpdate) 
         {
             int bitMask = 0;
 
@@ -77,7 +77,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        public static void ClearObstructionMap()
+        internal static void ClearObstructionMap()
         {
             for (int i = 0; i < DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE; i++)
             {
@@ -99,13 +99,13 @@ namespace MortalDungeon.Game.Units
             return (num & (1 << bitNumber)) != 0;
         }
 
-        public static bool InVision(int x, int y, UnitTeam team) 
+        internal static bool InVision(int x, int y, UnitTeam team) 
         {
             return GetBit(Vision[x, y], (int)team);
         }
 
         private static int _obstructionsChangeToken = -1;
-        public static void SetObstructions(QueuedList<LightObstruction> obstructions, Scene scene) 
+        internal static void SetObstructions(QueuedList<LightObstruction> obstructions, Scene scene) 
         {
             if (_obstructionsChangeToken == obstructions.CHANGE_TOKEN) return;
 
@@ -228,7 +228,7 @@ namespace MortalDungeon.Game.Units
         const int TEXELS_PER_TILE_IDEAL = 32;
 
         private static int _visionChangeToken = -1;
-        public static void CalculateVision(QueuedList<VisionGenerator> visionGenerators, Scene scene, UnitTeam teamToUpdate = UnitTeam.Unknown) 
+        internal static void CalculateVision(QueuedList<VisionGenerator> visionGenerators, Scene scene, UnitTeam teamToUpdate = UnitTeam.Unknown) 
         {
             if (_visionChangeToken == visionGenerators.CHANGE_TOKEN) return;
 
@@ -443,7 +443,7 @@ namespace MortalDungeon.Game.Units
             //Console.WriteLine($"Vision updated in {stopwatch.ElapsedMilliseconds}ms");
         }
 
-        //public static void CalculateVision2(QueuedList<VisionGenerator> visionGenerators, Scene scene, UnitTeam teamToUpdate = UnitTeam.Unknown) 
+        //internal static void CalculateVision2(QueuedList<VisionGenerator> visionGenerators, Scene scene, UnitTeam teamToUpdate = UnitTeam.Unknown) 
         //{
 
         //    if (_visionChangeToken == visionGenerators.CHANGE_TOKEN) return;
@@ -508,11 +508,11 @@ namespace MortalDungeon.Game.Units
         }
 
 
-        public static bool TargetInVision(TilePoint startPoint, TilePoint endPoint, int radius, Scene scene) 
+        internal static bool TargetInVision(TilePoint startPoint, TilePoint endPoint, int radius, Scene scene) 
         {
             return TargetInVision(Map.FeatureEquation.PointToMapCoords(startPoint), Map.FeatureEquation.PointToMapCoords(endPoint), radius, scene);
         }
-        public static bool TargetInVision(Vector2i startPoint, Vector2i endPoint, int radius, Scene scene) 
+        internal static bool TargetInVision(Vector2i startPoint, Vector2i endPoint, int radius, Scene scene) 
         {
             VisionGenerator generator = new VisionGenerator() { Radius = radius };
             generator.SetPosition(startPoint);
@@ -615,7 +615,7 @@ namespace MortalDungeon.Game.Units
             return false;
         }
 
-        public static List<Unit> GetUnitsInRadius(Unit castingUnit, List<Unit> units, int radius, Scene scene) 
+        internal static List<Unit> GetUnitsInRadius(Unit castingUnit, List<Unit> units, int radius, Scene scene) 
         {
             List<Unit> returnList = new List<Unit>();
 
@@ -642,16 +642,16 @@ namespace MortalDungeon.Game.Units
         }
 
 
-        public struct TemporaryVisionParams 
+        internal struct TemporaryVisionParams 
         {
-            public Unit Unit;
-            public TilePoint TemporaryPosition;
+            internal Unit Unit;
+            internal TilePoint TemporaryPosition;
         }
 
         /// <summary>
         /// Gets the team's vision (accounting for temporary position of units) and returns it in tile map cluster coordinates [0, 149]
         /// </summary>
-        public static List<Vector2i> GetTeamVision(UnitTeam team, Scene scene, List<TemporaryVisionParams> temporaryVisionParams = null) 
+        internal static List<Vector2i> GetTeamVision(UnitTeam team, Scene scene, List<TemporaryVisionParams> temporaryVisionParams = null) 
         {
             List<Vector2i> returnList = new List<Vector2i>();
 
@@ -787,7 +787,7 @@ namespace MortalDungeon.Game.Units
             return returnList;
         }
 
-        public static void SaveObstructionMap() 
+        internal static void SaveObstructionMap() 
         {
             Bitmap bitmap = new Bitmap(DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE);
 
@@ -804,9 +804,9 @@ namespace MortalDungeon.Game.Units
             bitmap.Save("C:\\Users\\tgiyb\\Pictures\\GameEngine\\ObstructionMap.bmp");
         }
 
-        public static Bitmap OperationBitmap = new Bitmap(DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE);
-        public static bool _saveToBitmap = false;
-        public static void SaveOperationMap()
+        internal static Bitmap OperationBitmap = new Bitmap(DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE);
+        internal static bool _saveToBitmap = false;
+        internal static void SaveOperationMap()
         {
             OperationBitmap.Save("C:\\Users\\tgiyb\\Pictures\\GameEngine\\OperationMap.bmp");
             _saveToBitmap = false;

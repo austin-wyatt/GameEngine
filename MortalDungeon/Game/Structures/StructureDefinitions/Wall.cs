@@ -12,30 +12,30 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Game.Structures
 {
-    public enum WallType
+    internal enum WallType
     {
         Wall,
         Corner,
         Door
     }
 
-    public class Wall : Structure
+    internal class Wall : Structure
     {
-        public WallType WallType;
+        internal WallType WallType;
 
-        public bool Locked = false;
-        public bool Openable = true;
-        public bool Opened = false;
+        internal bool Locked = false;
+        internal bool Openable = true;
+        internal bool Opened = false;
 
         private float ZRotation = 0;
         private const float WALL_HEIGHT = 0.6f;
 
-        public Wall(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position, WallType type) : base(scene, spritesheet, spritesheetPos, position)
+        internal Wall(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position, WallType type) : base(scene, spritesheet, spritesheetPos, position)
         {
             WallType = type;
         }
 
-        public void CreateDoor(BaseTile tile)
+        internal void CreateDoor(BaseTile tile)
         {
             Vector3 tileDim = tile.GetDimensions();
 
@@ -54,11 +54,13 @@ namespace MortalDungeon.Game.Structures
             BaseObject.BaseFrame.SpritesheetPosition = (int)Type;
             SetColor(Colors.Transparent);
 
+            RemoveBaseObject(BaseObject);
+
             BaseObject door_1 = tile.CreateBaseObjectFromSpritesheet(Spritesheets.StructureSheet, (int)StructureEnum.Wall_Iron_Door);
             door_1.SetPosition(topPos);
             door_1.BaseFrame.RotateX(90);
             door_1.BaseFrame.RotateZ(ZRotation - 90);
-            door_1.BaseFrame.VerticeType = _3DObjects.WallObj.ObjectID;
+            door_1.BaseFrame.VerticeType = 0;
 
             AddBaseObject(door_1);
 
@@ -66,7 +68,7 @@ namespace MortalDungeon.Game.Structures
             door_2.SetPosition(botPos);
             door_2.BaseFrame.RotateX(90);
             door_2.BaseFrame.RotateZ(ZRotation + 90);
-            door_2.BaseFrame.VerticeType = _3DObjects.WallObj.ObjectID;
+            door_2.BaseFrame.VerticeType = 0;
             AddBaseObject(door_2);
 
             door_2.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
@@ -74,9 +76,11 @@ namespace MortalDungeon.Game.Structures
 
             door_1.BaseFrame.ScaleAll(0.5f);
             door_2.BaseFrame.ScaleAll(0.5f);
+
+            LoadTexture(this);
         }
 
-        public void OpenDoor()
+        internal void OpenDoor()
         {
             if (!Opened && Openable)
             {
@@ -87,7 +91,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public void CloseDoor()
+        internal void CloseDoor()
         {
             if (Opened && Openable)
             {
@@ -98,7 +102,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public void ToggleDoor()
+        internal void ToggleDoor()
         {
             if (!Opened)
             {
@@ -111,13 +115,13 @@ namespace MortalDungeon.Game.Structures
         }
 
 
-        public enum WallMaterial
+        internal enum WallMaterial
         {
             Wood,
             Stone,
             Iron
         }
-        public static void CreateWalls(TileMap map, List<BaseTile> tiles, WallMaterial walls)
+        internal static void CreateWalls(TileMap map, List<BaseTile> tiles, WallMaterial walls)
         {
             Direction direction = Direction.None;
             Direction nextDirection = Direction.None;
@@ -198,7 +202,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, WallMaterial wallMaterial = WallMaterial.Wood)
+        internal static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, WallMaterial wallMaterial = WallMaterial.Wood)
         {
             Wall wall = new Wall(map.Controller.Scene, Spritesheets.StructureSheet, (int)wallType, tile.Position + new Vector3(0, 0, WALL_HEIGHT), type);
 
@@ -211,14 +215,16 @@ namespace MortalDungeon.Game.Structures
             if (type == WallType.Corner)
             {
                 wall.BaseObjects.Clear();
-                wall.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallCornerObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                //wall.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallCornerObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                wall.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(3, Spritesheets.TestSheet), _3DObjects.WallCorner3D, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
 
                 wall.BaseObject.BaseFrame.RotateX(90);
             }
             else
             {
                 wall.BaseObjects.Clear();
-                wall.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                //wall.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                wall.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(3, Spritesheets.TestSheet), _3DObjects.Wall3D, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
 
                 wall.BaseObject.BaseFrame.RotateX(90);
             }
@@ -238,6 +244,8 @@ namespace MortalDungeon.Game.Structures
             wall.SetTeam(UnitTeam.Unknown);
             wall.Info.Height = 4;
 
+            LoadTexture(wall);
+
             tile.AddStructure(wall);
 
             wall.ZRotation = rotation;
@@ -249,7 +257,7 @@ namespace MortalDungeon.Game.Structures
         }
 
         //theres definitely a formula for this but this works just as well and is readable so whatev
-        public static int AngledWallDirectionsToRotation(Direction inlet, Direction outlet)
+        internal static int AngledWallDirectionsToRotation(Direction inlet, Direction outlet)
         {
             return inlet switch
             {
@@ -265,7 +273,7 @@ namespace MortalDungeon.Game.Structures
         /// Given a wall, find all adjacent walls of the same material
         /// </summary>
         /// <param name="wall">The wall to start with</param>
-        public static (List<Wall> walls, bool circular) FindAdjacentWalls(Wall wall) 
+        internal static (List<Wall> walls, bool circular) FindAdjacentWalls(Wall wall) 
         {
             TileMap map = wall.Info.Map;
 
@@ -282,6 +290,7 @@ namespace MortalDungeon.Game.Structures
                 List<BaseTile> tiles = new List<BaseTile>();
                 map.GetNeighboringTiles(currWall.Info.TileMapPosition, tiles, false);
 
+                tiles.ForEach(t => t.TilePoint._visited = false);
 
                 if (visitedSecondaryDirection) 
                 {
@@ -297,7 +306,7 @@ namespace MortalDungeon.Game.Structures
                 {
                     if (tiles[i].Structure is Wall tempWall)
                     {
-                        if (tempWall != prevWall) 
+                        if (!wallList.Contains(tempWall)) 
                         {
                             if (!wallFound)
                             {
@@ -315,7 +324,7 @@ namespace MortalDungeon.Game.Structures
 
                 if (wallFound == false)
                 {
-                    if (!visitedSecondaryDirection)
+                    if (!visitedSecondaryDirection && secondaryDirection != null)
                     {
                         prevWall = currWall;
                         currWall = secondaryDirection;
@@ -339,7 +348,7 @@ namespace MortalDungeon.Game.Structures
             return (wallList, circular);
         }
 
-        public static void UnifyWalls(List<Wall> wallList, bool circular) 
+        internal static void UnifyWalls(List<Wall> wallList, bool circular) 
         {
             Direction direction = Direction.None;
             Direction nextDirection = Direction.None;
@@ -391,14 +400,16 @@ namespace MortalDungeon.Game.Structures
                 if (wallList[i].WallType == WallType.Corner)
                 {
                     wallList[i].BaseObjects.Clear();
-                    wallList[i].AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)wallList[i].Type, Spritesheets.StructureSheet), _3DObjects.WallCornerObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                    //wallList[i].AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)wallList[i].Type, Spritesheets.StructureSheet), _3DObjects.WallCornerObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                    wallList[i].AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(3, Spritesheets.TestSheet), _3DObjects.WallCorner3D, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
 
                     wallList[i].BaseObject.BaseFrame.RotateX(90);
                 }
                 else
                 {
                     wallList[i].BaseObjects.Clear();
-                    wallList[i].AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                    //wallList[i].AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject((int)StructureEnum.Wall_Iron_1, Spritesheets.StructureSheet), _3DObjects.WallObj, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
+                    wallList[i].AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(3, Spritesheets.TestSheet), _3DObjects.Wall3D, tile.Position + new Vector3(0, 0, WALL_HEIGHT)));
 
                     wallList[i].BaseObject.BaseFrame.RotateX(90);
                 }
@@ -413,7 +424,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public override Tooltip CreateContextMenu()
+        internal override Tooltip CreateContextMenu()
         {
             if (WallType != WallType.Door)
                 return null;

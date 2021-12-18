@@ -15,11 +15,12 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Move : Ability
+    internal class Move : Ability
     {
         List<TileClassification> TraversableTypes = new List<TileClassification>();
 
-        public Move(Unit castingUnit, int range = 6)
+        public Action _moveCancelAction = null;
+        internal Move(Unit castingUnit, int range = 6)
         {
             Type = AbilityTypes.Move;
             Range = range;
@@ -27,9 +28,9 @@ namespace MortalDungeon.Game.Abilities
             CanTargetThroughFog = true;
             BreakStealth = false;
 
-            UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
-            UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
-            UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
+            UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             DamageType = DamageType.NonDamaging;
 
@@ -51,8 +52,10 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             Range = CastingUnit.Info.Energy / GetEnergyCost(); //special case for general move ability
             
 
@@ -72,13 +75,13 @@ namespace MortalDungeon.Game.Abilities
             return AffectedTiles;
         }
 
-        public override void OnSelect(CombatScene scene, TileMap currentMap)
+        internal override void OnSelect(CombatScene scene, TileMap currentMap)
         {
             Units = scene._units;
             Range = CastingUnit.Info.Energy / GetEnergyCost(); //special case for general move ability
         }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -156,7 +159,10 @@ namespace MortalDungeon.Game.Abilities
 
                             if (_moveCanceled)
                             {
+                                _moveCanceled = false;
+
                                 moveAnimation.Finish();
+                                _moveCancelAction?.Invoke();
                             }
                         };
 
@@ -187,6 +193,11 @@ namespace MortalDungeon.Game.Abilities
                         CastingUnit.RemovePropertyAnimation(moveAnimation.AnimationID);
                         EffectEnded();
 
+                        if (_moveCanceled) 
+                        {
+                            _moveCancelAction?.Invoke();
+                        }
+
                         Moving = false;
                         _moveCanceled = false;
                     };
@@ -206,9 +217,9 @@ namespace MortalDungeon.Game.Abilities
             SelectedTile = null;
         }
 
-        public bool Moving = false;
+        internal bool Moving = false;
         private bool _moveCanceled = false;
-        public void CancelMovement() 
+        internal void CancelMovement() 
         {
             if (Moving) 
             {
@@ -216,7 +227,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public override void OnCast()
+        internal override void OnCast()
         {
             TileMap.DeselectTiles();
 
@@ -225,14 +236,14 @@ namespace MortalDungeon.Game.Abilities
             CurrentTiles.Clear();
         }
 
-        public override void OnAICast()
+        internal override void OnAICast()
         {
             base.OnAICast();
 
             CurrentTiles.Clear();
         }
 
-        public override void ApplyEnergyCost()
+        internal override void ApplyEnergyCost()
         {
             //if (CastingUnit.AI.ControlType == ControlType.Controlled)
             //{
@@ -284,7 +295,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        internal override void OnTileClicked(TileMap map, BaseTile tile)
         {
             if (_path.Count > 0)
             {
@@ -301,7 +312,7 @@ namespace MortalDungeon.Game.Abilities
         private List<BaseTile> _path = new List<BaseTile>();
         private List<int> _pathTilesToDelete = new List<int>();
         private bool _evaluatingPath = false;
-        public override void OnHover(BaseTile tile, TileMap map)
+        internal override void OnHover(BaseTile tile, TileMap map)
         {
             if (tile.TilePoint == CastingUnit.Info.TileMapPosition) 
             {
@@ -320,7 +331,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public void EvaluateHoverPath(BaseTile tile, TileMap map) 
+        internal void EvaluateHoverPath(BaseTile tile, TileMap map) 
         {
             _evaluatingPath = true;
 
@@ -437,8 +448,11 @@ namespace MortalDungeon.Game.Abilities
 
             if (tiles.Count > 0)
             {
-                tiles.ForEach(t =>
+                foreach(var t in tiles)
                 {
+                    if (t == null)
+                        break;
+
                     if (t.AttachedTile != null)
                     {
                         _path.Add(t.AttachedTile);
@@ -449,7 +463,7 @@ namespace MortalDungeon.Game.Abilities
                         _path.Add(t.AttachedTile);
                         _pathTilesToDelete.Add(_path.Count - 1);
                     }
-                });
+                }
 
                 for (int i = 0; i < _path.Count; i++) 
                 {
@@ -481,7 +495,7 @@ namespace MortalDungeon.Game.Abilities
             _evaluatingPath = false;
         }
 
-        public (float cost, int moves) GetCostToPoint(TilePoint point, float customRange = -1) 
+        internal (float cost, int moves) GetCostToPoint(TilePoint point, float customRange = -1) 
         {
             float range;
 
@@ -526,6 +540,9 @@ namespace MortalDungeon.Game.Abilities
             {
                 for (int i = 0; i < _path.Count; i++)
                 {
+                    if (_path[i] == null)
+                        continue;
+
                     ClearTile(_path[i]);
                 }
 
@@ -549,13 +566,13 @@ namespace MortalDungeon.Game.Abilities
             tile._tileObject.OutlineParameters.InlineThickness = tile._tileObject.OutlineParameters.BaseInlineThickness;
         }
 
-        public override void OnRightClick()
+        internal override void OnRightClick()
         {
             base.OnRightClick();
             ClearSelectedTiles();
         }
 
-        public override void OnAbilityDeselect()
+        internal override void OnAbilityDeselect()
         {
             base.OnAbilityDeselect();
 
@@ -563,7 +580,7 @@ namespace MortalDungeon.Game.Abilities
             SelectedTile = null;
         }
 
-        public override float GetEnergyCost()
+        internal override float GetEnergyCost()
         {
             if (CastingUnit != null)
             {

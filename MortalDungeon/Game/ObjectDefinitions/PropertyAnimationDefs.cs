@@ -9,9 +9,9 @@ namespace MortalDungeon.Game.Objects
 {
     namespace PropertyAnimations
     {
-        public class BounceAnimation : PropertyAnimation
+        internal class BounceAnimation : PropertyAnimation
         {
-            public BounceAnimation(RenderableObject baseFrame, int bounceFrameDelay = 1)
+            internal BounceAnimation(RenderableObject baseFrame, int bounceFrameDelay = 1)
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
@@ -40,9 +40,9 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
-        public class LiftAnimation : PropertyAnimation
+        internal class LiftAnimation : PropertyAnimation
         {
-            public LiftAnimation(RenderableObject baseFrame)
+            internal LiftAnimation(RenderableObject baseFrame)
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
@@ -58,29 +58,31 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
-        public class DayNightCycle : PropertyAnimation 
+        internal class DayNightCycle : PropertyAnimation 
         {
-            private static Color NightColor = new Color(0.25f, 0.25f, 0.5f, 0.5f);
-            private static Color MorningColor = new Color(0.65f, 0.65f, 0.25f, 0.2f);
-            private static Color MiddayColor = new Color(1, 1, 1, 0f);
-            private static Color EveningColor = new Color(0.82f, 0.53f, 0.3f, 0.3f);
+            private static Color NightColor = new Color(0.1f, 0.1f, 0.2f, 1f);
+            private static Color MorningColor = new Color(0.5f, 0.5f, 0.43f, 1f);
+            private static Color MiddayColor = new Color(0.52f, 0.52f, 0.52f, 1f);
+            private static Color EveningColor = new Color(0.5f, 0.47f, 0.42f, 1f);
 
 
             private const int STATIC_PERIOD = 24;
             private const int TRANSITION_PERIOD = 64;
 
             private const int NightEnd = 0;
-            private const int MorningStart = NightEnd + TRANSITION_PERIOD;
+            internal const int MorningStart = NightEnd + TRANSITION_PERIOD;
             private const int MorningEnd = MorningStart + STATIC_PERIOD;
-            private const int MiddayStart = MorningEnd + TRANSITION_PERIOD;
+            internal const int MiddayStart = MorningEnd + TRANSITION_PERIOD;
             private const int MiddayEnd = MiddayStart + STATIC_PERIOD * 5;
-            private const int EveningStart = MiddayEnd + TRANSITION_PERIOD;
+            internal const int EveningStart = MiddayEnd + TRANSITION_PERIOD;
             private const int EveningEnd = EveningStart + STATIC_PERIOD;
-            private const int NightStart = EveningEnd + TRANSITION_PERIOD;
+            internal const int NightStart = EveningEnd + TRANSITION_PERIOD;
 
             private const int DAY_PERIOD = NightStart + STATIC_PERIOD * 3;
 
-            public DayNightCycle(int timeDelay, int startTime) 
+            public const int HOUR = STATIC_PERIOD;
+
+            internal DayNightCycle(int timeDelay, int startTime) 
             {
                 Repeat = true;
                 Playing = true;
@@ -123,7 +125,7 @@ namespace MortalDungeon.Game.Objects
                     frame.Action = () =>
                     {
                         CombatScene.EnvironmentColor.Add(colorDif);
-                        CombatScene.Time = (CombatScene.Time + 1) % DAY_PERIOD;
+                        CombatScene.Time = tick % DAY_PERIOD;
                         //PrintTime();
                     };
 
@@ -138,7 +140,7 @@ namespace MortalDungeon.Game.Objects
                 CombatScene.EnvironmentColor.A = startColor.A;
             }
 
-            public void PrintTime() 
+            internal void PrintTime() 
             {
                 Console.Write($"{CombatScene.Time}");
 
@@ -178,7 +180,7 @@ namespace MortalDungeon.Game.Objects
                 Console.Write(identifer + "\n");
             }
 
-            public static bool IsNight() 
+            internal static bool IsNight() 
             {
                 return CombatScene.Time < MorningStart || CombatScene.Time > EveningEnd;
             }

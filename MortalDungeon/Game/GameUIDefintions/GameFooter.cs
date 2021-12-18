@@ -12,7 +12,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    public class GameFooter : Footer
+    internal class GameFooter : Footer
     {
         CombatScene Scene;
 
@@ -22,17 +22,17 @@ namespace MortalDungeon.Game.UI
         private ShieldBar _unitShieldBar;
         private FocusBar _unitFocusBar;
 
-        public Unit _currentUnit;
+        internal Unit _currentUnit;
 
-        public Icon _meditationIcon;
+        internal Icon _meditationIcon;
 
-        public Button EndTurnButton;
-        public Button VentureForthButton;
+        internal Button EndTurnButton;
+        internal Button VentureForthButton;
 
         private ScrollableArea _scrollableAreaBuff;
         private ScrollableArea _scrollableAreaAbility;
 
-        public GameFooter(float height, CombatScene scene) : base(height)
+        internal GameFooter(float height, CombatScene scene) : base(height)
         {
             Scene = scene;
 
@@ -135,6 +135,7 @@ namespace MortalDungeon.Game.UI
 
             ventureForthButton.OnClickAction = () =>
             {
+                Scene.DeselectAbility();
                 Scene._tileMapController.LoadSurroundingTileMaps(Scene.CurrentUnit.GetTileMap().TileMapCoords);
                 ventureForthButton.SetRender(false);
             };
@@ -232,7 +233,7 @@ namespace MortalDungeon.Game.UI
         private List<Icon> _currentIcons = new List<Icon>();
         private bool _updatingFooterInfo = false;
         private Action _updateAction = null;
-        public void UpdateFooterInfo(Unit unit = null) 
+        internal void UpdateFooterInfo(Unit unit = null) 
         {
             if (_updatingFooterInfo) 
             {
@@ -288,15 +289,21 @@ namespace MortalDungeon.Game.UI
 
             if (isPlayerUnitTakingTurn)
             {
-                CreateMeditationIcon();
+                //CreateMeditationIcon();
 
-                _unitFocusBar.SetPositionFromAnchor(_meditationIcon.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
+                _unitFocusBar.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(10, -GetDimensions().Y / 2, 0), UIAnchorPosition.TopLeft);
                 _unitFocusBar.SetFocusPercent(_currentUnit.Info.Focus / _currentUnit.Info.MaxFocus);
                 _unitFocusBar.SetRender(true);
+
+                if (Scene.EnergyDisplayBar != null && Scene.ActionEnergyBar != null) 
+                {
+                    Scene.EnergyDisplayBar.SetActiveEnergy(_currentUnit.Info.Energy);
+                    Scene.ActionEnergyBar.SetActiveEnergy(_currentUnit.Info.ActionEnergy);
+                }
             }
             else 
             {
-                RemoveMeditationIcon();
+                //RemoveMeditationIcon();
                 _unitFocusBar.SetRender(false);
             }
 
@@ -317,7 +324,7 @@ namespace MortalDungeon.Game.UI
 
                     Icon abilityIcon = ability.GenerateIcon(iconSize, true, 
                         _currentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground, 
-                        false, null, hotkey, ability.GetMaxCharges() > 0);
+                        false, null, isPlayerUnitTakingTurn && ability.CanCast() ? hotkey : null, ability.GetMaxCharges() > 0);
 
                     int currIndex = count;
 
@@ -395,9 +402,15 @@ namespace MortalDungeon.Game.UI
 
                     void selectAbilityByNum(SceneEventArgs args) 
                     {
-                        if ((int)args.EventAction == currIndex && _currentUnit.AI.ControlType == ControlType.Controlled)
+                        if ((int)args.EventAction == currIndex && isPlayerUnitTakingTurn && ability.CanCast())
                         {
                             Scene.SelectAbility(ability, _currentUnit);
+                        }
+
+                        if ((int)args.EventAction == currIndex && !isPlayerUnitTakingTurn && Scene.CurrentUnit != null 
+                            && Scene.CurrentUnit.AI.ControlType == ControlType.Controlled) 
+                        {
+                            UpdateFooterInfo(Scene.CurrentUnit);
                         }
                     }
 
@@ -505,7 +518,7 @@ namespace MortalDungeon.Game.UI
         }
 
 
-        public override void OnResize()
+        internal override void OnResize()
         {
             base.OnResize();
 
@@ -621,19 +634,9 @@ namespace MortalDungeon.Game.UI
             {
                 ListItem listItem = uiList.AddItem(ability.Name, (_) =>
                 {
-                    if (ability.Charges < ability.MaxCharges && (ability.CastingUnit.Info.Focus >= ability.RechargeCost || ability.CastingUnit.Info.Health >= ability.RechargeCost)) 
+                    if (ability.GetCharges() < ability.MaxCharges && ability.CanRecharge()) 
                     {
-                        if (ability.CastingUnit.Info.Focus >= ability.RechargeCost)
-                        {
-                            ability.CastingUnit.Info.Focus -= ability.RechargeCost;
-                        }
-                        else 
-                        {
-                            DamageInstance damage = new DamageInstance();
-                            damage.Damage.Add(DamageType.Focus, ability.RechargeCost);
-
-                            ability.CastingUnit.ApplyDamage(new Unit.DamageParams(damage));
-                        }
+                        ability.ApplyChargeRechargeCost();
 
                         ability.RestoreCharges(1);
                         UpdateFooterInfo();
@@ -642,7 +645,7 @@ namespace MortalDungeon.Game.UI
 
                 TextComponent focusCostAdornment = new TextComponent();
                 focusCostAdornment.SetTextScale(0.03f);
-                focusCostAdornment.SetText(ability.RechargeCost.ToString());
+                focusCostAdornment.SetText(ability.ChargeRechargeCost.ToString());
                 focusCostAdornment.SetColor(Colors.UITextBlack);
 
                 focusCostAdornment.SetPositionFromAnchor(listItem.BaseComponent.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(-10, 0, 0), UIAnchorPosition.RightCenter);

@@ -7,18 +7,21 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    public class River_1 : FeatureEquation
+    internal class River_1 : FeatureEquation
     {
         PathParams RiverParams;
 
-        public River_1(PathParams riverParams)
+        internal River_1(PathParams riverParams)
         {
             RiverParams = riverParams;
         }
 
-        public override void ApplyToTile(BaseTile tile)
+        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
+
+            if (!freshGeneration)
+                return;
 
             if (AffectedPoints.TryGetValue(affectedPoint, out int value)) 
             {
@@ -40,9 +43,9 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        public override void GenerateFeature()
+        internal override void GenerateFeature()
         {
-            AffectedPoints.Clear();
+            ClearAffectedPoints();
 
             FeaturePoint startPoint = RiverParams.Start;
 
@@ -65,23 +68,17 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
                         ringList.ForEach(p =>
                         {
-                            UpdatePoint(p);
+                            AddAffectedPoint(p, TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)Feature.Water_1 : (int)Feature.Water_2);
                         });
                     }
-                    
 
 
-                    UpdatePoint(path[j]);
+
+                    AddAffectedPoint(path[j], TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)Feature.Water_1 : (int)Feature.Water_2);
                 }
 
                 startPoint = RiverParams.Stops[i];
             }
-        }
-
-
-        internal override void UpdatePoint(FeaturePoint point)
-        {
-            AffectedPoints.TryAdd(point, TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)Feature.Water_1 : (int)Feature.Water_2);
         }
     }
 }

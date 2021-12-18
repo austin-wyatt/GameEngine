@@ -8,21 +8,24 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    public class Forest_1 : FeatureEquation
+    internal class Forest_1 : FeatureEquation
     {
         ForestParams ForestParams;
         Random NumberGen;
 
 
-        public Forest_1(ForestParams forestParams)
+        internal Forest_1(ForestParams forestParams)
         {
             ForestParams = forestParams;
             NumberGen = new Random(HashCoordinates(forestParams.Origin.X, forestParams.Origin.Y));
         }
 
-        public override void ApplyToTile(BaseTile tile)
+        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
+
+            if (!freshGeneration)
+                return;
 
             if (AffectedPoints.TryGetValue(affectedPoint, out int value))
             {
@@ -46,15 +49,15 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        public override void GenerateFeature()
+        internal override void GenerateFeature()
         {
-            AffectedPoints.Clear();
+            ClearAffectedPoints();
 
             FeaturePoint startPoint = ForestParams.Origin;
 
             List<FeaturePoint> path = new List<FeaturePoint>();
 
-            UpdatePoint(startPoint);
+            AddAffectedPoint(startPoint, 0);
 
             for (int i = 0; i < ForestParams.Radius; i++)
             {
@@ -63,28 +66,24 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
                 for (int j = 0; j < path.Count; j++) 
                 {
-                    UpdatePoint(path[j]);
+                    if (NumberGen.NextDouble() > 1 - ForestParams.Density)
+                    {
+                        AddAffectedPoint(path[j], NumberGen.NextDouble() > 0.5 ? (int)Feature.Tree_1 : (int)Feature.Tree_2);
+                    }
                 }
             }
         }
 
-        internal override void UpdatePoint(FeaturePoint point)
-        {
-            if (NumberGen.NextDouble() > 1 - ForestParams.Density) 
-            {
-                AffectedPoints.TryAdd(point, NumberGen.NextDouble() > 0.5 ? (int)Feature.Tree_1 : (int)Feature.Tree_2);
-            }
-        }
     }
 
 
-    public struct ForestParams
+    internal struct ForestParams
     {
-        public FeaturePoint Origin;
-        public int Radius;
-        public double Density;
+        internal FeaturePoint Origin;
+        internal int Radius;
+        internal double Density;
 
-        public ForestParams(FeaturePoint origin, int radius = 1, double density = 0.7)
+        internal ForestParams(FeaturePoint origin, int radius = 1, double density = 0.7)
         {
             Origin = origin;
 

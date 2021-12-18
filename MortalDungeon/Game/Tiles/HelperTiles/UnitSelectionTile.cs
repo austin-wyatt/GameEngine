@@ -9,23 +9,23 @@ using System.Text;
 
 namespace MortalDungeon.Game.GameObjects
 {
-    public class UnitSelectionTile : GameObject
+    internal class UnitSelectionTile : GameObject
     {
-        public Unit BoundUnit;
-        public Vector3 UnitOffset;
+        internal Unit BoundUnit;
+        internal Vector3 UnitOffset;
 
-        public PropertyAnimation _selectAnimation;
-        public PropertyAnimation _targetAnimation;
+        internal PropertyAnimation _selectAnimation;
+        internal PropertyAnimation _targetAnimation;
 
         private Vector4 _baseColor;
 
-        public enum UnitSelectionAnimations 
+        internal enum UnitSelectionAnimations 
         {
             Select,
             Target
         }
 
-        public UnitSelectionTile(Unit unit, Vector3 positionOffset)
+        internal UnitSelectionTile(Unit unit, Vector3 positionOffset)
         {
             Name = "UnitSelectionTile " + unit.ObjectID;
             BoundUnit = unit;
@@ -69,12 +69,12 @@ namespace MortalDungeon.Game.GameObjects
             //base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
         }
 
-        public override void SetPosition(Vector3 position)
+        internal override void SetPosition(Vector3 position)
         {
             base.SetPosition(position + UnitOffset);
         }
 
-        public override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color)
         {
             base.SetColor(color);
 
@@ -83,7 +83,7 @@ namespace MortalDungeon.Game.GameObjects
             CreateAnimations();
         }
 
-        public void Select() 
+        internal void Select() 
         {
             _selectAnimation.Reset();
 
@@ -97,13 +97,13 @@ namespace MortalDungeon.Game.GameObjects
             BaseObjects[0].SetAnimation((int)UnitSelectionAnimations.Select);
         }
 
-        public void Deselect()
+        internal void Deselect()
         {
             SetRender(false);
             _selectAnimation.Reset();
         }
 
-        public void Target() 
+        internal void Target() 
         {
             _targetAnimation.Reset();
 
@@ -117,7 +117,7 @@ namespace MortalDungeon.Game.GameObjects
             BaseObjects[0].SetAnimation((int)UnitSelectionAnimations.Target);
         }
 
-        public void Untarget() 
+        internal void Untarget() 
         {
             SetRender(false);
             _targetAnimation.Reset();

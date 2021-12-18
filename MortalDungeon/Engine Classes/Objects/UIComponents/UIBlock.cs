@@ -7,9 +7,9 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    public class UIBlock : UIObject
+    internal class UIBlock : UIObject
     {
-        public UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
+        internal UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
         {
             Position = position;
             Size = size == null ? Size : size;
@@ -61,7 +61,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        public override void SetSize(UIScale size)
+        internal override void SetSize(UIScale size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
@@ -80,28 +80,28 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetOrigin(aspectRatio, Size);
         }
 
-        public void SetOrigin() 
+        internal void SetOrigin() 
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
             SetOrigin(aspectRatio, Size);
         }
 
-        public override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color)
         {
             _baseObject.BaseFrame.SetBaseColor(color);
         }
 
-        public override void ScaleAddition(float f)
+        internal override void ScaleAddition(float f)
         {
             base.ScaleAddition(f);
         }
 
-        public override void ScaleAll(float f)
+        internal override void ScaleAll(float f)
         {
             base.ScaleAll(f);
         }
 
-        public override void SetPosition(Vector3 position)
+        internal override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
 

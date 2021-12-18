@@ -7,16 +7,16 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
-    public static class ObjectCulling
+    internal static class ObjectCulling
     {
-        public static Frustum Frustum;
+        internal static Frustum Frustum;
 
-        public static void Initialize() 
+        internal static void Initialize() 
         {
             Frustum = new Frustum();
         }
 
-        public static void UpdateValues(Camera camera) 
+        internal static void UpdateValues(Camera camera) 
         {
             Frustum.CalculateFrustum(camera.ProjectionMatrix, camera.GetViewMatrix());
         }
@@ -24,7 +24,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
 
         private static Vector3 _localPos = new Vector3(0, 0, 0);
-        public static void CullListOfGameObjects<T>(List<T> objList) where T : GameObject 
+        internal static void CullListOfGameObjects<T>(List<T> objList) where T : GameObject 
         {
             objList.ForEach(obj =>
             {
@@ -59,8 +59,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
         }
 
-        public static int _culledChunks = 0;
-        public static void CullTileChunk(TileChunk obj)
+        internal static int _culledChunks = 0;
+        internal static void CullTileChunk(TileChunk obj)
         {
             if (obj.Tiles.Count == 0)
                 return;
@@ -101,7 +101,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public static void CullListOfParticles(List<ParticleGenerator> objList)
+        internal static void CullListOfParticles(List<ParticleGenerator> objList)
         {
             for (int i = 0; i < objList.Count; i++)
             {

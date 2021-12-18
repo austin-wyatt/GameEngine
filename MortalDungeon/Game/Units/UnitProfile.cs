@@ -5,15 +5,15 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
-    public class UnitProfile
+    internal class UnitProfile
     {
-        public string Name;
-        public Func<CombatScene, Unit> CreateUnit;
+        internal string Name;
+        internal Func<CombatScene, Unit> CreateUnit;
     }
 
-    public static class UnitProfiles 
+    internal static class UnitProfiles 
     {
-        public static List<UnitProfile> Profiles = new List<UnitProfile>();
+        internal static List<UnitProfile> Profiles = new List<UnitProfile>();
 
         static UnitProfiles()
         {

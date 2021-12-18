@@ -8,31 +8,33 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class BaseObject
+    internal class BaseObject
     {
-        public int ID;
-        public string Name;
-        public Vector3 Position; //uses global position (based off of screen width and height), use GetDisplay().Position for local coordinates 
-        public Bounds Bounds;
-        public Vector3 PositionalOffset = new Vector3();
+        internal int ID;
+        internal string Name;
+        internal Vector3 Position; //uses global position (based off of screen width and height), use GetDisplay().Position for local coordinates 
+        internal Bounds Bounds;
+        internal Vector3 PositionalOffset = new Vector3();
 
-        public Dictionary<AnimationType, Animation> Animations = new Dictionary<AnimationType, Animation>();
-        public AnimationType CurrentAnimationType = AnimationType.Idle; //static textures will use the idle animation
+        internal Dictionary<AnimationType, Animation> Animations = new Dictionary<AnimationType, Animation>();
+        internal AnimationType CurrentAnimationType = AnimationType.Idle; //static textures will use the idle animation
 
 
-        public bool LockToWindow = false;
-        public bool Render = true;
-        public bool Clickable = true;
+        internal bool LockToWindow = false;
+        internal bool Render = true;
+
+        internal bool EnableLighting = true;
+
         private Vector3 _dimensions;
-        public Animation _currentAnimation;
+        internal Animation _currentAnimation;
 
-        public RenderableObject BaseFrame;
+        internal RenderableObject BaseFrame;
 
-        public OutlineParameters OutlineParameters = new OutlineParameters();
+        internal OutlineParameters OutlineParameters = new OutlineParameters();
 
-        public RenderData RenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold };
+        internal RenderData RenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold };
 
-        public Vector3 Dimensions 
+        internal Vector3 Dimensions 
         {
             get 
             {
@@ -44,7 +46,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public BaseObject(List<Animation> animations, int id, string name, Vector3 position, float[] bounds = null) 
+        internal BaseObject(List<Animation> animations, int id, string name, Vector3 position, float[] bounds = null) 
         {
             ID = id;
             Name = name;
@@ -72,7 +74,7 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(position);
         }
 
-        public BaseObject(RenderableObject obj, int id, string name, Vector3 position, float[] bounds = null)
+        internal BaseObject(RenderableObject obj, int id, string name, Vector3 position, float[] bounds = null)
         {
             ID = id;
             Name = name;
@@ -106,10 +108,10 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(position);
         }
 
-        public BaseObject() { } //don't use this for creating objects
+        internal BaseObject() { } //don't use this for creating objects
 
         //sets the position using units (1 thousandth of the width/height of the screen
-        public void SetPosition(Vector3 position) 
+        internal void SetPosition(Vector3 position) 
         {
             //Position = new Vector3(Math.Clamp(position.X, 0, _windowSize.X), Math.Clamp(position.Y, 0, _windowSize.Y), 0);
             Position = new Vector3(position.X, position.Y, position.Z) + PositionalOffset;
@@ -125,7 +127,7 @@ namespace MortalDungeon.Engine_Classes
             BaseFrame.SetTranslation(position);
         }
 
-        public void SetPosition(Vector2 position)
+        internal void SetPosition(Vector2 position)
         {
             Position = new Vector3(Math.Clamp(position.X, 0, WindowConstants.ClientSize.X), Math.Clamp(position.Y, 0, WindowConstants.ClientSize.Y), 0);
 
@@ -144,7 +146,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //uses global coordinates
-        public void MoveObject(Vector3 position)
+        internal void MoveObject(Vector3 position)
         {
             //position.X = ((position.X / WindowConstants.ScreenUnits.X) + 1) * 2; //converts proportion of screen into global coordinates?
             //position.Y = ((position.Y / WindowConstants.ScreenUnits.Y) + 1) * 2; //converts proportion of screen into global coordinates?
@@ -154,13 +156,13 @@ namespace MortalDungeon.Engine_Classes
             BaseFrame.Translate(position);
         }
 
-        public void RemakeBounds(RenderableObject display, float[] bounds = null) 
+        internal void RemakeBounds(RenderableObject display, float[] bounds = null) 
         {
             Bounds = new Bounds(bounds, display);
             SetPosition(Position);
         }
 
-        public void SetAnimation(AnimationType type, Action onFinish = null) 
+        internal void SetAnimation(AnimationType type, Action onFinish = null) 
         {
             _currentAnimation.Reset();
 
@@ -174,32 +176,32 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void SetAnimation(int genericType, Action onFinish = null) 
+        internal void SetAnimation(int genericType, Action onFinish = null) 
         {
             SetAnimation((AnimationType)genericType, onFinish);
         }
 
-        public RenderableObject GetDisplay() 
+        internal RenderableObject GetDisplay() 
         {
             return _currentAnimation.CurrentFrame;
         }
     }
 
-    public class Bounds
+    internal class Bounds
     {
-        public float[] Vertices;
-        public RenderableObject Display;
+        internal float[] Vertices;
+        internal RenderableObject Display;
         //the square of the radius of a sphere that can be used to quickly determine whether to do a full check of the bounds of the object
-        public float BoundingSphere;
+        internal float BoundingSphere;
 
-        public Bounds(float[] vertices, RenderableObject display, float boundingSphere = 1f) 
+        internal Bounds(float[] vertices, RenderableObject display, float boundingSphere = 1f) 
         {
             Vertices = vertices;
             Display = display;
             BoundingSphere = boundingSphere;
         }
 
-        public bool Contains(Vector2 point, Camera camera = null)
+        internal bool Contains(Vector2 point, Camera camera = null)
         {
             const int dimensions = 3;
 
@@ -240,7 +242,7 @@ namespace MortalDungeon.Engine_Classes
             return true;
         }
 
-        public bool Contains3D(Vector3 pointNear, Vector3 pointFar, Camera camera)
+        internal bool Contains3D(Vector3 pointNear, Vector3 pointFar, Camera camera)
         {
             if(!Display.CameraPerspective)
             {
@@ -266,7 +268,7 @@ namespace MortalDungeon.Engine_Classes
             return Contains(pointAtZ.Xy, camera);
         }
 
-        public Vector3 GetDimensionData() 
+        internal Vector3 GetDimensionData() 
         {
             const int dimensions = 3;
             float minX = float.MaxValue;
@@ -309,7 +311,7 @@ namespace MortalDungeon.Engine_Classes
             return new PointF(transform.X, transform.Y);
         }
 
-        public void PrintBounds(Camera camera)
+        internal void PrintBounds(Camera camera)
         {
             const int dimensions = 3;
 
@@ -327,21 +329,21 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class OutlineParameters 
+    internal class OutlineParameters 
     {
-        public int OutlineThickness = 0;
-        public int InlineThickness = 0;
-        public Vector4 OutlineColor = Colors.Black;
-        public Vector4 InlineColor = Colors.Black;
+        internal int OutlineThickness = 0;
+        internal int InlineThickness = 0;
+        internal Vector4 OutlineColor = Colors.Black;
+        internal Vector4 InlineColor = Colors.Black;
 
-        public int BaseOutlineThickness = 0;
-        public int BaseInlineThickness = 0;
+        internal int BaseOutlineThickness = 0;
+        internal int BaseInlineThickness = 0;
 
         /// <summary>
         /// Sets the inline thickness and base value to the thickness parameter
         /// </summary>
         /// <param name="thickness"></param>
-        public void SetAllInline(int thickness) 
+        internal void SetAllInline(int thickness) 
         {
             InlineThickness = thickness;
             BaseInlineThickness = thickness;
@@ -351,18 +353,18 @@ namespace MortalDungeon.Engine_Classes
         /// Sets the outline thickness and base value to the thickness parameter
         /// </summary>
         /// <param name="thickness"></param>
-        public void SetAllOutline(int thickness) 
+        internal void SetAllOutline(int thickness) 
         {
             OutlineThickness = thickness;
             BaseOutlineThickness = thickness;
         }
     }
 
-    public class RenderData
+    internal class RenderData
     {
-        public float AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold;
+        internal float AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold;
 
-        public static RenderData DefaultRenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold };
+        internal static RenderData DefaultRenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.DefaultAlphaThreshold };
     }
 
 }

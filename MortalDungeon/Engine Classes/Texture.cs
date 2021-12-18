@@ -12,28 +12,28 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class BitmapImageData 
+    internal class BitmapImageData 
     {
-        public float[] ImageData;
-        public Vector2i ImageDimensions;
+        internal float[] ImageData;
+        internal Vector2i ImageDimensions;
 
-        public BitmapImageData(float[] imgData, Vector2i dimensions) 
+        internal BitmapImageData(float[] imgData, Vector2i dimensions) 
         {
             ImageData = imgData;
             ImageDimensions = dimensions;
         }
-        public BitmapImageData() { }
+        internal BitmapImageData() { }
     }
 
-    public class Texture
+    internal class Texture
     {
-        public readonly int Handle;
-        public BitmapImageData ImageData = null;
-        public TextureName TextureName = TextureName.Unknown;
+        internal readonly int Handle;
+        internal BitmapImageData ImageData = null;
+        internal TextureName TextureName = TextureName.Unknown;
 
-        public static Dictionary<TextureUnit, TextureName> UsedTextures = new Dictionary<TextureUnit, TextureName>();
+        internal static Dictionary<TextureUnit, TextureName> UsedTextures = new Dictionary<TextureUnit, TextureName>();
 
-        public static Texture LoadFromFile(string path, bool nearest = true, TextureName name = TextureName.Unknown)
+        internal static Texture LoadFromFile(string path, bool nearest = true, TextureName name = TextureName.Unknown)
         {
             // Generate handle
             int handle = GL.GenTexture();
@@ -84,7 +84,7 @@ namespace MortalDungeon.Engine_Classes
             return tex;
         }
 
-        public static Texture LoadFromArray(float[] data, Vector2i imageDimensions, bool nearest = true, TextureName name = TextureName.Unknown)
+        internal static Texture LoadFromArray(float[] data, Vector2i imageDimensions, bool nearest = true, TextureName name = TextureName.Unknown)
         {
             // Generate handle
             int handle = GL.GenTexture();
@@ -130,7 +130,7 @@ namespace MortalDungeon.Engine_Classes
             return tex;
         }
 
-        //public void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
+        //internal void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
         //{
         //    Stopwatch stopwatch = new Stopwatch();
         //    stopwatch.Restart();
@@ -172,13 +172,13 @@ namespace MortalDungeon.Engine_Classes
         //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         //}
 
-        public Texture(int glHandle, TextureName name)
+        internal Texture(int glHandle, TextureName name)
         {
             Handle = glHandle;
             TextureName = name;
         }
 
-        public void Use(TextureUnit unit)
+        internal void Use(TextureUnit unit)
         {
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, Handle);

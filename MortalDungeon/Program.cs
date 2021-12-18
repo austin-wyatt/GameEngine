@@ -9,7 +9,7 @@ namespace MortalDungeon
 {
     class Program
     {
-        public static Window Window;
+        internal static Window Window;
 
         static void Main(string[] args)
         {
@@ -22,10 +22,13 @@ namespace MortalDungeon
                 //Size = new Vector2i(2560, 1440),
                 //Size = new Vector2i(800, 800),
                 Title = "Test Window",
-                WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable
+                WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable,
             };
 
             var gameWindowSettings = GameWindowSettings.Default;
+
+            //gameWindowSettings.RenderFrequency = 60;
+
 
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {

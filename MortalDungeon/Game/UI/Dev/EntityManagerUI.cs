@@ -14,23 +14,23 @@ using static MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Game.UI.Dev
 {
-    public class EntityManagerUI
+    internal class EntityManagerUI
     {
-        public UIObject Window;
+        internal UIObject Window;
 
-        public UIObject AddEntityWindow;
-        public UIObject EntityPropertiesWindow;
-        public UIObject EntityAbilitiesWindow;
-        public UIObject UnitPrefabWindow;
+        internal UIObject AddEntityWindow;
+        internal UIObject EntityPropertiesWindow;
+        internal UIObject EntityAbilitiesWindow;
+        internal UIObject UnitPrefabWindow;
 
-        public CombatScene Scene;
+        internal CombatScene Scene;
 
         private ScrollableArea EntityArea;
         private UIList EntityList;
 
-        public bool Displayed = false;
+        internal bool Displayed = false;
 
-        public EntityManagerUI(CombatScene scene)
+        internal EntityManagerUI(CombatScene scene)
         {
             Scene = scene;
 
@@ -106,7 +106,7 @@ namespace MortalDungeon.Game.UI.Dev
             PopulateEntityList();
         }
 
-        public void PopulateEntityList() 
+        internal void PopulateEntityList() 
         {
             EntityList.ClearItems();
 
@@ -119,7 +119,7 @@ namespace MortalDungeon.Game.UI.Dev
             }
         }
 
-        public void CreateContextMenuFromEntity(Entity entity)
+        internal void CreateContextMenuFromEntity(Entity entity)
         {
             (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(entity.Handle.Name);
 
@@ -169,7 +169,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Scene.OpenContextMenu(menu);
         }
-        public void CreateAbilityContextMenu(Ability ability)
+        internal void CreateAbilityContextMenu(Ability ability)
         {
             (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(ability.Name);
 
@@ -209,7 +209,7 @@ namespace MortalDungeon.Game.UI.Dev
         }
 
 
-        public void CreateAddEntityWindow() 
+        internal void CreateAddEntityWindow() 
         {
             if (AddEntityWindow != null) 
             {
@@ -332,7 +332,7 @@ namespace MortalDungeon.Game.UI.Dev
 
 
 
-        public void CreateEntityPropertiesWindow(Entity entity)
+        internal void CreateEntityPropertiesWindow(Entity entity)
         {
             if (EntityPropertiesWindow != null)
             {
@@ -424,7 +424,7 @@ namespace MortalDungeon.Game.UI.Dev
         }
 
 
-        public void CreateEntityAbilitiesWindow(Entity entity)
+        internal void CreateEntityAbilitiesWindow(Entity entity)
         {
             #region basic window
             if (EntityAbilitiesWindow != null)
@@ -525,7 +525,7 @@ namespace MortalDungeon.Game.UI.Dev
             Window.AddChild(EntityAbilitiesWindow, 10000);
         }
 
-        public void CreateUnitPrefabWindow(Entity entity)
+        internal void CreateUnitPrefabWindow(Entity entity)
         {
             UnitPrefabWindow = UIHelpers.CreateWindow(new UIScale(1f, 1f), "UnitPrefabWindow", Window, Scene, true);
 

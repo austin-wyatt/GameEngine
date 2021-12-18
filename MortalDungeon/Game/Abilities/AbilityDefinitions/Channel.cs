@@ -12,17 +12,17 @@ using MortalDungeon.Game.Particles;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Channel : Ability
+    internal class Channel : Ability
     {
-        public Channel(Unit castingUnit, string name, string description, Enum icon = null, Spritesheet spritesheet = null)
+        internal Channel(Unit castingUnit, string name, string description, Enum icon = null, Spritesheet spritesheet = null)
         {
             CastingUnit = castingUnit;
 
             CanTargetGround = false;
             CanTargetSelf = true;
-            UnitTargetParams.IsHostile = Disposition.CheckEnum.False;
-            UnitTargetParams.IsFriendly = Disposition.CheckEnum.False;
-            UnitTargetParams.IsNeutral = Disposition.CheckEnum.False;
+            UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             Name = name;
             _description = description;
@@ -33,8 +33,10 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, iconPos, iconSpritesheet, true);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
+            base.GetValidTileTargets(tileMap);
+
             List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
 
             AffectedUnits.Add(CastingUnit);
@@ -44,7 +46,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        public override bool OnUnitClicked(Unit unit)
+        internal override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -59,14 +61,14 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        public override void OnCast()
+        internal override void OnCast()
         {
             TileMap.DeselectTiles();
 
             base.OnCast();
         }
 
-        public override void EnactEffect()
+        internal override void EnactEffect()
         {
             base.EnactEffect();
 
