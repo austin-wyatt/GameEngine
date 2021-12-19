@@ -71,6 +71,10 @@ namespace MortalDungeon
         internal static bool ShowTicksPerSecond = false;
         internal static bool EnableBoundsTestingTools = false;
         internal static bool ShowCulledChunks = true;
+
+        internal static Stopwatch GlobalTimer = new Stopwatch();
+
+        internal static int MainThreadId = 0;
         internal static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position)
@@ -183,6 +187,8 @@ namespace MortalDungeon
             WindowConstants.ClientSize.X = ClientSize.X;
             WindowConstants.ClientSize.Y = ClientSize.Y;
 
+            WindowConstants.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+
             //Set listeners
             MouseDown += Window_MouseDown;
             MouseMove += Window_MouseMove;
@@ -243,6 +249,8 @@ namespace MortalDungeon
             _timer = new Stopwatch();
             _timer.Start();
 
+            WindowConstants.GlobalTimer.Restart();
+
 
             //hides mouse cursor
             CursorGrabbed = true;
@@ -265,6 +273,14 @@ namespace MortalDungeon
                     {
                         highFreqTick++;
                         _gameTimer.Restart();
+
+                        for(int i = 0; i < _sceneController.Scenes.Count; i++)
+                        {
+                            for(int j = 0; j < _sceneController.Scenes[i].TimedTickableObjects.Count; j++) 
+                            {
+                                _sceneController.Scenes[i].TimedTickableObjects[j].Tick();
+                            }
+                        }
                     }
 
                     //if (timeValue > tickRate)
@@ -297,7 +313,6 @@ namespace MortalDungeon
             SkyBox.LoadImages();
         }
 
-        private uint highFreqTPS = 0;
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             TickAllObjects();
@@ -336,8 +351,11 @@ namespace MortalDungeon
                     Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
                 }
 
-                Console.Write("   High freq ticks: " + (highFreqTick - highFreqTPS));
-                highFreqTPS = highFreqTick;
+                Console.Write("   High freq ticks: " + _highFreqTickCounter);
+                _highFreqTickCounter = 0;
+
+                Console.Write("   Ticks: " + _tickCounter);
+                _tickCounter = 0;
 
                 Console.Write("\n");
                 _timer.Restart();
@@ -448,16 +466,20 @@ namespace MortalDungeon
                     }
 
                     RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
-
-                    RenderingQueue.QueueTileObjectsForRender(tileMap.SelectionTiles);
-
-                    RenderingQueue.QueueTileObjectsForRender(tileMap.GetHoveredTile());
                 }); //TileMap
+
+                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles);
+
+                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
+
 
 
                 RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
 
-                RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
+                lock (scene._UI._lock) 
+                {
+                    RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
+                }
 
                 scene.GetRenderTarget<Text>(ObjectType.Text).ForEach(text =>
                 {
@@ -612,10 +634,14 @@ namespace MortalDungeon
             });
         }
 
+        private int _tickCounter = 0;
+        private int _highFreqTickCounter = 0;
         private void TickAllObjects() 
         {
             if (highFreqTick != highFreqLastTick) 
             {
+                _highFreqTickCounter++;
+
                 highFreqLastTick = highFreqTick;
                 _sceneController.Scenes.ForEach(scene =>
                 {
@@ -627,7 +653,9 @@ namespace MortalDungeon
             }
 
             if (tick != lastTick)
-            {             
+            {
+                _tickCounter++;
+
                 lastTick = tick;
                 _sceneController.Scenes.ForEach(scene =>
                 {
@@ -692,7 +720,7 @@ namespace MortalDungeon
                     uiTask.Wait();
                     tickableObjectsTask.Wait();
 
-                    scene.PostTickAction?.Invoke();
+                    scene.PostTickAction();
                 });
             }
         }

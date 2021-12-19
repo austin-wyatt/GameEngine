@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Units;
@@ -24,94 +25,91 @@ namespace MortalDungeon.Game.UI
             ValidateObject(this);
         }
 
-        private bool _settingUnits = false;
+        private readonly object _settingUnitsLock = new object();
         internal void SetUnits(List<Unit> units, CombatScene scene) 
         {
-            if (_settingUnits)
-                return;
-
-            _settingUnits = true;
-            
-            Units = units;
-
-            BaseComponent.RemoveChildren();
-
-            UnitObjects.Clear();
-
-            int unitSpacing = 50;
-
-            for (int i = 0; i < Units.Count; i++) 
+            lock (_settingUnitsLock) 
             {
-                BaseObject obj = Units[i].CreateBaseObject();
+                Units = units;
 
-                obj._currentAnimation.Reset();
-                obj._currentAnimation.Pause();
-
-                UIObject uiObj = new UIObject();
-
-                obj.BaseFrame.ScaleX(0.18f / WindowConstants.AspectRatio);
-                obj.BaseFrame.ScaleY(0.18f);
-
-                UnitObjects.Add(uiObj);
-
-                Vector3 pos;
-
-                if (BaseComponent.Children.Count > 0)
+                foreach(var unitObj in UnitObjects)
                 {
-                    pos = BaseComponent.Children[^1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(unitSpacing, 0, 0);
-                }
-                else 
-                {
-                    pos = BaseComponent.GetAnchorPosition(UIAnchorPosition.Center);
+                    BaseComponent.RemoveChild(unitObj);
                 }
 
-                UIBlock block = new UIBlock(default, new UIScale(0.18f, 0.18f));
-                block.MultiTextureData.MixTexture = false;
-                block.SetColor(Colors.UILightGray - new Vector4(0, 0, 0, 0.25f));
+                UnitObjects.Clear();
 
-                block.BaseObjects.Insert(0, obj);
-                block._baseObject = obj;
+                int unitSpacing = 50;
 
-                block.SetPosition(obj.Position);
-
-                uiObj.BaseComponent = block;
-
-                uiObj.AddChild(block);
-
-                uiObj.SetPositionFromAnchor(pos, UIAnchorPosition.Center);
-
-                if (i != Units.Count - 1) 
+                for (int i = 0; i < Units.Count; i++) 
                 {
-                    UIBlock chevron = new UIBlock(default, new UIScale(0.15f, 0.1f), default, (int)UISheetIcons.Chevron);
-                    chevron.MultiTextureData.MixTexture = false;
+                    BaseObject obj = Units[i].CreateBaseObject();
 
-                    chevron.SetPositionFromAnchor(pos + new Vector3(unitSpacing * 0.7f, 0, 0), UIAnchorPosition.Center);
-                    chevron.SetColor(Units[i + 1].StatusBarComp.HealthBar.BarColor);
+                    obj._currentAnimation.Reset();
+                    obj._currentAnimation.Pause();
 
-                    uiObj.AddChild(chevron);
-                }
+                    UIObject uiObj = new UIObject();
 
-                int index = i;
-                uiObj.Clickable = true;
-                uiObj.OnClickAction = () =>
-                {
-                    Vector2i clusterPos = scene._tileMapController.PointToClusterPosition(Units[index].Info.TileMapPosition);
+                    obj.BaseFrame.ScaleX(0.18f / WindowConstants.AspectRatio);
+                    obj.BaseFrame.ScaleY(0.18f);
 
-                    if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
+                    UnitObjects.Add(uiObj);
+
+                    Vector3 pos;
+
+                    if (BaseComponent.Children.Count > 0)
                     {
-                        Vector4 pos = Units[index].BaseObject.BaseFrame.Position;
-
-                        scene.SmoothPanCamera(new Vector3(pos.X, pos.Y - scene._camera.Position.Z / 5, scene._camera.Position.Z), 1);
+                        pos = BaseComponent.Children[^1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(unitSpacing, 0, 0);
                     }
-                };
+                    else 
+                    {
+                        pos = BaseComponent.GetAnchorPosition(UIAnchorPosition.Center);
+                    }
+
+                    UIBlock block = new UIBlock(default, new UIScale(0.18f, 0.18f));
+                    block.MultiTextureData.MixTexture = false;
+                    block.SetColor(Colors.UILightGray - new Vector4(0, 0, 0, 0.25f));
+
+                    block.BaseObjects.Insert(0, obj);
+                    block._baseObject = obj;
+
+                    block.SetPosition(obj.Position);
+
+                    uiObj.BaseComponent = block;
+
+                    uiObj.AddChild(block);
+
+                    uiObj.SetPositionFromAnchor(pos, UIAnchorPosition.Center);
+
+                    if (i != Units.Count - 1) 
+                    {
+                        UIBlock chevron = new UIBlock(default, new UIScale(0.15f, 0.1f), default, (int)UISheetIcons.Chevron);
+                        chevron.MultiTextureData.MixTexture = false;
+
+                        chevron.SetPositionFromAnchor(pos + new Vector3(unitSpacing * 0.7f, 0, 0), UIAnchorPosition.Center);
+                        chevron.SetColor(Units[i + 1].StatusBarComp.HealthBar.BarColor);
+
+                        uiObj.AddChild(chevron);
+                    }
+
+                    int index = i;
+                    uiObj.Clickable = true;
+                    uiObj.OnClickAction = () =>
+                    {
+                        Vector2i clusterPos = scene._tileMapController.PointToClusterPosition(Units[index].Info.TileMapPosition);
+
+                        if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
+                        {
+                            scene.SmoothPanCameraToUnit(Units[index], 1);
+                        }
+                    };
 
 
-                BaseComponent.AddChild(uiObj);
+                    BaseComponent.AddChild(uiObj);
+                }
+
+                PositionUnits();
             }
-
-            PositionUnits();
-
-            _settingUnits = false;
         }
 
         internal void PositionUnits() 

@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Abilities
     }
     internal class Buff
     {
-        internal Unit Unit;
+        internal Unit AffectedUnit;
 
         internal BuffModifier OutgoingDamage = new BuffModifier();
 
@@ -50,6 +50,11 @@ namespace MortalDungeon.Game.Abilities
         internal string Name = "";
         internal BuffType BuffType = BuffType.Neutral;
 
+        /// <summary>
+        /// The status condition that having this buff/debuff provides
+        /// </summary>
+        internal StatusCondition StatusCondition;
+
         internal int Grade = 1;
 
         internal int BuffID => _buffID;
@@ -65,30 +70,25 @@ namespace MortalDungeon.Game.Abilities
         }
         internal Buff(Unit unit, int duration = -1) 
         {
-            Unit = unit;
             MaxDuration = duration;
             Duration = duration;
-
-            AddBuffToUnit(unit);
         }
 
         internal virtual void AddBuffToUnit(Unit unit) 
         {
-            if (Unit != null) 
+            if (AffectedUnit != null)
             {
                 RemoveBuffFromUnit();
             }
 
-            unit.Info.Buffs.Add(this);
-            Unit = unit;
+            unit.Info.AddBuff(this);
         }
 
         internal virtual void RemoveBuffFromUnit() 
         {
-            if (Unit != null) 
+            if (AffectedUnit != null) 
             {
-                Unit.Info.Buffs.Remove(this);
-                Unit = null;
+                AffectedUnit.Info.RemoveBuff(this); 
             }
         }
 
@@ -119,7 +119,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (Duration <= 0)
                 {
-                    Unit.Info.Buffs.Remove(this);
+                    AffectedUnit.Info.RemoveBuff(this);
                 }
             }
         }

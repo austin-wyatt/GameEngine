@@ -109,7 +109,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             });
                         }
 
-                        foreach (var tile in obj.GetSelectionTilePool()) 
+                        foreach (var tile in obj.Controller.GetSelectionTilePool()) 
                         {
                             Renderer.LoadTextureFromGameObj(tile);
                         }

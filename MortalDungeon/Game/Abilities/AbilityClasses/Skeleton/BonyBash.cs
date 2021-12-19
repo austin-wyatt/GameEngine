@@ -22,6 +22,8 @@ namespace MortalDungeon.Game.Abilities
             Damage = damage;
             ActionCost = 3;
 
+            CastingMethod |= CastingMethod.BruteForce | CastingMethod.Weapon;
+
             Grade = 1;
 
             MaxCharges = 0;
@@ -81,7 +83,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
 
-            if (unit.AI.Team != CastingUnit.AI.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
+            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
             {
                 SelectedUnit = unit;
                 EnactEffect();

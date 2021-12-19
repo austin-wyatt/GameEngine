@@ -126,7 +126,7 @@ namespace MortalDungeon.Game.UI
                 });
             };
 
-            createGroup.SetPositionFromAnchor(PartyWindow.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, 50, -0.0001f), UIAnchorPosition.TopRight);
+            createGroup.SetPositionFromAnchor(PartyWindow.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, 50, -0.00001f), UIAnchorPosition.TopRight);
 
             PartyWindow.AddChild(createGroup, 10);
 
@@ -140,7 +140,7 @@ namespace MortalDungeon.Game.UI
                 Task.Run(() => Scene.DissolveUnitGroup(true, CreatePartyWindowList));
             };
 
-            dissolveGroup.SetPositionFromAnchor(createGroup.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(-0, 10, -0.0001f), UIAnchorPosition.TopLeft);
+            dissolveGroup.SetPositionFromAnchor(createGroup.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(-0, 10, -0.00001f), UIAnchorPosition.TopLeft);
             UIHelpers.AddTimedHoverTooltip(dissolveGroup, "Dissolve group", Scene);
 
 
@@ -225,17 +225,14 @@ namespace MortalDungeon.Game.UI
                 int index = i;
                 item.OnClickAction = (_) =>
                 {
-                    Vector4 pos = default;
                     if (isSecondaryUnit) 
                     {
-                        pos = Scene.UnitGroup.PrimaryUnit.BaseObject.BaseFrame.Position;
+                        Scene.SmoothPanCameraToUnit(Scene.UnitGroup.PrimaryUnit, 1);
                     }
                     else
                     {
-                        pos = unitList[index].BaseObject.BaseFrame.Position;
+                        Scene.SmoothPanCameraToUnit(unitList[index], 1);
                     }
-
-                    Scene.SmoothPanCamera(new Vector3(pos.X, pos.Y - Scene._camera.Position.Z / 5, Scene._camera.Position.Z), 1);
                 };
             }
 
@@ -275,7 +272,7 @@ namespace MortalDungeon.Game.UI
                         }
                     }
 
-                    Scene.SetTime(CombatScene.Time + DayNightCycle.HOUR * 4);
+                    Scene.SetTime(Scene.Time + DayNightCycle.HOUR * 4);
                 }
             };
 

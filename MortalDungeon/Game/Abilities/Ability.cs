@@ -39,7 +39,26 @@ namespace MortalDungeon.Game.Abilities
     internal enum AbilityClass
     {
         Unknown,
-        Skeleton
+        Skeleton,
+        Bandit
+    }
+
+    /// <summary>
+    /// The casting method of the ability. This will be used to determine if the ability can be cast based off of 
+    /// the unit's current status effects.
+    /// </summary>
+    internal enum CastingMethod
+    {
+        Base = 1, //base value
+        Vocal = 2, //incanting a spell, screaming at someone, etc
+        BruteForce = 4, //hitting someone with a club
+        PhysicalDexterity = 8, //picking a lock, bandaging wounds, etc
+        Weapon = 16, //stabbing someone with a sword or shooting a bow
+        Unarmed = 32, //punch, kick, bite, etc
+        Magic = 64, //a magical attack of any variety
+        Intelligence = 128, //activating a complicated device
+        Passive = 256, //an always active ability
+        Movement = 512, //walking, flying, jumping, etc
     }
 
     internal enum DamageType //main effect (extra effects provided by abilities)
@@ -71,6 +90,7 @@ namespace MortalDungeon.Game.Abilities
         internal AbilityTypes Type = AbilityTypes.Empty;
         internal DamageType DamageType = DamageType.NonDamaging;
         internal AbilityClass AbilityClass = AbilityClass.Unknown;
+        internal CastingMethod CastingMethod = CastingMethod.Base;
 
         internal int Grade = 1;
         /// <summary>
@@ -395,8 +415,10 @@ namespace MortalDungeon.Game.Abilities
 
         internal bool CanCast() 
         {
-            return CastingUnit.Info.Energy >= GetEnergyCost() && CastingUnit.Info.ActionEnergy >= GetActionEnergyCost() && HasSufficientCharges();
+            return CastingUnit.Info.Energy >= GetEnergyCost() && CastingUnit.Info.ActionEnergy >= GetActionEnergyCost() && HasSufficientCharges()
+                && CastingUnit.Info.CanUseAbility(this);
         }
+
 
         internal void TargetAffectedUnits()
         {
@@ -589,7 +611,7 @@ namespace MortalDungeon.Game.Abilities
             AffectedUnits.Clear();
             AffectedTiles.Clear();
 
-            TileMap.DeselectTiles();
+            TileMap.Controller.DeselectTiles();
         }
 
         internal void CreateTemporaryVision()
@@ -631,49 +653,21 @@ namespace MortalDungeon.Game.Abilities
 
             Icon icon = GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType, false, passedIcon);
 
-
-            icon.SetCameraPerspective(true);
+            Vector3 pos;
             if (SelectedUnit != null)
             {
-                icon.SetPosition(SelectedUnit.Position + new Vector3(0, -400, 0.3f));
+                pos = SelectedUnit.Position + new Vector3(0, -400, 0.3f);
             }
             else if (SelectedTile != null)
             {
-                icon.SetPosition(SelectedTile.Position + new Vector3(0, -400, 0.3f));
+                pos = SelectedTile.Position + new Vector3(0, -400, 0.3f);
             }
             else
             {
-                icon.SetPosition(CastingUnit.Position + new Vector3(0, -400, 0.3f));
+                pos = CastingUnit.Position + new Vector3(0, -400, 0.3f);
             }
 
-            Scene._genericObjects.Add(icon);
-
-            PropertyAnimation anim = new PropertyAnimation(icon.BaseObject.BaseFrame);
-
-            float xMovement = (float)(new Random().NextDouble() - 1) * 10f;
-
-            for (int i = 0; i < 50; i++)
-            {
-                Keyframe frame = new Keyframe(i * 2)
-                {
-                    Action = () =>
-                    {
-                        icon.SetPosition(icon.Position + new Vector3(xMovement, -10, 0.015f));
-                        icon.SetColor(icon.BaseObject.BaseFrame.BaseColor - new Vector4(0, 0, 0, 0.02f));
-                    }
-                };
-
-                anim.Keyframes.Add(frame);
-            }
-
-            icon.AddPropertyAnimation(anim);
-            anim.Play();
-
-            anim.OnFinish = () =>
-            {
-                icon.RemovePropertyAnimation(anim.AnimationID);
-                Scene._genericObjects.Remove(icon);
-            };
+            UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
         }
 
         /// <summary>

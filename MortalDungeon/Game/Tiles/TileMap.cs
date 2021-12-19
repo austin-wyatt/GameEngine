@@ -55,8 +55,6 @@ namespace MortalDungeon.Game.Tiles
         internal TileMapController Controller;
 
         internal List<BaseTile> Tiles = new List<BaseTile>();
-        internal QueuedList<BaseTile> SelectionTiles = new QueuedList<BaseTile>(); //these tiles will be place above the currently selected tiles
-        internal BaseTile HoveredTile;
 
         internal List<GameObject> Structures = new List<GameObject>();
 
@@ -73,11 +71,6 @@ namespace MortalDungeon.Game.Tiles
 
         internal GameObject TexturedQuad;
 
-        private const int MAX_SELECTION_TILES = 1000;
-        internal int _amountOfSelectionTiles = 0;
-        private readonly List<BaseTile> _selectionTilePool = new List<BaseTile>();
-
-        private List<BaseTile> _hoveredTileList = new List<BaseTile>();
         internal TileMap(Vector3 position, TileMapPoint point, TileMapController controller, string name = "TileMap")
         {
             Position = position; //position of the first tile
@@ -146,56 +139,11 @@ namespace MortalDungeon.Game.Tiles
             }
 
             tilePosition.Z += 0.03f;
-            InitializeHelperTiles(tilePosition);
 
             SetDefaultTileValues();
             //InitializeTexturedQuad();
         }
 
-        internal void InitializeHelperTiles(Vector3 tilePosition)
-        {
-            BaseTile baseTile = new BaseTile();
-            for (int i = 0; i < MAX_SELECTION_TILES; i++)
-            {
-                baseTile = new BaseTile(tilePosition, new TilePoint(i, -1,this));
-                baseTile.SetRender(false);
-                baseTile._tileObject.OutlineParameters.OutlineColor = Colors.TranslucentBlue;
-                baseTile._tileObject.OutlineParameters.InlineColor = Colors.TranslucentBlue;
-                //baseTile._tileObject.OutlineParameters.OutlineThickness = 2;
-                baseTile._tileObject.OutlineParameters.SetAllInline(4);
-                baseTile.SetAnimation(BaseTileAnimationType.SolidWhite);
-                baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
-
-                //baseTile.DefaultColor = Colors.TranslucentBlue;
-                //baseTile.SetColor(Colors.TranslucentBlue);
-
-                baseTile.DefaultColor = Colors.Transparent;
-                baseTile.SetColor(Colors.Transparent);
-
-                //SelectionTiles.Add(baseTile);
-                _selectionTilePool.Add(baseTile);
-            }
-
-            tilePosition.Z += 0.001f;
-            HoveredTile = new BaseTile(tilePosition, new TilePoint(-1, -1, this));
-            HoveredTile.SetRender(false);
-            //HoveredTile._tileObject.OutlineParameters.OutlineColor = Colors.Red;
-            //HoveredTile._tileObject.OutlineParameters.InlineColor = Colors.Red;
-            //HoveredTile._tileObject.OutlineParameters.SetAllOutline(0);
-            //HoveredTile._tileObject.OutlineParameters.SetAllInline(10);
-            
-            HoveredTile.SetAnimation(BaseTileAnimationType.Transparent);
-            HoveredTile.DefaultAnimation = BaseTileAnimationType.Transparent;
-
-            HoveredTile.SetColor(Colors.Red);
-            HoveredTile._tileObject.OutlineParameters.SetAllInline(0);
-
-            LoadTexture(HoveredTile);
-
-            LoadTextures(_selectionTilePool);
-
-            _hoveredTileList = new List<BaseTile>() { HoveredTile };
-        }
 
         internal virtual void OnAddedToController() 
         {
@@ -334,7 +282,6 @@ namespace MortalDungeon.Game.Tiles
 
             TileChunks.Clear();
             Tiles.Clear();
-            SelectionTiles.Clear();
         }
 
 
@@ -438,10 +385,7 @@ namespace MortalDungeon.Game.Tiles
             UpdateQuadPosition();
         }
 
-        internal List<BaseTile> GetHoveredTile()
-        {
-            return _hoveredTileList;
-        }
+        
 
         #region Tile validity checks
         internal bool IsValidTile(int xIndex, int yIndex)
@@ -494,84 +438,7 @@ namespace MortalDungeon.Game.Tiles
         }
         #endregion
 
-        internal List<BaseTile> GetSelectionTilePool()
-        {
-            return _selectionTilePool;
-        }
-
-        internal void SelectTiles(List<BaseTile> tiles)
-        {
-            if (tiles.Count > MAX_SELECTION_TILES)
-                throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + MAX_SELECTION_TILES + " in tile map " + ObjectID);
-
-            for (int i = 0; i < tiles.Count; i++)
-            {
-                SelectTile(tiles[i]);
-            }
-        }
-
-        internal void SelectTile(BaseTile tile)
-        {
-            Console.WriteLine(_amountOfSelectionTiles + " tiles in use");
-
-            if (_amountOfSelectionTiles == _selectionTilePool.Count)
-                _amountOfSelectionTiles--;
-
-            if (_amountOfSelectionTiles < 0) 
-            {
-                Console.WriteLine("TileMap.SelectTile: Less than 0 selection tiles ");
-                _amountOfSelectionTiles = 0;
-            }
-                
-
-            Vector3 pos = new Vector3
-            {
-                X = tile.Position.X,
-                Y = tile.Position.Y,
-                Z = _selectionTilePool[_amountOfSelectionTiles].Position.Z
-            };
-
-            _selectionTilePool[_amountOfSelectionTiles].SetPosition(pos);
-            _selectionTilePool[_amountOfSelectionTiles].SetRender(true);
-
-            SelectionTiles.Add(_selectionTilePool[_amountOfSelectionTiles]);
-
-            _selectionTilePool[_amountOfSelectionTiles].AttachedTile = tile;
-            tile.AttachedTile = _selectionTilePool[_amountOfSelectionTiles];
-
-            _amountOfSelectionTiles++;
-        }
-
-        internal void DeselectTile(BaseTile selectionTile)
-        {
-            SelectionTiles.Remove(selectionTile);
-
-            if (selectionTile.AttachedTile != null) 
-            {
-                selectionTile.SetRender(false);
-                selectionTile.AttachedTile.AttachedTile = null;
-                selectionTile.AttachedTile = null;
-                _amountOfSelectionTiles--;
-            }
-            
-        }
-
-        internal void DeselectTiles()
-        {
-            for (int i = 0; i < _amountOfSelectionTiles; i++)
-            {
-                _selectionTilePool[i].SetRender(false);
-                if (_selectionTilePool[i].AttachedTile != null)
-                {
-                    _selectionTilePool[i].AttachedTile.AttachedTile = null;
-                    _selectionTilePool[i].AttachedTile = null;
-                }
-            }
-
-            SelectionTiles.Clear();
-
-            _amountOfSelectionTiles = 0;
-        }
+        
 
         internal void AddHeightIndicator(BaseTile attachedTile, bool up = true) 
         {
@@ -600,38 +467,6 @@ namespace MortalDungeon.Game.Tiles
             {
                 Controller.Scene._genericObjects.Remove(attachedTile.HeightIndicator);
             }
-        }
-
-        internal void HoverTile(BaseTile tile)
-        {
-            Vector3 pos = new Vector3
-            {
-                X = tile.Position.X,
-                Y = tile.Position.Y,
-                Z = HoveredTile.Position.Z
-            };
-
-            if (!tile.Hovered) 
-            {
-                EndHover();
-                HoveredTile.AttachedTile = tile;
-            }
-
-            tile.OnHover();
-
-            HoveredTile.SetPosition(pos);
-            HoveredTile.SetRender(true);
-        }
-
-        internal void EndHover()
-        {
-            if (HoveredTile.AttachedTile != null) 
-            {
-                HoveredTile.AttachedTile.OnHoverEnd();
-                HoveredTile.AttachedTile = null;
-            }
-
-            HoveredTile.SetRender(false);
         }
 
 

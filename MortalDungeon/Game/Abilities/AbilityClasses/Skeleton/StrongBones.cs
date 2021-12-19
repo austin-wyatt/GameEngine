@@ -19,6 +19,8 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.NonDamaging;
             CastingUnit = castingUnit;
 
+            CastingMethod |= CastingMethod.Passive | CastingMethod.BruteForce;
+
             Grade = 1;
 
             Name = "Strong Bones";
@@ -29,7 +31,7 @@ namespace MortalDungeon.Game.Abilities
 
             AbilityClass = AbilityClass.Skeleton;
 
-            new StrongBonesBuff(castingUnit);
+            CastingUnit.Info.AddBuff(new StrongBonesBuff(castingUnit));
         }
     }
 
@@ -53,7 +55,7 @@ namespace MortalDungeon.Game.Abilities
         {
             int skeletonTypeAbilities = 0;
 
-            Unit.Info.Abilities.ForEach(ability =>
+            AffectedUnit.Info.Abilities.ForEach(ability =>
             {
                 if (ability.AbilityClass == AbilityClass.Skeleton)
                 {
@@ -79,7 +81,7 @@ namespace MortalDungeon.Game.Abilities
         {
             int skeletonTypeAbilities = 0;
 
-            Unit.Info.Abilities.ForEach(ability =>
+            AffectedUnit.Info.Abilities.ForEach(ability =>
             {
                 if (ability.AbilityClass == AbilityClass.Skeleton)
                 {

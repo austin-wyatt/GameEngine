@@ -43,6 +43,8 @@ namespace MortalDungeon.Engine_Classes
 
         protected const int INTERNAL_QUEUES = 2;
 
+        public object _lock = new object();
+
         internal int CHANGE_TOKEN { get; private set; }
 
         internal QueuedList()
@@ -95,7 +97,7 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         internal void AddImmediate(T item)
         {
-            lock (this)
+            lock (_lock)
             {
                 base.Add(item);
             }
@@ -109,7 +111,7 @@ namespace MortalDungeon.Engine_Classes
 
         internal void AddQueuedItems(int queue)
         {
-            lock (this)
+            lock (_lock)
             {
                 lock (_itemsToAdd[_currentQueue])
                 {
@@ -125,7 +127,7 @@ namespace MortalDungeon.Engine_Classes
 
         internal void RemoveImmediate(T item)
         {
-            lock (this)
+            lock (_lock)
             {
                 base.Remove(item);
             }
@@ -138,7 +140,7 @@ namespace MortalDungeon.Engine_Classes
 
         internal void ClearQueuedItems(int queue)
         {
-            lock (this)
+            lock (_lock)
             {
                 lock (_itemsToRemove[_currentQueue])
                 {

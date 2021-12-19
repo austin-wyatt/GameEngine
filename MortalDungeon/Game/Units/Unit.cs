@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.GameObjects;
@@ -280,6 +281,8 @@ namespace MortalDungeon.Game.Units
             VisionGenerator.SetPosition(baseTile.TilePoint);
             LightObstruction.SetPosition(baseTile);
 
+            Info.TileMapPosition.OnSteppedOn(this);
+
             Scene.OnUnitMoved(this, prevTile);
         }
 
@@ -323,12 +326,45 @@ namespace MortalDungeon.Game.Units
 
         internal void OnTurnStart() 
         {
-            if (StatusBarComp != null) 
+            if (StatusBarComp != null && StatusBarComp.Render) 
             {
                 StatusBarComp.SetIsTurn(true);
             }
 
-            if (AI.ControlType != ControlType.Controlled)
+            List<Ability> abilitiesToDecay = new List<Ability>();
+
+            lock (Info.Abilities)
+            {
+                foreach (var ability in Info.Abilities)
+                {
+                    if (ability.DecayCombo())
+                    {
+                        abilitiesToDecay.Add(ability);
+                    }
+                }
+            }
+            
+
+            foreach (var ability in abilitiesToDecay)
+            {
+                ability.CompleteDecay();
+            }
+
+            foreach (var effect in Info.TileMapPosition.TileEffects)
+            {
+                effect.OnTurnStart(this, Info.TileMapPosition);
+            }
+
+            lock (Info.Buffs)
+            {
+                for (int i = 0; i < Info.Buffs.Count; i++)
+                {
+                    Info.Buffs[i].OnTurnStart();
+                }
+            }
+
+
+            if (AI.ControlType != ControlType.Controlled && Scene.InCombat)
             {
                 AI.TakeTurn();
             }
@@ -336,9 +372,19 @@ namespace MortalDungeon.Game.Units
 
         internal void OnTurnEnd()
         {
-            if (StatusBarComp != null) 
+            if (StatusBarComp != null && StatusBarComp.Render) 
             {
                 StatusBarComp.SetIsTurn(false);
+            }
+
+            foreach (var effect in Info.TileMapPosition.TileEffects)
+            {
+                effect.OnTurnEnd(this, Info.TileMapPosition);
+            }
+
+            for (int i = 0; i < Info.Buffs.Count; i++)
+            {
+                Info.Buffs[i].OnTurnEnd();
             }
         }
 
@@ -777,6 +823,20 @@ namespace MortalDungeon.Game.Units
         }
     }
 
+    internal enum StatusCondition
+    {
+        None,
+        Stunned = 1, //disables all
+        Silenced = 2, //disables vocal
+        Weakened = 4, //disables brute force
+        Debilitated = 8, //disables dexterity
+        Disarmed = 16, //disables weapon
+        MagicBlocked = 64, //disables magic
+        Confused = 128, //disables intelligence
+        Exposed = 256, //disables passives
+        Rooted = 512, //disables movement
+    }
+
     internal class UnitInfo
     {
         internal static int OUT_OF_COMBAT_VISION = 5;
@@ -865,6 +925,8 @@ namespace MortalDungeon.Game.Units
         internal bool BlocksSpace = true;
         internal bool PhasedMovement = false;
 
+        internal StatusCondition Status = StatusCondition.None;
+
         /// <summary>
         /// If true, this unit/structure can always be seen through
         /// </summary>
@@ -882,6 +944,61 @@ namespace MortalDungeon.Game.Units
         internal Hidden Stealth;
         internal Scouting Scouting;
 
+        private object _buffLock = new object();
+        public void AddBuff(Buff buff) 
+        {
+            lock (_buffLock) 
+            {
+                Buffs.Add(buff);
+                buff.AffectedUnit = Unit;
+
+                EvaluateStatusCondition();
+
+                Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
+
+                switch (buff.BuffType)
+                {
+                    case BuffType.Debuff:
+                        backgroundType = Icon.BackgroundType.DebuffBackground;
+                        break;
+                    case BuffType.Buff:
+                        backgroundType = Icon.BackgroundType.BuffBackground;
+                        break;
+                }
+
+                Icon icon = buff.GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType);
+                Vector3 pos = Unit.Position + new Vector3(0, -400, 0.3f);
+                UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
+            }
+        }
+
+        public void RemoveBuff(Buff buff)
+        {
+            lock (_buffLock)
+            {
+                Buffs.Remove(buff);
+                buff.AffectedUnit = null;
+
+                EvaluateStatusCondition();
+
+                Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
+
+                switch (buff.BuffType)
+                {
+                    case BuffType.Debuff:
+                        backgroundType = Icon.BackgroundType.DebuffBackground;
+                        break;
+                    case BuffType.Buff:
+                        backgroundType = Icon.BackgroundType.BuffBackground;
+                        break;
+                }
+
+                Icon icon = buff.GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType);
+                Vector3 pos = Unit.Position + new Vector3(0, -400, 0.3f);
+                UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
+            }
+        }
+
         private float ApplyBuffAdditiveShieldBlockModifications()
         {
             float modifications = 0;
@@ -891,6 +1008,33 @@ namespace MortalDungeon.Game.Units
             }
 
             return modifications;
+        }
+
+        internal void EvaluateStatusCondition() 
+        {
+            StatusCondition condition = StatusCondition.None;
+
+            for(int i = 0; i < Buffs.Count; i++)
+            {
+                condition |= Buffs[i].StatusCondition;
+            }
+
+            Status = condition;
+        }
+
+        internal bool CanUseAbility(Ability ability)
+        {
+            CastingMethod method = ability.CastingMethod;
+
+            int propertyCount = Enum.GetValues(typeof(CastingMethod)).Length;
+
+            for(int i = 0; i < propertyCount; i++)
+            {
+                if (BitOps.GetBit((int)method, i) && BitOps.GetBit((int)Status, i))
+                    return false;
+            }
+
+            return true;
         }
     }
 

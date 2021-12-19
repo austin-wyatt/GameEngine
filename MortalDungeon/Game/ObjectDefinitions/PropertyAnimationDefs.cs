@@ -58,7 +58,7 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
-        internal class DayNightCycle : PropertyAnimation 
+        internal class DayNightCycle : TimedAnimation 
         {
             private static Color NightColor = new Color(0.1f, 0.1f, 0.2f, 1f);
             private static Color MorningColor = new Color(0.5f, 0.5f, 0.43f, 1f);
@@ -78,26 +78,31 @@ namespace MortalDungeon.Game.Objects
             private const int EveningEnd = EveningStart + STATIC_PERIOD;
             internal const int NightStart = EveningEnd + TRANSITION_PERIOD;
 
-            private const int DAY_PERIOD = NightStart + STATIC_PERIOD * 3;
+            private const int DAY_PERIOD = NightStart + STATIC_PERIOD * 3; //496
 
             public const int HOUR = STATIC_PERIOD;
 
-            internal DayNightCycle(int timeDelay, int startTime) 
+            public CombatScene Scene;
+
+            internal DayNightCycle(int timeDelay, int startTime, CombatScene scene) 
             {
                 Repeat = true;
                 Playing = true;
 
+                Scene = scene;
+
                 startTime %= DAY_PERIOD;
 
-                CombatScene.Time = startTime;
+                Scene.Time = startTime;
                 CurrentKeyframe = startTime;
-                tick = startTime * timeDelay;
+
+                StartTime = -startTime * timeDelay;
 
                 Color startColor = new Color(NightColor);
 
                 for (int i = 0; i < DAY_PERIOD; i++) 
                 {
-                    Keyframe frame = new Keyframe(i * timeDelay);
+                    TimedKeyframe frame = new TimedKeyframe(i * timeDelay);
                     Color colorDif = new Color(0, 0, 0, 0);
 
                     if (i >= NightEnd && i < MorningStart) 
@@ -122,17 +127,15 @@ namespace MortalDungeon.Game.Objects
                         startColor.Add(colorDif);
                     }
 
+                    int time = i;
                     frame.Action = () =>
                     {
                         CombatScene.EnvironmentColor.Add(colorDif);
-                        CombatScene.Time = tick % DAY_PERIOD;
-                        //PrintTime();
+                        Scene.UpdateTime(time);
                     };
 
                     Keyframes.Add(frame);
                 }
-
-
 
                 CombatScene.EnvironmentColor.R = startColor.R;
                 CombatScene.EnvironmentColor.G = startColor.G;
@@ -142,14 +145,14 @@ namespace MortalDungeon.Game.Objects
 
             internal void PrintTime() 
             {
-                Console.Write($"{CombatScene.Time}");
+                Console.Write($"{Scene.Time}");
 
                 string identifer = "";
-                if (CombatScene.Time == NightStart) 
+                if (Scene.Time == NightStart) 
                 {
                     identifer = " Night start";
                 }
-                switch (CombatScene.Time) 
+                switch (Scene.Time) 
                 {
                     case NightStart:
                         identifer = " Night start";
@@ -180,9 +183,9 @@ namespace MortalDungeon.Game.Objects
                 Console.Write(identifer + "\n");
             }
 
-            internal static bool IsNight() 
+            internal bool IsNight() 
             {
-                return CombatScene.Time < MorningStart || CombatScene.Time > EveningEnd;
+                return Scene.Time < MorningStart || Scene.Time > EveningEnd;
             }
         }
     }

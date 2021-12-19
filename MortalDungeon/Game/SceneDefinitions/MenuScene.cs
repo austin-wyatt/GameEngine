@@ -237,6 +237,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                 RenderingConstants.LightColor = EnvironmentColor.ToVector();
             };
 
+            EnvironmentColor._onChange();
+
 
             ShowEnergyDisplayBars(false);
             Footer.EndTurnButton.SetRender(false);
@@ -282,9 +284,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 case Keys.Q:
                     if (CurrentUnit != null && CurrentUnit.Render && CurrentUnit.Info._movementAbility != null && !CurrentUnit.Info._movementAbility.Moving) 
                     {
-                        Vector4 pos = CurrentUnit.BaseObject.BaseFrame.Position;
-                        
-                        SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
+                        SmoothPanCameraToUnit(CurrentUnit, 1);
                         DeselectAllUnits();
                         CurrentUnit.Select();
                     }
@@ -396,6 +396,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
         private int _counter = 0;
+        private List<Vector3i> _cubeCoordinates = new List<Vector3i>();
         internal override void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
         {
             base.OnTileClicked(map, tile, button, flags);
@@ -651,6 +652,31 @@ namespace MortalDungeon.Game.SceneDefinitions
                             DissolveUnitGroup(true);
                         }
                     }
+                    else if (ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled) && KeyboardState.IsKeyDown(Keys.F7))
+                    {
+                        Console.Write("TilePattern = new List<Vector3i> {");
+                        if (_cubeCoordinates.Count == 0)
+                            return;
+
+                        Vector3i initial = _cubeCoordinates[0];
+
+                        Console.Write($"new Vector3i({0}, {0}, {0}), ");
+
+                        for (int i = 1; i < _cubeCoordinates.Count; i++) 
+                        {
+                            Vector3i diff = initial - _cubeCoordinates[i];
+                            Console.Write($"new Vector3i({diff.X}, {diff.Y}, {diff.Z}){(i == _cubeCoordinates.Count - 1 ? "" : ", ")}");
+                        }
+                        Console.Write("};\n");
+                    }
+                    else if (ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled)) 
+                    {
+                        Vector3i cubeCoords = CubeMethods.OffsetToCube(new FeaturePoint(tile));
+                        _cubeCoordinates.Add(cubeCoords);
+
+                        tile.Color = Colors.Red;
+                        tile.Update();
+                    }
                 }
             }
             else
@@ -661,6 +687,17 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else 
                 {
+                    if (ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled))
+                    {
+                        Vector3i cubeCoords = CubeMethods.OffsetToCube(new FeaturePoint(tile));
+                        _cubeCoordinates.Remove(cubeCoords);
+
+                        tile.Color = Colors.White;
+                        tile.Update();
+
+                        return;
+                    }
+
                     tile.OnRightClick(flags);
                 }
             }

@@ -25,6 +25,8 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit = castingUnit;
             Damage = heal;
 
+            CastingMethod |= CastingMethod.Intelligence | CastingMethod.PhysicalDexterity;
+
             Grade = 1;
 
             ActionCost = 1;
@@ -46,7 +48,7 @@ namespace MortalDungeon.Game.Abilities
 
             Name = "Mend Bones";
 
-            _description = "Patch up your bony friends.";
+            _description = "Oof ouch owie my bones";
 
             Icon = new Icon(Icon.DefaultIconSize, Character.M, Spritesheets.CharacterSheet, true);
         }

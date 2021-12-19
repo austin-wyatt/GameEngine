@@ -27,6 +27,7 @@ namespace MortalDungeon
 
             var gameWindowSettings = GameWindowSettings.Default;
 
+            //gameWindowSettings.RenderFrequency = 30;
             //gameWindowSettings.RenderFrequency = 60;
 
 

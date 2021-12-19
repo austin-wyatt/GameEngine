@@ -11,6 +11,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
     {
         internal UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
         {
+            //if (position == default)
+            //{
+            //    position = new Vector3(-1000, 0, 0);
+            //}
+
             Position = position;
             Size = size == null ? Size : size;
             _scaleAspectRatio = scaleAspectRatio;
@@ -86,8 +91,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetOrigin(aspectRatio, Size);
         }
 
-        internal override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
         {
+            if (flag == SetColorFlag.Base)
+                DefaultColor = color;
+
             _baseObject.BaseFrame.SetBaseColor(color);
         }
 

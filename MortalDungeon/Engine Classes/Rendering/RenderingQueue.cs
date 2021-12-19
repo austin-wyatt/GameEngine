@@ -158,72 +158,69 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             try //This is a lazy solution for a random crash. If I can figure out why it's happening then I'll come back to this
             {
-                lock (uiObjects)
+                if (uiObjects.Count > 0)
                 {
-                    if (uiObjects.Count > 0)
+                    for (int i = 0; i < uiObjects.Count; i++)
                     {
-                        for (int i = 0; i < uiObjects.Count; i++)
+                        if (uiObjects[i].Render && !uiObjects[i].Cull)
                         {
-                            if (uiObjects[i].Render && !uiObjects[i].Cull)
+                            if (uiObjects[i].RenderAfterParent && renderAfterParent != null && !overrideRender)
                             {
-                                if (uiObjects[i].RenderAfterParent && renderAfterParent != null && !overrideRender)
+                                renderAfterParentList.Add(uiObjects[i]);
+                                continue;
+                            }
+
+                            if (uiObjects[i].ScissorData.Scissor == true)
+                            {
+                                scissorData = uiObjects[i].ScissorData;
+                                scissorData._startingDepth = depth;
+                            }
+
+                            bool scissorFlag = false;
+                            if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
+                            {
+                                scissorFlag = true;
+                            }
+                            else
+                            {
+                                scissorData = null;
+                            }
+
+                            QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
+
+                            List<UIObject> objsToRenderAfterParent = new List<UIObject>();
+
+                            if (uiObjects[i].Children.Count > 0)
+                            {
+                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, (list) => 
                                 {
-                                    renderAfterParentList.Add(uiObjects[i]);
-                                    continue;
-                                }
+                                    objsToRenderAfterParent = list;
+                                });
+                            }
 
-                                if (uiObjects[i].ScissorData.Scissor == true)
-                                {
-                                    scissorData = uiObjects[i].ScissorData;
-                                    scissorData._startingDepth = depth;
-                                }
+                            QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
 
-                                bool scissorFlag = false;
-                                if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
-                                {
-                                    scissorFlag = true;
-                                }
-                                else
-                                {
-                                    scissorData = null;
-                                }
-
-                                QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
-
-                                List<UIObject> objsToRenderAfterParent = new List<UIObject>();
-
-                                if (uiObjects[i].Children.Count > 0)
-                                {
-                                    QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, (list) => 
-                                    {
-                                        objsToRenderAfterParent = list;
-                                    });
-                                }
-
-                                QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
-
-                                if (objsToRenderAfterParent.Count > 0) 
-                                {
-                                    QueueNestedUI(objsToRenderAfterParent, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, null, true);
-                                }
+                            if (objsToRenderAfterParent.Count > 0) 
+                            {
+                                QueueNestedUI(objsToRenderAfterParent, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, null, true);
                             }
                         }
-
-                        //RenderableObject display = uiObjects[0].GetDisplay();
-
-                        //RenderObjectsInstancedGeneric(uiObjects, display);
-                        //QueueUIForRender(uiObjects);
                     }
+
+                    //RenderableObject display = uiObjects[0].GetDisplay();
+
+                    //RenderObjectsInstancedGeneric(uiObjects, display);
+                    //QueueUIForRender(uiObjects);
+                }
+
+                if (renderAfterParentList.Count > 0 && renderAfterParent != null)
+                {
+                    renderAfterParent(renderAfterParentList);
                 }
             }
             catch (Exception e) 
             {
                 Console.WriteLine("Exception in QueueNestedUI: " + e.Message);
-            }
-
-            if(renderAfterParentList.Count > 0 && renderAfterParent != null) 
-            {
-                renderAfterParent(renderAfterParentList);
             }
         }
         internal static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject

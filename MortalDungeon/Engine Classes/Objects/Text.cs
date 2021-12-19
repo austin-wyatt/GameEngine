@@ -98,7 +98,7 @@ namespace MortalDungeon.Engine_Classes
             SetKerning();
         }
 
-        internal override void SetColor(Vector4 color) 
+        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base) 
         {
             _display.SetBaseColor(color);
         }

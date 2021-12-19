@@ -50,7 +50,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 validTiles.ForEach(tile =>
                 {
-                    tile.TilePoint.ParentTileMap.SelectTile(tile);
+                    tile.TilePoint.ParentTileMap.Controller.SelectTile(tile);
                 });
             }
 
@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.Abilities
                 EnactEffect();
                 Scene._selectedAbility = null;
 
-                map.DeselectTiles();
+                map.Controller.DeselectTiles();
             }
         }
 
@@ -111,7 +111,7 @@ namespace MortalDungeon.Game.Abilities
             lock (AffectedTiles)
                 AffectedTiles.ForEach(tile =>
                 {
-                    tile.TilePoint.ParentTileMap.DeselectTiles();
+                    tile.TilePoint.ParentTileMap.Controller.DeselectTiles();
                 });
         }
     }

@@ -75,28 +75,6 @@ namespace MortalDungeon.Engine_Classes
         internal static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
         internal static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
 
-        internal static void AddAbilityIconHoverEffect(UIObject obj, CombatScene scene, Ability ability = null)
-        {
-            void onHover(GameObject obj)
-            {
-                obj.SetColor(Colors.IconHover);
-            }
-
-            void hoverEnd(GameObject obj)
-            {
-                if (ability != null && scene._selectedAbility != null && scene._selectedAbility.AbilityID == ability.AbilityID)
-                {
-                    obj.SetColor(Colors.IconSelected);
-                }
-                else
-                {
-                    obj.SetColor(Colors.White);
-                }
-            }
-
-            obj.OnHoverEvent += onHover;
-            obj.OnHoverEndEvent += hoverEnd;
-        }
 
         internal struct StringTooltipParameters 
         {
@@ -486,6 +464,42 @@ namespace MortalDungeon.Engine_Classes
             
 
             return window;
+        }
+
+        public static void CreateIconHoverEffect(Icon icon, CombatScene scene, Vector3 position) 
+        {
+            icon.SetCameraPerspective(true);
+
+            icon.SetPosition(position);
+
+            scene._genericObjects.Add(icon);
+
+            PropertyAnimation anim = new PropertyAnimation(icon.BaseObject.BaseFrame);
+
+            float xMovement = (float)(new Random().NextDouble() - 1) * 10f;
+
+            for (int i = 0; i < 50; i++)
+            {
+                Keyframe frame = new Keyframe(i * 2)
+                {
+                    Action = () =>
+                    {
+                        icon.SetPosition(icon.Position + new Vector3(xMovement, -10, 0.015f));
+                        icon.SetColor(icon.BaseObject.BaseFrame.BaseColor - new Vector4(0, 0, 0, 0.02f));
+                    }
+                };
+
+                anim.Keyframes.Add(frame);
+            }
+
+            icon.AddPropertyAnimation(anim);
+            anim.Play();
+
+            anim.OnFinish = () =>
+            {
+                icon.RemovePropertyAnimation(anim.AnimationID);
+                scene._genericObjects.Remove(icon);
+            };
         }
     }
 

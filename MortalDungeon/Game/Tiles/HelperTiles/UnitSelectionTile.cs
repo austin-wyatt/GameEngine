@@ -74,9 +74,9 @@ namespace MortalDungeon.Game.GameObjects
             base.SetPosition(position + UnitOffset);
         }
 
-        internal override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
-            base.SetColor(color);
+            base.SetColor(color, setColorFlag);
 
             _baseColor = color;
 

@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Abilities
 
         internal override void OnTurnStart()
         {
-            Unit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Buff = this });
+            AffectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Buff = this });
 
             base.OnTurnStart();
         }

@@ -106,7 +106,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             sound.Play();
         }
 
-        internal override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
             if (Disabled) 
             {

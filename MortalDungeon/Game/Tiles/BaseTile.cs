@@ -5,6 +5,7 @@ using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Structures;
@@ -94,6 +95,8 @@ namespace MortalDungeon.Game.Tiles
         internal TileChunk Chunk;
 
         internal bool Updating = false;
+
+        internal List<TileEffect> TileEffects = new List<TileEffect>();
 
 
         internal new bool HasContextMenu = true;
@@ -242,6 +245,30 @@ namespace MortalDungeon.Game.Tiles
                 SetHovered(false);
 
                 HoverEndEvent(this);
+            }
+        }
+
+        internal void OnSteppedOn(Unit unit) 
+        {
+            for(int i = 0; i < TileEffects.Count; i++) 
+            {
+                TileEffects[i].OnSteppedOn(unit, this);
+            }
+        }
+
+        internal void OnTurnStart(Unit unit)
+        {
+            for (int i = 0; i < TileEffects.Count; i++)
+            {
+                TileEffects[i].OnTurnStart(unit, this);
+            }
+        }
+
+        internal void OnTurnEnd(Unit unit)
+        {
+            for (int i = 0; i < TileEffects.Count; i++)
+            {
+                TileEffects[i].OnTurnEnd(unit, this);
             }
         }
 

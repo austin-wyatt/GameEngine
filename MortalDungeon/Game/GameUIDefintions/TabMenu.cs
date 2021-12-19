@@ -171,17 +171,20 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].BaseComponent.AddChild(unitButton);
 
-            Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Select Skeleton", 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "(-)Pattern Tool", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             unitButton2.BaseComponent.MultiTextureData.MixTexture = false;
 
             unitButton2.OnClickAction = () =>
             {
-                Scene.CurrentUnit = Scene._units[2];
-                Scene.CurrentTeam = Scene._units[2].AI.Team;
-
-                Scene.SelectUnit(Scene._units[2]);
-
-                Scene.FillInTeamFog(true);
+                Scene.ContextManager.SetFlag(GeneralContextFlags.PatternToolEnabled, !Scene.ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled));
+                if (Scene.ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled))
+                {
+                    unitButton2.TextBox.SetText("(+)Pattern Tool");
+                }
+                else
+                {
+                    unitButton2.TextBox.SetText("(-)Pattern Tool");
+                }
             };
 
             unitButton2.SetPositionFromAnchor(unitButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);

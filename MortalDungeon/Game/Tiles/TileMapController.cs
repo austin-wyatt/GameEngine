@@ -12,6 +12,7 @@ using System.Diagnostics;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Game.Entities;
 using System.Linq;
+using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -35,9 +36,66 @@ namespace MortalDungeon.Game.Tiles
 
         internal List<FeatureEquation> LoadedFeatures = new List<FeatureEquation>();
 
+
+        internal QueuedList<BaseTile> SelectionTiles = new QueuedList<BaseTile>(); //these tiles will be place above the currently selected tiles
+        private const int MAX_SELECTION_TILES = 1000;
+        internal int _amountOfSelectionTiles = 0;
+        private readonly List<BaseTile> _selectionTilePool = new List<BaseTile>();
+
+        internal BaseTile HoveredTile;
+        private List<BaseTile> _hoveredTileList = new List<BaseTile>();
+
         internal TileMapController(CombatScene scene = null) 
         {
             Scene = scene;
+
+            InitializeHelperTiles();
+        }
+
+        private void InitializeHelperTiles() 
+        {
+            BaseTile baseTile = new BaseTile();
+            Vector3 tilePosition = new Vector3(0, 0, 0.03f);
+
+            for (int i = 0; i < MAX_SELECTION_TILES; i++)
+            {
+                baseTile = new BaseTile(tilePosition, new TilePoint(i, -1, null));
+                baseTile.SetRender(false);
+                baseTile._tileObject.OutlineParameters.OutlineColor = Colors.TranslucentBlue;
+                baseTile._tileObject.OutlineParameters.InlineColor = Colors.TranslucentBlue;
+                //baseTile._tileObject.OutlineParameters.OutlineThickness = 2;
+                baseTile._tileObject.OutlineParameters.SetAllInline(4);
+                baseTile.SetAnimation(Objects.BaseTileAnimationType.SolidWhite);
+                baseTile.DefaultAnimation = Objects.BaseTileAnimationType.SolidWhite;
+
+                //baseTile.DefaultColor = Colors.TranslucentBlue;
+                //baseTile.SetColor(Colors.TranslucentBlue);
+
+                baseTile.DefaultColor = Colors.Transparent;
+                baseTile.SetColor(Colors.Transparent);
+
+                //SelectionTiles.Add(baseTile);
+                _selectionTilePool.Add(baseTile);
+            }
+
+            GameObject.LoadTextures(_selectionTilePool);
+
+            HoveredTile = new BaseTile(new Vector3(0, 0, 0.05f), new TilePoint(-1, -1, null));
+            HoveredTile.SetRender(false);
+            //HoveredTile._tileObject.OutlineParameters.OutlineColor = Colors.Red;
+            //HoveredTile._tileObject.OutlineParameters.InlineColor = Colors.Red;
+            //HoveredTile._tileObject.OutlineParameters.SetAllOutline(0);
+            //HoveredTile._tileObject.OutlineParameters.SetAllInline(10);
+
+            HoveredTile.SetAnimation(Objects.BaseTileAnimationType.Transparent);
+            HoveredTile.DefaultAnimation = Objects.BaseTileAnimationType.Transparent;
+
+            HoveredTile.SetColor(Colors.Red);
+            HoveredTile._tileObject.OutlineParameters.SetAllInline(0);
+
+            GameObject.LoadTexture(HoveredTile);
+
+            _hoveredTileList = new List<BaseTile>() { HoveredTile };
         }
 
         internal void AddTileMap(TileMapPoint point, TileMap map) 
@@ -283,7 +341,7 @@ namespace MortalDungeon.Game.Tiles
 
             Scene.QueueLightObstructionUpdate();
 
-            Scene.PostTickAction = null;
+            //Scene.PostTickAction = null;
         }
 
         internal Vector2i GetTopLeftTilePosition()
@@ -500,6 +558,131 @@ namespace MortalDungeon.Game.Tiles
             {
                 map.Tiles.ForEach(tile => tile.Update());
             });
+        }
+
+
+        internal List<BaseTile> GetSelectionTilePool()
+        {
+            return _selectionTilePool;
+        }
+
+        internal void SelectTiles(List<BaseTile> tiles)
+        {
+            //if (tiles.Count > MAX_SELECTION_TILES)
+            //    throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + MAX_SELECTION_TILES + " in tile map " + ObjectID);
+
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                SelectTile(tiles[i]);
+            }
+        }
+
+        internal void SelectTile(BaseTile tile)
+        {
+            //Console.WriteLine(_amountOfSelectionTiles + " tiles in use");
+
+            if (_amountOfSelectionTiles == _selectionTilePool.Count)
+                _amountOfSelectionTiles--;
+
+            if (_amountOfSelectionTiles < 0)
+            {
+                Console.WriteLine("TileMap.SelectTile: Less than 0 selection tiles ");
+                _amountOfSelectionTiles = 0;
+            }
+
+
+            Vector3 pos = new Vector3
+            {
+                X = tile.Position.X,
+                Y = tile.Position.Y,
+                Z = _selectionTilePool[_amountOfSelectionTiles].Position.Z
+            };
+
+            _selectionTilePool[_amountOfSelectionTiles].TilePoint.ParentTileMap = tile.TileMap;
+            _selectionTilePool[_amountOfSelectionTiles].TileMap = tile.TileMap;
+            _selectionTilePool[_amountOfSelectionTiles].SetPosition(pos);
+            _selectionTilePool[_amountOfSelectionTiles].SetRender(true);
+
+            if(tile.AttachedTile != null) 
+            {
+                DeselectTile(tile.AttachedTile);
+            }
+
+            _selectionTilePool[_amountOfSelectionTiles].AttachedTile = tile;
+            tile.AttachedTile = _selectionTilePool[_amountOfSelectionTiles];
+
+
+            SelectionTiles.Add(_selectionTilePool[_amountOfSelectionTiles]);
+
+            _amountOfSelectionTiles++;
+        }
+
+        internal void DeselectTile(BaseTile selectionTile)
+        {
+            SelectionTiles.Remove(selectionTile);
+
+            if (selectionTile.AttachedTile != null)
+            {
+                selectionTile.SetRender(false);
+                selectionTile.AttachedTile.AttachedTile = null;
+                selectionTile.AttachedTile = null;
+                _amountOfSelectionTiles--;
+            }
+
+        }
+
+        internal void DeselectTiles()
+        {
+            for (int i = 0; i < _amountOfSelectionTiles; i++)
+            {
+                _selectionTilePool[i].SetRender(false);
+                if (_selectionTilePool[i].AttachedTile != null)
+                {
+                    _selectionTilePool[i].AttachedTile.AttachedTile = null;
+                    _selectionTilePool[i].AttachedTile = null;
+                }
+            }
+
+            SelectionTiles.Clear();
+
+            _amountOfSelectionTiles = 0;
+        }
+
+        internal List<BaseTile> GetHoveredTile()
+        {
+            return _hoveredTileList;
+        }
+
+        internal void HoverTile(BaseTile tile)
+        {
+            Vector3 pos = new Vector3
+            {
+                X = tile.Position.X,
+                Y = tile.Position.Y,
+                Z = HoveredTile.Position.Z
+            };
+
+            if (!tile.Hovered)
+            {
+                EndHover();
+                HoveredTile.AttachedTile = tile;
+            }
+
+            tile.OnHover();
+
+            HoveredTile.SetPosition(pos);
+            HoveredTile.SetRender(true);
+        }
+
+        internal void EndHover()
+        {
+            if (HoveredTile.AttachedTile != null)
+            {
+                HoveredTile.AttachedTile.OnHoverEnd();
+                HoveredTile.AttachedTile = null;
+            }
+
+            HoveredTile.SetRender(false);
         }
     }
 }

@@ -24,6 +24,8 @@ namespace MortalDungeon.Game.Abilities
             _slowDuration = duration;
             _slowMultiplier = 1 + slowAmount;
 
+            CastingMethod |= CastingMethod.Magic;
+
             Name = "Slow";
 
             CanTargetGround = false;
@@ -78,7 +80,7 @@ namespace MortalDungeon.Game.Abilities
             Scene.EnergyDisplayBar.AddEnergy(-energyCost);
             Scene.ActionEnergyBar.AddEnergy(-actionEnergyCost);
 
-            TileMap.DeselectTiles();
+            TileMap.Controller.DeselectTiles();
 
             base.OnCast();
         }
@@ -88,6 +90,8 @@ namespace MortalDungeon.Game.Abilities
             base.EnactEffect();
 
             SlowDebuff slowDebuff = new SlowDebuff(SelectedUnit, _slowDuration, _slowMultiplier);
+
+            SelectedUnit.Info.AddBuff(slowDebuff);
 
             Casted();
             EffectEnded();

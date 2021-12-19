@@ -94,9 +94,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         }
 
 
-        internal override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
-            BaseComponent.SetColor(color);
+            BaseComponent.SetColor(color, setColorFlag);
         }
 
         internal void SetTextColor(Vector4 color)

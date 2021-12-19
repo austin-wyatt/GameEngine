@@ -39,7 +39,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         UnitCollationRequired,
 
-        CameraPanning
+        CameraPanning,
+
+        PatternToolEnabled
     }
     internal class CombatScene : Scene
     {
@@ -55,8 +57,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         internal QueuedList<TemporaryVision> TemporaryVision = new QueuedList<TemporaryVision>();
 
         internal static Color EnvironmentColor = new Color(0.25f, 0.25f, 0.25f, 0.25f);
-        internal static int Time = 0;
-        internal static DayNightCycle DayNightCycle;
+        internal int Time = 0;
+        internal DayNightCycle DayNightCycle;
 
         internal static TabMenu TabMenu = new TabMenu();
         internal SideBar SideBar = null;
@@ -118,17 +120,48 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             base.Load(camera, cursorObject, mouseRay);
 
-
-            DayNightCycle = new DayNightCycle(90, DayNightCycle.MiddayStart);
-            TickableObjects.Add(DayNightCycle);
-
+            //1200 ms per step puts us at around 10 minutse per day/night cycle
+            DayNightCycle = new DayNightCycle(1200, DayNightCycle.MiddayStart, this);
+            TimedTickableObjects.Add(DayNightCycle);
         }
 
         internal void SetTime(int time)
         {
-            TickableObjects.Remove(DayNightCycle);
-            DayNightCycle = new DayNightCycle(90, time);
-            TickableObjects.Add(DayNightCycle);
+            TimedTickableObjects.Remove(DayNightCycle);
+            DayNightCycle = new DayNightCycle(1200, time, this);
+            TimedTickableObjects.Add(DayNightCycle);
+
+            Time = time;
+        }
+
+        private int _outOfCombatTimeCounter = 0;
+        internal void UpdateTime(int time) 
+        {
+            Time = time;
+
+            if (!InCombat) 
+            {
+                _outOfCombatTimeCounter++;
+
+                if(_outOfCombatTimeCounter % 5 == 0) 
+                {
+                    ResolveOutOfCombatTurn();
+                }
+            }
+        }
+
+        internal void ResolveOutOfCombatTurn() 
+        {
+            lock (_units._lock) 
+            {
+                foreach(var unit in _units) 
+                {
+                    unit.OnTurnStart();
+                    unit.OnTurnEnd();
+                }
+
+                //Footer.UpdateFooterInfo();
+            }
         }
 
         /// <summary>
@@ -203,14 +236,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
 
-            
-            TemporaryVision.ForEach(t =>
+
+            lock (TemporaryVision._lock) 
             {
-                if (t.TickTarget == TickDurationTarget.OnUnitTurnStart && t.TargetUnit.ObjectID == CurrentUnit.ObjectID) 
+                foreach(var t in TemporaryVision) 
                 {
-                    TickTemporaryVision(t);
+                    if (t.TickTarget == TickDurationTarget.OnUnitTurnStart && t.TargetUnit.ObjectID == CurrentUnit.ObjectID)
+                    {
+                        TickTemporaryVision(t);
+                    }
                 }
-            });
+            }
+
             UpdateTemporaryVision();
 
             CurrentUnit.Info.Energy = CurrentUnit.Info.CurrentEnergy;
@@ -233,9 +270,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 FillInTeamFog(true);
 
-                Vector4 pos = CurrentUnit.BaseObject.BaseFrame.Position;
-
-                SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
+                SmoothPanCameraToUnit(CurrentUnit, 1);
             }
             else 
             {
@@ -245,34 +280,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             TurnDisplay.SetCurrentUnit(UnitTakingTurn);
 
-            lock (CurrentUnit.Info.Buffs)
-            for (int i = 0; i < CurrentUnit.Info.Buffs.Count; i++)
-            {
-                CurrentUnit.Info.Buffs[i].OnTurnStart();
-            }
-
-            List<Ability> abilitiesToDecay = new List<Ability>();
-
-            lock (CurrentUnit.Info.Abilities)
-            foreach (var ability in CurrentUnit.Info.Abilities)
-            {
-                if (ability.DecayCombo()) 
-                {
-                    abilitiesToDecay.Add(ability);
-                }
-            }
-
-            foreach (var ability in abilitiesToDecay) 
-            {
-                ability.CompleteDecay();
-            }
 
             if (CurrentUnit.AI.ControlType == ControlType.Controlled)
             {
                 Footer.UpdateFooterInfo(CurrentUnit);
             }
 
-            CurrentUnit.OnTurnStart();
+            Task.Run(CurrentUnit.OnTurnStart);
         }
 
         internal void SetCurrentUnitEnergy() 
@@ -330,12 +344,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 CompleteRound();
                 return;
-            }
-
-
-            for (int i = 0; i < CurrentUnit.Info.Buffs.Count; i++)
-            {
-                CurrentUnit.Info.Buffs[i].OnTurnEnd();
             }
 
             if (InCombat) 
@@ -445,7 +453,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     return;
 
 
-                _selectedAbility.TileMap.DeselectTiles();
+                _selectedAbility.TileMap.Controller.DeselectTiles();
 
                 _selectedAbility?.OnAbilityDeselect();
                 _selectedAbility = null;
@@ -1023,12 +1031,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         internal override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
+            _tileMapController.EndHover();
+
             _tileMapController.TileMaps.ForEach(map =>
             {
                 if (!map.Render)
                     return;
-
-                map.EndHover();
 
                 map.TileChunks.ForEach(chunk =>
                 {
@@ -1038,7 +1046,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             if (tile.Hoverable)
                             {
-                                map.HoverTile(tile);
+                                map.Controller.HoverTile(tile);
                                 if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
                                 {
                                     _selectedAbility.OnHover(tile, map);

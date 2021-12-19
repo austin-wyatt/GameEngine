@@ -7,32 +7,50 @@ using System.Text;
 using System.Linq;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
+using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class Strike : Ability
+    internal class SuckerPunch : Ability
     {
-        internal Strike(Unit castingUnit, int range = 1, float damage = 10)
+        internal SuckerPunch(Unit castingUnit, int range = 1, float damage = 10)
         {
             Type = AbilityTypes.MeleeAttack;
-            DamageType = DamageType.Slashing;
+            DamageType = DamageType.Blunt;
             Range = range;
             CastingUnit = castingUnit;
             Damage = damage;
-            ActionCost = 2;
+            ActionCost = 3;
 
-            CastingMethod |= CastingMethod.Weapon | CastingMethod.PhysicalDexterity | CastingMethod.BruteForce;
+            CastingMethod |= CastingMethod.BruteForce | CastingMethod.Unarmed;
 
-            Name = "Strike";
+            Grade = 1;
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
+            MaxCharges = 0;
+            Charges = 0;
+            ChargeRechargeCost = 0;
+
+            Basic = true;
+
+            Name = "Sucker Punch";
+
+            _description = "Rude";
+
+            Icon = new Icon(Icon.DefaultIconSize, Character.P, Spritesheets.CharacterSheet, true);
+
+            AbilityClass = AbilityClass.Bandit;
         }
 
         internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
+            if (position == null)
+            {
+                position = CastingUnit.Info.TileMapPosition;
+            }
+
+            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(position, Range)
             {
                 TraversableTypes = TileMapConstants.AllTileClassifications,
                 Units = units,
@@ -50,7 +68,12 @@ namespace MortalDungeon.Game.Abilities
 
         internal override bool UnitInRange(Unit unit, BaseTile position = null)
         {
-            GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit });
+            if (position == null)
+            {
+                position = CastingUnit.Info.TileMapPosition;
+            }
+
+            GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit }, position);
 
             return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
         }
@@ -59,8 +82,8 @@ namespace MortalDungeon.Game.Abilities
         {
             if (!base.OnUnitClicked(unit))
                 return false;
-            
-            if (unit.AI.Team != CastingUnit.AI.Team && AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1) 
+
+            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
             {
                 SelectedUnit = unit;
                 EnactEffect();
@@ -69,23 +92,16 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void OnCast()
-        {
-            TileMap.Controller.DeselectTiles();
-
-            base.OnCast();
-        }
-
-        internal override void OnAICast()
-        {
-            base.OnAICast();
-        }
-
         internal override void EnactEffect()
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
+            var damageParams = SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
+
+            if (damageParams.ActualDamageDealt >= GetDamage()) 
+            {
+                SelectedUnit.Info.AddBuff(new StunDebuff(SelectedUnit, 3));
+            }
 
             Casted();
             EffectEnded();
@@ -95,7 +111,10 @@ namespace MortalDungeon.Game.Abilities
         {
             DamageInstance instance = new DamageInstance();
 
-            instance.Damage.Add(DamageType, GetDamage());
+
+            float damageAmount = GetDamage();
+
+            instance.Damage.Add(DamageType, damageAmount);
 
             ApplyBuffDamageInstanceModifications(instance);
             return instance;

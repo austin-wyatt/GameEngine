@@ -40,7 +40,6 @@ namespace MortalDungeon.Game.Units
             base.InitializeUnitInfo();
 
             VisionGenerator.Radius = 12;
-            Info.CurrentShields = 5;
 
             Info.Stealth.Skill = 0;
 

@@ -53,7 +53,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        internal override void SetColor(Vector4 color)
+        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
             _baseObject.BaseFrame.SetBaseColor(color);
         }

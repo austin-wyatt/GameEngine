@@ -62,6 +62,11 @@ namespace MortalDungeon.Engine_Classes
 
         internal bool RenderAfterParent = false;
 
+        public Vector4 DefaultColor = new Vector4(1, 1, 1, 1);
+        public Vector4 HoverColor;
+        public Vector4 DisabledColor;
+        public Vector4 SelectedColor;
+
         internal UIObject() { }
 
         internal void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
@@ -247,19 +252,19 @@ namespace MortalDungeon.Engine_Classes
 
         internal static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
         {
-            if (!IsRendered(obj) || obj.Disabled)
+            if (!IsRendered(obj))
                 return false;
 
             return type switch
             {
-                UIEventType.Click => obj.Clickable,
-                UIEventType.RightClick => obj.Clickable,
+                UIEventType.Click => obj.Clickable && !obj.Disabled,
+                UIEventType.RightClick => obj.Clickable && !obj.Disabled,
                 UIEventType.Hover => obj.Hoverable,
                 UIEventType.TimedHover => obj.HasTimedHoverEffect,
-                UIEventType.MouseDown => obj.Clickable,
-                UIEventType.Grab => obj.Draggable,
-                UIEventType.KeyDown => obj.Focused,
-                UIEventType.Focus => obj.Focusable,
+                UIEventType.MouseDown => obj.Clickable && !obj.Disabled,
+                UIEventType.Grab => obj.Draggable && !obj.Disabled,
+                UIEventType.KeyDown => obj.Focused && !obj.Disabled,
+                UIEventType.Focus => obj.Focusable && !obj.Disabled,
                 UIEventType.HoverEnd => obj.Hoverable,
                 _ => false,
             };
@@ -564,11 +569,13 @@ namespace MortalDungeon.Engine_Classes
 
         internal void RemoveChildren()
         {
-            for (int i = Children.Count - 1; i >= 0; i--)
-            {
-                Children[i].Parent = null;
-                Children.RemoveAt(i);
-            }
+            //for (int i = Children.Count - 1; i >= 0; i--)
+            //{
+            //    Children[i].Parent = null;
+            //    Children.RemoveAt(i);
+            //}
+
+            Children.Clear();
 
             if (Parent == null)
             {
@@ -640,6 +647,14 @@ namespace MortalDungeon.Engine_Classes
             return null;
         }
 
+        internal override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
+        {
+            if (flag == SetColorFlag.Base)
+                DefaultColor = color;
+
+            base.SetColor(color);
+        }
+
         internal override void OnMouseUp()
         {
             base.OnMouseUp();
@@ -672,9 +687,44 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        internal override void OnHover() 
+        {
+            if (Hoverable && !Hovered)
+            {
+                Hovered = true;
+
+                HoverEvent(this);
+
+                if(HoverColor != default) 
+                {
+                    EvaluateColor();
+                }
+            }
+        }
+
+        internal override void OnHoverEnd()
+        {
+            if (Hovered)
+            {
+                Hovered = false;
+
+                HoverEndEvent(this);
+
+                if (HoverColor != default)
+                {
+                    EvaluateColor();
+                }
+            }
+        }
+
         internal virtual void OnDisabled(bool disable) 
         {
             Disabled = disable;
+
+            if (DisabledColor != default)
+            {
+                EvaluateColor();
+            }
         }
 
         internal virtual void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
@@ -695,6 +745,16 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        internal virtual void OnSelect(bool select) 
+        {
+            Selected = select;
+
+            if (SelectedColor != default)
+            {
+                EvaluateColor();
+            }
+        }
+
         internal virtual void OnKeyDown(KeyboardKeyEventArgs e) 
         {
             if (ReverseTree == null)
@@ -702,12 +762,19 @@ namespace MortalDungeon.Engine_Classes
 
             int count = ReverseTree.Count;
 
-            for (int i = 0; i < count; i++)
+            try
             {
-                if (IsValidForBoundsType(ReverseTree[i].UIObject, UIEventType.KeyDown))
+                for (int i = 0; i < count; i++)
                 {
-                    ReverseTree[i].UIObject.OnType(e);
+                    if (IsValidForBoundsType(ReverseTree[i].UIObject, UIEventType.KeyDown))
+                    {
+                        ReverseTree[i].UIObject.OnType(e);
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Error in UIObject.OnKeyDown: " + ex.Message);
             }
         }
 
@@ -729,6 +796,35 @@ namespace MortalDungeon.Engine_Classes
 
         internal virtual void OnCameraMove() { }
 
+        internal void EvaluateColor()
+        {
+            Vector4 color = DefaultColor;
+            SetColorFlag reason = SetColorFlag.Base;
+
+            // these cases should be laid out from least important to most important
+            // so that the later ones overwrite the former
+
+            if (HoverColor != default && Hovered)
+            {
+                color = HoverColor;
+                reason = SetColorFlag.Hover;
+            }
+
+            if (DisabledColor != default && Disabled)
+            {
+                color = DisabledColor; 
+                reason = SetColorFlag.Disabled;
+            }
+
+            if (SelectedColor != default && Selected)
+            {
+                color = SelectedColor;
+                reason = SetColorFlag.Selected;
+            }
+
+            SetColor(color, reason);
+        }
+
         internal virtual void UpdateScissorBounds()
         {
             Vector3 botLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
@@ -736,7 +832,6 @@ namespace MortalDungeon.Engine_Classes
 
             ScissorBounds.UpdateBoundingArea(botLeft.X, topRight.X, botLeft.Y, topRight.Y);
         }
-
 
 
         public int CompareTo([AllowNull] UIObject other)

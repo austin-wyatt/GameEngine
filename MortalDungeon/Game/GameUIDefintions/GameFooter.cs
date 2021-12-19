@@ -170,7 +170,7 @@ namespace MortalDungeon.Game.UI
             #endregion
 
             #region health and shield bar
-            _unitHealthBar = new HealthBar(new Vector3(), new UIScale(0.5f, 0.1f)) { Hoverable = true, HasTimedHoverEffect = true };
+            _unitHealthBar = new HealthBar(new Vector3(), new UIScale(0.4f, 0.075f)) { Hoverable = true, HasTimedHoverEffect = true };
 
             void healthBarHover(GameObject obj) 
             {
@@ -183,7 +183,7 @@ namespace MortalDungeon.Game.UI
             _containingBlock.AddChild(_unitHealthBar, 100);
 
 
-            _unitFocusBar = new FocusBar(new Vector3(), new UIScale(0.25f, 0.05f)) { Hoverable = true, HasTimedHoverEffect = true };
+            _unitFocusBar = new FocusBar(new Vector3(), new UIScale(0.4f, 0.05f)) { Hoverable = true, HasTimedHoverEffect = true };
             void focusBarHover(GameObject obj)
             {
                 UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Focus + "/" + _currentUnit.Info.MaxFocus, _unitFocusBar, Scene._tooltipBlock);
@@ -197,7 +197,7 @@ namespace MortalDungeon.Game.UI
 
 
 
-            _unitShieldBar = new ShieldBar(new Vector3(), new UIScale(0.5f, 0.1f)) { Hoverable = true, HasTimedHoverEffect = true };
+            _unitShieldBar = new ShieldBar(new Vector3(), new UIScale(0.4f, 0.075f)) { Hoverable = true, HasTimedHoverEffect = true };
 
             void shieldBarHover(GameObject obj)
             {
@@ -247,6 +247,8 @@ namespace MortalDungeon.Game.UI
 
             _updatingFooterInfo = true;
 
+            bool refreshingFooter = unit == null;
+
             if (unit != null) 
             {
                 _currentUnit = unit;
@@ -271,10 +273,10 @@ namespace MortalDungeon.Game.UI
             nameBoxPos.X = nameBoxPos.X + (_containingBlock.GetDimensions().X / 6) * 3;
             nameBoxPos.Y = nameBoxPos.Y - _containingBlock.GetDimensions().Y / 4;
 
-            _unitHealthBar.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
+            _unitHealthBar.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, 12, 0), UIAnchorPosition.TopCenter);
             _unitHealthBar.SetHealthPercent(_currentUnit.Info.Health / _currentUnit.Info.MaxHealth, _currentUnit.AI.Team);
 
-            _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
+            _unitShieldBar.SetPositionFromAnchor(_unitFocusBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 7, 0), UIAnchorPosition.TopLeft);
             _unitShieldBar.SetCurrentShields(_currentUnit.Info.CurrentShields);
             #endregion
 
@@ -291,7 +293,7 @@ namespace MortalDungeon.Game.UI
             {
                 //CreateMeditationIcon();
 
-                _unitFocusBar.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(10, -GetDimensions().Y / 2, 0), UIAnchorPosition.TopLeft);
+                _unitFocusBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 7, 0), UIAnchorPosition.TopLeft);
                 _unitFocusBar.SetFocusPercent(_currentUnit.Info.Focus / _currentUnit.Info.MaxFocus);
                 _unitFocusBar.SetRender(true);
 
@@ -328,6 +330,10 @@ namespace MortalDungeon.Game.UI
 
                     int currIndex = count;
 
+                    abilityIcon.DisabledColor = Colors.IconDisabled;
+                    abilityIcon.SelectedColor = Colors.IconSelected;
+                    abilityIcon.HoverColor = Colors.IconHover;
+
                     if (_currentIcons.Count == 0)
                     {
                         abilityIcon.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(20, 0, 0), UIAnchorPosition.LeftCenter);
@@ -348,7 +354,7 @@ namespace MortalDungeon.Game.UI
                         else
                         {
                             abilityIcon.Clickable = false;
-                            abilityIcon.SetColor(Colors.IconDisabled);
+                            abilityIcon.SetDisabled(true);
                         }
                     }
 
@@ -367,7 +373,7 @@ namespace MortalDungeon.Game.UI
                     {
                         if (selectedAbility.AbilityID == ability.AbilityID)
                         {
-                            abilityIcon.SetColor(Colors.IconSelected);
+                            abilityIcon.OnSelect(true);
 
                             Sound sound = new Sound(Sounds.Select) { Gain = 0.1f, Pitch = 0.5f + currIndex * 0.05f };
                             sound.Play();
@@ -376,29 +382,19 @@ namespace MortalDungeon.Game.UI
 
                     void onAbilityDeselected()
                     {
-                        if (isPlayerUnitTakingTurn && ability.CanCast())
-                        {
-                            abilityIcon.SetColor(Colors.White);
-                        }
-                        else
+                        abilityIcon.OnSelect(false);
+
+                        if (!isPlayerUnitTakingTurn || !ability.CanCast())
                         {
                             abilityIcon.Clickable = false;
-                            abilityIcon.SetColor(Colors.IconDisabled);
+                            abilityIcon.SetDisabled(true);
                         }
                     }
 
-                    void onAbilityCast(Ability castAbility)
-                    {
-                        //if (Scene.EnergyDisplayBar != null && !ability.GetEnergyIsSufficient())
-                        //{
-                        //    abilityIcon.Clickable = false;
-                        //    abilityIcon.SetColor(Colors.IconDisabled);
-                        //}
-                    }
 
                     Scene._onSelectAbilityActions.Add(onAbilitySelected);
                     Scene._onDeselectAbilityActions.Add(onAbilityDeselected);
-                    Scene._onAbilityCastActions.Add(onAbilityCast);
+                    //Scene._onAbilityCastActions.Add(onAbilityCast);
 
                     void selectAbilityByNum(SceneEventArgs args) 
                     {
@@ -416,14 +412,11 @@ namespace MortalDungeon.Game.UI
 
                     Scene.OnNumberPressed += selectAbilityByNum;
 
-
-                    UIHelpers.AddAbilityIconHoverEffect(abilityIcon, Scene, ability);
-
                     void cleanUp(GameObject obj) 
                     {
                         Scene._onSelectAbilityActions.Remove(onAbilitySelected);
                         Scene._onDeselectAbilityActions.Remove(onAbilityDeselected);
-                        Scene._onAbilityCastActions.Remove(onAbilityCast);
+                        //Scene._onAbilityCastActions.Remove(onAbilityCast);
 
                         Scene.OnNumberPressed -= selectAbilityByNum;
                         abilityIcon.OnCleanUp -= cleanUp;
@@ -591,7 +584,7 @@ namespace MortalDungeon.Game.UI
 
             _meditationIcon = new Icon(new UIScale(0.13f, 0.13f), IconSheetIcons.MonkBig, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
 
-            UIHelpers.AddAbilityIconHoverEffect(_meditationIcon, Scene);
+            _meditationIcon.HoverColor = Colors.IconHover;
 
             UIHelpers.AddTimedHoverTooltip(_meditationIcon, "Meditate to regain ability uses.", Scene);
 

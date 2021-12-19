@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Tiles;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,6 +30,13 @@ namespace MortalDungeon.Game.Units.AI
                 if (!Ability.UnitInRange(TargetedUnit)) 
                 {
                     Console.WriteLine("How did this happen?");
+                }
+
+                Vector2i clusterPos = Scene._tileMapController.PointToClusterPosition(Ability.SelectedUnit.Info.TileMapPosition);
+
+                if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
+                {
+                    Scene.SmoothPanCameraToUnit(Ability.SelectedUnit, 1);
                 }
 
                 Ability.EnactEffect();

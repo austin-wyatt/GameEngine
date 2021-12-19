@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.Abilities
 
         internal override void OnCast()
         {
-            TileMap.DeselectTiles();
+            TileMap.Controller.DeselectTiles();
 
             base.OnCast();
         }
@@ -75,6 +75,8 @@ namespace MortalDungeon.Game.Abilities
             base.EnactEffect();
 
             BleedDebuff bleedDebuff = new BleedDebuff(SelectedUnit, Duration, Damage);
+
+            SelectedUnit.Info.AddBuff(bleedDebuff); 
 
             Casted();
             EffectEnded();

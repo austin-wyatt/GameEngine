@@ -6,23 +6,30 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class StealthBuff : Buff
+    internal class StunDebuff : Buff
     {
-        internal StealthBuff(Unit affected, int duration) : base(affected, duration)
+        internal StunDebuff(Unit affected, int duration) : base(affected, duration)
         {
-            Name = "Stealth";
-            BuffType = BuffType.Neutral;
-            IndefiniteDuration = true;
+            Name = "Stun";
+            BuffType = BuffType.Debuff;
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet);
+            StatusCondition = StatusCondition.Stunned;
+
+            Icon = new Icon(Icon.DefaultIconSize, Character.And, Spritesheets.CharacterSheet);
+        }
+
+        internal override void RemoveBuffFromUnit()
+        {
+            base.RemoveBuffFromUnit();
         }
 
         internal override Icon GenerateIcon(UIScale scale)
         {
-            Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.NeutralBackground);
+            Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.DebuffBackground);
 
             return icon;
         }
@@ -39,9 +46,8 @@ namespace MortalDungeon.Game.Abilities
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
             description.SetColor(Colors.UITextBlack);
+            description.SetText($"Unit is stunned for {Duration} turn{(Duration != 1 ? "s" : "")}");
 
-            description.SetText($"Unit is hidden until they use an action\nthat breaks stealth or they take damage\ngreater than their stealth skill\n\nSkill level: {AffectedUnit.Info.Stealth.Skill}");
-            
             tooltip.AddChild(header);
             tooltip.AddChild(description);
 
@@ -56,6 +62,11 @@ namespace MortalDungeon.Game.Abilities
             tooltip.BaseComponent.SetPosition(tooltip.Position + tooltip.Margins);
 
             return tooltip;
+        }
+
+        internal override void OnTurnStart()
+        {
+            base.OnTurnStart();
         }
     }
 }

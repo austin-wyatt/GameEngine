@@ -27,7 +27,8 @@ namespace MortalDungeon.Game.Abilities
             Damage = damage;
 
             ActionCost = 2;
-            
+
+            CastingMethod |= CastingMethod.Weapon | CastingMethod.PhysicalDexterity;
 
             Name = "Shoot";
 
@@ -98,7 +99,7 @@ namespace MortalDungeon.Game.Abilities
 
         internal override void OnCast()
         {
-            TileMap.DeselectTiles();
+            TileMap.Controller.DeselectTiles();
 
             base.OnCast();
         }
@@ -134,6 +135,8 @@ namespace MortalDungeon.Game.Abilities
 
             GameObject.LoadTexture(arrow);
 
+            arrow.SetPosition(new Vector3(0, 0, -1000));
+
             Scene._genericObjects.Add(arrow);
 
 
@@ -146,7 +149,7 @@ namespace MortalDungeon.Game.Abilities
 
 
 
-            PropertyAnimation shootAnimation = new PropertyAnimation();
+            TimedAnimation shootAnimation = new TimedAnimation();
 
             shootAnimation.BaseFrame = arrow.BaseObject.BaseFrame;
 
@@ -154,7 +157,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 int temp = i;
 
-                Keyframe frame = new Keyframe(temp)
+                TimedKeyframe frame = new TimedKeyframe(temp)
                 {
                     Action = () =>
                     {
@@ -165,10 +168,14 @@ namespace MortalDungeon.Game.Abilities
                 shootAnimation.Keyframes.Add(frame);
             }
 
-
             shootAnimation.OnFinish = () =>
             {
-                arrow.RemovePropertyAnimation(shootAnimation);
+                Scene.PostTickEvent += removeArrow;
+            };
+
+            void removeArrow(SceneEventArgs args) 
+            {
+                Scene.TimedTickableObjects.Remove(shootAnimation);
                 Scene._genericObjects.Remove(arrow);
 
                 DamageInstance damage = GetDamageInstance();
@@ -176,11 +183,12 @@ namespace MortalDungeon.Game.Abilities
                 SelectedUnit.ApplyDamage(new Unit.DamageParams(damage) { Ability = this });
 
                 EffectEnded();
-            };
+                Scene.PostTickEvent -= removeArrow;
+            }
+
 
             shootAnimation.Play();
-
-            arrow.AddPropertyAnimation(shootAnimation);
+            Scene.TimedTickableObjects.Add(shootAnimation);
         }
 
         internal override DamageInstance GetDamageInstance()

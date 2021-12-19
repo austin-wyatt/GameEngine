@@ -22,6 +22,8 @@ namespace MortalDungeon.Game.Abilities
             Range = range;
             CastingUnit = castingUnit;
 
+            CastingMethod |= CastingMethod.Magic | CastingMethod.Intelligence | CastingMethod.Vocal;
+
             CanTargetGround = true;
             UnitTargetParams.IsHostile = UnitCheckEnum.False;
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
@@ -40,6 +42,10 @@ namespace MortalDungeon.Game.Abilities
             first.AddCombo(second, null, false);
             second.AddCombo(third, first, false);
             third.AddCombo(this, second, false);
+
+            first.CastingMethod = CastingMethod;
+            second.CastingMethod = CastingMethod;
+            third.CastingMethod = CastingMethod;
         }
 
         internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
@@ -61,7 +67,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 validTiles.ForEach(tile =>
                 {
-                    tile.TilePoint.ParentTileMap.SelectTile(tile);
+                    tile.TilePoint.ParentTileMap.Controller.SelectTile(tile);
                 });
             }
 
@@ -76,7 +82,7 @@ namespace MortalDungeon.Game.Abilities
                 EnactEffect();
                 Scene._selectedAbility = null;
 
-                map.DeselectTiles();
+                map.Controller.DeselectTiles();
             }
         }
 
@@ -144,7 +150,7 @@ namespace MortalDungeon.Game.Abilities
             lock(AffectedTiles)
             AffectedTiles.ForEach(tile =>
             {
-                tile.TilePoint.ParentTileMap.DeselectTiles();
+                tile.TilePoint.ParentTileMap.Controller.DeselectTiles();
             });
         }
     }

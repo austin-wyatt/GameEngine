@@ -111,12 +111,13 @@ namespace MortalDungeon.Game.Units
 
             shieldBlock.DamageResistances[DamageType.Slashing] = 0;
 
+            Info.AddBuff(shieldBlock);
 
             //Strike melee = new Strike(this, 1, 45) { ChargeRechargeCost = 15 };
             //Info.Abilities.Add(melee);
 
-            BonyBash bash = new BonyBash(this);
-            Info.Abilities.Add(bash);
+            SuckerPunch punch = new SuckerPunch(this);
+            Info.Abilities.Add(punch);
 
             Shoot shootAbility = new Shoot(this, 15, 4, 20);
             Info.Abilities.Add(shootAbility);

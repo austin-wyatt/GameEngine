@@ -57,6 +57,9 @@ namespace MortalDungeon.Game.Units
         {
             //List<BaseTile> tilesInVision = Scene.GetTeamVision(_unit.AI.Team);
 
+            if (Scene.CurrentUnit != _unit)
+                return;
+
             foreach (var disp in Dispositions.DispositionList) 
             {
                 disp.TurnFatigue = 0;
@@ -349,7 +352,9 @@ namespace MortalDungeon.Game.Units
             return ability;
         }
 
-        
+        /// <summary>
+        /// All hard params must be satisfied and (if present) at least one soft param must be satisfied
+        /// </summary>
         internal class UnitSearchParams 
         {
             internal UnitCheckEnum Dead = UnitCheckEnum.NotSet;

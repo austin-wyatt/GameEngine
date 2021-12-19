@@ -34,6 +34,8 @@ namespace MortalDungeon.Game.Abilities
 
             DamageType = DamageType.NonDamaging;
 
+            CastingMethod |= CastingMethod.Movement;
+
             EnergyCost = 1;
             ActionCost = 0;
 
@@ -85,6 +87,8 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
+            List<BaseTile> tiles = new List<BaseTile>(CurrentTiles);
+
             if (_path.Count > 0)
             {
                 int startingIndex = 0;
@@ -92,15 +96,24 @@ namespace MortalDungeon.Game.Abilities
                 for (int i = startingIndex; i < _path.Count; i++)
                 {
                     CurrentTiles.Add(_path[i].AttachedTile);
+                    tiles.Add(_path[i].AttachedTile);
                 }
 
                 ClearSelectedTiles();
             }
 
+            Casted();
+
             try
             {
-                if (CurrentTiles.Count > 0)
+                if (tiles.Count > 0)
                 {
+                    if (tiles.Exists(t => t == null)) 
+                    {
+                        EffectEnded();
+                        return;
+                    }
+
                     //Task.Run(() =>
                     //{
                     PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
@@ -108,16 +121,16 @@ namespace MortalDungeon.Game.Abilities
                     //float speed = CastingUnit.Info.Speed;
                     float speed = 0.1f;
 
-                    Vector3 tileAPosition = CurrentTiles[0].Position;
+                    Vector3 tileAPosition = tiles[0].Position;
                     Vector3 tileBPosition;
 
                     int moveIncrements = (int)(20 * speed);
 
                     int moveDelay = 1; //in ticks
 
-                    for (int i = 1; i < CurrentTiles.Count; i++)
+                    for (int i = 1; i < tiles.Count; i++)
                     {
-                        tileBPosition = CurrentTiles[i].Position;
+                        tileBPosition = tiles[i].Position;
 
                         Vector3 distanceToTravel = tileAPosition - tileBPosition;
                         distanceToTravel.X /= moveIncrements;
@@ -139,7 +152,7 @@ namespace MortalDungeon.Game.Abilities
 
                         Keyframe endOfTileMoveKeyframe = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * moveIncrements);
 
-                        BaseTile currentTile = CurrentTiles[i];
+                        BaseTile currentTile = tiles[i];
                         endOfTileMoveKeyframe.Action = () =>
                         {
                             if (!ApplyTileEnergyCost(currentTile)) 
@@ -169,13 +182,13 @@ namespace MortalDungeon.Game.Abilities
                         moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
 
 
-                        if (Settings.MovementTurbo && i == CurrentTiles.Count - 1)
+                        if (Settings.MovementTurbo && i == tiles.Count - 1)
                         {
                             moveAnimation.Keyframes.RemoveRange(0, moveAnimation.Keyframes.Count - 1);
                             moveAnimation.Keyframes[0].ActivationTick = 5;
 
                             tileAPosition = CastingUnit.Info.TileMapPosition.Position;
-                            tileBPosition = CurrentTiles[^1].Position;
+                            tileBPosition = tiles[^1].Position;
 
                             distanceToTravel = tileAPosition - tileBPosition;
                             CastingUnit.SetPosition(CastingUnit.Position - distanceToTravel);
@@ -190,6 +203,9 @@ namespace MortalDungeon.Game.Abilities
 
                     moveAnimation.OnFinish = () =>
                     {
+                        //we set the position here as a failsafe to the unit model being desynced from their position somehow
+                        //CastingUnit.SetPosition(CastingUnit.Info.TileMapPosition.Position + CastingUnit.TileOffset); 
+
                         CastingUnit.RemovePropertyAnimation(moveAnimation.AnimationID);
                         EffectEnded();
 
@@ -212,8 +228,6 @@ namespace MortalDungeon.Game.Abilities
                 return;
             }
 
-            Casted();
-
             SelectedTile = null;
         }
 
@@ -229,7 +243,7 @@ namespace MortalDungeon.Game.Abilities
 
         internal override void OnCast()
         {
-            TileMap.DeselectTiles();
+            TileMap.Controller.DeselectTiles();
 
             base.OnCast();
 
@@ -303,7 +317,7 @@ namespace MortalDungeon.Game.Abilities
                 EnactEffect();
                 Scene._selectedAbility = null;
 
-                map.DeselectTiles();
+                map.Controller.DeselectTiles();
             }
         }
 
@@ -333,6 +347,9 @@ namespace MortalDungeon.Game.Abilities
 
         internal void EvaluateHoverPath(BaseTile tile, TileMap map) 
         {
+            if (_evaluatingPath)
+                return;
+
             _evaluatingPath = true;
 
             SelectedTile = tile;
@@ -344,7 +361,12 @@ namespace MortalDungeon.Game.Abilities
             {
                 bool selectedTileInPath = _path.Exists(p => p.AttachedTile != null && p.AttachedTile.ObjectID == tile.ObjectID);
 
-                if (_path[^1].AttachedTile == null) return;
+                if (_path[^1].AttachedTile == null)
+                {
+                    _evaluatingPath = false;
+                    return;
+                }
+                
 
                 //get the path from the last tile to the hovered point
                 param = new TileMap.PathToPointParameters(_path[^1].AttachedTile.TilePoint, SelectedTile.TilePoint, Range - _path.Count + 1)
@@ -385,7 +407,7 @@ namespace MortalDungeon.Game.Abilities
                     for (int i = 0; i < _path.Count - 1; i++)
                     {
                         //if the path does exist make sure we aren't backtracking
-                        if (tiles.Exists(t => t.ObjectID == _path[i].AttachedTile.ObjectID))
+                        if (tiles.Exists(t => _path[i].AttachedTile != null && t.ObjectID == _path[i].AttachedTile.ObjectID))
                         {
                             tiles.Clear();
                             //remove the last tile since we are backtracking
@@ -394,7 +416,7 @@ namespace MortalDungeon.Game.Abilities
                                 if (_pathTilesToDelete.Contains(j))
                                 {
                                     _pathTilesToDelete.Remove(j);
-                                    _path[j].TilePoint.ParentTileMap.DeselectTile(_path[j]);
+                                    _path[j].TilePoint.ParentTileMap.Controller.DeselectTile(_path[j]);
                                 }
                                 ClearTile(_path[j]);
                                 _path.Remove(_path[j]);
@@ -448,7 +470,14 @@ namespace MortalDungeon.Game.Abilities
 
             if (tiles.Count > 0)
             {
-                foreach(var t in tiles)
+                int dist = tiles[0].TileMap.GetDistanceBetweenPoints(tiles[0], CastingUnit.Info.TileMapPosition);
+                if (dist > 1)
+                {
+                    _evaluatingPath = false;
+                    return;
+                }
+
+                foreach (var t in tiles)
                 {
                     if (t == null)
                         break;
@@ -459,7 +488,7 @@ namespace MortalDungeon.Game.Abilities
                     }
                     else
                     {
-                        map.SelectTile(t);
+                        map.Controller.SelectTile(t);
                         _path.Add(t.AttachedTile);
                         _pathTilesToDelete.Add(_path.Count - 1);
                     }
@@ -528,6 +557,9 @@ namespace MortalDungeon.Game.Abilities
 
             for (int i = 1; i < tiles.Count; i++) 
             {
+                if (tiles[i] == null)
+                    continue;
+
                 value += tiles[i].Properties.MovementCost;
             }
 
@@ -548,7 +580,7 @@ namespace MortalDungeon.Game.Abilities
 
                 _pathTilesToDelete.ForEach(i =>
                 {
-                    _path[i].TilePoint.ParentTileMap.DeselectTile(_path[i]);
+                    _path[i].TilePoint.ParentTileMap.Controller.DeselectTile(_path[i]);
                 });
 
                 _path.Clear();

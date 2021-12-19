@@ -42,7 +42,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         SevenKeyDown,
         EightKeyDown,
 
-        CloseTooltip
+        CloseTooltip,
+
+        PostTickAction,
+        Render
     }
 
     internal class SceneEventArgs
@@ -83,13 +86,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         internal QueuedList<ITickable> TickableObjects = new QueuedList<ITickable>();
         internal QueuedList<ITickable> HighFreqTickableObjects = new QueuedList<ITickable>();
 
+        internal QueuedList<ITickable> TimedTickableObjects = new QueuedList<ITickable>();
+
         internal ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
 
         internal Action ExitFunc = null; //function used to exit the application
 
         internal bool Loaded = false;
-
-        internal Action PostTickAction;
 
         internal int Priority = 0; //determines which scene will have their events evaluated first
 
@@ -375,6 +378,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             TickableObjects.HandleQueuedItems();
             HighFreqTickableObjects.HandleQueuedItems();
+            TimedTickableObjects.HandleQueuedItems();
 
             if (LightObstructions.HasQueuedItems())
             {
@@ -397,8 +401,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             for (int i = 0; i < _tileMapController.TileMaps.Count; i++)
             {
-                _tileMapController.TileMaps[i].SelectionTiles.HandleQueuedItems();
+                _tileMapController.TileMaps[i].Controller.SelectionTiles.HandleQueuedItems();
             }
+
+            OnRenderEvent?.Invoke(new SceneEventArgs(this, EventAction.Render));
         }
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
@@ -790,6 +796,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         internal event SceneEventHandler OnUIForceClose;
 
+        internal event SceneEventHandler PostTickEvent;
+
+        internal event SceneEventHandler OnRenderEvent;
+
+
         protected void NumberPressed(SceneEventArgs args)
         {
             OnNumberPressed?.Invoke(args);
@@ -799,6 +810,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
             OnUIForceClose?.Invoke(args);
         }
 
+        public void PostTickAction() 
+        {
+            PostTickEvent?.Invoke(new SceneEventArgs(this, EventAction.PostTickAction));
+        }
 
         #endregion
 
@@ -833,6 +848,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
         internal Scene() { }
 
         #region Misc helper functions
+        internal void SmoothPanCameraToUnit(Unit unit, int speed) 
+        {
+            Vector4 pos = unit.BaseObject.BaseFrame.Position;
+
+            SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
+        }
         internal void SmoothPanCamera(Vector3 pos, int speed)
         {
             if (ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
@@ -842,15 +863,24 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             Vector3 deltaPos = (_camera.Position - pos) / frames;
 
-            PropertyAnimation animation = new PropertyAnimation();
+            TimedAnimation animation = new TimedAnimation();
+
+
+            void updateCameraPos(SceneEventArgs _) 
+            {
+                OnMouseMove();
+                OnCameraMoved();
+                OnRenderEvent -= updateCameraPos;
+            }
+
+
             for (int i = 0; i < frames; i++) 
             {
-                Keyframe frame = new Keyframe(speed * i);
+                TimedKeyframe frame = new TimedKeyframe(speed * i);
                 frame.Action = () =>
                 {
                     _camera.SetPosition(_camera.Position - deltaPos);
-                    OnMouseMove();
-                    OnCameraMoved();
+                    OnRenderEvent += updateCameraPos;
                 };
 
                 animation.Keyframes.Add(frame);
@@ -861,11 +891,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
             ContextManager.SetFlag(GeneralContextFlags.CameraPanning, true);
             animation.Playing = true;
 
-            HighFreqTickableObjects.Add(animation);
+            //HighFreqTickableObjects.Add(animation);
+            TimedTickableObjects.Add(animation);
 
             animation.OnFinish = () =>
             {
-                HighFreqTickableObjects.Remove(animation);
+                //HighFreqTickableObjects.Remove(animation);
+                TimedTickableObjects.Remove(animation);
                 ContextManager.SetFlag(GeneralContextFlags.CameraPanning, false);
 
                 RenderingQueue.RenderStateManager.SetFlag(RenderingStates.GuassianBlur, false);
@@ -935,7 +967,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         internal void CollateUnits()
         {
-            _collatedUnits = _renderedUnits.ToList();
+            lock (_renderedUnits)
+            {
+                _collatedUnits = _renderedUnits.ToList();
+            }
             ContextManager.SetFlag(GeneralContextFlags.UnitCollationRequired, false);
         }
 

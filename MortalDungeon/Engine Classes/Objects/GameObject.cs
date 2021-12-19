@@ -11,6 +11,14 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
 {
+    internal enum SetColorFlag 
+    {
+        Base,
+        Hover,
+        Disabled,
+        Selected
+    }
+
     internal class GameObject : ITickable
     {
         internal string Name = "";
@@ -204,7 +212,7 @@ namespace MortalDungeon.Engine_Classes
             Scale.Z += f;
         }
 
-        internal virtual void SetColor(Vector4 color) 
+        internal virtual void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base) 
         {
             BaseObjects.ForEach(obj =>
             {

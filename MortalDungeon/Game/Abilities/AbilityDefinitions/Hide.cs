@@ -71,12 +71,14 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit.Info.Stealth.SetHiding(true);
             StealthBuff stealthBuff = new StealthBuff(CastingUnit, -1);
 
+            CastingUnit.Info.AddBuff(stealthBuff);
+
             Color stealthColor = new Color(1, 1, 1, 0.5f);
 
             void hidingBroken() 
             {
                 CastingUnit.Info.Stealth.HidingBrokenActions.Remove(hidingBroken);
-                CastingUnit.Info.Buffs.Remove(stealthBuff);
+                CastingUnit.Info.RemoveBuff(stealthBuff);
                 Scene.Footer.UpdateFooterInfo();
 
                 CastingUnit.BaseObject.BaseFrame.RemoveAppliedColor(stealthColor);
