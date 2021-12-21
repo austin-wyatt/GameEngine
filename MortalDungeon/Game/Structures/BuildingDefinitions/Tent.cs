@@ -12,21 +12,21 @@ using System.Text;
 
 namespace MortalDungeon.Game.Structures
 {
-    internal class Tent : Building
+    public class Tent : Building
     {
 
-        internal Tent() 
+        public Tent() 
         {
             CreateTilePattern();
             Type = StructureEnum.Tent;
         }
-        internal Tent(CombatScene scene) : base(scene)
+        public Tent(CombatScene scene) : base(scene)
         {
             CreateTilePattern();
             Type = StructureEnum.Tent;
         }
 
-        internal override void CreateTilePattern()
+        public override void CreateTilePattern()
         {
             base.CreateTilePattern();
 
@@ -42,7 +42,7 @@ namespace MortalDungeon.Game.Structures
         /// <summary>
         /// Call this from the feature equation that loads this building
         /// </summary>
-        internal override void InitializeVisualComponent()
+        public override void InitializeVisualComponent()
         {
             base.InitializeVisualComponent();
 
@@ -56,7 +56,7 @@ namespace MortalDungeon.Game.Structures
             LoadTexture(this);
         }
 
-        internal override void TileAction()
+        public override void TileAction()
         {
             List<BaseTile> tiles = GetPatternTiles();
 

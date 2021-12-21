@@ -7,13 +7,15 @@ using OpenTK.Mathematics;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class Shader
+    public class Shader
     {
-        internal readonly int Handle;
+        public readonly int Handle;
 
         private readonly Dictionary<string, int> _uniformLocations;
 
-        internal Shader(string vertPath, string fragPath)
+        public Shader() { }
+
+        public Shader(string vertPath, string fragPath)
         {
             var shaderSource = File.ReadAllText(vertPath);
 
@@ -79,12 +81,12 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal void Use()
+        public void Use()
         {
             GL.UseProgram(Handle);
         }
 
-        internal int GetAttribLocation(string attribName)
+        public int GetAttribLocation(string attribName)
         {
             return GL.GetAttribLocation(Handle, attribName);
         }
@@ -96,7 +98,7 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         /// <param name="name">The name of the uniform</param>
         /// <param name="data">The data to set</param>
-        internal void SetInt(string name, int data)
+        public void SetInt(string name, int data)
         {
             GL.Uniform1(_uniformLocations[name], data);
         }
@@ -106,7 +108,7 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         /// <param name="name">The name of the uniform</param>
         /// <param name="data">The data to set</param>
-        internal void SetFloat(string name, float data)
+        public void SetFloat(string name, float data)
         {
             GL.Uniform1(_uniformLocations[name], data);
         }
@@ -121,7 +123,7 @@ namespace MortalDungeon.Engine_Classes
         ///   The matrix is transposed before being sent to the shader.
         ///   </para>
         /// </remarks>
-        internal void SetMatrix4(string name, Matrix4 data)
+        public void SetMatrix4(string name, Matrix4 data)
         {
             GL.UniformMatrix4(_uniformLocations[name], true, ref data);
         }
@@ -131,7 +133,7 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         /// <param name="name">The name of the uniform</param>
         /// <param name="data">The data to set</param>
-        internal void SetVector3(string name, Vector3 data)
+        public void SetVector3(string name, Vector3 data)
         {
             GL.Uniform3(_uniformLocations[name], data);
         }
@@ -141,7 +143,7 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         /// <param name="name">The name of the uniform</param>
         /// <param name="data">The data to set</param>
-        internal void SetVector4(string name, Vector4 data)
+        public void SetVector4(string name, Vector4 data)
         {
             GL.Uniform4(_uniformLocations[name], data);
         }
@@ -151,7 +153,7 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         /// <param name="name">The name of the uniform</param>
         /// <param name="data">The data to set</param>
-        internal void SetBool(string name, bool data)
+        public void SetBool(string name, bool data)
         {
             GL.Uniform1(_uniformLocations[name], data ? 1 : 0);
         }

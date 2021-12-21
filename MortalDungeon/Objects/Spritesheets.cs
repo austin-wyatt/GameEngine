@@ -5,54 +5,63 @@ using System.Text;
 
 namespace MortalDungeon.Objects
 {
-    internal class Spritesheet
+    public class Spritesheet
     {
-        internal string File;
-        internal int Offset = 64;
-        internal int Rows = 10;
-        internal int Columns = 10;
-        internal TextureName TextureName;
-        internal Spritesheet(string file, TextureName textureName)
+        public string File;
+        public int Offset = 64;
+        public int Rows = 10;
+        public int Columns = 10;
+        public TextureName TextureName;
+
+        public Spritesheet() { }
+        public Spritesheet(string file, TextureName textureName)
         {
             File = file;
             TextureName = textureName;
         }
     }
 
-    internal static class Spritesheets 
+    public static class Spritesheets 
     {
-        internal static Spritesheet TestSheet = new Spritesheet("Resources/SpritesheetTest.png", TextureName.SpritesheetTest);
-        internal static Spritesheet CaveSheet = new Spritesheet("Resources/CaveSpritesheet.png", TextureName.CaveSpritesheet);
-        internal static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.png", TextureName.CharacterSpritesheet);
-        internal static Spritesheet UISheet = new Spritesheet("Resources/UISpritesheet.png", TextureName.UISpritesheet);
-        internal static Spritesheet IconSheet = new Spritesheet("Resources/IconSpritesheet.png", TextureName.IconSpritesheet);
-        internal static Spritesheet TileSheet = new Spritesheet("Resources/TileSpritesheet.png", TextureName.TileSpritesheet)
+        public static Spritesheet TestSheet = new Spritesheet("Resources/SpritesheetTest.png", TextureName.SpritesheetTest);
+        public static Spritesheet CaveSheet = new Spritesheet("Resources/CaveSpritesheet.png", TextureName.CaveSpritesheet);
+        public static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.png", TextureName.CharacterSpritesheet);
+        public static Spritesheet CharacterSheetSDF = new Spritesheet("Resources/CharacterSpritesheetDistance.png", TextureName.CharacterSpritesheetSDF) 
+        {
+            Offset = 64,
+            Rows = 16,
+            Columns = 16
+        };
+
+        public static Spritesheet UISheet = new Spritesheet("Resources/UISpritesheet.png", TextureName.UISpritesheet);
+        public static Spritesheet IconSheet = new Spritesheet("Resources/IconSpritesheet.png", TextureName.IconSpritesheet);
+        public static Spritesheet TileSheet = new Spritesheet("Resources/TileSpritesheet.png", TextureName.TileSpritesheet)
         {
             Offset = 128,
             Rows = 20,
             Columns = 20
         };
-        internal static Spritesheet StructureSheet = new Spritesheet("Resources/StructureSpritesheet.png", TextureName.StructureSpritesheet);
-        internal static Spritesheet ObjectSheet = new Spritesheet("Resources/ObjectSheet.png", TextureName.ObjectSpritesheet);
+        public static Spritesheet StructureSheet = new Spritesheet("Resources/StructureSpritesheet.png", TextureName.StructureSpritesheet);
+        public static Spritesheet ObjectSheet = new Spritesheet("Resources/ObjectSheet.png", TextureName.ObjectSpritesheet);
 
-        internal static Spritesheet TextureTestSheet = new Spritesheet("Resources/TestTexture.png", TextureName.TestTexture) 
+        public static Spritesheet TextureTestSheet = new Spritesheet("Resources/TestTexture.png", TextureName.TestTexture) 
         {
             Rows = 2,
             Columns = 2
         };
 
-        internal static Spritesheet SphereTexture = new Spritesheet("Resources/Sphere texture.png", TextureName.SphereTexture)
+        public static Spritesheet SphereTexture = new Spritesheet("Resources/Sphere texture.png", TextureName.SphereTexture)
         {
             Rows = 1,
             Columns = 1
         };
-        internal static Spritesheet CubeTexture = new Spritesheet("Resources/cube texture.png", TextureName.CubeTexture)
+        public static Spritesheet CubeTexture = new Spritesheet("Resources/cube texture.png", TextureName.CubeTexture)
         {
             Rows = 1,
             Columns = 1
         };
 
-        internal static Spritesheet LightObstructionSheet = new Spritesheet("Resources/LightObstructionSheet.png", TextureName.LightObstructionSheet)
+        public static Spritesheet LightObstructionSheet = new Spritesheet("Resources/LightObstructionSheet.png", TextureName.LightObstructionSheet)
         {
             Rows = 10,
             Columns = 10,
@@ -61,12 +70,12 @@ namespace MortalDungeon.Objects
 
     }
 
-    internal static class Textures 
+    public static class Textures 
     {
-        internal static readonly Texture GEN_DIFFUSE_MAP = Texture.LoadFromFile("Resources/GEN_PURPOSE_DIFFUSE.png");
-        internal static readonly Texture GEN_AMBIENT_MAP = Texture.LoadFromFile("Resources/GEN_PURPOSE_AMBIENT.png");
+        public static readonly Texture GEN_DIFFUSE_MAP = Texture.LoadFromFile("Resources/GEN_PURPOSE_DIFFUSE.png");
+        public static readonly Texture GEN_AMBIENT_MAP = Texture.LoadFromFile("Resources/GEN_PURPOSE_AMBIENT.png");
 
-        internal static Spritesheet TentTexture = new Spritesheet("Resources/3D models/Canvas texture.png", TextureName.SphereTexture)
+        public static Spritesheet TentTexture = new Spritesheet("Resources/3D models/Canvas texture.png", TextureName.SphereTexture)
         {
             Rows = 1,
             Columns = 1

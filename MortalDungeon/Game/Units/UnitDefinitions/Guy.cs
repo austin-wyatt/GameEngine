@@ -14,23 +14,27 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
-    internal class Guy : Unit
+    public class Guy : Unit
     {
-        internal Guy(CombatScene scene) : base(scene) 
+        public Guy() { }
+        public Guy(CombatScene scene) : base(scene) 
         {
             Clickable = true;
             Selectable = true;
 
             _createStatusBar = true;
         }
-        internal Guy(CombatScene scene, BaseTile tileMapPosition, string name = "Guy") : base(scene)
+        public Guy(CombatScene scene, BaseTile tileMapPosition, string name = "Guy") : base(scene)
         {
             Name = name;
             SetTileMapPosition(tileMapPosition);
             Clickable = true;
             Selectable = true;
 
+            ProfileType = UnitProfileType.Guy;
+
             _createStatusBar = true;
+
 
             //AI.MeleeDamageDealer disp = new AI.MeleeDamageDealer(this)
             //{
@@ -39,39 +43,21 @@ namespace MortalDungeon.Game.Units
             //};
 
             //AI.Dispositions.Add(disp);
-
-
-            //LightGenerator = new LightGenerator() { Radius = 10, Brightness = 0.1f, LightColor = new Vector3(0.75f, 0.6f, 0.2f) };
-            //Scene.LightGenerators.Add(LightGenerator);
-
-            //_lightGenChangeFunc = (_, __) =>
-            //{
-            //    if (DayNightCycle.IsNight())
-            //    {
-            //        LightGenerator.On = true;
-            //    }
-            //    else
-            //    {
-            //        LightGenerator.On = false;
-            //    }
-            //};
-
-            //CombatScene.EnvironmentColor.OnChangeEvent += _lightGenChangeFunc;
+            
         }
 
-        //private EventHandler _lightGenChangeFunc;
-        //private LightGenerator LightGenerator;
-
-        internal override void InitializeUnitInfo()
+        public override void InitializeUnitInfo()
         {
             base.InitializeUnitInfo();
 
             VisionGenerator.Radius = 12;
 
             Info.MaxEnergy = 15;
+
+            AbilityLoadout = AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 3);
         }
 
-        internal override void InitializeVisualComponent()
+        public override void InitializeVisualComponent()
         {
             base.InitializeVisualComponent();
 
@@ -97,43 +83,36 @@ namespace MortalDungeon.Game.Units
             SelectionTile.SetPosition(Position);
 
 
-            Move movement = new Move(this);
-            movement.EnergyCost = 0.3f;
-            Info.Abilities.Add(movement);
+            //Buff shieldBlock = new Buff(this);
+            //shieldBlock.ShieldBlock.Additive = 10;
+            //shieldBlock.IndefiniteDuration = true;
+            //shieldBlock.Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
-            Info._movementAbility = movement;
+            //shieldBlock.DamageResistances[DamageType.Slashing] = 0;
 
+            //Info.AddBuff(shieldBlock);
 
-            Buff shieldBlock = new Buff(this);
-            shieldBlock.ShieldBlock.Additive = 10;
-            shieldBlock.IndefiniteDuration = true;
-            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
+            ////Strike melee = new Strike(this, 1, 45) { ChargeRechargeCost = 15 };
+            ////Info.Abilities.Add(melee);
 
-            shieldBlock.DamageResistances[DamageType.Slashing] = 0;
+            //SuckerPunch punch = new SuckerPunch(this);
+            //Info.Abilities.Add(punch);
 
-            Info.AddBuff(shieldBlock);
+            //Shoot shootAbility = new Shoot(this, 15, 4, 20);
+            //Info.Abilities.Add(shootAbility);
 
-            //Strike melee = new Strike(this, 1, 45) { ChargeRechargeCost = 15 };
-            //Info.Abilities.Add(melee);
+            //shootAbility.AddCombo(new Shoot(this, 15, 4, 10), null, false);
+            //shootAbility.Next.AddCombo(new Shoot(this, 15, 4, 15), shootAbility, false);
 
-            SuckerPunch punch = new SuckerPunch(this);
-            Info.Abilities.Add(punch);
+            //AncientArmor ancientArmor = new AncientArmor(this);
+            //Info.Abilities.Add(ancientArmor);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 20);
-            Info.Abilities.Add(shootAbility);
-
-            shootAbility.AddCombo(new Shoot(this, 15, 4, 10), null, false);
-            shootAbility.Next.AddCombo(new Shoot(this, 15, 4, 15), shootAbility, false);
-
-            AncientArmor ancientArmor = new AncientArmor(this);
-            Info.Abilities.Add(ancientArmor);
-
-            SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);
-            Info.Abilities.Add(spawnSkeleton);
-            spawnSkeleton.ReturnToFirst();
+            //SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);
+            //Info.Abilities.Add(spawnSkeleton);
+            //spawnSkeleton.ReturnToFirst();
         }
 
-        internal override BaseObject CreateBaseObject()
+        public override BaseObject CreateBaseObject()
         {
             BaseObject obj = new BaseObject(BAD_GUY_ANIMATION.List, ObjectID, "BadGuy", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
 
@@ -145,7 +124,7 @@ namespace MortalDungeon.Game.Units
             return obj;
         }
 
-        internal override void SetTileMapPosition(BaseTile baseTile)
+        public override void SetTileMapPosition(BaseTile baseTile)
         {
             base.SetTileMapPosition(baseTile);
 
@@ -156,7 +135,7 @@ namespace MortalDungeon.Game.Units
             //}
         }
 
-        internal override void CleanUp()
+        public override void CleanUp()
         {
             base.CleanUp();
 

@@ -11,9 +11,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class SuckerPunch : Ability
+    public class SuckerPunch : Ability
     {
-        internal SuckerPunch(Unit castingUnit, int range = 1, float damage = 10)
+        public SuckerPunch(Unit castingUnit, int range = 1, float damage = 10)
         {
             Type = AbilityTypes.MeleeAttack;
             DamageType = DamageType.Blunt;
@@ -41,7 +41,7 @@ namespace MortalDungeon.Game.Abilities
             AbilityClass = AbilityClass.Bandit;
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -66,7 +66,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override bool UnitInRange(Unit unit, BaseTile position = null)
+        public override bool UnitInRange(Unit unit, BaseTile position = null)
         {
             if (position == null)
             {
@@ -78,7 +78,7 @@ namespace MortalDungeon.Game.Abilities
             return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -92,7 +92,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -107,7 +107,7 @@ namespace MortalDungeon.Game.Abilities
             EffectEnded();
         }
 
-        internal override DamageInstance GetDamageInstance()
+        public override DamageInstance GetDamageInstance()
         {
             DamageInstance instance = new DamageInstance();
 

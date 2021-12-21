@@ -15,14 +15,14 @@ namespace MortalDungeon.Game.SceneDefinitions
     {
 
         private UIObject _backdrop;
-        internal EscapeMenuScene(Action exitFunc)
+        public EscapeMenuScene(Action exitFunc)
         {
             InitializeFields();
 
             ExitFunc = exitFunc;
         }
 
-        internal override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
         {
             base.Load(camera, cursorObject, mouseRay);
            
@@ -129,7 +129,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
         private bool MenuOpen = false;
 
-        internal override bool OnKeyDown(KeyboardKeyEventArgs e)
+        public override bool OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (!base.OnKeyDown(e))
             {

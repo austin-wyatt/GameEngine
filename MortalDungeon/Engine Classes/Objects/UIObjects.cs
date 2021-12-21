@@ -13,7 +13,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal enum UISheetIcons 
+    public enum UISheetIcons 
     {
         Shield = 27,
         BrokenShield,
@@ -25,51 +25,51 @@ namespace MortalDungeon.Engine_Classes
         Fire = 59
     }
 
-    internal class UIObject : GameObject, IComparable<UIObject>
+    public class UIObject : GameObject, IComparable<UIObject>
     {
-        internal List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
-        internal List<Text> TextObjects = new List<Text>();
-        internal Vector3 Origin = default; //this will be the top left of the UIBlock
-        internal UIScale Size = new UIScale(1, 1);
-        internal bool CameraPerspective = false;
+        public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
+        public List<Text> TextObjects = new List<Text>();
+        public Vector3 Origin = default; //this will be the top left of the UIBlock
+        public UIScale Size = new UIScale(1, 1);
+        public bool CameraPerspective = false;
 
-        internal new ObjectType ObjectType = ObjectType.UI;
+        public new ObjectType ObjectType = ObjectType.UI;
 
-        internal UIObject BaseComponent;
-        internal BaseObject _baseObject;
+        public UIObject BaseComponent;
+        public BaseObject _baseObject;
 
-        internal UIAnchorPosition Anchor = UIAnchorPosition.Center;
-        internal UIDimensions _anchorOffset = new UIDimensions();
+        public UIAnchorPosition Anchor = UIAnchorPosition.Center;
+        public UIDimensions _anchorOffset = new UIDimensions();
 
-        internal float ZIndex = 0; //higher values get rendered in front
+        public float ZIndex = 0; //higher values get rendered in front
 
-        internal bool Focusable = false;
+        public bool Focusable = false;
 
-        internal bool Disabled = false;
-        internal bool Selected = false;
-        internal bool Focused = false; //determines whether this object should be taking key presses
+        public bool Disabled = false;
+        public bool Selected = false;
+        public bool Focused = false; //determines whether this object should be taking key presses
 
-        internal UIObject Parent = null;
+        public UIObject Parent = null;
 
         protected Vector3 _originOffset = default;
         protected bool _scaleAspectRatio = true;
 
-        internal Action OnClickAction = null;
+        public Action OnClickAction = null;
 
-        internal List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
-        internal BoundingArea ScissorBounds = new BoundingArea();
-        internal Bounds AdditionalBounds = null;
+        public List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
+        public BoundingArea ScissorBounds = new BoundingArea();
+        public Bounds AdditionalBounds = null;
 
-        internal bool RenderAfterParent = false;
+        public bool RenderAfterParent = false;
 
         public Vector4 DefaultColor = new Vector4(1, 1, 1, 1);
         public Vector4 HoverColor;
         public Vector4 DisabledColor;
         public Vector4 SelectedColor;
 
-        internal UIObject() { }
+        public UIObject() { }
 
-        internal void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
+        public void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
         {
             Origin = new Vector3(Position.X - Position.X * aspectRatio * ScaleFactor.X / 2, Position.Y - Position.Y * ScaleFactor.Y / 2, Position.Z);
             _originOffset.X = Position.X - Origin.X;
@@ -77,7 +77,7 @@ namespace MortalDungeon.Engine_Classes
             _originOffset.Z = Position.Z - Origin.Z;
         }
 
-        internal override void Tick()
+        public override void Tick()
         {
             if (Render) 
             {
@@ -91,7 +91,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void SetSize(UIScale size)
+        public virtual void SetSize(UIScale size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
@@ -118,7 +118,7 @@ namespace MortalDungeon.Engine_Classes
             SetOrigin(aspectRatio, Size);
         }
 
-        internal override void ScaleAll(float f)
+        public override void ScaleAll(float f)
         {
             ScaleAllRecursive(this, f);
 
@@ -137,7 +137,7 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        internal override void ScaleAddition(float f)
+        public override void ScaleAddition(float f)
         {
             ScaleAdditionRecursive(this, f);
 
@@ -158,24 +158,24 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        internal override void AddBaseObject(BaseObject obj)
+        public override void AddBaseObject(BaseObject obj)
         {
             obj.EnableLighting = false;
 
             BaseObjects.Add(obj);
         }
 
-        internal virtual void SetInlineColor(Vector4 color) 
+        public virtual void SetInlineColor(Vector4 color) 
         {
             GetBaseObject().OutlineParameters.InlineColor = color;
         }
 
-        internal virtual void SetAllInline(int num) 
+        public virtual void SetAllInline(int num) 
         {
             GetBaseObject().OutlineParameters.SetAllInline(num);
         }
 
-        internal void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.Click)
+        public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.Click)
         {
             if (ReverseTree == null)
                 return;
@@ -250,18 +250,18 @@ namespace MortalDungeon.Engine_Classes
         }
         
 
-        internal static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
+        public static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
         {
             if (!IsRendered(obj))
                 return false;
 
             return type switch
             {
-                UIEventType.Click => obj.Clickable && !obj.Disabled,
-                UIEventType.RightClick => obj.Clickable && !obj.Disabled,
+                UIEventType.Click => obj.Clickable,
+                UIEventType.RightClick => obj.Clickable,
                 UIEventType.Hover => obj.Hoverable,
                 UIEventType.TimedHover => obj.HasTimedHoverEffect,
-                UIEventType.MouseDown => obj.Clickable && !obj.Disabled,
+                UIEventType.MouseDown => obj.Clickable,
                 UIEventType.Grab => obj.Draggable && !obj.Disabled,
                 UIEventType.KeyDown => obj.Focused && !obj.Disabled,
                 UIEventType.Focus => obj.Focusable && !obj.Disabled,
@@ -273,7 +273,7 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Checks all the way up the tree for the passed UIObject to ascertain whether the ui element is being displayed
         /// </summary>
-        internal static bool IsRendered(UIObject obj) 
+        public static bool IsRendered(UIObject obj) 
         {
             UIObject parent = obj;
 
@@ -289,20 +289,28 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        internal override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position)
         {
             Vector3 deltaPos = Position - position;
             base.SetPosition(position);
 
+            deltaPos.Z = 0;
+
             for (int i = 0; i < Children.Count; i++) 
             {
-                Children[i].SetPosition(Children[i].Position - deltaPos);
+                Vector3 childPos = Children[i].Position;
+                childPos.Z = position.Z - 0.0001f;
+
+                Children[i].SetPosition(childPos - deltaPos);
             }
         }
 
-        
+        public void SetZPosition(float z) 
+        {
+            base.SetPosition(new Vector3(Position.X, Position.Y, z));
+        }
 
-        internal virtual void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
+        public virtual void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
         {
             if (anchor == UIAnchorPosition.Center)
                 anchor = Anchor;
@@ -315,11 +323,11 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        internal Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition) 
+        public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition) 
         {
             return GetAnchorPosition(anchorPosition, Position);
         }
-        internal virtual Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
+        public virtual Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
         {
             UIDimensions dimensions = GetDimensions();
             Vector3 anchorPos = new Vector3(position);
@@ -361,7 +369,7 @@ namespace MortalDungeon.Engine_Classes
 
             return anchorPos;
         }
-        internal virtual UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
+        public virtual UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
         {
             UIDimensions dimensions = GetDimensions();
             UIDimensions returnDim = new UIDimensions();
@@ -407,7 +415,7 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Actually a preorder search now but I'm leaving the breadth first search code commented out
         /// </summary>
-        internal List<UITreeNode> BreadthFirstSearch() 
+        public List<UITreeNode> BreadthFirstSearch() 
         {
             List<UITreeNode> tree = new List<UITreeNode>();
             //List<UIObject> nodesToTraverse = new List<UIObject>();
@@ -437,6 +445,7 @@ namespace MortalDungeon.Engine_Classes
             //    }
             //}
 
+
             void queueChildren(UIObject parentObject) 
             {
                 tree.Add(new UITreeNode(parentObject, 0, GetBaseObject(parentObject)));
@@ -452,7 +461,7 @@ namespace MortalDungeon.Engine_Classes
             return tree;
         }
 
-        internal static BaseObject GetBaseObject(UIObject obj) 
+        public static BaseObject GetBaseObject(UIObject obj) 
         {
             if (obj._baseObject != null)
                 return obj._baseObject;
@@ -478,13 +487,13 @@ namespace MortalDungeon.Engine_Classes
             return returnObj;
         }
 
-        internal void GenerateReverseTree() 
+        public void GenerateReverseTree() 
         {
             ReverseTree = BreadthFirstSearch();
             ReverseTree.Reverse();
         }
 
-        internal void ForceTreeRegeneration() 
+        public void ForceTreeRegeneration() 
         {
             UIObject parent = this;
             while (true) 
@@ -500,7 +509,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal override void CleanUp()
+        public override void CleanUp()
         {
             Children.ForEach(child =>
             {
@@ -510,11 +519,15 @@ namespace MortalDungeon.Engine_Classes
             base.CleanUp();
         }
 
-        internal virtual void AddChild(UIObject uiObj, int zIndex = -1) 
+        public virtual void AddChild(UIObject uiObj, int zIndex = -1) 
         {
             uiObj.ReverseTree = null;
             uiObj.Parent = this;
             Children.Add(uiObj);
+
+            //Vector3 childPos = uiObj.Position;
+            //childPos.Z = Position.Z - 0.00001f;
+            //uiObj.SetPosition(childPos);
 
             if (zIndex != -1)
             {
@@ -539,7 +552,7 @@ namespace MortalDungeon.Engine_Classes
             LoadTexture(uiObj);
         }
 
-        internal void RemoveChild(int objectID) 
+        public void RemoveChild(int objectID) 
         {
             UIObject child = Children.Find(c => c.ObjectID == objectID);
 
@@ -562,12 +575,12 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal void RemoveChild(UIObject obj) 
+        public void RemoveChild(UIObject obj) 
         {
             RemoveChild(obj.ObjectID);
         }
 
-        internal void RemoveChildren()
+        public void RemoveChildren()
         {
             //for (int i = Children.Count - 1; i >= 0; i--)
             //{
@@ -587,17 +600,17 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal void RemoveChildren(List<int> objectIDs) 
+        public void RemoveChildren(List<int> objectIDs) 
         {
             objectIDs.ForEach(id => RemoveChild(id));
         }
 
-        internal void SetDisabled(bool disable) 
+        public void SetDisabled(bool disable) 
         {
             ForEach(obj => obj.OnDisabled(disable));
         }
 
-        internal void ForEach(Action<UIObject> objAction, UIObject uiObj = null)
+        public void ForEach(Action<UIObject> objAction, UIObject uiObj = null)
         {
             if (uiObj == null)
             {
@@ -618,7 +631,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        internal virtual new UIDimensions GetDimensions() 
+        public virtual new UIDimensions GetDimensions() 
         {
             UIDimensions dimensions = default;
             if (BaseComponent != null) 
@@ -633,7 +646,7 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
-        internal BaseObject GetBaseObject() 
+        public BaseObject GetBaseObject() 
         {
             if (_baseObject != null) 
             {
@@ -647,7 +660,7 @@ namespace MortalDungeon.Engine_Classes
             return null;
         }
 
-        internal override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
+        public override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
         {
             if (flag == SetColorFlag.Base)
                 DefaultColor = color;
@@ -655,23 +668,23 @@ namespace MortalDungeon.Engine_Classes
             base.SetColor(color);
         }
 
-        internal override void OnMouseUp()
+        public override void OnMouseUp()
         {
             base.OnMouseUp();
             OnClick(); //Default OnMouseUp behavior is a click for UIObjects
         }
-        internal override void OnClick()
+        public override void OnClick()
         {
             base.OnClick();
 
             OnClickAction?.Invoke();
         }
-        internal override void OnMouseDown()
+        public override void OnMouseDown()
         {
             base.OnMouseDown();
         }
 
-        internal virtual void OnFocus() 
+        public virtual void OnFocus() 
         {
             if (Focusable && !Focused)
             {
@@ -679,7 +692,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void FocusEnd() 
+        public virtual void FocusEnd() 
         {
             if (Focused) 
             {
@@ -687,7 +700,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal override void OnHover() 
+        public override void OnHover() 
         {
             if (Hoverable && !Hovered)
             {
@@ -702,7 +715,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal override void OnHoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
@@ -717,7 +730,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void OnDisabled(bool disable) 
+        public virtual void OnDisabled(bool disable) 
         {
             Disabled = disable;
 
@@ -727,7 +740,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
+        public virtual void OnGrab(Vector2 MouseCoordinates, UIObject grabbedObject) 
         {
             if (Draggable && !Grabbed)
             {
@@ -745,7 +758,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void OnSelect(bool select) 
+        public virtual void OnSelect(bool select) 
         {
             Selected = select;
 
@@ -755,7 +768,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void OnKeyDown(KeyboardKeyEventArgs e) 
+        public virtual void OnKeyDown(KeyboardKeyEventArgs e) 
         {
             if (ReverseTree == null)
                 return;
@@ -778,9 +791,9 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
+        public virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
 
-        internal virtual void OnType(KeyboardKeyEventArgs e) 
+        public virtual void OnType(KeyboardKeyEventArgs e) 
         {
             switch (e.Key)
             {
@@ -790,13 +803,13 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal virtual void OnUpdate(MouseState mouseState) { }
+        public virtual void OnUpdate(MouseState mouseState) { }
 
-        internal virtual void OnResize() { }
+        public virtual void OnResize() { }
 
-        internal virtual void OnCameraMove() { }
+        public virtual void OnCameraMove() { }
 
-        internal void EvaluateColor()
+        public void EvaluateColor()
         {
             Vector4 color = DefaultColor;
             SetColorFlag reason = SetColorFlag.Base;
@@ -825,7 +838,7 @@ namespace MortalDungeon.Engine_Classes
             SetColor(color, reason);
         }
 
-        internal virtual void UpdateScissorBounds()
+        public virtual void UpdateScissorBounds()
         {
             Vector3 botLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
             Vector3 topRight = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopRight);
@@ -842,12 +855,12 @@ namespace MortalDungeon.Engine_Classes
             return -ZIndex.CompareTo(other.ZIndex);
         }
 
-        internal void LoadTexture(UIObject obj)
+        public void LoadTexture(UIObject obj)
         {
             Renderer.LoadTextureFromUIObject(obj);
         }
 
-        internal void LoadTexture()
+        public void LoadTexture()
         {
             Renderer.LoadTextureFromUIObject(this);
         }
@@ -859,20 +872,20 @@ namespace MortalDungeon.Engine_Classes
     }
 
 
-    internal class UITreeNode 
+    public class UITreeNode 
     {
-        internal UIObject UIObject;
-        internal int Depth = 0;
-        internal BaseObject BoundingObject;
+        public UIObject UIObject;
+        public int Depth = 0;
+        public BaseObject BoundingObject;
 
-        internal UITreeNode(UIObject obj, int depth, BaseObject baseObject) 
+        public UITreeNode(UIObject obj, int depth, BaseObject baseObject) 
         {
             UIObject = obj;
             Depth = depth;
             BoundingObject = baseObject;
         }
 
-        internal bool InsideBounds(Vector2 point, Camera camera = null)
+        public bool InsideBounds(Vector2 point, Camera camera = null)
         {
             if (UIObject.AdditionalBounds == null)
             {

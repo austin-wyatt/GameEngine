@@ -7,9 +7,9 @@ using System;
 
 namespace MortalDungeon.Game.Particles
 {
-    internal class ParticleGenTest : ParticleGenerator
+    public class ParticleGenTest : ParticleGenerator
     {
-        internal ParticleGenTest(Vector3 position) 
+        public ParticleGenTest(Vector3 position) 
         {
             ParticleCount = 1000;
             Position = position;
@@ -37,7 +37,7 @@ namespace MortalDungeon.Game.Particles
             }
         }
 
-        internal override void Tick()
+        public override void Tick()
         {
             base.Tick();
             if (Playing) 
@@ -51,7 +51,7 @@ namespace MortalDungeon.Game.Particles
             }
         }
 
-        internal override void GenerateParticle()
+        public override void GenerateParticle()
         {
             if(Particles[_currentParticle].Life == 0) 
             {
@@ -63,18 +63,18 @@ namespace MortalDungeon.Game.Particles
         }
     }
 
-    internal class FireGen : ParticleGenerator
+    public class FireGen : ParticleGenerator
     {
         private Random rand = new Random();
-        internal int DefaultLife = 80;
+        public int DefaultLife = 80;
 
-        internal float fireSpeedX = 5;
-        internal float fireSpeedY = 10;
+        public float fireSpeedX = 5;
+        public float fireSpeedY = 10;
 
-        internal float offsetX = 0.5f;
-        internal float offsetY = 0f;
+        public float offsetX = 0.5f;
+        public float offsetY = 0f;
 
-        internal FireGen(Vector3 position, float rotation)
+        public FireGen(Vector3 position, float rotation)
         {
             ParticleCount = 2000;
             Position = position;
@@ -109,7 +109,7 @@ namespace MortalDungeon.Game.Particles
         }
 
 
-        internal override void PrimeParticles() 
+        public override void PrimeParticles() 
         {
             Priming = true;
             for(int i = 0; i < DefaultLife; i++)
@@ -140,7 +140,7 @@ namespace MortalDungeon.Game.Particles
             return color;
         }
 
-        internal override void Tick()
+        public override void Tick()
         {
             base.Tick();
             if (Playing || Priming)
@@ -154,7 +154,7 @@ namespace MortalDungeon.Game.Particles
             }
         }
 
-        internal override void GenerateParticle()
+        public override void GenerateParticle()
         {
             if (Particles[_currentParticle].Life == 0)
             {
@@ -166,7 +166,7 @@ namespace MortalDungeon.Game.Particles
         }
 
 
-        internal override void DecayParticles()
+        public override void DecayParticles()
         {
             float xSpeed = 1 / fireSpeedX;
             float ySpeed = 1 / fireSpeedY;
@@ -185,20 +185,20 @@ namespace MortalDungeon.Game.Particles
         }
     }
 
-    internal class Explosion : ParticleGenerator
+    public class Explosion : ParticleGenerator
     {
-        internal struct ExplosionParams 
+        public struct ExplosionParams 
         {
-            internal Vector3 Acceleration;
-            internal Vector3 MultiplicativeAcceleration;
-            internal Vector4 ColorDelta;
-            internal Vector3 BaseVelocity;
-            internal int ParticleCount;
-            internal int Life;
+            public Vector3 Acceleration;
+            public Vector3 MultiplicativeAcceleration;
+            public Vector4 ColorDelta;
+            public Vector3 BaseVelocity;
+            public int ParticleCount;
+            public int Life;
 
-            internal float ParticleSize;
+            public float ParticleSize;
 
-            internal ExplosionParams(ExplosionParams @params) 
+            public ExplosionParams(ExplosionParams @params) 
             {
                 Acceleration = @params.Acceleration;
                 ColorDelta = @params.ColorDelta;
@@ -209,7 +209,7 @@ namespace MortalDungeon.Game.Particles
                 ParticleSize = @params.ParticleSize;
             }
 
-            internal static ExplosionParams Default = new ExplosionParams()
+            public static ExplosionParams Default = new ExplosionParams()
             {
                 Acceleration = new Vector3(0, 1, -0.005f),
                 MultiplicativeAcceleration = new Vector3(1, 1, 1),
@@ -221,11 +221,11 @@ namespace MortalDungeon.Game.Particles
         }
 
         private Random rand = new Random();
-        internal int DefaultLife = 15;
+        public int DefaultLife = 15;
 
         ExplosionParams Params;
 
-        internal Explosion(Vector3 position, Vector4 color, ExplosionParams explosionParams)
+        public Explosion(Vector3 position, Vector4 color, ExplosionParams explosionParams)
         {
             ParticleCount = explosionParams.ParticleCount;
             DefaultLife = explosionParams.Life;
@@ -262,7 +262,7 @@ namespace MortalDungeon.Game.Particles
         }
 
 
-        internal override void Tick()
+        public override void Tick()
         {
             base.Tick();
             if (Playing || Priming)
@@ -277,7 +277,7 @@ namespace MortalDungeon.Game.Particles
             }
         }
 
-        internal override void UpdateParticle(Particle particle)
+        public override void UpdateParticle(Particle particle)
         {
             particle.Velocity += Params.Acceleration;
             particle.Color += Params.ColorDelta;
@@ -285,7 +285,7 @@ namespace MortalDungeon.Game.Particles
             particle.Velocity *= Params.MultiplicativeAcceleration;
         }
 
-        internal override void GenerateParticle()
+        public override void GenerateParticle()
         {
             if (RefreshParticles && Particles[_currentParticle].Life == 0)
             {

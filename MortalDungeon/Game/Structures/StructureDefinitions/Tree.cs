@@ -13,7 +13,7 @@ namespace MortalDungeon.Game.Structures
 {
     class Tree : Structure
     {
-        internal Tree(TileMap map, BaseTile tile, int treeType = -1) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetTreeType(treeType), tile.Position + new Vector3(0, -200, 0.22f))
+        public Tree(TileMap map, BaseTile tile, int treeType = -1) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetTreeType(treeType), tile.Position + new Vector3(0, -200, 0.22f))
         {
             BaseObject.BaseFrame.RotateX(25);
             BaseObject.BaseFrame.SetScaleAll(1 + (float)TileMap._randomNumberGen.NextDouble() / 2);
@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal override Tooltip CreateContextMenu()
+        public override Tooltip CreateContextMenu()
         {
             (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(Type.Name());
 

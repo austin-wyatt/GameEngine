@@ -13,10 +13,10 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class Hide : Ability
+    public class Hide : Ability
     {
         private Icon BrokenMaskIcon;
-        internal Hide(Unit castingUnit)
+        public Hide(Unit castingUnit)
         {
             Type = AbilityTypes.BuffDefensive;
             Range = 1;
@@ -37,7 +37,7 @@ namespace MortalDungeon.Game.Abilities
             BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -50,7 +50,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -64,7 +64,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 

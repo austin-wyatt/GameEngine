@@ -16,7 +16,7 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Tiles
 {
-    internal enum MapPosition
+    public enum MapPosition
     {
         None = 0,
         Top = 1,
@@ -25,29 +25,31 @@ namespace MortalDungeon.Game.Tiles
         Right = 8,
     }
 
-    internal class TileMapController
+    public class TileMapController
     {
-        internal List<TileMap> TileMaps = new List<TileMap>();
-        internal static StaticBitmap TileBitmap;
+        public List<TileMap> TileMaps = new List<TileMap>();
+        public static StaticBitmap TileBitmap;
 
-        internal int BaseElevation = 0; //base elevation for determining heightmap colors
+        public int BaseElevation = 0; //base elevation for determining heightmap colors
 
-        internal CombatScene Scene;
+        public CombatScene Scene;
 
-        internal List<FeatureEquation> LoadedFeatures = new List<FeatureEquation>();
+        public List<FeatureEquation> LoadedFeatures = new List<FeatureEquation>();
 
 
-        internal QueuedList<BaseTile> SelectionTiles = new QueuedList<BaseTile>(); //these tiles will be place above the currently selected tiles
+        public QueuedList<BaseTile> SelectionTiles = new QueuedList<BaseTile>(); //these tiles will be place above the currently selected tiles
         private const int MAX_SELECTION_TILES = 1000;
-        internal int _amountOfSelectionTiles = 0;
+        public int _amountOfSelectionTiles = 0;
         private readonly List<BaseTile> _selectionTilePool = new List<BaseTile>();
 
-        internal BaseTile HoveredTile;
+        public BaseTile HoveredTile;
         private List<BaseTile> _hoveredTileList = new List<BaseTile>();
 
-        internal TileMapController(CombatScene scene = null) 
+        public TileMapController(CombatScene scene = null) 
         {
             Scene = scene;
+
+            TileTexturer.InitializeTileTexturer();
 
             InitializeHelperTiles();
         }
@@ -98,7 +100,7 @@ namespace MortalDungeon.Game.Tiles
             _hoveredTileList = new List<BaseTile>() { HoveredTile };
         }
 
-        internal void AddTileMap(TileMapPoint point, TileMap map) 
+        public void AddTileMap(TileMapPoint point, TileMap map) 
         {
             map.TileMapCoords = new TileMapPoint(point.X, point.Y);
             TileMaps.Add(map);
@@ -107,7 +109,7 @@ namespace MortalDungeon.Game.Tiles
             map.OnAddedToController();
         }
 
-        internal void RemoveTileMap(TileMap map) 
+        public void RemoveTileMap(TileMap map) 
         {
             lock (EntityManager.Entities) 
             {
@@ -125,7 +127,7 @@ namespace MortalDungeon.Game.Tiles
             TileMaps.Remove(map);
         }
 
-        internal void PositionTileMaps() 
+        public void PositionTileMaps() 
         {
             if (TileMaps.Count == 0)
                 return;
@@ -159,6 +161,7 @@ namespace MortalDungeon.Game.Tiles
             });
 
             Vector2i centerTileMapCoords = new Vector2i((maxX + minX) / 2, (maxY + minY) / 2);
+            //Vector2i centerTileMapCoords = new Vector2i(0, 0);
 
             Vector3 offset = new Vector3();
             for (int i = 0; i < TileMaps.Count; i++) 
@@ -179,7 +182,7 @@ namespace MortalDungeon.Game.Tiles
             Scene._camera.SetPosition(Scene._camera.Position + offset * 2);
         }
 
-        internal void RecreateTileChunks() 
+        public void RecreateTileChunks() 
         {
             TileMaps.ForEach(map =>
             {
@@ -187,7 +190,7 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        internal void ApplyFeatureEquationToMaps(FeatureEquation feature) 
+        public void ApplyFeatureEquationToMaps(FeatureEquation feature) 
         {
             for (int i = 0; i < TileMaps.Count; i++) 
             {
@@ -200,7 +203,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
         //TODO, optimize so that it only loops through every tile once
-        internal void ApplyLoadedFeaturesToMaps(List<TileMapPoint> points)
+        public void ApplyLoadedFeaturesToMaps(List<TileMapPoint> points)
         {
             LoadedFeatures.ForEach(feature =>
             {
@@ -219,7 +222,7 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        internal void ApplyLoadedFeaturesToMaps(List<TileMap> maps, List<TileMapPoint> addedMaps = null)
+        public void ApplyLoadedFeaturesToMaps(List<TileMap> maps, List<TileMapPoint> addedMaps = null)
         {
             LoadedFeatures.ForEach(feature =>
             {
@@ -242,7 +245,7 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        internal void ApplyLoadedFeaturesToMap(TileMap map, bool freshGeneration = true) 
+        public void ApplyLoadedFeaturesToMap(TileMap map, bool freshGeneration = true) 
         {
             LoadedFeatures.ForEach(feature =>
             {
@@ -253,19 +256,19 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        internal void AddFeature(FeatureEquation feature) 
+        public void AddFeature(FeatureEquation feature) 
         {
             LoadedFeatures.Add(feature);
         }
 
-        internal void RemoveFeature(FeatureEquation feature) 
+        public void RemoveFeature(FeatureEquation feature) 
         {
             LoadedFeatures.Remove(feature);
         }
 
         const int LOADED_MAP_DIMENSIONS = 3;
 
-        internal void LoadSurroundingTileMaps(TileMapPoint point) 
+        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, bool forceMapRegeneration = false) 
         {
             TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
 
@@ -277,6 +280,15 @@ namespace MortalDungeon.Game.Tiles
 
             Stopwatch timer = new Stopwatch();
             timer.Start();
+
+            if (forceMapRegeneration)
+            {
+                for (int i = TileMaps.Count - 1; i >= 0; i--)
+                {
+                    RemoveTileMap(TileMaps[i]);
+                }
+            }
+
 
             for (int i = 0; i < LOADED_MAP_DIMENSIONS; i++) 
             {
@@ -325,7 +337,10 @@ namespace MortalDungeon.Game.Tiles
             });
 
             //ApplyLoadedFeaturesToMaps(mapsToAdd);
-            ApplyLoadedFeaturesToMaps(TileMaps, mapsToAdd);
+            if (applyFeatures)
+            {
+                ApplyLoadedFeaturesToMaps(TileMaps, mapsToAdd);
+            }
 
 
             PositionTileMaps();
@@ -344,7 +359,7 @@ namespace MortalDungeon.Game.Tiles
             //Scene.PostTickAction = null;
         }
 
-        internal Vector2i GetTopLeftTilePosition()
+        public Vector2i GetTopLeftTilePosition()
         {
             for (int i = 0; i < TileMaps.Count; i++) 
             {
@@ -357,7 +372,7 @@ namespace MortalDungeon.Game.Tiles
             return new Vector2i(0, 0);
         }
 
-        internal Vector2i PointToClusterPosition(TilePoint point) 
+        public Vector2i PointToClusterPosition(TilePoint point) 
         {
             Vector2i globalPoint = FeatureEquation.PointToMapCoords(point);
 
@@ -366,7 +381,7 @@ namespace MortalDungeon.Game.Tiles
             return globalPoint - zeroPoint;
         }
 
-        internal TileMap GetTopLeftMap()
+        public TileMap GetTopLeftMap()
         {
             for (int i = 0; i < TileMaps.Count; i++)
             {
@@ -379,7 +394,7 @@ namespace MortalDungeon.Game.Tiles
             return null;
         }
 
-        internal BaseTile GetCenterTile()
+        public BaseTile GetCenterTile()
         {
             for (int i = 0; i < TileMaps.Count; i++)
             {
@@ -392,7 +407,20 @@ namespace MortalDungeon.Game.Tiles
             throw new Exception("Tile not found");
         }
 
-        internal bool PointAtEdge(TilePoint point) 
+        public Vector2i GetCenterMapCoords()
+        {
+            for (int i = 0; i < TileMaps.Count; i++)
+            {
+                if (TileMaps[i].TileMapCoords.MapPosition == MapPosition.None)
+                {
+                    return new Vector2i(TileMaps[i].TileMapCoords.X, TileMaps[i].TileMapCoords.Y);
+                }
+            }
+
+            throw new Exception("Map not found");
+        }
+
+        public bool PointAtEdge(TilePoint point) 
         {
             TileMapPoint mapPoint = point.ParentTileMap.TileMapCoords;
 
@@ -431,7 +459,7 @@ namespace MortalDungeon.Game.Tiles
             return false;
         }
 
-        internal MapPosition GetMapPosition(int index) 
+        public MapPosition GetMapPosition(int index) 
         {
             MapPosition pos = MapPosition.None;
 
@@ -459,7 +487,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        internal bool IsValidTile(int xIndex, int yIndex, TileMap map)
+        public bool IsValidTile(int xIndex, int yIndex, TileMap map)
         {
             int currX;
             int currY;
@@ -478,7 +506,7 @@ namespace MortalDungeon.Game.Tiles
             return false;
         }
 
-        internal bool IsValidTile(FeaturePoint point) 
+        public bool IsValidTile(FeaturePoint point) 
         {
             Vector2i topLeftCoord = GetTopLeftTilePosition();
             TileMap topleftMap = GetTopLeftMap();
@@ -490,7 +518,7 @@ namespace MortalDungeon.Game.Tiles
 
         
 
-        internal static Vector2i PointToMapCoords(TilePoint point)
+        public static Vector2i PointToMapCoords(TilePoint point)
         {
             Vector2i coords = new Vector2i
             {
@@ -501,7 +529,7 @@ namespace MortalDungeon.Game.Tiles
             return coords;
         }
 
-        internal BaseTile GetTile(int xIndex, int yIndex, TileMap map)
+        public BaseTile GetTile(int xIndex, int yIndex, TileMap map)
         {
             int currX;
             int currY;
@@ -517,7 +545,7 @@ namespace MortalDungeon.Game.Tiles
             return null;
         }
 
-        internal BaseTile GetTile(int xIndex, int yIndex)
+        public BaseTile GetTile(int xIndex, int yIndex)
         {
             TileMap map = GetTopLeftMap();
 
@@ -538,19 +566,19 @@ namespace MortalDungeon.Game.Tiles
             return null;
         }
 
-        internal BaseTile GetTile(FeaturePoint point)
+        public BaseTile GetTile(FeaturePoint point)
         {
             Vector2i topLeftCoord = GetTopLeftTilePosition();
 
             return GetTile(point.X - topLeftCoord.X, point.Y - topLeftCoord.Y);
         }
 
-        internal void ClearAllVisitedTiles()
+        public void ClearAllVisitedTiles()
         {
             TileMaps.ForEach(m => m.Tiles.ForEach(tile => tile.TilePoint._visited = false)); //clear visited tiles
         }
 
-        internal void ToggleHeightmap()
+        public void ToggleHeightmap()
         {
             Settings.HeightmapEnabled = !Settings.HeightmapEnabled;
 
@@ -561,12 +589,12 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        internal List<BaseTile> GetSelectionTilePool()
+        public List<BaseTile> GetSelectionTilePool()
         {
             return _selectionTilePool;
         }
 
-        internal void SelectTiles(List<BaseTile> tiles)
+        public void SelectTiles(List<BaseTile> tiles)
         {
             //if (tiles.Count > MAX_SELECTION_TILES)
             //    throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + MAX_SELECTION_TILES + " in tile map " + ObjectID);
@@ -577,7 +605,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal void SelectTile(BaseTile tile)
+        public void SelectTile(BaseTile tile)
         {
             //Console.WriteLine(_amountOfSelectionTiles + " tiles in use");
 
@@ -617,7 +645,7 @@ namespace MortalDungeon.Game.Tiles
             _amountOfSelectionTiles++;
         }
 
-        internal void DeselectTile(BaseTile selectionTile)
+        public void DeselectTile(BaseTile selectionTile)
         {
             SelectionTiles.Remove(selectionTile);
 
@@ -631,7 +659,7 @@ namespace MortalDungeon.Game.Tiles
 
         }
 
-        internal void DeselectTiles()
+        public void DeselectTiles()
         {
             for (int i = 0; i < _amountOfSelectionTiles; i++)
             {
@@ -648,12 +676,12 @@ namespace MortalDungeon.Game.Tiles
             _amountOfSelectionTiles = 0;
         }
 
-        internal List<BaseTile> GetHoveredTile()
+        public List<BaseTile> GetHoveredTile()
         {
             return _hoveredTileList;
         }
 
-        internal void HoverTile(BaseTile tile)
+        public void HoverTile(BaseTile tile)
         {
             Vector3 pos = new Vector3
             {
@@ -674,7 +702,7 @@ namespace MortalDungeon.Game.Tiles
             HoveredTile.SetRender(true);
         }
 
-        internal void EndHover()
+        public void EndHover()
         {
             if (HoveredTile.AttachedTile != null)
             {

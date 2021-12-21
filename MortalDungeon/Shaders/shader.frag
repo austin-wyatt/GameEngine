@@ -36,7 +36,7 @@ struct Material {
 }; 
 
 uniform Material[4] material;
-int materialIndex = primaryTextureTarget > 0 ? int(primaryTextureTarget - 1) : 0;
+int materialIndex = primaryTextureTarget > 1 ? int(primaryTextureTarget - 1) : 0;
 
 struct Light {
 	vec3 position;

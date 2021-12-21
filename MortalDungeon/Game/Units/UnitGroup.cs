@@ -9,24 +9,24 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Units
 {
-    internal class UnitGroup
+    public class UnitGroup
     {
-        internal Unit PrimaryUnit;
-        internal List<Unit> SecondaryUnitsInGroup = new List<Unit>();
+        public Unit PrimaryUnit;
+        public List<Unit> SecondaryUnitsInGroup = new List<Unit>();
 
-        internal CombatScene Scene;
+        public CombatScene Scene;
 
-        internal UnitGroup(CombatScene scene) 
+        public UnitGroup(CombatScene scene) 
         {
             Scene = scene;
         }
 
-        internal void SetPrimaryUnit(Unit unit) 
+        public void SetPrimaryUnit(Unit unit) 
         {
             PrimaryUnit = unit;
         }
 
-        internal void AddUnitToGroup(Unit unit) 
+        public void AddUnitToGroup(Unit unit) 
         {
             if ((PrimaryUnit == null && !Scene.InCombat) || unit == PrimaryUnit)
                 return;
@@ -42,7 +42,7 @@ namespace MortalDungeon.Game.Units
             Scene.DecollateUnit(unit);
         }
 
-        internal void DissolveGroup(bool force = false, Action onGroupDissolved = null) 
+        public void DissolveGroup(bool force = false, Action onGroupDissolved = null) 
         {
             GenericSelectGround ability = new GenericSelectGround(PrimaryUnit, 4) { MustCast = force, ActionCost = 0, MaxCharges = 0, EnergyCost = 0 };
 

@@ -25,6 +25,7 @@
 	<Content Include="Resources\\**\*.*">
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</Content>
+	<None Remove="Resources\Save\placeholder.txt" />
 	<None Update="Resources\CaveSpritesheet.png">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</None>
@@ -137,6 +138,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\particleShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Text\textShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Text\textShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\tileMapShader.frag">

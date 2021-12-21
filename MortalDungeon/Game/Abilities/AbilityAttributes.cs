@@ -5,18 +5,18 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    //internal class AbilityAttributes
+    //public class AbilityAttributes
     //{
-    //    internal List<DamageInstance> DamageInstances = new List<DamageInstance>();
+    //    public List<DamageInstance> DamageInstances = new List<DamageInstance>();
     //}
 
-    internal class DamageInstance
+    public class DamageInstance
     {
-        internal Dictionary<DamageType, float> Damage = new Dictionary<DamageType, float>();
+        public Dictionary<DamageType, float> Damage = new Dictionary<DamageType, float>();
 
-        internal float PiercingPercent = 0.5f;
+        public float PiercingPercent = 0.5f;
 
-        internal string GetTooltipStrings(Unit castingUnit) 
+        public string GetTooltipStrings(Unit castingUnit) 
         {
             string returnString = "";
 

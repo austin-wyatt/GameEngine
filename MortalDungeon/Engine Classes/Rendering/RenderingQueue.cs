@@ -9,11 +9,11 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Rendering
 {
-    internal enum RenderingStates 
+    public enum RenderingStates 
     {
         GuassianBlur
     }
-    internal static class RenderingQueue
+    public static class RenderingQueue
     {
         private static readonly List<Letter> _LettersToRender = new List<Letter>();
         private static readonly List<GameObject> _UIToRender = new List<GameObject>();
@@ -31,14 +31,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         private static readonly List<GameObject> _LightQueue = new List<GameObject>();
 
-        internal static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
+        public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
 
-        internal static Action RenderSkybox = null;
+        public static Action RenderSkybox = null;
 
         /// <summary>
         /// Render all queued objects
         /// </summary>
-        internal static void RenderQueue()
+        public static void RenderQueue()
         {
             RenderSkybox?.Invoke();
 
@@ -58,7 +58,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             //DrawToFrameBuffer(MainFBO); 
 
-            RenderQueuedLetters();
+            //RenderQueuedLetters();
 
             RenderTileQueue();
 
@@ -83,32 +83,22 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Renderer.MainFBO.UnbindFrameBuffer();
             }
 
-            GL.Disable(EnableCap.FramebufferSrgb);
-
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            //GL.Disable(EnableCap.DepthTest);
-            //GL.Disable(EnableCap.Blend);
-            //GL.BlendEquationSeparate(BlendEquationMode.FuncAdd, BlendEquationMode.FuncAdd);
-            //GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.One, BlendingFactorDest.OneMinusSrcAlpha);
+            RenderQueuedLetters();
+
+            GL.Disable(EnableCap.FramebufferSrgb);
 
             RenderQueuedUI();
-
-            //GL.Enable(EnableCap.DepthTest);
-            //GL.Enable(EnableCap.Blend);
-            //GL.BlendEquation(BlendEquationMode.FuncAdd);
-            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-            //RenderFrameBuffer(MainFBO);
         }
 
 
         #region Particle queue
-        internal static void QueueParticlesForRender(ParticleGenerator generator)
+        public static void QueueParticlesForRender(ParticleGenerator generator)
         {
             _ParticleGeneratorsToRender.Add(generator);
         }
-        internal static void RenderQueuedParticles()
+        public static void RenderQueuedParticles()
         {
             for (int i = 0; i < _ParticleGeneratorsToRender.Count; i++)
             {
@@ -120,14 +110,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Text queue
-        internal static void QueueLettersForRender(List<Letter> letters)
+        public static void QueueLettersForRender(List<Letter> letters)
         {
             for (int i = 0; i < letters.Count; i++)
             {
                 _LettersToRender.Add(letters[i]);
             }
         }
-        internal static void QueueTextForRender(List<Text> text)
+        public static void QueueTextForRender(List<Text> text)
         {
             for (int i = 0;i < text.Count; i++)
             {
@@ -138,21 +128,23 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region UI queue
-        internal static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
+        public static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
         {
             for(int i = 0; i < text.Count; i++)
             {
+                //if (text[i].Render)
+                //    QueueUIForRender(text[i].Letters, scissorFlag);
                 if (text[i].Render)
-                    QueueUIForRender(text[i].Letters, scissorFlag);
+                    QueueLettersForRender(text[i].Letters);
             }
         }
-        internal static void RenderQueuedLetters()
+        public static void RenderQueuedLetters()
         {
-            Renderer.RenderObjectsInstancedGeneric(_LettersToRender, ref Renderer._instancedRenderArray);
+            Renderer.RenderTextInstanced(_LettersToRender, ref Renderer._instancedRenderArray);
             _LettersToRender.Clear();
         }
 
-        internal static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null, Action<List<UIObject>> renderAfterParent = null, bool overrideRender = false) where T : UIObject
+        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null, Action<List<UIObject>> renderAfterParent = null, bool overrideRender = false) where T : UIObject
         {
             List<UIObject> renderAfterParentList = new List<UIObject>();
 
@@ -223,7 +215,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Console.WriteLine("Exception in QueueNestedUI: " + e.Message);
             }
         }
-        internal static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
+        public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
         {
             for (int i = 0; i < objList.Count; i++)
             {
@@ -232,13 +224,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 _UIToRender.Add(objList[i]);
             }
         }
-        internal static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
+        public static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
         {
             obj.ScissorData._scissorFlag = scissorFlag;
 
             _UIToRender.Add(obj);
         }
-        internal static void RenderQueuedUI()
+        public static void RenderQueuedUI()
         {
             Renderer.RenderObjectsInstancedGeneric(_UIToRender, ref Renderer._instancedRenderArray, null, true, false);
             _UIToRender.Clear();
@@ -247,11 +239,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Object queue
-        internal static void QueueObjectsForRender(List<GameObject> objList)
+        public static void QueueObjectsForRender(List<GameObject> objList)
         {
             _ObjectsToRender.Add(objList);
         }
-        internal static void RenderQueuedObjects()
+        public static void RenderQueuedObjects()
         {
             for(int i = 0; i < _ObjectsToRender.Count; i++)
             {
@@ -262,12 +254,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Unit queue
-        internal static void QueueUnitsForRender(List<Unit> objList)
+        public static void QueueUnitsForRender(List<Unit> objList)
         {
             _UnitsToRender.Add(objList);
         }
 
-        internal static void RenderQueuedUnits()
+        public static void RenderQueuedUnits()
         {
             for(int i = 0; i < _UnitsToRender.Count; i ++)
             {
@@ -279,7 +271,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Tile queue
-        internal static void QueueTileObjectsForRender(List<BaseTile> objList)
+        public static void QueueTileObjectsForRender(List<BaseTile> objList)
         {
             if (objList.Count == 0)
                 return;
@@ -287,7 +279,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _TilesToRender.Add(objList);
         }
 
-        internal static void RenderTileQueue()
+        public static void RenderTileQueue()
         {
             for(int i = 0; i < _TilesToRender.Count; i++)
             {
@@ -299,7 +291,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Tile quad queue
-        internal static void QueueTileQuadForRender(GameObject obj)
+        public static void QueueTileQuadForRender(GameObject obj)
         {
             if (obj == null)
                 return;
@@ -308,7 +300,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
         private static readonly List<GameObject> _tempGameObjList = new List<GameObject>();
-        internal static void RenderTileQuadQueue()
+        public static void RenderTileQuadQueue()
         {
             for (int i = 0; i < _TileQuadsToRender.Count; i++)
             {
@@ -322,14 +314,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region Low priority object queue
-        internal static void QueueLowPriorityObjectsForRender(List<GameObject> objList)
+        public static void QueueLowPriorityObjectsForRender(List<GameObject> objList)
         {
             if (objList.Count == 0)
                 return;
 
             _LowPriorityQueue.Add(objList);
         }
-        internal static void RenderLowPriorityQueue()
+        public static void RenderLowPriorityQueue()
         {
             for (int i = 0; i < _LowPriorityQueue.Count; i++)
             {

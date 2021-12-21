@@ -8,32 +8,32 @@ using System.Text;
 
 namespace MortalDungeon.Game.Entities
 {
-    internal interface ILoadableEntity 
+    public interface ILoadableEntity 
     {
         public void EntityLoad(FeaturePoint position);
         public void EntityUnload();
     }
 
-    //internal class Entity<T> where T : ILoadableEntity
-    internal class Entity
+    //public class Entity<T> where T : ILoadableEntity
+    public class Entity
     {
-        internal Unit Handle;
+        public Unit Handle;
 
-        internal int EntityID => _entityID;
+        public int EntityID => _entityID;
         protected int _entityID = _currentEntityID++;
         protected static int _currentEntityID = 0;
 
-        internal bool Loaded { get; private set; }
+        public bool Loaded { get; private set; }
 
-        internal bool DestroyOnUnload = false;
+        public bool DestroyOnUnload = false;
 
-        internal Entity(Unit handle)
+        public Entity(Unit handle)
         {
             Handle = handle;
             handle.EntityHandle = this;
         }
 
-        internal void Load(FeaturePoint position) 
+        public void Load(FeaturePoint position) 
         {
             if (!Loaded) 
             {
@@ -46,7 +46,7 @@ namespace MortalDungeon.Game.Entities
                 }
             }
         }
-        internal void Unload() 
+        public void Unload() 
         {
             if (Loaded)
             {

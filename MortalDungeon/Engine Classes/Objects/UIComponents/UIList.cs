@@ -4,23 +4,23 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class UIList : UIObject
+    public class UIList : UIObject
     {
-        internal UIScale Margin = new UIScale(0.02f, 0.02f);
-        internal UIScale ItemMargins = new UIScale(0f, 0.005f);
-        internal UIScale ListItemSize = new UIScale();
-        internal UIScale ListSize = new UIScale();
+        public UIScale Margin = new UIScale(0.02f, 0.02f);
+        public UIScale ItemMargins = new UIScale(0f, 0.005f);
+        public UIScale ListItemSize = new UIScale();
+        public UIScale ListSize = new UIScale();
 
-        internal bool Outline = false;
-        internal bool Ascending = false;
+        public bool Outline = false;
+        public bool Ascending = false;
 
-        internal List<ListItem> Items = new List<ListItem>();
+        public List<ListItem> Items = new List<ListItem>();
 
-        internal float TextScale = 1;
+        public float TextScale = 1;
 
-        internal Vector4 _textColor = Colors.UITextBlack;
-        internal Vector4 _itemColor = Colors.UILightGray;
-        internal UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
+        public Vector4 _textColor = Colors.UITextBlack;
+        public Vector4 _itemColor = Colors.UILightGray;
+        public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
         {
             Position = position;
             ListItemSize = listItemSize;
@@ -72,7 +72,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         }
 
 
-        internal void AddItem(UIObject item, Action onClickAction) 
+        public void AddItem(UIObject item, Action onClickAction) 
         {
             //if (Items.Count == 0)
             //{
@@ -80,7 +80,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
         }
 
-        internal ListItem AddItem(string text, Action<ListItem> onClickAction = null)
+        public ListItem AddItem(string text, Action<ListItem> onClickAction = null)
         {
             Vector3 position;
 
@@ -156,7 +156,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
         }
 
-        internal void ClearItems() 
+        public void ClearItems() 
         {
             for (int i = 0; i < Items.Count; i++) 
             {
@@ -168,7 +168,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             RescaleList();
         }
 
-        internal void RemoveItem(ListItem item) 
+        public void RemoveItem(ListItem item) 
         {
             RemoveChild(item);
 
@@ -178,17 +178,17 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         }
     }
 
-    internal class ListItem : UIObject 
+    public class ListItem : UIObject 
     {
-        internal TextComponent _textBox;
-        internal UIBlock _backdrop;
-        internal int Index = -1;
+        public TextComponent _textBox;
+        public UIBlock _backdrop;
+        public int Index = -1;
 
-        internal Vector4 _textColor = Colors.White;
-        internal Vector4 _itemColor = Colors.UIHoveredGray;
+        public Vector4 _textColor = Colors.White;
+        public Vector4 _itemColor = Colors.UIHoveredGray;
 
-        internal new Action<ListItem> OnClickAction;
-        internal ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor, bool outline = false) 
+        public new Action<ListItem> OnClickAction;
+        public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor, bool outline = false) 
         {
             //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
             TextComponent textBox = new TextComponent();
@@ -241,14 +241,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
+        public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
             base.SetColor(color, setColorFlag);
             _textBox.SetColor(color);
             _itemColor = color;
         }
 
-        internal override void OnHover()
+        public override void OnHover()
         {
             if (Hoverable && !Hovered && !Disabled)
             {
@@ -261,7 +261,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        internal override void OnHoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered && !Disabled)
             {
@@ -276,7 +276,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        internal override void OnDisabled(bool disable)
+        public override void OnDisabled(bool disable)
         {
             base.OnDisabled(disable);
 
@@ -292,7 +292,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        internal override void OnClick()
+        public override void OnClick()
         {
             OnClickAction?.Invoke(this);
         }

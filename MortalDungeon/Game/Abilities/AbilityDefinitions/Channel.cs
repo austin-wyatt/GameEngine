@@ -12,9 +12,9 @@ using MortalDungeon.Game.Particles;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class Channel : Ability
+    public class Channel : Ability
     {
-        internal Channel(Unit castingUnit, string name, string description, Enum icon = null, Spritesheet spritesheet = null)
+        public Channel(Unit castingUnit, string name, string description, Enum icon = null, Spritesheet spritesheet = null)
         {
             CastingUnit = castingUnit;
 
@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, iconPos, iconSpritesheet, true);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -46,7 +46,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -61,14 +61,14 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        internal override void OnCast()
+        public override void OnCast()
         {
             TileMap.Controller.DeselectTiles();
 
             base.OnCast();
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 

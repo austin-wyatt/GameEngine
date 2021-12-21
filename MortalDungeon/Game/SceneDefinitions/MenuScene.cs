@@ -26,6 +26,9 @@ using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.UI.Dev;
 using MortalDungeon.Engine_Classes.Rendering;
+using System.Xml.Serialization;
+using System.IO;
+using MortalDungeon.Game.Save;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -33,12 +36,12 @@ namespace MortalDungeon.Game.SceneDefinitions
     {
         private EntityManagerUI _entityManager;
 
-        internal MenuScene() : base()
+        public MenuScene() : base()
         {
             InitializeFields();
         }
 
-        internal override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
+        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             base.Load(camera, cursorObject, mouseRay);
 
@@ -102,25 +105,6 @@ namespace MortalDungeon.Game.SceneDefinitions
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.BadGuys, Relation.Neutral);
 
 
-            Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
-            guy.SetTeam(UnitTeam.PlayerUnits);
-            CurrentUnit = guy;
-
-            guy.pack_name = "player_party";
-
-            
-
-            guy.Info.PrimaryUnit = true;
-
-
-            Guy badGuy = new Guy(this, tileMap[1, 1]) { Clickable = true };
-            badGuy.SetTeam(UnitTeam.PlayerUnits);
-
-            badGuy.AI.ControlType = ControlType.Controlled;
-
-            badGuy.Name = "Frend";
-            badGuy.pack_name = "player_party";
-
 
             //UIBlock statusBarContainer = new UIBlock(new Vector3());
             //statusBarContainer.MultiTextureData.MixTexture = false;
@@ -163,7 +147,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             //_genericObjects.Add(mountainBackground);
             //mountainBackground.SetPosition(new Vector3(guy.Position.X, guy.Position.Y - 200, -50));
 
-            _camera.SetPosition(new Vector3(guy.Position.X / WindowConstants.ScreenUnits.X * 2, guy.Position.Y / WindowConstants.ScreenUnits.Y * -2, _camera.Position.Z));
+            //_camera.SetPosition(new Vector3(guy.Position.X / WindowConstants.ScreenUnits.X * 2, guy.Position.Y / WindowConstants.ScreenUnits.Y * -2, _camera.Position.Z));
 
 
             float footerHeight = 300;
@@ -171,6 +155,18 @@ namespace MortalDungeon.Game.SceneDefinitions
             Footer = new GameFooter(footerHeight, this);
             AddUI(Footer);
 
+            OnNumberPressed += (args) =>
+            {
+                if(Footer._currentUnit == null) 
+                {
+                    Unit unit = _units.Find(u => u.AI.Team == UnitTeam.PlayerUnits);
+
+                    if(unit != null) 
+                    {
+                        Footer.UpdateFooterInfo(unit);
+                    }
+                }
+            };
 
 
             EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(this, new Vector3(30, WindowConstants.ScreenUnits.Y - Footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
@@ -193,32 +189,53 @@ namespace MortalDungeon.Game.SceneDefinitions
             AddUI(TurnDisplay);
 
 
+            if (true) 
+            {
+                Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
+                guy.SetTeam(UnitTeam.PlayerUnits);
+                CurrentUnit = guy;
+
+                guy.pack_name = "player_party";
 
 
-            Skeleton skeleton = new Skeleton(this, tileMap[20, 5]) { };
-            skeleton.Name = "John";
 
-            skeleton.SetTeam(UnitTeam.Skeletons);
-            skeleton.AI.ControlType = ControlType.Basic_AI;
+                guy.Info.PrimaryUnit = true;
 
 
-            badGuy.SetShields(5);
-            guy.SetShields(5);
+                Guy badGuy = new Guy(this, tileMap[1, 1]) { Clickable = true };
+                badGuy.SetTeam(UnitTeam.PlayerUnits);
 
-            
-            Entity guyEntity = new Entity(guy);
-            guyEntity.Load(new FeaturePoint(guy.Info.TileMapPosition));
-            EntityManager.AddEntity(guyEntity);
+                badGuy.AI.ControlType = ControlType.Controlled;
 
-            Entity badGuyEntity = new Entity(badGuy);
-            badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
-            EntityManager.AddEntity(badGuyEntity);
+                badGuy.Name = "Frend";
+                badGuy.pack_name = "player_party";
 
-            badGuyEntity.Handle.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
-            Entity skeletonEntity = new Entity(skeleton);
-            skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
-            EntityManager.AddEntity(skeletonEntity);
+                Skeleton skeleton = new Skeleton(this, tileMap[20, 5]) { };
+                skeleton.Name = "John";
+
+                skeleton.SetTeam(UnitTeam.Skeletons);
+                skeleton.AI.ControlType = ControlType.Basic_AI;
+
+
+                badGuy.SetShields(5);
+                guy.SetShields(5);
+
+
+                Entity guyEntity = new Entity(guy);
+                guyEntity.Load(new FeaturePoint(guy.Info.TileMapPosition));
+                EntityManager.AddEntity(guyEntity);
+
+                Entity badGuyEntity = new Entity(badGuy);
+                badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
+                EntityManager.AddEntity(badGuyEntity);
+
+                badGuyEntity.Handle.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
+
+                Entity skeletonEntity = new Entity(skeleton);
+                skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
+                EntityManager.AddEntity(skeletonEntity);
+            }
 
 
             //GameObject tent1 = new GameObject();
@@ -246,17 +263,17 @@ namespace MortalDungeon.Game.SceneDefinitions
             EvaluateCombat();
         }
 
-        internal override void OnMouseUp(MouseButtonEventArgs e)
+        public override void OnMouseUp(MouseButtonEventArgs e)
         {
             base.OnMouseUp(e);
         }
-        internal override void OnMouseDown(MouseButtonEventArgs e)
+        public override void OnMouseDown(MouseButtonEventArgs e)
         {
             base.OnMouseDown(e);
         }
 
         
-        internal override bool OnKeyUp(KeyboardKeyEventArgs e)
+        public override bool OnKeyUp(KeyboardKeyEventArgs e)
         {
             if (!base.OnKeyUp(e)) 
             {
@@ -300,12 +317,12 @@ namespace MortalDungeon.Game.SceneDefinitions
             return true;
         }
 
-        internal override bool OnMouseMove()
+        public override bool OnMouseMove()
         {
             return base.OnMouseMove();
         }
 
-        internal override void OnUpdateFrame(FrameEventArgs args)
+        public override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
 
@@ -397,7 +414,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
         private int _counter = 0;
         private List<Vector3i> _cubeCoordinates = new List<Vector3i>();
-        internal override void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
+        public override void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
         {
             base.OnTileClicked(map, tile, button, flags);
 
@@ -615,42 +632,48 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F3))
                     {
-                        //List<BaseTile> tiles = new List<BaseTile>();
+                        SaveState state = SaveState.CreateSaveState(this);
+                        SaveState.WriteSaveStateToFile("Resources/Save/save_state.xml", state);
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.F4))
+                    {
+                        SaveState state = SaveState.LoadSaveStateFromFile("Resources/Save/save_state.xml");
 
-                        //tiles = map.GetVisionInRadius(tile.TilePoint, 2);
-
-                        //tiles.ForEach(tile =>
-                        //{
-                        //    tile.Properties.Type = TileType.WoodPlank;
-                        //    tile.Outline = true;
-
-                        //    tile.Update();
-                        //});
-
-                        Tent temp = new Tent(this);
-                        temp.InitializeVisualComponent();
-
-                        temp.BaseObject.BaseFrame.RotateZ(60 * _counter);
-                        temp.RotateTilePattern(1 * _counter);
-
-                        _counter++;
-
-                        temp.SetTileMapPosition(tile);
-
-                        temp.SetPosition(tile.Position + new Vector3(0, 0, 0.2f));
-
-                        ObjectCulling.CullListOfGameObjects(new List<Tent> { temp });
+                        SaveState.LoadSaveState(this, state);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F6))
                     {
-                        if(UnitGroup == null || UnitGroup.SecondaryUnitsInGroup.Count == 0) 
+                        string text = "";
+                        EventSeverity severity = EventSeverity.Info;
+
+                        int rand = GlobalRandom.Next(5);
+
+                        switch (rand)
                         {
-                            CreateUnitGroup();
+                            case 0:
+                                text = "You approach a goblin. He looks confused.";
+                                text = "Oh no! You've left your shoelaces untied and you have tripped. You and everyone you know dies instantly.";
+                                break;
+                            case 1:
+                                text = "Oh no! You've left your shoelaces untied and you have tripped. You and everyone you know dies instantly.";
+                                severity = EventSeverity.Severe;
+                                break;
+                            case 2:
+                                text = "Oh! A stroke of good luck. You've found a nickel wedged betwixt some rocks.";
+                                severity = EventSeverity.Positive;
+                                break;
+                            case 3:
+                                text = "You don't believe that you've been in this area before. Perhaps it's best to proceed cautiously.";
+                                severity = EventSeverity.Caution;
+                                break;
+                            case 4:
+                                text = "You sense that the foes around here aren't what you're used to. Is whatever you're doing worth it?";
+                                severity = EventSeverity.Caution;
+                                break;
+
                         }
-                        else
-                        {
-                            DissolveUnitGroup(true);
-                        }
+
+                        Footer.EventLog.AddEvent(text, severity);
                     }
                     else if (ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled) && KeyboardState.IsKeyDown(Keys.F7))
                     {

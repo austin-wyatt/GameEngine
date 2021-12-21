@@ -8,9 +8,9 @@ namespace MortalDungeon.Game.Units.AI
 {
     class EndTurn : UnitAIAction
     {
-        internal EndTurn(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.EndTurn, ability, tile, unit) { }
+        public EndTurn(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.EndTurn, ability, tile, unit) { }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             Scene.CompleteTurn();
         }

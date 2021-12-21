@@ -15,35 +15,35 @@ using System.Text;
 
 namespace MortalDungeon.Game.Lighting
 {
-    internal enum LightObstructionType 
+    public enum LightObstructionType 
     {
         Full = 99,
         None = 0,
         Tree,
         Grate
     }
-    internal class LightObstruction 
+    public class LightObstruction 
     {
-        //internal BitArray ObstructedLexels = new BitArray(Lighting.LEXEL_PER_TILE_WIDTH * Lighting.LEXEL_PER_TILE_HEIGHT);
-        internal LightObstructionType ObstructionType = LightObstructionType.None;
+        //public BitArray ObstructedLexels = new BitArray(Lighting.LEXEL_PER_TILE_WIDTH * Lighting.LEXEL_PER_TILE_HEIGHT);
+        public LightObstructionType ObstructionType = LightObstructionType.None;
         private Vector2i _position = new Vector2i();
-        internal Vector2i Position => _position;
+        public Vector2i Position => _position;
 
-        internal bool Valid = false;
+        public bool Valid = false;
 
-        internal LightObstruction() { }
+        public LightObstruction() { }
 
-        internal LightObstruction(BaseTile mapPosition) 
+        public LightObstruction(BaseTile mapPosition) 
         {
             _position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
         }
 
-        internal LightObstruction(Vector2i mapPosition)
+        public LightObstruction(Vector2i mapPosition)
         {
             _position = mapPosition;
         }
 
-        internal void SetPosition(BaseTile mapPosition) 
+        public void SetPosition(BaseTile mapPosition) 
         {
             _position = FeatureEquation.PointToMapCoords(mapPosition.TilePoint);
 
@@ -51,20 +51,20 @@ namespace MortalDungeon.Game.Lighting
         }
     }
 
-    internal class LightGenerator 
+    public class LightGenerator 
     {
-        internal Vector3 LightColor = new Vector3(1f, 1f, 1f);
-        internal float Brightness = 0.5f; //initial alpha color
-        internal float Radius = 1; //how far this light should extend in tiles
-        internal Vector2i Position = new Vector2i(0, 0); //tilemap position
-        internal Vector2i LightOffset = new Vector2i(); //how many lexels removed from the tilemap position this generator should be
+        public Vector3 LightColor = new Vector3(1f, 1f, 1f);
+        public float Brightness = 0.5f; //initial alpha color
+        public float Radius = 1; //how far this light should extend in tiles
+        public Vector2i Position = new Vector2i(0, 0); //tilemap position
+        public Vector2i LightOffset = new Vector2i(); //how many lexels removed from the tilemap position this generator should be
 
-        internal bool On = true;
+        public bool On = true;
 
-        internal float AlphaFalloff => Brightness / (Radius * Lighting.LEXEL_PER_TILE_WIDTH);
+        public float AlphaFalloff => Brightness / (Radius * Lighting.LEXEL_PER_TILE_WIDTH);
     }
 
-    internal class Lighting
+    public class Lighting
     {
         //600x600 (or possibly more precise after proof of concept) Framebuffer texture for saving where light obstructions are using color values
 
@@ -75,14 +75,14 @@ namespace MortalDungeon.Game.Lighting
 
         private static readonly Texture ObstructionSpritesheet = Texture.LoadFromFile("Resources/LightObstructionSheet.png");
 
-        internal FrameBufferObject ObstructionMap;
-        internal FrameBufferObject LightTexture;
+        public FrameBufferObject ObstructionMap;
+        public FrameBufferObject LightTexture;
 
-        internal Scene Scene;
+        public Scene Scene;
 
-        internal bool Initialized = false;
+        public bool Initialized = false;
 
-        internal Lighting(Scene scene) 
+        public Lighting(Scene scene) 
         {
             Scene = scene;
         }
@@ -90,8 +90,8 @@ namespace MortalDungeon.Game.Lighting
         const int TILE_OFFSET = 30; //also set it in the shaders
 
 
-        internal const int LEXEL_PER_TILE_WIDTH = 32;
-        internal const int LEXEL_PER_TILE_HEIGHT = 32;
+        public const int LEXEL_PER_TILE_WIDTH = 32;
+        public const int LEXEL_PER_TILE_HEIGHT = 32;
 
         private static readonly float[] SquareBounds = new float[]
         {
@@ -101,7 +101,7 @@ namespace MortalDungeon.Game.Lighting
             1f, -1f, 0.0f,
         };
 
-        internal void InitializeFramebuffers(int loadedTileDimensions = 150) 
+        public void InitializeFramebuffers(int loadedTileDimensions = 150) 
         {
             loadedTileDimensions += TILE_OFFSET;
 
@@ -125,7 +125,7 @@ namespace MortalDungeon.Game.Lighting
         /// <summary>
         /// Draw the light obstructions onto the obstruction map
         /// </summary>
-        internal void UpdateObstructionMap(List<LightObstruction> objects, ref float[] _instancedRenderDataArray) 
+        public void UpdateObstructionMap(List<LightObstruction> objects, ref float[] _instancedRenderDataArray) 
         {
             GL.Viewport(0, 0, ObstructionMap.FBODimensions.X, ObstructionMap.FBODimensions.Y);
 
@@ -214,7 +214,7 @@ namespace MortalDungeon.Game.Lighting
         /// <summary>
         /// Redraw the light texture using the current light obstruction map
         /// </summary>
-        internal void UpdateLightTexture(List<LightGenerator> generators, ref float[] _instancedRenderDataArray) 
+        public void UpdateLightTexture(List<LightGenerator> generators, ref float[] _instancedRenderDataArray) 
         {
             ClearBuffer(LightTexture, CombatScene.EnvironmentColor.ToVector());
 
@@ -335,7 +335,7 @@ namespace MortalDungeon.Game.Lighting
         }
 
 
-        internal GameObject CreateTexturedQuad(FrameBufferObject fbo, TextureName texName)
+        public GameObject CreateTexturedQuad(FrameBufferObject fbo, TextureName texName)
         {
             Texture texture = new Texture(fbo.RenderTexture, texName);
 
@@ -377,7 +377,7 @@ namespace MortalDungeon.Game.Lighting
             1.0f,  1.0f, 0.0f,
         };
 
-        internal void ClearBuffer(FrameBufferObject buffer, Vector4 color) 
+        public void ClearBuffer(FrameBufferObject buffer, Vector4 color) 
         {
             Shaders.COLOR_SHADER.Use();
 

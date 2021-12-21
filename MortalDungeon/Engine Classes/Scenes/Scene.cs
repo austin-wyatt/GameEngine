@@ -20,7 +20,7 @@ using static MortalDungeon.Engine_Classes.Scenes.CombatScene;
 
 namespace MortalDungeon.Engine_Classes.Scenes
 {
-    internal enum ObjectType //corresponds to their bit position in the MessageTarget enum
+    public enum ObjectType //corresponds to their bit position in the MessageTarget enum
     {
         UI = 0,
         Unit = 1,
@@ -31,16 +31,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         All = 7
     }
 
-    internal enum EventAction 
+    public enum EventAction 
     {
-        OneKeyDown,
-        TwoKeyDown,
-        ThreeKeyDown,
-        FourKeyDown,
-        FiveKeyDown,
-        SixKeyDown,
-        SevenKeyDown,
-        EightKeyDown,
+        NumberKeyDown,
 
         CloseTooltip,
 
@@ -48,59 +41,61 @@ namespace MortalDungeon.Engine_Classes.Scenes
         Render
     }
 
-    internal class SceneEventArgs
+    public class SceneEventArgs
     {
-        internal Scene Scene;
-        internal EventAction EventAction;
-        internal SceneEventArgs(Scene scene, EventAction action) 
+        public Scene Scene;
+        public EventAction EventAction;
+        public int ExtraInfo;
+        public SceneEventArgs(Scene scene, EventAction action, int extraInfo = 0) 
         {
             Scene = scene;
             EventAction = action;
+            ExtraInfo = extraInfo;
         }
     }
 
-    internal class Scene
+    public class Scene
     {
-        internal SceneController Controller;
+        public SceneController Controller;
 
-        internal QueuedObjectList<GameObject> _genericObjects = new QueuedObjectList<GameObject>(); //GameObjects that are not Units and are being rendered independently
-        internal List<Text> _text = new List<Text>();
-        internal TileMapController _tileMapController = new TileMapController();
-        internal QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
-        internal QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
-        internal QueuedList<ParticleGenerator> _particleGenerators = new QueuedList<ParticleGenerator>();
+        public QueuedObjectList<GameObject> _genericObjects = new QueuedObjectList<GameObject>(); //GameObjects that are not Units and are being rendered independently
+        public List<Text> _text = new List<Text>();
+        public TileMapController _tileMapController = new TileMapController();
+        public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
+        public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
+        public QueuedList<ParticleGenerator> _particleGenerators = new QueuedList<ParticleGenerator>();
 
-        internal QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
+        public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
 
-        internal HashSet<UnitTeam> ActiveTeams = new HashSet<UnitTeam>();
+        public HashSet<UnitTeam> ActiveTeams = new HashSet<UnitTeam>();
 
-        internal List<Unit> _collatedUnits = new List<Unit>();
+        public List<Unit> _collatedUnits = new List<Unit>();
         private HashSet<Unit> _renderedUnits = new HashSet<Unit>();
 
-        internal static GameObject LightObstructionObject = null;
-        internal static GameObject LightObject = null;
-        //internal static List<GameObject> LightObjects = new List<GameObject>();
-        internal static bool RenderLight = true;
+        public static GameObject LightObstructionObject = null;
+        public static GameObject LightObject = null;
+        //public static List<GameObject> LightObjects = new List<GameObject>();
+        public static bool RenderLight = true;
 
 
-        internal QueuedList<ITickable> TickableObjects = new QueuedList<ITickable>();
-        internal QueuedList<ITickable> HighFreqTickableObjects = new QueuedList<ITickable>();
+        public QueuedList<ITickable> TickableObjects = new QueuedList<ITickable>();
+        public QueuedList<ITickable> HighFreqTickableObjects = new QueuedList<ITickable>();
 
-        internal QueuedList<ITickable> TimedTickableObjects = new QueuedList<ITickable>();
+        public QueuedList<ITickable> TimedTickableObjects = new QueuedList<ITickable>();
 
-        internal ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
+        public ContextManager<GeneralContextFlags> ContextManager = new ContextManager<GeneralContextFlags>();
 
-        internal Action ExitFunc = null; //function used to exit the application
+        public Action ExitFunc = null; //function used to exit the application
 
-        internal bool Loaded = false;
+        public bool Loaded = false;
 
-        internal int Priority = 0; //determines which scene will have their events evaluated first
+        public int Priority = 0; //determines which scene will have their events evaluated first
 
-        internal int SceneID => _sceneID;
+        public int SceneID => _sceneID;
         protected int _sceneID = currentSceneID++;
         protected static int currentSceneID = 0;
 
-        internal MessageCenter MessageCenter = null;
+        public MessageCenter MessageCenter = null;
 
         #region Messaging flags
         protected int _interceptClicks = 0b0; //see MessageTarget enum in SceneController for notable values
@@ -111,19 +106,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #endregion
 
 
-        //internal Lighting Lighting;
-        internal QueuedList<LightObstruction> LightObstructions = new QueuedList<LightObstruction>();
-        internal QueuedList<LightGenerator> LightGenerators = new QueuedList<LightGenerator>();
-        internal QueuedList<VisionGenerator> UnitVisionGenerators = new QueuedList<VisionGenerator>();
+        //public Lighting Lighting;
+        public QueuedList<LightObstruction> LightObstructions = new QueuedList<LightObstruction>();
+        public QueuedList<LightGenerator> LightGenerators = new QueuedList<LightGenerator>();
+        public QueuedList<VisionGenerator> UnitVisionGenerators = new QueuedList<VisionGenerator>();
 
-        internal Camera _camera;
-        internal BaseObject _cursorObject;
-        internal MouseRay _mouseRay;
+        public Camera _camera;
+        public BaseObject _cursorObject;
+        public MouseRay _mouseRay;
 
-        internal Vector3 ScenePosition;
+        public Vector3 ScenePosition;
 
-        internal KeyboardState KeyboardState => Program.Window.KeyboardState;
-        internal MouseState MouseState => Program.Window.MouseState;
+        public KeyboardState KeyboardState => Program.Window.KeyboardState;
+        public MouseState MouseState => Program.Window.MouseState;
 
         protected Random rand = new Random();
         private Stopwatch _mouseTimer = new Stopwatch();
@@ -149,7 +144,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
 
-        internal virtual void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) //all object initialization should be handled here
+        public virtual void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) //all object initialization should be handled here
         {
             Loaded = true;
             _camera = camera;
@@ -159,14 +154,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _mouseTimer.Start();
         }
 
-        internal virtual void Unload()
+        public virtual void Unload()
         {
             InitializeFields();
 
             Loaded = false;
         }
 
-        internal void AddUI(UIObject ui, int zIndex = -1, bool immediate = true)
+        public void AddUI(UIObject ui, int zIndex = -1, bool immediate = true)
         {
             if (immediate)
             {
@@ -190,7 +185,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             SortUIByZIndex();
         }
 
-        internal void RemoveUI(UIObject ui)
+        public void RemoveUI(UIObject ui)
         {
             if (ui == null)
                 return;
@@ -200,22 +195,26 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
 
-        internal void SortUIByZIndex()
+        public void SortUIByZIndex()
         {
             _UI.Sort();
 
             float count = 0;
-            foreach (var ui in _UI) 
+            lock (_UI._lock) 
             {
-                Vector3 pos = new Vector3(ui.Position.X, ui.Position.Y, count);
-                ui.SetPosition(pos);
+                foreach (var ui in _UI)
+                {
+                    Vector3 pos = new Vector3(ui.Position.X, ui.Position.Y, count);
+                    ui.SetPosition(pos);
 
-                count += 0.001f; 
+                    count += 0.01f;
+                }
             }
         }
 
+
         #region Messaging handlers
-        internal virtual void ParseMessage(Message msg)
+        public virtual void ParseMessage(Message msg)
         {
             //Console.WriteLine(msg.MessageType.ToString() + " from id " + msg.Sender + " to " + SceneID + ": " + msg.MessageBody.ToString() + " " + msg.MessageTarget.ToString());
 
@@ -245,8 +244,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             MessageCenter.SendMessage(msg.CreateAffirmativeResponse(SceneID));
         }
-        internal delegate void MessageEventHandler(Message msg);
-        internal event MessageEventHandler OnMessageRecieved;
+        public delegate void MessageEventHandler(Message msg);
+        public event MessageEventHandler OnMessageRecieved;
 
         private void InterceptClicks(bool intercept, MessageTarget target)
         {
@@ -286,9 +285,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         private bool _updatingVisionMap = false;
         private bool _shouldRepeatVisionMap = false;
-        internal Task VisionMapTask = null;
+        public Task VisionMapTask = null;
 
-        internal void UpdateVisionMap(Action onFinish = null, UnitTeam teamToUpdate = UnitTeam.Unknown)
+        public void UpdateVisionMap(Action onFinish = null, UnitTeam teamToUpdate = UnitTeam.Unknown)
         {
             if (ContextManager.GetFlag(GeneralContextFlags.DisableVisionMapUpdate)) 
             {
@@ -350,9 +349,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
 
-        internal virtual void OnVisionMapUpdated() { }
+        public virtual void OnVisionMapUpdated() { }
 
-        internal void CalculateActiveTeams() 
+        public void CalculateActiveTeams() 
         {
             ActiveTeams.Clear();
             foreach (var unit in _units) 
@@ -363,7 +362,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         #region Event handlers
 
-        internal virtual void OnRender()
+        public virtual void OnRender()
         {
             _genericObjects.HandleQueuedItems();
             _UI.HandleQueuedItems();
@@ -409,7 +408,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
         //Ie, it curtails the problem of setting a flag earlier in the call chain and then checking it later expecting the old value
-        internal enum MouseUpFlags
+        public enum MouseUpFlags
         {
             ClickProcessed,
             ContextMenuOpen,
@@ -419,7 +418,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
         protected ContextManager<MouseUpFlags> MouseUpStateFlags = new ContextManager<MouseUpFlags>();
-        internal virtual void OnMouseUp(MouseButtonEventArgs e)
+        public virtual void OnMouseUp(MouseButtonEventArgs e)
         {
             SetMouseStateFlags();
             CheckMouseUp(e);
@@ -535,7 +534,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
 
         protected UIObject _focusedObj = null;
-        internal virtual void OnMouseDown(MouseButtonEventArgs e)
+        public virtual void OnMouseDown(MouseButtonEventArgs e)
         {
             if (e.Button == MouseButton.Left && e.Action == InputAction.Press)
             {
@@ -569,7 +568,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
         protected UIObject _grabbedObj = null;
-        internal virtual bool OnMouseMove()
+        public virtual bool OnMouseMove()
         {
             if (_mouseTimer.ElapsedMilliseconds > 30) //check every 30 ms
             {
@@ -651,7 +650,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 return false;
         }
 
-        internal virtual void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
+        public virtual void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
             //_tileMaps.ForEach(map =>
             //{
@@ -678,7 +677,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         }
 
-        internal virtual bool OnKeyDown(KeyboardKeyEventArgs e)
+        public virtual bool OnKeyDown(KeyboardKeyEventArgs e)
         {
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
@@ -694,28 +693,34 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     switch (e.Key)
                     {
                         case Keys.D1:
-                            NumberPressed(new SceneEventArgs(this, EventAction.OneKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 1));
                             break;
                         case Keys.D2:
-                            NumberPressed(new SceneEventArgs(this, EventAction.TwoKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 2));
                             break;
                         case Keys.D3:
-                            NumberPressed(new SceneEventArgs(this, EventAction.ThreeKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 3));
                             break;
                         case Keys.D4:
-                            NumberPressed(new SceneEventArgs(this, EventAction.FourKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 4));
                             break;
                         case Keys.D5:
-                            NumberPressed(new SceneEventArgs(this, EventAction.FiveKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 5));
                             break;
                         case Keys.D6:
-                            NumberPressed(new SceneEventArgs(this, EventAction.SixKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 6));
                             break;
                         case Keys.D7:
-                            NumberPressed(new SceneEventArgs(this, EventAction.SevenKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 7));
                             break;
                         case Keys.D8:
-                            NumberPressed(new SceneEventArgs(this, EventAction.EightKeyDown));
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 8));
+                            break;
+                        case Keys.D9:
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 9));
+                            break;
+                        case Keys.D0:
+                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 0));
                             break;
                     }
                 }
@@ -724,7 +729,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return !interceptKeystrokes;
         }
 
-        internal virtual bool OnKeyUp(KeyboardKeyEventArgs e)
+        public virtual bool OnKeyUp(KeyboardKeyEventArgs e)
         {
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
@@ -739,7 +744,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return !interceptKeystrokes;
         }
 
-        internal virtual void OnUpdateFrame(FrameEventArgs args)
+        public virtual void OnUpdateFrame(FrameEventArgs args)
         {
             if (_focusedObj != null && !_focusedObj.Focused)
             {
@@ -758,11 +763,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        internal virtual void OnUnitClicked(Unit unit, MouseButton button) { }
-        internal virtual void OnUIClicked(UIObject uiObj) { }
-        internal virtual void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags) { }
+        public virtual void OnUnitClicked(Unit unit, MouseButton button) { }
+        public virtual void OnUIClicked(UIObject uiObj) { }
+        public virtual void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags) { }
 
-        internal virtual void OnCameraMoved()
+        public virtual void OnCameraMoved()
         {
             _units.ForEach(u =>
             {
@@ -773,32 +778,32 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
         }
 
-        internal virtual void OnObjectFocused()
+        public virtual void OnObjectFocused()
         {
             Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
             MessageCenter.SendMessage(msg);
         }
 
-        internal virtual void OnObjectFocusEnd()
+        public virtual void OnObjectFocusEnd()
         {
             Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
             MessageCenter.SendMessage(msg);
         }
 
-        internal virtual void OnRenderEnd() { }
+        public virtual void OnRenderEnd() { }
         #endregion
 
         #region event actions
 
-        internal delegate void SceneEventHandler(SceneEventArgs args);
+        public delegate void SceneEventHandler(SceneEventArgs args);
 
-        internal event SceneEventHandler OnNumberPressed;
+        public event SceneEventHandler OnNumberPressed;
 
-        internal event SceneEventHandler OnUIForceClose;
+        public event SceneEventHandler OnUIForceClose;
 
-        internal event SceneEventHandler PostTickEvent;
+        public event SceneEventHandler PostTickEvent;
 
-        internal event SceneEventHandler OnRenderEvent;
+        public event SceneEventHandler OnRenderEvent;
 
 
         protected void NumberPressed(SceneEventArgs args)
@@ -845,16 +850,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
 
 
-        internal Scene() { }
+        public Scene() { }
 
         #region Misc helper functions
-        internal void SmoothPanCameraToUnit(Unit unit, int speed) 
+        public void SmoothPanCameraToUnit(Unit unit, int speed) 
         {
             Vector4 pos = unit.BaseObject.BaseFrame.Position;
 
             SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
         }
-        internal void SmoothPanCamera(Vector3 pos, int speed)
+        public void SmoothPanCamera(Vector3 pos, int speed)
         {
             if (ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
                 return;
@@ -923,7 +928,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         #region Render helper functions
 
-        internal List<T> GetRenderTarget<T>(ObjectType type)
+        public List<T> GetRenderTarget<T>(ObjectType type)
         {
             if (GetBit(_disableRender, ObjectType.All) || GetBit(_disableRender, type))
             {
@@ -942,7 +947,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             };
         }
 
-        internal void CollateUnit(Unit unit)
+        public void CollateUnit(Unit unit)
         {
             if (unit.EntityHandle != null && !unit.EntityHandle.Loaded)
                 return;
@@ -955,7 +960,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        internal void DecollateUnit(Unit unit)
+        public void DecollateUnit(Unit unit)
         {
             lock (_renderedUnits)
             if (_renderedUnits.TryGetValue(unit, out Unit found))
@@ -965,7 +970,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        internal void CollateUnits()
+        public void CollateUnits()
         {
             lock (_renderedUnits)
             {
@@ -974,27 +979,27 @@ namespace MortalDungeon.Engine_Classes.Scenes
             ContextManager.SetFlag(GeneralContextFlags.UnitCollationRequired, false);
         }
 
-        //internal virtual void UpdateLightObstructionMap()
+        //public virtual void UpdateLightObstructionMap()
         //{
         //    Lighting.UpdateObstructionMap(LightObstructions, ref Rendering.Renderer._instancedRenderArray);
         //}
 
-        //internal virtual void UpdateLightTexture()
+        //public virtual void UpdateLightTexture()
         //{
         //    Lighting.UpdateLightTexture(LightGenerators, ref Rendering.Renderer._instancedRenderArray);
         //}
 
-        internal void QueueLightUpdate() 
+        public void QueueLightUpdate() 
         {
             ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, true);
         }
-        internal void QueueLightObstructionUpdate()
+        public void QueueLightObstructionUpdate()
         {
             RefillLightObstructions();
             ContextManager.SetFlag(GeneralContextFlags.UpdateLightObstructionMap, true);
         }
 
-        internal void RefillLightObstructions()
+        public void RefillLightObstructions()
         {
             LightObstructions.Clear();
 
@@ -1018,26 +1023,26 @@ namespace MortalDungeon.Engine_Classes.Scenes
     }
 
 
-    internal class MessageCenter
+    public class MessageCenter
     {
-        internal Action<Message> ParseMessage = null;
+        public Action<Message> ParseMessage = null;
 
-        internal Action<Message> _sendMessage = null;
+        public Action<Message> _sendMessage = null;
 
-        internal int SceneID => _sceneID;
+        public int SceneID => _sceneID;
         private int _sceneID = -1;
 
-        internal MessageCenter(int id) 
+        public MessageCenter(int id) 
         {
             _sceneID = id;
         }
 
-        internal Message CreateMessage(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All)
+        public Message CreateMessage(MessageType msgType, MessageBody msgBody, MessageTarget msgTarget, TargetAmount targetAmount = TargetAmount.All)
         {
             return new Message(msgType, msgBody, msgTarget, targetAmount) { Sender = SceneID };
         }
 
-        internal void SendMessage(Message msg) 
+        public void SendMessage(Message msg) 
         {
             msg.Sender = SceneID;
             _sendMessage?.Invoke(msg);

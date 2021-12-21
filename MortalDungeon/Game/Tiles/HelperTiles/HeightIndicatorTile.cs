@@ -8,17 +8,17 @@ using System.Text;
 
 namespace MortalDungeon.Game.Tiles.HelperTiles
 {
-    internal class HeightIndicatorTile : GameObject
+    public class HeightIndicatorTile : GameObject
     {
-        internal enum Animations 
+        public enum Animations 
         {
             Up,
             Down
         }
 
-        internal BaseTile AttachedTile;
+        public BaseTile AttachedTile;
 
-        internal HeightIndicatorTile(BaseTile attachedTile){
+        public HeightIndicatorTile(BaseTile attachedTile){
             Name = "HeightIndicator";
             AttachedTile = attachedTile;
 

@@ -15,10 +15,10 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class AncientArmor : Ability
+    public class AncientArmor : Ability
     {
         private int ShieldsGained = 1;
-        internal AncientArmor(Unit castingUnit)
+        public AncientArmor(Unit castingUnit)
         {
             Type = AbilityTypes.BuffDefensive;
             CastingUnit = castingUnit;
@@ -48,7 +48,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, Character.A, Spritesheets.CharacterSheet, true);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -62,7 +62,7 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -76,7 +76,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 

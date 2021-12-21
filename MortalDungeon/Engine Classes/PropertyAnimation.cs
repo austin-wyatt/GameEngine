@@ -9,7 +9,7 @@ namespace MortalDungeon.Engine_Classes
     /// <summary>
     /// Works similarly to the Animation class but changes properties such as transformations and color instead of the sprite.
     /// </summary>
-    internal class PropertyAnimation : ITickable
+    public class PropertyAnimation : ITickable
     {
         public RenderableObject BaseFrame;
         public List<Keyframe> Keyframes = new List<Keyframe>();
@@ -176,21 +176,21 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class Keyframe
+    public class Keyframe
     {
-        internal int ActivationTick = 0; //the tick to activate on. 
-        internal Action Action = null;
+        public int ActivationTick = 0; //the tick to activate on. 
+        public Action Action = null;
 
-        internal Keyframe(int activationTick)
+        public Keyframe(int activationTick)
         {
             ActivationTick = activationTick;
         }
-        internal Keyframe(int tick, Action action)
+        public Keyframe(int tick, Action action)
         {
             ActivationTick = tick;
             Action = action;
         }
 
-        internal Keyframe() { }
+        public Keyframe() { }
     }
 }

@@ -15,9 +15,10 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
-    internal class Skeleton : Unit
+    public class Skeleton : Unit
     {
-        internal Skeleton(CombatScene scene) : base(scene)
+        public Skeleton() { }
+        public Skeleton(CombatScene scene) : base(scene)
         {
             Clickable = true;
             Selectable = true;
@@ -25,17 +26,19 @@ namespace MortalDungeon.Game.Units
             _createStatusBar = true;
         }
 
-        internal Skeleton(CombatScene scene, BaseTile tileMapPosition, string name = "Skeleton") : base(scene)
+        public Skeleton(CombatScene scene, BaseTile tileMapPosition, string name = "Skeleton") : base(scene)
         {
             Name = name;
             SetTileMapPosition(tileMapPosition);
             Clickable = true;
             Selectable = true;
 
+            ProfileType = UnitProfileType.Skeleton;
+
             _createStatusBar = true;
         }
 
-        internal override void InitializeUnitInfo()
+        public override void InitializeUnitInfo()
         {
             base.InitializeUnitInfo();
 
@@ -58,9 +61,11 @@ namespace MortalDungeon.Game.Units
 
             Healer healDisp = new Healer(this) { Weight = 1 };
             AI.Dispositions.Add(healDisp);
+
+            AbilityLoadout = AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 3);
         }
 
-        internal override void InitializeVisualComponent()
+        public override void InitializeVisualComponent()
         {
             base.InitializeVisualComponent();
 
@@ -82,51 +87,51 @@ namespace MortalDungeon.Game.Units
             SelectionTile.UnitOffset.Y += Info.TileMapPosition.GetDimensions().Y / 2;
             SelectionTile.SetPosition(Position);
 
-            Move movement = new Move(this);
-            Info.Abilities.Add(movement);
+            //Move movement = new Move(this);
+            //Info.Abilities.Add(movement);
 
-            Info._movementAbility = movement;
+            //Info._movementAbility = movement;
 
 
-            Buff shieldBlock = new Buff(this);
-            shieldBlock.ShieldBlock.Additive = 3;
-            shieldBlock.IndefiniteDuration = true;
-            shieldBlock.Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
+            //Buff shieldBlock = new Buff(this);
+            //shieldBlock.ShieldBlock.Additive = 3;
+            //shieldBlock.IndefiniteDuration = true;
+            //shieldBlock.Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Shield, MortalDungeon.Objects.Spritesheets.IconSheet);
 
-            BonyBash bash = new BonyBash(this);
-            Info.Abilities.Add(bash);
+            //BonyBash bash = new BonyBash(this);
+            //Info.Abilities.Add(bash);
 
             //Bleed bleedAbility = new Bleed(this, 2, 15, 5);
             //Info.Abilities.Add(bleedAbility);
             //bleedAbility.AbilityClass = AbilityClass.Skeleton;
 
-            AncientArmor armor = new AncientArmor(this);
-            Info.Abilities.Add(armor);
+            //AncientArmor armor = new AncientArmor(this);
+            //Info.Abilities.Add(armor);
 
-            Shoot shootAbility = new Shoot(this, 15, 4, 3);
-            shootAbility.MaxCharges = 100;
-            shootAbility.Charges = 100;
-            Info.Abilities.Add(shootAbility);
-            shootAbility.AbilityClass = AbilityClass.Skeleton;
+            //Shoot shootAbility = new Shoot(this, 15, 4, 3);
+            //shootAbility.MaxCharges = 100;
+            //shootAbility.Charges = 100;
+            //Info.Abilities.Add(shootAbility);
+            //shootAbility.AbilityClass = AbilityClass.Skeleton;
 
-            StrongBones strongBonesAbility = new StrongBones(this);
-            Info.Abilities.Add(strongBonesAbility);
+            //StrongBones strongBonesAbility = new StrongBones(this);
+            //Info.Abilities.Add(strongBonesAbility);
 
-            MendBones mendBonesAbility = new MendBones(this);
-            Info.Abilities.Add(mendBonesAbility);
+            //MendBones mendBonesAbility = new MendBones(this);
+            //Info.Abilities.Add(mendBonesAbility);
 
             //Hide hideAbility = new Hide(this);
             //Info.Abilities.Add(hideAbility);
         }
 
-        internal override void OnKill()
+        public override void OnKill()
         {
             base.OnKill();
 
             BaseObjects[0].SetAnimation(AnimationType.Die);
         }
 
-        internal override void OnHurt()
+        public override void OnHurt()
         {
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(1.2f, 1.4f) };
             sound.Play();
@@ -140,7 +145,7 @@ namespace MortalDungeon.Game.Units
             Scene._particleGenerators.Add(bloodExplosion);
         }
 
-        internal override BaseObject CreateBaseObject()
+        public override BaseObject CreateBaseObject()
         {
             return new BaseObject(SKELETON_ANIMATION.List, ObjectID, "", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
         }

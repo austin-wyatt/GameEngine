@@ -8,15 +8,15 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class CubeMap
+    public class CubeMap
     {
-        internal string[] ImagePaths = new string[6];
+        public string[] ImagePaths = new string[6];
 
-        internal int Handle;
+        public int Handle;
 
-        internal bool Loaded = false;
+        public bool Loaded = false;
 
-        internal void LoadImages() 
+        public void LoadImages() 
         {
             if (Loaded)
                 return;

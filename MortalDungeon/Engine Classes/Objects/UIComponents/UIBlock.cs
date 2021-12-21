@@ -7,9 +7,9 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class UIBlock : UIObject
+    public class UIBlock : UIObject
     {
-        internal UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
+        public UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
         {
             //if (position == default)
             //{
@@ -66,7 +66,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        internal override void SetSize(UIScale size)
+        public override void SetSize(UIScale size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
 
@@ -85,13 +85,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetOrigin(aspectRatio, Size);
         }
 
-        internal void SetOrigin() 
+        public void SetOrigin() 
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
             SetOrigin(aspectRatio, Size);
         }
 
-        internal override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
+        public override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
         {
             if (flag == SetColorFlag.Base)
                 DefaultColor = color;
@@ -99,17 +99,17 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             _baseObject.BaseFrame.SetBaseColor(color);
         }
 
-        internal override void ScaleAddition(float f)
+        public override void ScaleAddition(float f)
         {
             base.ScaleAddition(f);
         }
 
-        internal override void ScaleAll(float f)
+        public override void ScaleAll(float f)
         {
             base.ScaleAll(f);
         }
 
-        internal override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
 

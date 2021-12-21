@@ -7,9 +7,9 @@ using System.Text;
 
 namespace MortalDungeon.Game
 {
-    internal static class EnumExtensions
+    public static class EnumExtensions
     {
-        internal static string Name(this TileType type) 
+        public static string Name(this TileType type) 
         {
             switch (type) 
             {
@@ -35,7 +35,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        internal static string Name(this StructureEnum type)
+        public static string Name(this StructureEnum type)
         {
             switch (type)
             {
@@ -69,7 +69,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        internal static SimplifiedTileType SimplifiedType(this TileType type) 
+        public static SimplifiedTileType SimplifiedType(this TileType type) 
         {
             switch (type)
             {
@@ -94,7 +94,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        internal static bool BoolValue(this UnitCheckEnum val)
+        public static bool BoolValue(this UnitCheckEnum val)
         {
             if (val == UnitCheckEnum.True || val == UnitCheckEnum.SoftTrue)
             {
@@ -111,7 +111,7 @@ namespace MortalDungeon.Game
         /// where only one of them is required whereas a normal true or false would cause the check to be 
         /// false if they did not match.
         /// </summary>
-        internal static bool IsSoft(this UnitCheckEnum val)
+        public static bool IsSoft(this UnitCheckEnum val)
         {
             if (val == UnitCheckEnum.SoftFalse || val == UnitCheckEnum.SoftTrue)
             {
@@ -123,20 +123,20 @@ namespace MortalDungeon.Game
             }
         }
 
-        internal static int Hash(this UnitTeam team1, UnitTeam team2) 
+        public static long Hash(this UnitTeam team1, UnitTeam team2) 
         {
             List<int> teams = new List<int> { (int)team1, (int)team2 };
             teams.Sort();
 
-            return HashCode.Combine(teams[0], teams[1]);
+            return ((long)teams[0] << 32) + teams[1];
         }
 
-        internal static void SetRelation(this UnitTeam team1, UnitTeam team2, Relation relation) 
+        public static void SetRelation(this UnitTeam team1, UnitTeam team2, Relation relation) 
         {
             UnitAI.SetTeamRelation(team1, team2, relation);
         }
 
-        internal static Relation GetRelation(this UnitTeam team1, UnitTeam team2)
+        public static Relation GetRelation(this UnitTeam team1, UnitTeam team2)
         {
             if (team1 == team2)
                 return Relation.Friendly;
@@ -144,7 +144,7 @@ namespace MortalDungeon.Game
             return UnitAI.GetTeamRelation(team1, team2);
         }
 
-        internal static string Name(this UnitTeam team) 
+        public static string Name(this UnitTeam team) 
         {
             switch (team) 
             {
@@ -161,7 +161,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        internal static string Name(this ControlType controlType)
+        public static string Name(this ControlType controlType)
         {
             switch (controlType)
             {

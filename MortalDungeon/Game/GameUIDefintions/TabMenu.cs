@@ -16,17 +16,17 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.UI
 {
-    internal class TabMenu : UIObject
+    public class TabMenu : UIObject
     {
         private CombatScene Scene;
 
-        //internal List<UIBlock> Tabs = new List<UIBlock>();
-        internal List<ScrollableArea> Tabs = new List<ScrollableArea>();
-        internal List<Button> TabAccessButtons = new List<Button>();
+        //public List<UIBlock> Tabs = new List<UIBlock>();
+        public List<ScrollableArea> Tabs = new List<ScrollableArea>();
+        public List<Button> TabAccessButtons = new List<Button>();
 
-        internal int CurrentTab = 0;
+        public int CurrentTab = 0;
 
-        internal TabMenu() 
+        public TabMenu() 
         {
             UIBlock mainWindow = new UIBlock(WindowConstants.CenterScreen, new UIDimensions(WindowConstants.ScreenUnits.X * 0.75f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 2));
             mainWindow.SetColor(Colors.UILightGray);
@@ -53,7 +53,7 @@ namespace MortalDungeon.Game.UI
             PopulateMenus();
         }
 
-        internal int CreateTab() 
+        public int CreateTab() 
         {
             //UIBlock tab = new UIBlock(default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 1.8f));
 
@@ -74,7 +74,7 @@ namespace MortalDungeon.Game.UI
             return Tabs.IndexOf(tab);
         }
 
-        internal void CreateTabAccessButton(int tab, string name) 
+        public void CreateTabAccessButton(int tab, string name) 
         {
             Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.24f, BaseComponent.Size.Y / 15), name, 0.043f, Colors.UILightGray, Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
@@ -97,7 +97,7 @@ namespace MortalDungeon.Game.UI
             BaseComponent.AddChild(button);
         }
 
-        internal void SelectTab(int tab) 
+        public void SelectTab(int tab) 
         {
             if (tab >= Tabs.Count)
                 return;
@@ -111,14 +111,14 @@ namespace MortalDungeon.Game.UI
             CurrentTab = tab;
         }
 
-        internal void AddToScene(CombatScene scene) 
+        public void AddToScene(CombatScene scene) 
         {
             scene.AddUI(this, 999999);
 
             Scene = scene;
         }
 
-        internal void Display(bool display) 
+        public void Display(bool display) 
         {
             SetRender(display);
 

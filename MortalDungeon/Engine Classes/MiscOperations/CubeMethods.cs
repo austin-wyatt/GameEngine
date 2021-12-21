@@ -7,9 +7,9 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.MiscOperations
 {
-    internal static class CubeMethods
+    public static class CubeMethods
     {
-        internal static Dictionary<Direction, Vector3i> CubeDirections = new Dictionary<Direction, Vector3i>
+        public static Dictionary<Direction, Vector3i> CubeDirections = new Dictionary<Direction, Vector3i>
         {
             { Direction.SouthWest, new Vector3i(-1, 0, 1) },
             { Direction.South, new Vector3i(0, -1, 1) },
@@ -19,15 +19,15 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
             { Direction.NorthWest, new Vector3i(-1, 1, 0) },
             { Direction.None, new Vector3i(0, 0, 0) },
         };
-        internal static float Lerp(float a, float b, float t)
+        public static float Lerp(float a, float b, float t)
         {
             return a + (b - a) * t;
         }
-        internal static Vector3 CubeLerp(Vector3 start, Vector3 end, float t)
+        public static Vector3 CubeLerp(Vector3 start, Vector3 end, float t)
         {
             return new Vector3(Lerp(start.X, end.X, t), Lerp(start.Y, end.Y, t), Lerp(start.Z, end.Z, t));
         }
-        internal static Vector3i CubeRound(Vector3 cube)
+        public static Vector3i CubeRound(Vector3 cube)
         {
             float rx = (float)Math.Round(cube.X);
             float ry = (float)Math.Round(cube.Y);
@@ -52,12 +52,12 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
             return new Vector3i((int)rx, (int)ry, (int)rz);
         }
-        internal static Vector3i CubeNeighbor(Vector3i cube, Direction direction)
+        public static Vector3i CubeNeighbor(Vector3i cube, Direction direction)
         {
             return cube + CubeDirections[direction];
         }
 
-        internal static Vector3i OffsetToCube(FeaturePoint offset)
+        public static Vector3i OffsetToCube(FeaturePoint offset)
         {
             Vector3i cubeCoord = new Vector3i
             {
@@ -68,12 +68,12 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
             return cubeCoord;
         }
-        internal static int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
+        public static int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
         {
             return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
 
-        internal static Vector2i CubeToOffset(Vector3i cube)
+        public static Vector2i CubeToOffset(Vector3i cube)
         {
             Vector2i offsetCoord = new Vector2i
             {
@@ -84,7 +84,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
             return offsetCoord;
         }
 
-        internal static Vector3i OffsetToCube(Vector2i offset)
+        public static Vector3i OffsetToCube(Vector2i offset)
         {
             Vector3i cubeCoord = new Vector3i
             {
@@ -96,12 +96,12 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
             return cubeCoord;
         }
 
-        internal static Vector3i OffsetToCube(TilePoint offset)
+        public static Vector3i OffsetToCube(TilePoint offset)
         {
             return OffsetToCube(new Vector2i(offset.X, offset.Y));
         }
 
-        internal static Vector3i RotateCube(Vector3i cube, int rotations) 
+        public static Vector3i RotateCube(Vector3i cube, int rotations) 
         {
             Vector3i rotatedCube = cube;
 

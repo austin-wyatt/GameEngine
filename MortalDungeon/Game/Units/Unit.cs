@@ -15,43 +15,48 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Units
 {
-    internal class Unit : GameObject, ILoadableEntity
+    public class Unit : GameObject, ILoadableEntity
     {
-        internal UnitAI AI;
-        internal UnitInfo Info;
+        public UnitAI AI;
+        public UnitInfo Info;
 
+        public AbilityLoadout AbilityLoadout;
 
-        internal VisionGenerator VisionGenerator = new VisionGenerator();
-        internal LightObstruction LightObstruction = new LightObstruction();
+        public VisionGenerator VisionGenerator = new VisionGenerator();
+        public LightObstruction LightObstruction = new LightObstruction();
 
-        internal bool VisibleThroughFog = false;
-        
-        internal CombatScene Scene;
+        public bool VisibleThroughFog = false;
 
-        internal UnitStatusBar StatusBarComp = null;
-        internal static int BaseStatusBarZIndex = -10;
+        public CombatScene Scene;
 
-        internal bool Selectable = false;
+        public UnitStatusBar StatusBarComp = null;
+        public static int BaseStatusBarZIndex = -10;
 
-        internal bool Selected = false;
-        internal bool Targeted = false;
+        public bool Selectable = false;
+        public bool Selected = false;
+        public bool Targeted = false;
 
-        internal Entity EntityHandle;
+        public Entity EntityHandle;
 
-        internal Vector3 TileOffset = new Vector3();
-        
+        public Vector3 TileOffset = new Vector3();
 
-        internal UnitSelectionTile SelectionTile;
+        public UnitSelectionTile SelectionTile;
 
-        internal bool _createStatusBar = false;
-        internal string pack_name = "";
+        public bool _createStatusBar = false;
+        public string pack_name = "";
 
-        internal Unit() { }
+        public UnitProfileType ProfileType = UnitProfileType.Unknown;
 
-        internal Unit(CombatScene scene) 
+        public int FeatureID = -1;
+        public long FeatureHash = 0;
+
+        public Unit() { }
+
+        public Unit(CombatScene scene) 
         {
             InitializeUnitInfo();
 
@@ -63,7 +68,7 @@ namespace MortalDungeon.Game.Units
             //Scene._genericObjects.Add(SelectionTile);
         }
 
-        internal Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
+        public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
         {
             InitializeUnitInfo();
 
@@ -73,7 +78,7 @@ namespace MortalDungeon.Game.Units
             SetTeam(UnitTeam.Unknown);
         }
 
-        internal virtual void InitializeUnitInfo() 
+        public virtual void InitializeUnitInfo() 
         {
             AI = new UnitAI(this);
             Info = new UnitInfo(this);
@@ -82,7 +87,7 @@ namespace MortalDungeon.Game.Units
         /// <summary>
         /// Create and add the base object to the unit
         /// </summary>
-        internal virtual void InitializeVisualComponent()
+        public virtual void InitializeVisualComponent()
         {
 
         }
@@ -118,6 +123,8 @@ namespace MortalDungeon.Game.Units
             Info.ActionEnergy = Info.CurrentActionEnergy;
 
             SetTileMapPosition(Scene._tileMapController.GetTile(position));
+
+            ApplyAbilityLoadout();
         }
 
         public virtual void EntityUnload() 
@@ -138,7 +145,22 @@ namespace MortalDungeon.Game.Units
 
             BaseObjects.Clear();
         }
-        internal override void CleanUp()
+
+        public virtual void ApplyAbilityLoadout()
+        {
+            Move movement = new Move(this);
+            movement.EnergyCost = 0.3f;
+            Info.Abilities.Add(movement);
+
+            Info._movementAbility = movement;
+
+            if(AbilityLoadout != null)
+            {
+                AbilityLoadout.ApplyLoadoutToUnit(this);
+            }
+        }
+
+        public override void CleanUp()
         {
             base.CleanUp();
 
@@ -157,7 +179,7 @@ namespace MortalDungeon.Game.Units
             Scene.RemoveUnit(this);
         }
 
-        internal void RemoveFromTile() 
+        public void RemoveFromTile() 
         {
             if (Info.TileMapPosition != null)
             {
@@ -166,12 +188,12 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal override void AddBaseObject(BaseObject obj)
+        public override void AddBaseObject(BaseObject obj)
         {
             base.AddBaseObject(obj);
         }
 
-        internal Ability GetFirstAbilityOfType(AbilityTypes type)
+        public Ability GetFirstAbilityOfType(AbilityTypes type)
         {
             foreach (Ability ability in Info.Abilities) 
             {
@@ -182,7 +204,7 @@ namespace MortalDungeon.Game.Units
             return new Ability();
         }
 
-        internal List<Ability> GetAbilitiesOfType(AbilityTypes type)
+        public List<Ability> GetAbilitiesOfType(AbilityTypes type)
         {
             List<Ability> abilities = new List<Ability>();
 
@@ -195,7 +217,7 @@ namespace MortalDungeon.Game.Units
             return abilities;
         }
 
-        internal bool HasAbilityOfType(AbilityTypes type) 
+        public bool HasAbilityOfType(AbilityTypes type) 
         {
             foreach (Ability ability in Info.Abilities)
             {
@@ -206,19 +228,19 @@ namespace MortalDungeon.Game.Units
             return false;
         }
 
-        internal TileMap GetTileMap() 
+        public TileMap GetTileMap() 
         {
             return Info.TileMapPosition.TilePoint.ParentTileMap;
         }
 
-        internal override void SetName(string name)
+        public override void SetName(string name)
         {
             base.SetName(name);
 
             UpdateStatusBarInfo();
         }
 
-        internal void UpdateStatusBarInfo() 
+        public void UpdateStatusBarInfo() 
         {
             if (StatusBarComp != null)
             {
@@ -226,7 +248,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
 
@@ -241,7 +263,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal override void SetRender(bool render)
+        public override void SetRender(bool render)
         {
             base.SetRender(render);
 
@@ -267,7 +289,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal virtual void SetTileMapPosition(BaseTile baseTile) 
+        public virtual void SetTileMapPosition(BaseTile baseTile) 
         {
             BaseTile prevTile = Info.TileMapPosition;
 
@@ -287,7 +309,7 @@ namespace MortalDungeon.Game.Units
         }
 
 
-        internal virtual float GetBuffResistanceModifier(DamageType damageType) 
+        public virtual float GetBuffResistanceModifier(DamageType damageType) 
         {
             float modifier = 0;
 
@@ -300,7 +322,7 @@ namespace MortalDungeon.Game.Units
             return modifier;
         }
 
-        internal bool GetPierceShields(DamageType damageType) 
+        public bool GetPierceShields(DamageType damageType) 
         {
             return damageType switch
             {
@@ -312,7 +334,7 @@ namespace MortalDungeon.Game.Units
             };
         }
 
-        internal bool GetAmplifiedByNegativeShields(DamageType damageType)
+        public bool GetAmplifiedByNegativeShields(DamageType damageType)
         {
             switch (damageType)
             {
@@ -324,9 +346,9 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal void OnTurnStart() 
+        public void OnTurnStart() 
         {
-            if (StatusBarComp != null && StatusBarComp.Render) 
+            if (StatusBarComp != null && StatusBarComp.Render && Scene.InCombat) 
             {
                 StatusBarComp.SetIsTurn(true);
             }
@@ -350,6 +372,7 @@ namespace MortalDungeon.Game.Units
                 ability.CompleteDecay();
             }
 
+            if(Info.TileMapPosition != null)
             foreach (var effect in Info.TileMapPosition.TileEffects)
             {
                 effect.OnTurnStart(this, Info.TileMapPosition);
@@ -370,13 +393,14 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal void OnTurnEnd()
+        public void OnTurnEnd()
         {
             if (StatusBarComp != null && StatusBarComp.Render) 
             {
                 StatusBarComp.SetIsTurn(false);
             }
 
+            if(Info.TileMapPosition != null)
             foreach (var effect in Info.TileMapPosition.TileEffects)
             {
                 effect.OnTurnEnd(this, Info.TileMapPosition);
@@ -388,7 +412,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal virtual void SetTeam(UnitTeam team) 
+        public virtual void SetTeam(UnitTeam team) 
         {
             AI.Team = team;
 
@@ -408,7 +432,7 @@ namespace MortalDungeon.Game.Units
             VisionGenerator.Team = team;
         }
 
-        internal void SetSelectionTileColor() 
+        public void SetSelectionTileColor() 
         {
             if (SelectionTile == null)
                 return;
@@ -430,7 +454,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal virtual void SetShields(int shields) 
+        public virtual void SetShields(int shields) 
         {
             Info.CurrentShields = shields;
 
@@ -450,7 +474,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal void SetHealth(float health) 
+        public void SetHealth(float health) 
         {
             Info.Health = health;
 
@@ -464,26 +488,26 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal void Rest() 
+        public void Rest() 
         {
             SetHealth(Info.MaxHealth);
             Info.Focus = Info.MaxFocus;
         }
 
-        internal struct AppliedDamageReturnValues
+        public struct AppliedDamageReturnValues
         {
-            internal float DamageBlockedByShields;
-            internal float ActualDamageDealt;
-            internal bool KilledEnemy;
-            internal bool AttackBrokeShield;
+            public float DamageBlockedByShields;
+            public float ActualDamageDealt;
+            public bool KilledEnemy;
+            public bool AttackBrokeShield;
         }
-        internal struct DamageParams 
+        public struct DamageParams 
         {
-            internal DamageInstance Instance;
-            internal Ability Ability;
-            internal Buff Buff;
+            public DamageInstance Instance;
+            public Ability Ability;
+            public Buff Buff;
 
-            internal DamageParams(DamageInstance instance)
+            public DamageParams(DamageInstance instance)
             {
                 Instance = instance;
 
@@ -492,7 +516,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal virtual AppliedDamageReturnValues ApplyDamage(DamageParams damageParams)
+        public virtual AppliedDamageReturnValues ApplyDamage(DamageParams damageParams)
         {
             AppliedDamageReturnValues returnVals = new AppliedDamageReturnValues();
 
@@ -608,6 +632,12 @@ namespace MortalDungeon.Game.Units
             if (finalDamage > 0) 
             {
                 OnHurt();
+
+                Scene.EventLog.AddEvent(Name + " has taken " + finalDamage + " damage.", EventSeverity.Info);
+            }
+            if(finalDamage < 0)
+            {
+                Scene.EventLog.AddEvent(Name + " has healed for " + -finalDamage + " health.", EventSeverity.Info);
             }
 
             if (Info.Health > Info.MaxHealth) 
@@ -630,13 +660,13 @@ namespace MortalDungeon.Game.Units
             return returnVals;
         }
 
-        internal virtual void Kill() 
+        public virtual void Kill() 
         {
             Info.Dead = true;
             OnKill();
         }
 
-        internal virtual void Revive()
+        public virtual void Revive()
         {
             Info.Dead = false;
             SetHealth(1);
@@ -646,7 +676,7 @@ namespace MortalDungeon.Game.Units
             OnRevive();
         }
 
-        internal virtual void OnKill() 
+        public virtual void OnKill() 
         {
             if (BaseObject != null) 
             {
@@ -662,12 +692,12 @@ namespace MortalDungeon.Game.Units
             sound.Play();
         }
 
-        internal virtual void OnRevive() 
+        public virtual void OnRevive() 
         {
             BaseObject.SetAnimation(0);
         }
 
-        internal virtual void OnHurt() 
+        public virtual void OnHurt() 
         {
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
             sound.Play();
@@ -681,7 +711,7 @@ namespace MortalDungeon.Game.Units
             Scene._particleGenerators.Add(bloodExplosion);
         }
 
-        internal virtual void OnShieldsHit() 
+        public virtual void OnShieldsHit() 
         {
             if (Info.DamageBlockedByShields > Info.ShieldBlock)
             {
@@ -703,7 +733,7 @@ namespace MortalDungeon.Game.Units
             Scene._particleGenerators.Add(bloodExplosion);
         }
 
-        internal override void OnHover()
+        public override void OnHover()
         {
             if (Hoverable && !Hovered)
             {
@@ -721,7 +751,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal override void OnHoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
@@ -737,12 +767,12 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal override void OnTimedHover()
+        public override void OnTimedHover()
         {
             base.OnTimedHover();
         }
 
-        internal override void OnCull()
+        public override void OnCull()
         {
             if (Cull)
             {
@@ -764,7 +794,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal void Select() 
+        public void Select() 
         {
             if (SelectionTile == null)
                 return;
@@ -774,7 +804,7 @@ namespace MortalDungeon.Game.Units
             Selected = true;
         }
 
-        internal void Deselect()
+        public void Deselect()
         {
             if (SelectionTile == null)
                 return;
@@ -784,7 +814,7 @@ namespace MortalDungeon.Game.Units
             Selected = false;
         }
 
-        internal void Target() 
+        public void Target() 
         {
             if (SelectionTile == null)
                 return;
@@ -793,7 +823,7 @@ namespace MortalDungeon.Game.Units
             Targeted = true;
         }
 
-        internal void Untarget() 
+        public void Untarget() 
         {
             if (SelectionTile == null)
                 return;
@@ -802,7 +832,7 @@ namespace MortalDungeon.Game.Units
             Targeted = false;
         }
 
-        internal override void Tick()
+        public override void Tick()
         {
             base.Tick();
 
@@ -812,18 +842,18 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal bool OnTileMap(TileMap map) 
+        public bool OnTileMap(TileMap map) 
         {
             return Info != null && Info.TileMapPosition != null && Info.TileMapPosition.TileMap == map;
         }
 
-        internal virtual BaseObject CreateBaseObject() 
+        public virtual BaseObject CreateBaseObject() 
         {
             return null;
         }
     }
 
-    internal enum StatusCondition
+    public enum StatusCondition
     {
         None,
         Stunned = 1, //disables all
@@ -837,10 +867,13 @@ namespace MortalDungeon.Game.Units
         Rooted = 512, //disables movement
     }
 
-    internal class UnitInfo
+    public class UnitInfo
     {
-        internal static int OUT_OF_COMBAT_VISION = 5;
-        internal UnitInfo(Unit unit)
+        public static int OUT_OF_COMBAT_VISION = 5;
+
+        public UnitInfo() { }
+
+        public UnitInfo(Unit unit)
         {
             Unit = unit;
 
@@ -848,52 +881,56 @@ namespace MortalDungeon.Game.Units
             Scouting = new Scouting(unit);
         }
 
-        internal Unit Unit;
-        internal BaseTile TileMapPosition;
+        public Unit Unit;
 
-        internal TilePoint TemporaryPosition = null; //used as a placeholder position for calculating things like vision before a unit moves
+        public BaseTile TileMapPosition;
 
-        internal TilePoint Point => TileMapPosition.TilePoint;
-        internal CombatScene Scene => TileMapPosition.GetScene();
-        internal TileMap Map => TileMapPosition.TileMap;
+        public TilePoint TemporaryPosition = null; //used as a placeholder position for calculating things like vision before a unit moves
 
-        internal List<Ability> Abilities = new List<Ability>();
-        internal List<Buff> Buffs = new List<Buff>();
+        public TilePoint Point => TileMapPosition.TilePoint;
 
-        internal Move _movementAbility = null;
+        public CombatScene Scene => TileMapPosition.GetScene();
 
-        internal float MaxEnergy = 10;
-        internal float CurrentEnergy => MaxEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyBoost.Additive + seed); //Energy at the start of the turn
-        internal float Energy = 10; //internal unit energy tracker
+        public TileMap Map => TileMapPosition.TileMap;
 
-        internal float MaxActionEnergy = 4;
+        public List<Ability> Abilities = new List<Ability>();
 
-        internal float MaxFocus = 40;
-        internal float Focus = 40;
+        public List<Buff> Buffs = new List<Buff>();
 
-        internal float CurrentActionEnergy => MaxActionEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ActionEnergyBoost.Additive + seed); //Energy at the start of the turn
-        internal float ActionEnergy = 0;
+        public Move _movementAbility = null;
 
-        internal float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
-        internal float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
-        internal float ActionEnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
-        internal float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
-        internal float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
-        internal float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.SpeedModifier.Multiplier * seed);
-        internal float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.SpeedModifier.Additive + seed);
+        public float MaxEnergy = 10;
+        public float CurrentEnergy => MaxEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyBoost.Additive + seed); //Energy at the start of the turn
+        public float Energy = 10; //public unit energy tracker
+
+        public float MaxActionEnergy = 4;
+
+        public float MaxFocus = 40;
+        public float Focus = 40;
+
+        public float CurrentActionEnergy => MaxActionEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ActionEnergyBoost.Additive + seed); //Energy at the start of the turn
+        public float ActionEnergy = 0;
+
+        public float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
+        public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
+        public float ActionEnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
+        public float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
+        public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
+        public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.SpeedModifier.Multiplier * seed);
+        public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.SpeedModifier.Additive + seed);
 
 
 
-        internal float Speed => _movementAbility != null ? _movementAbility.GetEnergyCost() : 10;
+        public float Speed => _movementAbility != null ? _movementAbility.GetEnergyCost() : 10;
 
-        internal float Health = 100;
-        internal float MaxHealth = 100;
+        public float Health = 100;
+        public float MaxHealth = 100;
 
-        internal int CurrentShields = 0;
+        public int CurrentShields = 0;
 
-        internal float ShieldBlockMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.ShieldBlock.Multiplier * seed);
+        public float ShieldBlockMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.ShieldBlock.Multiplier * seed);
 
-        internal float ShieldBlock 
+        public float ShieldBlock 
         {
             get
             {
@@ -907,42 +944,46 @@ namespace MortalDungeon.Game.Units
         }
             
 
-        internal float DamageBlockedByShields = 0;
+        public float DamageBlockedByShields = 0;
 
-        internal Dictionary<DamageType, float> BaseDamageResistances = new Dictionary<DamageType, float>();
 
-        internal bool NonCombatant = false;
+        public Dictionary<DamageType, float> BaseDamageResistances = new Dictionary<DamageType, float>();
 
-        internal bool PrimaryUnit = false;
+        public bool NonCombatant = false;
 
-        internal int Height = 1;
-        //internal int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
-        //internal int _visionRadius = 6;
+        public bool PrimaryUnit = false;
 
-        internal Direction Facing = Direction.North;
+        public int Height = 1;
+        //public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
+        //public int _visionRadius = 6;
 
-        internal bool Dead = false;
-        internal bool BlocksSpace = true;
-        internal bool PhasedMovement = false;
+        public Direction Facing = Direction.North;
 
-        internal StatusCondition Status = StatusCondition.None;
+        public bool Dead = false;
+        public bool BlocksSpace = true;
+        public bool PhasedMovement = false;
+
+        public StatusCondition Status = StatusCondition.None;
 
         /// <summary>
         /// If true, this unit/structure can always be seen through
         /// </summary>
-        internal bool Transparent = false;
+        public bool Transparent = false;
 
-        internal bool Visible(UnitTeam team) 
+        public bool Visible(UnitTeam team) 
         {
             if (Unit.VisibleThroughFog && TileMapPosition.Explored[team])
                 return true;
+
+            if (TileMapPosition == null)
+                return false;
 
             return !TileMapPosition.InFog[team] && Stealth.Revealed[team];
         }
 
 
-        internal Hidden Stealth;
-        internal Scouting Scouting;
+        public Hidden Stealth;
+        public Scouting Scouting;
 
         private object _buffLock = new object();
         public void AddBuff(Buff buff) 
@@ -1010,7 +1051,7 @@ namespace MortalDungeon.Game.Units
             return modifications;
         }
 
-        internal void EvaluateStatusCondition() 
+        public void EvaluateStatusCondition() 
         {
             StatusCondition condition = StatusCondition.None;
 
@@ -1022,7 +1063,7 @@ namespace MortalDungeon.Game.Units
             Status = condition;
         }
 
-        internal bool CanUseAbility(Ability ability)
+        public bool CanUseAbility(Ability ability)
         {
             CastingMethod method = ability.CastingMethod;
 
@@ -1038,24 +1079,25 @@ namespace MortalDungeon.Game.Units
         }
     }
 
-    internal class Hidden 
+    public class Hidden 
     {
         private Unit Unit;
         /// <summary>
         /// Whether a unit is currently attemping to hide
         /// </summary>
-        internal bool Hiding = false;
+        public bool Hiding = false;
 
         /// <summary>
         /// The teams that can see this unit
         /// </summary>
-        internal Dictionary<UnitTeam, bool> Revealed = new Dictionary<UnitTeam, bool>();
+        public Dictionary<UnitTeam, bool> Revealed = new Dictionary<UnitTeam, bool>();
 
-        internal float Skill = 0;
+        public float Skill = 0;
 
-        internal QueuedList<Action> HidingBrokenActions = new QueuedList<Action>();
+        public QueuedList<Action> HidingBrokenActions = new QueuedList<Action>();
 
-        internal Hidden(Unit unit) 
+        public Hidden() { }
+        public Hidden(Unit unit) 
         {
             Unit = unit;
 
@@ -1065,7 +1107,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        internal void SetHiding(bool hiding) 
+        public void SetHiding(bool hiding) 
         {
             if (Hiding && !hiding) 
             {
@@ -1084,7 +1126,7 @@ namespace MortalDungeon.Game.Units
             HidingBrokenActions.ForEach(a => a.Invoke());
         }
 
-        internal void SetAllRevealed(bool revealed = true) 
+        public void SetAllRevealed(bool revealed = true) 
         {
             foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
             {
@@ -1094,7 +1136,7 @@ namespace MortalDungeon.Game.Units
             Revealed[Unit.AI.Team] = true;
         }
 
-        internal void SetRevealed(UnitTeam team, bool revealed) 
+        public void SetRevealed(UnitTeam team, bool revealed) 
         {
             Revealed[team] = revealed;
         }
@@ -1103,7 +1145,7 @@ namespace MortalDungeon.Game.Units
         /// Returns false if any team that isn't the unit's team has vision of the space
         /// </summary>
         /// <returns></returns>
-        internal bool EnemyHasVision()
+        public bool EnemyHasVision()
         {
             bool hasVision = false;
 
@@ -1118,7 +1160,7 @@ namespace MortalDungeon.Game.Units
             return hasVision;
         }
 
-        internal bool PositionInFog(UnitTeam team) 
+        public bool PositionInFog(UnitTeam team) 
         {
             bool inFog = true;
 
@@ -1131,15 +1173,16 @@ namespace MortalDungeon.Game.Units
         }
     }
 
-    internal class Scouting 
+    public class Scouting 
     {
         private Unit Unit;
 
-        internal const int DEFAULT_RANGE = 5;
+        public const int DEFAULT_RANGE = 5;
 
-        internal float Skill = 0;
+        public float Skill = 0;
 
-        internal Scouting(Unit unit) 
+        public Scouting() { }
+        public Scouting(Unit unit) 
         {
             Unit = unit;
         }
@@ -1147,7 +1190,7 @@ namespace MortalDungeon.Game.Units
         /// <summary>
         /// Calculates whether a unit can scout a hiding unit. This does not take into account whether the tiles are actually/would be in vision.
         /// </summary>
-        internal bool CouldSeeUnit(Unit unit, int distance)
+        public bool CouldSeeUnit(Unit unit, int distance)
         {
             if (!unit.Info.Stealth.Hiding)
                 return true;

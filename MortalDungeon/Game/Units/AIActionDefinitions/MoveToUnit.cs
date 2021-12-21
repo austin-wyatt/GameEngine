@@ -8,11 +8,11 @@ namespace MortalDungeon.Game.Units.AI
 {
     class MoveToUnit : UnitAIAction
     {
-        internal int DistanceFromEnemy = 0;
+        public int DistanceFromEnemy = 0;
 
-        internal MoveToUnit(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.MoveCloser, ability, tile, unit) { }
+        public MoveToUnit(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.MoveCloser, ability, tile, unit) { }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             CastingUnit.Info._movementAbility.Units = Scene._units;
 

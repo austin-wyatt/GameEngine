@@ -28,26 +28,26 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MortalDungeon
 {
-    internal static class GlobalRandom 
+    public static class GlobalRandom 
     {
         private static Random _random = new Random();
 
-        internal static int Next() 
+        public static int Next() 
         {
             return _random.Next();
         }
 
-        internal static int Next(int val)
+        public static int Next(int val)
         {
             return _random.Next(val);
         }
 
-        internal static float NextFloat() 
+        public static float NextFloat() 
         {
             return (float)_random.NextDouble();
         }
 
-        internal static float NextFloat(float minValue, float maxValue)
+        public static float NextFloat(float minValue, float maxValue)
         {
             float val = (float)_random.NextDouble();
 
@@ -58,24 +58,24 @@ namespace MortalDungeon
         }
 
     }
-    internal static class WindowConstants
+    public static class WindowConstants
     {
-        internal static readonly Vector2 ScreenUnits = new Vector2(1000, 1000);
-        internal static Vector3 CenterScreen = new Vector3(ScreenUnits.X / 2, ScreenUnits.Y / 2, 0); //use to outline bounds;
-        internal static readonly Vector4 FullColor = new Vector4(1, 1, 1, 1);
-        internal const int TickDenominator = 45; // 1 divided by this determines the tick rate.
-        internal static Vector2i ClientSize;
-        internal static float AspectRatio => (float)ClientSize.X / ClientSize.Y;
+        public static readonly Vector2 ScreenUnits = new Vector2(1000, 1000);
+        public static Vector3 CenterScreen = new Vector3(ScreenUnits.X / 2, ScreenUnits.Y / 2, 0); //use to outline bounds;
+        public static readonly Vector4 FullColor = new Vector4(1, 1, 1, 1);
+        public const int TickDenominator = 45; // 1 divided by this determines the tick rate.
+        public static Vector2i ClientSize;
+        public static float AspectRatio => (float)ClientSize.X / ClientSize.Y;
 
-        internal static bool ShowFPS = true;
-        internal static bool ShowTicksPerSecond = false;
-        internal static bool EnableBoundsTestingTools = false;
-        internal static bool ShowCulledChunks = true;
+        public static bool ShowFPS = true;
+        public static bool ShowTicksPerSecond = false;
+        public static bool EnableBoundsTestingTools = false;
+        public static bool ShowCulledChunks = true;
 
-        internal static Stopwatch GlobalTimer = new Stopwatch();
+        public static Stopwatch GlobalTimer = new Stopwatch();
 
-        internal static int MainThreadId = 0;
-        internal static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
+        public static int MainThreadId = 0;
+        public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position)
             {
@@ -87,14 +87,14 @@ namespace MortalDungeon
             return returnVec;
         }
 
-        internal static void ConvertGlobalToLocalCoordinatesInPlace(ref Vector3 position)
+        public static void ConvertGlobalToLocalCoordinatesInPlace(ref Vector3 position)
         {
             position.X = (position.X / ScreenUnits.X) * 2 - 1;
             position.Y = ((position.Y / ScreenUnits.Y) * 2 - 1) * -1;
         }
 
         //Ie convert mouse coordinates to workable screen coordinates
-        internal static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector3 position) 
+        public static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector3 position) 
         {
             Vector3 returnVec = new Vector3(position)
             {
@@ -106,7 +106,7 @@ namespace MortalDungeon
             return returnVec;
         }
 
-        internal static Vector3 ConvertScreenSpaceToGlobalCoordinates(Vector3 position)
+        public static Vector3 ConvertScreenSpaceToGlobalCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position)
             {
@@ -118,7 +118,7 @@ namespace MortalDungeon
             return returnVec;
         }
 
-        internal static Vector3 ConvertLocalToScreenSpaceCoordinates(Vector2 position)
+        public static Vector3 ConvertLocalToScreenSpaceCoordinates(Vector2 position)
         {
             Vector3 returnVec = new Vector3(position)
             {
@@ -130,7 +130,7 @@ namespace MortalDungeon
             return returnVec;
         }
 
-        internal static Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize)
+        public static Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize)
         {
             float X = (vec.X / clientSize.X) * 2 - 1; //converts it into local opengl coordinates
             float Y = ((vec.Y / clientSize.Y) * 2 - 1) * -1; //converts it into local opengl coordinates
@@ -139,15 +139,15 @@ namespace MortalDungeon
         }
     }
 
-    internal class Window : GameWindow
+    public class Window : GameWindow
     {
         private Vector2i WindowSize = new Vector2i();
 
         BaseObject _cursorObject;
 
-        internal static List<BaseObject> _renderedItems = new List<BaseObject>();
+        public static List<BaseObject> _renderedItems = new List<BaseObject>();
 
-        internal static Task GameLoop;
+        public static Task GameLoop;
 
         private List<Vector2> _points = new List<Vector2>();
         private List<Vector3> _lines = new List<Vector3>();
@@ -175,10 +175,10 @@ namespace MortalDungeon
         private const float tickRate = (float)1 / WindowConstants.TickDenominator;
         private const float highFreqTickRate = (float)1 / 90;
 
-        internal CubeMap SkyBox = new CubeMap();
+        public CubeMap SkyBox = new CubeMap();
 
 
-        internal Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
+        public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
         {  }
 
 

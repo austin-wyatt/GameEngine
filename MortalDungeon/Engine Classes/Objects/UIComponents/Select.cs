@@ -6,21 +6,21 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class SelectItem 
+    public class SelectItem 
     {
-        internal string Name = "";
-        internal Action OnSelect = null;
+        public string Name = "";
+        public Action OnSelect = null;
     }
-    internal class Select : UIObject
+    public class Select : UIObject
     {
-        internal List<SelectItem> Items = new List<SelectItem>();
-        internal SelectItem SelectedItem = null;
+        public List<SelectItem> Items = new List<SelectItem>();
+        public SelectItem SelectedItem = null;
         private SelectItem _emptyItem = new SelectItem();
 
-        internal UIList List;
+        public UIList List;
         private Icon Chevron;
 
-        internal Select(UIScale listItemSize, float textScale = 0.1f) 
+        public Select(UIScale listItemSize, float textScale = 0.1f) 
         {
             List = new UIList(default, listItemSize, textScale);
 
@@ -39,7 +39,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ItemSelected(_emptyItem);
         }
 
-        internal SelectItem AddItem(string name, Action onSelect = null) 
+        public SelectItem AddItem(string name, Action onSelect = null) 
         {
             SelectItem item = new SelectItem() { Name = name, OnSelect = onSelect };
 
@@ -48,13 +48,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             return item;
         }
 
-        internal void ClearItems() 
+        public void ClearItems() 
         {
             Items.Clear();
             ItemSelected(_emptyItem);
         }
 
-        internal void CreateItemList() 
+        public void CreateItemList() 
         {
             Chevron.SetRender(false);
 
@@ -67,7 +67,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             });
         }
 
-        internal void ItemSelected(SelectItem item) 
+        public void ItemSelected(SelectItem item) 
         {
             SelectedItem = item;
 

@@ -5,9 +5,9 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal static class Extensions
+    public static class Extensions
     {
-        internal static bool Replace<T>(this List<T> list, T itemToReplace, T replacement)
+        public static bool Replace<T>(this List<T> list, T itemToReplace, T replacement)
         {
             int index = list.FindIndex(i => i.Equals(itemToReplace));
             
@@ -20,7 +20,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
         private static Random rng = new Random();
-        internal static void Randomize<T>(this IList<T> source)
+        public static void Randomize<T>(this IList<T> source)
         {
             int n = source.Count;
             while (n > 1)
@@ -31,6 +31,11 @@ namespace MortalDungeon.Engine_Classes
                 source[k] = source[n];
                 source[n] = value;
             }
+        }
+
+        public static T GetRandom<T>(this IList<T> source)
+        {
+            return source[rng.Next(source.Count)];
         }
     }
 }

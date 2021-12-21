@@ -10,7 +10,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Structures
 {
-    internal enum CliffFace 
+    public enum CliffFace 
     {
         None = -1,
         NorthWest = 1,
@@ -21,14 +21,14 @@ namespace MortalDungeon.Game.Structures
         North = 32
     }
 
-    internal class Cliff
+    public class Cliff
     {
-        internal BaseTile Tile;
-        internal List<Structure> CliffStructure = new List<Structure>();
+        public BaseTile Tile;
+        public List<Structure> CliffStructure = new List<Structure>();
 
-        internal short CliffBitArray;
+        public short CliffBitArray;
 
-        internal Cliff(CombatScene scene, BaseTile tile, short cliffBitArray)
+        public Cliff(CombatScene scene, BaseTile tile, short cliffBitArray)
         {
             Tile = tile;
             CliffBitArray = cliffBitArray;
@@ -130,7 +130,7 @@ namespace MortalDungeon.Game.Structures
             tile.Cliff = this;
         }
 
-        internal void GenerateCliff(CombatScene scene, Direction direction, int length) 
+        public void GenerateCliff(CombatScene scene, Direction direction, int length) 
         {
             Structure cliffStructure = new Structure(scene, Spritesheets.StructureSheet, (int)StructureEnum.Cliff_1 + length - 1, Tile.Position + new Vector3(0, 0, 0.008f));
 
@@ -164,7 +164,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal void ClearCliff() 
+        public void ClearCliff() 
         {
             CliffStructure.ForEach(structure =>
             {
@@ -174,7 +174,7 @@ namespace MortalDungeon.Game.Structures
             CliffStructure.Clear();
         }
 
-        internal static CliffFace DirectionToCliffFace(Direction direction) 
+        public static CliffFace DirectionToCliffFace(Direction direction) 
         {
             return direction switch
             {
@@ -187,7 +187,7 @@ namespace MortalDungeon.Game.Structures
             };
         }
 
-        internal static Direction CliffFaceToDirection(CliffFace face)
+        public static Direction CliffFaceToDirection(CliffFace face)
         {
             return face switch
             {

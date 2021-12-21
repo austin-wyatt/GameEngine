@@ -10,12 +10,12 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    internal class TurnDisplay : UIObject
+    public class TurnDisplay : UIObject
     {
-        internal List<Unit> Units = new List<Unit>();
+        public List<Unit> Units = new List<Unit>();
         private List<UIObject> UnitObjects = new List<UIObject>();
 
-        internal TurnDisplay() 
+        public TurnDisplay() 
         {
             BaseComponent = new UIBlock();
             BaseComponent.SetColor(Colors.Transparent);
@@ -26,7 +26,7 @@ namespace MortalDungeon.Game.UI
         }
 
         private readonly object _settingUnitsLock = new object();
-        internal void SetUnits(List<Unit> units, CombatScene scene) 
+        public void SetUnits(List<Unit> units, CombatScene scene) 
         {
             lock (_settingUnitsLock) 
             {
@@ -112,7 +112,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        internal void PositionUnits() 
+        public void PositionUnits() 
         {
             if (UnitObjects.Count <= 1)
                 return;
@@ -125,7 +125,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        internal void ClearUnits() 
+        public void ClearUnits() 
         {
             Units = null;
 
@@ -134,7 +134,7 @@ namespace MortalDungeon.Game.UI
             UnitObjects.Clear();
         }
 
-        internal void SetCurrentUnit(int currUnit) 
+        public void SetCurrentUnit(int currUnit) 
         {
             for (int i = 0; i < UnitObjects.Count; i++) 
             {

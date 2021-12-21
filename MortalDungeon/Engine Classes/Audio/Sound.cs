@@ -2,23 +2,23 @@
 
 namespace MortalDungeon.Engine_Classes.Audio
 {
-    internal class Sound
+    public class Sound
     {
-        internal AudioBuffer Buffer = null;
+        public AudioBuffer Buffer = null;
 
-        internal Source Source = null;
+        public Source Source = null;
 
-        internal bool Valid => Source != null && Buffer.Loaded;
+        public bool Valid => Source != null && Buffer.Loaded;
 
-        internal string Name { get; private set; }
+        public string Name { get; private set; }
 
 
-        internal float Gain = 1;
-        internal float Pitch = 1;
-        internal bool Loop = false;
-        internal float EndTime = -1;
+        public float Gain = 1;
+        public float Pitch = 1;
+        public bool Loop = false;
+        public float EndTime = -1;
 
-        internal Sound(AudioBuffer buffer)
+        public Sound(AudioBuffer buffer)
         {
             Buffer = buffer;
 
@@ -30,7 +30,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         /// <summary>
         /// Remove the allocated source from the sound.
         /// </summary>
-        internal void DeallocateSource()
+        public void DeallocateSource()
         {
             if (Valid) SoundPlayer.FreeSource(Source);
         }
@@ -38,7 +38,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         /// <summary>
         /// This should be called when the sound is being unloaded.
         /// </summary>
-        internal void Dispose() 
+        public void Dispose() 
         {
             DeallocateSource();
             Buffer.AttachedSounds.Remove(this);
@@ -48,7 +48,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         /// Assigns the sound a source from the source pool and returns a bool indicating whether it was successful.
         /// If the sound has non-default source params they will be set here if a source was successfully allocated.
         /// </summary>
-        internal bool Prepare(Action onFinish = null)
+        public bool Prepare(Action onFinish = null)
         {
             if (Valid)
                 return true;
@@ -84,7 +84,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         /// <summary>
         /// Here is where default source values such as location or gain should be set.
         /// </summary>
-        internal void SetSourceParams() 
+        public void SetSourceParams() 
         {
             Source.Gain = Gain;
             Source.Pitch = Pitch;
@@ -100,7 +100,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        internal void Play()
+        public void Play()
         {
             if (Valid) Source.Play();
             else 
@@ -109,7 +109,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        internal void Pause()
+        public void Pause()
         {
             if (Valid) Source.Pause();
             else 
@@ -118,7 +118,7 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
-        internal void Stop()
+        public void Stop()
         {
             if (Valid) Source.Stop();
             else

@@ -10,9 +10,9 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class Strike : Ability
+    public class Strike : Ability
     {
-        internal Strike(Unit castingUnit, int range = 1, float damage = 10)
+        public Strike(Unit castingUnit, int range = 1, float damage = 10)
         {
             Type = AbilityTypes.MeleeAttack;
             DamageType = DamageType.Slashing;
@@ -28,7 +28,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -48,14 +48,14 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override bool UnitInRange(Unit unit, BaseTile position = null)
+        public override bool UnitInRange(Unit unit, BaseTile position = null)
         {
             GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit });
 
             return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -69,19 +69,19 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void OnCast()
+        public override void OnCast()
         {
             TileMap.Controller.DeselectTiles();
 
             base.OnCast();
         }
 
-        internal override void OnAICast()
+        public override void OnAICast()
         {
             base.OnAICast();
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -91,7 +91,7 @@ namespace MortalDungeon.Game.Abilities
             EffectEnded();
         }
 
-        internal override DamageInstance GetDamageInstance()
+        public override DamageInstance GetDamageInstance()
         {
             DamageInstance instance = new DamageInstance();
 

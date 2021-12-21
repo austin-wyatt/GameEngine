@@ -10,9 +10,9 @@ using System.Threading;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class StunDebuff : Buff
+    public class StunDebuff : Buff
     {
-        internal StunDebuff(Unit affected, int duration) : base(affected, duration)
+        public StunDebuff(Unit affected, int duration) : base(affected, duration)
         {
             Name = "Stun";
             BuffType = BuffType.Debuff;
@@ -22,19 +22,19 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, Character.And, Spritesheets.CharacterSheet);
         }
 
-        internal override void RemoveBuffFromUnit()
+        public override void RemoveBuffFromUnit()
         {
             base.RemoveBuffFromUnit();
         }
 
-        internal override Icon GenerateIcon(UIScale scale)
+        public override Icon GenerateIcon(UIScale scale)
         {
             Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.DebuffBackground);
 
             return icon;
         }
 
-        internal override Tooltip GenerateTooltip()
+        public override Tooltip GenerateTooltip()
         {
             Tooltip tooltip = new Tooltip();
 
@@ -64,7 +64,7 @@ namespace MortalDungeon.Game.Abilities
             return tooltip;
         }
 
-        internal override void OnTurnStart()
+        public override void OnTurnStart()
         {
             base.OnTurnStart();
         }

@@ -8,19 +8,21 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    internal class Forest_1 : FeatureEquation
+    public class Forest_1 : FeatureEquation
     {
         ForestParams ForestParams;
         Random NumberGen;
 
 
-        internal Forest_1(ForestParams forestParams)
+        public Forest_1(ForestParams forestParams)
         {
             ForestParams = forestParams;
             NumberGen = new Random(HashCoordinates(forestParams.Origin.X, forestParams.Origin.Y));
+
+            FeatureID = HashCoordinates(forestParams.Origin.X, forestParams.Origin.Y);
         }
 
-        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
+        public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
@@ -49,7 +51,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        internal override void GenerateFeature()
+        public override void GenerateFeature()
         {
             ClearAffectedPoints();
 
@@ -77,13 +79,13 @@ namespace MortalDungeon.Game.Map.FeatureEquations
     }
 
 
-    internal struct ForestParams
+    public struct ForestParams
     {
-        internal FeaturePoint Origin;
-        internal int Radius;
-        internal double Density;
+        public FeaturePoint Origin;
+        public int Radius;
+        public double Density;
 
-        internal ForestParams(FeaturePoint origin, int radius = 1, double density = 0.7)
+        public ForestParams(FeaturePoint origin, int radius = 1, double density = 0.7)
         {
             Origin = origin;
 

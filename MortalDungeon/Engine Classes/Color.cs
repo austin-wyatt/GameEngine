@@ -5,19 +5,19 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class Color
+    public class Color
     {
-        internal float A = 1;
-        internal float R = 1;
-        internal float G = 1;
-        internal float B = 1;
+        public float A = 1;
+        public float R = 1;
+        public float G = 1;
+        public float B = 1;
 
-        internal bool Use = true;
+        public bool Use = true;
 
-        internal event EventHandler OnChangeEvent;
-        internal Color() { }
+        public event EventHandler OnChangeEvent;
+        public Color() { }
 
-        internal Color(float r, float g, float b, float a) 
+        public Color(float r, float g, float b, float a) 
         {
             A = a;
             R = r;
@@ -25,7 +25,7 @@ namespace MortalDungeon.Engine_Classes
             B = b;
         }
 
-        internal Color(Vector4 color) 
+        public Color(Vector4 color) 
         {
             A = color.W;
             R = color.X;
@@ -33,7 +33,7 @@ namespace MortalDungeon.Engine_Classes
             B = color.Z;
         }
 
-        internal Color(Color color)
+        public Color(Color color)
         {
             A = color.A;
             R = color.R;
@@ -85,7 +85,7 @@ namespace MortalDungeon.Engine_Classes
             return newCol;
         }
 
-        internal Color Add(Color color) 
+        public Color Add(Color color) 
         {
             A += color.A;
             R += color.R;
@@ -99,7 +99,7 @@ namespace MortalDungeon.Engine_Classes
             return this;
         }
 
-        internal Color Sub(Color color)
+        public Color Sub(Color color)
         {
             A -= color.A;
             R -= color.R;
@@ -110,12 +110,12 @@ namespace MortalDungeon.Engine_Classes
             return this;
         }
 
-        internal void _onChange() 
+        public void _onChange() 
         {
             OnChangeEvent?.Invoke(this, EventArgs.Empty);
         }
 
-        internal Vector4 ToVector() 
+        public Vector4 ToVector() 
         {
             return new Vector4(R, G, B, A);
         }

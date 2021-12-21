@@ -10,12 +10,12 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class Slow : Ability
+    public class Slow : Ability
     {
         float _slowMultiplier;
         int _slowDuration;
 
-        internal Slow(Unit castingUnit, int range = 1, float slowAmount = 0.25f, int duration = 3)
+        public Slow(Unit castingUnit, int range = 1, float slowAmount = 0.25f, int duration = 3)
         {
             Type = AbilityTypes.Debuff;
             Range = range;
@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -53,7 +53,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -67,7 +67,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void OnCast()
+        public override void OnCast()
         {
             Scene.EnergyDisplayBar.HoverAmount(0);
             Scene.ActionEnergyBar.HoverAmount(0);
@@ -85,7 +85,7 @@ namespace MortalDungeon.Game.Abilities
             base.OnCast();
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 

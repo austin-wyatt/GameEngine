@@ -9,9 +9,9 @@ namespace MortalDungeon.Game.Units.AI
 {
     class UseAbilityOnUnit : UnitAIAction
     {
-        internal UseAbilityOnUnit(Unit castingUnit, AIAction actionType, Ability ability, BaseTile tile = null, Unit unit = null) : base(castingUnit, actionType, ability, tile, unit) { }
+        public UseAbilityOnUnit(Unit castingUnit, AIAction actionType, Ability ability, BaseTile tile = null, Unit unit = null) : base(castingUnit, actionType, ability, tile, unit) { }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             Ability.EffectEndedAction = () =>
             {

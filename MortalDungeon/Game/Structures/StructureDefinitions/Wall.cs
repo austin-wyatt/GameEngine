@@ -12,30 +12,30 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Game.Structures
 {
-    internal enum WallType
+    public enum WallType
     {
         Wall,
         Corner,
         Door
     }
 
-    internal class Wall : Structure
+    public class Wall : Structure
     {
-        internal WallType WallType;
+        public WallType WallType;
 
-        internal bool Locked = false;
-        internal bool Openable = true;
-        internal bool Opened = false;
+        public bool Locked = false;
+        public bool Openable = true;
+        public bool Opened = false;
 
         private float ZRotation = 0;
         private const float WALL_HEIGHT = 0.6f;
 
-        internal Wall(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position, WallType type) : base(scene, spritesheet, spritesheetPos, position)
+        public Wall(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position, WallType type) : base(scene, spritesheet, spritesheetPos, position)
         {
             WallType = type;
         }
 
-        internal void CreateDoor(BaseTile tile)
+        public void CreateDoor(BaseTile tile)
         {
             Vector3 tileDim = tile.GetDimensions();
 
@@ -80,7 +80,7 @@ namespace MortalDungeon.Game.Structures
             LoadTexture(this);
         }
 
-        internal void OpenDoor()
+        public void OpenDoor()
         {
             if (!Opened && Openable)
             {
@@ -91,7 +91,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal void CloseDoor()
+        public void CloseDoor()
         {
             if (Opened && Openable)
             {
@@ -102,7 +102,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal void ToggleDoor()
+        public void ToggleDoor()
         {
             if (!Opened)
             {
@@ -115,13 +115,13 @@ namespace MortalDungeon.Game.Structures
         }
 
 
-        internal enum WallMaterial
+        public enum WallMaterial
         {
             Wood,
             Stone,
             Iron
         }
-        internal static void CreateWalls(TileMap map, List<BaseTile> tiles, WallMaterial walls)
+        public static void CreateWalls(TileMap map, List<BaseTile> tiles, WallMaterial walls)
         {
             Direction direction = Direction.None;
             Direction nextDirection = Direction.None;
@@ -202,7 +202,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, WallMaterial wallMaterial = WallMaterial.Wood)
+        public static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, WallMaterial wallMaterial = WallMaterial.Wood)
         {
             Wall wall = new Wall(map.Controller.Scene, Spritesheets.StructureSheet, (int)wallType, tile.Position + new Vector3(0, 0, WALL_HEIGHT), type);
 
@@ -257,7 +257,7 @@ namespace MortalDungeon.Game.Structures
         }
 
         //theres definitely a formula for this but this works just as well and is readable so whatev
-        internal static int AngledWallDirectionsToRotation(Direction inlet, Direction outlet)
+        public static int AngledWallDirectionsToRotation(Direction inlet, Direction outlet)
         {
             return inlet switch
             {
@@ -273,7 +273,7 @@ namespace MortalDungeon.Game.Structures
         /// Given a wall, find all adjacent walls of the same material
         /// </summary>
         /// <param name="wall">The wall to start with</param>
-        internal static (List<Wall> walls, bool circular) FindAdjacentWalls(Wall wall) 
+        public static (List<Wall> walls, bool circular) FindAdjacentWalls(Wall wall) 
         {
             TileMap map = wall.Info.Map;
 
@@ -348,7 +348,7 @@ namespace MortalDungeon.Game.Structures
             return (wallList, circular);
         }
 
-        internal static void UnifyWalls(List<Wall> wallList, bool circular) 
+        public static void UnifyWalls(List<Wall> wallList, bool circular) 
         {
             Direction direction = Direction.None;
             Direction nextDirection = Direction.None;
@@ -424,7 +424,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal override Tooltip CreateContextMenu()
+        public override Tooltip CreateContextMenu()
         {
             if (WallType != WallType.Door)
                 return null;

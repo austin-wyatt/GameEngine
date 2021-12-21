@@ -11,9 +11,9 @@ namespace MortalDungeon.Game.Units.AI
 {
     class MoveInRangeOfAbility : UnitAIAction
     {
-        internal MoveInRangeOfAbility(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.MoveCloser, ability, tile, unit) { }
+        public MoveInRangeOfAbility(Unit castingUnit, Ability ability = null, BaseTile tile = null, Unit unit = null) : base(castingUnit, AIAction.MoveCloser, ability, tile, unit) { }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();

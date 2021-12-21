@@ -3,16 +3,16 @@ using OpenTK.Mathematics;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class TextBox : UIObject
+    public class TextBox : UIObject
     {
-        internal float TextScale = 1f;
-        //internal float TitleScale = 1.5f;
-        internal UIDimensions TextOffset = new UIDimensions(20, 30);
-        internal bool CenterText = false;
+        public float TextScale = 1f;
+        //public float TitleScale = 1.5f;
+        public UIDimensions TextOffset = new UIDimensions(20, 30);
+        public bool CenterText = false;
 
-        internal TextComponent TextField;
+        public TextComponent TextField;
 
-        internal TextBox(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
+        public TextBox(Vector3 position, UIScale size, string text, float textScale = 0.1f, bool centerText = false, UIDimensions textOffset = default)
         {
             TextScale = textScale;
             Size = size;
@@ -73,7 +73,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        internal override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
             TextObjects.ForEach(obj =>
@@ -94,12 +94,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         }
 
 
-        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
+        public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
             BaseComponent.SetColor(color, setColorFlag);
         }
 
-        internal void SetTextColor(Vector4 color)
+        public void SetTextColor(Vector4 color)
         {
             TextObjects.ForEach(obj => obj.SetColor(color));
         }

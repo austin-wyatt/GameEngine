@@ -5,10 +5,10 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class Footer : UIObject
+    public class Footer : UIObject
     {
-        internal List<Button> Buttons = new List<Button>();
-        internal Footer(float height)
+        public List<Button> Buttons = new List<Button>();
+        public Footer(float height)
         {
             Position = new Vector3(WindowConstants.ScreenUnits.X / 2, WindowConstants.ScreenUnits.Y - height / 4 + height / 200, 0);
             Name = "Footer";

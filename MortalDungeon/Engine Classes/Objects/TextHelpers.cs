@@ -6,16 +6,16 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal enum Character
+    public enum Character
     {
         A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,
         Period, QuestionMark, ExclamationPoint, Comma, QuotationMark, Apostrophe, LeftBracket, RightBracket, Plus, Minus, Equals, Underscore, Colon, Semicolon,
         LessThan, GreaterThan, At, DollarSign, Modulo, Caret, Asterisk, LeftParenthesis, RightParenthesis, And, Pipe, ForwardSlash, BackSlash, Hash, Tilde, BackTick,
-        One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Zero, Space, NewLine, Return
+        One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Zero, Space, NewLine, Return, LeftCurlyBracket, RightCurlyBracket
     }
     static class CharacterConstants
     {
-        internal static Dictionary<char, Character> _characterMap = new Dictionary<char, Character>()
+        public static Dictionary<char, Character> _characterMap = new Dictionary<char, Character>()
         {
             {'A', Character.A }, {'B', Character.B },{'C', Character.C },{'D', Character.D },{'E', Character.E },{'F', Character.F },{'G', Character.G },{'H', Character.H },{'I', Character.I },{'J', Character.J },
             {'K', Character.K },{'L', Character.L },{'M', Character.M },{'N', Character.N },{'O', Character.O },{'P', Character.P },{'Q', Character.Q },{'R', Character.R },{'S', Character.S },{'T', Character.T },
@@ -27,10 +27,10 @@ namespace MortalDungeon.Engine_Classes
             {'<', Character.LessThan },{'>', Character.GreaterThan },{'@', Character.At },{'$', Character.DollarSign },{'%', Character.Modulo },{'^', Character.Caret },{'*', Character.Asterisk },{'(', Character.LeftParenthesis },
             {')', Character.RightParenthesis },{'&', Character.And },{'|', Character.Pipe },{'\\', Character.ForwardSlash },{'/', Character.BackSlash },{'#', Character.Hash },{'~', Character.Tilde },{'`', Character.BackTick },
             {'1', Character.One },{'2', Character.Two },{'3', Character.Three },{'4', Character.Four },{'5', Character.Five },{'6', Character.Six },{'7', Character.Seven },{'8', Character.Eight },{'9', Character.Nine },
-            {'0', Character.Zero }, {' ', Character.Space }, {'\n', Character.NewLine }, {'\r', Character.Return }
+            {'0', Character.Zero }, {' ', Character.Space }, {'\n', Character.NewLine }, {'\r', Character.Return }, {'{', Character.LeftCurlyBracket }, {'}', Character.RightCurlyBracket }
         };
 
-        internal static Dictionary<Character, char> _characterMapToChar = new Dictionary<Character, char>()
+        public static Dictionary<Character, char> _characterMapToChar = new Dictionary<Character, char>()
         {
             {Character.A, 'A' }, {Character.B, 'B' },{Character.C,'C' },{ Character.D, 'D' },{Character.E, 'E' },{Character.F, 'F' },{Character.G, 'G' },{Character.H, 'H' },{Character.I,'I' },{Character.J,'J' },
             {Character.K, 'K' },{Character.L, 'L' },{Character.M, 'M' },{Character.N, 'N' },{Character.O, 'O' },{Character.P, 'P' },{Character.Q, 'Q' },{Character.R, 'R' },{Character.S, 'S' },{Character.T, 'T' },
@@ -42,13 +42,13 @@ namespace MortalDungeon.Engine_Classes
             {Character.LessThan, '<' },{Character.GreaterThan, '>' },{Character.At, '@' },{Character.DollarSign, '$' },{Character.Modulo, '%' },{Character.Caret, '^' },{Character.Asterisk, '*' },{Character.LeftParenthesis, '(' },
             {Character.RightParenthesis, ')' },{Character.And, '&' },{Character.Pipe, '|' },{Character.ForwardSlash, '\\' },{Character.BackSlash, '/' },{Character.Hash, '#' },{Character.Tilde, '~' },{Character.BackTick, '`' },
             {Character.One, '1' },{Character.Two, '2' },{Character.Three, '3' },{Character.Four, '4' },{Character.Five, '5' },{Character.Six, '6' },{Character.Seven, '7' },{Character.Eight, '8'},{Character.Nine, '9' },
-            {Character.Zero, '0' }, {Character.Space, ' ' }, {Character.NewLine, '\n' }, {Character.Return, '\r' }
+            {Character.Zero, '0' }, {Character.Space, ' ' }, {Character.NewLine, '\n' }, {Character.Return, '\r' }, {Character.LeftCurlyBracket, '{' }, {Character.RightCurlyBracket, '}' }
         };
     }
 
     static class TextHelper 
     {
-        internal static string KeyStrokeToString(KeyboardKeyEventArgs e) 
+        public static string KeyStrokeToString(KeyboardKeyEventArgs e) 
         {
             string outStr;
             bool shift = e.Shift;

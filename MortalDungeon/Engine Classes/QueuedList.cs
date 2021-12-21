@@ -5,14 +5,14 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class QueuedObjectList<T> : QueuedList<T> where T : GameObject
+    public class QueuedObjectList<T> : QueuedList<T> where T : GameObject
     {
-        internal QueuedObjectList()
+        public QueuedObjectList()
         {
 
         }
 
-        internal new void Add(T item)
+        public new void Add(T item)
         {
             _itemsToAdd[_currentQueue].Add(item);
 
@@ -26,15 +26,15 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class QueuedUIList<T> : QueuedList<T> where T : UIObject
+    public class QueuedUIList<T> : QueuedList<T> where T : UIObject
     {
-        internal QueuedUIList()
+        public QueuedUIList()
         {
 
         }
     }
 
-    internal class QueuedList<T> : List<T>
+    public class QueuedList<T> : List<T>
     {
         protected List<List<T>> _itemsToAdd = CreateQueue();
         protected List<List<T>> _itemsToRemove = CreateQueue();
@@ -45,14 +45,14 @@ namespace MortalDungeon.Engine_Classes
 
         public object _lock = new object();
 
-        internal int CHANGE_TOKEN { get; private set; }
+        public int CHANGE_TOKEN { get; private set; }
 
-        internal QueuedList()
+        public QueuedList()
         {
             CHANGE_TOKEN = 0;
         }
 
-        internal QueuedList(List<T> list)
+        public QueuedList(List<T> list)
         {
             Clear();
 
@@ -62,7 +62,7 @@ namespace MortalDungeon.Engine_Classes
             list.ForEach(i => AddImmediate(i));
         }
 
-        internal QueuedList(IOrderedEnumerable<T> list)
+        public QueuedList(IOrderedEnumerable<T> list)
         {
             Clear();
 
@@ -87,7 +87,7 @@ namespace MortalDungeon.Engine_Classes
             return temp;
         }
 
-        internal static QueuedList<T> FromEnumerable(IOrderedEnumerable<T> list) 
+        public static QueuedList<T> FromEnumerable(IOrderedEnumerable<T> list) 
         {
             return new QueuedList<T>(list);
         }
@@ -95,7 +95,7 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Immediately adds the item to the list instead of queueing it for the next tick.
         /// </summary>
-        internal void AddImmediate(T item)
+        public void AddImmediate(T item)
         {
             lock (_lock)
             {
@@ -103,13 +103,13 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal new void Add(T item)
+        public new void Add(T item)
         {
             lock(_itemsToAdd[_currentQueue])
             _itemsToAdd[_currentQueue].Add(item);
         }
 
-        internal void AddQueuedItems(int queue)
+        public void AddQueuedItems(int queue)
         {
             lock (_lock)
             {
@@ -125,20 +125,20 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal void RemoveImmediate(T item)
+        public void RemoveImmediate(T item)
         {
             lock (_lock)
             {
                 base.Remove(item);
             }
         }
-        internal new void Remove(T item)
+        public new void Remove(T item)
         {
             lock (_itemsToRemove[_currentQueue])
             _itemsToRemove[_currentQueue].Add(item);
         }
 
-        internal void ClearQueuedItems(int queue)
+        public void ClearQueuedItems(int queue)
         {
             lock (_lock)
             {
@@ -154,7 +154,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal void HandleQueuedItems()
+        public void HandleQueuedItems()
         {
             if (!HasQueuedItems()) return;
 
@@ -167,12 +167,12 @@ namespace MortalDungeon.Engine_Classes
             ClearQueuedItems(queue);
         }
 
-        internal bool HasQueuedItems() 
+        public bool HasQueuedItems() 
         {
             return _itemsToAdd[_currentQueue].Count > 0 || _itemsToRemove[_currentQueue].Count > 0;
         }
 
-        internal void ManuallyIncrementChangeToken() 
+        public void ManuallyIncrementChangeToken() 
         {
             CHANGE_TOKEN++;
         }

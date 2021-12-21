@@ -5,13 +5,13 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class Cursor : UIObject
+    public class Cursor : UIObject
     {
-        internal UIScale CursorScale;
+        public UIScale CursorScale;
 
         private float _cursorWidthRatio = 0.055f;
         private float _cursorHeightRatio = 1.3f;
-        internal Cursor(Vector3 position, float textScale) 
+        public Cursor(Vector3 position, float textScale) 
         {
             CursorScale = new UIScale(_cursorWidthRatio * textScale, _cursorHeightRatio * textScale);
 

@@ -7,40 +7,40 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Game.Tiles
 {
-    internal class TileChunk : ITickable
+    public class TileChunk : ITickable
     {
-        internal const int DefaultChunkWidth = 10;
-        internal const int DefaultChunkHeight = 10;
+        public const int DefaultChunkWidth = 10;
+        public const int DefaultChunkHeight = 10;
 
-        internal Vector3 Center;
-        internal Vector3 SideLengths;
-        internal float Radius = 0; //radius in global coords 
+        public Vector3 Center;
+        public Vector3 SideLengths;
+        public float Radius = 0; //radius in global coords 
 
-        internal float LocalRadius = 0; //radius in local coords
+        public float LocalRadius = 0; //radius in local coords
 
-        internal List<BaseTile> Tiles = new List<BaseTile>();
-        internal List<Structure> Structures = new List<Structure>();
-        internal List<GameObject> GenericObjects = new List<GameObject>();
-        internal int Width = DefaultChunkWidth;
-        internal int Height = DefaultChunkHeight;
+        public List<BaseTile> Tiles = new List<BaseTile>();
+        public List<Structure> Structures = new List<Structure>();
+        public List<GameObject> GenericObjects = new List<GameObject>();
+        public int Width = DefaultChunkWidth;
+        public int Height = DefaultChunkHeight;
 
-        internal bool Cull = true;
+        public bool Cull = true;
 
-        internal TileChunk() { }
+        public TileChunk() { }
 
-        internal TileChunk(int width, int height) 
+        public TileChunk(int width, int height) 
         {
             Width = width;
             Height = height;
         }
 
-        internal void AddTile(BaseTile tile) 
+        public void AddTile(BaseTile tile) 
         {
             Tiles.Add(tile);
             tile.Chunk = this;
         }
 
-        internal void ClearChunk() 
+        public void ClearChunk() 
         {
             Tiles.ForEach(tile =>
             {
@@ -52,7 +52,7 @@ namespace MortalDungeon.Game.Tiles
             GenericObjects.Clear();
         }
 
-        internal void CalculateValues() 
+        public void CalculateValues() 
         {
             Center = (Tiles[0].Position + Tiles[^1].Position) / 2;
             Radius = new Vector3(Tiles[0].Position - Center).Length;
@@ -61,13 +61,13 @@ namespace MortalDungeon.Game.Tiles
             LocalRadius = WindowConstants.ConvertGlobalToLocalCoordinates(new Vector3(Tiles[0].Position - Center)).Length;
         }
 
-        internal void Tick() 
+        public void Tick() 
         {
             //Tiles.ForEach(tile => tile.Tick());
             Structures.ForEach(structure => structure.Tick());
         }
 
-        internal void OnCull()
+        public void OnCull()
         {
             if (Tiles.Count == 0)
                 return;

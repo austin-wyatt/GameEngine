@@ -9,7 +9,7 @@ namespace MortalDungeon.Engine_Classes
     /// <summary>
     /// Works similarly to the Animation class but changes properties such as transformations and color instead of the sprite.
     /// </summary>
-    internal class TimedAnimation : ITickable
+    public class TimedAnimation : ITickable
     {
         public RenderableObject BaseFrame;
         public List<TimedKeyframe> Keyframes = new List<TimedKeyframe>();
@@ -163,24 +163,24 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class TimedKeyframe
+    public class TimedKeyframe
     {
         /// <summary>
         /// in milliseconds
         /// </summary>
-        internal long ActivationTime = 0;
-        internal Action Action = null;
+        public long ActivationTime = 0;
+        public Action Action = null;
 
-        internal TimedKeyframe(long activationTime)
+        public TimedKeyframe(long activationTime)
         {
             ActivationTime = activationTime;
         }
-        internal TimedKeyframe(long activationTime, Action action)
+        public TimedKeyframe(long activationTime, Action action)
         {
             ActivationTime = activationTime;
             Action = action;
         }
 
-        internal TimedKeyframe() { }
+        public TimedKeyframe() { }
     }
 }

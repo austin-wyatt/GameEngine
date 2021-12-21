@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal enum UIEventType
+    public enum UIEventType
     {
         None,
         Click,
@@ -23,7 +23,7 @@ namespace MortalDungeon.Engine_Classes
         HoverEnd
     }
 
-    internal enum UIAnchorPosition
+    public enum UIAnchorPosition
     {
         Center,
         TopCenter,
@@ -36,61 +36,61 @@ namespace MortalDungeon.Engine_Classes
         RightCenter
     }
 
-    internal static class UIHelpers
+    public static class UIHelpers
     {
-        internal struct UIBorders
+        public struct UIBorders
         {
-            internal bool Left;
-            internal bool Right;
-            internal bool Top;
-            internal bool Bottom;
+            public bool Left;
+            public bool Right;
+            public bool Top;
+            public bool Bottom;
         }
 
-        internal const int BLOCK_WIDTH = 500;
-        internal const int BLOCK_HEIGHT = 500;
+        public const int BLOCK_WIDTH = 500;
+        public const int BLOCK_HEIGHT = 500;
 
-        internal static class Borders
+        public static class Borders
         {
-            internal static readonly UIBorders None = new UIBorders();
-            internal static readonly UIBorders All = new UIBorders { Bottom = true, Top = true, Left = true, Right = true };
-            internal static readonly UIBorders LeftOnly = new UIBorders { Left = true };
-            internal static readonly UIBorders RightOnly = new UIBorders { Right = true };
-            internal static readonly UIBorders TopOnly = new UIBorders { Top = true };
-            internal static readonly UIBorders BottomOnly = new UIBorders { Bottom = true };
-            internal static readonly UIBorders TopLeft = new UIBorders { Top = true, Left = true };
-            internal static readonly UIBorders BottomLeft = new UIBorders { Bottom = true, Left = true };
-            internal static readonly UIBorders TopRight = new UIBorders { Top = true, Right = true };
-            internal static readonly UIBorders BottomRight = new UIBorders { Bottom = true, Right = true };
-            internal static readonly UIBorders TopBottom = new UIBorders { Top = true, Bottom = true };
+            public static readonly UIBorders None = new UIBorders();
+            public static readonly UIBorders All = new UIBorders { Bottom = true, Top = true, Left = true, Right = true };
+            public static readonly UIBorders LeftOnly = new UIBorders { Left = true };
+            public static readonly UIBorders RightOnly = new UIBorders { Right = true };
+            public static readonly UIBorders TopOnly = new UIBorders { Top = true };
+            public static readonly UIBorders BottomOnly = new UIBorders { Bottom = true };
+            public static readonly UIBorders TopLeft = new UIBorders { Top = true, Left = true };
+            public static readonly UIBorders BottomLeft = new UIBorders { Bottom = true, Left = true };
+            public static readonly UIBorders TopRight = new UIBorders { Top = true, Right = true };
+            public static readonly UIBorders BottomRight = new UIBorders { Bottom = true, Right = true };
+            public static readonly UIBorders TopBottom = new UIBorders { Top = true, Bottom = true };
 
-            internal static readonly UIBorders OpenTop = new UIBorders { Bottom = true, Left = true, Right = true };
-            internal static readonly UIBorders OpenLeft = new UIBorders { Bottom = true, Top = true, Right = true };
-            internal static readonly UIBorders OpenBottom = new UIBorders { Top = true, Left = true, Right = true };
-            internal static readonly UIBorders OpenRight = new UIBorders { Bottom = true, Top = true, Left = true };
+            public static readonly UIBorders OpenTop = new UIBorders { Bottom = true, Left = true, Right = true };
+            public static readonly UIBorders OpenLeft = new UIBorders { Bottom = true, Top = true, Right = true };
+            public static readonly UIBorders OpenBottom = new UIBorders { Top = true, Left = true, Right = true };
+            public static readonly UIBorders OpenRight = new UIBorders { Bottom = true, Top = true, Left = true };
         }
 
-        internal static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
+        public static readonly Texture UI_BACKGROUND = Texture.LoadFromFile("Resources/FogTexture.png");
 
-        internal static readonly Vector3 BaseMargin = new Vector3(10, 10, 0);
-        internal static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
-        internal static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
+        public static readonly Vector3 BaseMargin = new Vector3(10, 10, 0);
+        public static readonly Vector3 BaseVerticalMargin = new Vector3(0, 10, 0);
+        public static readonly Vector3 BaseHorizontalMargin = new Vector3(10, 0, 0);
 
 
-        internal struct StringTooltipParameters 
+        public struct StringTooltipParameters 
         {
-            internal CombatScene Scene;
-            internal string Text;
-            internal GameObject HoverParent;
-            internal UIObject TooltipParent;
-            internal GeneralContextFlags TooltipFlag;
-            internal Vector3 Position;
-            internal UIAnchorPosition Anchor;
-            internal Vector4 BackgroundColor;
-            internal float TextScale;
+            public CombatScene Scene;
+            public string Text;
+            public GameObject HoverParent;
+            public UIObject TooltipParent;
+            public GeneralContextFlags TooltipFlag;
+            public Vector3 Position;
+            public UIAnchorPosition Anchor;
+            public Vector4 BackgroundColor;
+            public float TextScale;
 
-            internal bool EnforceScreenBounds;
+            public bool EnforceScreenBounds;
 
-            internal StringTooltipParameters(CombatScene scene, string text, GameObject hoverParent, UIObject baseObject) 
+            public StringTooltipParameters(CombatScene scene, string text, GameObject hoverParent, UIObject baseObject) 
             {
                 Scene = scene;
                 Text = text;
@@ -106,7 +106,7 @@ namespace MortalDungeon.Engine_Classes
                 EnforceScreenBounds = true;
             }
         }
-        internal static void CreateToolTip(StringTooltipParameters param)
+        public static void CreateToolTip(StringTooltipParameters param)
         {
             string tooltipName = "Tooltip" + param.TooltipFlag;
 
@@ -126,7 +126,7 @@ namespace MortalDungeon.Engine_Classes
 
             Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
-            TextComponent tooltip = new TextComponent();
+            TextComponent tooltip = new TextComponent(new TextRenderData() { Bold = false});
             tooltip.SetColor(Colors.UITextBlack);
             tooltip.SetText(param.Text);
             tooltip.SetTextScale(param.TextScale);
@@ -202,7 +202,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        internal static void CreateToolTip(CombatScene scene, Tooltip tooltip, UIObject tooltipParent, UIObject baseObject, GeneralContextFlags tooltipFlag = GeneralContextFlags.UITooltipOpen)
+        public static void CreateToolTip(CombatScene scene, Tooltip tooltip, UIObject tooltipParent, UIObject baseObject, GeneralContextFlags tooltipFlag = GeneralContextFlags.UITooltipOpen)
         {
             if (scene.ContextManager.GetFlag(tooltipFlag))
                 return;
@@ -239,7 +239,7 @@ namespace MortalDungeon.Engine_Classes
             CheckTooltipPlacement(tooltip, scene);
         }
 
-        internal static void NukeTooltips(GeneralContextFlags tooltipFlag, CombatScene scene) 
+        public static void NukeTooltips(GeneralContextFlags tooltipFlag, CombatScene scene) 
         {
             string tooltipName = "Tooltip" + tooltipFlag;
 
@@ -252,7 +252,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal static Tooltip GenerateTooltipWithHeader(string headerText, string bodyText)
+        public static Tooltip GenerateTooltipWithHeader(string headerText, string bodyText)
         {
             Tooltip tooltip = new Tooltip();
 
@@ -261,7 +261,7 @@ namespace MortalDungeon.Engine_Classes
             header.SetColor(Colors.UITextBlack);
             header.SetText(headerText);
 
-            TextComponent description = new TextComponent();
+            TextComponent description = new TextComponent(new TextRenderData() { Bold = false });
             description.SetTextScale(0.05f);
             description.SetColor(Colors.UITextBlack);
             description.SetText(bodyText);
@@ -288,7 +288,7 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Creates a context menu based on the passed Tooltip object. Returns an action that will delete the context menu when invoked (or null if a context menu is open already)
         /// </summary>
-        internal static void CreateContextMenu(CombatScene scene, Tooltip tooltip, UIObject baseObject, GeneralContextFlags contextFlag = GeneralContextFlags.ContextMenuOpen)
+        public static void CreateContextMenu(CombatScene scene, Tooltip tooltip, UIObject baseObject, GeneralContextFlags contextFlag = GeneralContextFlags.ContextMenuOpen)
         {
             if (scene.ContextManager.GetFlag(contextFlag))
                 return;
@@ -314,7 +314,7 @@ namespace MortalDungeon.Engine_Classes
             CheckTooltipPlacement(tooltip, scene);
         }
 
-        internal static (Tooltip tooltip, UIList itemList) GenerateContextMenuWithList(string headerText)
+        public static (Tooltip tooltip, UIList itemList) GenerateContextMenuWithList(string headerText)
         {
             Tooltip menu = new Tooltip();
 
@@ -355,7 +355,7 @@ namespace MortalDungeon.Engine_Classes
             return (menu, list);
         }
 
-        internal static void CheckTooltipPlacement(UIObject tooltip, Scene scene) 
+        public static void CheckTooltipPlacement(UIObject tooltip, Scene scene) 
         {
             Vector3 topLeft = tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft);
             Vector3 botRight = tooltip.GetAnchorPosition(UIAnchorPosition.BottomRight);
@@ -400,7 +400,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal static void AddTimedHoverTooltip(UIObject obj, string text, CombatScene scene)
+        public static void AddTimedHoverTooltip(UIObject obj, string text, CombatScene scene)
         {
             obj.HasTimedHoverEffect = true;
             obj.Hoverable = true;
@@ -424,7 +424,7 @@ namespace MortalDungeon.Engine_Classes
             obj.OnCleanUp += onCleanUp;
         }
 
-        internal static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, bool enforceUniqueness = false, bool createExitButton = true) 
+        public static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, bool enforceUniqueness = false, bool createExitButton = true) 
         {
             if (enforceUniqueness) 
             {
@@ -503,11 +503,11 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class UIDimensions
+    public class UIDimensions
     {
-        internal Vector2 _dimensions;
-        internal float X { get { return _dimensions.X; } set { _dimensions.X = value; } }
-        internal float Y { get { return _dimensions.Y; } set { _dimensions.Y = value; } }
+        public Vector2 _dimensions;
+        public float X { get { return _dimensions.X; } set { _dimensions.X = value; } }
+        public float Y { get { return _dimensions.Y; } set { _dimensions.Y = value; } }
 
         public static UIDimensions operator +(UIDimensions a, UIDimensions b) => new UIDimensions(a.X + b.X, a.Y + b.Y);
         public static Vector3 operator +(Vector3 b, UIDimensions a) => new Vector3(a.X + b.X, a.Y + b.Y, b.Z);
@@ -531,27 +531,27 @@ namespace MortalDungeon.Engine_Classes
             return new UIDimensions(vec.X, vec.Y);
         }
 
-        internal UIDimensions()
+        public UIDimensions()
         {
             _dimensions = new Vector2();
         }
 
-        internal UIDimensions(Vector2 dimensions)
+        public UIDimensions(Vector2 dimensions)
         {
             _dimensions = dimensions;
         }
 
-        internal UIDimensions(Vector3 dimensions)
+        public UIDimensions(Vector3 dimensions)
         {
             _dimensions = new Vector2(dimensions.X, dimensions.Y);
         }
 
-        internal UIDimensions(float x, float y)
+        public UIDimensions(float x, float y)
         {
             _dimensions = new Vector2(x, y);
         }
 
-        internal UIScale ToScale()
+        public UIScale ToScale()
         {
             return new UIScale(_dimensions.X / WindowConstants.ScreenUnits.X, _dimensions.Y / WindowConstants.ScreenUnits.Y);
         }
@@ -562,11 +562,11 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class UIScale
+    public class UIScale
     {
-        internal Vector2 _scale;
-        internal float X { get { return _scale.X; } set { _scale.X = value; } }
-        internal float Y { get { return _scale.Y; } set { _scale.Y = value; } }
+        public Vector2 _scale;
+        public float X { get { return _scale.X; } set { _scale.X = value; } }
+        public float Y { get { return _scale.Y; } set { _scale.Y = value; } }
 
 
         public static UIScale operator +(UIScale a, UIScale b) => new UIScale(a.X + b.X, a.Y + b.Y);
@@ -579,32 +579,32 @@ namespace MortalDungeon.Engine_Classes
             return self.ToDimensions();
         }
 
-        internal UIScale()
+        public UIScale()
         {
             _scale = new Vector2();
         }
 
-        internal UIScale(Vector2 scale)
+        public UIScale(Vector2 scale)
         {
             _scale = scale;
         }
 
-        internal UIScale(UIScale scale)
+        public UIScale(UIScale scale)
         {
             _scale = new Vector2(scale.X, scale.Y);
         }
 
-        internal UIScale(float x, float y)
+        public UIScale(float x, float y)
         {
             _scale = new Vector2(x, y);
         }
 
-        internal UIDimensions ToDimensions()
+        public UIDimensions ToDimensions()
         {
             return new UIDimensions(_scale.X * WindowConstants.ScreenUnits.X, _scale.Y * WindowConstants.ScreenUnits.Y);
         }
 
-        internal static float CoordToScale(float coord)
+        public static float CoordToScale(float coord)
         {
             return coord / WindowConstants.ScreenUnits.X;
         }
@@ -615,19 +615,19 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class BoundingArea
+    public class BoundingArea
     {
-        internal float MinX = 0;
-        internal float MaxX = 0;
-        internal float MinY = 0;
-        internal float MaxY = 0;
+        public float MinX = 0;
+        public float MaxX = 0;
+        public float MinY = 0;
+        public float MaxY = 0;
 
-        internal bool InBoundingArea(Vector3 position) 
+        public bool InBoundingArea(Vector3 position) 
         {
             return !(position.X < MinX || position.X > MaxX || position.Y > MinY || position.Y < MaxY);
         }
 
-        internal void UpdateBoundingArea(float minX, float maxX, float minY, float maxY) 
+        public void UpdateBoundingArea(float minX, float maxX, float minY, float maxY) 
         {
             MinX = minX;
             MaxX = maxX;

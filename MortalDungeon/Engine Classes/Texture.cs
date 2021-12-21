@@ -12,28 +12,29 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class BitmapImageData 
+    public class BitmapImageData 
     {
-        internal float[] ImageData;
-        internal Vector2i ImageDimensions;
+        public float[] ImageData;
+        public Vector2i ImageDimensions;
 
-        internal BitmapImageData(float[] imgData, Vector2i dimensions) 
+        public BitmapImageData(float[] imgData, Vector2i dimensions) 
         {
             ImageData = imgData;
             ImageDimensions = dimensions;
         }
-        internal BitmapImageData() { }
+        public BitmapImageData() { }
     }
 
-    internal class Texture
+    public class Texture
     {
-        internal readonly int Handle;
-        internal BitmapImageData ImageData = null;
-        internal TextureName TextureName = TextureName.Unknown;
+        public readonly int Handle;
+        public BitmapImageData ImageData = null;
+        public TextureName TextureName = TextureName.Unknown;
 
-        internal static Dictionary<TextureUnit, TextureName> UsedTextures = new Dictionary<TextureUnit, TextureName>();
+        public static Dictionary<TextureUnit, TextureName> UsedTextures = new Dictionary<TextureUnit, TextureName>();
 
-        internal static Texture LoadFromFile(string path, bool nearest = true, TextureName name = TextureName.Unknown)
+        public Texture() { }
+        public static Texture LoadFromFile(string path, bool nearest = true, TextureName name = TextureName.Unknown, bool generateMipMaps = true)
         {
             // Generate handle
             int handle = GL.GenTexture();
@@ -62,29 +63,40 @@ namespace MortalDungeon.Engine_Classes
                     data.Scan0);
             }
 
-            if (nearest)
+            if (generateMipMaps)
             {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                if (nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+
+
+                //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
             else 
             {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             }
-            
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
             Texture tex = new Texture(handle, name);
 
             return tex;
         }
 
-        internal static Texture LoadFromArray(float[] data, Vector2i imageDimensions, bool nearest = true, TextureName name = TextureName.Unknown)
+        public static Texture LoadFromArray(float[] data, Vector2i imageDimensions, bool nearest = true, TextureName name = TextureName.Unknown)
         {
             // Generate handle
             int handle = GL.GenTexture();
@@ -130,7 +142,7 @@ namespace MortalDungeon.Engine_Classes
             return tex;
         }
 
-        //internal void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
+        //public void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
         //{
         //    Stopwatch stopwatch = new Stopwatch();
         //    stopwatch.Restart();
@@ -172,13 +184,13 @@ namespace MortalDungeon.Engine_Classes
         //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         //}
 
-        internal Texture(int glHandle, TextureName name)
+        public Texture(int glHandle, TextureName name)
         {
             Handle = glHandle;
             TextureName = name;
         }
 
-        internal void Use(TextureUnit unit)
+        public void Use(TextureUnit unit)
         {
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, Handle);

@@ -14,23 +14,23 @@ using static MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Game.UI.Dev
 {
-    internal class EntityManagerUI
+    public class EntityManagerUI
     {
-        internal UIObject Window;
+        public UIObject Window;
 
-        internal UIObject AddEntityWindow;
-        internal UIObject EntityPropertiesWindow;
-        internal UIObject EntityAbilitiesWindow;
-        internal UIObject UnitPrefabWindow;
+        public UIObject AddEntityWindow;
+        public UIObject EntityPropertiesWindow;
+        public UIObject EntityAbilitiesWindow;
+        public UIObject UnitPrefabWindow;
 
-        internal CombatScene Scene;
+        public CombatScene Scene;
 
         private ScrollableArea EntityArea;
         private UIList EntityList;
 
-        internal bool Displayed = false;
+        public bool Displayed = false;
 
-        internal EntityManagerUI(CombatScene scene)
+        public EntityManagerUI(CombatScene scene)
         {
             Scene = scene;
 
@@ -106,7 +106,7 @@ namespace MortalDungeon.Game.UI.Dev
             PopulateEntityList();
         }
 
-        internal void PopulateEntityList() 
+        public void PopulateEntityList() 
         {
             EntityList.ClearItems();
 
@@ -119,7 +119,7 @@ namespace MortalDungeon.Game.UI.Dev
             }
         }
 
-        internal void CreateContextMenuFromEntity(Entity entity)
+        public void CreateContextMenuFromEntity(Entity entity)
         {
             (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(entity.Handle.Name);
 
@@ -169,7 +169,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Scene.OpenContextMenu(menu);
         }
-        internal void CreateAbilityContextMenu(Ability ability)
+        public void CreateAbilityContextMenu(Ability ability)
         {
             (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(ability.Name);
 
@@ -209,7 +209,7 @@ namespace MortalDungeon.Game.UI.Dev
         }
 
 
-        internal void CreateAddEntityWindow() 
+        public void CreateAddEntityWindow() 
         {
             if (AddEntityWindow != null) 
             {
@@ -332,7 +332,7 @@ namespace MortalDungeon.Game.UI.Dev
 
 
 
-        internal void CreateEntityPropertiesWindow(Entity entity)
+        public void CreateEntityPropertiesWindow(Entity entity)
         {
             if (EntityPropertiesWindow != null)
             {
@@ -424,7 +424,7 @@ namespace MortalDungeon.Game.UI.Dev
         }
 
 
-        internal void CreateEntityAbilitiesWindow(Entity entity)
+        public void CreateEntityAbilitiesWindow(Entity entity)
         {
             #region basic window
             if (EntityAbilitiesWindow != null)
@@ -498,24 +498,24 @@ namespace MortalDungeon.Game.UI.Dev
 
             Select abilityPrefabSelect = new Select(new UIScale(0.8f, 0.1f), 0.05f);
 
-            foreach (Prefab prefab in EntityParser.Prefabs)
-            {
-                if (prefab.Type != PrefabType.Ability)
-                    continue;
+            //foreach (Prefab prefab in EntityParser.Prefabs)
+            //{
+            //    if (prefab.Type != PrefabType.Ability)
+            //        continue;
 
-                SelectItem item = abilityPrefabSelect.AddItem($"{prefab.Name}{(prefab.HasProfile ? " *" : "")}", () =>
-                {
-                    Ability newAbility = EntityParser.ApplyPrefabToAbility(prefab, entity.Handle);
+            //    SelectItem item = abilityPrefabSelect.AddItem($"{prefab.Name}{(prefab.HasProfile ? " *" : "")}", () =>
+            //    {
+            //        Ability newAbility = EntityParser.ApplyPrefabToAbility(prefab, entity.Handle);
 
-                    if (newAbility == null)
-                        return;
+            //        if (newAbility == null)
+            //            return;
 
-                    entity.Handle.Info.Abilities.Add(newAbility);
+            //        entity.Handle.Info.Abilities.Add(newAbility);
 
-                    PopulateEntityList();
-                    populateAbilityList();
-                });
-            }
+            //        PopulateEntityList();
+            //        populateAbilityList();
+            //    });
+            //}
 
             abilityPrefabSelect.SetPositionFromAnchor(scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
@@ -525,7 +525,7 @@ namespace MortalDungeon.Game.UI.Dev
             Window.AddChild(EntityAbilitiesWindow, 10000);
         }
 
-        internal void CreateUnitPrefabWindow(Entity entity)
+        public void CreateUnitPrefabWindow(Entity entity)
         {
             UnitPrefabWindow = UIHelpers.CreateWindow(new UIScale(1f, 1f), "UnitPrefabWindow", Window, Scene, true);
 

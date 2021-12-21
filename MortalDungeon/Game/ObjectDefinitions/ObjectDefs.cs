@@ -7,7 +7,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Objects
 {
-    internal enum ObjectIDs
+    public enum ObjectIDs
     {
         Unknown = -1,
         CURSOR = 0,
@@ -20,9 +20,9 @@ namespace MortalDungeon.Game.Objects
     }
 
     //Where static object defs are defined for usage with renderable objects, animations, etc
-    internal static class CursorObjects
+    public static class CursorObjects
     {
-        internal static readonly ObjectDefinition MAIN_CURSOR = new ObjectDefinition(
+        public static readonly ObjectDefinition MAIN_CURSOR = new ObjectDefinition(
             new float[]{
                 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, // top right
                 0, 0, 1, // normal (facing up)
@@ -43,10 +43,10 @@ namespace MortalDungeon.Game.Objects
         );
     }
 
-    internal static class TestObjects
+    public static class TestObjects
     {
 
-        internal static readonly ObjectDefinition TEST_SPRITESHEET = new ObjectDefinition(
+        public static readonly ObjectDefinition TEST_SPRITESHEET = new ObjectDefinition(
             new float[]{
             0.5f, 0.5f, 0.0f, 0.2f, 0.0f,
             0.5f, -0.5f, 0.0f, 0.2f, 0.1f,
@@ -71,10 +71,10 @@ namespace MortalDungeon.Game.Objects
         );
     }
 
-    internal static class EnvironmentObjects
+    public static class EnvironmentObjects
     {
-        internal static readonly ObjectDefinition FIRE_BASE = new SpritesheetObject(2, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.FIRE_BASE);
-        internal static readonly float[] BaseTileBounds = new float[]{
+        public static readonly ObjectDefinition FIRE_BASE = new SpritesheetObject(2, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.FIRE_BASE);
+        public static readonly float[] BaseTileBounds = new float[]{
         0.26093745f, -0.44166672f, 0.0f,
         -0.253125f, -0.44166672f, 0.0f,
         -0.484375f, -0.008333325f, 0.0f,
@@ -82,9 +82,9 @@ namespace MortalDungeon.Game.Objects
         0.2578125f, 0.41388887f, 0.0f,
         0.49843752f, -0.0055555105f, 0.0f,
         };
-        internal static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
+        public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
 
-        internal static readonly float[] UIBlockBounds = new float[] 
+        public static readonly float[] UIBlockBounds = new float[] 
         {
             -0.5f, -0.5f, 0.0f,
             -0.5f, 0.5f, 0.0f,
@@ -93,18 +93,18 @@ namespace MortalDungeon.Game.Objects
         };
     }
 
-    internal static class _3DObjects 
+    public static class _3DObjects 
     {
-        internal static Object3D WallObj = OBJParser.ParseOBJ("Resources/Wall.obj");
-        internal static Object3D WallCornerObj = OBJParser.ParseOBJ("Resources/WallCorner.obj");
-        internal static Object3D Ball = OBJParser.ParseOBJ("Resources/Ball.obj");
-        //internal static Object3D Monkey = OBJParser.ParseOBJ("Resources/Monkey.obj");
-        internal static Object3D Cube = OBJParser.ParseOBJ("Resources/Cube.obj");
-        internal static Object3D Wall3D = OBJParser.ParseOBJ("Resources/WallObj.obj");
-        internal static Object3D WallCorner3D = OBJParser.ParseOBJ("Resources/WallCornerObj.obj");
-        internal static Object3D Tent = OBJParser.ParseOBJ("Resources/3D models/Tent.obj");
+        public static Object3D WallObj = OBJParser.ParseOBJ("Resources/Wall.obj");
+        public static Object3D WallCornerObj = OBJParser.ParseOBJ("Resources/WallCorner.obj");
+        public static Object3D Ball = OBJParser.ParseOBJ("Resources/Ball.obj");
+        //public static Object3D Monkey = OBJParser.ParseOBJ("Resources/Monkey.obj");
+        public static Object3D Cube = OBJParser.ParseOBJ("Resources/Cube.obj");
+        public static Object3D Wall3D = OBJParser.ParseOBJ("Resources/WallObj.obj");
+        public static Object3D WallCorner3D = OBJParser.ParseOBJ("Resources/WallCornerObj.obj");
+        public static Object3D Tent = OBJParser.ParseOBJ("Resources/3D models/Tent.obj");
 
-        internal static RenderableObject CreateObject(SpritesheetObject spritesheet, Object3D obj) 
+        public static RenderableObject CreateObject(SpritesheetObject spritesheet, Object3D obj) 
         {
             RenderableObject testObj = new RenderableObject(spritesheet.Create3DObjectDefinition(obj), new Vector4(1, 1, 1, 1), Shaders.FAST_DEFAULT_SHADER);
             testObj.CameraPerspective = true;
@@ -112,7 +112,7 @@ namespace MortalDungeon.Game.Objects
             return testObj;
         }
 
-        internal static BaseObject CreateBaseObject(SpritesheetObject spritesheet, Object3D obj, Vector3 position)
+        public static BaseObject CreateBaseObject(SpritesheetObject spritesheet, Object3D obj, Vector3 position)
         {
             BaseObject testObj = new BaseObject(CreateObject(spritesheet, obj), 0, "", position);
 
@@ -123,7 +123,7 @@ namespace MortalDungeon.Game.Objects
             return testObj;
         }
 
-        internal static void PrintObjectVertices(Object3D obj) 
+        public static void PrintObjectVertices(Object3D obj) 
         {
             Console.Write("[");
 
@@ -144,19 +144,19 @@ namespace MortalDungeon.Game.Objects
     }
 
 
-    internal class LineObject
+    public class LineObject
     {
         Vector3 Point1;
         Vector3 Point2;
         float Thickness;
-        internal LineObject(Vector3 point1, Vector3 point2, float thickness = 0.01f)
+        public LineObject(Vector3 point1, Vector3 point2, float thickness = 0.01f)
         {
             Point1 = point1;
             Point2 = point2;
             Thickness = thickness;
         }
 
-        internal ObjectDefinition CreateLineDefinition()
+        public ObjectDefinition CreateLineDefinition()
         {
             return new ObjectDefinition(
             new float[] {
@@ -178,13 +178,13 @@ namespace MortalDungeon.Game.Objects
         }
     }
 
-    internal class SpritesheetObject
+    public class SpritesheetObject
     {
-        internal int SpritesheetPosition = 0;
-        internal Vector2 SideLengths = new Vector2(1, 1); //allows multiple spreadsheet tiles to be used to define a texture
-        internal Spritesheet Spritesheet;
+        public int SpritesheetPosition = 0;
+        public Vector2 SideLengths = new Vector2(1, 1); //allows multiple spreadsheet tiles to be used to define a texture
+        public Spritesheet Spritesheet;
 
-        internal SpritesheetObject(int position, Spritesheet spritesheet, int xLength = 1, int yLength = -1)
+        public SpritesheetObject(int position, Spritesheet spritesheet, int xLength = 1, int yLength = -1)
         {
             SpritesheetPosition = position;
             Spritesheet = spritesheet;
@@ -200,11 +200,11 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
-        internal ObjectDefinition CreateObjectDefinition(bool fastRendering, ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null) 
+        public ObjectDefinition CreateObjectDefinition(bool fastRendering, ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null) 
         {
             return CreateObjectDefinition(ID, bounds, fastRendering);
         }
-        internal ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true, bool invertTexture = false)
+        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true, bool invertTexture = false)
         {
 
             float[] defaultBounds = new float[]{
@@ -277,7 +277,7 @@ namespace MortalDungeon.Game.Objects
             return returnDef;
         }
 
-        internal ObjectDefinition Create3DObjectDefinition(Object3D object3D, float[] bounds = null, bool fastRendering = true, bool invertTexture = false)
+        public ObjectDefinition Create3DObjectDefinition(Object3D object3D, float[] bounds = null, bool fastRendering = true, bool invertTexture = false)
         {
             float[] defaultBounds = new float[]{
                 0.5f, 0.5f, 0.0f,

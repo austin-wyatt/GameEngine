@@ -10,7 +10,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    internal class BanditCamp : FeatureEquation
+    public class BanditCamp : FeatureEquation
     {
         private enum CampFeatures
         {
@@ -25,13 +25,15 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
         private List<BuildingSkeleton> TentSkeletons = new List<BuildingSkeleton>();
 
-        internal BanditCamp(BanditCampParams @params)
+        public BanditCamp(BanditCampParams @params)
         {
             CampParams = @params;
             NumberGen = new Random(HashCoordinates(@params.Origin.X, @params.Origin.Y));
+
+            FeatureID = HashCoordinates(@params.Origin.X, @params.Origin.Y);
         }
 
-        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
+        public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
@@ -105,12 +107,16 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     }
                 }
 
-                if(GetBit(value, 2) && freshGeneration) 
+                long pointHash = affectedPoint.GetUniqueHash();
+                if (GetBit(value, 2) && freshGeneration && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash)) 
                 {
                     Entity enemy = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
                     EntityManager.AddEntity(enemy);
 
                     enemy.Handle.pack_name = "bandit camp" + FeatureID;
+
+                    enemy.Handle.FeatureID = FeatureID;
+                    enemy.Handle.FeatureHash = pointHash;
 
                     enemy.DestroyOnUnload = true;
 
@@ -125,7 +131,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        internal override void GenerateFeature()
+        public override void GenerateFeature()
         {
             ClearAffectedPoints();
 
@@ -230,7 +236,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        internal override void OnAppliedToMaps()
+        public override void OnAppliedToMaps()
         {
             base.OnAppliedToMaps();
 
@@ -242,11 +248,11 @@ namespace MortalDungeon.Game.Map.FeatureEquations
     }
 
 
-    internal struct BanditCampParams
+    public struct BanditCampParams
     {
-        internal FeaturePoint Origin;
+        public FeaturePoint Origin;
 
-        internal BanditCampParams(FeaturePoint origin)
+        public BanditCampParams(FeaturePoint origin)
         {
             Origin = origin;
         }

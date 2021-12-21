@@ -8,50 +8,52 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map
 {
-    internal class FeatureEquation
+    public class FeatureEquation
     {
-        internal const int MAP_WIDTH = 50;
-        internal const int MAP_HEIGHT = 50;
+        public const int MAP_WIDTH = 50;
+        public const int MAP_HEIGHT = 50;
 
-        internal Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
-        internal HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
+        public Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
+        public HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
 
-        internal HashSet<TileMapPoint> AffectedMaps = new HashSet<TileMapPoint>();
+        public HashSet<TileMapPoint> AffectedMaps = new HashSet<TileMapPoint>();
 
         /// <summary>
         /// If the tile map we are loading is within this load radius of maps then we should load and check this feature.
         /// </summary>
-        internal float LoadRadius = 100;
+        public float LoadRadius = 100;
 
-        internal int FeatureID => _featureID;
-        protected int _featureID = _currentFeatureID++;
-        protected static int _currentFeatureID = 0;
+        //public int FeatureID => _featureID;
+        //protected int _featureID = _currentFeatureID++;
+        //protected static int _currentFeatureID = 0;
+
+        public int FeatureID = -1;
 
         /// <summary>
         /// Applies any feature effects to a relevant tile.
         /// </summary>
         /// <param name="freshGeneration">Whether this is a newly added map or one that has already been loaded. 
         /// The main use for this is resolving features that span multiple tilemaps and must seem contiguous (such as buildings)</param>
-        internal virtual void ApplyToTile(BaseTile tile, bool freshGeneration = true)
+        public virtual void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
 
         }
 
-        internal virtual bool AffectsMap(TileMap map)
+        public virtual bool AffectsMap(TileMap map)
         {
             return AffectedMaps.TryGetValue(map.TileMapCoords, out var _);
         }
 
-        internal virtual bool AffectsPoint(TilePoint point)
+        public virtual bool AffectsPoint(TilePoint point)
         {
             return AffectedPoints.TryGetValue(new FeaturePoint(PointToMapCoords(point)), out int feature);
         }
-        internal virtual bool AffectsPoint(FeaturePoint point)
+        public virtual bool AffectsPoint(FeaturePoint point)
         {
             return AffectedPoints.TryGetValue(point, out int feature);
         }
 
-        internal virtual void ApplyToMap(TileMap map, bool freshGeneration = true)
+        public virtual void ApplyToMap(TileMap map, bool freshGeneration = true)
         {
             map.Tiles.ForEach(t =>
             {
@@ -59,7 +61,7 @@ namespace MortalDungeon.Game.Map
             });
         }
 
-        internal virtual void OnAppliedToMaps() 
+        public virtual void OnAppliedToMaps() 
         {
 
         }
@@ -67,9 +69,9 @@ namespace MortalDungeon.Game.Map
         /// <summary>
         /// The AffectedPoints hash set is filled here. This should only be run if the LoadRadius condition is satisfied
         /// </summary>
-        internal virtual void GenerateFeature() { }
+        public virtual void GenerateFeature() { }
 
-        internal static Vector2i PointToMapCoords(TilePoint point)
+        public static Vector2i PointToMapCoords(TilePoint point)
         {
             Vector2i coords = new Vector2i
             {
@@ -80,7 +82,7 @@ namespace MortalDungeon.Game.Map
             return coords;
         }
 
-        internal static TileMapPoint FeaturePointToTileMapCoords(FeaturePoint point, int mapWidth = 50, int mapHeight = 50)
+        public static TileMapPoint FeaturePointToTileMapCoords(FeaturePoint point, int mapWidth = 50, int mapHeight = 50)
         {
             TileMapPoint coords = new TileMapPoint((int)Math.Floor((float)point.X / mapWidth), (int)Math.Floor((float)point.Y / mapHeight));
 
@@ -88,14 +90,14 @@ namespace MortalDungeon.Game.Map
         }
 
 
-        internal struct FeaturePathToPointParameters
+        public struct FeaturePathToPointParameters
         {
-            internal FeaturePoint StartingPoint;
-            internal FeaturePoint EndingPoint;
-            internal Random NumberGen;
+            public FeaturePoint StartingPoint;
+            public FeaturePoint EndingPoint;
+            public Random NumberGen;
 
 
-            internal FeaturePathToPointParameters(FeaturePoint startingPoint, FeaturePoint endPoint)
+            public FeaturePathToPointParameters(FeaturePoint startingPoint, FeaturePoint endPoint)
             {
                 StartingPoint = startingPoint;
                 EndingPoint = endPoint;
@@ -104,7 +106,7 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        internal List<FeaturePoint> GetPathToPoint(FeaturePathToPointParameters param)
+        public List<FeaturePoint> GetPathToPoint(FeaturePathToPointParameters param)
         {
             List<FeaturePointWithParent> pointList = new List<FeaturePointWithParent>();
             List<FeaturePoint> returnList = new List<FeaturePoint>();
@@ -179,7 +181,7 @@ namespace MortalDungeon.Game.Map
             return returnList;
         }
 
-        internal void GetRingOfTiles(FeaturePoint startPoint, List<FeaturePoint> outputList, int radius = 1)
+        public void GetRingOfTiles(FeaturePoint startPoint, List<FeaturePoint> outputList, int radius = 1)
         {
             Vector3i cubePosition = CubeMethods.OffsetToCube(startPoint);
 
@@ -200,7 +202,7 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        internal void GetNeighboringTiles(FeaturePoint tile, List<FeaturePoint> neighborList, bool shuffle = true, Random numberGen = null)
+        public void GetNeighboringTiles(FeaturePoint tile, List<FeaturePoint> neighborList, bool shuffle = true, Random numberGen = null)
         {
             FeaturePoint neighborPos = new FeaturePoint(tile.X, tile.Y);
             int yOffset = tile.X % 2 == 0 ? 1 : 0;
@@ -248,7 +250,7 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        internal FeaturePoint GetNeighboringTile(FeaturePoint point, Direction direction)
+        public FeaturePoint GetNeighboringTile(FeaturePoint point, Direction direction)
         {
             FeaturePoint neighborPos = new FeaturePoint(point.X, point.Y);
             int yOffset = point.X % 2 == 0 ? 1 : 0;
@@ -284,7 +286,7 @@ namespace MortalDungeon.Game.Map
             return neighborPos;
         }
 
-        internal void GetLine(FeaturePoint startPoint, FeaturePoint endPoint, List<FeaturePoint> outputList)
+        public void GetLine(FeaturePoint startPoint, FeaturePoint endPoint, List<FeaturePoint> outputList)
         {
             Vector3i startCube = CubeMethods.OffsetToCube(startPoint);
             Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
@@ -309,7 +311,7 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        internal static Direction DirectionBetweenTiles(TilePoint startPoint, TilePoint endPoint)
+        public static Direction DirectionBetweenTiles(TilePoint startPoint, TilePoint endPoint)
         {
             Direction direction = Direction.None;
 
@@ -345,7 +347,7 @@ namespace MortalDungeon.Game.Map
 
             return direction;
         }
-        internal static Direction DirectionBetweenTiles(FeaturePoint startPoint, FeaturePoint endPoint)
+        public static Direction DirectionBetweenTiles(FeaturePoint startPoint, FeaturePoint endPoint)
         {
             Direction direction = Direction.None;
 
@@ -378,7 +380,7 @@ namespace MortalDungeon.Game.Map
 
             return direction;
         }
-        internal static int AngleBetweenDirections(Direction a, Direction b)
+        public static int AngleBetweenDirections(Direction a, Direction b)
         {
             int temp = (int)a - (int)b;
 
@@ -396,7 +398,7 @@ namespace MortalDungeon.Game.Map
             return angle;
         }
 
-        internal static int GetDistanceBetweenPoints(FeaturePoint pointA, FeaturePoint pointB)
+        public static int GetDistanceBetweenPoints(FeaturePoint pointA, FeaturePoint pointB)
         {
             Vector3i a = CubeMethods.OffsetToCube(pointA);
             Vector3i b = CubeMethods.OffsetToCube(pointB);
@@ -404,7 +406,7 @@ namespace MortalDungeon.Game.Map
             return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
 
-        internal static int AngleOfDirection(Direction dir)
+        public static int AngleOfDirection(Direction dir)
         {
             return ((int)dir + 2) * 60; //subtract 2 from the direction so that the default direction is north
         }
@@ -431,7 +433,7 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        internal static int HashCoordinates(int x, int y)
+        public static int HashCoordinates(int x, int y)
         {
             int h = x * 374761393 + y * 668265263;
             h = (h ^ (h >> 13)) * 1274126177;
@@ -441,13 +443,13 @@ namespace MortalDungeon.Game.Map
         /// <summary>
         /// This is where the point gets associated with a specific feature
         /// </summary>
-        internal void AddAffectedPoint(FeaturePoint point, int feature)
+        public void AddAffectedPoint(FeaturePoint point, int feature)
         {
             AffectedPoints.TryAdd(point, feature);
             AffectedMaps.Add(FeaturePointToTileMapCoords(point));
         }
 
-        internal void ClearAffectedPoints() 
+        public void ClearAffectedPoints() 
         {
             AffectedPoints.Clear();
             AffectedMaps.Clear();
@@ -461,14 +463,14 @@ namespace MortalDungeon.Game.Map
         }
     }
 
-    internal struct FeaturePoint
+    public struct FeaturePoint
     {
-        internal int X;
-        internal int Y;
+        public int X;
+        public int Y;
 
-        internal bool _visited;
+        public bool _visited;
 
-        internal FeaturePoint(int x, int y) 
+        public FeaturePoint(int x, int y) 
         {
             X = x;
             Y = y;
@@ -476,7 +478,7 @@ namespace MortalDungeon.Game.Map
             _visited = false;
         }
 
-        internal FeaturePoint(TilePoint tilePoint) 
+        public FeaturePoint(TilePoint tilePoint) 
         {
             Vector2i coords = FeatureEquation.PointToMapCoords(tilePoint);
 
@@ -486,12 +488,12 @@ namespace MortalDungeon.Game.Map
             _visited = false;
         }
 
-        internal FeaturePoint(BaseTile tile) 
+        public FeaturePoint(BaseTile tile) 
         {
             this = new FeaturePoint(tile.TilePoint);
         }
 
-        internal FeaturePoint(Vector2i coords)
+        public FeaturePoint(Vector2i coords)
         {
             X = coords.X;
             Y = coords.Y;
@@ -499,7 +501,7 @@ namespace MortalDungeon.Game.Map
             _visited = false;
         }
 
-        internal FeaturePoint(FeaturePoint coords)
+        public FeaturePoint(FeaturePoint coords)
         {
             X = coords.X;
             Y = coords.Y;
@@ -515,24 +517,29 @@ namespace MortalDungeon.Game.Map
             return base.Equals(obj);
         }
 
-        public override int GetHashCode()
+        public long GetUniqueHash()
         {
-            return HashCode.Combine(X, Y);
+            return ((long)X << 32) + Y;
         }
 
         public override string ToString()
         {
             return $"{{{X}, {Y}}}";
         }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y);
+        }
     }
 
-    internal class FeaturePointWithParent 
+    public class FeaturePointWithParent 
     {
-        internal FeaturePoint Point;
-        internal FeaturePoint Parent;
-        internal bool IsRoot;
+        public FeaturePoint Point;
+        public FeaturePoint Parent;
+        public bool IsRoot;
 
-        internal FeaturePointWithParent(FeaturePoint point, FeaturePoint parent, bool isRoot = false) 
+        public FeaturePointWithParent(FeaturePoint point, FeaturePoint parent, bool isRoot = false) 
         {
             Point = point;
             Parent = parent;
@@ -541,7 +548,7 @@ namespace MortalDungeon.Game.Map
         }
     }
 
-    internal enum Feature 
+    public enum Feature 
     {
         None,
         Grass,

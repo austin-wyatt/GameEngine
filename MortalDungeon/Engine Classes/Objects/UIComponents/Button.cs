@@ -3,12 +3,12 @@ using System;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal class Button : UIObject
+    public class Button : UIObject
     {
-        internal TextComponent TextBox;
-        internal Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
+        public TextComponent TextBox;
+        public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
 
-        internal Button(Vector3 position, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
+        public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
         {
             Position = position;
             Size = size;
@@ -61,7 +61,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        internal override void OnHover()
+        public override void OnHover()
         {
             if (!Hovered)
             {
@@ -73,7 +73,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.OnHover();
         }
 
-        internal override void OnHoverEnd()
+        public override void OnHoverEnd()
         {
             if (Hovered)
             {
@@ -83,14 +83,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.OnHoverEnd();
         }
 
-        internal override void OnMouseDown()
+        public override void OnMouseDown()
         {
             base.OnMouseDown();
             Vector4 mouseDownColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
 
             SetColor(mouseDownColor);
         }
-        internal override void OnMouseUp()
+        public override void OnMouseUp()
         {
             base.OnMouseUp();
             Vector4 hoveredColor = new Vector4(BaseColor.X - 0.1f, BaseColor.Y - 0.1f, BaseColor.Z - 0.1f, BaseColor.W);
@@ -98,7 +98,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetColor(hoveredColor);
         }
 
-        internal override void OnClick()
+        public override void OnClick()
         {
             base.OnClick();
 
@@ -106,7 +106,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             sound.Play();
         }
 
-        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
+        public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
         {
             if (Disabled) 
             {
@@ -121,14 +121,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        internal override void OnDisabled(bool disable)
+        public override void OnDisabled(bool disable)
         {
             base.OnDisabled(disable);
 
             SetColor(BaseColor);
         }
 
-        internal void SetSelected(bool selected) 
+        public void SetSelected(bool selected) 
         {
             Selected = selected;
 

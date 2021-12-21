@@ -4,9 +4,9 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal static class BitOps
+    public static class BitOps
     {
-        internal static bool GetBit(int num, int bitNumber)
+        public static bool GetBit(int num, int bitNumber)
         {
             return (num & (1 << bitNumber)) != 0;
         }

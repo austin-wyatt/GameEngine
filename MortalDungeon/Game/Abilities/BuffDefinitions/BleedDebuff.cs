@@ -9,10 +9,10 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class BleedDebuff : Buff
+    public class BleedDebuff : Buff
     {
-        internal float Damage;
-        internal BleedDebuff(Unit affected, int duration, float damage) : base(affected, duration)
+        public float Damage;
+        public BleedDebuff(Unit affected, int duration, float damage) : base(affected, duration)
         {
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BleedingDagger, Spritesheets.IconSheet);
             Name = "Bleed";
@@ -21,21 +21,21 @@ namespace MortalDungeon.Game.Abilities
             Damage = damage;
         }
 
-        internal override Icon GenerateIcon(UIScale scale)
+        public override Icon GenerateIcon(UIScale scale)
         {
             Icon icon = GenerateIcon(scale, true, Icon.BackgroundType.DebuffBackground);
 
             return icon;
         }
 
-        internal override void OnTurnStart()
+        public override void OnTurnStart()
         {
             AffectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Buff = this });
 
             base.OnTurnStart();
         }
 
-        internal override DamageInstance GetDamageInstance()
+        public override DamageInstance GetDamageInstance()
         {
             DamageInstance instance = new DamageInstance();
 
@@ -44,7 +44,7 @@ namespace MortalDungeon.Game.Abilities
             return instance;
         }
 
-        internal override Tooltip GenerateTooltip()
+        public override Tooltip GenerateTooltip()
         {
             Tooltip tooltip = new Tooltip();
 

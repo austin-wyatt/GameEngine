@@ -5,12 +5,12 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map
 {
-    internal class Cell
+    public class Cell
     {
         protected int CellSeed = 0;
-        internal int[] CellLocation = new int[2]; //0, 0 is in the top left
+        public int[] CellLocation = new int[2]; //0, 0 is in the top left
 
-        internal Cell(int[] location) 
+        public Cell(int[] location) 
         {
             if (location.Length == 2) 
             {

@@ -5,27 +5,34 @@ using System.Text;
 
 namespace MortalDungeon.Game.Units
 {
-    internal class UnitProfile
+
+    public enum UnitProfileType 
     {
-        internal string Name;
-        internal Func<CombatScene, Unit> CreateUnit;
+        Unknown,
+        Guy,
+        Skeleton
     }
 
-    internal static class UnitProfiles 
+    public class UnitProfile
     {
-        internal static List<UnitProfile> Profiles = new List<UnitProfile>();
+        public string Name;
+        public Func<CombatScene, Unit> CreateUnit;
+        public UnitProfileType Type;
+    }
+
+    public static class UnitProfiles 
+    {
+        public static List<UnitProfile> Profiles = new List<UnitProfile>();
 
         static UnitProfiles()
         {
-            UnitProfile Guy = new UnitProfile() { Name = "Guy" };
-            Guy.CreateUnit = (scene) => new Guy(scene);
+            UnitProfile Guy = new UnitProfile() { Name = "Guy", Type = UnitProfileType.Guy};
+            Guy.CreateUnit = (scene) => new Guy(scene) { ProfileType = UnitProfileType.Guy };
             Profiles.Add(Guy);
 
-            UnitProfile Skeleton = new UnitProfile() { Name = "Skeleton" };
-            Skeleton.CreateUnit = (scene) => new Skeleton(scene);
+            UnitProfile Skeleton = new UnitProfile() { Name = "Skeleton", Type = UnitProfileType.Skeleton };
+            Skeleton.CreateUnit = (scene) => new Skeleton(scene) { ProfileType = UnitProfileType.Skeleton };
             Profiles.Add(Skeleton);
-
-
         }
     }
 }

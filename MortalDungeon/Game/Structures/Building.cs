@@ -14,39 +14,39 @@ namespace MortalDungeon.Game.Structures
     /// <summary>
     /// Multi-tile structure. The 
     /// </summary>
-    internal class Building : Structure
+    public class Building : Structure
     {
 
         /// <summary>
         /// Stored as cube coordinates that are applied relative to the actual tile position that is holding the structure.
         /// The TileAction function is called for each tile in the TilePattern list to determine what should be done to the tiles.
         /// </summary>
-        internal List<Vector3i> TilePattern = new List<Vector3i>();
-        internal int Rotations = 0;
+        public List<Vector3i> TilePattern = new List<Vector3i>();
+        public int Rotations = 0;
 
-        internal List<GameObject> SupportingObject = new List<GameObject>();
+        public List<GameObject> SupportingObject = new List<GameObject>();
 
-        internal BuildingSkeleton SkeletonReference = null;
+        public BuildingSkeleton SkeletonReference = null;
 
 
         /// <summary>
         /// This will initialize nothing. Any buildings created with this must create a valid GameObject before attempting to be rendered.
         /// </summary>
-        internal Building() { }
-        internal Building(CombatScene scene) : base(scene) { }
+        public Building() { }
+        public Building(CombatScene scene) : base(scene) { }
 
-        internal Building(CombatScene scene, Spritesheet spritesheet, int spritesheetPos) : base(scene, spritesheet, spritesheetPos) 
+        public Building(CombatScene scene, Spritesheet spritesheet, int spritesheetPos) : base(scene, spritesheet, spritesheetPos) 
         {
 
         }
 
-        internal virtual void CreateTilePattern() 
+        public virtual void CreateTilePattern() 
         {
             TilePattern.Clear();
         }
         
 
-        internal override void SetTileMapPosition(BaseTile baseTile)
+        public override void SetTileMapPosition(BaseTile baseTile)
         {
             BaseTile prevTile = Info.TileMapPosition;
 
@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.Structures
             Scene.OnStructureMoved();
         }
 
-        internal override void CleanUp()
+        public override void CleanUp()
         {
             if (SkeletonReference != null)
             {
@@ -77,7 +77,7 @@ namespace MortalDungeon.Game.Structures
             base.CleanUp();
         }
 
-        internal virtual void TileAction() 
+        public virtual void TileAction() 
         {
             List<BaseTile> tiles = GetPatternTiles();
 
@@ -87,7 +87,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        internal List<BaseTile> GetPatternTiles() 
+        public List<BaseTile> GetPatternTiles() 
         {
             List<BaseTile> list = new List<BaseTile>();
 
@@ -126,7 +126,7 @@ namespace MortalDungeon.Game.Structures
         /// <summary>
         /// Rotates the pattern by 60 degrees N times
         /// </summary>
-        internal void RotateTilePattern(int rotations) 
+        public void RotateTilePattern(int rotations) 
         {
             Rotations += rotations;
             for (int i = 0; i < TilePattern.Count; i++) 
@@ -138,7 +138,7 @@ namespace MortalDungeon.Game.Structures
         /// <summary>
         /// Returns the ideal case list of points if the passed buildingLocation is the center point of the building.
         /// </summary>
-        internal List<FeaturePoint> GetPatternFeaturePoints(FeaturePoint buildingLocation) 
+        public List<FeaturePoint> GetPatternFeaturePoints(FeaturePoint buildingLocation) 
         {
             List<FeaturePoint> list = new List<FeaturePoint>();
 
@@ -159,21 +159,21 @@ namespace MortalDungeon.Game.Structures
     /// <summary>
     /// The minimum possible information needed to recreate a building.
     /// </summary>
-    internal class BuildingSkeleton
+    public class BuildingSkeleton
     {
-        internal FeaturePoint IdealCenter;
-        internal HashSet<FeaturePoint> TilePattern;
-        internal int Rotations;
+        public FeaturePoint IdealCenter;
+        public HashSet<FeaturePoint> TilePattern;
+        public int Rotations;
 
-        internal bool Loaded;
-        internal Building Handle;
+        public bool Loaded;
+        public Building Handle;
 
         /// <summary>
         /// True when the skeleton is acted upon during application of a feature equation until OnAppliedToMaps is called 
         /// </summary>
-        internal bool _skeletonTouchedThisCycle;
+        public bool _skeletonTouchedThisCycle;
 
-        internal static BuildingSkeleton Empty;
+        public static BuildingSkeleton Empty;
 
         #region overrides
 

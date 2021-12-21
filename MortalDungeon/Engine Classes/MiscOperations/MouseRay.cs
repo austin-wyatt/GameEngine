@@ -5,23 +5,23 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.MiscOperations
 {
-    internal class MouseRay
+    public class MouseRay
     {
         private Vector3 currentRay;
 
         private Camera camera;
 
-        internal MouseRay(Camera _camera)
+        public MouseRay(Camera _camera)
         {
             camera = _camera;
         }
 
-        internal Vector3 GetCurrentRay() 
+        public Vector3 GetCurrentRay() 
         {
             return currentRay;
         }
 
-        internal void Update(Vector2 mouseCoordinates) 
+        public void Update(Vector2 mouseCoordinates) 
         {
             currentRay = CalculateMouseRay(mouseCoordinates);
         }
@@ -82,7 +82,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
         }
 
         //not needed but good for referencing
-        internal Vector3 UnProject(float mouseX, float mouseY, float z, Camera camera, Vector2 Viewport)
+        public Vector3 UnProject(float mouseX, float mouseY, float z, Camera camera, Vector2 Viewport)
         {
             Vector4 vec;
 

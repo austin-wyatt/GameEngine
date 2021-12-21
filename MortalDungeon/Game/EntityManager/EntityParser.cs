@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Game.Entities
 {
-    internal enum PrefabType 
+    public enum PrefabType 
     {
         Unit, 
         Disposition,
@@ -17,23 +17,23 @@ namespace MortalDungeon.Game.Entities
         Buff,
         Unknown
     }
-    internal class Prefab 
+    public class Prefab 
     {
-        internal PrefabType Type;
-        internal string Name = "";
-        internal string File = "";
-        internal bool HasProfile = false;
+        public PrefabType Type;
+        public string Name = "";
+        public string File = "";
+        public bool HasProfile = false;
     }
-    internal static class EntityParser
+    public static class EntityParser
     {
-        internal static List<Prefab> Prefabs = new List<Prefab>();
+        public static List<Prefab> Prefabs = new List<Prefab>();
 
         static EntityParser() 
         {
             GatherPrefabs();
         }
 
-        internal static void GatherPrefabs() 
+        public static void GatherPrefabs() 
         {
             string[] fileList = Directory.GetFiles(@"Resources\Prefabs\");
 
@@ -129,7 +129,7 @@ namespace MortalDungeon.Game.Entities
             return foundObjs;
         }
 
-        internal static Prefab FindPrefab(PrefabType type, string name) 
+        public static Prefab FindPrefab(PrefabType type, string name) 
         {
             return Prefabs.Find(p => p.Type == type && p.Name == name);
         }
@@ -181,7 +181,7 @@ namespace MortalDungeon.Game.Entities
         /// <summary>
         /// 
         /// </summary>
-        internal static Unit ApplyPrefabToUnit(Prefab prefab, CombatScene scene, Unit unit = null) 
+        public static Unit ApplyPrefabToUnit(Prefab prefab, CombatScene scene, Unit unit = null) 
         {
             Dictionary<string, object> prefabToApply = GetPrefabObject(prefab);
 
@@ -217,7 +217,7 @@ namespace MortalDungeon.Game.Entities
             return returnUnit;
         }
 
-        internal static void ParseDict(Dictionary<string, object> dict, Unit unit) 
+        public static void ParseDict(Dictionary<string, object> dict, Unit unit) 
         {
             foreach (string key in dict.Keys)
             {
@@ -260,43 +260,43 @@ namespace MortalDungeon.Game.Entities
         }
 
 
-        internal static Ability ApplyPrefabToAbility(Prefab prefab, Unit castingUnit, Ability ability = null)
-        {
-            Dictionary<string, object> prefabToApply = GetPrefabObject(prefab);
+        //public static Ability ApplyPrefabToAbility(Prefab prefab, Unit castingUnit, Ability ability = null)
+        //{
+        //    Dictionary<string, object> prefabToApply = GetPrefabObject(prefab);
 
-            Ability returnAbility = null;
-
-
-            if (prefabToApply == null)
-                return null;
-
-            if (prefabToApply.TryGetValue("AbilityProfile", out object val) && (ability == null))
-            {
-                foreach (var profile in AbilityProfiles.Profiles)
-                {
-                    if (profile.Name == (string)val)
-                    {
-                        returnAbility = profile.CreateAbility(castingUnit);
-                        break;
-                    }
-                }
-            }
-            else if (ability != null)
-            {
-                returnAbility = ability;
-            }
-            else
-            {
-                return null;
-            }
+        //    Ability returnAbility = null;
 
 
-            ParseDict(prefabToApply, returnAbility);
+        //    if (prefabToApply == null)
+        //        return null;
 
-            return returnAbility;
-        }
+        //    if (prefabToApply.TryGetValue("AbilityProfile", out object val) && (ability == null))
+        //    {
+        //        foreach (var profile in AbilityProfiles.Profiles)
+        //        {
+        //            if (profile.Name == (string)val)
+        //            {
+        //                returnAbility = profile.CreateAbility(castingUnit);
+        //                break;
+        //            }
+        //        }
+        //    }
+        //    else if (ability != null)
+        //    {
+        //        returnAbility = ability;
+        //    }
+        //    else
+        //    {
+        //        return null;
+        //    }
 
-        internal static void ParseDict(Dictionary<string, object> dict, Ability ability)
+
+        //    ParseDict(prefabToApply, returnAbility);
+
+        //    return returnAbility;
+        //}
+
+        public static void ParseDict(Dictionary<string, object> dict, Ability ability)
         {
             foreach (string key in dict.Keys)
             {

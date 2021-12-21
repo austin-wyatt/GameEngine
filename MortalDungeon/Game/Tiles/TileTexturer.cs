@@ -12,7 +12,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 
 namespace MortalDungeon.Game.Tiles
 {
-    internal static class TileTexturer
+    public static class TileTexturer
     {
         private const int tile_width = 124; //individual tile width
         private const int tile_width_partial = 92; //stacked width
@@ -23,21 +23,56 @@ namespace MortalDungeon.Game.Tiles
 
         private static readonly Random random = new Random();
 
-        internal static void InitializeTexture(TileMap map)
+        private static List<FrameBufferObject> MapFBOs = new List<FrameBufferObject>();
+        private static HashSet<FrameBufferObject> UsedFBOs = new HashSet<FrameBufferObject>();
+
+        private const int MAX_FBOS = 9;
+        private const int MAP_WIDTH = 50;
+        private const int MAP_HEIGHT = 50;
+
+        public static void InitializeTileTexturer() 
         {
             TileSpritesheet.Use(TextureUnit.Texture0);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
+            //for(int i = 0; i < MAX_FBOS; i++)
+            //{
+            //    MapFBOs.Add(new FrameBufferObject(new Vector2i((tile_width + MAP_WIDTH * tile_width_partial),
+            //    tile_height * MAP_HEIGHT + tile_height)));
+            //}
+        }
 
-            if (map.FrameBuffer != null) 
+        public static void InitializeTexture(TileMap map)
+        {
+            TileSpritesheet.Use(TextureUnit.Texture0);
+
+
+            //if (map.FrameBuffer != null) 
+            //{
+            //    map.FrameBuffer.Dispose();
+            //}
+
+            //map.FrameBuffer = new FrameBufferObject(new Vector2i((tile_width + map.Width * tile_width_partial),
+            //    tile_height * map.Height + tile_height));
+
+            FrameBufferObject frameBuffer = GetAvailableFrameBuffer();
+
+            if(frameBuffer == null && MapFBOs.Count >= MAX_FBOS)
             {
-                map.FrameBuffer.Dispose();
+                return;
+            }
+            else if(frameBuffer == null){
+                frameBuffer = new FrameBufferObject(new Vector2i((tile_width + map.Width * tile_width_partial),
+                    tile_height * map.Height + tile_height));
+
+                MapFBOs.Add(frameBuffer);
             }
 
-            map.FrameBuffer = new FrameBufferObject(new Vector2i((tile_width + map.Width * tile_width_partial),
-                tile_height * map.Height + tile_height));
+            map.FrameBuffer = frameBuffer;
+            UsedFBOs.Add(map.FrameBuffer);
+
 
 
             GL.BindTexture(TextureTarget.Texture2D, map.FrameBuffer.RenderTexture);
@@ -59,7 +94,26 @@ namespace MortalDungeon.Game.Tiles
             map.TilesToUpdate.Clear();
         }
 
-        internal static void UpdateTexture(TileMap map) 
+        private static FrameBufferObject GetAvailableFrameBuffer()
+        {
+            foreach (var fbo in MapFBOs)
+            {
+                if (!UsedFBOs.Contains(fbo))
+                {
+                    return fbo;
+                }
+            }
+
+            return null;
+        }
+
+        public static void RemoveFrameBufferFromMap(TileMap map)
+        {
+            UsedFBOs.Remove(map.FrameBuffer);
+            map.FrameBuffer = null;
+        }
+
+        public static void UpdateTexture(TileMap map) 
         {
             RenderTilesToFramebuffer(map);
         }

@@ -4,27 +4,27 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class Object3D 
+    public class Object3D 
     {
-        internal string Name;
-        internal float[] Vertices;
-        internal float[] TextureCoords;
-        internal float[] Normals;
-        internal Face[] Faces;
-        internal readonly int ObjectID = _verticeType++;
+        public string Name;
+        public float[] Vertices;
+        public float[] TextureCoords;
+        public float[] Normals;
+        public Face[] Faces;
+        public readonly int ObjectID = _verticeType++;
 
         private static int _verticeType = 1;
     }
 
-    internal struct Face 
+    public struct Face 
     {
-        internal VVtN X => Values[0];  
-        internal VVtN Y => Values[1];
-        internal VVtN Z => Values[2];
+        public VVtN X => Values[0];  
+        public VVtN Y => Values[1];
+        public VVtN Z => Values[2];
 
-        internal VVtN[] Values; 
+        public VVtN[] Values; 
 
-        internal Face(VVtN x, VVtN y, VVtN z) 
+        public Face(VVtN x, VVtN y, VVtN z) 
         {
             Values = new VVtN[] { x, y, z };
         }
@@ -33,13 +33,13 @@ namespace MortalDungeon.Engine_Classes
     /// <summary>
     /// Vertex/Texture/Normal coordinate group
     /// </summary>
-    internal struct VVtN 
+    public struct VVtN 
     {
-        internal int Vertex;
-        internal int VertexTexture;
-        internal int Normal;
+        public int Vertex;
+        public int VertexTexture;
+        public int Normal;
 
-        internal VVtN(int v, int vt, int normal) 
+        public VVtN(int v, int vt, int normal) 
         {
             Vertex = v;
             VertexTexture = vt;
@@ -47,9 +47,9 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal static class OBJParser
+    public static class OBJParser
     {
-        internal static Object3D ParseOBJ(string filename) 
+        public static Object3D ParseOBJ(string filename) 
         {
             Object3D obj = new Object3D();
             string[] lines = new string[0];

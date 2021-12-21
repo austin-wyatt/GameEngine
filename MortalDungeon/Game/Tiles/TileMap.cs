@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Tiles
 {
-    internal enum Direction
+    public enum Direction
     {
         None = -1,
         SouthWest,
@@ -28,9 +28,9 @@ namespace MortalDungeon.Game.Tiles
         NorthWest,
     }
 
-    internal static class TileMapConstants
+    public static class TileMapConstants
     {
-        internal static Dictionary<Direction, Vector3i> CubeDirections = new Dictionary<Direction, Vector3i>
+        public static Dictionary<Direction, Vector3i> CubeDirections = new Dictionary<Direction, Vector3i>
         {
             { Direction.SouthWest, new Vector3i(-1, 0, 1) },
             { Direction.South, new Vector3i(0, -1, 1) },
@@ -40,38 +40,38 @@ namespace MortalDungeon.Game.Tiles
             { Direction.NorthWest, new Vector3i(-1, 1, 0) },
         };
 
-        internal static List<TileClassification> AllTileClassifications = new List<TileClassification>()
+        public static List<TileClassification> AllTileClassifications = new List<TileClassification>()
         { TileClassification.Ground, TileClassification.AttackableTerrain, TileClassification.Terrain, TileClassification.Water };
 
     }
 
-    internal class TileMap : GameObject //grid of tiles
+    public class TileMap : GameObject //grid of tiles
     {
-        internal int Width = 30;
-        internal int Height = 30;
+        public int Width = 30;
+        public int Height = 30;
 
-        internal TileMapPoint TileMapCoords;
+        public TileMapPoint TileMapCoords;
 
-        internal TileMapController Controller;
+        public TileMapController Controller;
 
-        internal List<BaseTile> Tiles = new List<BaseTile>();
+        public List<BaseTile> Tiles = new List<BaseTile>();
 
-        internal List<GameObject> Structures = new List<GameObject>();
+        public List<GameObject> Structures = new List<GameObject>();
 
-        internal List<TileChunk> TileChunks = new List<TileChunk>();
+        public List<TileChunk> TileChunks = new List<TileChunk>();
 
-        internal Texture DynamicTexture;
-        internal FrameBufferObject FrameBuffer;
-        internal DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
-        internal ConcurrentBag<BaseTile> TilesToUpdate = new ConcurrentBag<BaseTile>();
+        public Texture DynamicTexture;
+        public FrameBufferObject FrameBuffer;
+        public DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
+        public ConcurrentBag<BaseTile> TilesToUpdate = new ConcurrentBag<BaseTile>();
 
         private const int TILE_QUEUES = 5;
         protected int _currentTileQueue = 0;
         protected List<ConcurrentBag<BaseTile>> _tilesToUpdate = new List<ConcurrentBag<BaseTile>>();
 
-        internal GameObject TexturedQuad;
+        public GameObject TexturedQuad;
 
-        internal TileMap(Vector3 position, TileMapPoint point, TileMapController controller, string name = "TileMap")
+        public TileMap(Vector3 position, TileMapPoint point, TileMapController controller, string name = "TileMap")
         {
             Position = position; //position of the first tile
             Name = name;
@@ -90,12 +90,12 @@ namespace MortalDungeon.Game.Tiles
             Console.WriteLine($"TileMap {TileMapCoords.X}, {TileMapCoords.Y} disposed");
         }
         
-        internal BaseTile this[int x, int y]
+        public BaseTile this[int x, int y]
         {
             get { return GetTile(x, y); }
         }
 
-        internal BaseTile this[TilePoint point]
+        public BaseTile this[TilePoint point]
         {
             get { return Controller.GetTile(point.X, point.Y, point.ParentTileMap); }
         }
@@ -105,14 +105,14 @@ namespace MortalDungeon.Game.Tiles
             return Controller.GetTile(x, y, this);
         }
 
-        internal BaseTile GetLocalTile(int x, int y) 
+        public BaseTile GetLocalTile(int x, int y) 
         {
             return Tiles[x * Height + y];
         }
 
-        internal static Random _randomNumberGen = new Random();
+        public static Random _randomNumberGen = new Random();
 
-        internal virtual void PopulateTileMap(float zTilePlacement = 0)
+        public virtual void PopulateTileMap(float zTilePlacement = 0)
         {
             BaseTile baseTile = new BaseTile();
             Vector3 tilePosition = new Vector3(Position);
@@ -145,14 +145,14 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        internal virtual void OnAddedToController() 
+        public virtual void OnAddedToController() 
         {
             InitializeTileChunks();
         }
 
-        internal virtual void PopulateFeatures() { }
+        public virtual void PopulateFeatures() { }
 
-        internal void InitializeTileChunks() 
+        public void InitializeTileChunks() 
         {
             TileChunks.Clear();
             FillTileChunks(10, 10);
@@ -195,7 +195,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal void InitializeTexturedQuad() 
+        public void InitializeTexturedQuad() 
         {
             TileTexturer.InitializeTexture(this);
 
@@ -233,7 +233,7 @@ namespace MortalDungeon.Game.Tiles
             UpdateQuadPosition();
         }
 
-        internal void UpdateQuadPosition() 
+        public void UpdateQuadPosition() 
         {
             Vector3 tileMapPos = (Tiles[0].Position + Tiles[Tiles.Count - 1].Position) / 2;
 
@@ -246,7 +246,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal void UpdateDynamicTexture() 
+        public void UpdateDynamicTexture() 
         {
             //DynamicTexture.UpdateTextureArray(DynamicTextureInfo.MinChangedBounds, DynamicTextureInfo.MaxChangedBounds, this);
             TilesToUpdate = _tilesToUpdate[_currentTileQueue];
@@ -261,19 +261,14 @@ namespace MortalDungeon.Game.Tiles
         }
 
         private ActionQueue _tileActionQueue = new ActionQueue();
-        internal void UpdateTile(BaseTile tile) 
+        public void UpdateTile(BaseTile tile) 
         {
             _tilesToUpdate[_currentTileQueue].Add(tile);
         }
 
-        internal override void CleanUp()
+        public override void CleanUp()
         {
             base.CleanUp();
-
-            if (FrameBuffer != null) 
-            {
-                FrameBuffer.Dispose();
-            }
 
             for (int i = 0; i < TileChunks.Count; i++)
             {
@@ -282,10 +277,17 @@ namespace MortalDungeon.Game.Tiles
 
             TileChunks.Clear();
             Tiles.Clear();
+
+            if (FrameBuffer != null)
+            {
+                //FrameBuffer.Dispose();
+
+                TileTexturer.RemoveFrameBufferFromMap(this);
+            }
         }
 
 
-        internal void GenerateCliffs() 
+        public void GenerateCliffs() 
         {
             BaseTile neighborTile;
             for (int i = 0; i < Tiles.Count; i++) 
@@ -314,7 +316,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal void GenerateCliff(BaseTile tile) 
+        public void GenerateCliff(BaseTile tile) 
         {
             BaseTile neighborTile;
             short cliffBitArray = 0;
@@ -340,7 +342,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal Vector3 GetTileMapDimensions() 
+        public Vector3 GetTileMapDimensions() 
         {
             if (Tiles.Count > 0) 
             {
@@ -356,7 +358,7 @@ namespace MortalDungeon.Game.Tiles
             return new Vector3();
         }
 
-        internal override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position)
         {
             Vector3 offset = Position - position;
 
@@ -388,11 +390,11 @@ namespace MortalDungeon.Game.Tiles
         
 
         #region Tile validity checks
-        internal bool IsValidTile(int xIndex, int yIndex)
+        public bool IsValidTile(int xIndex, int yIndex)
         {
             return Controller.IsValidTile(xIndex, yIndex, this);
         }
-        internal bool IsValidTile(TilePoint point)
+        public bool IsValidTile(TilePoint point)
         {
             return Controller.IsValidTile(point.X, point.Y, point.ParentTileMap);
             //return point.X >= 0 && point.Y >= 0 && point.X < Width && point.Y < Height;
@@ -400,7 +402,7 @@ namespace MortalDungeon.Game.Tiles
         #endregion
 
         #region Tile conversions
-        internal Vector3i OffsetToCube(TilePoint offset)
+        public Vector3i OffsetToCube(TilePoint offset)
         {
             int xMapOffset = (offset.ParentTileMap.TileMapCoords.X - TileMapCoords.X) * Width;
             int yMapOffset = (offset.ParentTileMap.TileMapCoords.Y - TileMapCoords.Y) * Height;
@@ -421,7 +423,7 @@ namespace MortalDungeon.Game.Tiles
         /// </summary>
         /// <param name="offsetCoord"></param>
         /// <returns></returns>
-        internal Vector2i ClampTileCoordsToMapValues(Vector2i offsetCoord)
+        public Vector2i ClampTileCoordsToMapValues(Vector2i offsetCoord)
         {
             Vector2i returnValue = new Vector2i(offsetCoord.X, offsetCoord.Y);
 
@@ -440,7 +442,7 @@ namespace MortalDungeon.Game.Tiles
 
         
 
-        internal void AddHeightIndicator(BaseTile attachedTile, bool up = true) 
+        public void AddHeightIndicator(BaseTile attachedTile, bool up = true) 
         {
             if (attachedTile.TilePoint == null)
                 return;
@@ -461,7 +463,7 @@ namespace MortalDungeon.Game.Tiles
             Controller.Scene._genericObjects.Add(tile);
         }
 
-        internal void RemoveHeightIndicatorTile(BaseTile attachedTile) 
+        public void RemoveHeightIndicatorTile(BaseTile attachedTile) 
         {
             if (attachedTile.HeightIndicator != null) 
             {
@@ -470,7 +472,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        internal void SetDefaultTileValues()
+        public void SetDefaultTileValues()
         {
             Tiles.ForEach(tile =>
             {
@@ -479,7 +481,7 @@ namespace MortalDungeon.Game.Tiles
             });
         }
 
-        internal override void Tick()
+        public override void Tick()
         {
             base.Tick();
 
@@ -491,36 +493,36 @@ namespace MortalDungeon.Game.Tiles
         }
 
         #region Distance between points
-        internal int GetDistanceBetweenPoints(TilePoint start, TilePoint end)
+        public int GetDistanceBetweenPoints(TilePoint start, TilePoint end)
         {
             Vector3i a = OffsetToCube(start);
             Vector3i b = OffsetToCube(end);
 
             return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
-        internal int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
+        public int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
         {
             return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
         #endregion
 
-        internal void ClearVisitedTiles() 
+        public void ClearVisitedTiles() 
         {
             Controller.ClearAllVisitedTiles();
         }
 
-        internal struct TilesInRadiusParameters 
+        public struct TilesInRadiusParameters 
         {
-            internal TilePoint StartingPoint;
-            internal float Radius;
-            internal List<TileClassification> TraversableTypes;
-            internal List<Unit> Units;
-            internal Unit CastingUnit;
-            internal AbilityTypes AbilityType;
-            internal bool CheckTileHigher;
-            internal bool CheckTileLower;
+            public TilePoint StartingPoint;
+            public float Radius;
+            public List<TileClassification> TraversableTypes;
+            public List<Unit> Units;
+            public Unit CastingUnit;
+            public AbilityTypes AbilityType;
+            public bool CheckTileHigher;
+            public bool CheckTileLower;
 
-            internal TilesInRadiusParameters(TilePoint startingPoint, float radius) 
+            public TilesInRadiusParameters(TilePoint startingPoint, float radius) 
             {
                 StartingPoint = startingPoint;
                 Radius = radius;
@@ -535,7 +537,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
         //gets tiles in a radius from a center point by expanding outward to all valid neighbors until the radius is reached.
-        internal List<BaseTile> FindValidTilesInRadius(TilesInRadiusParameters param)
+        public List<BaseTile> FindValidTilesInRadius(TilesInRadiusParameters param)
         {
             List<BaseTile> tileList = new List<BaseTile>();
             List<BaseTile> neighbors = new List<BaseTile>();
@@ -611,7 +613,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="startPoint"></param>
         /// <param name="endPoint"></param>
         /// <returns></returns>
-        internal List<BaseTile> GetLineOfTiles(TilePoint startPoint, TilePoint endPoint)
+        public List<BaseTile> GetLineOfTiles(TilePoint startPoint, TilePoint endPoint)
         {
             List<BaseTile> tileList = new List<BaseTile>();
             Vector3i startCube = OffsetToCube(startPoint);
@@ -644,7 +646,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="start"></param>
         /// <param name="radius"></param>
         /// <returns></returns>
-        internal void GetRingOfTiles(TilePoint startPoint, List<Vector2i> outputList, int radius = 1)
+        public void GetRingOfTiles(TilePoint startPoint, List<Vector2i> outputList, int radius = 1)
         {
             Vector3i cubePosition = OffsetToCube(startPoint);
 
@@ -671,7 +673,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="start"></param>
         /// <param name="radius"></param>
         /// <returns></returns>
-        internal void GetRingOfTiles(TilePoint startPoint, List<BaseTile> outputList, int radius = 1, bool includeEdges = true)
+        public void GetRingOfTiles(TilePoint startPoint, List<BaseTile> outputList, int radius = 1, bool includeEdges = true)
         {
             Vector3i cubePosition = OffsetToCube(startPoint);
 
@@ -708,7 +710,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="untraversableTypes">tile types that will block vision</param>
         /// <param name="units"></param>
         /// <returns></returns>
-        internal void GetVisionLine(TilePoint startPoint, Vector2i endPoint, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
+        public void GetVisionLine(TilePoint startPoint, Vector2i endPoint, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             Vector3i startCube = OffsetToCube(startPoint);
             Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
@@ -763,7 +765,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal void GetTargetingLine(TilePoint startPoint, Vector3i endPointCube, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false) 
+        public void GetTargetingLine(TilePoint startPoint, Vector3i endPointCube, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false) 
         {
             Vector3i startCube = OffsetToCube(startPoint);
 
@@ -816,13 +818,13 @@ namespace MortalDungeon.Game.Tiles
                 }
             }
         }
-        internal void GetTargetingLine(TilePoint startPoint, TilePoint endPoint, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
+        public void GetTargetingLine(TilePoint startPoint, TilePoint endPoint, HashSet<BaseTile> outputList, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             GetTargetingLine(startPoint, OffsetToCube(endPoint), outputList, units, ignoreBlockedVision);
         }
 
 
-        internal List<BaseTile> GetVisionInRadius(TilePoint point, int radius, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
+        public List<BaseTile> GetVisionInRadius(TilePoint point, int radius, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             List<Vector2i> ringOfTiles = new List<Vector2i>();
             GetRingOfTiles(point, ringOfTiles, radius);
@@ -837,7 +839,7 @@ namespace MortalDungeon.Game.Tiles
             return outputList.ToList();
         }
 
-        internal List<BaseTile> GetTargetsInRadius(TilePoint point, int radius, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
+        public List<BaseTile> GetTargetsInRadius(TilePoint point, int radius, List<TileClassification> untraversableTypes = default, List<Unit> units = default, bool ignoreBlockedVision = false)
         {
             List<Vector2i> ringOfTiles = new List<Vector2i>();
             GetRingOfTiles(point, ringOfTiles, radius);
@@ -855,25 +857,25 @@ namespace MortalDungeon.Game.Tiles
 
 
 
-        internal struct PathToPointParameters
+        public struct PathToPointParameters
         {
-            internal TilePoint StartingPoint;
-            internal TilePoint EndingPoint;
-            internal float Depth;
-            internal List<TileClassification> TraversableTypes;
-            internal List<Unit> Units;
-            internal Unit CastingUnit;
-            internal AbilityTypes AbilityType;
-            internal bool CheckTileHigher;
-            internal bool CheckTileLower;
-            internal bool Shuffle;
+            public TilePoint StartingPoint;
+            public TilePoint EndingPoint;
+            public float Depth;
+            public List<TileClassification> TraversableTypes;
+            public List<Unit> Units;
+            public Unit CastingUnit;
+            public AbilityTypes AbilityType;
+            public bool CheckTileHigher;
+            public bool CheckTileLower;
+            public bool Shuffle;
 
             /// <summary>
             /// If a unit is at the endPoint it will not break the path.
             /// </summary>
-            internal bool IgnoreTargetUnit;
+            public bool IgnoreTargetUnit;
 
-            internal PathToPointParameters(TilePoint startingPoint, TilePoint endPoint, float depth)
+            public PathToPointParameters(TilePoint startingPoint, TilePoint endPoint, float depth)
             {
                 StartingPoint = startingPoint;
                 EndingPoint = endPoint;
@@ -891,7 +893,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        internal List<BaseTile> GetPathToPoint(PathToPointParameters param)
+        public List<BaseTile> GetPathToPoint(PathToPointParameters param)
         {
             List<TileWithParent> tileList = new List<TileWithParent>();
             List<BaseTile> returnList = new List<BaseTile>();
@@ -1076,7 +1078,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="tile"></param>
         /// <param name="neighborList"></param>
         /// <param name="visitedTiles"></param>
-        internal void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, bool checkTileHigher = false, bool checkTileLower = false, bool attachHeightIndicator = false)
+        public void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, bool checkTileHigher = false, bool checkTileLower = false, bool attachHeightIndicator = false)
         {
             TilePoint neighborPos = new TilePoint(tile.TilePoint.X, tile.TilePoint.Y, tile.TilePoint.ParentTileMap);
             int yOffset = tile.TilePoint.X % 2 == 0 ? 1 : 0;
@@ -1144,7 +1146,7 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        internal BaseTile GetNeighboringTile(BaseTile tile, Direction direction) 
+        public BaseTile GetNeighboringTile(BaseTile tile, Direction direction) 
         {
             TilePoint neighborPos = new TilePoint(tile.TilePoint.X, tile.TilePoint.Y, tile.TilePoint.ParentTileMap); ;
             int yOffset = tile.TilePoint.X % 2 == 0 ? 1 : 0;
@@ -1188,16 +1190,16 @@ namespace MortalDungeon.Game.Tiles
         private BaseTile _BaseTileTemp = new BaseTile();
         private readonly List<TileClassification> _EmptyTileClassification = new List<TileClassification>();
 
-        internal class TileWithParent
+        public class TileWithParent
         {
-            internal TileWithParent Parent = null;
-            internal BaseTile Tile;
-            internal float G = 0; //Path cost
-            internal float H = 0; //Distance to end
-            internal float F => G + H;
-            internal bool Visited = false;
+            public TileWithParent Parent = null;
+            public BaseTile Tile;
+            public float G = 0; //Path cost
+            public float H = 0; //Distance to end
+            public float F => G + H;
+            public bool Visited = false;
 
-            internal TileWithParent(BaseTile tile, TileWithParent parent = null)
+            public TileWithParent(BaseTile tile, TileWithParent parent = null)
             {
                 Parent = parent;
                 Tile = tile;
@@ -1218,20 +1220,20 @@ namespace MortalDungeon.Game.Tiles
         }
     }
 
-    internal class TileMapPoint
+    public class TileMapPoint
     {
-        internal int X;
-        internal int Y;
+        public int X;
+        public int Y;
 
-        internal MapPosition MapPosition = MapPosition.None;
+        public MapPosition MapPosition = MapPosition.None;
 
-        internal TileMapPoint(int x, int y)
+        public TileMapPoint(int x, int y)
         {
             X = x;
             Y = y;
         }
 
-        internal TileMapPoint(Vector2i coords)
+        public TileMapPoint(Vector2i coords)
         {
             X = coords.X;
             Y = coords.Y;
@@ -1251,15 +1253,20 @@ namespace MortalDungeon.Game.Tiles
                    Y == point.Y;
         }
 
+        public long GetUniqueHash()
+        {
+            return ((long)X << 32) + Y;
+        }
+
         public override int GetHashCode()
         {
             return HashCode.Combine(X, Y);
         }
     }
 
-    internal class DynamicTextureInfo 
+    public class DynamicTextureInfo 
     {
-        internal bool TextureChanged = false;
-        internal bool Initialize = true;
+        public bool TextureChanged = false;
+        public bool Initialize = true;
     }
 }

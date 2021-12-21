@@ -9,7 +9,7 @@ namespace MortalDungeon
 {
     class Program
     {
-        internal static Window Window;
+        public static Window Window;
 
         static void Main(string[] args)
         {

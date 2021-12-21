@@ -15,9 +15,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class MendBones : Ability
+    public class MendBones : Ability
     {
-        internal MendBones(Unit castingUnit, int range = 3, float heal = 10)
+        public MendBones(Unit castingUnit, int range = 3, float heal = 10)
         {
             Type = AbilityTypes.Heal;
             DamageType = DamageType.Healing;
@@ -53,7 +53,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, Character.M, Spritesheets.CharacterSheet, true);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -69,7 +69,7 @@ namespace MortalDungeon.Game.Abilities
             return new List<BaseTile>();
         }
 
-        internal override bool UnitInRange(Unit unit, BaseTile position = null)
+        public override bool UnitInRange(Unit unit, BaseTile position = null)
         {
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
@@ -102,7 +102,7 @@ namespace MortalDungeon.Game.Abilities
             return inRange;
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -116,7 +116,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -136,7 +136,7 @@ namespace MortalDungeon.Game.Abilities
             EffectEnded();
         }
 
-        internal override DamageInstance GetDamageInstance()
+        public override DamageInstance GetDamageInstance()
         {
             DamageInstance instance = new DamageInstance();
 

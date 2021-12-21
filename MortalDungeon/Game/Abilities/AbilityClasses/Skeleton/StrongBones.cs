@@ -11,9 +11,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class StrongBones : Ability
+    public class StrongBones : Ability
     {
-        internal StrongBones(Unit castingUnit)
+        public StrongBones(Unit castingUnit)
         {
             Type = AbilityTypes.Passive;
             DamageType = DamageType.NonDamaging;
@@ -35,12 +35,12 @@ namespace MortalDungeon.Game.Abilities
         }
     }
 
-    internal class StrongBonesBuff : Buff
+    public class StrongBonesBuff : Buff
     {
         private int PotencyIncrease = 2; //per skeleton ability
         private int DamageBlockIncrease = 2; //per skeleton ability
 
-        internal StrongBonesBuff(Unit affected) : base(affected)
+        public StrongBonesBuff(Unit affected) : base(affected)
         {
             Name = "StrongBonesBuff";
             BuffType = BuffType.Buff;
@@ -51,7 +51,7 @@ namespace MortalDungeon.Game.Abilities
             Hidden = true;
         }
 
-        internal override void ModifyDamageInstance(DamageInstance instance, Ability ability)
+        public override void ModifyDamageInstance(DamageInstance instance, Ability ability)
         {
             int skeletonTypeAbilities = 0;
 
@@ -77,7 +77,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        internal override float ModifyShieldBlockAdditive(Unit unit)
+        public override float ModifyShieldBlockAdditive(Unit unit)
         {
             int skeletonTypeAbilities = 0;
 

@@ -18,15 +18,15 @@ namespace MortalDungeon.Game.SceneDefinitions
 {
     class BoundsTestScene : Scene
     {
-        internal BoundsTestScene()
+        public BoundsTestScene()
         {
             InitializeFields();
         }
 
-        //internal static float[] imageData = new float[512 * 512 * 4];
-        //internal static Texture tex;
+        //public static float[] imageData = new float[512 * 512 * 4];
+        //public static Texture tex;
 
-        internal override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
         {
             base.Load(camera, cursorObject, mouseRay);
 
@@ -165,9 +165,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             //TickableObjects.Add(anim2);
         }
 
-        internal static Texture SPECULAR_TEST = null;
+        public static Texture SPECULAR_TEST = null;
 
-        internal override void OnUpdateFrame(FrameEventArgs args)
+        public override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
 

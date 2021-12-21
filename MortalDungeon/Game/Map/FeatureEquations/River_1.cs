@@ -7,16 +7,18 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    internal class River_1 : FeatureEquation
+    public class River_1 : FeatureEquation
     {
         PathParams RiverParams;
 
-        internal River_1(PathParams riverParams)
+        public River_1(PathParams riverParams)
         {
             RiverParams = riverParams;
+
+            FeatureID = HashCoordinates(riverParams.Start.X, riverParams.Start.Y);
         }
 
-        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
+        public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
@@ -43,7 +45,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        internal override void GenerateFeature()
+        public override void GenerateFeature()
         {
             ClearAffectedPoints();
 

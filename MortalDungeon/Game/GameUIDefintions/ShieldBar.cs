@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Game.UI
 {
-    internal class ShieldBar : UIObject
+    public class ShieldBar : UIObject
     {
         enum ShieldAnimations 
         {
@@ -18,8 +18,8 @@ namespace MortalDungeon.Game.UI
 
         private int _maxShieldsDisplayed = 10;
 
-        internal List<UIBlock> Shields = new List<UIBlock>();
-        internal ShieldBar(Vector3 position, UIScale scale)
+        public List<UIBlock> Shields = new List<UIBlock>();
+        public ShieldBar(Vector3 position, UIScale scale)
         {
             Size = scale;
             Position = position;
@@ -62,7 +62,7 @@ namespace MortalDungeon.Game.UI
             AddChild(BaseComponent);
         }
 
-        internal override void SetSize(UIScale size)
+        public override void SetSize(UIScale size)
         {
             base.SetSize(size);
 
@@ -80,7 +80,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        internal void SetShieldsBroken() 
+        public void SetShieldsBroken() 
         {
             Shields.ForEach(shield =>
             {
@@ -88,7 +88,7 @@ namespace MortalDungeon.Game.UI
             });
         }
 
-        internal void SetShieldsWhole()
+        public void SetShieldsWhole()
         {
             Shields.ForEach(shield =>
             {
@@ -96,7 +96,7 @@ namespace MortalDungeon.Game.UI
             });
         }
 
-        internal void SetCurrentShields(int shieldCount) 
+        public void SetCurrentShields(int shieldCount) 
         {
             if (shieldCount < 0)
             {

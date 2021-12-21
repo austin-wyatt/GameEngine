@@ -7,16 +7,16 @@ namespace MortalDungeon.Game.Units.AI
 {
     class Utility : Disposition
     {
-        internal float Virtuous = 3;
+        public float Virtuous = 3;
 
 
         private float _unitSeekRange = 50;
-        internal Utility(Unit unit) : base(unit)
+        public Utility(Unit unit) : base(unit)
         {
 
         }
 
-        internal override UnitAIAction GetAction(AIAction action)
+        public override UnitAIAction GetAction(AIAction action)
         {
             float weight = 0;
 
@@ -99,7 +99,7 @@ namespace MortalDungeon.Game.Units.AI
             return null;
         }
 
-        internal override void OnActionSelected(AIAction action)
+        public override void OnActionSelected(AIAction action)
         {
             base.OnActionSelected(action);
 

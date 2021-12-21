@@ -7,17 +7,17 @@ namespace MortalDungeon.Game.Units.AI
 {
     class Healer : Disposition
     {
-        internal float Virtuous = 3;
-        internal float HPThreshold = 0.5f;
+        public float Virtuous = 3;
+        public float HPThreshold = 0.5f;
 
 
         private float _unitSeekRange = 50;
-        internal Healer(Unit unit) : base(unit)
+        public Healer(Unit unit) : base(unit)
         {
 
         }
 
-        internal override UnitAIAction GetAction(AIAction action)
+        public override UnitAIAction GetAction(AIAction action)
         {
             float weight = 0;
 

@@ -8,17 +8,17 @@ namespace MortalDungeon.Engine_Classes.Lighting
     /// <summary>
     /// Eventually this should be expanded to refer to PBR lighting materials
     /// </summary>
-    internal class Material
+    public class Material
     {
-        internal Texture Diffuse;
-        internal Texture Specular;
-        internal float Shininess = 0;
+        public Texture Diffuse;
+        public Texture Specular;
+        public float Shininess = 0;
 
-        internal Material() 
+        public Material() 
         {
 
         }
-        internal Material(Material oldMaterial) 
+        public Material(Material oldMaterial) 
         {
             Diffuse = oldMaterial.Diffuse;
             Specular = oldMaterial.Specular;

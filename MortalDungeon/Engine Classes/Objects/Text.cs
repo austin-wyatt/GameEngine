@@ -8,34 +8,43 @@ using System.Collections.Generic;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class Letter : GameObject
+    public class TextRenderData 
     {
-        internal Character Character;
-        internal new float Scale = 0.1f;
+        public bool Outline;
+        public bool Bold = true;
+        public Vector4 OutlineColor;
+    }
+
+    public class Letter : GameObject
+    {
+        public Character Character;
+        public new float Scale = 0.1f;
         private float _scaleX = 1;
         private float _baseLetterOffset = 350f; 
         private float _baseYOffset = 0f;
-        internal float LetterOffset = 350f; //how wide the character is
-        internal float YOffset = 0f;
+        public float LetterOffset = 350f; //how wide the character is
+        public float YOffset = 0f;
 
         private float _baseXCorrection = 0f;
         private float _baseYCorrection = 0f;
-        internal float XCorrection = 0f; //shift by this much in the X direction
-        internal float YCorrection = 0f;
+        public float XCorrection = 0f; //shift by this much in the X direction
+        public float YCorrection = 0f;
 
-        internal BaseObject LetterObject;
+        public BaseObject LetterObject;
 
-        internal new ObjectType ObjectType = ObjectType.Text;
+        public new ObjectType ObjectType = ObjectType.Text;
 
         private bool CameraPerspective = false;
         private RenderableObject _display;
         private bool usingMonospace = true;
 
-        internal Letter(Character character, Vector3 position, bool cameraPerspective, int ID = 0, float scale = 0.1f)
+        public TextRenderData TextRenderData = new TextRenderData();
+
+        public Letter(Character character, Vector3 position, bool cameraPerspective, int ID = 0, float scale = 0.1f)
         {
             Character = character;
 
-            RenderableObject letterDisplay = new RenderableObject(new SpritesheetObject((int)Character, Spritesheets.CharacterSheet).CreateObjectDefinition(ObjectIDs.CHARACTER), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject letterDisplay = new RenderableObject(new SpritesheetObject((int)Character, Spritesheets.CharacterSheetSDF).CreateObjectDefinition(ObjectIDs.CHARACTER), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
             Animation Idle = new Animation()
             {
@@ -54,7 +63,7 @@ namespace MortalDungeon.Engine_Classes
 
             AddBaseObject(letter);
 
-            letter.RenderData = new RenderData() { AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold };
+            letter.RenderData = new RenderData() { AlphaThreshold = RenderingConstants.TextAlphaThreshold };
 
             SetScale(scale);
 
@@ -62,13 +71,13 @@ namespace MortalDungeon.Engine_Classes
             SetPosition(position);
         }
 
-        internal void ChangeCharacter(Character character) 
+        public void ChangeCharacter(Character character) 
         {
             _display.SpritesheetPosition = (int)character;
             Character = character;
         }
 
-        internal override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position)
         {
             BaseObjects.ForEach(obj =>
             {
@@ -83,7 +92,7 @@ namespace MortalDungeon.Engine_Classes
             Position = position;
         }
 
-        internal override void SetScale(float scale) 
+        public override void SetScale(float scale) 
         {
             LetterObject.BaseFrame.SetScaleAll(scale);
 
@@ -98,7 +107,7 @@ namespace MortalDungeon.Engine_Classes
             SetKerning();
         }
 
-        internal override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base) 
+        public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base) 
         {
             _display.SetBaseColor(color);
         }
@@ -294,26 +303,30 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    internal class Text
+    public class Text
     {
-        internal List<Letter> Letters = new List<Letter>();
-        internal string TextString = "";
-        internal Vector3 Position = new Vector3();
+        public List<Letter> Letters = new List<Letter>();
+        public string TextString = "";
+        public Vector3 Position = new Vector3();
 
-        internal float TextScale = 0.1f;
-        internal bool CameraPerspective = false;
+        public float TextScale = 0.1f;
+        public bool CameraPerspective = false;
         private float _baseLetterOffset = 300f;
-        internal float LetterOffset = 300f;
-        internal float YOffset = 0f;
+        public float LetterOffset = 300f;
+        public float YOffset = 0f;
 
-        internal static float NewLineHeight = 700f;
+        public static float NewLineHeight = 700f;
 
-        internal Vector4 Color = Colors.White;
+        public Vector4 Color = Colors.White;
 
-        internal bool Render = true;
+        public bool Render = true;
 
-        internal Text() { }
-        internal Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
+        public ScissorData ScissorData = new ScissorData();
+        public TextRenderData TextRenderData = new TextRenderData();
+
+
+        public Text() { }
+        public Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
         {
             TextString = textString;
             Position = position;
@@ -323,7 +336,7 @@ namespace MortalDungeon.Engine_Classes
             SetTextString(textString);
         }
 
-        internal void SetTextString(string textString) 
+        public void SetTextString(string textString) 
         {
             //textString = textString.Replace("\r", "");
 
@@ -364,7 +377,11 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else 
                 {
-                    Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, TextScale);
+                    Letter temp = new Letter(CharacterConstants._characterMap[arr[i]], position, CameraPerspective, i, TextScale) 
+                    { 
+                        ScissorData = ScissorData,
+                        TextRenderData = TextRenderData
+                    };
 
                     if (tempTexture != null)
                     {
@@ -396,7 +413,7 @@ namespace MortalDungeon.Engine_Classes
 
             SetColor(Color);
         }
-        internal void RecalculateTextPosition() 
+        public void RecalculateTextPosition() 
         {
             Vector3 position = new Vector3(Position);
 
@@ -418,7 +435,7 @@ namespace MortalDungeon.Engine_Classes
         }
 
 
-        internal UIDimensions GetTextDimensions()
+        public UIDimensions GetTextDimensions()
         {
             if (Letters.Count == 0)
                 return new UIDimensions();
@@ -442,7 +459,7 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
-        internal static UIDimensions GetTextDimensions(int columns, int rows, float textScale)
+        public static UIDimensions GetTextDimensions(int columns, int rows, float textScale)
         {
             if (columns == 0)
                 return new UIDimensions();
@@ -456,7 +473,7 @@ namespace MortalDungeon.Engine_Classes
             return dimensions;
         }
 
-        internal void AddCharacter(Character character, int index = -1)
+        public void AddCharacter(Character character, int index = -1)
         {
 
             if (index > 0 || index >= TextString.Length)
@@ -465,12 +482,19 @@ namespace MortalDungeon.Engine_Classes
                 Letter temp = new Letter(character, position, CameraPerspective, TextString.Length, TextScale);
                 TextString += CharacterConstants._characterMapToChar[character];
 
+                temp.ScissorData = ScissorData;
+                temp.TextRenderData = TextRenderData;
+
                 Letters.Add(temp);
             }
             else 
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(index), GetYOffsetAtIndex(index), 0);
-                Letter temp = new Letter(character, position, CameraPerspective, index, TextScale);
+                Letter temp = new Letter(character, position, CameraPerspective, index, TextScale) 
+                {
+                    ScissorData = ScissorData,
+                    TextRenderData = TextRenderData
+                };
 
                 char[] arr = TextString.ToCharArray();
                 string newStr = "";
@@ -494,12 +518,16 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
         }
-        internal void AddCharacter(char character, int index = -1)
+        public void AddCharacter(char character, int index = -1)
         {
             if (index < 0 || index >= TextString.Length)
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(TextString.Length - 1), GetYOffsetAtIndex(TextString.Length - 1), 0);
-                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, TextString.Length, TextScale);
+                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, TextString.Length, TextScale)
+                {
+                    ScissorData = ScissorData,
+                    TextRenderData = TextRenderData,
+                };
                 TextString += character;
 
                 Letters.Add(temp);
@@ -507,7 +535,11 @@ namespace MortalDungeon.Engine_Classes
             else
             {
                 Vector3 position = new Vector3(Position) + new Vector3(GetOffsetAtIndex(index), GetYOffsetAtIndex(index), 0);
-                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, index, TextScale);
+                Letter temp = new Letter(CharacterConstants._characterMap[character], position, CameraPerspective, index, TextScale)
+                {
+                    ScissorData = ScissorData,
+                    TextRenderData= TextRenderData,
+                };
 
                 char[] arr = TextString.ToCharArray();
                 string newStr = "";
@@ -532,7 +564,7 @@ namespace MortalDungeon.Engine_Classes
             }
 
         }
-        internal void RemoveCharacter(int index = -1)
+        public void RemoveCharacter(int index = -1)
         {
             if (index < 0 || index >= TextString.Length)
             {
@@ -559,7 +591,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal void SetTextScale(float scale) 
+        public void SetTextScale(float scale) 
         {
             TextScale = scale;
             LetterOffset = TextScale * _baseLetterOffset;
@@ -572,7 +604,7 @@ namespace MortalDungeon.Engine_Classes
 
             RecalculateTextPosition();
         }
-        internal void SetColor(Vector4 color) 
+        public void SetColor(Vector4 color) 
         {
             Color = color;
 
@@ -582,7 +614,7 @@ namespace MortalDungeon.Engine_Classes
             });
         }
 
-        internal void SetPosition(Vector3 position)
+        public void SetPosition(Vector3 position)
         {
             Position = position;
             RecalculateTextPosition();
@@ -616,6 +648,15 @@ namespace MortalDungeon.Engine_Classes
                 }
 
             return offset;
+        }
+
+        public void SetScissorData(ScissorData data) 
+        {
+            ScissorData = data;
+            foreach(var letter in Letters)
+            {
+                letter.ScissorData = data;
+            }
         }
     }
 }

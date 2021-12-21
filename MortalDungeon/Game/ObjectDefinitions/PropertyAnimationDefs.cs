@@ -9,9 +9,9 @@ namespace MortalDungeon.Game.Objects
 {
     namespace PropertyAnimations
     {
-        internal class BounceAnimation : PropertyAnimation
+        public class BounceAnimation : PropertyAnimation
         {
-            internal BounceAnimation(RenderableObject baseFrame, int bounceFrameDelay = 1)
+            public BounceAnimation(RenderableObject baseFrame, int bounceFrameDelay = 1)
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
@@ -40,9 +40,9 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
-        internal class LiftAnimation : PropertyAnimation
+        public class LiftAnimation : PropertyAnimation
         {
-            internal LiftAnimation(RenderableObject baseFrame)
+            public LiftAnimation(RenderableObject baseFrame)
             {
                 BaseFrame = baseFrame;
                 BaseTranslation = baseFrame.Translation.ExtractTranslation();
@@ -58,7 +58,7 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
-        internal class DayNightCycle : TimedAnimation 
+        public class DayNightCycle : TimedAnimation 
         {
             private static Color NightColor = new Color(0.1f, 0.1f, 0.2f, 1f);
             private static Color MorningColor = new Color(0.5f, 0.5f, 0.43f, 1f);
@@ -70,13 +70,13 @@ namespace MortalDungeon.Game.Objects
             private const int TRANSITION_PERIOD = 64;
 
             private const int NightEnd = 0;
-            internal const int MorningStart = NightEnd + TRANSITION_PERIOD;
+            public const int MorningStart = NightEnd + TRANSITION_PERIOD;
             private const int MorningEnd = MorningStart + STATIC_PERIOD;
-            internal const int MiddayStart = MorningEnd + TRANSITION_PERIOD;
+            public const int MiddayStart = MorningEnd + TRANSITION_PERIOD;
             private const int MiddayEnd = MiddayStart + STATIC_PERIOD * 5;
-            internal const int EveningStart = MiddayEnd + TRANSITION_PERIOD;
+            public const int EveningStart = MiddayEnd + TRANSITION_PERIOD;
             private const int EveningEnd = EveningStart + STATIC_PERIOD;
-            internal const int NightStart = EveningEnd + TRANSITION_PERIOD;
+            public const int NightStart = EveningEnd + TRANSITION_PERIOD;
 
             private const int DAY_PERIOD = NightStart + STATIC_PERIOD * 3; //496
 
@@ -84,7 +84,7 @@ namespace MortalDungeon.Game.Objects
 
             public CombatScene Scene;
 
-            internal DayNightCycle(int timeDelay, int startTime, CombatScene scene) 
+            public DayNightCycle(int timeDelay, int startTime, CombatScene scene) 
             {
                 Repeat = true;
                 Playing = true;
@@ -143,7 +143,7 @@ namespace MortalDungeon.Game.Objects
                 CombatScene.EnvironmentColor.A = startColor.A;
             }
 
-            internal void PrintTime() 
+            public void PrintTime() 
             {
                 Console.Write($"{Scene.Time}");
 
@@ -183,7 +183,7 @@ namespace MortalDungeon.Game.Objects
                 Console.Write(identifer + "\n");
             }
 
-            internal bool IsNight() 
+            public bool IsNight() 
             {
                 return Scene.Time < MorningStart || Scene.Time > EveningEnd;
             }

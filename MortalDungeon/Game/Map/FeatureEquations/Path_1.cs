@@ -8,16 +8,18 @@ using System.Text;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
-    internal class Path_1 : FeatureEquation
+    public class Path_1 : FeatureEquation
     {
         PathParams PathParams;
 
-        internal Path_1(PathParams pathParams)
+        public Path_1(PathParams pathParams)
         {
             PathParams = pathParams;
+
+            FeatureID = HashCoordinates(pathParams.Start.X, pathParams.Start.Y);
         }
 
-        internal override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
+        public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
@@ -48,7 +50,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             }
         }
 
-        internal override void GenerateFeature()
+        public override void GenerateFeature()
         {
             ClearAffectedPoints();
 
@@ -88,13 +90,13 @@ namespace MortalDungeon.Game.Map.FeatureEquations
     }
 
 
-    internal struct PathParams
+    public struct PathParams
     {
-        internal FeaturePoint Start;
-        internal List<FeaturePoint> Stops;
-        internal int Width;
+        public FeaturePoint Start;
+        public List<FeaturePoint> Stops;
+        public int Width;
 
-        internal PathParams(FeaturePoint start, FeaturePoint end, int width = 1)
+        public PathParams(FeaturePoint start, FeaturePoint end, int width = 1)
         {
             Start = start;
             Stops = new List<FeaturePoint>() { end };
@@ -102,7 +104,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             Width = width;
         }
 
-        internal void AddStop(FeaturePoint stop)
+        public void AddStop(FeaturePoint stop)
         {
             Stops.Insert(Stops.Count - 1, stop);
         }
@@ -115,7 +117,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         /// <param name="stepWidth">The maximum distance that a single meander can move.</param>
         /// <param name="seed">The number that will be used to seed the random number generator.</param>
         /// <param name="meanderProportion">A number [0:1] that represents the proportion of the meander that will apply to the X (0) or Y(1) value</param>
-        internal void AddMeanderingPoints(int maxMeander, float density, int stepWidth, float meanderProportion, int seed)
+        public void AddMeanderingPoints(int maxMeander, float density, int stepWidth, float meanderProportion, int seed)
         {
             float length = FeatureEquation.GetDistanceBetweenPoints(Start, Stops[^1]);
 

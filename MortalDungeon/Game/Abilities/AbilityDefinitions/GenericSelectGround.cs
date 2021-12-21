@@ -10,11 +10,11 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class GenericSelectGround : Ability
+    public class GenericSelectGround : Ability
     {
-        internal Action<BaseTile> OnGroundSelected = null;
+        public Action<BaseTile> OnGroundSelected = null;
 
-        internal GenericSelectGround(Unit castingUnit, int range = 3)
+        public GenericSelectGround(Unit castingUnit, int range = 3)
         {
             Type = AbilityTypes.Empty;
             DamageType = DamageType.NonDamaging;
@@ -31,7 +31,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.QuestionMark, Spritesheets.IconSheet, true);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -57,7 +57,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override void OnTileClicked(TileMap map, BaseTile tile)
+        public override void OnTileClicked(TileMap map, BaseTile tile)
         {
             if (AffectedTiles.Exists(t => t == tile))
             {
@@ -70,19 +70,19 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        internal override void OnCast()
+        public override void OnCast()
         {
             ClearSelectedTiles();
 
             base.OnCast();
         }
 
-        internal override void OnAICast()
+        public override void OnAICast()
         {
             base.OnAICast();
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 
@@ -92,12 +92,12 @@ namespace MortalDungeon.Game.Abilities
             OnGroundSelected?.Invoke(SelectedTile);
         }
 
-        internal override void OnRightClick()
+        public override void OnRightClick()
         {
             base.OnRightClick();
         }
 
-        internal override void OnAbilityDeselect()
+        public override void OnAbilityDeselect()
         {
             ClearSelectedTiles();
 
@@ -106,7 +106,7 @@ namespace MortalDungeon.Game.Abilities
             SelectedTile = null;
         }
 
-        internal void ClearSelectedTiles()
+        public void ClearSelectedTiles()
         {
             lock (AffectedTiles)
                 AffectedTiles.ForEach(tile =>

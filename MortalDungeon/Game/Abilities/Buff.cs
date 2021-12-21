@@ -9,72 +9,72 @@ using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal enum BuffType 
+    public enum BuffType 
     {
         Neutral,
         Debuff,
         Buff
     }
-    internal class Buff
+    public class Buff
     {
-        internal Unit AffectedUnit;
+        public Unit AffectedUnit;
 
-        internal BuffModifier OutgoingDamage = new BuffModifier();
+        public BuffModifier OutgoingDamage = new BuffModifier();
 
-        internal BuffModifier ShieldBlock = new BuffModifier();
+        public BuffModifier ShieldBlock = new BuffModifier();
 
-        internal BuffModifier EnergyCost = new BuffModifier();
+        public BuffModifier EnergyCost = new BuffModifier();
 
-        internal BuffModifier ActionEnergyCost = new BuffModifier();
+        public BuffModifier ActionEnergyCost = new BuffModifier();
 
-        internal BuffModifier SpeedModifier = new BuffModifier();
+        public BuffModifier SpeedModifier = new BuffModifier();
 
-        internal BuffModifier DamageReduction = new BuffModifier();
+        public BuffModifier DamageReduction = new BuffModifier();
 
-        internal BuffModifier EnergyBoost = new BuffModifier();
+        public BuffModifier EnergyBoost = new BuffModifier();
 
-        internal BuffModifier ActionEnergyBoost = new BuffModifier();
+        public BuffModifier ActionEnergyBoost = new BuffModifier();
 
-        internal BuffModifier SoundModifier = new BuffModifier();
+        public BuffModifier SoundModifier = new BuffModifier();
 
-        internal Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
+        public Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
 
-        internal int MaxDuration = 0;
-        internal int Duration = 0;
-        internal bool IndefiniteDuration = false;
-        internal bool Hidden = false;
+        public int MaxDuration = 0;
+        public int Duration = 0;
+        public bool IndefiniteDuration = false;
+        public bool Hidden = false;
 
-        internal bool Dispellable = false;
-        internal bool DispellableStrong = false;
+        public bool Dispellable = false;
+        public bool DispellableStrong = false;
 
-        internal string Name = "";
-        internal BuffType BuffType = BuffType.Neutral;
+        public string Name = "";
+        public BuffType BuffType = BuffType.Neutral;
 
         /// <summary>
         /// The status condition that having this buff/debuff provides
         /// </summary>
-        internal StatusCondition StatusCondition;
+        public StatusCondition StatusCondition;
 
-        internal int Grade = 1;
+        public int Grade = 1;
 
-        internal int BuffID => _buffID;
+        public int BuffID => _buffID;
         protected int _buffID = _currentBuffID++;
         protected static int _currentBuffID = 0;
 
-        internal Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
+        public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
 
-        internal Buff(int duration = -1)
+        public Buff(int duration = -1)
         {
             MaxDuration = duration;
             Duration = duration;
         }
-        internal Buff(Unit unit, int duration = -1) 
+        public Buff(Unit unit, int duration = -1) 
         {
             MaxDuration = duration;
             Duration = duration;
         }
 
-        internal virtual void AddBuffToUnit(Unit unit) 
+        public virtual void AddBuffToUnit(Unit unit) 
         {
             if (AffectedUnit != null)
             {
@@ -84,7 +84,7 @@ namespace MortalDungeon.Game.Abilities
             unit.Info.AddBuff(this);
         }
 
-        internal virtual void RemoveBuffFromUnit() 
+        public virtual void RemoveBuffFromUnit() 
         {
             if (AffectedUnit != null) 
             {
@@ -92,26 +92,26 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        internal virtual Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground)
+        public virtual Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground)
         {
             Icon icon = new Icon(Icon, scale, withBackground, backgroundType);
            
             return icon;
         }
 
-        internal virtual Icon GenerateIcon(UIScale scale)
+        public virtual Icon GenerateIcon(UIScale scale)
         {
             return GenerateIcon(scale, false);
         }
 
-        internal virtual Tooltip GenerateTooltip() 
+        public virtual Tooltip GenerateTooltip() 
         {
             Tooltip tooltip = new Tooltip();
 
             return tooltip;
         }
 
-        internal virtual void OnTurnStart()
+        public virtual void OnTurnStart()
         {
             if (!IndefiniteDuration)
             {
@@ -124,40 +124,40 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        internal virtual void OnRoundStart()
+        public virtual void OnRoundStart()
         {
 
         }
 
-        internal virtual void OnTurnEnd()
+        public virtual void OnTurnEnd()
         {
             
         }
 
-        internal virtual void OnRoundEnd()
+        public virtual void OnRoundEnd()
         {
 
         }
 
-        internal virtual DamageInstance GetDamageInstance()
+        public virtual DamageInstance GetDamageInstance()
         {
             return new DamageInstance();
         }
 
-        internal virtual void ModifyDamageInstance(DamageInstance instance, Ability ability) 
+        public virtual void ModifyDamageInstance(DamageInstance instance, Ability ability) 
         {
 
         }
 
-        internal virtual float ModifyShieldBlockAdditive(Unit unit)
+        public virtual float ModifyShieldBlockAdditive(Unit unit)
         {
             return 0;
         }
 
-        internal class BuffModifier
+        public class BuffModifier
         {
-            internal float Additive = 0;
-            internal float Multiplier = 1;
+            public float Additive = 0;
+            public float Multiplier = 1;
         }
     }
 }

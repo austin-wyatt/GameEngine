@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
-    internal enum IconSheetIcons
+    public enum IconSheetIcons
     {
         CrossedSwords,
         Shield,
@@ -27,24 +27,24 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         MonkBig,
         Circle
     }
-    internal class Icon : UIObject
+    public class Icon : UIObject
     {
-        internal enum BackgroundType 
+        public enum BackgroundType 
         {
             NeutralBackground = 10,
             BuffBackground = 30,
             DebuffBackground = 50
         }
 
-        internal Spritesheet _spritesheet;
-        internal Enum _spritesheetPosition;
+        public Spritesheet _spritesheet;
+        public Enum _spritesheetPosition;
 
-        internal UIObject ChargeDisplay = null;
+        public UIObject ChargeDisplay = null;
 
-        internal static UIScale DefaultIconSize = new UIScale(0.25f, 0.25f);
-        internal static IconSheetIcons DefaultIcon = IconSheetIcons.QuestionMark; //question mark icon
+        public static UIScale DefaultIconSize = new UIScale(0.25f, 0.25f);
+        public static IconSheetIcons DefaultIcon = IconSheetIcons.QuestionMark; //question mark icon
 
-        internal Icon(UIScale size, Enum spritesheetPosition, Spritesheet spritesheet, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground)
+        public Icon(UIScale size, Enum spritesheetPosition, Spritesheet spritesheet, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground)
         {
             Size = size;
             Name = "Icon";
@@ -105,15 +105,15 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             LoadTexture(this);
         }
 
-        internal Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground) 
+        public Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground) 
             : this(size, icon._spritesheetPosition, icon._spritesheet, withBackground, backgroundType) { }
 
-        internal override void OnClick()
+        public override void OnClick()
         {
             base.OnClick();
         }
 
-        internal void SetCameraPerspective(bool camPerspective) 
+        public void SetCameraPerspective(bool camPerspective) 
         {
             BaseObjects.ForEach(b =>
             {
@@ -121,7 +121,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             });
         }
 
-        internal void AddChargeDisplay(Ability ability) 
+        public void AddChargeDisplay(Ability ability) 
         {
             UIScale textBoxSize = new UIScale(Size);
             textBoxSize *= 0.333f;
@@ -166,7 +166,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
                     ability.RestoreCharges(1);
                     ability.Scene.ActionEnergyBar.HoverAmount(0);
-                    ability.Scene.Footer.UpdateFooterInfo();
+                    ability.Scene.Footer.UpdateFooterInfo(forceUpdate: true);
                 }
                 else if (ability.Scene._selectedAbility != null) 
                 {
@@ -210,7 +210,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         /// <summary>
         /// Creates a pattern of action point objects to indicate how many action points the ability costs
         /// </summary>
-        internal void AddActionCost(Ability ability) 
+        public void AddActionCost(Ability ability) 
         {
             UIScale textBoxSize = new UIScale(Size);
             textBoxSize *= 0.16f;
@@ -239,7 +239,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        internal void AddComboIndicator(Ability ability) 
+        public void AddComboIndicator(Ability ability) 
         {
             UIScale textBoxSize = new UIScale(Size);
             textBoxSize *= 0.1f;

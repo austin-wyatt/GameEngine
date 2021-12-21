@@ -9,9 +9,9 @@ using System.Text;
 
 namespace MortalDungeon.Game.GameObjects
 {
-    internal class Fire : GameObject
+    public class Fire : GameObject
     {
-        internal Fire(Vector3 position)
+        public Fire(Vector3 position)
         {
             Name = "Fire";
 
@@ -31,10 +31,10 @@ namespace MortalDungeon.Game.GameObjects
         }
     }
 
-    internal class Mountain : GameObject
+    public class Mountain : GameObject
     {
-        internal Mountain() { }
-        internal Mountain(Vector3 position, int id = 0)
+        public Mountain() { }
+        public Mountain(Vector3 position, int id = 0)
         {
             Name = "Moutain";
 
@@ -48,10 +48,10 @@ namespace MortalDungeon.Game.GameObjects
         }
     }
 
-    internal class CaveBackground : GameObject
+    public class CaveBackground : GameObject
     {
-        internal CaveBackground() { }
-        internal CaveBackground(Vector2i clientSize, Vector3 position, int id = 0)
+        public CaveBackground() { }
+        public CaveBackground(Vector2i clientSize, Vector3 position, int id = 0)
         {
             Name = "CaveBackground";
 
@@ -65,10 +65,10 @@ namespace MortalDungeon.Game.GameObjects
         }
     }
 
-    internal class MountainTwo : GameObject
+    public class MountainTwo : GameObject
     {
-        internal MountainTwo() { }
-        internal MountainTwo(Vector3 position, int id = 0)
+        public MountainTwo() { }
+        public MountainTwo(Vector3 position, int id = 0)
         {
             Name = "MoutainTwo";
 

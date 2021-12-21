@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.UI
 {
-    internal class SideBar
+    public class SideBar
     {
         public CombatScene Scene;
 
@@ -82,9 +82,28 @@ namespace MortalDungeon.Game.UI
 
             campIcon.SetPositionFromAnchor(partyIcon.GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 15, -0.0001f), UIAnchorPosition.TopCenter);
 
+            Icon moveIcon = new Icon(new UIScale(0.12f, 0.12f), IconSheetIcons.WalkingBoot, Spritesheets.IconSheet, true);
+            moveIcon.Clickable = true;
+            UIHelpers.AddTimedHoverTooltip(moveIcon, "Enable right click movement", scene);
+            moveIcon.RenderAfterParent = true;
+
+            moveIcon.SelectedColor = Colors.IconSelected;
+
+            moveIcon.OnClickAction = () =>
+            {
+                moveIcon.OnSelect(!moveIcon.Selected);
+
+                Scene.ContextManager.SetFlag(GeneralContextFlags.RightClickMovementEnabled, moveIcon.Selected);
+            };
+
+            moveIcon.SetPositionFromAnchor(campIcon.GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 15, -0.0001f), UIAnchorPosition.TopCenter);
+
+
+
             ControlBar.AddChild(minimizeIcon);
             ControlBar.AddChild(partyIcon);
             ControlBar.AddChild(campIcon);
+            ControlBar.AddChild(moveIcon);
 
             ParentObject.AddChild(ControlBar);
             ParentObject.AddChild(MinimizedBar);
@@ -114,7 +133,7 @@ namespace MortalDungeon.Game.UI
             Icon createGroup = new Icon(new UIScale(0.1f, 0.1f), UISheetIcons.Shield, Spritesheets.UISheet, true);
             createGroup.BaseObject.BaseFrame.SetBaseColor(new Vector4(0.125f, 0.836f, 0.125f, 1));
             createGroup.Clickable = true;
-            UIHelpers.AddTimedHoverTooltip(createGroup, "Create group\nYour friends must be within 10 distance", Scene);
+            UIHelpers.AddTimedHoverTooltip(createGroup, "Create group\nYour friends must be within 10 yalms", Scene);
             createGroup.RenderAfterParent = true;
 
             createGroup.OnClickAction = () =>
@@ -126,7 +145,7 @@ namespace MortalDungeon.Game.UI
                 });
             };
 
-            createGroup.SetPositionFromAnchor(PartyWindow.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, 50, -0.00001f), UIAnchorPosition.TopRight);
+            createGroup.SetPositionFromAnchor(PartyWindow.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, 50, -0.000001f), UIAnchorPosition.TopRight);
 
             PartyWindow.AddChild(createGroup, 10);
 
@@ -140,7 +159,7 @@ namespace MortalDungeon.Game.UI
                 Task.Run(() => Scene.DissolveUnitGroup(true, CreatePartyWindowList));
             };
 
-            dissolveGroup.SetPositionFromAnchor(createGroup.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(-0, 10, -0.00001f), UIAnchorPosition.TopLeft);
+            dissolveGroup.SetPositionFromAnchor(createGroup.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(-0, 10, -0.000001f), UIAnchorPosition.TopLeft);
             UIHelpers.AddTimedHoverTooltip(dissolveGroup, "Dissolve group", Scene);
 
 
@@ -232,6 +251,7 @@ namespace MortalDungeon.Game.UI
                     else
                     {
                         Scene.SmoothPanCameraToUnit(unitList[index], 1);
+                        Scene.SelectUnit(unitList[index]);
                     }
                 };
             }
@@ -276,7 +296,7 @@ namespace MortalDungeon.Game.UI
                 }
             };
 
-            campButton.SetPositionFromAnchor(CampWindow.GetAnchorPosition(UIAnchorPosition.Center) + new Vector3(0, 0, -0.0001f), UIAnchorPosition.Center);
+            campButton.SetPositionFromAnchor(CampWindow.GetAnchorPosition(UIAnchorPosition.Center) + new Vector3(0, 0, -0.000001f), UIAnchorPosition.Center);
 
             CampWindow.AddChild(campButton);
 

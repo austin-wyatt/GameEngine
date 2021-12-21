@@ -10,9 +10,9 @@ using MortalDungeon.Objects;
 
 namespace MortalDungeon.Game.Abilities
 {
-    internal class Bleed : Ability
+    public class Bleed : Ability
     {
-        internal Bleed(Unit castingUnit, int range = 1, float bleedDamage = 15f, int duration = 3)
+        public Bleed(Unit castingUnit, int range = 1, float bleedDamage = 15f, int duration = 3)
         {
             Type = AbilityTypes.Debuff;
             Range = range;
@@ -28,7 +28,7 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BleedingDagger, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
-        internal override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
         {
             base.GetValidTileTargets(tileMap);
 
@@ -49,7 +49,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        internal override bool OnUnitClicked(Unit unit)
+        public override bool OnUnitClicked(Unit unit)
         {
             if (!base.OnUnitClicked(unit))
                 return false;
@@ -63,14 +63,14 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        internal override void OnCast()
+        public override void OnCast()
         {
             TileMap.Controller.DeselectTiles();
 
             base.OnCast();
         }
 
-        internal override void EnactEffect()
+        public override void EnactEffect()
         {
             base.EnactEffect();
 

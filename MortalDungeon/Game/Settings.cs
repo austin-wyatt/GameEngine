@@ -4,11 +4,11 @@ using System.Text;
 
 namespace MortalDungeon.Game
 {
-    internal static class Settings
+    public static class Settings
     {
-        internal static bool EnableTileTooltips = false;
-        internal static bool HeightmapEnabled = false;
-        internal static bool VsyncEnabled = false;
-        internal static bool MovementTurbo = false;
+        public static bool EnableTileTooltips = false;
+        public static bool HeightmapEnabled = false;
+        public static bool VsyncEnabled = false;
+        public static bool MovementTurbo = false;
     }
 }

@@ -8,19 +8,19 @@ using System.Text;
 
 namespace MortalDungeon.Game.UI
 {
-    internal class UnitStatusBar : UIObject
+    public class UnitStatusBar : UIObject
     {
-        internal Camera _camera;
-        internal Unit _unit;
+        public Camera _camera;
+        public Unit _unit;
 
-        internal TextComponent _mainTextBox;
-        internal TextBox _turnDisplay;
-        internal HealthBar HealthBar;
-        internal ShieldBar ShieldBar;
+        public TextComponent _mainTextBox;
+        public TextBox _turnDisplay;
+        public HealthBar HealthBar;
+        public ShieldBar ShieldBar;
 
-        internal bool WillDisplay = true;
+        public bool WillDisplay = true;
 
-        internal UnitStatusBar(Unit unit, Camera camera) 
+        public UnitStatusBar(Unit unit, Camera camera) 
         {
             Vector4 unitPos = new Vector4(unit.Position, 1) * unit.GetDisplay().Transformations * camera.GetViewMatrix() * camera.ProjectionMatrix;
             unitPos.X /= unitPos.W;
@@ -87,7 +87,7 @@ namespace MortalDungeon.Game.UI
             UpdateUnitStatusPosition();
         }
 
-        internal void UpdateUnitStatusPosition() 
+        public void UpdateUnitStatusPosition() 
         {
             if (_unit.BaseObjects.Count == 0)
                 return;
@@ -163,7 +163,8 @@ namespace MortalDungeon.Game.UI
 
                 Vector3 screenSpace = WindowConstants.ConvertLocalToScreenSpaceCoordinates(unitPos.Xy);
 
-                screenSpace.Z = 0.01f;
+                screenSpace.Z = Position.Z;
+                //screenSpace.Z = 0.01f;
 
                 BaseComponent.SetPosition(screenSpace);
 
@@ -174,7 +175,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        internal void SetWillDisplay(bool display) 
+        public void SetWillDisplay(bool display) 
         {
             if(WillDisplay != display) 
             {
@@ -188,7 +189,7 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        internal void SetIsTurn(bool isTurn) 
+        public void SetIsTurn(bool isTurn) 
         {
             if (isTurn)
             {
@@ -202,14 +203,14 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        internal void UpdateInfo() 
+        public void UpdateInfo() 
         {
             HealthBar.SetHealthPercent(_unit.Info.Health / _unit.Info.MaxHealth, _unit.AI.Team);
             ShieldBar.SetCurrentShields(_unit.Info.CurrentShields);
             _mainTextBox.SetText(_unit.Name);
         }
 
-        internal override void OnCameraMove()
+        public override void OnCameraMove()
         {
             base.OnCameraMove();
 

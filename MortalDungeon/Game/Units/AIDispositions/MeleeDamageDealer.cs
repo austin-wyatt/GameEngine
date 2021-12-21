@@ -7,16 +7,16 @@ namespace MortalDungeon.Game.Units.AI
 {
     class MeleeDamageDealer : Disposition
     {
-        internal float Bloodthirsty;
+        public float Bloodthirsty;
 
 
         private float _unitSeekRange = 50;
-        internal MeleeDamageDealer(Unit unit) : base(unit) 
+        public MeleeDamageDealer(Unit unit) : base(unit) 
         {
             
         }
 
-        internal override UnitAIAction GetAction(AIAction action)
+        public override UnitAIAction GetAction(AIAction action)
         {
             float weight = 0;
 

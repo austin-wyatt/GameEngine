@@ -8,7 +8,7 @@ using System.Text;
 namespace MortalDungeon.Game.Objects
 {
     #region Animation type enums
-    internal enum BaseTileAnimationType
+    public enum BaseTileAnimationType
     {
         SolidWhite,
         Transparent,
@@ -17,24 +17,24 @@ namespace MortalDungeon.Game.Objects
     }
     #endregion
 
-    internal static class CURSOR_ANIMATION
+    public static class CURSOR_ANIMATION
     {
         private static RenderableObject cursor_Idle_1 = new RenderableObject(CursorObjects.MAIN_CURSOR, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
-        internal static Animation Idle = new Animation() 
+        public static Animation Idle = new Animation() 
         { 
             Frames = new List<RenderableObject>() { cursor_Idle_1 },
             Frequency = 30
         };
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle
         };
     }
 
 
-    internal static class FIRE_BASE_ANIMATION
+    public static class FIRE_BASE_ANIMATION
     {
         private static RenderableObject fire_Idle_1 = new RenderableObject(EnvironmentObjects.FIRE_BASE, WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
@@ -45,13 +45,13 @@ namespace MortalDungeon.Game.Objects
             Repeats = 0
         };
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle
         };
     }
 
-    internal static class BASE_TILE_ANIMATION
+    public static class BASE_TILE_ANIMATION
     {
         private static RenderableObject base_Idle_1 = new RenderableObject(new SpritesheetObject((int)Tiles.TileType.Default, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         private static RenderableObject base_Selected_1 = new RenderableObject(new SpritesheetObject((int)Tiles.TileType.Outline, Spritesheets.TileSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, EnvironmentObjects.BaseTileBounds, true, true), new Vector4(1, 0.4f, 0.4f, 1), ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
@@ -91,7 +91,7 @@ namespace MortalDungeon.Game.Objects
             GenericType = (int)BaseTileAnimationType.Selected
         };
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             SolidWhite,
             Transparent,
@@ -100,7 +100,7 @@ namespace MortalDungeon.Game.Objects
         };
     }
 
-    internal enum TestSheetItems 
+    public enum TestSheetItems 
     {
         Guy_Idle_1 = 30,
         Guy_Idle_2,
@@ -115,7 +115,7 @@ namespace MortalDungeon.Game.Objects
         Skeleton_Die_2
     }
 
-    internal static class BAD_GUY_ANIMATION
+    public static class BAD_GUY_ANIMATION
     {
         private static RenderableObject guy_Idle_1 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Idle_1, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         private static RenderableObject guy_Idle_2 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Guy_Idle_2, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
@@ -142,14 +142,14 @@ namespace MortalDungeon.Game.Objects
             Type = AnimationType.Die
         };
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle,
             Die
         };
     }
 
-    internal static class SKELETON_ANIMATION
+    public static class SKELETON_ANIMATION
     {
         private static RenderableObject idle1 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
         private static RenderableObject idle2 = new RenderableObject(new SpritesheetObject((int)TestSheetItems.Skeleton_Idle_2, Spritesheets.TestSheet).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
@@ -174,14 +174,14 @@ namespace MortalDungeon.Game.Objects
             Type = AnimationType.Die
         };
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle,
             Die
         };
     }
 
-    internal static class MOUNTAIN_ANIMATION
+    public static class MOUNTAIN_ANIMATION
     {
         private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(70, Spritesheets.TestSheet, 5, 3).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
@@ -193,13 +193,13 @@ namespace MortalDungeon.Game.Objects
         };
 
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle
         };
     }
 
-    internal static class CAVE_BACKGROUND_ANIMATION
+    public static class CAVE_BACKGROUND_ANIMATION
     {
         private static RenderableObject cave_Idle_1 = new RenderableObject(new SpritesheetObject(0, Spritesheets.CaveSheet, 8, 8).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
@@ -211,13 +211,13 @@ namespace MortalDungeon.Game.Objects
         };
 
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle
         };
     }
 
-    internal static class MOUNTAIN_TWO_ANIMATION
+    public static class MOUNTAIN_TWO_ANIMATION
     {
         private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(75, Spritesheets.TestSheet, 4, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
 
@@ -229,21 +229,21 @@ namespace MortalDungeon.Game.Objects
         };
 
 
-        internal static List<Animation> List = new List<Animation>()
+        public static List<Animation> List = new List<Animation>()
         {
             Idle
         };
     }
-    internal class LINE_ANIMATION
+    public class LINE_ANIMATION
     {
         private LineObject lineObj;
 
-        internal List<Animation> List;
+        public List<Animation> List;
 
         private RenderableObject line_Idle_1;
 
         private Animation Idle;
-        internal LINE_ANIMATION(LineObject lineObject)
+        public LINE_ANIMATION(LineObject lineObject)
         {
             lineObj = lineObject;
 

@@ -3,7 +3,7 @@ using System;
 
 namespace MortalDungeon.Engine_Classes
 {
-    internal class Camera
+    public class Camera
     {
         private Vector3 _front = -Vector3.UnitZ;
 
@@ -17,27 +17,27 @@ namespace MortalDungeon.Engine_Classes
 
         private float _fov = MathHelper.PiOver2;
 
-        internal Matrix4 ProjectionMatrix;
+        public Matrix4 ProjectionMatrix;
 
-        internal Action onUpdate = null;
+        public Action onUpdate = null;
 
-        internal Camera(Vector3 position, float aspectRatio)
+        public Camera(Vector3 position, float aspectRatio)
         {
             Position = position;
             AspectRatio = aspectRatio;
         }
 
-        internal Vector3 Position { get; set; }
+        public Vector3 Position { get; set; }
 
-        internal float AspectRatio { private get; set; }
+        public float AspectRatio { private get; set; }
 
-        internal Vector3 Front => _front;
+        public Vector3 Front => _front;
 
-        internal Vector3 Up => _up;
+        public Vector3 Up => _up;
 
-        internal Vector3 Right => _right;
+        public Vector3 Right => _right;
 
-        internal float Pitch
+        public float Pitch
         {
             get => MathHelper.RadiansToDegrees(_pitch);
             set
@@ -48,7 +48,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal float Yaw
+        public float Yaw
         {
             get => MathHelper.RadiansToDegrees(_yaw);
             set
@@ -58,7 +58,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal float Fov
+        public float Fov
         {
             get => MathHelper.RadiansToDegrees(_fov);
             set
@@ -68,22 +68,22 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        internal float GetFOVRadians() 
+        public float GetFOVRadians() 
         {
             return _fov;
         }
 
-        internal Matrix4 GetViewMatrix()
+        public Matrix4 GetViewMatrix()
         {
             return Matrix4.LookAt(Position, Position + _front, _up);
         }
 
-        internal Matrix4 GetProjectionMatrix()
+        public Matrix4 GetProjectionMatrix()
         {
             return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 400f);
         }
 
-        internal void UpdateProjectionMatrix() 
+        public void UpdateProjectionMatrix() 
         {
             ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 1000f);
         }
@@ -102,7 +102,7 @@ namespace MortalDungeon.Engine_Classes
             onUpdate?.Invoke();
         }
 
-        internal void SetPosition(Vector3 pos) 
+        public void SetPosition(Vector3 pos) 
         {
             Position = pos;
 
