@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using MortalDungeon.Engine_Classes;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,8 +22,8 @@ namespace MortalDungeon.Game.Map
         }
         protected void GenerateCellSeed()
         {
-            int xVal = new Random(int.MaxValue - CellLocation[0]).Next();
-            int yVal = new Random(CellLocation[1]).Next();
+            int xVal = new ConsistentRandom(int.MaxValue - CellLocation[0]).Next();
+            int yVal = new ConsistentRandom(CellLocation[1]).Next();
 
             CellSeed = Math.Abs((xVal + yVal) / 2); //should be sufficient to generate a seed based on the X and Y position
         }

@@ -15,11 +15,9 @@ namespace MortalDungeon.Game.SceneDefinitions
     {
 
         private UIObject _backdrop;
-        public EscapeMenuScene(Action exitFunc)
+        public EscapeMenuScene()
         {
             InitializeFields();
-
-            ExitFunc = exitFunc;
         }
 
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
@@ -34,7 +32,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                 OnClickAction = () =>
                 {
                     SoundPlayer.FreeAllSources();
-                    ExitFunc?.Invoke();
+                    Window.CloseWindow?.Invoke();
                 }
             };
 

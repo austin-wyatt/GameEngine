@@ -28,9 +28,12 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         public BanditCamp(BanditCampParams @params)
         {
             CampParams = @params;
-            NumberGen = new Random(HashCoordinates(@params.Origin.X, @params.Origin.Y));
+            NumberGen = new ConsistentRandom((int)HashCoordinates(@params.Origin.X, @params.Origin.Y));
 
             FeatureID = HashCoordinates(@params.Origin.X, @params.Origin.Y);
+
+            FeatureLedger.SetFeatureStateValue(FeatureID, FeatureStateValues.NormalKillRequirements, 3);
+            FeatureLedger.SetFeatureStateValue(FeatureID, FeatureStateValues.AvailableToClear, 1);
         }
 
         public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
@@ -107,8 +110,14 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     }
                 }
 
+
                 long pointHash = affectedPoint.GetUniqueHash();
-                if (GetBit(value, 2) && freshGeneration && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash)) 
+
+                var interaction = FeatureLedger.GetInteraction(FeatureID, pointHash);
+                short featureStateVal = FeatureLedger.GetFeatureStateValue(FeatureID, FeatureStateValues.AvailableToClear);
+
+                if (GetBit(value, 2) && freshGeneration && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash) 
+                    && interaction != FeatureInteraction.Killed && featureStateVal > 0) 
                 {
                     Entity enemy = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
                     EntityManager.AddEntity(enemy);
@@ -123,7 +132,8 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     enemy.Load(affectedPoint);
                 }
 
-                if (GetBit(value, 3) && freshGeneration)
+
+                if (GetBit(value, 3) && freshGeneration && interaction != FeatureInteraction.Cleared && interaction != FeatureInteraction.Explored)
                 {
                     tile.Properties.MustExplore = true;
                     tile.Update();

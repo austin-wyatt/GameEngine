@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         public Graveyard_1(GraveyardParams @params)
         {
             GraveyardParams = @params;
-            NumberGen = new Random(HashCoordinates(@params.Origin.X, @params.Origin.Y));
+            NumberGen = new ConsistentRandom((int)HashCoordinates(@params.Origin.X, @params.Origin.Y));
 
             FeatureID = HashCoordinates(@params.Origin.X, @params.Origin.Y);
         }
@@ -86,7 +86,8 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 {
                     long pointHash = affectedPoint.GetUniqueHash();
 
-                    if (tile.Structure == null && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash))
+                    if (tile.Structure == null && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash) 
+                        && FeatureLedger.GetInteraction(FeatureID, pointHash) != FeatureInteraction.Killed)
                     {
                         Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
                         EntityManager.AddEntity(skele);
@@ -94,13 +95,11 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                         skele.Handle.pack_name = "graveyard" + FeatureID;
 
                         skele.Handle.FeatureID = FeatureID;
-                        skele.Handle.FeatureHash = affectedPoint.GetUniqueHash();
+                        skele.Handle.FeatureHash = pointHash;
 
                         skele.DestroyOnUnload = true;
 
                         skele.Load(affectedPoint);
-
-                        //Console.WriteLine("Skeleton spawned on point " + affectedPoint.ToString());
                     }
                 }
             }

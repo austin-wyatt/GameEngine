@@ -93,11 +93,15 @@ namespace MortalDungeon.Game.Abilities
         public AbilityClass AbilityClass = AbilityClass.Unknown;
         public CastingMethod CastingMethod = CastingMethod.Base;
 
+
+
         public int Grade = 1;
         /// <summary>
         /// Denotes abilities that do not have charges and that act as a base ability in an ability tree.
         /// </summary>
-        public bool Basic = false;
+        public bool BasicAbility = false;
+        public AbilityTreeType AbilityTreeType = AbilityTreeType.None;
+        public int NodeID = -1;
 
         public Unit CastingUnit;
 

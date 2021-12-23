@@ -5,6 +5,7 @@ using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Ledger;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Particles;
@@ -51,7 +52,7 @@ namespace MortalDungeon.Game.Units
 
         public UnitProfileType ProfileType = UnitProfileType.Unknown;
 
-        public int FeatureID = -1;
+        public long FeatureID = -1;
         public long FeatureHash = 0;
 
         public Unit() { }
@@ -92,7 +93,7 @@ namespace MortalDungeon.Game.Units
 
         }
 
-        public virtual void EntityLoad(FeaturePoint position) 
+        public virtual void EntityLoad(FeaturePoint position, bool placeOnTileMap = true) 
         {
             Position = new Vector3();
 
@@ -122,7 +123,10 @@ namespace MortalDungeon.Game.Units
             Info.Energy = Info.CurrentEnergy;
             Info.ActionEnergy = Info.CurrentActionEnergy;
 
-            SetTileMapPosition(Scene._tileMapController.GetTile(position));
+            if (placeOnTileMap)
+            {
+                SetTileMapPosition(Scene._tileMapController.GetTile(position));
+            }
 
             ApplyAbilityLoadout();
         }
@@ -690,11 +694,15 @@ namespace MortalDungeon.Game.Units
 
             Sound sound = new Sound(Sounds.Die) { Gain = 0.2f, Pitch = 1 };
             sound.Play();
+
+            Ledgers.OnUnitKilled(this);
         }
 
         public virtual void OnRevive() 
         {
             BaseObject.SetAnimation(0);
+
+            Ledgers.OnUnitRevived(this);
         }
 
         public virtual void OnHurt() 
@@ -853,6 +861,13 @@ namespace MortalDungeon.Game.Units
         }
     }
 
+
+    public enum Species
+    {
+        Human,
+        Skeleton,
+    }
+
     public enum StatusCondition
     {
         None,
@@ -965,6 +980,8 @@ namespace MortalDungeon.Game.Units
 
         public StatusCondition Status = StatusCondition.None;
 
+        public Species Species = Species.Human;
+
         /// <summary>
         /// If true, this unit/structure can always be seen through
         /// </summary>
@@ -972,11 +989,11 @@ namespace MortalDungeon.Game.Units
 
         public bool Visible(UnitTeam team) 
         {
-            if (Unit.VisibleThroughFog && TileMapPosition.Explored[team])
-                return true;
-
             if (TileMapPosition == null)
                 return false;
+
+            if (Unit.VisibleThroughFog && TileMapPosition.Explored[team])
+                return true;
 
             return !TileMapPosition.InFog[team] && Stealth.Revealed[team];
         }

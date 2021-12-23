@@ -30,7 +30,7 @@ namespace MortalDungeon
 {
     public static class GlobalRandom 
     {
-        private static Random _random = new Random();
+        private static Random _random = new ConsistentRandom();
 
         public static int Next() 
         {
@@ -75,6 +75,7 @@ namespace MortalDungeon
         public static Stopwatch GlobalTimer = new Stopwatch();
 
         public static int MainThreadId = 0;
+
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position)
@@ -177,6 +178,7 @@ namespace MortalDungeon
 
         public CubeMap SkyBox = new CubeMap();
 
+        public static Action CloseWindow = null;
 
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
         {  }
@@ -189,6 +191,8 @@ namespace MortalDungeon
 
             WindowConstants.MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
+            CloseWindow = () => Close();
+
             //Set listeners
             MouseDown += Window_MouseDown;
             MouseMove += Window_MouseMove;
@@ -199,7 +203,7 @@ namespace MortalDungeon
             Renderer.Initialize();
 
             VisionMap.Initialize();
-            
+
 
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
@@ -228,18 +232,37 @@ namespace MortalDungeon
                 int boundSceneID = _sceneController.AddScene(boundScene, 1);
                 _sceneController.LoadScene(boundSceneID, _camera, _cursorObject, _mouseRay);
             }
+            //else if (false) 
+            //{
+            //    Scene writeData = new WriteDataScene();
+
+            //    int writeDataID = _sceneController.AddScene(writeData, 1);
+            //    _sceneController.LoadScene(writeDataID, _camera, _cursorObject, _mouseRay);
+            //}
             else
             {
                 Scene menuScene = new MenuScene();
 
                 int menuSceneID = _sceneController.AddScene(menuScene, 2);
 
-                Scene escapeMenuScene = new EscapeMenuScene(() => Close());
+                Scene escapeMenuScene = new EscapeMenuScene();
 
                 int escapeMenuID = _sceneController.AddScene(escapeMenuScene, 1);
 
                 _sceneController.LoadScene(menuSceneID, _camera, _cursorObject, _mouseRay);
                 _sceneController.LoadScene(escapeMenuID, _camera, _cursorObject, _mouseRay);
+
+                SkyBox.ImagePaths = new string[]
+{
+                "Resources/skybox/forest/right.jpg",
+                "Resources/skybox/forest/left.jpg",
+                "Resources/skybox/forest/top.jpg",
+                "Resources/skybox/forest/bottom.jpg",
+                "Resources/skybox/forest/front.jpg",
+                "Resources/skybox/forest/back.jpg"
+};
+
+                SkyBox.LoadImages();
             }
 
 
@@ -298,19 +321,6 @@ namespace MortalDungeon
             }, TaskCreationOptions.LongRunning);
 
             GameLoop.Start();
-
-
-            SkyBox.ImagePaths = new string[]
-            {
-                "Resources/skybox/forest/right.jpg",
-                "Resources/skybox/forest/left.jpg",
-                "Resources/skybox/forest/top.jpg",
-                "Resources/skybox/forest/bottom.jpg",
-                "Resources/skybox/forest/front.jpg",
-                "Resources/skybox/forest/back.jpg"
-            };
-
-            SkyBox.LoadImages();
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -351,16 +361,19 @@ namespace MortalDungeon
                     Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
                 }
 
-                Console.Write("   High freq ticks: " + _highFreqTickCounter);
-                _highFreqTickCounter = 0;
+                //Console.Write("   High freq ticks: " + _highFreqTickCounter);
+                //_highFreqTickCounter = 0;
 
-                Console.Write("   Ticks: " + _tickCounter);
-                _tickCounter = 0;
+                //Console.Write("   Ticks: " + _tickCounter);
+                //_tickCounter = 0;
+
+                Console.Write("   Objects drawn: " + Renderer.ObjectsDrawn / Renderer.FPSCount);
 
                 Console.Write("\n");
                 _timer.Restart();
                 Renderer.FPSCount = 0;
                 Renderer.DrawCount = 0;
+                Renderer.ObjectsDrawn = 0;
             }
 
             //Tick counter
@@ -513,7 +526,7 @@ namespace MortalDungeon
             Shaders.PARTICLE_SHADER.Use();
             Shaders.PARTICLE_SHADER.SetMatrix4("camera", cameraMatrix);
 
-            if (SkyBox.Loaded)
+            if (SkyBox != null && SkyBox.Loaded)
             {
                 RenderingQueue.RenderSkybox = () =>
                 {

@@ -10,7 +10,7 @@ namespace MortalDungeon.Game.Entities
 {
     public interface ILoadableEntity 
     {
-        public void EntityLoad(FeaturePoint position);
+        public void EntityLoad(FeaturePoint position, bool placeOnTileMap = true);
         public void EntityUnload();
     }
 
@@ -33,14 +33,14 @@ namespace MortalDungeon.Game.Entities
             handle.EntityHandle = this;
         }
 
-        public void Load(FeaturePoint position) 
+        public void Load(FeaturePoint position, bool placeOnTileMap = true) 
         {
             if (!Loaded) 
             {
                 if (Handle.Scene._tileMapController.IsValidTile(position)) 
                 {
                     Loaded = true;
-                    Handle.EntityLoad(position);
+                    Handle.EntityLoad(position, placeOnTileMap);
 
                     Handle.Scene._units.Add(Handle);
                 }

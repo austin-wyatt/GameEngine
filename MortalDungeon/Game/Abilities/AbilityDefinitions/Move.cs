@@ -120,6 +120,12 @@ namespace MortalDungeon.Game.Abilities
                         return;
                     }
 
+                    if(Moving)
+                    {
+                        EffectEnded();
+                        return;
+                    }
+
                     //Task.Run(() =>
                     //{
                     PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);

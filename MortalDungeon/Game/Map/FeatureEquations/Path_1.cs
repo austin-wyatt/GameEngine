@@ -121,7 +121,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         {
             float length = FeatureEquation.GetDistanceBetweenPoints(Start, Stops[^1]);
 
-            Random rand = new Random(seed);
+            Random rand = new ConsistentRandom(seed);
 
             int currentMeander = 0;
             bool meanderSign = false;

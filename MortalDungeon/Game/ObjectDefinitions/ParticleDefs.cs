@@ -14,7 +14,7 @@ namespace MortalDungeon.Game.Particles
             ParticleCount = 1000;
             Position = position;
 
-            var rand = new Random();
+            var rand = new ConsistentRandom();
 
             SpritesheetObject particleObj = new SpritesheetObject(0, Spritesheets.TestSheet, 3);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.Particles
 
     public class FireGen : ParticleGenerator
     {
-        private Random rand = new Random();
+        private Random rand = new ConsistentRandom();
         public int DefaultLife = 80;
 
         public float fireSpeedX = 5;
@@ -220,7 +220,7 @@ namespace MortalDungeon.Game.Particles
             };
         }
 
-        private Random rand = new Random();
+        private Random rand = new ConsistentRandom();
         public int DefaultLife = 15;
 
         ExplosionParams Params;

@@ -110,7 +110,7 @@ namespace MortalDungeon.Game.Tiles
             return Tiles[x * Height + y];
         }
 
-        public static Random _randomNumberGen = new Random();
+        public static Random _randomNumberGen = new ConsistentRandom();
 
         public virtual void PopulateTileMap(float zTilePlacement = 0)
         {
@@ -575,7 +575,7 @@ namespace MortalDungeon.Game.Tiles
                     param.Units?.Exists(u =>
                     {
                         count++;
-                        if (u.Info.TileMapPosition == neighbors[j].TilePoint)
+                        if (u.Info.TileMapPosition != null && u.Info.TileMapPosition == neighbors[j].TilePoint)
                         {
                             unitIndex = count;
                             return true;

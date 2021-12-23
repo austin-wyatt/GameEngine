@@ -21,7 +21,7 @@ namespace MortalDungeon.Game.Tiles
 
         private static readonly Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
 
-        private static readonly Random random = new Random();
+        private static readonly Random random = new ConsistentRandom();
 
         private static List<FrameBufferObject> MapFBOs = new List<FrameBufferObject>();
         private static HashSet<FrameBufferObject> UsedFBOs = new HashSet<FrameBufferObject>();

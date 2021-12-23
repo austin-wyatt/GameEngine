@@ -21,7 +21,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
     }
     public static class Renderer
     {
-        static readonly Random _rand = new Random();
+        static readonly Random _rand = new ConsistentRandom();
         public static int _vertexBufferObject;
         public static int _vertexArrayObject;
 
@@ -50,6 +50,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static int DrawCount = 0;
         public static int FPSCount = 0;
+        public static int ObjectsDrawn = 0;
         public static Stopwatch _internalTimer = new Stopwatch();
 
         public static readonly Vector4 ClearColor = new Vector4(0.2f, 0.3f, 0.3f, 1);
@@ -312,6 +313,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
 
                 DrawCount++;
+                ObjectsDrawn += itemCount;
             }
 
             for (int i = 0; i < objects.Count; i++)
@@ -530,6 +532,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
 
             DrawCount++;
+            ObjectsDrawn += count;
         }
 
 
@@ -671,6 +674,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             DisableParticleShaderAttributes();
 
             DrawCount++;
+            ObjectsDrawn += count;
         }
 
         private static float[] skyboxVertices = new float[]
@@ -832,6 +836,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
 
                 DrawCount++;
+                ObjectsDrawn += itemCount;
             }
 
             for (int i = 0; i < objects.Count; i++)

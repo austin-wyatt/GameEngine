@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
         public Forest_1(ForestParams forestParams)
         {
             ForestParams = forestParams;
-            NumberGen = new Random(HashCoordinates(forestParams.Origin.X, forestParams.Origin.Y));
+            NumberGen = new ConsistentRandom((int)HashCoordinates(forestParams.Origin.X, forestParams.Origin.Y));
 
             FeatureID = HashCoordinates(forestParams.Origin.X, forestParams.Origin.Y);
         }

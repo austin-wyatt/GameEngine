@@ -291,122 +291,142 @@ namespace MortalDungeon.Game.Units
                     Vector2 workingTileTexel = new Vector2();
 
                     Vector2 CenterTile = generator.Position - zeroPoint;
-                    Vector2 CenterTileTexels = CenterTile * TEXELS_PER_TILE_APPROX;
 
-                    CenterTileTexels.Y += TEXELS_PER_TILE_APPROX / 2;
-                    CenterTileTexels.X += TEXELS_PER_TILE_APPROX / 2;
-
-                    if (Math.Abs((int)CenterTile.X % 2) == 1)
+                    for (int te = 0; te < 4; te++)
                     {
-                        CenterTileTexels.Y -= TEXELS_PER_TILE_APPROX / 2;
-                    }
+                        Vector2 CenterTileTexels = CenterTile * TEXELS_PER_TILE_APPROX;
 
-                    Vector2 obstructionColor = new Vector2();
+                        CenterTileTexels.Y += TEXELS_PER_TILE_APPROX / 2;
+                        CenterTileTexels.X += TEXELS_PER_TILE_APPROX / 2;
 
-                    float alpha_falloff = 1 / (generator.Radius * TEXELS_PER_TILE_APPROX);
-
-                    for (int i = -(int)generator.Radius; i < generator.Radius; i++)
-                    {
-                        for (int j = -(int)generator.Radius; j < generator.Radius; j++)
+                        if (Math.Abs((int)CenterTile.X % 2) == 1)
                         {
-                            int successes = 0;
+                            CenterTileTexels.Y -= TEXELS_PER_TILE_APPROX / 2;
+                        }
 
-                            workingTile.X = CenterTile.X;
-                            workingTile.Y = CenterTile.Y;
 
-                            currTile.X = i + CenterTile.X;
-                            currTile.Y = j + CenterTile.Y;
+                        //check vision as if the unit was on each corner of the tile
+                        switch (te)
+                        {
+                            case 1:
+                                CenterTileTexels.X += 0.5f;
+                                break;
+                            case 2:
+                                CenterTileTexels.Y -= 0.5f;
+                                break;
+                            case 3:
+                                CenterTileTexels.X -= 0.5f;
+                                CenterTileTexels.Y -= 0.5f;
+                                break;
+                        }
 
-                            if (currTile.X < 0 || currTile.Y < 0 || currTile.X > 149 || currTile.Y > 149) //throw out impossible situations
-                                continue;
+                        Vector2 obstructionColor = new Vector2();
 
-                            if (InVision((int)currTile.X, (int)currTile.Y, generator.Team)) //don't bother calculating if we already did the work
-                                continue;
+                        float alpha_falloff = 1 / (generator.Radius * TEXELS_PER_TILE_APPROX);
 
-                            currTileTexel.X = currTile.X * TEXELS_PER_TILE_APPROX;
-                            currTileTexel.Y = currTile.Y * TEXELS_PER_TILE_APPROX;
-
-                            if (Math.Abs((int)currTile.X % 2) == 1)
+                        for (int i = -(int)generator.Radius; i < generator.Radius; i++)
+                        {
+                            for (int j = -(int)generator.Radius; j < generator.Radius; j++)
                             {
-                                currTileTexel.Y -= TEXELS_PER_TILE_APPROX / 2;
-                            }
+                                int successes = 0;
 
-                            float baseX = currTileTexel.X;
-                            float baseY = currTileTexel.Y;
+                                workingTile.X = CenterTile.X;
+                                workingTile.Y = CenterTile.Y;
 
-                            //loop through each texel
-                            for (int x = 0; x < TEXELS_PER_TILE_APPROX; x++)
-                            {
-                                for (int y = 0; y < TEXELS_PER_TILE_APPROX; y++)
+                                currTile.X = i + CenterTile.X;
+                                currTile.Y = j + CenterTile.Y;
+
+                                if (currTile.X < 0 || currTile.Y < 0 || currTile.X > 149 || currTile.Y > 149) //throw out impossible situations
+                                    continue;
+
+                                if (InVision((int)currTile.X, (int)currTile.Y, generator.Team)) //don't bother calculating if we already did the work
+                                    continue;
+
+                                currTileTexel.X = currTile.X * TEXELS_PER_TILE_APPROX;
+                                currTileTexel.Y = currTile.Y * TEXELS_PER_TILE_APPROX;
+
+                                if (Math.Abs((int)currTile.X % 2) == 1)
                                 {
-                                    currTileTexel.X = baseX + x;
-                                    currTileTexel.Y = baseY + y;
+                                    currTileTexel.Y -= TEXELS_PER_TILE_APPROX / 2;
+                                }
 
-                                    float alphaValue = 1;
-                                    float dist = (float)MathHelper.Sqrt((CenterTileTexels.X - currTileTexel.X) * (CenterTileTexels.X - currTileTexel.X) + (CenterTileTexels.Y - currTileTexel.Y) * (CenterTileTexels.Y - currTileTexel.Y));
-                                    float step_length = 1 / dist;
+                                float baseX = currTileTexel.X;
+                                float baseY = currTileTexel.Y;
 
-                                    for (int q = 0; q < dist; q++) //loop from the center texel to the 
+                                //loop through each texel
+                                for (int x = 0; x < TEXELS_PER_TILE_APPROX; x++)
+                                {
+                                    for (int y = 0; y < TEXELS_PER_TILE_APPROX; y++)
                                     {
-                                        workingTileTexel = lerp(CenterTileTexels, currTileTexel, step_length * q); //the current texel we're examining
+                                        currTileTexel.X = baseX + x;
+                                        currTileTexel.Y = baseY + y;
 
-                                        if(workingTileTexel.X < 0 || workingTileTexel.Y < 0 
-                                            || workingTileTexel.X >= DIMENSIONS * TEXELS_PER_TILE_APPROX 
-                                            || workingTileTexel.Y >= DIMENSIONS * TEXELS_PER_TILE_APPROX) 
+                                        float alphaValue = 1;
+                                        float dist = (float)MathHelper.Sqrt((CenterTileTexels.X - currTileTexel.X) * (CenterTileTexels.X - currTileTexel.X) + (CenterTileTexels.Y - currTileTexel.Y) * (CenterTileTexels.Y - currTileTexel.Y));
+                                        float step_length = 1 / dist;
+
+                                        for (int q = 0; q < dist; q++) //loop from the center texel to the 
                                         {
-                                            continue;
-                                        }
+                                            workingTileTexel = lerp(CenterTileTexels, currTileTexel, step_length * q); //the current texel we're examining
 
-                                    
-
-                                        obstructionColor = ObstructionMap[(int)workingTileTexel.X, (int)workingTileTexel.Y];
-
-                                        if (obstructionColor.X > 250 && obstructionColor.Y > 250)
-                                        {
-                                            //alphaValue -= alpha_falloff * 10;
-                                            if (_saveToBitmap) 
+                                            if (workingTileTexel.X < 0 || workingTileTexel.Y < 0
+                                                || workingTileTexel.X >= DIMENSIONS * TEXELS_PER_TILE_APPROX
+                                                || workingTileTexel.Y >= DIMENSIONS * TEXELS_PER_TILE_APPROX)
                                             {
-                                                OperationBitmap.SetPixel((int)workingTileTexel.X, (int)workingTileTexel.Y, System.Drawing.Color.FromArgb(255, 255, 0, 0));
+                                                continue;
                                             }
 
-                                            if ((int)currTileTexel.X == (int)workingTileTexel.X && (int)currTileTexel.Y == (int)workingTileTexel.Y) 
+
+
+                                            obstructionColor = ObstructionMap[(int)workingTileTexel.X, (int)workingTileTexel.Y];
+
+                                            if (obstructionColor.X > 250 && obstructionColor.Y > 250)
                                             {
-                                                successes += REQUIRED_SUCCESSES;
-                                                x = TEXELS_PER_TILE_APPROX;
-                                                //q = (int)dist + 2;
+                                                //alphaValue -= alpha_falloff * 10;
+                                                if (_saveToBitmap)
+                                                {
+                                                    OperationBitmap.SetPixel((int)workingTileTexel.X, (int)workingTileTexel.Y, System.Drawing.Color.FromArgb(255, 255, 0, 0));
+                                                }
+
+                                                if ((int)currTileTexel.X == (int)workingTileTexel.X && (int)currTileTexel.Y == (int)workingTileTexel.Y)
+                                                {
+                                                    successes += REQUIRED_SUCCESSES;
+                                                    x = TEXELS_PER_TILE_APPROX;
+                                                    //q = (int)dist + 2;
+                                                }
+                                                alphaValue = 0;
+                                                break;
                                             }
-                                            alphaValue = 0;
-                                            break;
+
+                                            alphaValue -= alpha_falloff;
+
+                                            if (alphaValue <= 0)
+                                            {
+                                                break;
+                                            }
                                         }
 
-                                        alphaValue -= alpha_falloff;
-
-                                        if (alphaValue <= 0)
+                                        if (alphaValue > 0)
                                         {
-                                            break;
-                                        }
-                                    }
+                                            if (_saveToBitmap && !(currTileTexel.X < 0 || currTileTexel.Y < 0
+                                                || currTileTexel.X >= DIMENSIONS * TEXELS_PER_TILE_APPROX
+                                                || currTileTexel.Y >= DIMENSIONS * TEXELS_PER_TILE_APPROX))
+                                            {
+                                                OperationBitmap.SetPixel((int)currTileTexel.X, (int)currTileTexel.Y, System.Drawing.Color.FromArgb(255, 0, 0, 255));
+                                            }
 
-                                    if (alphaValue > 0)
-                                    {
-                                        if (_saveToBitmap && !(currTileTexel.X < 0 || currTileTexel.Y < 0
-                                            || currTileTexel.X >= DIMENSIONS * TEXELS_PER_TILE_APPROX
-                                            || currTileTexel.Y >= DIMENSIONS * TEXELS_PER_TILE_APPROX))
-                                        {
-                                            OperationBitmap.SetPixel((int)currTileTexel.X, (int)currTileTexel.Y, System.Drawing.Color.FromArgb(255, 0, 0, 255));
+                                            successes++;
                                         }
-                                    
-                                        successes++;
                                     }
                                 }
-                            }
-                            //if (successes > 128) //out of 256 (256 being 100% vision coverage of a tile (16x16 samples))
-                            //if (successes > 32) //out of 64 (64 being 100% vision coverage of a tile (8x8 samples))
-                            //if (successes >= 8) //out of 16
-                            if (successes >= REQUIRED_SUCCESSES) //out of 4
-                            {
-                                Vision[(int)currTile.X, (int)currTile.Y] |= BitFromUnitTeam(generator.Team);
-                                counter++;
+                                //if (successes > 128) //out of 256 (256 being 100% vision coverage of a tile (16x16 samples))
+                                //if (successes > 32) //out of 64 (64 being 100% vision coverage of a tile (8x8 samples))
+                                //if (successes >= 8) //out of 16
+                                if (successes >= REQUIRED_SUCCESSES) //out of 4
+                                {
+                                    Vision[(int)currTile.X, (int)currTile.Y] |= BitFromUnitTeam(generator.Team);
+                                    counter++;
+                                }
                             }
                         }
                     }

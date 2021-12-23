@@ -67,6 +67,10 @@ namespace MortalDungeon.Engine_Classes
         public Vector4 DisabledColor;
         public Vector4 SelectedColor;
 
+        public int _depth = 0;
+        public int _childIndex = 1;
+        public float ZPos = 0;
+
         public UIObject() { }
 
         public void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
@@ -107,11 +111,16 @@ namespace MortalDungeon.Engine_Classes
                 BaseObjects.ForEach(obj =>
                 {
                     obj.BaseFrame.SetScaleAll(1);
-
                     obj.BaseFrame.ScaleX(aspectRatio);
+
                     obj.BaseFrame.ScaleX(ScaleFactor.X);
                     obj.BaseFrame.ScaleY(ScaleFactor.Y);
                 });
+            }
+
+            foreach(var text in TextObjects)
+            {
+                text.SetTextScale(text.TextScale);
             }
 
             Size = size;
@@ -292,6 +301,7 @@ namespace MortalDungeon.Engine_Classes
         public override void SetPosition(Vector3 position)
         {
             Vector3 deltaPos = Position - position;
+            //base.SetPosition(new Vector3(position.X, position.Y, ZPos));
             base.SetPosition(position);
 
             deltaPos.Z = 0;
@@ -299,16 +309,33 @@ namespace MortalDungeon.Engine_Classes
             for (int i = 0; i < Children.Count; i++) 
             {
                 Vector3 childPos = Children[i].Position;
-                childPos.Z = position.Z - 0.0001f;
+                //childPos.Z = position.Z - 0.0001f;
+                childPos.Z = position.Z - 1 / (float)Math.Pow(10, _depth + 2) * _childIndex;
 
                 Children[i].SetPosition(childPos - deltaPos);
             }
         }
 
-        public void SetZPosition(float z) 
+        public void SetZPosition(float zPos, bool updateChildren = false)
         {
-            base.SetPosition(new Vector3(Position.X, Position.Y, z));
+            ZPos = zPos;
+
+            base.SetPosition(new Vector3(Position.X, Position.Y, ZPos));
+
+            foreach(var text in TextObjects)
+            {
+                text.SetPosition(text.Position + new Vector3(0, 0, 0));
+            }
+
+            if (updateChildren)
+            {
+                for (int i = 0; i < Children.Count; i++)
+                {
+                    Children[i].SetZPosition(Children[i].ZPos, true);
+                }
+            }
         }
+
 
         public virtual void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
         {
@@ -446,17 +473,31 @@ namespace MortalDungeon.Engine_Classes
             //}
 
 
-            void queueChildren(UIObject parentObject) 
+            void queueChildren(UIObject parentObject, int depth, int childIndex) 
             {
-                tree.Add(new UITreeNode(parentObject, 0, GetBaseObject(parentObject)));
+                tree.Add(new UITreeNode(parentObject, depth, GetBaseObject(parentObject)));
+
+                parentObject._depth = depth;
+                parentObject._childIndex = childIndex;
+
+                float zPos = parentObject.ZPos;
+
+                if (parentObject._depth > 1)
+                {
+                    zPos = parentObject.Parent.Position.Z - 1 / (float)Math.Pow(10, parentObject._depth) * parentObject._childIndex;
+                }
+
+                parentObject.ZPos = zPos;
+
+                //parentObject.SetZPosition(zPos);
 
                 for (int i = parentObject.Children.Count - 1; i >= 0; i--) 
                 {
-                    queueChildren(parentObject.Children[i]);
+                    queueChildren(parentObject.Children[i], depth + 1, i + 1);
                 }
             }
 
-            queueChildren(this);
+            queueChildren(this, 1, 1);
 
             return tree;
         }
@@ -539,6 +580,7 @@ namespace MortalDungeon.Engine_Classes
             }
 
             Children.Sort();
+
 
             if (Parent == null)
             {
@@ -805,7 +847,10 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void OnUpdate(MouseState mouseState) { }
 
-        public virtual void OnResize() { }
+        public virtual void OnResize() 
+        {
+            SetSize(Size);
+        }
 
         public virtual void OnCameraMove() { }
 

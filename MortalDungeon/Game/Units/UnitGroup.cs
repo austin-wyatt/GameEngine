@@ -39,6 +39,7 @@ namespace MortalDungeon.Game.Units
                 unit.StatusBarComp.SetRender(false);
 
             Scene.RemoveUnit(unit, true);
+            Scene.RemoveUnit(unit, false);
             Scene.DecollateUnit(unit);
         }
 

@@ -69,6 +69,8 @@ namespace MortalDungeon.Engine_Classes
 
             SetKerning();
             SetPosition(position);
+
+            Renderer.LoadTextureFromBaseObject(letter);
         }
 
         public void ChangeCharacter(Character character) 

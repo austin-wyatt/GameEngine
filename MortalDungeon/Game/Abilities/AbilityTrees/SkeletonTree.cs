@@ -10,18 +10,18 @@ namespace MortalDungeon.Game.Abilities
         {
             AbilityTree skeletonTree = new AbilityTree() { TreeType = AbilityTreeType.Skeleton };
 
-            skeletonTree.BasicAbility = new AbilityTreeNode() 
+            skeletonTree.BasicAbility.Add(new AbilityTreeNode() 
             {
                 ID = 0,
-                Name = "BonyBash",
-                CreateAbility = (unit) => new BonyBash(unit)
-            };
+                Name = "Bony Bash",
+                CreateAbility = (unit) => new BonyBash(unit),
+            });
 
             var mendBones = new AbilityTreeNode()
             {
                 ID = 0,
-                Name = "MendBones",
-                CreateAbility = (unit) => new MendBones(unit)
+                Name = "Mend Bones",
+                CreateAbility = (unit) => new MendBones(unit),
             };
 
             skeletonTree.EntryPoint = mendBones;
@@ -29,8 +29,8 @@ namespace MortalDungeon.Game.Abilities
             var ancientArmor = new AbilityTreeNode()
             {
                 ID = 1,
-                Name = "AncientArmor",
-                CreateAbility = (unit) => new AncientArmor(unit)
+                Name = "Ancient Armor",
+                CreateAbility = (unit) => new AncientArmor(unit),
             };
 
             ancientArmor.AddChild(mendBones);
@@ -38,8 +38,8 @@ namespace MortalDungeon.Game.Abilities
             var strongBones = new AbilityTreeNode()
             {
                 ID = 2,
-                Name = "StrongBones",
-                CreateAbility = (unit) => new StrongBones(unit)
+                Name = "Strong Bones",
+                CreateAbility = (unit) => new StrongBones(unit),
             };
 
             ancientArmor.AddChild(strongBones);

@@ -57,7 +57,7 @@ namespace MortalDungeon.Game.UI
         {
             if(eventText.Length > maxEventWidth) 
             {
-                eventText = WrapString(eventText);
+                eventText = WrapString(eventText, maxEventWidth);
             }
 
             TextComponent textComponent = new TextComponent();
@@ -118,8 +118,11 @@ namespace MortalDungeon.Game.UI
             }
         }
 
-        public string WrapString(string line) 
+        public static string WrapString(string line, int maxWidth) 
         {
+            if (line.Length < maxWidth)
+                return line;
+
             string returnString = "";
 
             char[] testChars = new char[] { ' ', '"', '@' };
@@ -132,7 +135,7 @@ namespace MortalDungeon.Game.UI
                 if (matchFound)
                     break;
 
-                for (int i = maxEventWidth; i > 1; i--)
+                for (int i = maxWidth; i > 1; i--)
                 {
                     bool foundChar = false;
 
@@ -167,9 +170,9 @@ namespace MortalDungeon.Game.UI
                         }
                         
 
-                        if (line.Length > maxEventWidth)
+                        if (line.Length > maxWidth)
                         {
-                            returnString += WrapString(line);
+                            returnString += WrapString(line, maxWidth);
                         }
                         else
                         {
@@ -183,13 +186,13 @@ namespace MortalDungeon.Game.UI
 
             if(matchFound == false) 
             {
-                returnString = line.Substring(0, maxEventWidth) + "\n";
+                returnString = line.Substring(0, maxWidth) + "\n";
 
-                line = line.Substring(maxEventWidth + 1);
+                line = line.Substring(maxWidth + 1);
 
-                if (line.Length > maxEventWidth)
+                if (line.Length > maxWidth)
                 {
-                    returnString += WrapString(line);
+                    returnString += WrapString(line, maxWidth);
                 }
                 else
                 {

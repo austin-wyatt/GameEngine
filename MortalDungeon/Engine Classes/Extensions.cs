@@ -19,7 +19,7 @@ namespace MortalDungeon.Engine_Classes
             return true;
         }
 
-        private static Random rng = new Random();
+        private static Random rng = new ConsistentRandom();
         public static void Randomize<T>(this IList<T> source)
         {
             int n = source.Count;
@@ -36,6 +36,21 @@ namespace MortalDungeon.Engine_Classes
         public static T GetRandom<T>(this IList<T> source)
         {
             return source[rng.Next(source.Count)];
+        }
+
+        public static string CreateRandom(this string charset, int seed, int length)
+        {
+            var stringChars = new char[length];
+            var random = new ConsistentRandom(seed);
+
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = charset[random.Next(charset.Length)];
+            }
+
+            var finalString = new string(stringChars);
+
+            return finalString;
         }
     }
 }

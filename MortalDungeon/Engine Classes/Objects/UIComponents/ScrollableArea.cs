@@ -15,18 +15,20 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         private float _scrollPercent = 0;
 
         private bool _showScrollbar = true;
+        public bool EnableScrollbar = true;
         float _scrollbarWidth = 0.1f;
 
         public Action OnScrollAction = null;
 
-        public ScrollableArea(Vector3 position, UIScale visibleAreaSize, Vector3 baseAreaPosition, UIScale baseAreaSize, float scrollbarWidth = 0.1f) 
+        public ScrollableArea(Vector3 position, UIScale visibleAreaSize, Vector3 baseAreaPosition, UIScale baseAreaSize, float scrollbarWidth = 0.1f, bool enableScrollbar = true) 
         {
             Size = visibleAreaSize;
             Position = position;
             Name = "ScrollableArea";
             Anchor = UIAnchorPosition.Center;
+            EnableScrollbar = enableScrollbar;
 
-            //Focusable = true;
+            Focusable = true;
 
             _baseAreaSize = baseAreaSize;
 
@@ -94,28 +96,29 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             BaseComponent.ScissorData = scissor;
 
-            void propagateScissorData(UIObject obj) 
-            {
-                foreach(var text in obj.TextObjects) 
-                {
-                    text.ScissorData.X = scissor.X;
-                    text.ScissorData.Y = scissor.Y;
-                    text.ScissorData.Height = scissor.Height;
-                    text.ScissorData.Width = scissor.Width;
-                    text.ScissorData.Depth = scissor.Depth;
-                }
 
-                foreach (var child in obj.Children) 
-                {
-                    propagateScissorData(child);
-                }
-            }
-
-            propagateScissorData(BaseComponent);
+            PropagateScissorData(BaseComponent);
 
             UpdateScrollableAreaBounds();
 
             BaseComponent.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+        }
+
+        public void PropagateScissorData(UIObject obj)
+        {
+            foreach (var text in obj.TextObjects)
+            {
+                text.ScissorData.X = BaseComponent.ScissorData.X;
+                text.ScissorData.Y = BaseComponent.ScissorData.Y;
+                text.ScissorData.Height = BaseComponent.ScissorData.Height;
+                text.ScissorData.Width = BaseComponent.ScissorData.Width;
+                text.ScissorData.Depth = BaseComponent.ScissorData.Depth;
+            }
+
+            foreach (var child in obj.Children)
+            {
+                PropagateScissorData(child);
+            }
         }
 
         public void SetVisibleAreaSize(UIScale size) 
@@ -131,12 +134,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             InitializeScrollbar();
             SetScrollbarPosition();
-            Scrollbar.ScrollByPercentage(_scrollPercent);
+            //Scrollbar.ScrollByPercentage(_scrollPercent);
         }
 
         public void SetBaseAreaSize(UIScale size) 
         {
             Vector3 oldTopLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+
 
             _baseAreaSize = size;
 
@@ -151,7 +155,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             BaseComponent.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
             InitializeScrollbar();
             SetScrollbarPosition();
-            Scrollbar.ScrollByPercentage(_scrollPercent);
+            //Scrollbar.ScrollByPercentage(_scrollPercent);
 
             Vector3 offset = new Vector3(oldTopLeft.X - newTopLeft.X, newTopLeft.Y - oldTopLeft.Y, 0);
 
@@ -215,7 +219,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Scrollbar.ScrollByPercentage(scrollPercent);
 
-            Scrollbar.SetRender(_showScrollbar);
+            Scrollbar.SetRender(_showScrollbar && EnableScrollbar);
         }
 
         public override void OnUpdate(MouseState mouseState)

@@ -29,6 +29,7 @@ using MortalDungeon.Engine_Classes.Rendering;
 using System.Xml.Serialization;
 using System.IO;
 using MortalDungeon.Game.Save;
+using MortalDungeon.Game.Quests;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -422,6 +423,13 @@ namespace MortalDungeon.Game.SceneDefinitions
             {
                 if (tile.UnitOnTile != null)
                 {
+                    if (KeyboardState.IsKeyDown(Keys.F10))
+                    {
+                        var unit = tile.UnitOnTile;
+                        Console.WriteLine($"{unit.Name}: FeatureID {unit.FeatureID}  Feature Hash {unit.FeatureHash}");
+                    }
+
+
                     OnUnitClicked(tile.UnitOnTile, button);
                 }
                 else if (_selectedAbility != null)
@@ -462,14 +470,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F))
                     {
-                        List<BaseTile> tiles = new List<BaseTile>();
-
-                        tiles = map.GetVisionInRadius(tile.TilePoint, 6);
-
-                        tiles.ForEach(tile =>
-                        {
-                            tile.Properties.Height += 2;
-                        });
+                        QuestManager.StartQuest(0);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.V))
                     {
@@ -633,11 +634,11 @@ namespace MortalDungeon.Game.SceneDefinitions
                     else if (KeyboardState.IsKeyDown(Keys.F3))
                     {
                         SaveState state = SaveState.CreateSaveState(this);
-                        SaveState.WriteSaveStateToFile("Resources/Save/save_state.xml", state);
+                        SaveState.WriteSaveStateToFile("Data/save_state", state);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F4))
                     {
-                        SaveState state = SaveState.LoadSaveStateFromFile("Resources/Save/save_state.xml");
+                        SaveState state = SaveState.LoadSaveStateFromFile("Data/save_state");
 
                         SaveState.LoadSaveState(this, state);
                     }
@@ -699,6 +700,15 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                         tile.Color = Colors.Red;
                         tile.Update();
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.F9))
+                    {
+                        List<Unit> units = new List<Unit>();
+
+                        units.Add(_units.Find(u => u.Name == "John"));
+                        units.Add(_units.Find(u => u.Name == "Frend"));
+
+                        DialogueWindow.StartDialogue(DialogueSerializer.LoadDialogueFromFile(0), units);
                     }
                 }
             }

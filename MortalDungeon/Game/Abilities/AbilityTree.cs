@@ -7,6 +7,7 @@ namespace MortalDungeon.Game.Abilities
 {
     public enum AbilityTreeType
     {
+        None,
         Skeleton
     }
     public static class AbilityTrees
@@ -66,7 +67,7 @@ namespace MortalDungeon.Game.Abilities
         public AbilityTreeNode EntryPoint;
         public AbilityTreeType TreeType;
 
-        public AbilityTreeNode BasicAbility; //guaranteed to be orphaned
+        public List<AbilityTreeNode> BasicAbility = new List<AbilityTreeNode>(); //guaranteed to be orphaned
 
         public int NodeCount = 0;
 
@@ -160,7 +161,7 @@ namespace MortalDungeon.Game.Abilities
         public List<AbilityTreeNode> Parents = new List<AbilityTreeNode>();
         public List<AbilityTreeNode> Children = new List<AbilityTreeNode>();
 
-        //ID should roughly correlate to strength of the ability (although that could be added as an actual field too)
+        //ID should roughly correlate to strength of the ability (although that should be added as an actual field)
         public int ID = 0;
 
         public string Name;
@@ -178,9 +179,22 @@ namespace MortalDungeon.Game.Abilities
             parent.Children.Add(this);
         }
 
-        public void ApplyToUnit(Unit unit)
+        public void ApplyToUnit(Unit unit, AbilityLoadoutItem item)
         {
-            unit.Info.Abilities.Add(CreateAbility(unit));
+            var ability = CreateAbility(unit);
+
+            if(item.CurrentCharges != -1)
+            {
+                ability.Charges = item.CurrentCharges;
+            }
+
+            ability.Name = Name;
+
+            ability.AbilityTreeType = item.AbilityTreeType;
+            ability.NodeID = item.NodeID;
+            ability.BasicAbility = item.BasicAbility;
+
+            unit.Info.Abilities.Add(ability);
         }
     }
 }

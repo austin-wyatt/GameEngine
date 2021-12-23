@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
@@ -27,7 +28,7 @@ namespace MortalDungeon.Game.Map
         //protected int _featureID = _currentFeatureID++;
         //protected static int _currentFeatureID = 0;
 
-        public int FeatureID = -1;
+        public long FeatureID = -1;
 
         /// <summary>
         /// Applies any feature effects to a relevant tile.
@@ -102,7 +103,7 @@ namespace MortalDungeon.Game.Map
                 StartingPoint = startingPoint;
                 EndingPoint = endPoint;
 
-                NumberGen = new Random(HashCoordinates(startingPoint.X, startingPoint.Y));
+                NumberGen = new ConsistentRandom((int)HashCoordinates(startingPoint.X, startingPoint.Y));
             }
         }
 
@@ -420,7 +421,7 @@ namespace MortalDungeon.Game.Map
                 int k;
                 if (numberGen == null)
                 {
-                    k = new Random().Next(n + 1);
+                    k = new ConsistentRandom().Next(n + 1);
                 }
                 else
                 {
@@ -433,11 +434,10 @@ namespace MortalDungeon.Game.Map
             }
         }
 
-        public static int HashCoordinates(int x, int y)
+        public static long HashCoordinates(int x, int y)
         {
-            int h = x * 374761393 + y * 668265263;
-            h = (h ^ (h >> 13)) * 1274126177;
-            return h ^ (h >> 16);
+            long val = ((long)x << 32) + y;
+            return val;
         }
 
         /// <summary>

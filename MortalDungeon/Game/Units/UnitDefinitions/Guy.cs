@@ -54,7 +54,7 @@ namespace MortalDungeon.Game.Units
 
             Info.MaxEnergy = 15;
 
-            AbilityLoadout = AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 3);
+            AbilityLoadout = AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 2);
         }
 
         public override void InitializeVisualComponent()
@@ -70,7 +70,7 @@ namespace MortalDungeon.Game.Units
             AddBaseObject(Guy);
         }
 
-        public override void EntityLoad(FeaturePoint position)
+        public override void EntityLoad(FeaturePoint position, bool placeOnTileMap = true)
         {
             base.EntityLoad(position);
 
@@ -107,9 +107,12 @@ namespace MortalDungeon.Game.Units
             //AncientArmor ancientArmor = new AncientArmor(this);
             //Info.Abilities.Add(ancientArmor);
 
-            //SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);
-            //Info.Abilities.Add(spawnSkeleton);
-            //spawnSkeleton.ReturnToFirst();
+            SpawnSkeleton spawnSkeleton = new SpawnSkeleton(this);
+            Info.Abilities.Add(spawnSkeleton);
+            spawnSkeleton.ReturnToFirst();
+
+            Smite_dev smite_Dev = new Smite_dev(this);
+            Info.Abilities.Add(smite_Dev);
         }
 
         public override BaseObject CreateBaseObject()

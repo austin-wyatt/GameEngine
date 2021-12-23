@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            Basic = true;
+            BasicAbility = true;
 
             Name = "Sucker Punch";
 

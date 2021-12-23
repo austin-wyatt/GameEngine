@@ -172,17 +172,25 @@ void main()
 	outputColor = vec4(result, 1);
 
 
-	if(FragPos.x > 72)
-		outputColor[3] = (73 - FragPos.x);
+	if(FragPos.x > 71)
+		outputColor[3] = (72 - FragPos.x);
+	else if(FragPos.x < -37)
+		outputColor[3] = (FragPos.x + 38);
 
-	if(FragPos.x < -38)
-		outputColor[3] = (FragPos.x + 39);
+	float alphaColor = outputColor[3];
 
-	if(FragPos.y < -84)
-		outputColor[3] = (FragPos.y + 85);
+	if(FragPos.y < -82.5)
+	{
+		alphaColor = FragPos.y + 83.5;
+		outputColor[3] = outputColor[3] < alphaColor ? outputColor[3] : alphaColor;
+	}
+	else if(FragPos.y > 43.5)
+	{
+		alphaColor = 44.5 - FragPos.y;
 
-	if(FragPos.y > 45)
-		outputColor[3] = (46 - FragPos.y);
+		outputColor[3] = outputColor[3] < alphaColor ? outputColor[3] : alphaColor;
+	}
+		
 	
 }
 

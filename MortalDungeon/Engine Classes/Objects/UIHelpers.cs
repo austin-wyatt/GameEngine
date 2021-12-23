@@ -418,6 +418,7 @@ namespace MortalDungeon.Engine_Classes
 
             void onCleanUp(GameObject _) 
             {
+                _.OnHoverEnd();
                 obj.OnTimedHoverEvent -= timedHover;
             }
 
@@ -476,7 +477,7 @@ namespace MortalDungeon.Engine_Classes
 
             PropertyAnimation anim = new PropertyAnimation(icon.BaseObject.BaseFrame);
 
-            float xMovement = (float)(new Random().NextDouble() - 1) * 10f;
+            float xMovement = (float)(new ConsistentRandom().NextDouble() - 1) * 10f;
 
             for (int i = 0; i < 50; i++)
             {

@@ -96,7 +96,7 @@ namespace MortalDungeon.Game.Objects
                 Scene.Time = startTime;
                 CurrentKeyframe = startTime;
 
-                StartTime = -startTime * timeDelay;
+                StartTime = WindowConstants.GlobalTimer.ElapsedMilliseconds - startTime * timeDelay;
 
                 Color startColor = new Color(NightColor);
 
@@ -111,7 +111,7 @@ namespace MortalDungeon.Game.Objects
                     }
                     if (i >= MorningEnd && i < MiddayStart)
                     {
-                        colorDif = (MiddayColor - MorningColor)/ 64;
+                        colorDif = (MiddayColor - MorningColor) / 64;
                     }
                     if (i >= MiddayEnd && i < EveningStart)
                     {

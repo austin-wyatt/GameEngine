@@ -166,7 +166,7 @@ namespace MortalDungeon.Game.UI
             PartyWindow.AddChild(dissolveGroup, 10);
             #endregion
 
-            ParentObject.AddChild(PartyWindow);
+            ParentObject.AddChild(PartyWindow, 11);
         }
 
         public void CreatePartyWindowList() 
@@ -300,7 +300,7 @@ namespace MortalDungeon.Game.UI
 
             CampWindow.AddChild(campButton);
 
-            ParentObject.AddChild(CampWindow);
+            ParentObject.AddChild(CampWindow, 10);
         }
     }
 }

@@ -6,6 +6,8 @@ using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -417,6 +419,8 @@ namespace MortalDungeon.Game.UI
             //AddChild(_scrollableAreaAbility, 1500);
         }
 
+
+        private Dictionary<int, Action<int>> _selectAbilityByNumList = new Dictionary<int, Action<int>>();
         private void CreateAbilityIcons(bool isPlayerUnitTakingTurn) 
         {
             for (int i = 0; i < _currentIcons.Count; i++)
@@ -425,6 +429,7 @@ namespace MortalDungeon.Game.UI
             }
 
             _currentIcons.Clear();
+            _selectAbilityByNumList.Clear();
 
 
             UIScale iconSize = new UIScale(0.25f, 0.25f);
@@ -514,21 +519,22 @@ namespace MortalDungeon.Game.UI
                     Scene._onDeselectAbilityActions.Add(onAbilityDeselected);
                     //Scene._onAbilityCastActions.Add(onAbilityCast);
 
-                    void selectAbilityByNum(SceneEventArgs args)
+                    void selectAbilityByNum(int numPressed)
                     {
-                        if (args.ExtraInfo - 1 == currIndex && isPlayerUnitTakingTurn && ability.CanCast() && _currentAbilities.Count > 0)
+                        if (numPressed == currIndex && isPlayerUnitTakingTurn && ability.CanCast() && _currentAbilities.Count > 0)
                         {
                             Scene.SelectAbility(ability, _currentUnit);
                         }
 
-                        if (args.ExtraInfo - 1 == currIndex && !isPlayerUnitTakingTurn && Scene.CurrentUnit != null
+                        if (numPressed == currIndex && !isPlayerUnitTakingTurn && Scene.CurrentUnit != null
                             && Scene.CurrentUnit.AI.ControlType == ControlType.Controlled)
                         {
                             UpdateFooterInfo(Scene.CurrentUnit);
                         }
                     }
 
-                    Scene.OnNumberPressed += selectAbilityByNum;
+                    _selectAbilityByNumList.Add(currIndex, selectAbilityByNum);
+
 
                     void cleanUp(GameObject obj)
                     {
@@ -536,7 +542,6 @@ namespace MortalDungeon.Game.UI
                         Scene._onDeselectAbilityActions.Remove(onAbilityDeselected);
                         //Scene._onAbilityCastActions.Remove(onAbilityCast);
 
-                        Scene.OnNumberPressed -= selectAbilityByNum;
                         abilityIcon.OnCleanUp -= cleanUp;
                     }
                     abilityIcon.OnCleanUp += cleanUp;
@@ -557,6 +562,18 @@ namespace MortalDungeon.Game.UI
 
                     count++;
                 }
+            }
+        }
+
+        public override void OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+
+            int numPressed = (int)e.Key - (int)Keys.D1;
+
+            if(numPressed < _selectAbilityByNumList.Count && numPressed >= 0)
+            {
+                _selectAbilityByNumList[numPressed].Invoke(numPressed);
             }
         }
 

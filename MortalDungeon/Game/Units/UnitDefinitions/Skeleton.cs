@@ -42,6 +42,8 @@ namespace MortalDungeon.Game.Units
         {
             base.InitializeUnitInfo();
 
+            Info.Species = Species.Skeleton;
+
             VisionGenerator.Radius = 12;
 
             Info.Stealth.Skill = 0;
@@ -76,7 +78,7 @@ namespace MortalDungeon.Game.Units
             AddBaseObject(Skeleton);
         }
 
-        public override void EntityLoad(FeaturePoint position)
+        public override void EntityLoad(FeaturePoint position, bool placeOnTileMap = true)
         {
             base.EntityLoad(position);
 

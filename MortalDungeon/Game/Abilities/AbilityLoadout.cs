@@ -3,12 +3,15 @@ using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Abilities
 {
+    [XmlType(TypeName = "AL")]
     [Serializable]
     public class AbilityLoadout
     {
+        [XmlElement("Ait")]
         public List<AbilityLoadoutItem> Items = new List<AbilityLoadoutItem>();
 
         public AbilityLoadout() { }
@@ -51,20 +54,20 @@ namespace MortalDungeon.Game.Abilities
                 {
                     if (item.BasicAbility)
                     {
-                        tree.BasicAbility.ApplyToUnit(unit);
+                        tree.BasicAbility[0].ApplyToUnit(unit, item);
                     }
                     else if (item.NodeName != "")
                     {
                         if (tree.GetNodeFromTreeByName(item.NodeName, out var node))
                         {
-                            node.ApplyToUnit(unit);
+                            node.ApplyToUnit(unit, item);
                         }
                     }
                     else if (item.NodeID != -1)
                     {
                         if (tree.GetNodeFromTreeByID(item.NodeID, out var node))
                         {
-                            node.ApplyToUnit(unit);
+                            node.ApplyToUnit(unit, item);
                         }
                     }
                 }
@@ -72,13 +75,20 @@ namespace MortalDungeon.Game.Abilities
         }
     }
 
+    [XmlType(TypeName = "ALI")]
     [Serializable]
     public class AbilityLoadoutItem
     {
+        [XmlElement("Aty")]
         public AbilityTreeType AbilityTreeType;
+        [XmlElement("Aid")]
         public int NodeID = -1;
+        [XmlElement("Ana")]
         public string NodeName = "";
+        [XmlElement("Ab")]
         public bool BasicAbility = false;
+        [XmlElement("Acc")]
+        public int CurrentCharges = -1;
 
         public AbilityLoadoutItem() { }
 

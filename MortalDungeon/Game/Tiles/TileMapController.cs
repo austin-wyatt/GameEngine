@@ -268,7 +268,7 @@ namespace MortalDungeon.Game.Tiles
 
         const int LOADED_MAP_DIMENSIONS = 3;
 
-        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, bool forceMapRegeneration = false) 
+        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, bool forceMapRegeneration = false, Action onFinish = null) 
         {
             TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
 
@@ -355,6 +355,8 @@ namespace MortalDungeon.Game.Tiles
             Scene.Controller.CullObjects();
 
             Scene.QueueLightObstructionUpdate();
+
+            onFinish?.Invoke();
 
             //Scene.PostTickAction = null;
         }
@@ -457,6 +459,14 @@ namespace MortalDungeon.Game.Tiles
             }
 
             return false;
+        }
+
+        public static bool PointWillBeUnloaded(TileMapPoint newCenter, TileMapPoint locationToCheck)
+        {
+            return newCenter.MapPosition.HasFlag(MapPosition.Left) && locationToCheck.MapPosition.HasFlag(MapPosition.Right)
+                      || newCenter.MapPosition.HasFlag(MapPosition.Right) && locationToCheck.MapPosition.HasFlag(MapPosition.Left)
+                      || newCenter.MapPosition.HasFlag(MapPosition.Top) && locationToCheck.MapPosition.HasFlag(MapPosition.Bot)
+                      || newCenter.MapPosition.HasFlag(MapPosition.Bot) && locationToCheck.MapPosition.HasFlag(MapPosition.Top);
         }
 
         public MapPosition GetMapPosition(int index) 

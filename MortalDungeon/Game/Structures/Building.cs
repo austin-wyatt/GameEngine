@@ -174,9 +174,5 @@ namespace MortalDungeon.Game.Structures
         public bool _skeletonTouchedThisCycle;
 
         public static BuildingSkeleton Empty;
-
-        #region overrides
-
-        #endregion
     }
 }
