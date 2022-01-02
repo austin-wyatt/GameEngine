@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.UI
 
             _healthBar = new UIBlock(Position, Size);
             _healthBar.SetColor(BarColor);
-            _healthBar.MultiTextureData.MixTexture = true;
+            _healthBar.MultiTextureData.MixTexture = false;
             _healthBar.MultiTextureData.MixPercent = 0.25f;
             _healthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
 

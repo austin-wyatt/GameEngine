@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Quests
+namespace MortalDungeon.Game.Serializers
 {
     [Serializable]
     public class Quest
@@ -16,13 +16,16 @@ namespace MortalDungeon.Game.Quests
 
         [XmlElement("Qcs")]
         public int CurrentState = 0;
+
+        [XmlElement("Qsn")]
+        public string Name = "";
         public Quest() { }
 
-        public void CheckObjectives(LedgerUpdateType type, long id, long data)
+        public void CheckObjectives()
         {
             if(CurrentState < QuestStates.Count)
             {
-                if (QuestStates[CurrentState].IsStateCompleted(type, id, data))
+                if (QuestStates[CurrentState].IsStateCompleted(ID))
                 {
                     AdvanceQuestState();
                 }
@@ -38,11 +41,25 @@ namespace MortalDungeon.Game.Quests
         /// </summary>
         public void AdvanceQuestState()
         {
+            QuestStates[CurrentState].ClearState(ID);
+
             CurrentState++;
 
-            if(CurrentState >= QuestStates.Count)
+            if (CurrentState >= QuestStates.Count)
             {
                 QuestManager.CompleteQuest(this);
+            }
+            else
+            {
+                AddCurrentStateObjectivesToSubscriber();
+            }
+        }
+
+        public void AddCurrentStateObjectivesToSubscriber()
+        {
+            foreach(var obj in QuestStates[CurrentState].QuestObjectives)
+            {
+                Ledgers.SetStateValue(obj.State);
             }
         }
     }
@@ -56,19 +73,40 @@ namespace MortalDungeon.Game.Quests
         [XmlElement("QSt")]
         public string StateText = "";
 
+        [XmlElement("QSte")]
+        public int TextEntry = 0;
+
         public QuestState() { }
 
-        public bool IsStateCompleted(LedgerUpdateType type, long id, long data)
+        public bool IsStateCompleted(int questID)
         {
+            int count = 0;
             foreach (var obj in QuestObjectives)
             {
-                if (!obj.IsObjectiveCompleted(type, id, data))
+                if (!QuestLedger.GetStateValue(questID, (int)QuestStates.CompleteObjective0 + count))
                 {
                     return false;
                 }
             }
 
             return true;
+        }
+
+        public void ClearState(int questID)
+        {
+            for(int i = 0; i < QuestObjectives.Count; i++)
+            {
+                StateIDValuePair clearValue = new StateIDValuePair()
+                {
+                    Type = (int)LedgerUpdateType.Quest,
+                    StateID = questID,
+                    ObjectHash = 0,
+                    Data = (int)QuestStates.CompleteObjective0 + i,
+                    Instruction = (short)StateInstructions.Clear
+                };
+
+                Ledgers.SetStateValue(clearValue);
+            }
         }
     }
 
@@ -89,49 +127,28 @@ namespace MortalDungeon.Game.Quests
 
     }
 
+    public enum QuestStates
+    {
+        Completed = 99857,
+        Start = 99858,
+        CompleteObjective0 = 100000, //Completes objective 0 of the current state of the quest id included in the StateID
+        CompleteObjective1 = 100001, //Completes objective 1 of the current state 
+    }
+
     [XmlType(TypeName = "QO")]
     public class QuestObjective
     {
-        [XmlElement("QOt")]
-        public QuestObjectiveType Type;
-        [XmlElement("QOi")]
-        public long ItemID;
-        [XmlElement("QOdi")]
-        public long RelevantDataID;
-        [XmlElement("QOev")]
-        public int ExpectedValue;
-        [XmlElement("QOls")]
-        public int LocalStorage;
+        public StateIDValuePair State = new StateIDValuePair()
+        {
+            Instruction = (short)StateInstructions.Subscribe,
+        };
+
+        [XmlElement("QOn")]
+        public string Name;
+
+        [XmlElement("QOte")]
+        public int TextEntry = 0;
 
         public QuestObjective() { }
-
-        public bool IsObjectiveCompleted(LedgerUpdateType type, long id, long data)
-        {
-            switch (Type)
-            {
-                case QuestObjectiveType.Feature:
-                    if((int)FeatureLedger.GetInteraction(ItemID, RelevantDataID) == ExpectedValue)
-                    {
-                        return true;
-                    }
-                    break;
-                case QuestObjectiveType.Dialogue:
-                    if (DialogueLedger.GetOutcome((int)ItemID, (int)RelevantDataID))
-                    {
-                        return true;
-                    }
-                    break;
-                case QuestObjectiveType.Quest:
-                    if (QuestLedger.GetStateValue((int)ItemID, (int)RelevantDataID))
-                    {
-                        return true;
-                    }
-                    break;
-                default:
-                    return false;
-            }
-
-            return false;
-        }
     }
 }

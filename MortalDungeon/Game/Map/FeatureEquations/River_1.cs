@@ -29,10 +29,10 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             {
                 switch (value) 
                 {
-                    case (int)Feature.Water_1:
+                    case (int)FeatureType.Water_1:
                         tile.Properties.Type = TileType.Water;
                         break;
-                    case (int)Feature.Water_2:
+                    case (int)FeatureType.Water_2:
                         tile.Properties.Type = TileType.AltWater;
                         break;
                 }
@@ -68,15 +68,15 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                         ringList.Clear();
                         GetRingOfTiles(path[j], ringList, k);
 
-                        ringList.ForEach(p =>
+                        ringList.ForEach((Action<FeaturePoint>)(p =>
                         {
-                            AddAffectedPoint(p, TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)Feature.Water_1 : (int)Feature.Water_2);
-                        });
+                            AddAffectedPoint(p, TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)FeatureType.Water_1 : (int)FeatureType.Water_2);
+                        }));
                     }
 
 
 
-                    AddAffectedPoint(path[j], TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)Feature.Water_1 : (int)Feature.Water_2);
+                    AddAffectedPoint(path[j], TileMap._randomNumberGen.NextDouble() > 0.3 ? (int)FeatureType.Water_1 : (int)FeatureType.Water_2);
                 }
 
                 startPoint = RiverParams.Stops[i];

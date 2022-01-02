@@ -30,10 +30,6 @@ namespace MortalDungeon.Game.Units.AI
 
             validTiles.Randomize();
 
-            //split the range finding into some amount of tasks
-            //cut the tasks short in the same way we do now and compare their paths
-            //if there are no paths then calculate the closest path and use that
-
             const int MAX_SAMPLES = 50;
             int sampleCount = 3;
             int sampleSize = validTiles.Count / sampleCount > MAX_SAMPLES ? MAX_SAMPLES : validTiles.Count / sampleCount;

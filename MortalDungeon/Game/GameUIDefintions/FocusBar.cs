@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.UI
 
             _focusBar = new UIBlock(Position, Size);
             _focusBar.SetColor(BarColor);
-            _focusBar.MultiTextureData.MixTexture = true;
+            _focusBar.MultiTextureData.MixTexture = false;
             _focusBar.MultiTextureData.MixPercent = 0.25f;
             _focusBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
 

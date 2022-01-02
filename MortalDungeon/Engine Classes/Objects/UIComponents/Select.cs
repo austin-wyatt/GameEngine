@@ -65,6 +65,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             {
                 List.AddItem(item.Name, (_) => ItemSelected(item));
             });
+
+            ForceTreeRegeneration();
         }
 
         public void ItemSelected(SelectItem item) 
@@ -81,6 +83,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Chevron.SetPositionFromAnchor(List.GetAnchorPosition(UIAnchorPosition.RightCenter), UIAnchorPosition.RightCenter);
             Chevron.SetRender(true);
+
+            ForceTreeRegeneration();
         }
     }
 }

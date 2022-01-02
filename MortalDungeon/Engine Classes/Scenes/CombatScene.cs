@@ -65,7 +65,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public static int Days = 0;
         public DayNightCycle DayNightCycle;
 
-        public DialogueWindow DialogueWindow;
+        public static DialogueWindow DialogueWindow;
 
         public static TabMenu TabMenu = new TabMenu();
         public SideBar SideBar = null;
@@ -212,7 +212,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderBy(i => i.Info.Speed)); //sort the list by speed
 
             TurnDisplay.SetUnits(InitiativeOrder, this);
-            TurnDisplay.SetCurrentUnit(UnitTakingTurn);
+            //TurnDisplay.SetCurrentUnit(UnitTakingTurn);
 
             //do calculations here (advance an event, show a cutscene, etc)
 
@@ -277,7 +277,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if(!AbilityInProgress)
                     Footer.EndTurnButton.SetRender(true);
 
-                FillInTeamFog(true);
+                //FillInTeamFog(true);
 
                 SmoothPanCameraToUnit(CurrentUnit, 1);
             }
@@ -286,6 +286,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 Footer.EndTurnButton.SetRender(false);
                 ShowEnergyDisplayBars(false);
             }
+
+            FillInTeamFog(true);
 
             TurnDisplay.SetCurrentUnit(UnitTakingTurn);
 
@@ -497,6 +499,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             ability.OnSelect(this, ability.CastingUnit.GetTileMap());
 
             _onSelectAbilityActions.ForEach(a => a?.Invoke(ability));
+
+            if (!InCombat)
+            {
+                CurrentUnit = unit;
+            }
         }
 
         public virtual void DeselectAbility()

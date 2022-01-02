@@ -33,13 +33,13 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             {
                 switch (value)
                 {
-                    case (int)Feature.Tree_1:
+                    case (int)FeatureType.Tree_1:
                         if ((tile.Properties.Type == TileType.Grass || tile.Properties.Type == TileType.Grass_2) && tile.Structure == null) 
                         {
                             new Tree(tile.TileMap, tile, 0);
                         }
                         break;
-                    case (int)Feature.Tree_2:
+                    case (int)FeatureType.Tree_2:
                         if ((tile.Properties.Type == TileType.Grass || tile.Properties.Type == TileType.Grass_2) && tile.Structure == null)
                         {
                             new Tree(tile.TileMap, tile, 1);
@@ -70,7 +70,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 {
                     if (NumberGen.NextDouble() > 1 - ForestParams.Density)
                     {
-                        AddAffectedPoint(path[j], NumberGen.NextDouble() > 0.5 ? (int)Feature.Tree_1 : (int)Feature.Tree_2);
+                        AddAffectedPoint(path[j], NumberGen.NextDouble() > 0.5 ? (int)FeatureType.Tree_1 : (int)FeatureType.Tree_2);
                     }
                 }
             }

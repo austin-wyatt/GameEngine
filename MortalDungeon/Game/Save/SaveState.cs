@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Entities;
+using MortalDungeon.Game.Ledger;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -10,6 +11,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game.Save
 {
@@ -31,7 +33,11 @@ namespace MortalDungeon.Game.Save
         public List<QuestSaveInfo> QuestSaveInfo;
         public List<DialogueSaveInfo> DialogueSaveInfo;
 
+        public List<Quest> ActiveQuests = new List<Quest>();
+        public List<Quest> CompletedQuests = new List<Quest>();
+        public List<StateIDValuePair> StateSubscribers = new List<StateIDValuePair>();
 
+        public DeserializableDictionary<long, GeneralLedgerNode> GeneralLedgerInfo = new DeserializableDictionary<long, GeneralLedgerNode>();
 
         public static SaveState CreateSaveState(CombatScene scene) 
         {
@@ -92,6 +98,18 @@ namespace MortalDungeon.Game.Save
                 returnState.DialogueSaveInfo.Add(info);
             }
 
+            foreach (var g in GeneralLedger.LedgeredGeneralState)
+            {
+                g.Value._stateValues = new DeserializableDictionary<long, int>(g.Value.StateValues);
+            }
+
+            returnState.GeneralLedgerInfo = new DeserializableDictionary<long, GeneralLedgerNode>(GeneralLedger.LedgeredGeneralState);
+
+
+            returnState.ActiveQuests = QuestManager.Quests;
+            returnState.CompletedQuests = QuestManager.CompletedQuests;
+
+            returnState.StateSubscribers = Ledgers.StateSubscribers;
 
             return returnState;
         }
@@ -104,14 +122,20 @@ namespace MortalDungeon.Game.Save
             scene.UnitVisionGenerators.Clear();
             scene.LightObstructions.Clear();
 
-            scene.UnitGroup = new UnitGroup(scene); //TEMP
+            scene.UnitGroup = new UnitGroup(scene);
+
+            QuestManager.Quests = state.ActiveQuests;
+            QuestManager.CompletedQuests = state.CompletedQuests;
+
+             Ledgers.StateSubscribers = state.StateSubscribers;
 
             for (int i = EntityManager.Entities.Count - 1; i >= 0; i--)
             {
                 EntityManager.RemoveEntity(EntityManager.Entities[i]);
             }
 
-            foreach(var info in state.FeatureSaveInfo)
+            FeatureLedger.LedgeredFeatures.Clear();
+            foreach (var info in state.FeatureSaveInfo)
             {
                 FeatureLedgerNode node;
 
@@ -129,6 +153,7 @@ namespace MortalDungeon.Game.Save
                 info.SignificantInteractions.FillDictionary(node.SignificantInteractions);
             }
 
+            DialogueLedger.LedgeredDialogues.Clear();
             foreach (var info in state.DialogueSaveInfo)
             {
                 DialogueLedgerNode node;
@@ -147,6 +172,7 @@ namespace MortalDungeon.Game.Save
                 info.RecievedOutcomes.FillHashSet(node.RecievedOutcomes);
             }
 
+            QuestLedger.LedgeredQuests.Clear();
             foreach (var info in state.QuestSaveInfo)
             {
                 QuestLedgerNode node;
@@ -165,6 +191,18 @@ namespace MortalDungeon.Game.Save
                 info.QuestState.FillHashSet(node.QuestState);
             }
 
+            GeneralLedger.LedgeredGeneralState.Clear();
+            
+            foreach(var g in state.GeneralLedgerInfo.Values)
+            {
+                g._stateValues.FillDictionary(g.StateValues);
+                g._stateValues = null;
+            }
+
+            state.GeneralLedgerInfo.FillDictionary(GeneralLedger.LedgeredGeneralState);
+
+
+
 
             scene._tileMapController.LoadSurroundingTileMaps(new Tiles.TileMapPoint(state.TileMapCoords), applyFeatures: false, forceMapRegeneration: true);
 
@@ -172,12 +210,12 @@ namespace MortalDungeon.Game.Save
 
             foreach(var unitInfo in state.UnitSaveInfo)
             {
-                UnitProfile profile = UnitProfiles.Profiles.Find(p => p.Type == unitInfo.ProfileType);
+                UnitCreationInfo info = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(unitInfo.UnitCreationInfoId);
 
-                if (profile == null)
+                if (info == null)
                     continue;
 
-                Unit unit = profile.CreateUnit(scene);
+                Unit unit = info.CreateUnit(scene);
 
                 unitInfo.ApplyUnitInfoToUnit(unit);
 

@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Quests
+namespace MortalDungeon.Game.Serializers
 {
     public static class QuestSerializer
     {

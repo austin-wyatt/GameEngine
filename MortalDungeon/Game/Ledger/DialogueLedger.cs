@@ -1,4 +1,6 @@
-﻿using MortalDungeon.Game.Ledger;
+﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Ledger;
+using MortalDungeon.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,32 +12,58 @@ namespace MortalDungeon.Game
     {
         public static Dictionary<int, DialogueLedgerNode> LedgeredDialogues = new Dictionary<int, DialogueLedgerNode>();
 
-        public static void AddOutcome(int dialogueID, int outcome)
+        public static void SetStateValue(StateIDValuePair stateValue)
         {
             DialogueLedgerNode node;
 
-            if (LedgeredDialogues.TryGetValue(dialogueID, out var n))
+            #region instructions
+            if (stateValue.Data == (int)DialogueStates.CreateDialogue)
+            {
+                //create dialogue here (maybe through a dialogue manager or something).
+                //as it is we don't have a good way to define which units should be present in the dialogue
+                //but that isn't a huge deal.
+                return; //this is an instruction so we don't want to actually set the value
+            }
+            #endregion
+
+
+            if (LedgeredDialogues.TryGetValue((int)stateValue.StateID, out var n))
             {
                 node = n;
             }
             else
             {
-                node = new DialogueLedgerNode() { ID = dialogueID };
-                LedgeredDialogues.Add(dialogueID, node);
+                node = new DialogueLedgerNode() { ID = (int)stateValue.StateID };
+                LedgeredDialogues.Add((int)stateValue.StateID, node);
             }
 
-            if(outcome > 0)
+            if(stateValue.Data > 0)
             {
-                node.RecievedOutcomes.Add(outcome);
+                node.RecievedOutcomes.Add(stateValue.Data);
 
-                Ledgers.LedgerUpdated(LedgerUpdateType.Dialogue, dialogueID, outcome);
+                Ledgers.LedgerUpdated(stateValue);
+            }
+        }
+
+        public static void RemoveStateValue(StateIDValuePair stateValue)
+        {
+            DialogueLedgerNode node = null;
+
+            if (LedgeredDialogues.TryGetValue((int)stateValue.StateID, out var n))
+            {
+                node = n;
+            }
+
+            if (node != null)
+            {
+                node.RecievedOutcomes.Remove(stateValue.Data);
             }
         }
 
         /// <summary>
         /// Returns true if the outcome has been achieved and false otherwise
         /// </summary>
-        public static bool GetOutcome(int dialogueID, int outcome)
+        public static bool GetStateValue(int dialogueID, int outcome)
         {
             if (LedgeredDialogues.TryGetValue(dialogueID, out var n))
             {

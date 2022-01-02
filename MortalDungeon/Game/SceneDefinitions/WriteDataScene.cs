@@ -28,51 +28,6 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.Load(camera, cursorObject, mouseRay);
 
-            Dialogue dialogue = new Dialogue();
-
-            DialogueNode entry = new DialogueNode(0, "Hello traveler");
-
-            var option = entry.AddResponse(message: "Oh, hello there")
-                .AddNext(0, "What brings you to this neck of the woods?");
-
-            var hostilePath = option.AddResponse(message: "None of your beeswax")
-                .AddNext(1, "But the question I have is what are you doing here?")
-                .AddResponse()
-                .AddNext(0, "Frig off buddy")
-                .AddResponse(message:"Rude.", outcome: 1);
-
-            var amiablePath = option.AddResponse(message: "Just taking a stroll")
-                .AddNext(0, "Nice")
-                .AddResponse()
-                .AddNext(0, "Well... See you around.")
-                .AddResponse(type: ResponseType.Ok, outcome: 2);
-
-            var longPath = option.AddResponse(message: "lots of responses")
-                .AddNext(0, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(1, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(0, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(1, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(0, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(1, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(1, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(1, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse()
-                .AddNext(1, "This is a long message meant to take up lots of space in the conversation")
-                .AddResponse(type: ResponseType.Ok, outcome: 3);
-
-
-
-            dialogue.EntryPoint = entry;
-
-            DialogueSerializer.WriteDialogueToFile(dialogue);
-
 
         }
 

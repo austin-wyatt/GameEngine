@@ -4,41 +4,45 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game
 {
+    /// <summary>
+    /// Feature interactions that hook into the interaction functionality will specifically be negative values.
+    /// </summary>
     public enum FeatureInteraction
     {
-        Refreshed = -2,
-        Cleared = -1,
+        Refreshed = -8,
+        Cleared = -7,
+        Killed = -6,
+        Revived = -5,
+        Explored = -4,
+        KilledBoss = -3,
+        KilledSummon = -2,
+        Entered = -1,
         None = 0,
-        Killed = 1,
-        Revived = 2,
-        Explored = 3,
-        KilledBoss = 4,
-        KilledSummon = 5,
-        Entered = 6,
     }
 
     public static class FeatureLedger
     {
         public static Dictionary<long, FeatureLedgerNode> LedgeredFeatures = new Dictionary<long,FeatureLedgerNode>();
 
-        public static void AddInteraction(long FeatureID, FeatureInteraction interaction, long objectHash = 0)
+        public static void AddInteraction(StateIDValuePair state)
         {
             FeatureLedgerNode node;
 
-            if (LedgeredFeatures.TryGetValue(FeatureID, out var n))
+            if (LedgeredFeatures.TryGetValue(state.StateID, out var n))
             {
                 node = n;
             }
             else
             {
-                node = new FeatureLedgerNode() { ID = FeatureID };
-                LedgeredFeatures.Add(FeatureID, node);
+                node = new FeatureLedgerNode() { ID = state.StateID };
+                LedgeredFeatures.Add(state.StateID, node);
             }
 
-            switch (interaction)
+            switch ((FeatureInteraction)state.Data)
             {
                 case FeatureInteraction.Refreshed:
                     node.SetStateValue(FeatureStateValues.AvailableToClear, 1);
@@ -67,23 +71,23 @@ namespace MortalDungeon.Game
                     //points we care about checking. 
                     break;
                 case FeatureInteraction.Killed:
-                    if(node.SignificantInteractions.TryGetValue(objectHash, out var a))
+                    if (node.SignificantInteractions.TryGetValue(state.ObjectHash, out var a))
                     {
-                        node.SignificantInteractions[objectHash] = (short)interaction;
+                        node.SignificantInteractions[state.ObjectHash] = (short)state.Data;
                     }
                     else
                     {
-                        node.SignificantInteractions.Add(objectHash, (short)interaction);
+                        node.SignificantInteractions.Add(state.ObjectHash, (short)state.Data);
                     }
 
                     node.IncrementStateValue(FeatureStateValues.NormalKillCount);
                     break;
                 case FeatureInteraction.Revived:
-                    if(node.SignificantInteractions.TryGetValue(objectHash, out var i))
+                    if (node.SignificantInteractions.TryGetValue(state.ObjectHash, out var i))
                     {
-                        if(i == (short)FeatureInteraction.Killed)
+                        if (i == (short)FeatureInteraction.Killed)
                         {
-                            node.SignificantInteractions.Remove(objectHash);
+                            node.SignificantInteractions.Remove(state.ObjectHash);
                         }
                     }
                     break;
@@ -91,9 +95,18 @@ namespace MortalDungeon.Game
 
             node.CheckNodeCleared();
 
-            if(interaction != FeatureInteraction.None)
+            if(state.Data != (int)FeatureInteraction.None)
             {
-                Ledgers.LedgerUpdated(LedgerUpdateType.Feature, FeatureID, objectHash);
+                StateIDValuePair updatedState = new StateIDValuePair() 
+                {
+                    Type = (int)LedgerUpdateType.Feature,
+                    StateID = state.StateID,
+                    ObjectHash = state.ObjectHash,
+                    Data = state.Data,
+                };
+
+                
+                Ledgers.LedgerUpdated(updatedState);
             }
         }
 
@@ -113,20 +126,35 @@ namespace MortalDungeon.Game
             return FeatureInteraction.None;
         }
 
-        public static void SetFeatureStateValue(long featureID, FeatureStateValues objectHash, short value)
+        public static void SetFeatureStateValue(StateIDValuePair stateValue)
         {
-            if (LedgeredFeatures.TryGetValue(featureID, out var n))
+            if(stateValue.Data < 0)
             {
-                n.SetStateValue(objectHash, value);
+                AddInteraction(stateValue);
+                return; //A data of less than 0 will mean that an interaction has occured and the value will be handled there
+            }
+
+            if (LedgeredFeatures.TryGetValue(stateValue.StateID, out var n))
+            {
+                n.SetStateValue((FeatureStateValues)stateValue.ObjectHash, (short)stateValue.Data);
             }
             else
             {
-                FeatureLedgerNode node = new FeatureLedgerNode() { ID = featureID };
-                LedgeredFeatures.Add(featureID, node);
+                FeatureLedgerNode node = new FeatureLedgerNode() { ID = stateValue.StateID };
+                LedgeredFeatures.Add(stateValue.StateID, node);
 
-                node.SetStateValue(objectHash, value);
+                node.SetStateValue((FeatureStateValues)stateValue.ObjectHash, (short)stateValue.Data);
             }
         }
+
+        public static void RemoveFeatureStateValue(StateIDValuePair stateValue)
+        {
+            if (LedgeredFeatures.TryGetValue(stateValue.StateID, out var n))
+            {
+                n.RemoveStateValue((FeatureStateValues)stateValue.ObjectHash, (short)stateValue.Data);
+            }
+        }
+
 
         public static short GetFeatureStateValue(long featureID, FeatureStateValues objectHash)
         {
@@ -158,7 +186,9 @@ namespace MortalDungeon.Game
         NormalKillCount = long.MaxValue - 50,
         BossKillCount = long.MaxValue - 51,
         LootInteractionCount = long.MaxValue - 52,
-        SpecialInteractionCount= long.MaxValue - 53,
+        SpecialInteractionCount = long.MaxValue - 53,
+
+        SpecifyFeatureInteraction = long.MaxValue - 100,
     }
 
     public class FeatureLedgerNode
@@ -175,14 +205,28 @@ namespace MortalDungeon.Game
 
         public void IncrementStateValue(FeatureStateValues objHash)
         {
+            int val = 0;
+
             if (SignificantInteractions.TryGetValue((long)objHash, out var a))
             {
-                SignificantInteractions[(long)objHash] = (short)(a + 1);
+                val = a + 1;
+                SignificantInteractions[(long)objHash] = (short)(val);
             }
             else
             {
-                SignificantInteractions.Add((long)objHash, 1);
+                val = 1;
+                SignificantInteractions.Add((long)objHash, (short)val);
             }
+
+            StateIDValuePair updatedState = new StateIDValuePair()
+            {
+                Type = (int)LedgerUpdateType.Feature,
+                StateID = ID,
+                ObjectHash = (long)objHash,
+                Data = val,
+            };
+
+            Ledgers.LedgerUpdated(updatedState);
         }
 
         public void SetStateValue(FeatureStateValues objHash, short value)
@@ -194,6 +238,24 @@ namespace MortalDungeon.Game
             else
             {
                 SignificantInteractions.Add((long)objHash, value);
+            }
+
+            StateIDValuePair updatedState = new StateIDValuePair()
+            {
+                Type = (int)LedgerUpdateType.Feature,
+                StateID = ID,
+                ObjectHash = (long)objHash,
+                Data = value,
+            };
+
+            Ledgers.LedgerUpdated(updatedState);
+        }
+
+        public void RemoveStateValue(FeatureStateValues objHash, short value)
+        {
+            if (SignificantInteractions.TryGetValue((long)objHash, out var a))
+            {
+                SignificantInteractions.Remove(value);
             }
         }
 

@@ -63,7 +63,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public List<Text> _text = new List<Text>();
         public TileMapController _tileMapController = new TileMapController();
         public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
-        public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
+        //public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
+        public UIManager UIManager = new UIManager();
+
         public QueuedList<ParticleGenerator> _particleGenerators = new QueuedList<ParticleGenerator>();
 
         public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
@@ -134,7 +136,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _genericObjects = new QueuedObjectList<GameObject>();
             _text = new List<Text>();
             _units = new QueuedObjectList<Unit>(); //The units to render
-            _UI = new QueuedUIList<UIObject>();
+            //_UI = new QueuedUIList<UIObject>();
             _tileMapController = new TileMapController();
 
             MessageCenter = new MessageCenter(SceneID)
@@ -167,26 +169,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void AddUI(UIObject ui, int zIndex = -1, bool immediate = true)
         {
-            if (immediate)
-            {
-                _UI.AddImmediate(ui);
-            }
-            else
-            {
-                _UI.Add(ui);
-            }
 
-
-            if (zIndex != -1)
-            {
-                ui.ZIndex = zIndex;
-            }
-            //else
-            //{
-            //    ui.ZIndex = 0;
-            //}
-
-            SortUIByZIndex();
+            UIManager.AddUIObject(ui, zIndex);
         }
 
         public void RemoveUI(UIObject ui)
@@ -194,40 +178,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (ui == null)
                 return;
 
-            ui.CleanUp();
-            _UI.Remove(ui);
-           
-            SortUIByZIndex();
+            UIManager.RemoveUIObject(ui);
         }
 
-
-        public void SortUIByZIndex()
-        {
-            _UI.Sort();
-
-            //int count = 0;
-            float count = 0;
-            lock (_UI._lock) 
-            {
-                foreach (var ui in _UI)
-                {
-                    //count++;
-                    //ui._childIndex = count;
-
-                    //var pos = new Vector3(ui.Position.X, ui.Position.Y, count);
-
-                    //pos.Z = -1 * 0.1f * ui._childIndex;
-
-                    //ui.SetZPosition(pos.Z, true);
-
-                    //ui.ForceTreeRegeneration();
-                    Vector3 pos = new Vector3(ui.Position.X, ui.Position.Y, count);
-                    ui.SetPosition(pos);
-
-                    count += 0.01f;
-                }
-            }
-        }
 
 
         #region Messaging handlers
@@ -329,7 +282,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 VisionMap.SetObstructions(LightObstructions, this);
 
-                VisionMap.CalculateVision(UnitVisionGenerators, this, teamToUpdate);
+                if(teamToUpdate == UnitTeam.Unknown)
+                {
+                    HashSet<UnitTeam> activeTeams = _units.Select(u => u.AI.Team).ToHashSet();
+
+                    foreach(UnitTeam team in activeTeams)
+                    {
+                        UnitVisionGenerators.ManuallyIncrementChangeToken();
+                        LightObstructions.ManuallyIncrementChangeToken();
+
+                        VisionMap.CalculateVision(UnitVisionGenerators, this, team);
+                    }
+                }
+                else
+                {
+                    VisionMap.CalculateVision(UnitVisionGenerators, this, teamToUpdate);
+                }
 
                 _updatingVisionMap = false;
 
@@ -382,7 +350,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void OnRender()
         {
             _genericObjects.HandleQueuedItems();
-            _UI.HandleQueuedItems();
             if (_units.HasQueuedItems()) 
             {
                 _units.HandleQueuedItems();
@@ -461,31 +428,25 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     {
                         bool clickProcessed = false;
 
-                        List<UIObject> ui = GetUI();
-
-                        for (int i = 0; i < ui.Count; i++)
+                        lock (UIManager._clickableObjectLock)
                         {
-                            if (MouseUpStateFlags.GetFlag(MouseUpFlags.TabMenuOpen))
+                            for (int i = 0; i < UIManager.ClickableObjects.Count; i++)
                             {
-                                if (ui[i] != TabMenu)
+
+                                if (UIManager.ClickableObjects[i].Render && !UIManager.ClickableObjects[i].Disabled)
                                 {
-                                    return;
+                                    UIManager.ClickableObjects[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                                    {
+                                        clickProcessed = true;
+
+                                        OnUIClicked(obj);
+                                        MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                                        MouseUpStateFlags.SetFlag(MouseUpFlags.RightClick, !leftClick);
+                                    }, leftClick ? UIEventType.Click : UIEventType.RightClick);
+
+                                    if (clickProcessed)
+                                        break;
                                 }
-                            }
-
-                            if (ui[i].Render && !ui[i].Disabled)
-                            {
-                                ui[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
-                                {
-                                    clickProcessed = true;
-
-                                    OnUIClicked(obj);
-                                    MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
-                                    MouseUpStateFlags.SetFlag(MouseUpFlags.RightClick, !leftClick);
-                                }, leftClick ? UIEventType.Click : UIEventType.RightClick);
-
-                                if (clickProcessed)
-                                    break;
                             }
                         }
                     }
@@ -561,21 +522,25 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 UIObject tempFocusedObj = null;
 
-                GetUI().ForEach(uiObj =>
+                lock (UIManager._clickableObjectLock)
                 {
-                    uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.MouseDown);
-
-                    uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                    foreach(var uiObj in UIManager.ClickableObjects)
                     {
-                        tempFocusedObj = obj;
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.MouseDown);
 
-                        if (_focusedObj == null)
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
                         {
-                            _focusedObj = tempFocusedObj;
-                        }
-                        OnObjectFocused();
-                    }, UIEventType.Focus);
-                });
+                            tempFocusedObj = obj;
+
+                            if (_focusedObj == null)
+                            {
+                                _focusedObj = tempFocusedObj;
+                            }
+                            OnObjectFocused();
+                        }, UIEventType.Focus);
+                    }
+                }
+
 
                 if (_focusedObj != null && (tempFocusedObj == null || tempFocusedObj.ObjectID != _focusedObj.ObjectID))
                 {
@@ -600,10 +565,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     if (_grabbedObj == null)
                     {
-                        GetUI().ForEach(uiObj =>
+                        lock (UIManager._clickableObjectLock)
                         {
-                            uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => _grabbedObj = obj, UIEventType.Grab);
-                        });
+                            foreach(var uiObj in UIManager.ClickableObjects)
+                            {
+                                uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => _grabbedObj = obj, UIEventType.Grab);
+                            }
+                        }
                     }
                     else
                     {
@@ -620,42 +588,34 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 } //resolve all grabbed effects
 
 
-                bool hovered = false;
-                //check hovered objects
-                foreach (var uiObj in GetUI())
+                lock (UIManager._hoverableObjectLock)
                 {
-                    if (hovered)
+                    bool hovered = false;
+                    bool timedHover = false;
+                    //check hovered objects
+                    foreach (var uiObj in UIManager.HoverableObjects)
                     {
-                        uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
-                    }
-                    else 
-                    {
-                        uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                        if (hovered)
                         {
-                            hovered = true;
-                        }, UIEventType.Hover);
-                    }
-                }
-
-                bool timedHover = false;
-                foreach (var uiObj in GetUI())
-                {
-                    if (timedHover)
-                        break;
-
-                    uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
-                    {
-                        if (obj.HasTimedHoverEffect)
-                        {
-                            _hoverTimer.Restart();
-                            _hoveredObject = obj;
-
-                            timedHover = true;
+                            uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
                         }
-                    }, UIEventType.TimedHover);
+                        else
+                        {
+                            uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                            {
+                                hovered = true;
+
+                                if (obj.HasTimedHoverEffect && !timedHover)
+                                {
+                                    _hoverTimer.Restart();
+                                    _hoveredObject = obj;
+
+                                    timedHover = true;
+                                }
+                            }, UIEventType.Hover);
+                        }
+                    }
                 }
-
-
 
 
                 Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
@@ -789,13 +749,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void OnCameraMoved()
         {
-            _units.ForEach(u =>
+            lock (_units._lock)
             {
-                if (u.StatusBarComp != null)
+                _units.ForEach(u =>
                 {
-                    u.StatusBarComp.OnCameraMove();
-                }
-            });
+                    if (u.StatusBarComp != null)
+                    {
+                        u.StatusBarComp.OnCameraMove();
+                    }
+                });
+            }
         }
 
         public virtual void OnObjectFocused()
@@ -820,7 +783,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             if (ExclusiveUIObjects.Count == 0)
             {
-                return _UI;
+                return UIManager.TopLevelObjects;
             }
             else
             {
@@ -974,7 +937,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             return type switch
             {
-                ObjectType.UI => _UI as List<T>,
+                ObjectType.UI => UIManager.TopLevelObjects as List<T>,
                 ObjectType.Tile => _tileMapController.TileMaps as List<T>,
                 ObjectType.Unit => _collatedUnits as List<T>,
                 ObjectType.Text => _text as List<T>,

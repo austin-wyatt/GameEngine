@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.UI
             {
                 MaximizeSidebar();
             };
-            MinimizedBar.GenerateReverseTree();
+            MinimizedBar.GenerateReverseTree(Scene.UIManager);
 
 
             Icon minimizeIcon = new Icon(new UIScale(0.07f, 0.07f), UISheetIcons.Minimize, Spritesheets.UISheet);

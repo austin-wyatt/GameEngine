@@ -2,15 +2,23 @@
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Structures
 {
+    public enum BuildingEnum
+    {
+        Tent
+    }
+
     /// <summary>
     /// Multi-tile structure. The 
     /// </summary>
@@ -28,6 +36,7 @@ namespace MortalDungeon.Game.Structures
 
         public BuildingSkeleton SkeletonReference = null;
 
+        public int BuildingProfileId = 0;
 
         /// <summary>
         /// This will initialize nothing. Any buildings created with this must create a valid GameObject before attempting to be rendered.
@@ -35,16 +44,16 @@ namespace MortalDungeon.Game.Structures
         public Building() { }
         public Building(CombatScene scene) : base(scene) { }
 
-        public Building(CombatScene scene, Spritesheet spritesheet, int spritesheetPos) : base(scene, spritesheet, spritesheetPos) 
+        public Building(CombatScene scene, Spritesheet spritesheet, int spritesheetPos) : base(scene, spritesheet, spritesheetPos)
         {
 
         }
 
-        public virtual void CreateTilePattern() 
+        public virtual void CreateTilePattern()
         {
             TilePattern.Clear();
         }
-        
+
 
         public override void SetTileMapPosition(BaseTile baseTile)
         {
@@ -77,17 +86,35 @@ namespace MortalDungeon.Game.Structures
             base.CleanUp();
         }
 
-        public virtual void TileAction() 
+        public override void InitializeVisualComponent()
+        {
+            base.InitializeVisualComponent();
+
+            VisibleThroughFog = true;
+
+            //AddBaseObject(BuildingProfiles[BuildingProfileId].CreateBaseObject());
+            //LoadTexture(this)
+
+
+            //then the building profile would contain the code defined below.
+            //
+            //SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+            //AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.Tent, default));
+            //BaseObject.BaseFrame.SetScale(0.5f, 0.5f, 0.25f);
+            //BaseObject.BaseFrame.RotateZ(Rotations * 60);
+        }
+
+        public virtual void TileAction()
         {
             List<BaseTile> tiles = GetPatternTiles();
 
-            foreach (BaseTile tile in tiles) 
+            foreach (BaseTile tile in tiles)
             {
                 tile.Properties.Classification = TileClassification.Terrain;
             }
         }
 
-        public List<BaseTile> GetPatternTiles() 
+        public List<BaseTile> GetPatternTiles()
         {
             List<BaseTile> list = new List<BaseTile>();
 
@@ -96,7 +123,7 @@ namespace MortalDungeon.Game.Structures
 
             Vector2i tilePoint = new Vector2i(Info.TileMapPosition.TilePoint.X, Info.TileMapPosition.TilePoint.Y);
 
-            if (SkeletonReference != null) 
+            if (SkeletonReference != null)
             {
                 var featurePoint = Info.TileMapPosition.ToFeaturePoint();
                 Vector2i tileOffset = new Vector2i(featurePoint.X - SkeletonReference.IdealCenter.X, featurePoint.Y - SkeletonReference.IdealCenter.Y);
@@ -105,7 +132,7 @@ namespace MortalDungeon.Game.Structures
             }
 
 
-            for (int i = 0; i < TilePattern.Count; i++) 
+            for (int i = 0; i < TilePattern.Count; i++)
             {
                 Vector2i tileCoords = CubeMethods.CubeToOffset(CubeMethods.OffsetToCube(tilePoint) + TilePattern[i]);
 
@@ -126,10 +153,10 @@ namespace MortalDungeon.Game.Structures
         /// <summary>
         /// Rotates the pattern by 60 degrees N times
         /// </summary>
-        public void RotateTilePattern(int rotations) 
+        public void RotateTilePattern(int rotations)
         {
             Rotations += rotations;
-            for (int i = 0; i < TilePattern.Count; i++) 
+            for (int i = 0; i < TilePattern.Count; i++)
             {
                 TilePattern[i] = CubeMethods.RotateCube(TilePattern[i], rotations);
             }
@@ -138,7 +165,7 @@ namespace MortalDungeon.Game.Structures
         /// <summary>
         /// Returns the ideal case list of points if the passed buildingLocation is the center point of the building.
         /// </summary>
-        public List<FeaturePoint> GetPatternFeaturePoints(FeaturePoint buildingLocation) 
+        public List<FeaturePoint> GetPatternFeaturePoints(FeaturePoint buildingLocation)
         {
             List<FeaturePoint> list = new List<FeaturePoint>();
 
@@ -174,5 +201,18 @@ namespace MortalDungeon.Game.Structures
         public bool _skeletonTouchedThisCycle;
 
         public static BuildingSkeleton Empty;
+
+        public static BuildingSkeleton CreateFromSerialized(SerialiableBuildingSkeleton skele)
+        {
+            BuildingSkeleton newSkele = new BuildingSkeleton();
+
+            newSkele.TilePattern = skele.TilePattern.ToHashSet();
+            newSkele.IdealCenter = skele.IdealCenter;
+            newSkele.Rotations = skele.Rotations;
+
+            //using the BuildingID, create the skeleton's handle.
+
+            return newSkele;
+        }
     }
 }

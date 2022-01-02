@@ -48,13 +48,15 @@ namespace MortalDungeon.Game.Abilities
 
             Name = "Move";
 
+            OneUsePerTurn = false;
+
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.WalkingBoot, Spritesheets.IconSheet, true);
 
             TraversableTypes.Add(TileClassification.Ground);
         }
 
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
         {
             base.GetValidTileTargets(tileMap);
 

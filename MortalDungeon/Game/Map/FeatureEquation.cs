@@ -1,14 +1,28 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Game.Entities;
+using MortalDungeon.Game.Ledger;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
+using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Map
 {
+    public enum FeatureEquationPointValues
+    {
+        TileStart = 50000,
+        TileEnd = 150000,
+
+        UnitStart = 1000000,
+        UnitEnd = 2000000
+    }
+
     public class FeatureEquation
     {
         public const int MAP_WIDTH = 50;
@@ -19,16 +33,28 @@ namespace MortalDungeon.Game.Map
 
         public HashSet<TileMapPoint> AffectedMaps = new HashSet<TileMapPoint>();
 
+        public List<FeaturePoint> BoundingPoints = new List<FeaturePoint>();
+
+        public FeaturePoint Origin = new FeaturePoint();
+
+        /// <summary>
+        /// These get applied to the state when the player enters the load radius.
+        /// </summary>
+        public List<StateIDValuePair> StateValues = new List<StateIDValuePair>();
+
         /// <summary>
         /// If the tile map we are loading is within this load radius of maps then we should load and check this feature.
         /// </summary>
-        public float LoadRadius = 100;
+        public int LoadRadius = 100;
 
         //public int FeatureID => _featureID;
         //protected int _featureID = _currentFeatureID++;
         //protected static int _currentFeatureID = 0;
 
         public long FeatureID = -1;
+
+        public int FeatureTemplate = 0;
+        public int BoundPointsId = 0;
 
         /// <summary>
         /// Applies any feature effects to a relevant tile.
@@ -37,7 +63,59 @@ namespace MortalDungeon.Game.Map
         /// The main use for this is resolving features that span multiple tilemaps and must seem contiguous (such as buildings)</param>
         public virtual void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
+            FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
+            if(AffectedPoints.TryGetValue(affectedPoint, out int value))
+            {
+                long pointHash = affectedPoint.GetUniqueHash();
+
+                var interaction = FeatureLedger.GetInteraction(FeatureID, pointHash);
+
+                if(value == 50000)
+                {
+                    tile.Properties.Type = new Random().NextDouble() > 0.3 ? TileType.Water : TileType.AltWater;
+                    tile.Properties.Classification = TileClassification.Water;
+                    tile.Outline = false;
+                    tile.NeverOutline = true;
+
+                    tile.Update();
+
+                    return;
+                }
+
+                if (value >= (int)FeatureEquationPointValues.UnitStart && value <= (int)FeatureEquationPointValues.UnitEnd && freshGeneration &&
+                    interaction != FeatureInteraction.Killed &&
+                    !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.ObjectHash == pointHash))
+                {
+                    var unitInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(value - (int)FeatureEquationPointValues.UnitStart);
+
+                    if(unitInfo != null)
+                    {
+                        Unit unit = unitInfo.CreateUnit(tile.GetScene());
+
+                        Entity unitEntity = new Entity(unit);
+                        EntityManager.AddEntity(unitEntity);
+
+                        unitEntity.Handle.FeatureID = FeatureID;
+                        unitEntity.Handle.ObjectHash = pointHash;
+
+                        unitEntity.DestroyOnUnload = true;
+
+                        unitEntity.Load(affectedPoint);
+
+                        var stateValue = StateValues.FindAll(v => v.ObjectHash == pointHash && v.Type == (int)LedgerUpdateType.Unit);
+                        if(stateValue.Count != 0)
+                        {
+                            foreach(var state in stateValue)
+                            {
+                                unit.ApplyStateValue(state);
+                            }
+                        }
+
+                        return;
+                    }
+                }
+            }
         }
 
         public virtual bool AffectsMap(TileMap map)
@@ -440,6 +518,16 @@ namespace MortalDungeon.Game.Map
             return val;
         }
 
+        public static Vector2i UnhashCoordinates(long hashedCoords)
+        {
+            Vector2i coords = new Vector2i();
+
+            coords.X = (int)(hashedCoords >> 32);
+            coords.Y = (int)(hashedCoords - coords.X << 32);
+
+            return coords;
+        }
+
         /// <summary>
         /// This is where the point gets associated with a specific feature
         /// </summary>
@@ -463,11 +551,14 @@ namespace MortalDungeon.Game.Map
         }
     }
 
+    [XmlType(TypeName = "FP")]
+    [Serializable]
     public struct FeaturePoint
     {
         public int X;
         public int Y;
 
+        [XmlElement("FPv")]
         public bool _visited;
 
         public FeaturePoint(int x, int y) 
@@ -548,7 +639,7 @@ namespace MortalDungeon.Game.Map
         }
     }
 
-    public enum Feature 
+    public enum FeatureType 
     {
         None,
         Grass,

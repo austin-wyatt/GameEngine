@@ -115,7 +115,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         }
                     });
 
-                    Scenes[u]._UI.ForEach(obj =>
+                    Scenes[u].UIManager.TopLevelObjects.ForEach(obj =>
                     {
                         Renderer.LoadTextureFromUIObject(obj);
                     });

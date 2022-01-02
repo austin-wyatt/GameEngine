@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.UI.Dev
             Window.Clickable = true;
             Window.Hoverable = true;
 
-            Window.GenerateReverseTree();
+            Window.GenerateReverseTree(scene.UIManager);
 
             Window.Name = "Entity Manager";
 

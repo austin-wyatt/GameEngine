@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game
 {
@@ -15,35 +16,44 @@ namespace MortalDungeon.Game
     {
         public static Dictionary<int, QuestLedgerNode> LedgeredQuests = new Dictionary<int, QuestLedgerNode>();
 
-        public static void ModifyStateValue(int questID, int state, StateModificationOptions option = StateModificationOptions.Add)
+        public static void ModifyStateValue(StateIDValuePair stateValue)
         {
+            #region instructions
+            if (stateValue.Data == (long)QuestStates.Start)
+            {
+                QuestManager.StartQuest((int)stateValue.StateID);
+                return;
+            }
+            #endregion
+
+
             QuestLedgerNode node;
 
-            if (LedgeredQuests.TryGetValue(questID, out var n))
+            if (LedgeredQuests.TryGetValue((int)stateValue.StateID, out var n))
             {
                 node = n;
             }
             else
             {
-                node = new QuestLedgerNode() { ID = questID };
-                LedgeredQuests.Add(questID, node);
+                node = new QuestLedgerNode() { ID = (int)stateValue.StateID };
+                LedgeredQuests.Add((int)stateValue.StateID, node);
             }
 
-            if (option == StateModificationOptions.Add)
+            if (stateValue.Instruction == (short)StateInstructions.Set)
             {
-                node.QuestState.Add(state);
+                node.QuestState.Add(stateValue.Data);
             }
-            else if(option == StateModificationOptions.Remove)
+            else if(stateValue.Instruction == (short)StateInstructions.Clear)
             {
-                node.QuestState.Remove(state);
+                node.QuestState.Remove(stateValue.Data);
             }
 
-            Ledgers.LedgerUpdated(LedgerUpdateType.Quest, questID, state);
+            Ledgers.LedgerUpdated(stateValue);
         }
 
-        public static bool GetStateValue(int dialogueID, int stateValue)
+        public static bool GetStateValue(int questID, int stateValue)
         {
-            if (LedgeredQuests.TryGetValue(dialogueID, out var n))
+            if (LedgeredQuests.TryGetValue(questID, out var n))
             {
                 if (n.QuestState.TryGetValue(stateValue, out var i))
                 {
@@ -57,7 +67,8 @@ namespace MortalDungeon.Game
 
     public enum QuestStates
     {
-        Completed = 99857
+        Completed = 99857,
+        Start = 99858
     }
 
     public class QuestLedgerNode

@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
@@ -83,6 +84,9 @@ namespace MortalDungeon.Game.Save
         [XmlElement("Ual")]
         public AbilityLoadout AbilityLoadout;
 
+        [XmlElement("Ucin")]
+        public int UnitCreationInfoId;
+
         [XmlElement("Uc")]
         public Vector4 Color;
 
@@ -134,16 +138,17 @@ namespace MortalDungeon.Game.Save
             ProfileType = unit.ProfileType;
             Species = unit.Info.Species;
 
-            FeatureHash = unit.FeatureHash;
+            FeatureHash = unit.ObjectHash;
             FeatureID = unit.FeatureID;
 
             AbilityLoadout = unit.AbilityLoadout;
+            UnitCreationInfoId = unit.UnitCreationInfoId;
 
-            foreach(var ability in unit.Info.Abilities)
+            foreach (var ability in unit.Info.Abilities)
             {
                 var loadout = AbilityLoadout.Items.Find(a => a.NodeID == ability.NodeID 
                     && a.AbilityTreeType == ability.AbilityTreeType 
-                    && a.BasicAbility == ability.BasicAbility);
+                    && (a.BasicAbility > 0) == ability.BasicAbility);
 
                 if(loadout != null)
                 {
@@ -151,7 +156,7 @@ namespace MortalDungeon.Game.Save
                 }
             }
 
-            Color = unit.BaseObject.BaseFrame.BaseColor;
+            Color = unit.Color;
 
             if (unit.Scene.UnitGroup != null && unit.Scene.UnitGroup.SecondaryUnitsInGroup.Contains(unit))
             {
@@ -201,10 +206,11 @@ namespace MortalDungeon.Game.Save
             unit.ProfileType = ProfileType;
             unit.Info.Species = Species;
 
-            unit.FeatureHash = FeatureHash;
+            unit.ObjectHash = FeatureHash;
             unit.FeatureID = FeatureID;
 
             unit.AbilityLoadout = AbilityLoadout;
+            unit.UnitCreationInfoId = UnitCreationInfoId;
         }
 
     }

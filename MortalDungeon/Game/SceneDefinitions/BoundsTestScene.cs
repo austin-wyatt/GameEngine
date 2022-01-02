@@ -181,8 +181,8 @@ namespace MortalDungeon.Game.SceneDefinitions
             block1.LoadTexture();
             block2.LoadTexture();
 
-            block1.GenerateReverseTree();
-            block2.GenerateReverseTree();
+            block1.GenerateReverseTree(UIManager);
+            block2.GenerateReverseTree(UIManager);
 
 
             UIBlock blockt = new UIBlock(default, new UIScale(0.5f, 0.5f));

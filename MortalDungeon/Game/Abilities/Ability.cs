@@ -185,6 +185,9 @@ namespace MortalDungeon.Game.Abilities
 
         public float ChargeRechargeCost = 10;
 
+        public bool UsedThisTurn = false;
+        public bool OneUsePerTurn = true;
+
         public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
 
         public Ability()
@@ -192,7 +195,7 @@ namespace MortalDungeon.Game.Abilities
 
         }
 
-        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
         {
             AffectedUnits.Clear();
             AffectedTiles.Clear();
@@ -267,7 +270,7 @@ namespace MortalDungeon.Game.Abilities
                 icon.AddChild(energyCostBackground, 49);
 
                 energyCostBackground.RenderAfterParent = true;
-                Vector3 newPos = new Vector3(energyCostBackground.Position.X, energyCostBackground.Position.Y, icon.Position.Z - 0.001f);
+                Vector3 newPos = new Vector3(energyCostBackground.Position.X, energyCostBackground.Position.Y, icon.Position.Z);
                 energyCostBackground.SetPosition(newPos);
                 //energyCostBackground.SetAllInline(0);
             }
@@ -433,7 +436,7 @@ namespace MortalDungeon.Game.Abilities
         public bool CanCast() 
         {
             return CastingUnit.Info.Energy >= GetEnergyCost() && CastingUnit.Info.ActionEnergy >= GetActionEnergyCost() && HasSufficientCharges()
-                && CastingUnit.Info.CanUseAbility(this);
+                && CastingUnit.Info.CanUseAbility(this) && !(Scene.InCombat && UsedThisTurn);
         }
 
 
@@ -556,8 +559,10 @@ namespace MortalDungeon.Game.Abilities
         }
         public void ApplyChargeRechargeCost() 
         {
-            CastingUnit.Info.ActionEnergy -= ChargeRechargeActionCost;
-            
+            if (Scene.InCombat)
+            {
+                CastingUnit.Info.ActionEnergy -= ChargeRechargeActionCost;
+            }
 
             if (CastingUnit.Info.Focus >= ChargeRechargeCost)
             {
@@ -619,6 +624,9 @@ namespace MortalDungeon.Game.Abilities
 
             CreateIconHoverEffect();
             CreateTemporaryVision();
+
+            if (Scene.InCombat)
+                UsedThisTurn = OneUsePerTurn;
 
             if (BreakStealth && CastingUnit.Info.Stealth.Hiding)
             {
@@ -714,9 +722,10 @@ namespace MortalDungeon.Game.Abilities
         public Action EffectEndedAction = null;
 
         //remove invalid tiles from the list
-        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0)
+        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0, List<Unit> validUnits = null)
         {
             HashSet<BaseTile> validTilesSet = validTiles.ToHashSet();
+
 
             for (int i = 0; i < validTiles.Count; i++)
             {
@@ -744,7 +753,8 @@ namespace MortalDungeon.Game.Abilities
                     AffectedUnits.Add(CastingUnit);
                 }
 
-                if ((validTiles[i].InFog[CastingUnit.AI.Team] && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (validTiles[i].InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
+
+                if ((!validTiles[i].InVision(CastingUnit.AI.Team) && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (!validTiles[i].InVision(CastingUnit.AI.Team) && !CanTargetThroughFog))
                 {
                     validTilesSet.Remove(validTiles[i]);
                     validTiles.RemoveAt(i);
@@ -800,6 +810,10 @@ namespace MortalDungeon.Game.Abilities
                 }
                 else
                 {
+                    if(validUnits != null)
+                    {
+                        validUnits.Add(units[j]);
+                    }
                     AffectedUnits.Add(units[j]);
                 }
             }
@@ -1034,6 +1048,13 @@ namespace MortalDungeon.Game.Abilities
                     buff.ModifyDamageInstance(instance, this);
                 }
             }
+        }
+
+        public virtual UnitAIAction GetAction(List<Unit> unitsInCombat)
+        {
+            var action = new UnitAIAction(CastingUnit, AIAction.MoveCloser);
+
+            return action;
         }
 
         public override bool Equals(object obj)

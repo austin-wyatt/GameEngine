@@ -48,23 +48,23 @@ namespace MortalDungeon.Game.Units
 
             Info.Stealth.Skill = 0;
 
-            RangedDamageDealer disp = new RangedDamageDealer(this)
-            {
-                Weight = 1,
-                Bloodthirsty = 1
-            };
-            AI.Dispositions.Add(disp);
+            //RangedDamageDealer disp = new RangedDamageDealer(this)
+            //{
+            //    Weight = 1,
+            //    Bloodthirsty = 1
+            //};
+            //AI.Dispositions.Add(disp);
 
-            MeleeDamageDealer meleeDisp = new MeleeDamageDealer(this) { Weight = 1 };
-            AI.Dispositions.Add(meleeDisp);
+            //MeleeDamageDealer meleeDisp = new MeleeDamageDealer(this) { Weight = 1 };
+            //AI.Dispositions.Add(meleeDisp);
 
-            Utility utilityDisp = new Utility(this) { Weight = 1 };
-            AI.Dispositions.Add(utilityDisp);
+            //Utility utilityDisp = new Utility(this) { Weight = 1 };
+            //AI.Dispositions.Add(utilityDisp);
 
-            Healer healDisp = new Healer(this) { Weight = 1 };
-            AI.Dispositions.Add(healDisp);
+            //Healer healDisp = new Healer(this) { Weight = 1 };
+            //AI.Dispositions.Add(healDisp);
 
-            AbilityLoadout = AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 3);
+            AbilityLoadout = Serializers.AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 3);
         }
 
         public override void InitializeVisualComponent()

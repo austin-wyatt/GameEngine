@@ -12,6 +12,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.SceneDefinitions;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
@@ -203,7 +204,7 @@ namespace MortalDungeon
             Renderer.Initialize();
 
             VisionMap.Initialize();
-
+            FeatureManager.Initialize();
 
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
@@ -489,7 +490,7 @@ namespace MortalDungeon
 
                 RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
 
-                lock (scene._UI._lock) 
+                lock (scene.UIManager._UILock) 
                 {
                     RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
                 }
@@ -701,7 +702,7 @@ namespace MortalDungeon
 
                     Task uiTask = new Task(() =>
                     {
-                        scene._UI.ForEach(ui =>
+                        scene.UIManager.TopLevelObjects.ForEach(ui =>
                         {
                             ui.Tick();
                         });
@@ -764,7 +765,7 @@ namespace MortalDungeon
 
             _sceneController.Scenes.ForEach(scene =>
             {
-                scene._UI.ForEach(ui =>
+                scene.UIManager.TopLevelObjects.ForEach(ui =>
                 {
                     ui.ForEach(obj => obj.OnResize());
                 });

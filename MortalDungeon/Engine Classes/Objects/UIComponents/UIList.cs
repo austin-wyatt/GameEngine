@@ -97,6 +97,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Items.Add(newItem);
             AddChild(newItem, 100);
 
+            //newItem._backdrop.SetColor(new Vector4((float)new Random().NextDouble(), (float)new Random().NextDouble(), 0, 1));
+
 
             newItem.OnClickAction = onClickAction;
             newItem.Clickable = true;
@@ -113,6 +115,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             if (Items.Count > 0)
             {
                 Position = (Items[0].BaseComponent.Position + Items[^1].BaseComponent.Position) / 2;
+
                 BaseComponent.SetPosition(Position);
             }
 

@@ -1,7 +1,6 @@
 ﻿#version 420
 
 layout(location = 0) out vec4 outputColor;
-//out vec4 outputColor; 
 
 in vec4 appliedColor;
 
@@ -64,9 +63,6 @@ void main()
 		outputColor = appliedColor;
 	}
 	
-
-
-
 	//if the alpha is below the alpha threshold the pixel is discarded
 	if(outputColor.a < alpha_threshold)
 	{
@@ -74,6 +70,4 @@ void main()
 	}
 	
 	outputColor.a = 1;
-
-
 }

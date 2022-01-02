@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Units;
+﻿using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +9,8 @@ namespace MortalDungeon.Game.Abilities
     public enum AbilityTreeType
     {
         None,
-        Skeleton
+        Skeleton,
+        Dev
     }
     public static class AbilityTrees
     {
@@ -17,6 +19,7 @@ namespace MortalDungeon.Game.Abilities
         static AbilityTrees()
         {
             SkeletonTree.Initialize();
+            DevTree.Initialize();
         }
 
         public static bool FindTree(AbilityTreeType type, out AbilityTree tree)
@@ -188,11 +191,16 @@ namespace MortalDungeon.Game.Abilities
                 ability.Charges = item.CurrentCharges;
             }
 
+            if (item.MaxCharges != -1)
+            {
+                ability.MaxCharges = item.MaxCharges;
+            }
+
             ability.Name = Name;
 
             ability.AbilityTreeType = item.AbilityTreeType;
             ability.NodeID = item.NodeID;
-            ability.BasicAbility = item.BasicAbility;
+            ability.BasicAbility = item.BasicAbility > 0;
 
             unit.Info.Abilities.Add(ability);
         }

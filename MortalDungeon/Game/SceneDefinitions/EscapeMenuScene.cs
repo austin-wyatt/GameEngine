@@ -151,7 +151,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             if (_menuCooldown.ElapsedMilliseconds < 100) return;
 
             MenuOpen = !MenuOpen;
-            _UI.ForEach(ui =>
+            UIManager.TopLevelObjects.ForEach(ui =>
             {
                 ui.SetRender(MenuOpen);
             });

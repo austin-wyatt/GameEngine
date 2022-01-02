@@ -41,7 +41,7 @@ namespace MortalDungeon.Game.Abilities
             AbilityClass = AbilityClass.Bandit;
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
         {
             base.GetValidTileTargets(tileMap);
 

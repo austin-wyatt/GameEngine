@@ -199,23 +199,6 @@ namespace MortalDungeon.Game.Objects
         };
     }
 
-    public static class CAVE_BACKGROUND_ANIMATION
-    {
-        private static RenderableObject cave_Idle_1 = new RenderableObject(new SpritesheetObject(0, Spritesheets.CaveSheet, 8, 8).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-
-        private static Animation Idle = new Animation()
-        {
-            Frames = new List<RenderableObject>() { cave_Idle_1 },
-            Frequency = 0,
-            Repeats = -1
-        };
-
-
-        public static List<Animation> List = new List<Animation>()
-        {
-            Idle
-        };
-    }
 
     public static class MOUNTAIN_TWO_ANIMATION
     {

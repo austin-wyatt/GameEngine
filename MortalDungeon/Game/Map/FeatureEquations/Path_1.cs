@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
             {
                 switch (value)
                 {
-                    case (int)Feature.StonePath:
+                    case (int)FeatureType.StonePath:
                         tile.Properties.Type = TileType.Stone_1 + TileMap._randomNumberGen.Next() % 3;
                         break;
                 }
@@ -73,15 +73,15 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                         ringList.Clear();
                         GetRingOfTiles(path[j], ringList, k);
 
-                        ringList.ForEach(p =>
+                        ringList.ForEach((Action<FeaturePoint>)(p =>
                         {
-                            AddAffectedPoint(p, (int)Feature.StonePath);
-                        });
+                            AddAffectedPoint(p, (int)FeatureType.StonePath);
+                        }));
                     }
 
 
 
-                    AddAffectedPoint(path[j], (int)Feature.StonePath);
+                    AddAffectedPoint(path[j], (int)FeatureType.StonePath);
                 }
 
                 startPoint = PathParams.Stops[i];

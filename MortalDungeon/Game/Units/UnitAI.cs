@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -38,7 +39,7 @@ namespace MortalDungeon.Game.Units
         public UnitTeam Team = UnitTeam.Skeletons;
         public ControlType ControlType = ControlType.Controlled;
 
-        public Dispositions Dispositions;
+        //public Dispositions Dispositions;
 
         private Unit _unit;
 
@@ -52,12 +53,17 @@ namespace MortalDungeon.Game.Units
 
         public bool Fighting = true; //if a unit surrenders they will no longer be considered fighting
 
+        public float Bloodthirsty = 0;
+        public float Virtuous = 0;
+        public float Cowardly = 0;
+        public float MovementAversion = 0.2f;
+
         public UnitAI() { }
 
         public UnitAI(Unit unit) 
         {
             _unit = unit;
-            Dispositions = new Dispositions(_unit);
+            //Dispositions = new Dispositions(_unit);
         }
 
 
@@ -68,10 +74,10 @@ namespace MortalDungeon.Game.Units
             if (Scene.CurrentUnit != _unit)
                 return;
 
-            foreach (var disp in Dispositions.DispositionList) 
-            {
-                disp.TurnFatigue = 0;
-            }
+            //foreach (var disp in Dispositions.DispositionList) 
+            //{
+            //    disp.TurnFatigue = 0;
+            //}
 
             _depth = 0;
             BeginNextAction();
@@ -91,6 +97,7 @@ namespace MortalDungeon.Game.Units
                 {
                     //Stopwatch timer = new Stopwatch();
                     //timer.Start();
+
                     GetAction().EnactEffect();
 
                     //Console.WriteLine($"AI effect completed in {timer.ElapsedMilliseconds}ms");
@@ -144,73 +151,78 @@ namespace MortalDungeon.Game.Units
 
         public UnitAIAction GetAction()
         {
-            Dictionary<AIAction, UnitAIAction> actionValues = new Dictionary<AIAction, UnitAIAction>();
+            //go through each ability and check their weight. 
+            //each action will be composed of a movement step then an ability usage, just an ability usage, or just a movement step
+            //actions where something that isn't movement occurs get extra weight. This extra weight is dimished by an amount relative to
+            //how much the unit has to move
+
+            List<UnitAIAction> abilityActions = new List<UnitAIAction>();
+
+            foreach(var ability in _unit.Info.Abilities)
+            {
+                var action = ability.GetAction(Scene.InitiativeOrder);
+
+
+                if(action.Weight >= 1)
+                {
+                    abilityActions.Add(action);
+                }
+            }
 
             UnitAIAction selectedAction = new AI.EndTurn(_unit) { Weight = 1 };
 
-            List<UnitAIAction> actions = new List<UnitAIAction> { selectedAction };
-            List<Disposition> actionDispositions = new List<Disposition>() { new Disposition(_unit) };
-
-            UnitAIAction tempAction;
-            foreach (AIAction action in Enum.GetValues(typeof(AIAction)))
+            foreach(var action in abilityActions)
             {
-                Dispositions.DispositionList.ForEach(disp =>
+                if(action.Weight > selectedAction.Weight)
                 {
-                    tempAction = disp.GetAction(action);
-
-                    if (tempAction != null)
-                    {
-                        tempAction.Weight -= disp.Fatigue;
-                        tempAction.Weight -= disp.TurnFatigue;
-
-                        actions.Add(tempAction);
-                        actionDispositions.Add(disp);
-                    }
-                });
-            }
-
-            int selectedActionIndex = 0;
-            for (int i = 0; i < actions.Count; i++)
-            {
-                if (actions[i].Weight > selectedAction.Weight) 
-                {
-                    selectedAction = actions[i];
-                    selectedActionIndex = i;
-                }
-                if (actions[i].Weight == selectedAction.Weight) 
-                {
-                    if(GlobalRandom.NextFloat() >= 0.5f) 
-                    {
-                        selectedAction = actions[i];
-                        selectedActionIndex = i;
-                    }
+                    selectedAction = action;
                 }
             }
+
+
+            //Dictionary<AIAction, UnitAIAction> actionValues = new Dictionary<AIAction, UnitAIAction>();
+
+
+            //List<UnitAIAction> actions = new List<UnitAIAction> { selectedAction };
+            //List<Disposition> actionDispositions = new List<Disposition>() { new Disposition(_unit) };
+
+            //UnitAIAction tempAction;
+            //foreach (AIAction action in Enum.GetValues(typeof(AIAction)))
+            //{
+            //    Dispositions.DispositionList.ForEach(disp =>
+            //    {
+            //        tempAction = disp.GetAction(action);
+
+            //        if (tempAction != null)
+            //        {
+            //            tempAction.Weight -= disp.Fatigue;
+            //            tempAction.Weight -= disp.TurnFatigue;
+
+            //            actions.Add(tempAction);
+            //            actionDispositions.Add(disp);
+            //        }
+            //    });
+            //}
+
+            //int selectedActionIndex = 0;
+            //for (int i = 0; i < actions.Count; i++)
+            //{
+            //    if (actions[i].Weight > selectedAction.Weight) 
+            //    {
+            //        selectedAction = actions[i];
+            //        selectedActionIndex = i;
+            //    }
+            //    if (actions[i].Weight == selectedAction.Weight) 
+            //    {
+            //        if(GlobalRandom.NextFloat() >= 0.5f) 
+            //        {
+            //            selectedAction = actions[i];
+            //            selectedActionIndex = i;
+            //        }
+            //    }
+            //}
 
             Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Movement remaining. {_unit.Info.ActionEnergy} Actions remaining.");
-
-
-            float fatigueBuildup = GlobalRandom.NextFloat(0.01f, 0.05f);
-
-            Disposition selectedDisposition = actionDispositions[selectedActionIndex];
-            selectedDisposition.OnActionSelected(selectedAction.ActionType);
-
-            selectedDisposition.Fatigue += fatigueBuildup;
-            var dispHashSet = actionDispositions.ToHashSet();
-
-            dispHashSet.Remove(selectedDisposition);
-
-            foreach (var item in dispHashSet) 
-            {
-                if (item.Fatigue > 0) 
-                {
-                    item.Fatigue -= 0.01f;
-                }
-                if (item.Fatigue < 0) 
-                {
-                    item.Fatigue = 0;
-                }
-            }
 
 
             return selectedAction;
@@ -593,6 +605,11 @@ namespace MortalDungeon.Game.Units
 
         public float Weight = 0;
 
+        public bool HasAction = false;
+        public float PathCost = 0;
+
+        public Action EffectAction = null;
+
         protected CombatScene Scene => CastingUnit.Scene;
         protected TileMap Map => CastingUnit.GetTileMap();
         protected TilePoint TilePosition => CastingUnit.Info.TileMapPosition.TilePoint;
@@ -611,7 +628,7 @@ namespace MortalDungeon.Game.Units
         }
         public virtual void EnactEffect() 
         {
-            Scene.CompleteTurn();
+            EffectAction?.Invoke();
         }
     }
 }

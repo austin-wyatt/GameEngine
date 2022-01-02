@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Engine_Classes
 {
@@ -56,7 +57,9 @@ namespace MortalDungeon.Engine_Classes
 
         public Action OnClickAction = null;
 
+        private object _reverseTreeLock = new object();
         public List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
+
         public BoundingArea ScissorBounds = new BoundingArea();
         public Bounds AdditionalBounds = null;
 
@@ -70,6 +73,8 @@ namespace MortalDungeon.Engine_Classes
         public int _depth = 0;
         public int _childIndex = 1;
         public float ZPos = 0;
+
+        public UIManager ManagerHandle = null;
 
         public UIObject() { }
 
@@ -184,80 +189,68 @@ namespace MortalDungeon.Engine_Classes
             GetBaseObject().OutlineParameters.SetAllInline(num);
         }
 
+
         public void BoundsCheck(Vector2 MouseCoordinates, Camera camera, Action<UIObject> optionalAction = null, UIEventType type = UIEventType.Click)
         {
-            if (ReverseTree == null)
-                return;
-
-            int count = ReverseTree.Count;
-
-            try
+            if (IsValidForBoundsType(this, type))
             {
-                for (int i = 0; i < count; i++)
+                if (type == UIEventType.HoverEnd)
                 {
-                    if (count != ReverseTree.Count)
-                    {
-                        Console.WriteLine("ReverseTree modified during BoundsCheck");
-                        return;
-                    }
+                    Task.Run(OnHoverEnd);
+                }
+                else if (InsideBounds(MouseCoordinates, camera))
+                {
+                    optionalAction?.Invoke(this);
 
-                    if (IsValidForBoundsType(ReverseTree[i].UIObject, type))
+                    switch (type)
                     {
-                        if (type == UIEventType.HoverEnd)
-                        {
-                            ReverseTree[i].UIObject.OnHoverEnd();
-                        }
-                        else if (ReverseTree[i].InsideBounds(MouseCoordinates, camera))
-                        {
-                            optionalAction?.Invoke(ReverseTree[i].UIObject);
-
-                            switch (type)
+                        case UIEventType.Click:
+                            Task.Run(OnMouseUp);
+                            return;
+                        case UIEventType.RightClick:
+                            Task.Run(OnRightClick);
+                            return;
+                        case UIEventType.Hover:
+                            Task.Run(OnHover);
+                            break;
+                        case UIEventType.TimedHover:
+                            Task.Run(() => optionalAction?.Invoke(this));
+                            break;
+                        case UIEventType.MouseDown:
+                            Task.Run(OnMouseDown);
+                            return;
+                        case UIEventType.Grab:
+                            Task.Run(() =>
                             {
-                                case UIEventType.Click:
-                                    ReverseTree[i].UIObject.OnMouseUp();
-                                    return;
-                                case UIEventType.RightClick:
-                                    ReverseTree[i].UIObject.OnRightClick();
-                                    return;
-                                case UIEventType.Hover:
-                                    ReverseTree[i].UIObject.OnHover();
+                                OnGrab(MouseCoordinates, this);
+                                optionalAction?.Invoke(this);
+                            });
 
-                                    type = UIEventType.HoverEnd; //This ensures only 1 object can be hovered in any given reverse tree
-                                    break;
-                                case UIEventType.TimedHover:
-                                    optionalAction?.Invoke(ReverseTree[i].UIObject);
-
-                                    type = UIEventType.HoverEnd; //This ensures only 1 object can be hovered in any given reverse tree
-                                    break;
-                                case UIEventType.MouseDown:
-                                    ReverseTree[i].UIObject.OnMouseDown();
-                                    return;
-                                case UIEventType.Grab:
-                                    ReverseTree[i].UIObject.OnGrab(MouseCoordinates, ReverseTree[i].UIObject);
-                                    optionalAction?.Invoke(ReverseTree[i].UIObject);
-                                    return;
-                                case UIEventType.Focus:
-                                    if (!ReverseTree[i].UIObject.Focused)
-                                    {
-                                        ReverseTree[i].UIObject.OnFocus();
-                                    }
-                                    optionalAction?.Invoke(ReverseTree[i].UIObject);
-                                    return;
-                            }
-                        }
-                        else if (type == UIEventType.Hover)
-                        {
-                            ReverseTree[i].UIObject.OnHoverEnd();
-                        }
+                            return;
+                        case UIEventType.Focus:
+                            Task.Run(() =>
+                            {
+                                if (!Focused)
+                                {
+                                    OnFocus();
+                                }
+                                optionalAction?.Invoke(this);
+                            });
+                            return;
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error caught in BoundsCheck: " + e.Message);
+                else if (type == UIEventType.Hover)
+                {
+                    Task.Run(OnHoverEnd);
+                }
             }
         }
-        
+
+        private bool InsideBounds(Vector2 point, Camera camera = null)
+        {
+            return GetBaseObject().Bounds.Contains(point, camera);
+        }
+
 
         public static bool IsValidForBoundsType(UIObject obj, UIEventType type) 
         {
@@ -309,30 +302,32 @@ namespace MortalDungeon.Engine_Classes
             for (int i = 0; i < Children.Count; i++) 
             {
                 Vector3 childPos = Children[i].Position;
-                //childPos.Z = position.Z - 0.0001f;
-                childPos.Z = position.Z - 1 / (float)Math.Pow(10, _depth + 2) * _childIndex;
 
                 Children[i].SetPosition(childPos - deltaPos);
             }
         }
 
-        public void SetZPosition(float zPos, bool updateChildren = false)
+        public void SetZPosition(float zPos)
         {
             ZPos = zPos;
 
             base.SetPosition(new Vector3(Position.X, Position.Y, ZPos));
 
-            foreach(var text in TextObjects)
+            if (Clickable)
             {
-                text.SetPosition(text.Position + new Vector3(0, 0, 0));
+                ManagerHandle.AddClickableObject(this);
             }
 
-            if (updateChildren)
+            if (Hoverable)
             {
-                for (int i = 0; i < Children.Count; i++)
-                {
-                    Children[i].SetZPosition(Children[i].ZPos, true);
-                }
+                ManagerHandle.AddHoverableObject(this);
+            }
+
+            foreach(var text in TextObjects)
+            {
+                Vector3 pos = text.Position;
+                pos.Z = zPos;
+                text.SetPosition(pos);
             }
         }
 
@@ -442,7 +437,7 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Actually a preorder search now but I'm leaving the breadth first search code commented out
         /// </summary>
-        public List<UITreeNode> BreadthFirstSearch() 
+        public List<UITreeNode> BreadthFirstSearch(UIManager handle) 
         {
             List<UITreeNode> tree = new List<UITreeNode>();
             //List<UIObject> nodesToTraverse = new List<UIObject>();
@@ -477,17 +472,19 @@ namespace MortalDungeon.Engine_Classes
             {
                 tree.Add(new UITreeNode(parentObject, depth, GetBaseObject(parentObject)));
 
+                parentObject.ManagerHandle = handle;
+
                 parentObject._depth = depth;
                 parentObject._childIndex = childIndex;
 
-                float zPos = parentObject.ZPos;
+                //float zPos = parentObject.ZPos;
 
-                if (parentObject._depth > 1)
-                {
-                    zPos = parentObject.Parent.Position.Z - 1 / (float)Math.Pow(10, parentObject._depth) * parentObject._childIndex;
-                }
+                //if (parentObject._depth > 1)
+                //{
+                //    zPos = parentObject.Parent.Position.Z - 1 / (float)Math.Pow(10, parentObject._depth) * parentObject._childIndex;
+                //}
 
-                parentObject.ZPos = zPos;
+                //parentObject.ZPos = zPos;
 
                 //parentObject.SetZPosition(zPos);
 
@@ -528,10 +525,15 @@ namespace MortalDungeon.Engine_Classes
             return returnObj;
         }
 
-        public void GenerateReverseTree() 
+        public void GenerateReverseTree(UIManager handle) 
         {
-            ReverseTree = BreadthFirstSearch();
-            ReverseTree.Reverse();
+            ManagerHandle = handle;
+
+            lock (_reverseTreeLock)
+            {
+                ReverseTree = BreadthFirstSearch(handle);
+                ReverseTree.Reverse();
+            }
         }
 
         public void ForceTreeRegeneration() 
@@ -542,10 +544,34 @@ namespace MortalDungeon.Engine_Classes
                 if(parent.Parent != null)
                     parent = parent.Parent;
 
-                if (parent.Parent == null)
+                if (parent.Parent == null && ManagerHandle != null)
                 {
-                    parent.GenerateReverseTree();
+                    //parent.GenerateReverseTree();
+                    ManagerHandle.GenerateReverseTree(parent);
                     return;
+                }
+                else if(parent.Parent == null)
+                {
+                    return;
+                }
+            }
+        }
+
+        public void GenerateZPositions(float baseZVal)
+        {
+            if (ReverseTree == null)
+                return;
+
+            float currVal = baseZVal;
+
+            lock (_reverseTreeLock)
+            {
+                foreach (var item in ReverseTree)
+                {
+                    item.UIObject.SetZPosition(currVal);
+
+                    //currVal += 0.000000001f;
+                    currVal += 0.0000001f;
                 }
             }
         }
@@ -558,6 +584,12 @@ namespace MortalDungeon.Engine_Classes
             });
 
             base.CleanUp();
+
+            if (ManagerHandle != null)
+            {
+                ManagerHandle.RemoveClickableObject(this);
+                ManagerHandle.RemoveHoverableObject(this);
+            }
         }
 
         public virtual void AddChild(UIObject uiObj, int zIndex = -1) 
@@ -565,10 +597,6 @@ namespace MortalDungeon.Engine_Classes
             uiObj.ReverseTree = null;
             uiObj.Parent = this;
             Children.Add(uiObj);
-
-            //Vector3 childPos = uiObj.Position;
-            //childPos.Z = Position.Z - 0.00001f;
-            //uiObj.SetPosition(childPos);
 
             if (zIndex != -1)
             {
@@ -582,14 +610,16 @@ namespace MortalDungeon.Engine_Classes
             Children.Sort();
 
 
-            if (Parent == null)
-            {
-                GenerateReverseTree();
-            }
-            else 
-            {
-                ForceTreeRegeneration();
-            }
+            //if (Parent == null)
+            //{
+            //    GenerateReverseTree(ManagerHandle);
+            //}
+            //else 
+            //{
+            //    ForceTreeRegeneration();
+            //}
+
+            ForceTreeRegeneration();
 
             LoadTexture(uiObj);
         }
@@ -606,20 +636,24 @@ namespace MortalDungeon.Engine_Classes
 
                 child.Parent = null;
 
-                if (Parent == null)
-                {
-                    GenerateReverseTree();
-                }
-                else 
-                {
-                    ForceTreeRegeneration();
-                }
+                //if (Parent == null)
+                //{
+                //    GenerateReverseTree(ManagerHandle);
+                //}
+                //else 
+                //{
+                //    ForceTreeRegeneration();
+                //}
+
+                ForceTreeRegeneration();
             }
         }
 
         public void RemoveChild(UIObject obj) 
         {
             RemoveChild(obj.ObjectID);
+
+            ForceTreeRegeneration();
         }
 
         public void RemoveChildren()
@@ -632,14 +666,16 @@ namespace MortalDungeon.Engine_Classes
 
             Children.Clear();
 
-            if (Parent == null)
-            {
-                GenerateReverseTree();
-            }
-            else
-            {
-                ForceTreeRegeneration();
-            }
+            //if (Parent == null)
+            //{
+            //    GenerateReverseTree(ManagerHandle);
+            //}
+            //else
+            //{
+            //    ForceTreeRegeneration();
+            //}
+
+            ForceTreeRegeneration();
         }
 
         public void RemoveChildren(List<int> objectIDs) 

@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Game.Entities;
+using MortalDungeon.Game.Ledger;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game.Map.FeatureEquations
 {
@@ -32,8 +34,25 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
             FeatureID = HashCoordinates(@params.Origin.X, @params.Origin.Y);
 
-            FeatureLedger.SetFeatureStateValue(FeatureID, FeatureStateValues.NormalKillRequirements, 3);
-            FeatureLedger.SetFeatureStateValue(FeatureID, FeatureStateValues.AvailableToClear, 1);
+            StateIDValuePair killRequirementState = new StateIDValuePair() 
+            {
+                Type = (int)LedgerUpdateType.Feature,
+                StateID = FeatureID,
+                ObjectHash = (long)FeatureStateValues.NormalKillRequirements,
+                Data = 3
+            };
+
+            Ledgers.SetStateValue(killRequirementState);
+
+            StateIDValuePair availableToClearState = new StateIDValuePair()
+            {
+                Type = (int)LedgerUpdateType.Feature,
+                StateID = FeatureID,
+                ObjectHash = (long)FeatureStateValues.AvailableToClear,
+                Data = 1
+            };
+
+            Ledgers.SetStateValue(availableToClearState);
         }
 
         public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
@@ -116,7 +135,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 var interaction = FeatureLedger.GetInteraction(FeatureID, pointHash);
                 short featureStateVal = FeatureLedger.GetFeatureStateValue(FeatureID, FeatureStateValues.AvailableToClear);
 
-                if (GetBit(value, 2) && freshGeneration && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash) 
+                if (GetBit(value, 2) && freshGeneration && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.ObjectHash == pointHash) 
                     && interaction != FeatureInteraction.Killed && featureStateVal > 0) 
                 {
                     Entity enemy = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
@@ -125,7 +144,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     enemy.Handle.pack_name = "bandit camp" + FeatureID;
 
                     enemy.Handle.FeatureID = FeatureID;
-                    enemy.Handle.FeatureHash = pointHash;
+                    enemy.Handle.ObjectHash = pointHash;
 
                     enemy.DestroyOnUnload = true;
 

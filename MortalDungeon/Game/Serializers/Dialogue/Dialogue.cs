@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game
+namespace MortalDungeon.Game.Serializers
 {
     public enum ResponseType
     {
@@ -12,6 +12,12 @@ namespace MortalDungeon.Game
         Ok,
         Yes,
         No
+    }
+
+    public enum DialogueStates
+    {
+        CreateDialogue = -10000, //Opens a dialogue window with the ID of the state value's State ID
+
     }
 
     [Serializable]
@@ -29,6 +35,9 @@ namespace MortalDungeon.Game
         /// An outcome of less than zero can be used for doing things in the scene that aren't relevant to the overall game state (like opening a shop window).
         /// </summary>
         public int DialogueOutcome = 0;
+
+        [XmlElement("name")]
+        public string Name = "";
 
         public Dialogue() { }
         public Dialogue(DialogueNode node)
@@ -48,7 +57,7 @@ namespace MortalDungeon.Game
         /// </summary>
         public int Speaker = 0;
         [XmlElement("m")]
-        public string Message = "<dialogue>";
+        public int TextEntry = 0;
 
         [XmlElement("d")]
         /// <summary>
@@ -64,10 +73,10 @@ namespace MortalDungeon.Game
         public List<Response> Responses = new List<Response>();
 
         public DialogueNode() { }
-        public DialogueNode(int speaker, string message)
+        public DialogueNode(int speaker, int messageID)
         {
             Speaker = speaker;
-            Message = message;
+            TextEntry = messageID;
         }
 
         public Response AddResponse(Response node)
@@ -77,21 +86,37 @@ namespace MortalDungeon.Game
             return node;
         }
 
-        public Response AddResponse(ResponseType type = ResponseType.None, string message = "", int outcome = 0)
+        public Response AddResponse(out Response res, ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0)
         {
-            Response node = new Response(type, message, outcome);
+            Response node = new Response(type, messageID, outcome);
             Responses.Add(node);
+
+            res = node;
 
             return node;
         }
+
+        public Response AddResponse(ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0)
+        {
+            return AddResponse(out var val, type, messageID, outcome);
+        }
+
+        public string GetMessage()
+        {
+            return TextTableManager.GetTextEntry(0, TextEntry);
+        }
     }
+
+
+
+
 
     [XmlType(TypeName = "r")]
     [Serializable]
     public class Response
     {
         [XmlElement("rm")]
-        public string ResponseMessage = "";
+        public int TextTableEntry = 0;
         [XmlElement("t")]
         public ResponseType ResponseType = ResponseType.Ok;
 
@@ -104,10 +129,13 @@ namespace MortalDungeon.Game
         [XmlElement("N")]
         public DialogueNode Next;
 
+        [XmlElement("rSTv")]
+        public List<StateIDValuePair> StateValues = new List<StateIDValuePair>();
+
         public Response() { }
-        public Response(ResponseType type = ResponseType.None, string message = "", int outcome = 0)
+        public Response(ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0, int questStart = -1)
         {
-            if (message != "")
+            if (messageID != 0)
             {
                 ResponseType = ResponseType.Custom;
             }
@@ -116,7 +144,7 @@ namespace MortalDungeon.Game
                 ResponseType = type;
             }
 
-            ResponseMessage = message;
+            TextTableEntry = messageID;
 
             Outcome = outcome;
         }
@@ -127,16 +155,15 @@ namespace MortalDungeon.Game
             return next;
         }
 
-        public DialogueNode AddNext(int speaker, string message)
+        public DialogueNode AddNext(int speaker, int messageID)
         {
-            Next = new DialogueNode(speaker, message);
+            Next = new DialogueNode(speaker, messageID);
             return Next;
         }
 
         public override string ToString()
         {
-            return ResponseType == ResponseType.Custom ? ResponseMessage : ResponseType.ToString();
+            return ResponseType == ResponseType.Custom ? TextTableManager.GetTextEntry(0, TextTableEntry) : ResponseType.ToString();
         }
-
     }
 }

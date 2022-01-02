@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Ledger;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game
 {
@@ -151,7 +153,7 @@ namespace MortalDungeon.Game
             dialogueText.SetTextScale(0.04f);
             dialogueText._textField.SetColor(Colors.Tan);
 
-            string dialogueMessage = EventLog.WrapString(_currentNode.Message, 25);
+            string dialogueMessage = EventLog.WrapString(_currentNode.GetMessage(), textWrapLength);
 
             dialogueText.SetText(dialogueMessage);
 
@@ -216,11 +218,29 @@ namespace MortalDungeon.Game
 
         public void CreateResponses(Dialogue dialogue)
         {
+            if(_currentNode.Responses.Count == 0)
+            {
+                EndDialogue();
+            }
+
             if (_currentNode.Responses[0].ResponseType == ResponseType.None)
             {
                 if(_currentNode.Responses[0].Outcome > 0)
                 {
-                    DialogueLedger.AddOutcome(dialogue.ID, _currentNode.Responses[0].Outcome);
+                    StateIDValuePair updatedState = new StateIDValuePair()
+                    {
+                        Type = (int)LedgerUpdateType.Dialogue,
+                        StateID = dialogue.ID,
+                        ObjectHash = 0,
+                        Data = _currentNode.Responses[0].Outcome,
+                    };
+
+                    DialogueLedger.SetStateValue(updatedState);
+                }
+
+                if(_currentNode.Responses[0].StateValues.Count > 0)
+                {
+                    Ledgers.ApplyStateValues(_currentNode.Responses[0].StateValues);
                 }
 
                 dialogue.DialogueOutcome = _currentNode.Responses[0].Outcome;
@@ -244,22 +264,34 @@ namespace MortalDungeon.Game
                 //create buttons
                 foreach (var res in _currentNode.Responses)
                 {
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), res.ToString(), 0.043f, Colors.UILightGray, Colors.UITextBlack);
+                    string responseString = EventLog.WrapString(res.ToString(), textWrapLength);
+
+                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.043f, Colors.UILightGray, Colors.UITextBlack);
                     button.BaseComponent.MultiTextureData.MixTexture = false;
 
                     button.BaseComponent.SetSize(button.TextBox.BaseComponent.Size + new UIScale(0.05f, 0.05f));
-                    button.BaseComponent.SetPosition(button.TextBox.GetAnchorPosition(UIAnchorPosition.Center));
+                    button.BaseComponent.SetPosition(button.TextBox.BaseComponent.GetAnchorPosition(UIAnchorPosition.Center));
 
                     button.OnClickAction = () =>
                     {
-
-
                         _buttonParent.RemoveChildren();
-
 
                         if (res.Outcome > 0)
                         {
-                            DialogueLedger.AddOutcome(dialogue.ID, res.Outcome);
+                            StateIDValuePair updatedState = new StateIDValuePair()
+                            {
+                                Type = (int)LedgerUpdateType.Dialogue,
+                                StateID = dialogue.ID,
+                                ObjectHash = 0,
+                                Data = res.Outcome,
+                            };
+
+                            DialogueLedger.SetStateValue(updatedState);
+                        }
+
+                        if (res.StateValues.Count > 0)
+                        {
+                            Ledgers.ApplyStateValues(res.StateValues);
                         }
 
                         dialogue.DialogueOutcome = res.Outcome;
@@ -308,13 +340,14 @@ namespace MortalDungeon.Game
             }
         }
 
+        private const int textWrapLength = 25;
         public void AddResponseText(Dialogue dialogue, string response)
         {
             TextComponent dialogueText = new TextComponent();
             dialogueText.SetTextScale(0.04f);
             dialogueText._textField.SetColor(Colors.Green);
 
-            string dialogueMessage = EventLog.WrapString(response, 25);
+            string dialogueMessage = EventLog.WrapString(response, textWrapLength);
 
             dialogueText.SetText(dialogueMessage);
 

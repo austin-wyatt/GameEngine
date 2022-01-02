@@ -54,7 +54,7 @@ namespace MortalDungeon.Game.Units
 
             Info.MaxEnergy = 15;
 
-            AbilityLoadout = AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 2);
+            AbilityLoadout = Serializers.AbilityLoadout.GenerateLoadoutFromTree(AbilityTreeType.Skeleton, 2);
         }
 
         public override void InitializeVisualComponent()

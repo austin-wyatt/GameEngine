@@ -1,11 +1,14 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Abilities
+namespace MortalDungeon.Game.Serializers
 {
     [XmlType(TypeName = "AL")]
     [Serializable]
@@ -14,20 +17,24 @@ namespace MortalDungeon.Game.Abilities
         [XmlElement("Ait")]
         public List<AbilityLoadoutItem> Items = new List<AbilityLoadoutItem>();
 
-        public AbilityLoadout() { }
+        [XmlElement("An")]
+        public string Name = "";
+
+        [XmlElement("AId")]
+        public int Id = 0;
 
         public static AbilityLoadout GenerateLoadoutFromTree(AbilityTreeType type, int abilityCount = 2)
         {
             AbilityLoadout loadout = new AbilityLoadout();
 
-            if(AbilityTrees.FindTree(type, out var tree))
+            if (AbilityTrees.FindTree(type, out var tree))
             {
                 loadout.Items.Add(new AbilityLoadoutItem(type, isBasic: true));
                 abilityCount--;
 
                 List<int> nodeIds = new List<int>();
 
-                for(int i = 0; i < tree.NodeCount; i++)
+                for (int i = 0; i < tree.NodeCount; i++)
                 {
                     nodeIds.Add(i);
                 }
@@ -41,18 +48,17 @@ namespace MortalDungeon.Game.Abilities
                     nodeIds.Remove(id);
                 }
             }
-            
+
 
             return loadout;
         }
-
         public void ApplyLoadoutToUnit(Unit unit)
         {
             foreach (var item in Items)
             {
                 if (AbilityTrees.FindTree(item.AbilityTreeType, out var tree))
                 {
-                    if (item.BasicAbility)
+                    if (item.BasicAbility > 0)
                     {
                         tree.BasicAbility[0].ApplyToUnit(unit, item);
                     }
@@ -73,6 +79,8 @@ namespace MortalDungeon.Game.Abilities
                 }
             }
         }
+
+        public AbilityLoadout() { }
     }
 
     [XmlType(TypeName = "ALI")]
@@ -86,9 +94,18 @@ namespace MortalDungeon.Game.Abilities
         [XmlElement("Ana")]
         public string NodeName = "";
         [XmlElement("Ab")]
-        public bool BasicAbility = false;
+        public int BasicAbility = 0;
+
         [XmlElement("Acc")]
         public int CurrentCharges = -1;
+        [XmlElement("ALm")]
+        public int MaxCharges = -1;
+
+        /// <summary>
+        /// Descriptive name because we have to manually map all of these without an automatic process
+        /// </summary>
+        [XmlElement("ALn")]
+        public string Name = "";
 
         public AbilityLoadoutItem() { }
 
@@ -97,7 +114,7 @@ namespace MortalDungeon.Game.Abilities
             AbilityTreeType = type;
             NodeID = nodeID;
             NodeName = name;
-            BasicAbility = isBasic;
+            BasicAbility = isBasic ? 1 : 0;
         }
     }
 }

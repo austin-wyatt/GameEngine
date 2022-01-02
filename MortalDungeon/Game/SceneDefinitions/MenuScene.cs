@@ -29,7 +29,7 @@ using MortalDungeon.Engine_Classes.Rendering;
 using System.Xml.Serialization;
 using System.IO;
 using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Quests;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -74,30 +74,31 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
 
-            river.GenerateFeature();
-            _tileMapController.AddFeature(river);
+            //river.GenerateFeature();
+            //_tileMapController.AddFeature(river);
 
-            path.GenerateFeature();
-            _tileMapController.AddFeature(path);
+            //path.GenerateFeature();
+            //_tileMapController.AddFeature(path);
 
-            graveyard.GenerateFeature();
-            _tileMapController.AddFeature(graveyard);
+            //graveyard.GenerateFeature();
+            //_tileMapController.AddFeature(graveyard);
 
-            forest.GenerateFeature();
-            _tileMapController.AddFeature(forest);
+            //forest.GenerateFeature();
+            //_tileMapController.AddFeature(forest);
 
-            camp.GenerateFeature();
-            _tileMapController.AddFeature(camp);
+            //camp.GenerateFeature();
+            //_tileMapController.AddFeature(camp);
 
 
 
-            TestTileMap tileMap = new TestTileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-            tileMap.PopulateTileMap();
+            //TestTileMap tileMap = new TestTileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
+            //tileMap.PopulateTileMap();
 
-            _tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
-            _tileMapController.ApplyLoadedFeaturesToMap(tileMap);
+            //_tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
+            //_tileMapController.ApplyLoadedFeaturesToMap(tileMap);
 
-            _tileMapController.LoadSurroundingTileMaps(tileMap.TileMapCoords);
+            //_tileMapController.LoadSurroundingTileMaps(tileMap.TileMapCoords);
+            _tileMapController.LoadSurroundingTileMaps(new TileMapPoint(0, 0));
 
 
 
@@ -192,50 +193,54 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             if (true) 
             {
-                Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
-                guy.SetTeam(UnitTeam.PlayerUnits);
-                CurrentUnit = guy;
+                //Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
+                //guy.SetTeam(UnitTeam.PlayerUnits);
+                //CurrentUnit = guy;
 
-                guy.pack_name = "player_party";
-
-
-
-                guy.Info.PrimaryUnit = true;
+                //guy.pack_name = "player_party";
 
 
-                Guy badGuy = new Guy(this, tileMap[1, 1]) { Clickable = true };
-                badGuy.SetTeam(UnitTeam.PlayerUnits);
 
-                badGuy.AI.ControlType = ControlType.Controlled;
+                //guy.Info.PrimaryUnit = true;
 
-                badGuy.Name = "Frend";
-                badGuy.pack_name = "player_party";
+                //var creationInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(2);
 
-
-                Skeleton skeleton = new Skeleton(this, tileMap[20, 5]) { };
-                skeleton.Name = "John";
-
-                skeleton.SetTeam(UnitTeam.Skeletons);
-                skeleton.AI.ControlType = ControlType.Basic_AI;
+                //Unit guy = creationInfo.CreateUnit(this);
 
 
-                badGuy.SetShields(5);
-                guy.SetShields(5);
+                //Guy badGuy = new Guy(this, tileMap[1, 1]) { Clickable = true };
+                //badGuy.SetTeam(UnitTeam.PlayerUnits);
+
+                //badGuy.AI.ControlType = ControlType.Controlled;
+
+                //badGuy.Name = "Frend";
+                //badGuy.pack_name = "player_party";
 
 
-                Entity guyEntity = new Entity(guy);
-                guyEntity.Load(new FeaturePoint(guy.Info.TileMapPosition));
-                EntityManager.AddEntity(guyEntity);
+                //Skeleton skeleton = new Skeleton(this, tileMap[20, 5]) { };
+                //skeleton.Name = "John";
 
-                Entity badGuyEntity = new Entity(badGuy);
-                badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
-                EntityManager.AddEntity(badGuyEntity);
+                //skeleton.SetTeam(UnitTeam.Skeletons);
+                //skeleton.AI.ControlType = ControlType.Basic_AI;
 
-                badGuyEntity.Handle.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
-                Entity skeletonEntity = new Entity(skeleton);
-                skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
-                EntityManager.AddEntity(skeletonEntity);
+                //badGuy.SetShields(5);
+                //guy.SetShields(5);
+
+
+                //Entity guyEntity = new Entity(guy);
+                //guyEntity.Load(new FeaturePoint(0, 0));
+                //EntityManager.AddEntity(guyEntity);
+
+                //Entity badGuyEntity = new Entity(badGuy);
+                //badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
+                //EntityManager.AddEntity(badGuyEntity);
+
+                //badGuyEntity.Handle.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
+
+                //Entity skeletonEntity = new Entity(skeleton);
+                //skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
+                //EntityManager.AddEntity(skeletonEntity);
             }
 
 
@@ -426,7 +431,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (KeyboardState.IsKeyDown(Keys.F10))
                     {
                         var unit = tile.UnitOnTile;
-                        Console.WriteLine($"{unit.Name}: FeatureID {unit.FeatureID}  Feature Hash {unit.FeatureHash}");
+                        Console.WriteLine($"{unit.Name}: FeatureID {unit.FeatureID}  Feature Hash {unit.ObjectHash}");
                     }
 
 
@@ -705,10 +710,19 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         List<Unit> units = new List<Unit>();
 
-                        units.Add(_units.Find(u => u.Name == "John"));
+                        units.Add(_units.Find(u => u.Name == "Guy"));
                         units.Add(_units.Find(u => u.Name == "Frend"));
 
-                        DialogueWindow.StartDialogue(DialogueSerializer.LoadDialogueFromFile(0), units);
+                        Quest activeQuest = QuestManager.Quests.Find(q => q.ID == 50);
+
+                        if (activeQuest != null)
+                        {
+                            DialogueWindow.StartDialogue(DialogueSerializer.LoadDialogueFromFile(2), units);
+                        }
+                        else
+                        {
+                            DialogueWindow.StartDialogue(DialogueSerializer.LoadDialogueFromFile(0), units);
+                        }
                     }
                 }
             }

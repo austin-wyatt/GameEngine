@@ -77,6 +77,8 @@ namespace MortalDungeon.Game.UI
 
                     uiObj.BaseComponent = block;
 
+                    BaseComponent.AddChild(uiObj);
+
                     uiObj.AddChild(block);
 
                     uiObj.SetPositionFromAnchor(pos, UIAnchorPosition.Center);
@@ -103,9 +105,6 @@ namespace MortalDungeon.Game.UI
                             scene.SmoothPanCameraToUnit(Units[index], 1);
                         }
                     };
-
-
-                    BaseComponent.AddChild(uiObj);
                 }
 
                 PositionUnits();

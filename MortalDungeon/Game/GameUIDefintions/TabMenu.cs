@@ -134,6 +134,8 @@ namespace MortalDungeon.Game.UI
                 Message msg = new Message(MessageType.Request, MessageBody.EndKeyStrokeInterception, MessageTarget.All);
                 Scene.MessageCenter.SendMessage(msg);
             }
+
+            ForceTreeRegeneration();
         }
 
         private void PopulateMenus() 
@@ -241,7 +243,7 @@ namespace MortalDungeon.Game.UI
                 //var rotations = (int)tent.Rotations;
                 //var idealCenter = new Map.FeaturePoint(10, 25);
 
-                var tempList = Scene._tileMapController.LoadedFeatures[1].AffectedPoints.ToList();
+                //var tempList = Scene._tileMapController.LoadedFeatures[1].AffectedPoints.ToList();
 
                 long postObj = GC.GetTotalMemory(true);
 
@@ -290,6 +292,8 @@ namespace MortalDungeon.Game.UI
             {
 
             }, removeEntity.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+
+            //ForceTreeRegeneration();
         }
 
         private Button CreateButton(string text, Action action, Vector3 prevButtonPos) 

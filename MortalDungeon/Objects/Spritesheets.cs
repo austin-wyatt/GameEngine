@@ -24,7 +24,6 @@ namespace MortalDungeon.Objects
     public static class Spritesheets 
     {
         public static Spritesheet TestSheet = new Spritesheet("Resources/SpritesheetTest.png", TextureName.SpritesheetTest);
-        public static Spritesheet CaveSheet = new Spritesheet("Resources/CaveSpritesheet.png", TextureName.CaveSpritesheet);
         public static Spritesheet CharacterSheet = new Spritesheet("Resources/CharacterSpritesheet.png", TextureName.CharacterSpritesheet);
         public static Spritesheet CharacterSheetSDF = new Spritesheet("Resources/CharacterSpritesheetDistance.png", TextureName.CharacterSpritesheetSDF) 
         {
@@ -44,11 +43,6 @@ namespace MortalDungeon.Objects
         public static Spritesheet StructureSheet = new Spritesheet("Resources/StructureSpritesheet.png", TextureName.StructureSpritesheet);
         public static Spritesheet ObjectSheet = new Spritesheet("Resources/ObjectSheet.png", TextureName.ObjectSpritesheet);
 
-        public static Spritesheet TextureTestSheet = new Spritesheet("Resources/TestTexture.png", TextureName.TestTexture) 
-        {
-            Rows = 2,
-            Columns = 2
-        };
 
         public static Spritesheet SphereTexture = new Spritesheet("Resources/Sphere texture.png", TextureName.SphereTexture)
         {
@@ -61,13 +55,22 @@ namespace MortalDungeon.Objects
             Columns = 1
         };
 
-        public static Spritesheet LightObstructionSheet = new Spritesheet("Resources/LightObstructionSheet.png", TextureName.LightObstructionSheet)
-        {
-            Rows = 10,
-            Columns = 10,
-            Offset = 32
-        };
+        public static Dictionary<TextureName, Spritesheet> AllSpritesheets = new Dictionary<TextureName, Spritesheet>();
 
+        static Spritesheets()
+        {
+            AllSpritesheets.Add(TestSheet.TextureName, TestSheet);
+            AllSpritesheets.Add(ObjectSheet.TextureName, ObjectSheet);
+            AllSpritesheets.Add(StructureSheet.TextureName, StructureSheet);
+            AllSpritesheets.Add(TileSheet.TextureName, TileSheet);
+            AllSpritesheets.Add(IconSheet.TextureName, IconSheet);
+            AllSpritesheets.Add(UISheet.TextureName, UISheet);
+            AllSpritesheets.Add(CharacterSheet.TextureName, CharacterSheet);
+
+            AllSpritesheets.Add(CharacterSheetSDF.TextureName, CharacterSheetSDF);
+            AllSpritesheets.Add(SphereTexture.TextureName, SphereTexture);
+            AllSpritesheets.Add(CubeTexture.TextureName, CubeTexture);
+        }
     }
 
     public static class Textures 

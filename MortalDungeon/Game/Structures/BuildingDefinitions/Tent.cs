@@ -14,16 +14,15 @@ namespace MortalDungeon.Game.Structures
 {
     public class Tent : Building
     {
-
         public Tent() 
         {
-            CreateTilePattern();
-            Type = StructureEnum.Tent;
+            //CreateTilePattern();
+            Type = (StructureEnum)BuildingEnum.Tent;
         }
         public Tent(CombatScene scene) : base(scene)
         {
-            CreateTilePattern();
-            Type = StructureEnum.Tent;
+            //CreateTilePattern();
+            Type = (StructureEnum)BuildingEnum.Tent;
         }
 
         public override void CreateTilePattern()

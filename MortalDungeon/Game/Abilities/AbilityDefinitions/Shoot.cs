@@ -37,16 +37,16 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null)
+        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
         {
             base.GetValidTileTargets(tileMap);
 
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
             //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-            List<Unit> validUnits = VisionMap.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
+            List<Unit> unitsInCastRadius = VisionMap.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
             
-            TrimUnits(validUnits, false, MinRange);
+            TrimUnits(unitsInCastRadius, false, MinRange);
 
             TargetAffectedUnits();
 

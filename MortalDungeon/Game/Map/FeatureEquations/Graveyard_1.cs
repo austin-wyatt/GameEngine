@@ -86,7 +86,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 {
                     long pointHash = affectedPoint.GetUniqueHash();
 
-                    if (tile.Structure == null && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.FeatureHash == pointHash) 
+                    if (tile.Structure == null && !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.ObjectHash == pointHash) 
                         && FeatureLedger.GetInteraction(FeatureID, pointHash) != FeatureInteraction.Killed)
                     {
                         Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Grave Skele"), tile.GetScene()));
@@ -95,7 +95,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                         skele.Handle.pack_name = "graveyard" + FeatureID;
 
                         skele.Handle.FeatureID = FeatureID;
-                        skele.Handle.FeatureHash = pointHash;
+                        skele.Handle.ObjectHash = pointHash;
 
                         skele.DestroyOnUnload = true;
 

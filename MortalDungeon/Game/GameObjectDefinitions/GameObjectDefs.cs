@@ -48,22 +48,6 @@ namespace MortalDungeon.Game.GameObjects
         }
     }
 
-    public class CaveBackground : GameObject
-    {
-        public CaveBackground() { }
-        public CaveBackground(Vector2i clientSize, Vector3 position, int id = 0)
-        {
-            Name = "CaveBackground";
-
-            BaseObject Cave = new BaseObject(CAVE_BACKGROUND_ANIMATION.List, id, "CaveBackground", position);
-            Cave.BaseFrame.CameraPerspective = true;
-            Cave.BaseFrame.ScaleAll(20);
-
-            AddBaseObject(Cave);
-
-            SetPosition(position);
-        }
-    }
 
     public class MountainTwo : GameObject
     {

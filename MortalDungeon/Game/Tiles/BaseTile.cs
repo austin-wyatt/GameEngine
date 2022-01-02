@@ -187,6 +187,13 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
+        public bool InVision(UnitTeam team)
+        {
+            Vector2i clusterPos = GetScene()._tileMapController.PointToClusterPosition(this);
+
+            return VisionMap.InVision(clusterPos.X, clusterPos.Y, team);
+        }
+
         public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.PlayerUnits)
         {
             if (explored != Explored[team])
@@ -331,6 +338,9 @@ namespace MortalDungeon.Game.Tiles
         public static string GetTooltipString(BaseTile tile, CombatScene scene) 
         {
             string tooltip;
+
+            if (scene.CurrentUnit == null)
+                return "";
 
             if (tile.InFog[scene.CurrentUnit.AI.Team] && !tile.Explored[scene.CurrentUnit.AI.Team])
             {

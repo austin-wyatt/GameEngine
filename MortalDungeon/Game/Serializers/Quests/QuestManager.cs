@@ -1,12 +1,14 @@
-﻿using System;
+﻿using MortalDungeon.Game.Ledger;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Quests
+namespace MortalDungeon.Game.Serializers
 {
     public static class QuestManager
     {
         public static List<Quest> Quests = new List<Quest>();
+        public static List<Quest> CompletedQuests = new List<Quest>();
 
         public static object _questLock = new object();
 
@@ -23,6 +25,8 @@ namespace MortalDungeon.Game.Quests
                     lock (_questLock)
                     {
                         Quests.Add(quest);
+
+                        quest.AddCurrentStateObjectivesToSubscriber();
                     }
 
                     Console.WriteLine($"Quest {quest.ID} has been started");
@@ -48,10 +52,19 @@ namespace MortalDungeon.Game.Quests
 
             Console.WriteLine($"Quest {quest.ID} has been completed");
 
-            QuestLedger.ModifyStateValue(quest.ID, (int)QuestStates.Completed);
+            StateIDValuePair completeQuestStateValue = new StateIDValuePair()
+            {
+                Type = (int)LedgerUpdateType.Quest,
+                StateID = quest.ID,
+                ObjectHash = 0,
+                Data = (int)QuestStates.Completed,
+            };
+
+            Ledgers.SetStateValue(completeQuestStateValue);
 
             lock (_questLock)
             {
+                CompletedQuests.Add(quest);
                 Quests.Remove(quest);
             }
         }

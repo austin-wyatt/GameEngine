@@ -184,7 +184,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void SetTextPosition(Vector3 position) 
         {
-            _textField.SetPosition(position + new Vector3(0, 0, -0.00001f));
+            _textField.SetPosition(position);
         }
 
         public void SetColor(Vector4 color) 

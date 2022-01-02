@@ -8,7 +8,9 @@ using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Ledger;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Particles;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Objects;
@@ -20,6 +22,12 @@ using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Units
 {
+    public enum UnitStateInstructions
+    {
+        GeneratePackName = 500, //Generates a random pack name using the number passed in the Data field as a seed.
+        PanToOnLoad = 501,
+    }
+
     public class Unit : GameObject, ILoadableEntity
     {
         public UnitAI AI;
@@ -44,16 +52,24 @@ namespace MortalDungeon.Game.Units
         public Entity EntityHandle;
 
         public Vector3 TileOffset = new Vector3();
+        public Vector3 SelectionTileOffset = new Vector3();
 
         public UnitSelectionTile SelectionTile;
 
         public bool _createStatusBar = false;
+        public int _xRotation = 25;
         public string pack_name = "";
 
         public UnitProfileType ProfileType = UnitProfileType.Unknown;
 
         public long FeatureID = -1;
-        public long FeatureHash = 0;
+        public long ObjectHash = 0;
+
+        public Vector4 Color = new Vector4(1, 1, 1, 1);
+
+        public AnimationSet AnimationSet;
+
+        public int UnitCreationInfoId = 0;
 
         public Unit() { }
 
@@ -64,9 +80,8 @@ namespace MortalDungeon.Game.Units
             Scene = scene;
 
             Hoverable = true;
-
-            //SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
-            //Scene._genericObjects.Add(SelectionTile);
+            Clickable = true;
+            Selectable = true;
         }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
@@ -90,7 +105,15 @@ namespace MortalDungeon.Game.Units
         /// </summary>
         public virtual void InitializeVisualComponent()
         {
+            //using the AnimationSetName create a base object with those animations
 
+            BaseObject obj = CreateBaseObject();
+            obj.BaseFrame.CameraPerspective = true;
+            obj.BaseFrame.RotateX(_xRotation);
+
+            AddBaseObject(obj);
+
+            BaseObject.BaseFrame.SetBaseColor(Color);
         }
 
         public virtual void EntityLoad(FeaturePoint position, bool placeOnTileMap = true) 
@@ -100,6 +123,7 @@ namespace MortalDungeon.Game.Units
             
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
             SetSelectionTileColor();
+
 
             if (VisionGenerator.Team != UnitTeam.Unknown && !Scene.UnitVisionGenerators.Contains(VisionGenerator)) 
             {
@@ -126,9 +150,18 @@ namespace MortalDungeon.Game.Units
             if (placeOnTileMap)
             {
                 SetTileMapPosition(Scene._tileMapController.GetTile(position));
+
+                SetPosition(Info.TileMapPosition.Position + TileOffset);
             }
 
             ApplyAbilityLoadout();
+
+            if(SelectionTileOffset.Z != 0)
+            {
+                SelectionTile.UnitOffset = SelectionTileOffset;
+            }
+            
+            SelectionTile.SetPosition(Position);
         }
 
         public virtual void EntityUnload() 
@@ -161,6 +194,35 @@ namespace MortalDungeon.Game.Units
             if(AbilityLoadout != null)
             {
                 AbilityLoadout.ApplyLoadoutToUnit(this);
+            }
+        }
+
+        public void ApplyStateValue(StateIDValuePair state)
+        {
+            //here instructions will exist that allow the unit to be modified based on a passed state value
+            //if(state.Instruction == (int)UnitStateInstructions.GeneratePackName)
+            //{
+            //    pack_name = new Random(state.Data).Next().ToString();
+            //}
+
+            switch (state.Instruction)
+            {
+                case (int)UnitStateInstructions.GeneratePackName:
+                    pack_name = new Random(state.Data).Next().ToString();
+                    break;
+                case (int)UnitStateInstructions.PanToOnLoad:
+                    Scene.SmoothPanCameraToUnit(this, 1);
+                    break;
+            }
+
+
+
+            if (state.Values.Count > 0)
+            {
+                foreach (var value in state.Values)
+                {
+                    ApplyStateValue(value);
+                }
             }
         }
 
@@ -363,6 +425,8 @@ namespace MortalDungeon.Game.Units
             {
                 foreach (var ability in Info.Abilities)
                 {
+                    ability.UsedThisTurn = false;
+
                     if (ability.DecayCombo())
                     {
                         abilitiesToDecay.Add(ability);
@@ -424,16 +488,18 @@ namespace MortalDungeon.Game.Units
 
             UpdateStatusBarInfo();
 
-            if (VisionGenerator.Team != UnitTeam.Unknown && team == UnitTeam.Unknown)
-            {
-                Scene.UnitVisionGenerators.Remove(VisionGenerator);
-            }
-            else if (VisionGenerator.Team == UnitTeam.Unknown && team != UnitTeam.Unknown) 
-            {
-                Scene.UnitVisionGenerators.Add(VisionGenerator);
-            }
+            //if (VisionGenerator.Team != UnitTeam.Unknown && team == UnitTeam.Unknown)
+            //{
+            //    Scene.UnitVisionGenerators.Remove(VisionGenerator);
+            //}
+            //else if (VisionGenerator.Team == UnitTeam.Unknown && team != UnitTeam.Unknown) 
+            //{
+            //    Scene.UnitVisionGenerators.Add(VisionGenerator);
+            //}
 
             VisionGenerator.Team = team;
+
+            Scene.UnitVisionGenerators.ManuallyIncrementChangeToken();
         }
 
         public void SetSelectionTileColor() 
@@ -749,8 +815,8 @@ namespace MortalDungeon.Game.Units
 
                 if (StatusBarComp != null && StatusBarComp.Render) 
                 {
-                    StatusBarComp.ZIndex = BaseStatusBarZIndex + 1;
-                    Scene.SortUIByZIndex();
+                    //StatusBarComp.ZIndex = BaseStatusBarZIndex + 1;
+                    //Scene.SortUIByZIndex();
 
                     //StatusBarComp.Parent.Children.Sort();
                 }
@@ -766,8 +832,8 @@ namespace MortalDungeon.Game.Units
                 Hovered = false;
                 if (StatusBarComp != null && StatusBarComp.Render)
                 {
-                    StatusBarComp.ZIndex = BaseStatusBarZIndex;
-                    Scene.SortUIByZIndex();
+                    //StatusBarComp.ZIndex = BaseStatusBarZIndex;
+                    //Scene.SortUIByZIndex();
                     //StatusBarComp.Parent.Children.Sort();
                 }
 
@@ -857,7 +923,11 @@ namespace MortalDungeon.Game.Units
 
         public virtual BaseObject CreateBaseObject() 
         {
-            return null;
+            BaseObject obj = new BaseObject(AnimationSet.BuildAnimationsFromSet(), ObjectID, "", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
+
+            obj.BaseFrame.BaseColor = Color;
+
+            return obj;
         }
     }
 
@@ -880,6 +950,7 @@ namespace MortalDungeon.Game.Units
         Confused = 128, //disables intelligence
         Exposed = 256, //disables passives
         Rooted = 512, //disables movement
+        Blinded = 1024, //reduces vision radius by a certain amount
     }
 
     public class UnitInfo
