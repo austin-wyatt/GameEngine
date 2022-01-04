@@ -28,7 +28,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Anchor = UIAnchorPosition.Center;
             EnableScrollbar = enableScrollbar;
 
-            Focusable = true;
+            Scrollable = true;
+
+            Scroll += (s, mouseState) =>
+            {
+                OnUpdate(mouseState);
+            };
 
             _baseAreaSize = baseAreaSize;
 
@@ -72,7 +77,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             base.SetPosition(position);
 
             SetVisibleAreaPosition(position, Anchor);
-            InitializeScrollbar(_scrollPercent);
         }
 
         public void SetVisibleAreaPosition(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center) 
@@ -102,6 +106,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             UpdateScrollableAreaBounds();
 
             BaseComponent.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
+
+            InitializeScrollbar(_scrollPercent);
         }
 
         public void PropagateScissorData(UIObject obj)
@@ -184,12 +190,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             Texture tex = null;
 
-            if (Scrollbar != null) 
-            {
-                tex = Scrollbar._baseObject.BaseFrame.Material.Diffuse;
+            //if (Scrollbar != null) 
+            //{
+            //    tex = Scrollbar._baseObject.BaseFrame.Material.Diffuse;
 
-                RemoveChild(Scrollbar.ObjectID);
-            }
+            //    RemoveChild(Scrollbar.ObjectID);
+            //}
 
             Vector3 visibleTopRight = VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight);
             Vector3 visibleBottomRight = VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomRight);
@@ -204,13 +210,26 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             UIScale scrollbarScale = new UIScale(_scrollbarWidth, UIScale.CoordToScale(H * 2));
 
-            Scrollbar = new Scrollbar(new Vector3(), scrollbarScale, new Scrollbar.ScrollInfo(new Vector2(K, J)), H);
+            if(Scrollbar == null)
+            {
+                Scrollbar = new Scrollbar(new Vector3(), scrollbarScale, new Scrollbar.ScrollInfo(new Vector2(K, J)), H);
+
+                Scrollbar.OnScrollAction = OnScroll;
+
+                AddChild(Scrollbar, 10000);
+            }
+            else
+            {
+                Scrollbar.SetScrollBounds(new Scrollbar.ScrollInfo(new Vector2(K, J)));
+            }
+
+            //Scrollbar = new Scrollbar(new Vector3(), scrollbarScale, new Scrollbar.ScrollInfo(new Vector2(K, J)), H);
 
             SetScrollbarPosition();
 
-            Scrollbar.OnScrollAction = OnScroll;
+            //Scrollbar.OnScrollAction = OnScroll;
 
-            AddChild(Scrollbar, 10000);
+            //AddChild(Scrollbar, 10000);
 
             if (tex != null) 
             {
@@ -304,6 +323,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetScrollBounds(bounds);
 
             Draggable = true;
+            Clickable = true;
         }
 
         public void SetScrollBounds(ScrollInfo bounds) 

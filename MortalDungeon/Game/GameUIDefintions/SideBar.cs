@@ -39,7 +39,7 @@ namespace MortalDungeon.Game.UI
             MinimizedBar.Draggable = false;
 
             MinimizedBar.Clickable = true;
-            MinimizedBar.OnClickAction = () =>
+            MinimizedBar.Click += (s, e) =>
             {
                 MaximizeSidebar();
             };
@@ -51,7 +51,7 @@ namespace MortalDungeon.Game.UI
             minimizeIcon.SetColor(Colors.UILightGray);
             UIHelpers.AddTimedHoverTooltip(minimizeIcon, "Minimize", scene);
 
-            minimizeIcon.OnClickAction = () =>
+            minimizeIcon.Click += (s, e) =>
             {
                 MinimizeSidebar();
             };
@@ -62,7 +62,7 @@ namespace MortalDungeon.Game.UI
             partyIcon.Clickable = true;
             UIHelpers.AddTimedHoverTooltip(partyIcon, "Party", scene);
 
-            partyIcon.OnClickAction = () =>
+            partyIcon.Click += (s, e) =>
             {
                 CreatePartyWindow();
             };
@@ -75,7 +75,7 @@ namespace MortalDungeon.Game.UI
             UIHelpers.AddTimedHoverTooltip(campIcon, "Camp", scene);
             campIcon.RenderAfterParent = true;
 
-            campIcon.OnClickAction = () =>
+            campIcon.Click += (s, e) =>
             {
                 CreateCampWindow();
             };
@@ -89,7 +89,7 @@ namespace MortalDungeon.Game.UI
 
             moveIcon.SelectedColor = Colors.IconSelected;
 
-            moveIcon.OnClickAction = () =>
+            moveIcon.Click += (s, e) =>
             {
                 moveIcon.OnSelect(!moveIcon.Selected);
 
@@ -125,6 +125,11 @@ namespace MortalDungeon.Game.UI
 
         public void CreatePartyWindow() 
         {
+            if (PartyWindow != null)
+            {
+                ParentObject.RemoveChild(PartyWindow);
+            }
+
             PartyWindow = UIHelpers.CreateWindow(new UIScale(0.5f, 0.75f), "PartyWindow", ParentObject, Scene, true);
 
             CreatePartyWindowList();
@@ -136,7 +141,7 @@ namespace MortalDungeon.Game.UI
             UIHelpers.AddTimedHoverTooltip(createGroup, "Create group\nYour friends must be within 10 yalms", Scene);
             createGroup.RenderAfterParent = true;
 
-            createGroup.OnClickAction = () =>
+            createGroup.Click += (s, e) =>
             {
                 Task.Run(() => 
                 {
@@ -154,7 +159,7 @@ namespace MortalDungeon.Game.UI
             dissolveGroup.Clickable = true;
             dissolveGroup.RenderAfterParent = true;
 
-            dissolveGroup.OnClickAction = () =>
+            dissolveGroup.Click += (s, e) =>
             {
                 Task.Run(() => Scene.DissolveUnitGroup(true, CreatePartyWindowList));
             };
@@ -267,6 +272,11 @@ namespace MortalDungeon.Game.UI
 
         public void CreateCampWindow() 
         {
+            if(CampWindow != null)
+            {
+                ParentObject.RemoveChild(CampWindow);
+            }
+
             CampWindow = UIHelpers.CreateWindow(new UIScale(0.3f, 0.3f), "CampWindow", ParentObject, Scene, true);
 
             Icon campButton = new Icon(new UIScale(0.15f, 0.15f), UISheetIcons.Fire, Spritesheets.UISheet, true);
@@ -275,7 +285,7 @@ namespace MortalDungeon.Game.UI
             UIHelpers.AddTimedHoverTooltip(campButton, "Camp for four hours", Scene);
             campButton.RenderAfterParent = true;
 
-            campButton.OnClickAction = () =>
+            campButton.Click += (s, e) =>
             {
                 if (!Scene.InCombat) 
                 {

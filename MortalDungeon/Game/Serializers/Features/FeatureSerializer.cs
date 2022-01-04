@@ -1,5 +1,7 @@
-﻿using MortalDungeon.Game.Map;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Save;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +12,7 @@ namespace MortalDungeon.Game.Serializers
 {
     public static class FeatureSerializer
     {
-        private static string _featureCharSet = "defgqrsJKAHtBCDEFGhiklmnouNOPQRSvwxyzpILMTUVabc";
+        private static string _featureCharSet = "DklHtBmKAuNoLMngqrsSvwxyTEFGdeCJiUVafOPQRhzpIbc";
         private static int _fileNameLength = 10;
 
         /// <summary>
@@ -46,31 +48,38 @@ namespace MortalDungeon.Game.Serializers
             return loadedState;
         }
 
-        public static void WriteFeatureToFile(Feature state)
+        public static Feature LoadFeatureFromFile(int id)
         {
-            string path = "Data/" + Feature.HashCoordinates(state.Origin.X, state.Origin.Y) + "_" + state.LoadRadius + ".f";
+            string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(id, _fileNameLength) + ".f";
 
-            state._affectedPoints = new DeserializableDictionary<FeaturePoint, int>(state.AffectedPoints);
+            return LoadFeatureFromFile(path);
+        }
+
+        public static void WriteFeatureToFile(Feature feature)
+        {
+            string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(feature.Id, _fileNameLength) + ".f";
+
+            feature._affectedPoints = new DeserializableDictionary<Vector3i, int>(feature.AffectedPoints);
 
             XmlSerializer serializer = new XmlSerializer(typeof(Feature));
 
             TextWriter writer = new StreamWriter(path);
 
-            serializer.Serialize(writer, state);
+            serializer.Serialize(writer, feature);
 
             writer.Close();
         }
 
         public static void DeleteFeature(Feature feature)
         {
-            string path = "Data/" + Feature.HashCoordinates(feature.Origin.X, feature.Origin.Y) + "_" + feature.LoadRadius + ".f";
+            string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(feature.Id, _fileNameLength) + ".f";
 
             File.Delete(path);
         }
 
         public static List<Feature> LoadAllFeatures()
         {
-            string[] files = Directory.GetFiles("Data/");
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
             List<string> filesToLoad = new List<string>();
 
@@ -92,6 +101,59 @@ namespace MortalDungeon.Game.Serializers
             }
 
             return features;
+        }
+
+        public static void CreateFeatureListFile()
+        {
+            List<Feature> features = LoadAllFeatures();
+
+            string featureListPath = SerializerParams.DATA_BASE_PATH + "qqqqqqqqqqqqqqqq.f";
+
+            if (File.Exists(featureListPath))
+            {
+                File.Delete(featureListPath);
+            }
+
+            FeatureList list = new FeatureList();
+
+            foreach (var feature in features)
+            {
+                list.Features.Add(new FeatureListNode(feature));
+            }
+
+            list.Features.Sort((a, b) => a.Id.CompareTo(b.Id));
+
+            XmlSerializer serializer = new XmlSerializer(typeof(FeatureList));
+
+            TextWriter writer = new StreamWriter(featureListPath);
+
+            serializer.Serialize(writer, list);
+
+            writer.Close();
+        }
+
+        public static FeatureList LoadFeatureListFile()
+        {
+            string featureListPath = SerializerParams.DATA_BASE_PATH + "qqqqqqqqqqqqqqqq.f";
+
+            if (!File.Exists(featureListPath))
+            {
+                return null;
+            }
+
+            XmlSerializer serializer = new XmlSerializer(typeof(FeatureList));
+
+            FileStream fs = new FileStream(featureListPath, FileMode.Open);
+
+            TextReader reader = new StreamReader(fs);
+
+
+            FeatureList featureList = (FeatureList)serializer.Deserialize(reader);
+
+            reader.Close();
+            fs.Close();
+
+            return featureList;
         }
     }
 }

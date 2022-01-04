@@ -39,7 +39,7 @@ namespace MortalDungeon.Game.Serializers
         {
             state._strings = new DeserializableDictionary<int, TextEntry>(state.Strings);
 
-            string path = "Data/" + _textTableCharSet.CreateRandom(state.TableID, _fileNameLength) + ".T";
+            string path = SerializerParams.DATA_BASE_PATH + _textTableCharSet.CreateRandom(state.TableID, _fileNameLength) + ".T";
 
             XmlSerializer serializer = new XmlSerializer(typeof(TextTable));
 

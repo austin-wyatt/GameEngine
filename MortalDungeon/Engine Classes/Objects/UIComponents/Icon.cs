@@ -158,7 +158,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
 
             energyCostBackground.Clickable = true;
-            energyCostBackground.OnClickAction = () =>
+            energyCostBackground.Click += (s, e) =>
             {
                 if (ability.Scene._selectedAbility == null && ability.GetCharges() < ability.MaxCharges && ability.CanRecharge())
                 {
@@ -174,7 +174,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 }
             };
 
-            energyCostBackground.OnHoverEvent += (_) =>
+            energyCostBackground.Hover += (s) =>
             {
                 if (ability.Scene._selectedAbility == null && ability.GetCharges() < ability.MaxCharges && ability.CanRecharge())
                 {
@@ -182,7 +182,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 }
             };
 
-            energyCostBackground.OnHoverEndEvent += (_) =>
+            energyCostBackground.HoverEnd += (s) =>
             {
                 if (ability.Scene._selectedAbility == null && ability.GetCharges() < ability.MaxCharges && ability.CanRecharge())
                 {

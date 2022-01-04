@@ -14,7 +14,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static Dialogue LoadDialogueFromFile(int id)
         {
-            string path = "Data/" + _dialogueCharSet.CreateRandom(id, _fileNameLength) + ".d";
+            string path = SerializerParams.DATA_BASE_PATH + _dialogueCharSet.CreateRandom(id, _fileNameLength) + ".d";
 
             return LoadDialogueFromFile(path);
         }
@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void WriteDialogueToFile(Dialogue state)
         {
-            string path = "Data/" + _dialogueCharSet.CreateRandom(state.ID, _fileNameLength) + ".d";
+            string path = SerializerParams.DATA_BASE_PATH + _dialogueCharSet.CreateRandom(state.ID, _fileNameLength) + ".d";
 
             XmlSerializer serializer = new XmlSerializer(typeof(Dialogue));
 
@@ -58,14 +58,14 @@ namespace MortalDungeon.Game.Serializers
 
         public static void DeleteDialogue(int id)
         {
-            string path = "Data/" + _dialogueCharSet.CreateRandom(id, _fileNameLength) + ".d";
+            string path = SerializerParams.DATA_BASE_PATH + _dialogueCharSet.CreateRandom(id, _fileNameLength) + ".d";
 
             File.Delete(path);
         }
 
         public static List<Dialogue> LoadAllDialogues()
         {
-            string[] files = Directory.GetFiles("Data/");
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
             List<string> filesToLoad = new List<string>();
 

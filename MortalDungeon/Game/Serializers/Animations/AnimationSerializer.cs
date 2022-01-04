@@ -15,7 +15,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static AnimationSet LoadAnimationFromFileWithName(string name)
         {
-            string path = "Data/" + name + ".a";
+            string path = SerializerParams.DATA_BASE_PATH + name + ".a";
 
             return LoadAnimationFromFile(path);
         }
@@ -46,7 +46,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void WriteAnimationToFile(AnimationSet state)
         {
-            string path = "Data/" + state.Name + ".a";
+            string path = SerializerParams.DATA_BASE_PATH + state.Name + ".a";
 
             XmlSerializer serializer = new XmlSerializer(typeof(AnimationSet));
 
@@ -59,14 +59,14 @@ namespace MortalDungeon.Game.Serializers
 
         public static void DeleteAnimation(string name)
         {
-            string path = "Data/" + name + ".a";
+            string path = SerializerParams.DATA_BASE_PATH + name + ".a";
 
             File.Delete(path);
         }
 
         public static List<AnimationSet> LoadAllAnimations()
         {
-            string[] files = Directory.GetFiles("Data/");
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
             List<string> filesToLoad = new List<string>();
 

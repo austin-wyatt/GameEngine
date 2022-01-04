@@ -27,69 +27,68 @@ namespace MortalDungeon.Game.SceneDefinitions
             UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true, Hoverable = true };
             UIDimensions menuDimensions = escapeMenu.GetDimensions();
 
-            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), "EXIT")
+            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), "EXIT");
+
+            exitButton.Click += (s, e) =>
             {
-                OnClickAction = () =>
-                {
-                    SoundPlayer.FreeAllSources();
-                    Window.CloseWindow?.Invoke();
-                }
+                SoundPlayer.FreeAllSources();
+                Window.CloseWindow?.Invoke();
             };
 
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "Toggle Vsync", 0.05f)
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "Toggle Vsync", 0.05f);
+
+            testButton.Click += (s, e) =>
             {
-                OnClickAction = () =>
+                void toggleVsync(SceneEventArgs args)
                 {
-                    //testButton._mainObject._mainBlock.SetSize(testButton._mainObject._mainBlock.Size * 1.05f); //UI resizing example
-                    //Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
                     if (Settings.VsyncEnabled)
                     {
                         Settings.VsyncEnabled = false;
                         Program.Window.VSync = VSyncMode.Off;
                     }
-                    else 
+                    else
                     {
                         Settings.VsyncEnabled = true;
                         Program.Window.VSync = VSyncMode.On;
                     }
 
+                    RenderEnd -= toggleVsync;
                 }
+
+                RenderEnd += toggleVsync;
             };
 
             escapeMenu.AddChild(testButton);
 
 
-            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Load Audio", 0.05f)
+            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Load Audio", 0.05f);
+
+            loadButton.Click += (s, e) =>
             {
-                OnClickAction = () =>
-                {
-                    Sounds.Test.Load();
-                }
+                Sounds.Test.Load();
             };
 
             escapeMenu.AddChild(loadButton);
 
-            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Play", 0.05f)
-            {
-                OnClickAction = () =>
-                {
-                    Sound testSound = new Sound(Sounds.Test);
+            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Play", 0.05f);
 
-                    testSound.Play();
-                }
+            playButton.Click += (s, e) =>
+            {
+                Sound testSound = new Sound(Sounds.Test);
+
+                testSound.Play();
             };
 
             escapeMenu.AddChild(playButton);
 
-            Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Dispose", 0.05f)
+            Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Dispose", 0.05f);
+
+            disposeButton.Click += (s, e) =>
             {
-                OnClickAction = () =>
-                {
-                    //testSound.Dispose();
-                    Sounds.Test.Unload();
-                }
+                //testSound.Dispose();
+                Sounds.Test.Unload();
             };
 
             escapeMenu.AddChild(disposeButton);

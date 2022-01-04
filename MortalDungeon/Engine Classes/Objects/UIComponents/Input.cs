@@ -17,8 +17,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public Cursor _cursorObject;
 
-        public bool Scrollable = true;
-
         public bool WordWrap = false;
         public int Lines = 1;
         public int Columns = 25;
@@ -123,7 +121,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                         _cursorIndex = currString.Length;
                         break;
                     case Keys.Escape:
-                        FocusEnd();
+                        OnFocusEnd();
                         break;
                     case Keys.Right:
                         _cursorIndex++;
@@ -187,9 +185,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             SetCursorPosition();
         }
 
-        public override void FocusEnd()
+        public override void OnFocusEnd()
         {
-            base.FocusEnd();
+            base.OnFocusEnd();
             _cursorObject.PropertyAnimations[0].Reset();
             _cursorObject.SetRender(false);
         }

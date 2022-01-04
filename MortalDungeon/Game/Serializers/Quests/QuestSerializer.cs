@@ -14,7 +14,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static Quest LoadQuestFromFile(int id)
         {
-            string path = "Data/" + _questCharSet.CreateRandom(id, _fileNameLength) + ".q";
+            string path = SerializerParams.DATA_BASE_PATH + _questCharSet.CreateRandom(id, _fileNameLength) + ".q";
 
             XmlSerializer serializer = new XmlSerializer(typeof(Quest));
 
@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void WriteQuestToFile(Quest state)
         {
-            string path = "Data/" + _questCharSet.CreateRandom(state.ID, _fileNameLength) + ".q";
+            string path = SerializerParams.DATA_BASE_PATH + _questCharSet.CreateRandom(state.ID, _fileNameLength) + ".q";
 
             XmlSerializer serializer = new XmlSerializer(typeof(Quest));
 

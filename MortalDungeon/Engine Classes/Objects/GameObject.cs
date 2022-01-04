@@ -338,8 +338,19 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public virtual void OnClick() { }
-        public virtual void OnRightClick() { }
+
+        public event EventHandler Click;
+        public event EventHandler RightClick;
+        public event EventHandler MouseDown;
+
+        public virtual void OnClick() 
+        {
+            Click?.Invoke(this, null);
+        }
+        public virtual void OnRightClick() 
+        {
+            RightClick?.Invoke(this, null);
+        }
         public virtual void OnHover() 
         {
             if (Hoverable && !Hovered)
@@ -364,7 +375,10 @@ namespace MortalDungeon.Engine_Classes
             TimedHoverEvent(this);
         }
 
-        public virtual void OnMouseDown() { }
+        public virtual void OnMouseDown() 
+        {
+            MouseDown?.Invoke(this, null);
+        }
         public virtual void OnMouseUp() { }
         public virtual void OnGrab(Vector2 MouseCoordinates) 
         {
@@ -403,13 +417,13 @@ namespace MortalDungeon.Engine_Classes
         public delegate void GameObjectEventHandler(GameObject obj);
 
         public event GameObjectEventHandler OnCleanUp;
-        public event GameObjectEventHandler OnHoverEndEvent;
-        public event GameObjectEventHandler OnHoverEvent;
-        public event GameObjectEventHandler OnTimedHoverEvent;
+        public event GameObjectEventHandler HoverEnd;
+        public event GameObjectEventHandler Hover;
+        public event GameObjectEventHandler TimedHover;
 
         protected void HoverEndEvent(GameObject obj) 
         {
-            OnHoverEndEvent?.Invoke(obj);
+            HoverEnd?.Invoke(obj);
         }
 
         protected void CleanUpEvent(GameObject obj)
@@ -419,12 +433,12 @@ namespace MortalDungeon.Engine_Classes
 
         protected void HoverEvent(GameObject obj)
         {
-            OnHoverEvent?.Invoke(obj);
+            Hover?.Invoke(obj);
         }
 
         protected void TimedHoverEvent(GameObject obj)
         {
-            OnTimedHoverEvent?.Invoke(obj);
+            TimedHover?.Invoke(obj);
         }
 
         #endregion

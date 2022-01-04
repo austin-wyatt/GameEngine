@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static UnitCreationInfo LoadUnitCreationInfoFromFile(int id)
         {
-            string path = "Data/" + _unitInfoCharSet.CreateRandom(id, _fileNameLength) + ".U";
+            string path = SerializerParams.DATA_BASE_PATH + _unitInfoCharSet.CreateRandom(id, _fileNameLength) + ".U";
 
             return LoadUnitCreationInfoFromFile(path);
         }
@@ -48,7 +48,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void WriteUnitCreationInfoToFile(UnitCreationInfo state)
         {
-            string path = "Data/" + _unitInfoCharSet.CreateRandom(state.Id, _fileNameLength) + ".U";
+            string path = SerializerParams.DATA_BASE_PATH + _unitInfoCharSet.CreateRandom(state.Id, _fileNameLength) + ".U";
 
             XmlSerializer serializer = new XmlSerializer(typeof(UnitCreationInfo));
 
@@ -61,14 +61,14 @@ namespace MortalDungeon.Game.Serializers
 
         public static void DeleteUnitCreationInfo(int id)
         {
-            string path = "Data/" + _unitInfoCharSet.CreateRandom(id, _fileNameLength) + ".U";
+            string path = SerializerParams.DATA_BASE_PATH + _unitInfoCharSet.CreateRandom(id, _fileNameLength) + ".U";
 
             File.Delete(path);
         }
 
         public static List<UnitCreationInfo> LoadAllUnitCreationInfo()
         {
-            string[] files = Directory.GetFiles("Data/");
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
             List<string> filesToLoad = new List<string>();
 

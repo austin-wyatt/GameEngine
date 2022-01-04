@@ -79,7 +79,7 @@ namespace MortalDungeon.Game.UI
             Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.24f, BaseComponent.Size.Y / 15), name, 0.043f, Colors.UILightGray, Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
-            button.OnClickAction = () =>
+            button.Click += (s, e) =>
             {
                 SelectTab(tab);
             };
@@ -143,7 +143,7 @@ namespace MortalDungeon.Game.UI
             Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle combat", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
-            button.OnClickAction = () =>
+            button.Click += (s, e) =>
             {
                 if (Scene.InCombat)
                 {
@@ -164,7 +164,7 @@ namespace MortalDungeon.Game.UI
             Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Tile Tooltips", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             unitButton.BaseComponent.MultiTextureData.MixTexture = false;
 
-            unitButton.OnClickAction = () =>
+            unitButton.Click += (s, e) =>
             {
                 Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
             };
@@ -176,7 +176,7 @@ namespace MortalDungeon.Game.UI
             Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "(-)Pattern Tool", 0.043f, Colors.UILightGray, Colors.UITextBlack);
             unitButton2.BaseComponent.MultiTextureData.MixTexture = false;
 
-            unitButton2.OnClickAction = () =>
+            unitButton2.Click += (s, e) =>
             {
                 Scene.ContextManager.SetFlag(GeneralContextFlags.PatternToolEnabled, !Scene.ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled));
                 if (Scene.ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled))
@@ -197,7 +197,7 @@ namespace MortalDungeon.Game.UI
             toggleAI.BaseComponent.MultiTextureData.MixTexture = false;
 
 
-            toggleAI.OnClickAction = () =>
+            toggleAI.Click += (s, e) =>
             {
                 Unit unit = Scene._units.Find(u => u.Name == "John");
                 unit.AI.ControlType = unit.AI.ControlType == ControlType.Basic_AI ? ControlType.Controlled : ControlType.Basic_AI;
@@ -301,7 +301,10 @@ namespace MortalDungeon.Game.UI
             Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), text, 0.043f, Colors.UILightGray, Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
-            button.OnClickAction = action;
+            button.Click += (s, e) =>
+            {
+                action?.Invoke();
+            };
 
             button.SetPositionFromAnchor(prevButtonPos, UIAnchorPosition.TopLeft);
 

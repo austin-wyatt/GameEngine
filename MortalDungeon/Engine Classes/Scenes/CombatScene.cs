@@ -113,7 +113,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _tooltipBlock.SetColor(Colors.Transparent);
             _tooltipBlock.SetAllInline(0);
 
-            AddUI(_tooltipBlock, 10000);
+            AddUI(_tooltipBlock, 99999999);
 
             TabMenu.AddToScene(this);
             TabMenu.Display(false);
@@ -370,7 +370,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 void loadTileMap(SceneEventArgs _)
                 {
                     _tileMapController.LoadSurroundingTileMaps(CurrentUnit.GetTileMap().TileMapCoords, onFinish: () => Task.Run(StartCombat));
-                    OnRenderEndEvent -= loadTileMap;
+                    RenderEnd -= loadTileMap;
                 }
 
                 var units = _units.FindAll(u => u.pack_name == "player_party" && u.Info.TileMapPosition != null 
@@ -394,7 +394,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     }
                 }
 
-                OnRenderEndEvent += loadTileMap;
+                RenderEnd += loadTileMap;
                 return;
             }
 
@@ -1104,52 +1104,56 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
-            _tileMapController.EndHover();
-
-            _tileMapController.TileMaps.ForEach(map =>
+            lock (_tileMapController._mapLoadLock)
             {
-                if (!map.Render)
-                    return;
+                _tileMapController.EndHover();
 
-                map.TileChunks.ForEach(chunk =>
+                _tileMapController.TileMaps.ForEach(map =>
                 {
-                    if (!chunk.Cull) 
+                    if (!map.Render)
+                        return;
+
+                    map.TileChunks.ForEach(chunk =>
                     {
-                        ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar, (tile) =>
+                        if (!chunk.Cull) 
                         {
-                            if (tile.Hoverable)
+                            ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar, (tile) =>
                             {
-                                map.Controller.HoverTile(tile);
-                                if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
+                                if (tile.Hoverable)
                                 {
-                                    _selectedAbility.OnHover(tile, map);
-                                }
-
-                                if (Game.Settings.EnableTileTooltips) 
-                                {
-                                    UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, BaseTile.GetTooltipString(tile, this), tile, _tooltipBlock)
+                                    map.Controller.HoverTile(tile);
+                                    if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
                                     {
-                                        TooltipFlag = GeneralContextFlags.TileTooltipOpen,
-                                        Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
-                                        Anchor = UIAnchorPosition.TopRight,
-                                        BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
-                                        TextScale = 0.04f,
-                                        EnforceScreenBounds = false
-                                    };
+                                        _selectedAbility.OnHover(tile, map);
+                                    }
 
-                                    UIHelpers.CreateToolTip(param);
+                                    if (Game.Settings.EnableTileTooltips) 
+                                    {
+                                        UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, BaseTile.GetTooltipString(tile, this), tile, _tooltipBlock)
+                                        {
+                                            TooltipFlag = GeneralContextFlags.TileTooltipOpen,
+                                            Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
+                                            Anchor = UIAnchorPosition.TopRight,
+                                            BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
+                                            TextScale = 0.04f,
+                                            EnforceScreenBounds = false
+                                        };
+
+                                        UIHelpers.CreateToolTip(param);
+                                    }
                                 }
-                            }
 
-                            if (tile.HasTimedHoverEffect)
-                            {
-                                _hoverTimer.Restart();
-                                _hoveredObject = tile;
-                            }
-                        });
-                    }
+                                if (tile.HasTimedHoverEffect)
+                                {
+                                    _hoverTimer.Restart();
+                                    _hoveredObject = tile;
+                                }
+                            });
+                        }
+                    });
                 });
-            });
+            }
+
 
             ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar, (unit) =>
             {

@@ -18,6 +18,8 @@ namespace MortalDungeon.Game.UI
         public TurnDisplay() 
         {
             BaseComponent = new UIBlock();
+            BaseComponent.SetAllInline(0);
+
             BaseComponent.SetColor(Colors.Transparent);
 
             AddChild(BaseComponent);
@@ -96,7 +98,7 @@ namespace MortalDungeon.Game.UI
 
                     int index = i;
                     uiObj.Clickable = true;
-                    uiObj.OnClickAction = () =>
+                    uiObj.Click += (s, e) =>
                     {
                         Vector2i clusterPos = scene._tileMapController.PointToClusterPosition(Units[index].Info.TileMapPosition);
 

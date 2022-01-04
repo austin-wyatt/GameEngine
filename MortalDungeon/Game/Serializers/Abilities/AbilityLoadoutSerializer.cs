@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static AbilityLoadout LoadAbilityLoadoutFromFile(int id)
         {
-            string path = "Data/" + _abilityCharSet.CreateRandom(id, _fileNameLength) + ".A";
+            string path = SerializerParams.DATA_BASE_PATH + _abilityCharSet.CreateRandom(id, _fileNameLength) + ".A";
 
             return LoadAbilityLoadoutFromFile(path);
         }
@@ -47,7 +47,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void WriteAbilityLoadoutToFile(AbilityLoadout state)
         {
-            string path = "Data/" + _abilityCharSet.CreateRandom(state.Id, _fileNameLength) + ".A";
+            string path = SerializerParams.DATA_BASE_PATH + _abilityCharSet.CreateRandom(state.Id, _fileNameLength) + ".A";
 
             XmlSerializer serializer = new XmlSerializer(typeof(AbilityLoadout));
 
@@ -60,14 +60,14 @@ namespace MortalDungeon.Game.Serializers
 
         public static void DeleteAbilityLoadout(int id)
         {
-            string path = "Data/" + _abilityCharSet.CreateRandom(id, _fileNameLength) + ".A";
+            string path = SerializerParams.DATA_BASE_PATH + _abilityCharSet.CreateRandom(id, _fileNameLength) + ".A";
 
             File.Delete(path);
         }
 
         public static List<AbilityLoadout> LoadAllAbilityLoadouts()
         {
-            string[] files = Directory.GetFiles("Data/");
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
             List<string> filesToLoad = new List<string>();
 

@@ -52,11 +52,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             windowObj.OutlineParameters.SetAllInline(2);
 
-            MultiTextureData.MixTexture = true;
-            MultiTextureData.MixPercent = 0.5f;
-            MultiTextureData.MixedTexture = new Texture(UIHelpers.UI_BACKGROUND.Handle, TextureName.FogTexture);
-            MultiTextureData.MixedTextureLocation = OpenTK.Graphics.OpenGL4.TextureUnit.Texture1;
-            MultiTextureData.MixedTextureName = TextureName.FogTexture;
+            //MultiTextureData.MixTexture = true;
+            //MultiTextureData.MixPercent = 0.5f;
+            //MultiTextureData.MixedTexture = new Texture(UIHelpers.UI_BACKGROUND.Handle, TextureName.FogTexture);
+            //MultiTextureData.MixedTextureLocation = OpenTK.Graphics.OpenGL4.TextureUnit.Texture1;
+            //MultiTextureData.MixedTextureName = TextureName.FogTexture;
 
 
             SetSize(Size);

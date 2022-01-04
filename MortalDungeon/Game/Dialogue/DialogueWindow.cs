@@ -272,7 +272,7 @@ namespace MortalDungeon.Game
                     button.BaseComponent.SetSize(button.TextBox.BaseComponent.Size + new UIScale(0.05f, 0.05f));
                     button.BaseComponent.SetPosition(button.TextBox.BaseComponent.GetAnchorPosition(UIAnchorPosition.Center));
 
-                    button.OnClickAction = () =>
+                    button.Click += (s, e) =>
                     {
                         _buttonParent.RemoveChildren();
 

@@ -65,7 +65,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             AddChild(textObj, 10);
             AddChild(block);
 
-            block.OnClickAction = () =>
+            block.Click += (s, e) =>
             {
                 //Console.WriteLine(block.Origin);
             };

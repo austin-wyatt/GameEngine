@@ -169,7 +169,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void AddUI(UIObject ui, int zIndex = -1, bool immediate = true)
         {
-
             UIManager.AddUIObject(ui, zIndex);
         }
 
@@ -387,7 +386,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _tileMapController.TileMaps[i].Controller.SelectionTiles.HandleQueuedItems();
             }
 
-            OnRenderEvent?.Invoke(new SceneEventArgs(this, EventAction.Render));
+            RenderEvent?.Invoke(new SceneEventArgs(this, EventAction.Render));
         }
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
@@ -527,7 +526,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     foreach(var uiObj in UIManager.ClickableObjects)
                     {
                         uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.MouseDown);
+                    }
+                }
 
+                lock (UIManager._focusableObjectLock)
+                {
+                    foreach(var uiObj in UIManager.FocusableObjects)
+                    {
                         uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
                         {
                             tempFocusedObj = obj;
@@ -544,9 +549,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 if (_focusedObj != null && (tempFocusedObj == null || tempFocusedObj.ObjectID != _focusedObj.ObjectID))
                 {
-                    _focusedObj.FocusEnd();
-                    _focusedObj = tempFocusedObj;
-                    OnObjectFocusEnd();
+                    EndObjectFocus(_focusedObj, tempFocusedObj);
                 }
             }
         }
@@ -567,9 +570,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     {
                         lock (UIManager._clickableObjectLock)
                         {
+                            bool handled = false;
+
                             foreach(var uiObj in UIManager.ClickableObjects)
                             {
-                                uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => _grabbedObj = obj, UIEventType.Grab);
+                                if (handled)
+                                    break;
+
+                                uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => 
+                                {
+                                    _grabbedObj = obj;
+                                    handled = true;
+                                }, UIEventType.Grab);
                             }
                         }
                     }
@@ -736,6 +748,24 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _focusedObj.OnUpdate(MouseState);
             }
 
+            if(MouseState.ScrollDelta.X != 0 || MouseState.ScrollDelta.Y != 0)
+            {
+                Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
+
+                bool handled = false;
+                foreach (var obj in UIManager.ScrollableObjects)
+                {
+                    if (handled)
+                        break;
+
+                    obj.BoundsCheck(MouseCoordinates, _camera, (o) =>
+                    {
+                        obj.OnScroll(MouseState);
+                        handled = true;
+                    }, UIEventType.Scroll);
+                }
+            }
+
             if (_hoverTimer.ElapsedMilliseconds > 500)
             {
                 _hoverTimer.Reset();
@@ -761,6 +791,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
+        public void FocusObject(UIObject obj)
+        {
+
+        }
+
+        public void EndObjectFocus(UIObject obj, UIObject newObj)
+        {
+            _focusedObj.OnFocusEnd();
+            _focusedObj = newObj;
+            OnObjectFocusEnd();
+        }
+
         public virtual void OnObjectFocused()
         {
             Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
@@ -775,7 +817,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void OnRenderEnd() 
         {
-            OnRenderEndEvent?.Invoke(new SceneEventArgs(this, EventAction.RenderEnd));
+            RenderEnd?.Invoke(new SceneEventArgs(this, EventAction.RenderEnd));
         }
         #endregion
 
@@ -801,9 +843,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public event SceneEventHandler PostTickEvent;
 
-        public event SceneEventHandler OnRenderEvent;
+        public event SceneEventHandler RenderEvent;
 
-        public event SceneEventHandler OnRenderEndEvent;
+        public event SceneEventHandler RenderEnd;
 
 
         protected void NumberPressed(SceneEventArgs args)
@@ -875,7 +917,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 OnMouseMove();
                 OnCameraMoved();
-                OnRenderEvent -= updateCameraPos;
+                RenderEvent -= updateCameraPos;
             }
 
 
@@ -885,7 +927,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 frame.Action = () =>
                 {
                     _camera.SetPosition(_camera.Position - deltaPos);
-                    OnRenderEvent += updateCameraPos;
+                    RenderEvent += updateCameraPos;
                 };
 
                 animation.Keyframes.Add(frame);

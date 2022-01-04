@@ -72,13 +72,13 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         }
 
 
-        public void AddItem(UIObject item, Action onClickAction) 
-        {
-            //if (Items.Count == 0)
-            //{
-            //    item.SetPosition()
-            //}
-        }
+        //public void AddItem(UIObject item, Action onClickAction) 
+        //{
+        //    //if (Items.Count == 0)
+        //    //{
+        //    //    item.SetPosition()
+        //    //}
+        //}
 
         public ListItem AddItem(string text, Action<ListItem> onClickAction = null)
         {
@@ -261,6 +261,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
                 _textBox.SetColor(_textColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
                 _backdrop.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
+
+                HoverEvent(this);
             }
         }
 
@@ -275,7 +277,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 _textBox.SetColor(_textColor);
                 _backdrop.SetColor(_itemColor);
 
-                base.OnHoverEnd();
+                HoverEndEvent(this);
             }
         }
 
@@ -293,11 +295,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 //BaseComponent.SetColor(_itemColor);
                 _textBox.SetColor(_textColor);
             }
-        }
-
-        public override void OnClick()
-        {
-            OnClickAction?.Invoke(this);
         }
     }
 }

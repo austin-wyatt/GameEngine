@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -482,7 +483,7 @@ namespace MortalDungeon
                     RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
                 }); //TileMap
 
-                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles);
+                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles.ToList());
 
                 RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
 

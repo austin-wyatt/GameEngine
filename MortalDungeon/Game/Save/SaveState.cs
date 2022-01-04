@@ -267,10 +267,10 @@ namespace MortalDungeon.Game.Save
                 scene.EndCombat();
 
 
-                scene.OnRenderEvent -= finishLoad;
+                scene.RenderEvent -= finishLoad;
             }
 
-            scene.OnRenderEvent += finishLoad;
+            scene.RenderEvent += finishLoad;
         }
 
         public static SaveState LoadSaveStateFromFile(string path) 

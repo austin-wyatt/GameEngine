@@ -30,7 +30,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static int _instancedArrayBuffer;
 
 
-        private const int ObjectBufferCount = 15000;
+        private const int ObjectBufferCount = 7500;
         private const int instanceDataOffset = 40;
         public static float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
         private const int instanceDataLength = instanceDataOffset * sizeof(float);

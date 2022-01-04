@@ -76,11 +76,11 @@ namespace MortalDungeon.Game.UI
                     UIHelpers.CreateToolTip(param);
                 }
 
-                energyPip.OnTimedHoverEvent += timedHover;
+                energyPip.TimedHover += timedHover;
 
                 energyPip.OnCleanUp += (_) =>
                 {
-                    energyPip.OnTimedHoverEvent -= timedHover;
+                    energyPip.TimedHover -= timedHover;
                 };
 
                 Pips.Add(energyPip);

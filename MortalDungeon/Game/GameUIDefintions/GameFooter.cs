@@ -62,7 +62,7 @@ namespace MortalDungeon.Game.UI
             endTurnButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -8, 0), UIAnchorPosition.BottomRight);
 
 
-            endTurnButton.OnClickAction = () =>
+            endTurnButton.Click += (s, e) =>
             {
                 Scene.CompleteTurn();
                 //Scene.DeselectUnits();
@@ -83,7 +83,7 @@ namespace MortalDungeon.Game.UI
 
             ventureForthButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -200, 0), UIAnchorPosition.BottomRight);
 
-            ventureForthButton.OnClickAction = () =>
+            ventureForthButton.Click += (s, e) =>
             {
                 if (Scene.CurrentUnit == null)
                     return;
@@ -126,7 +126,7 @@ namespace MortalDungeon.Game.UI
             _infoBlock.SetSize(infoBarDimensions);
             _infoBlock.SetPositionFromAnchor(infoBarPos, UIAnchorPosition.BottomLeft);
 
-            AddChild(_infoBlock);
+            AddChild(_infoBlock, 1000);
 
             #endregion
 
@@ -152,7 +152,7 @@ namespace MortalDungeon.Game.UI
                 UIHelpers.CreateToolTip(param);
             }
 
-            _unitHealthBar.OnTimedHoverEvent += healthBarHover;
+            _unitHealthBar.TimedHover += healthBarHover;
 
             _infoBlock.AddChild(_unitHealthBar, 100);
 
@@ -164,7 +164,7 @@ namespace MortalDungeon.Game.UI
                 UIHelpers.CreateToolTip(param);
             }
 
-            _unitFocusBar.OnTimedHoverEvent += focusBarHover;
+            _unitFocusBar.TimedHover += focusBarHover;
 
             _infoBlock.AddChild(_unitFocusBar, 100);
 
@@ -193,13 +193,15 @@ namespace MortalDungeon.Game.UI
                 }
             }
 
-            _unitShieldBar.OnTimedHoverEvent += shieldBarHover;
+            _unitShieldBar.TimedHover += shieldBarHover;
 
             _infoBlock.AddChild(_unitShieldBar, 100);
             #endregion
 
 
             _buffBlock = new UIBlock();
+
+            _buffBlock.SetAllInline(0);
 
             AddChild(_buffBlock);
 
@@ -483,7 +485,7 @@ namespace MortalDungeon.Game.UI
 
                     checkAbilityClickable();
 
-                    abilityIcon.OnClickAction = () =>
+                    abilityIcon.Click += (s, e) =>
                     {
                         if (isPlayerUnitTakingTurn && ability.CanCast())
                         {
@@ -553,7 +555,7 @@ namespace MortalDungeon.Game.UI
 
                     abilityIcon.HasTimedHoverEffect = true;
                     abilityIcon.Hoverable = true;
-                    abilityIcon.OnTimedHoverEvent += abilityHover;
+                    abilityIcon.TimedHover += abilityHover;
 
                     abilityIcon.Name = ability.Name + " Icon";
 
@@ -632,7 +634,7 @@ namespace MortalDungeon.Game.UI
 
                 icon.HasTimedHoverEffect = true;
                 icon.Hoverable = true;
-                icon.OnTimedHoverEvent += buffHover;
+                icon.TimedHover += buffHover;
 
 
                 //_scrollableAreaBuff.BaseComponent.AddChild(icon, 1000);
@@ -657,7 +659,7 @@ namespace MortalDungeon.Game.UI
             _meditationIcon.Hoverable = true;
             _meditationIcon.Clickable = true;
 
-            _meditationIcon.OnClickAction = () =>
+            _meditationIcon.Click += (s, e) =>
             {
                 CreateMeditationWindow();
 

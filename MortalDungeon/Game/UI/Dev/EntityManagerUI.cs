@@ -49,10 +49,12 @@ namespace MortalDungeon.Game.UI.Dev
 
             Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
             exit.Clickable = true;
-            exit.OnClickAction = () =>
+            exit.Click += (s, e) =>
             {
                 Scene.RemoveUI(Window);
                 exit.OnHoverEnd();
+
+                Displayed = false;
             };
             exit.SetPositionFromAnchor(Window.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
 
@@ -64,7 +66,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Icon refresh = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.Shield, Spritesheets.IconSheet, true);
             refresh.Clickable = true;
-            refresh.OnClickAction = () =>
+            refresh.Click += (s, e) =>
             {
                 PopulateEntityList();
             };
@@ -78,7 +80,7 @@ namespace MortalDungeon.Game.UI.Dev
             Icon addEntityButton = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true);
             addEntityButton.BaseObject.BaseFrame.SetBaseColor(new Vector4(1, 0, 0, 1));
             addEntityButton.Clickable = true;
-            addEntityButton.OnClickAction = () =>
+            addEntityButton.Click += (s, e) =>
             {
                 CreateAddEntityWindow();
             };
@@ -227,7 +229,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
             exit.Clickable = true;
-            exit.OnClickAction = () =>
+            exit.Click += (s, e) =>
             {
                 Window.RemoveChild(AddEntityWindow);
                 exit.OnHoverEnd();
@@ -314,7 +316,7 @@ namespace MortalDungeon.Game.UI.Dev
 
                 UIHelpers.AddTimedHoverTooltip(block, profile.Name, Scene);
 
-                block.OnClickAction = () =>
+                block.Click += (s, e) =>
                 {
                     Entity newEntity = new Entity(profile.CreateUnit(Scene));
 
@@ -350,7 +352,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
             exit.Clickable = true;
-            exit.OnClickAction = () =>
+            exit.Click += (s, e) =>
             {
                 Window.RemoveChild(EntityPropertiesWindow);
                 exit.OnHoverEnd();
@@ -443,7 +445,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
             exit.Clickable = true;
-            exit.OnClickAction = () =>
+            exit.Click += (s, e) =>
             {
                 Window.RemoveChild(EntityAbilitiesWindow);
                 exit.OnHoverEnd();
@@ -485,7 +487,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             Icon refresh = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.Shield, Spritesheets.IconSheet, true);
             refresh.Clickable = true;
-            refresh.OnClickAction = () =>
+            refresh.Click += (s, e) =>
             {
                 populateAbilityList();
             };

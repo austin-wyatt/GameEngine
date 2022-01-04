@@ -45,6 +45,11 @@ namespace MortalDungeon.Engine_Classes
         public float ZIndex = 0; //higher values get rendered in front
 
         public bool Focusable = false;
+        public bool Scrollable = false;
+        /// <summary>
+        /// Whether to check for key up/down events for this object
+        /// </summary>
+        public bool Typeable = false;
 
         public bool Disabled = false;
         public bool Selected = false;
@@ -54,8 +59,6 @@ namespace MortalDungeon.Engine_Classes
 
         protected Vector3 _originOffset = default;
         protected bool _scaleAspectRatio = true;
-
-        public Action OnClickAction = null;
 
         private object _reverseTreeLock = new object();
         public List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
@@ -237,6 +240,12 @@ namespace MortalDungeon.Engine_Classes
                                 optionalAction?.Invoke(this);
                             });
                             return;
+                        case UIEventType.Scroll:
+                            Task.Run(() =>
+                            {
+                                optionalAction?.Invoke(this);
+                            });
+                            return;
                     }
                 }
                 else if (type == UIEventType.Hover)
@@ -268,6 +277,7 @@ namespace MortalDungeon.Engine_Classes
                 UIEventType.KeyDown => obj.Focused && !obj.Disabled,
                 UIEventType.Focus => obj.Focusable && !obj.Disabled,
                 UIEventType.HoverEnd => obj.Hoverable,
+                UIEventType.Scroll => obj.Scrollable,
                 _ => false,
             };
         }
@@ -321,6 +331,22 @@ namespace MortalDungeon.Engine_Classes
             if (Hoverable)
             {
                 ManagerHandle.AddHoverableObject(this);
+            }
+
+            if (Focusable)
+            {
+                ManagerHandle.AddFocusableObject(this);
+            }
+
+            if (Typeable)
+            {
+                ManagerHandle.AddKeyDownObject(this);
+                ManagerHandle.AddKeyUpObject(this);
+            }
+
+            if (Scrollable)
+            {
+                ManagerHandle.AddScrollableObject(this);
             }
 
             foreach(var text in TextObjects)
@@ -546,7 +572,6 @@ namespace MortalDungeon.Engine_Classes
 
                 if (parent.Parent == null && ManagerHandle != null)
                 {
-                    //parent.GenerateReverseTree();
                     ManagerHandle.GenerateReverseTree(parent);
                     return;
                 }
@@ -589,52 +614,39 @@ namespace MortalDungeon.Engine_Classes
             {
                 ManagerHandle.RemoveClickableObject(this);
                 ManagerHandle.RemoveHoverableObject(this);
+                ManagerHandle.RemoveFocusableObject(this);
+                ManagerHandle.RemoveKeyDownObject(this);
+                ManagerHandle.RemoveKeyUpObject(this);
+                ManagerHandle.RemoveScrollableObject(this);
             }
         }
 
         public virtual void AddChild(UIObject uiObj, int zIndex = -1) 
         {
-            uiObj.ReverseTree = null;
-            uiObj.Parent = this;
-            Children.Add(uiObj);
+            object lockObj = new object();
 
-            if (zIndex != -1)
+            if(ManagerHandle != null)
             {
-                uiObj.ZIndex = zIndex;
-            }
-            else 
-            {
-                uiObj.ZIndex = 0;
+                lockObj = ManagerHandle._UILock;
             }
 
-            Children.Sort();
-
-
-            //if (Parent == null)
-            //{
-            //    GenerateReverseTree(ManagerHandle);
-            //}
-            //else 
-            //{
-            //    ForceTreeRegeneration();
-            //}
-
-            ForceTreeRegeneration();
-
-            LoadTexture(uiObj);
-        }
-
-        public void RemoveChild(int objectID) 
-        {
-            UIObject child = Children.Find(c => c.ObjectID == objectID);
-
-            if (child != null) 
+            lock (lockObj)
             {
-                child.CleanUp();
+                uiObj.ReverseTree = null;
+                uiObj.Parent = this;
+                Children.Add(uiObj);
 
-                Children.Remove(child);
+                if (zIndex != -1)
+                {
+                    uiObj.ZIndex = zIndex;
+                }
+                else
+                {
+                    uiObj.ZIndex = 0;
+                }
 
-                child.Parent = null;
+                Children.Sort();
+
 
                 //if (Parent == null)
                 //{
@@ -646,6 +658,43 @@ namespace MortalDungeon.Engine_Classes
                 //}
 
                 ForceTreeRegeneration();
+
+                LoadTexture(uiObj);
+            }
+        }
+
+        public void RemoveChild(int objectID) 
+        {
+            object lockObj = new object();
+
+            if (ManagerHandle != null)
+            {
+                lockObj = ManagerHandle._UILock;
+            }
+
+            lock (lockObj)
+            {
+                UIObject child = Children.Find(c => c.ObjectID == objectID);
+
+                if (child != null)
+                {
+                    child.CleanUp();
+
+                    Children.Remove(child);
+
+                    child.Parent = null;
+
+                    //if (Parent == null)
+                    //{
+                    //    GenerateReverseTree(ManagerHandle);
+                    //}
+                    //else 
+                    //{
+                    //    ForceTreeRegeneration();
+                    //}
+
+                    ForceTreeRegeneration();
+                }
             }
         }
 
@@ -658,24 +707,34 @@ namespace MortalDungeon.Engine_Classes
 
         public void RemoveChildren()
         {
-            //for (int i = Children.Count - 1; i >= 0; i--)
-            //{
-            //    Children[i].Parent = null;
-            //    Children.RemoveAt(i);
-            //}
+            object lockObj = new object();
 
-            Children.Clear();
+            if (ManagerHandle != null)
+            {
+                lockObj = ManagerHandle._UILock;
+            }
 
-            //if (Parent == null)
-            //{
-            //    GenerateReverseTree(ManagerHandle);
-            //}
-            //else
-            //{
-            //    ForceTreeRegeneration();
-            //}
+            lock (lockObj)
+            {
+                //for (int i = Children.Count - 1; i >= 0; i--)
+                //{
+                //    Children[i].Parent = null;
+                //    Children.RemoveAt(i);
+                //}
 
-            ForceTreeRegeneration();
+                Children.Clear();
+
+                //if (Parent == null)
+                //{
+                //    GenerateReverseTree(ManagerHandle);
+                //}
+                //else
+                //{
+                //    ForceTreeRegeneration();
+                //}
+
+                ForceTreeRegeneration();
+            }
         }
 
         public void RemoveChildren(List<int> objectIDs) 
@@ -746,17 +805,25 @@ namespace MortalDungeon.Engine_Classes
             base.SetColor(color);
         }
 
+
+        public event EventHandler Focus;
+        public event EventHandler FocusEnd;
+
+        public delegate void KeyboardEventHandler(object? sender, KeyboardKeyEventArgs e);
+
+        public event KeyboardEventHandler KeyUp;
+        public event KeyboardEventHandler KeyDown;
+
+        public delegate void MouseEventHandler(object? sender, MouseState mouseState);
+
+        public event MouseEventHandler Scroll;
+
         public override void OnMouseUp()
         {
             base.OnMouseUp();
             OnClick(); //Default OnMouseUp behavior is a click for UIObjects
         }
-        public override void OnClick()
-        {
-            base.OnClick();
 
-            OnClickAction?.Invoke();
-        }
         public override void OnMouseDown()
         {
             base.OnMouseDown();
@@ -767,14 +834,18 @@ namespace MortalDungeon.Engine_Classes
             if (Focusable && !Focused)
             {
                 Focused = true;
+
+                Focus?.Invoke(this, null);
             }
         }
 
-        public virtual void FocusEnd() 
+        public virtual void OnFocusEnd() 
         {
             if (Focused) 
             {
                 Focused = false;
+
+                FocusEnd?.Invoke(this, null);
             }
         }
 
@@ -848,40 +919,33 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void OnKeyDown(KeyboardKeyEventArgs e) 
         {
-            if (ReverseTree == null)
-                return;
-
-            int count = ReverseTree.Count;
-
-            try
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    if (IsValidForBoundsType(ReverseTree[i].UIObject, UIEventType.KeyDown))
-                    {
-                        ReverseTree[i].UIObject.OnType(e);
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine("Error in UIObject.OnKeyDown: " + ex.Message);
-            }
+            KeyDown?.Invoke(this, e);
         }
 
-        public virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
+        public virtual void OnKeyUp(KeyboardKeyEventArgs e) 
+        {
+            KeyUp?.Invoke(this, e);
+        }
 
         public virtual void OnType(KeyboardKeyEventArgs e) 
         {
             switch (e.Key)
             {
                 case Keys.Escape:
-                    FocusEnd();
+                    OnFocusEnd();
                     break;
             }
         }
 
-        public virtual void OnUpdate(MouseState mouseState) { }
+        public void OnScroll(MouseState mouseState)
+        {
+            Scroll?.Invoke(this, mouseState);
+        }
+
+        public virtual void OnUpdate(MouseState mouseState) 
+        {
+
+        }
 
         public virtual void OnResize() 
         {
@@ -949,6 +1013,8 @@ namespace MortalDungeon.Engine_Classes
         {
             if (obj.BaseComponent == null && obj._baseObject == null)
                 throw new Exception("Invalid base fields for UIObject " + obj.ObjectID);
+            else
+                obj.LoadTexture();
         }
     }
 

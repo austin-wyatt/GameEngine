@@ -8,14 +8,6 @@ using System.Text;
 
 namespace MortalDungeon.Game.Serializers
 {
-    public struct FeatureLoadInfo
-    {
-        public FeaturePoint Origin;
-        public int LoadRadius;
-        public string FilePath;
-    }
-
-
     /// <summary>
     /// Stores all of the possible feature origin points and load radii in memory. <para/>
     /// When maps are loaded this list will be checked. If any of the points are within 
@@ -24,41 +16,17 @@ namespace MortalDungeon.Game.Serializers
     /// </summary>
     public static class FeatureManager
     {
-        private static List<FeatureLoadInfo> AllFeatures = new List<FeatureLoadInfo>();
+        public static FeatureList AllFeatures = new FeatureList();
 
         public static Dictionary<FeaturePoint, FeatureEquation> LoadedFeatures = new Dictionary<FeaturePoint, FeatureEquation>();
 
         public static void Initialize()
         {
-            string[] files = Directory.GetFiles("Data/");
-
-            foreach (string file in files)
-            {
-                if (file.Contains(".f"))
-                {
-                    string temp = file.Substring(file.LastIndexOf('/') + 1);
-                    temp = temp.Replace(".f", "").Replace(" ", "");
-
-                    string[] values = temp.Split('_');
-
-                    try 
-                    {
-                        Vector2i origin = Feature.UnhashCoordinates(long.Parse(values[0]));
-                        int loadRadius = int.Parse(values[1]);
-
-                        AllFeatures.Add(new FeatureLoadInfo()
-                        {
-                            Origin = new FeaturePoint(origin),
-                            LoadRadius = loadRadius,
-                            FilePath = file
-                        });
-                    }
-                    catch { }
-                }
-            }
+            LoadedFeatures = new Dictionary<FeaturePoint, FeatureEquation>();
+            AllFeatures = FeatureSerializer.LoadFeatureListFile();
         }
         //when loading a feature, apply any passed state values as well.
-        public static void EvaluateLoadedFeatures(FeaturePoint currPosition)
+        public static void EvaluateLoadedFeatures(FeaturePoint currPosition, int layer)
         {
             List<FeaturePoint> featuresToRemove = new List<FeaturePoint>();
 
@@ -69,7 +37,7 @@ namespace MortalDungeon.Game.Serializers
                 loadRadius += 200; //we don't want to unload the feature as soon as we leave the load radius since that could
                                    //cause some issues if the user walks back and forth between 2 maps repeatedly.
 
-                if (!CheckDistance(eq.Value.Origin, currPosition, loadRadius))
+                if (layer != eq.Value.Layer || !CheckDistance(eq.Value.Origin, currPosition, loadRadius))
                 {
                     featuresToRemove.Add(eq.Value.Origin);
                 }
@@ -81,16 +49,16 @@ namespace MortalDungeon.Game.Serializers
             }
 
 
-            for(int i = 0; i < AllFeatures.Count; i++)
+            for(int i = 0; i < AllFeatures.Features.Count; i++)
             {
-                if (LoadedFeatures.ContainsKey(AllFeatures[i].Origin))
+                if (LoadedFeatures.ContainsKey(AllFeatures.Features[i].Origin))
                 {
                     continue;
                 }
 
-                if (CheckDistance(AllFeatures[i].Origin, currPosition, AllFeatures[i].LoadRadius))
+                if (layer == AllFeatures.Features[i].Layer && CheckDistance(AllFeatures.Features[i].Origin, currPosition, AllFeatures.Features[i].LoadRadius))
                 {
-                    var feature = FeatureSerializer.LoadFeatureFromFile(AllFeatures[i].FilePath);
+                    var feature = FeatureSerializer.LoadFeatureFromFile(AllFeatures.Features[i].Id);
 
                     if(feature != null)
                     {
@@ -101,7 +69,7 @@ namespace MortalDungeon.Game.Serializers
                             Ledgers.ApplyStateValues(equation.StateValues);
                         }
 
-                        LoadedFeatures.Add(AllFeatures[i].Origin, equation);
+                        LoadedFeatures.Add(AllFeatures.Features[i].Origin, equation);
                     }
                 }
             }

@@ -56,6 +56,14 @@ namespace MortalDungeon.Game.Map
         public int FeatureTemplate = 0;
         public int BoundPointsId = 0;
 
+        public int Layer = 0;
+        /// <summary>
+        /// Higher load priority gets applied first
+        /// </summary>
+        public int LoadPriority = 0;
+
+        public string DescriptiveName = "";
+
         /// <summary>
         /// Applies any feature effects to a relevant tile.
         /// </summary>

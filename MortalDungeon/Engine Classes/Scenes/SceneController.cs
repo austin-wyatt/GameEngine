@@ -246,16 +246,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 //for now don't cull generic objects as they are being used for background textures
                 //ObjectCulling.CullListOfGameObjects(scene._genericObjects);
 
-
-                scene._tileMapController.TileMaps.ForEach(map =>
+                lock (scene._tileMapController._mapLoadLock)
                 {
-                    map.TileChunks.ForEach(chunk =>
+                    scene._tileMapController.TileMaps.ForEach(map =>
                     {
-                        ObjectCulling.CullTileChunk(chunk);
-                    });
+                        map.TileChunks.ForEach(chunk =>
+                        {
+                            ObjectCulling.CullTileChunk(chunk);
+                        });
 
-                    //ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
-                });
+                        //ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
+                    });
+                }
+
 
                 ObjectCulling.CullListOfGameObjects(scene._units);
 

@@ -122,7 +122,7 @@ namespace MortalDungeon.Game.Tiles
                 }
             }
 
-            map.SetRender(false);
+            //map.SetRender(false);
             map.CleanUp();
             TileMaps.Remove(map);
         }
@@ -171,15 +171,20 @@ namespace MortalDungeon.Game.Tiles
                 if(i == 0) 
                 {
                     offset = new Vector3(pos.X - TileMaps[i].Position.X, pos.Y - TileMaps[i].Position.Y, 0);
+
+                    offset.X /= WindowConstants.ScreenUnits.X;
+                    offset.Y /= WindowConstants.ScreenUnits.Y * -1;
+
+                    Scene._camera.SetPosition(Scene._camera.Position + offset * 2);
                 }
 
                 TileMaps[i].SetPosition(pos);
             }
 
-            offset.X /= WindowConstants.ScreenUnits.X;
-            offset.Y /= WindowConstants.ScreenUnits.Y * -1;
+            //offset.X /= WindowConstants.ScreenUnits.X;
+            //offset.Y /= WindowConstants.ScreenUnits.Y * -1;
 
-            Scene._camera.SetPosition(Scene._camera.Position + offset * 2);
+            //Scene._camera.SetPosition(Scene._camera.Position + offset * 2);
         }
 
         public void RecreateTileChunks() 
@@ -224,6 +229,10 @@ namespace MortalDungeon.Game.Tiles
 
         public void ApplyLoadedFeaturesToMaps(List<TileMap> maps, List<TileMapPoint> addedMaps = null)
         {
+            var featureList = FeatureManager.LoadedFeatures.Values.ToList();
+
+            featureList.Sort((a, b) => b.LoadPriority.CompareTo(a.LoadPriority));
+
             foreach (var feature in FeatureManager.LoadedFeatures)
             {
                 for (int i = 0; i < maps.Count; i++)
@@ -263,141 +272,149 @@ namespace MortalDungeon.Game.Tiles
 
 
         const int LOADED_MAP_DIMENSIONS = 3;
+        public object _mapLoadLock = new object();
 
-        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, bool forceMapRegeneration = false, Action onFinish = null) 
+        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, 
+            bool forceMapRegeneration = false, Action onFinish = null, int layer = 0) 
         {
-            TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
-
-            List<TileMapPoint> loadedPoints = new List<TileMapPoint>();
-            List<TileMapPoint> mapsToAdd = new List<TileMapPoint>();
-
-            Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, true);
-
-            FeatureManager.EvaluateLoadedFeatures(new FeaturePoint(point.X * 50, point.Y * 50));
-
-
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-
-            if (forceMapRegeneration)
+            lock (_mapLoadLock)
             {
-                for (int i = TileMaps.Count - 1; i >= 0; i--)
+                TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
+
+                List<TileMapPoint> loadedPoints = new List<TileMapPoint>();
+                List<TileMapPoint> mapsToAdd = new List<TileMapPoint>();
+
+                Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, true);
+
+                FeatureManager.EvaluateLoadedFeatures(new FeaturePoint(point.X * 50, point.Y * 50), layer);
+
+
+                Stopwatch timer = new Stopwatch();
+                timer.Start();
+
+                if (forceMapRegeneration)
                 {
-                    RemoveTileMap(TileMaps[i]);
-                }
-            }
-
-
-            for (int i = 0; i < LOADED_MAP_DIMENSIONS; i++) 
-            {
-                for (int j = 0; j < LOADED_MAP_DIMENSIONS; j++) 
-                {
-                    TileMap map = TileMaps.Find(m => m.TileMapCoords == currPoint);
-
-                    if (map == null)
+                    for (int i = TileMaps.Count - 1; i >= 0; i--)
                     {
-                        mapsToAdd.Add(new TileMapPoint(currPoint.X, currPoint.Y));
+                        RemoveTileMap(TileMaps[i]);
+                    }
+                }
+
+
+                for (int i = 0; i < LOADED_MAP_DIMENSIONS; i++) 
+                {
+                    for (int j = 0; j < LOADED_MAP_DIMENSIONS; j++) 
+                    {
+                        TileMap map = TileMaps.Find(m => m.TileMapCoords == currPoint);
+
+                        if (map == null)
+                        {
+                            mapsToAdd.Add(new TileMapPoint(currPoint.X, currPoint.Y));
+                        }
+
+                        TileMapPoint mapPoint = new TileMapPoint(currPoint.X, currPoint.Y);
+
+                        mapPoint.MapPosition = GetMapPosition(i * LOADED_MAP_DIMENSIONS + j);
+
+                        loadedPoints.Add(mapPoint);
+
+                        currPoint.Y++;
                     }
 
-                    TileMapPoint mapPoint = new TileMapPoint(currPoint.X, currPoint.Y);
-
-                    mapPoint.MapPosition = GetMapPosition(i * LOADED_MAP_DIMENSIONS + j);
-
-                    loadedPoints.Add(mapPoint);
-
-                    currPoint.Y++;
+                    currPoint.X++;
+                    currPoint.Y = point.Y - 1;
                 }
 
-                currPoint.X++;
-                currPoint.Y = point.Y - 1;
-            }
-
-            for (int i = TileMaps.Count - 1; i >= 0; i--)
-            {
-                if (loadedPoints.Find(p => p == TileMaps[i].TileMapCoords) == null)
+                for (int i = TileMaps.Count - 1; i >= 0; i--)
                 {
-                    RemoveTileMap(TileMaps[i]);
+                    if (loadedPoints.Find(p => p == TileMaps[i].TileMapCoords) == null)
+                    {
+                        RemoveTileMap(TileMaps[i]);
+                    }
                 }
-            }
 
-            GC.Collect();
+                GC.Collect();
 
-            mapsToAdd.ForEach(p =>
-            {
-                TestTileMap newMap = new TestTileMap(default, p, this) { Width = 50, Height = 50 };
-                newMap.PopulateTileMap();
-                AddTileMap(p, newMap);
-            });
-
-            TileMaps.ForEach(m =>
-            {
-                m.TileMapCoords.MapPosition = loadedPoints.Find(p => p == m.TileMapCoords).MapPosition;
-
-                if (m.TileMapCoords.MapPosition.HasFlag(MapPosition.Top) && m.TileMapCoords.MapPosition.HasFlag(MapPosition.Left))
+                mapsToAdd.ForEach(p =>
                 {
-                    _topLeftMap = m;
+                    TestTileMap newMap = new TestTileMap(default, p, this) { Width = 50, Height = 50 };
+                    newMap.PopulateTileMap();
+                    AddTileMap(p, newMap);
+                });
+
+                foreach(var m in TileMaps)
+                {
+                    m.TileMapCoords.MapPosition = loadedPoints.Find(p => p == m.TileMapCoords).MapPosition;
+
+                    if (m.TileMapCoords.MapPosition.HasFlag(MapPosition.Top) && m.TileMapCoords.MapPosition.HasFlag(MapPosition.Left))
+                    {
+                        _topLeftMap = m;
+                    }
                 }
-            });
 
-            //ApplyLoadedFeaturesToMaps(mapsToAdd);
-            if (applyFeatures)
-            {
-                ApplyLoadedFeaturesToMaps(TileMaps, mapsToAdd);
-            }
+                //ApplyLoadedFeaturesToMaps(mapsToAdd);
+                if (applyFeatures)
+                {
+                    ApplyLoadedFeaturesToMaps(TileMaps, mapsToAdd);
+                }
 
 
-            PositionTileMaps();
+                PositionTileMaps();
 
-            Console.WriteLine("LoadSurroundingTileMaps completed in " + timer.ElapsedMilliseconds + "ms");
+                Console.WriteLine("LoadSurroundingTileMaps completed in " + timer.ElapsedMilliseconds + "ms");
 
-            Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, false);
+                Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapLoadInProgress, false);
 
-            //Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
-            //Scene.FillInTeamFog();
+                //Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
+                //Scene.FillInTeamFog();
 
             
 
 
-            Scene.Controller.CullObjects();
+                Scene.Controller.CullObjects();
 
-            Scene.QueueLightObstructionUpdate();
+                Scene.QueueLightObstructionUpdate();
 
-            onFinish?.Invoke();
+                onFinish?.Invoke();
 
-            Scene.OnCameraMoved();
+                Scene.OnCameraMoved();
 
 
-            void updateVisionMap(SceneEventArgs _)
-            {
-                foreach(var unit in Scene._units)
+                void updateVisionMap(SceneEventArgs _)
                 {
-                    unit.VisionGenerator.SetPosition(unit.Info.TileMapPosition);
-                    unit.LightObstruction.SetPosition(unit.Info.TileMapPosition);
+                    foreach(var unit in Scene._units)
+                    {
+                        unit.VisionGenerator.SetPosition(unit.Info.TileMapPosition);
+                        unit.LightObstruction.SetPosition(unit.Info.TileMapPosition);
+                    }
+
+                    Scene.UnitVisionGenerators.ManuallyIncrementChangeToken();
+                    Scene.LightObstructions.ManuallyIncrementChangeToken();
+
+                    Scene.UnitVisionGenerators.HandleQueuedItems();
+                    Scene.LightObstructions.HandleQueuedItems();
+
+                    Scene.UpdateVisionMap();
+
+                    Scene.RenderEvent -= updateVisionMap;
                 }
 
-                Scene.UnitVisionGenerators.ManuallyIncrementChangeToken();
-                Scene.LightObstructions.ManuallyIncrementChangeToken();
-
-                Scene.UnitVisionGenerators.HandleQueuedItems();
-                Scene.LightObstructions.HandleQueuedItems();
-
-                Scene.UpdateVisionMap();
-
-                Scene.OnRenderEvent -= updateVisionMap;
+                Scene.RenderEvent += updateVisionMap;
             }
-
-            Scene.OnRenderEvent += updateVisionMap;
         }
 
         private TileMap _topLeftMap;
         public Vector2i GetTopLeftTilePosition()
         {
-            if(_topLeftMap != null)
+            lock (_mapLoadLock)
             {
-                return FeatureEquation.PointToMapCoords(_topLeftMap.Tiles[0].TilePoint);
-            }
+                if (_topLeftMap != null)
+                {
+                    return FeatureEquation.PointToMapCoords(_topLeftMap.Tiles[0].TilePoint);
+                }
 
-            return new Vector2i(0, 0);
+                return new Vector2i(0, 0);
+            }
         }
 
         public Vector2i PointToClusterPosition(TilePoint point) 

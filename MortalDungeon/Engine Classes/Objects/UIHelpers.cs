@@ -20,7 +20,8 @@ namespace MortalDungeon.Engine_Classes
         KeyDown,
         Focus,
         TimedHover,
-        HoverEnd
+        HoverEnd,
+        Scroll
     }
 
     public enum UIAnchorPosition
@@ -176,7 +177,7 @@ namespace MortalDungeon.Engine_Classes
 
                 //param.TooltipParent.RemoveChild(tooltip.ObjectID);
                 param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
-                param.HoverParent.OnHoverEndEvent -= tempGameObj;
+                param.HoverParent.HoverEnd -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
 
                 param.Scene.OnUIForceClose -= tempScene;
@@ -186,13 +187,13 @@ namespace MortalDungeon.Engine_Classes
             {
                 //param.TooltipParent.RemoveChild(tooltip.ObjectID);
                 param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
-                param.HoverParent.OnHoverEndEvent -= tempGameObj;
+                param.HoverParent.HoverEnd -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
 
                 param.Scene.OnUIForceClose -= tempScene;
             }
 
-            param.HoverParent.OnHoverEndEvent += tempGameObj;
+            param.HoverParent.HoverEnd += tempGameObj;
             param.Scene.OnUIForceClose += tempScene;
 
             if (param.EnforceScreenBounds) 
@@ -218,7 +219,7 @@ namespace MortalDungeon.Engine_Classes
                 if (args.EventAction != EventAction.CloseTooltip) return;
 
                 baseObject.RemoveChild(tooltip.ObjectID);
-                tooltipParent.OnHoverEndEvent -= tempGameObj;
+                tooltipParent.HoverEnd -= tempGameObj;
                 scene.ContextManager.SetFlag(tooltipFlag, false);
 
                 scene.OnUIForceClose -= tempScene;
@@ -227,13 +228,13 @@ namespace MortalDungeon.Engine_Classes
             void tempGameObj(GameObject args)
             {
                 baseObject.RemoveChild(tooltip.ObjectID);
-                tooltipParent.OnHoverEndEvent -= tempGameObj;
+                tooltipParent.HoverEnd -= tempGameObj;
                 scene.ContextManager.SetFlag(tooltipFlag, false);
 
                 scene.OnUIForceClose -= tempScene;
             }
 
-            tooltipParent.OnHoverEndEvent += tempGameObj;
+            tooltipParent.HoverEnd += tempGameObj;
             scene.OnUIForceClose += tempScene;
 
             CheckTooltipPlacement(tooltip, scene);
@@ -299,7 +300,7 @@ namespace MortalDungeon.Engine_Classes
             scene.ContextManager.SetFlag(contextFlag, true);
 
 
-            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position), UIAnchorPosition.BottomLeft);
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position) + new Vector3(10, 0, 0), UIAnchorPosition.BottomLeft);
 
             baseObject.AddChild(tooltip, 100000);
 
@@ -414,18 +415,19 @@ namespace MortalDungeon.Engine_Classes
                 CreateToolTip(param);
             }
 
-            obj.OnTimedHoverEvent += timedHover;
+            obj.TimedHover += timedHover;
 
             void onCleanUp(GameObject _) 
             {
                 _.OnHoverEnd();
-                obj.OnTimedHoverEvent -= timedHover;
+                obj.TimedHover -= timedHover;
             }
 
             obj.OnCleanUp += onCleanUp;
         }
 
-        public static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, bool enforceUniqueness = false, bool createExitButton = true) 
+        public static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, 
+            bool enforceUniqueness = false, bool createExitButton = true, Action customExitAction = null) 
         {
             if (enforceUniqueness) 
             {
@@ -451,9 +453,13 @@ namespace MortalDungeon.Engine_Classes
             {
                 Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
                 exit.Clickable = true;
-                exit.OnClickAction = () =>
+                exit.Click += (s, e) =>
                 {
-                    parent.RemoveChild(window);
+                    if(customExitAction != null) 
+                        customExitAction?.Invoke();
+                    else
+                        parent.RemoveChild(window);
+
                     exit.OnHoverEnd();
                 };
                 exit.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);

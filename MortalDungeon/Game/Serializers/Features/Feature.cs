@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Map;
+﻿using MortalDungeon.Engine_Classes.MiscOperations;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Save;
 using OpenTK.Mathematics;
 using System;
@@ -69,17 +70,17 @@ namespace MortalDungeon.Game.Serializers
         /// AffectedPoints will be applied to the feature.
         /// </summary>
         [XmlIgnore]
-        public Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
+        public Dictionary<Vector3i, int> AffectedPoints = new Dictionary<Vector3i, int>();
 
         [XmlElement("FaP")]
-        public DeserializableDictionary<FeaturePoint, int> _affectedPoints = new DeserializableDictionary<FeaturePoint, int>();
+        public DeserializableDictionary<Vector3i, int> _affectedPoints = new DeserializableDictionary<Vector3i, int>();
 
         /// <summary>
         /// This is a set of feature points that represent the extremities of the feature
         /// They should be sorted in such a way that each point creates a convex edge with the next point.
         /// </summary>
         [XmlElement("FbP")]
-        public List<FeaturePoint> BoundingPoints = new List<FeaturePoint>();
+        public List<Vector3i> BoundingPoints = new List<Vector3i>();
 
         /// <summary>
         /// What "style" to apply to the inside of the bounding points. This would be like generic forest, generic desert, etc.
@@ -87,6 +88,9 @@ namespace MortalDungeon.Game.Serializers
         /// </summary>
         [XmlElement("FbPid")]
         public int BoundPointsId = 0;
+
+
+        public int Id = 0;
 
 
         [XmlElement("FdN")]
@@ -123,6 +127,18 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("Fesv")]
         public List<StateIDValuePair> StateValues = new List<StateIDValuePair>();
 
+        /// <summary>
+        /// The priority in which the feature is loaded. Higher means loaded first.
+        /// </summary>
+        [XmlElement("Felp")]
+        public int LoadPriority = 0;
+
+        /// <summary>
+        /// The layer that the feature is located on.
+        /// </summary>
+        [XmlElement("Fela")]
+        public int Layer = 0;
+
         public Feature() { }
 
 
@@ -134,15 +150,19 @@ namespace MortalDungeon.Game.Serializers
 
             foreach(var val in AffectedPoints)
             {
-                FeaturePoint newPoint = new FeaturePoint(val.Key.X + Origin.X, val.Key.Y + Origin.Y);
+                var point = CubeMethods.CubeToOffset(val.Key);
 
-                featureEquation.AffectedPoints.Add(newPoint, val.Value);
+                FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
+
+                featureEquation.AffectedPoints.TryAdd(newPoint, val.Value);
                 featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
             }
 
             foreach(var val in BoundingPoints)
             {
-                FeaturePoint newPoint = new FeaturePoint(val.X + Origin.X, val.Y + Origin.Y);
+                var point = CubeMethods.CubeToOffset(val);
+
+                FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
 
                 featureEquation.BoundingPoints.Add(newPoint);
                 featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
@@ -156,6 +176,12 @@ namespace MortalDungeon.Game.Serializers
             featureEquation.Origin = Origin;
 
             featureEquation.FeatureID = HashCoordinates(Origin.X, Origin.Y);
+
+            featureEquation.Layer = Layer;
+
+            featureEquation.DescriptiveName = DescriptiveName;
+
+            featureEquation.LoadPriority = LoadPriority;
 
             return featureEquation;
         }

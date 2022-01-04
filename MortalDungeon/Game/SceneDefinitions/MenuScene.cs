@@ -36,6 +36,7 @@ namespace MortalDungeon.Game.SceneDefinitions
     class MenuScene : CombatScene
     {
         private EntityManagerUI _entityManager;
+        private FeatureManagerUI _featureManagerUI;
 
         public MenuScene() : base()
         {
@@ -45,6 +46,39 @@ namespace MortalDungeon.Game.SceneDefinitions
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
         {
             base.Load(camera, cursorObject, mouseRay);
+
+
+            UIBlock inputCapture = new UIBlock(WindowConstants.CenterScreen, new UIScale(10, 10));
+            inputCapture.Scrollable = true;
+
+            inputCapture.SetColor(Colors.Transparent);
+
+            inputCapture.Scroll += (s, e) =>
+            {
+                if (MouseState.ScrollDelta[1] < 0)
+                {
+                    Vector3 movement = _camera.Front * 1.0f;
+                    if (_camera.Position.Z - movement.Z < 26)
+                    {
+                        _camera.SetPosition(_camera.Position - movement); // Backwards
+                        OnMouseMove();
+                        OnCameraMoved();
+                    }
+                }
+                else if (MouseState.ScrollDelta[1] > 0)
+                {
+                    Vector3 movement = _camera.Front * 1.0f;
+                    if (_camera.Position.Z + movement.Z > 1)
+                    {
+                        _camera.SetPosition(_camera.Position + movement); // Forward
+                        OnMouseMove();
+                        OnCameraMoved();
+                    }
+                }
+            };
+
+            UIManager.AddUIObject(inputCapture, -10000);
+
 
             _entityManager = new EntityManagerUI(this);
 
@@ -300,8 +334,27 @@ namespace MortalDungeon.Game.SceneDefinitions
                     else 
                     {
                         _entityManager.PopulateEntityList();
-                        AddUI(_entityManager.Window);
+                        AddUI(_entityManager.Window, 100000);
                         _entityManager.Displayed = true;
+                    }
+                    break;
+                case Keys.F2:
+
+                    if (_featureManagerUI != null)
+                    {
+                        RemoveUI(_featureManagerUI.Window);
+
+                        _featureManagerUI = null;
+                    }
+                    else
+                    {
+                        _featureManagerUI = new FeatureManagerUI(this, () =>
+                        {
+                            RemoveUI(_featureManagerUI.Window);
+                            _featureManagerUI = null;
+                        });
+
+                        AddUI(_featureManagerUI.Window, 100000);
                     }
                     break;
                 case Keys.Q:
@@ -337,26 +390,26 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             if (!GetBit(_interceptKeystrokes, ObjectType.All) && _focusedObj == null)
             {
-                if (MouseState.ScrollDelta[1] < 0)
-                {
-                    Vector3 movement = _camera.Front * _zoomSpeed;
-                    if (_camera.Position.Z - movement.Z < 26)
-                    {
-                        _camera.SetPosition(_camera.Position - movement); // Backwards
-                        OnMouseMove();
-                        OnCameraMoved();
-                    }
-                }
-                else if (MouseState.ScrollDelta[1] > 0)
-                {
-                    Vector3 movement = _camera.Front * _zoomSpeed;
-                    if (_camera.Position.Z + movement.Z > 1)
-                    {
-                        _camera.SetPosition(_camera.Position + movement); // Forward
-                        OnMouseMove();
-                        OnCameraMoved();
-                    }
-                }
+                //if (MouseState.ScrollDelta[1] < 0)
+                //{
+                //    Vector3 movement = _camera.Front * _zoomSpeed;
+                //    if (_camera.Position.Z - movement.Z < 26)
+                //    {
+                //        _camera.SetPosition(_camera.Position - movement); // Backwards
+                //        OnMouseMove();
+                //        OnCameraMoved();
+                //    }
+                //}
+                //else if (MouseState.ScrollDelta[1] > 0)
+                //{
+                //    Vector3 movement = _camera.Front * _zoomSpeed;
+                //    if (_camera.Position.Z + movement.Z > 1)
+                //    {
+                //        _camera.SetPosition(_camera.Position + movement); // Forward
+                //        OnMouseMove();
+                //        OnCameraMoved();
+                //    }
+                //}
 
                 if (_camera.Position.Z > 20)
                 {
