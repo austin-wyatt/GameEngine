@@ -357,6 +357,19 @@ namespace MortalDungeon.Game.SceneDefinitions
                         AddUI(_featureManagerUI.Window, 100000);
                     }
                     break;
+                case Keys.M:
+                    if(WorldMap.Displayed)
+                    {
+                        UIManager.RemoveUIObject(WorldMap.Window);
+                        WorldMap.Displayed = false;
+                    }
+                    else
+                    {
+                        WorldMap.PopulateFeatures();
+                        UIManager.AddUIObject(WorldMap.Window, 99999);
+                        WorldMap.Displayed = true;
+                    }
+                    break;
                 case Keys.Q:
                     if (CurrentUnit != null && CurrentUnit.Render && CurrentUnit.Info._movementAbility != null && !CurrentUnit.Info._movementAbility.Moving) 
                     {
@@ -552,10 +565,6 @@ namespace MortalDungeon.Game.SceneDefinitions
                     else if (KeyboardState.IsKeyDown(Keys.J))
                     {
                         tile.Properties.Height++;
-                    }
-                    else if (KeyboardState.IsKeyDown(Keys.M))
-                    {
-                        _tileMapController.ToggleHeightmap();
                     }
                     else if (KeyboardState.IsKeyDown(Keys.KeyPad1))
                     {

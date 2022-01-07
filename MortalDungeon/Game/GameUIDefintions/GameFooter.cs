@@ -479,7 +479,8 @@ namespace MortalDungeon.Game.UI
                         else
                         {
                             //abilityIcon.Clickable = false;
-                            abilityIcon.SetDisabled(true);
+                            //abilityIcon.SetDisabled(true);
+                            abilityIcon.OnDisabled(true);
                         }
                     }
 

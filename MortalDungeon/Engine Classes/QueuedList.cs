@@ -142,7 +142,7 @@ namespace MortalDungeon.Engine_Classes
         {
             lock (_lock)
             {
-                lock (_itemsToRemove[_currentQueue])
+                lock (_itemsToRemove[queue])
                 {
                     for (int i = 0; i < _itemsToRemove[queue].Count; i++)
                     {
@@ -151,6 +151,14 @@ namespace MortalDungeon.Engine_Classes
 
                     _itemsToRemove[queue].Clear();
                 }
+            }
+        }
+
+        public new void Clear()
+        {
+            lock (_lock)
+            {
+                base.Clear();
             }
         }
 

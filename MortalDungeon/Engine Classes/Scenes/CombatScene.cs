@@ -70,6 +70,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public static TabMenu TabMenu = new TabMenu();
         public SideBar SideBar = null;
 
+        public WorldMap WorldMap = null;
+
         public Ability _selectedAbility = null;
         public List<Unit> _selectedUnits = new List<Unit>();
 
@@ -123,6 +125,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             DialogueWindow = new DialogueWindow(this);
             AddUI(DialogueWindow.Window, 1000);
+
+            WorldMap = new WorldMap(this);
         }
 
         public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
@@ -339,28 +343,46 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 CurrentUnit.OnTurnEnd();
             }
 
-            TemporaryVision.ForEach(t =>
+            lock (TemporaryVision._lock)
             {
-                if (t.TickTarget == TickDurationTarget.OnUnitTurnEnd && t.TargetUnit.ObjectID == CurrentUnit.ObjectID)
+                foreach(var t in TemporaryVision)
                 {
-                    TickTemporaryVision(t);
+                    if (t.TickTarget == TickDurationTarget.OnUnitTurnEnd && t.TargetUnit.ObjectID == CurrentUnit.ObjectID)
+                    {
+                        TickTemporaryVision(t);
+                    }
                 }
-            });
+            }
+
             UpdateTemporaryVision();
 
             UnitTakingTurn++;
 
 
-            if (UnitTakingTurn == InitiativeOrder.Count)
+            UpdateVisionMap(() =>
             {
-                CompleteRound();
-                return;
-            }
+                if (UnitTakingTurn == InitiativeOrder.Count)
+                {
+                    CompleteRound();
+                    return;
+                }
 
-            if (InCombat) 
-            {
-                StartTurn(); //Advance to the next unit's turn
-            }
+                if (InCombat)
+                {
+                    StartTurn(); //Advance to the next unit's turn
+                }
+            });
+
+            //if (UnitTakingTurn == InitiativeOrder.Count)
+            //{
+            //    CompleteRound();
+            //    return;
+            //}
+
+            //if (InCombat) 
+            //{
+            //    StartTurn(); //Advance to the next unit's turn
+            //}
         }
 
         public virtual void StartCombat() 
@@ -882,42 +904,45 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (ContextManager.GetFlag(GeneralContextFlags.SaveStateLoadInProgress))
                 return;
 
-            foreach (var unit in _units) 
+            lock (_units._lock)
             {
-                if (unit.AI.Team != UnitTeam.PlayerUnits)
-                    continue;
-
-                foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
+                foreach (var unit in _units) 
                 {
-                    if (unit.AI.Team.GetRelation(team) == Relation.Hostile) 
+                    if (unit.AI.Team != UnitTeam.PlayerUnits)
+                        continue;
+
+                    foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
                     {
-                        if (unit.Info.Visible(team))
+                        if (unit.AI.Team.GetRelation(team) == Relation.Hostile) 
                         {
-                            EvaluateUnitsInCombat(unit, 20);
-
-                            if (!InCombat) 
+                            if (unit.Info.Visible(team))
                             {
-                                foreach (var initiativeUnit in InitiativeOrder)
-                                {
-                                    if (InitiativeOrder.Exists(u => u.AI.Team.GetRelation(initiativeUnit.AI.Team) == Relation.Hostile)) 
-                                    {
-                                        //stop unit movement
-                                        if (CurrentUnit != null && CurrentUnit.Info._movementAbility != null && CurrentUnit.Info._movementAbility.Moving) 
-                                        {
-                                            CurrentUnit.Info._movementAbility._moveCancelAction = () =>
-                                            {
-                                                CurrentUnit.Info._movementAbility._moveCancelAction = null;
-                                                Task.Run(StartCombat);
-                                            };
+                                EvaluateUnitsInCombat(unit, 20);
 
-                                            CurrentUnit.Info._movementAbility.CancelMovement();
-                                        }
-                                        else 
+                                if (!InCombat) 
+                                {
+                                    foreach (var initiativeUnit in InitiativeOrder)
+                                    {
+                                        if (InitiativeOrder.Exists(u => u.AI.Team.GetRelation(initiativeUnit.AI.Team) == Relation.Hostile)) 
                                         {
-                                            //if we aren't already in combat and we can verify that at least one enemy is present, start combat
-                                            StartCombat();
+                                            //stop unit movement
+                                            if (CurrentUnit != null && CurrentUnit.Info._movementAbility != null && CurrentUnit.Info._movementAbility.Moving) 
+                                            {
+                                                CurrentUnit.Info._movementAbility._moveCancelAction = () =>
+                                                {
+                                                    CurrentUnit.Info._movementAbility._moveCancelAction = null;
+                                                    Task.Run(StartCombat);
+                                                };
+
+                                                CurrentUnit.Info._movementAbility.CancelMovement();
+                                            }
+                                            else 
+                                            {
+                                                //if we aren't already in combat and we can verify that at least one enemy is present, start combat
+                                                StartCombat();
+                                            }
+                                            return;
                                         }
-                                        return;
                                     }
                                 }
                             }
@@ -938,27 +963,33 @@ namespace MortalDungeon.Engine_Classes.Scenes
             unitsToCheck.Add(seedUnit);
             checkedUnits.Add(seedUnit);
 
-            for (int i = 0; i < unitsToCheck.Count; i++)
+            lock (InitiativeOrder._lock)
             {
-                foreach (var u in _units)
+                for (int i = 0; i < unitsToCheck.Count; i++)
                 {
-                    if (!u.Info.Dead && u.Info.TileMapPosition != null &&
-                        (u.Info.TileMapPosition.TileMap.GetDistanceBetweenPoints(u.Info.TileMapPosition, unitsToCheck[i].Info.TileMapPosition) <= radius 
-                        || InitiativeOrder.Exists(_u => _u.pack_name != "" && _u.pack_name == u.pack_name)))
+                    lock (_units._lock)
                     {
-                        Relation unitRelation = u.AI.Team.GetRelation(unitsToCheck[i].AI.Team);
-                        if (unitRelation == Relation.Friendly || unitRelation == Relation.Hostile)
+                        foreach (var u in _units)
                         {
-                            if (!checkedUnits.Contains(u))
+                            if (!u.Info.Dead && u.Info.TileMapPosition != null &&
+                                (u.Info.TileMapPosition.TileMap.GetDistanceBetweenPoints(u.Info.TileMapPosition, unitsToCheck[i].Info.TileMapPosition) <= radius 
+                                || InitiativeOrder.Exists(_u => _u.pack_name != "" && _u.pack_name == u.pack_name)))
                             {
-                                unitsToCheck.Add(u);
-                                checkedUnits.Add(u);
-                            }
+                                Relation unitRelation = u.AI.Team.GetRelation(unitsToCheck[i].AI.Team);
+                                if (unitRelation == Relation.Friendly || unitRelation == Relation.Hostile)
+                                {
+                                    if (!checkedUnits.Contains(u))
+                                    {
+                                        unitsToCheck.Add(u);
+                                        checkedUnits.Add(u);
+                                    }
 
-                            if (!InitiativeOrder.Contains(u))
-                            {
-                                InitiativeOrder.AddImmediate(u);
-                                TurnDisplay.SetUnits(InitiativeOrder, this);
+                                    if (!InitiativeOrder.Contains(u))
+                                    {
+                                        InitiativeOrder.AddImmediate(u);
+                                        TurnDisplay.SetUnits(InitiativeOrder, this);
+                                    }
+                                }
                             }
                         }
                     }

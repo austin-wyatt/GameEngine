@@ -44,12 +44,120 @@ namespace MortalDungeon.Engine_Classes
 
         public float ZIndex = 0; //higher values get rendered in front
 
-        public bool Focusable = false;
-        public bool Scrollable = false;
+
+        #region relevant event flags
+        private bool _focusable = false;
+        public bool Focusable 
+        {
+            get => _focusable;
+            set
+            {
+                _focusable = value;
+                if(ManagerHandle != null)
+                {
+                    if (_focusable)
+                    {
+                        ManagerHandle.AddFocusableObject(this);
+                    }
+                    else
+                    {
+                        ManagerHandle.RemoveFocusableObject(this);
+                    }
+                }
+            }
+        }
+
+        private bool _scrollable = false;
+        public bool Scrollable
+        {
+            get => _scrollable;
+            set
+            {
+                _scrollable = value;
+                if (ManagerHandle != null)
+                {
+                    if (_scrollable)
+                    {
+                        ManagerHandle.AddScrollableObject(this);
+                    }
+                    else
+                    {
+                        ManagerHandle.RemoveScrollableObject(this);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Whether to check for key up/down events for this object
         /// </summary>
-        public bool Typeable = false;
+        private bool _typeable = false;
+        public bool Typeable
+        {
+            get => _typeable;
+            set
+            {
+                _typeable = value;
+                if (ManagerHandle != null)
+                {
+                    if (_typeable)
+                    {
+                        ManagerHandle.AddKeyDownObject(this);
+                        ManagerHandle.AddKeyUpObject(this);
+                    }
+                    else
+                    {
+                        ManagerHandle.RemoveKeyDownObject(this);
+                        ManagerHandle.RemoveKeyUpObject(this);
+                    }
+                }
+            }
+        }
+
+
+        private bool _clickable = false;
+        public override bool Clickable
+        {
+            get => _clickable;
+            set
+            {
+                _clickable = value;
+                if (ManagerHandle != null)
+                {
+                    if (_clickable)
+                    {
+                        ManagerHandle.AddClickableObject(this);
+                    }
+                    else
+                    {
+                        ManagerHandle.RemoveClickableObject(this);
+                    }
+                }
+            }
+        }
+
+        private bool _hoverable = false;
+        public override bool Hoverable
+        {
+            get => _hoverable;
+            set
+            {
+                _hoverable = value;
+                if (ManagerHandle != null)
+                {
+                    if (_hoverable)
+                    {
+                        ManagerHandle.AddHoverableObject(this);
+                    }
+                    else
+                    {
+                        ManagerHandle.RemoveHoverableObject(this);
+                    }
+                }
+            }
+        }
+        #endregion
+
 
         public bool Disabled = false;
         public bool Selected = false;
@@ -240,12 +348,12 @@ namespace MortalDungeon.Engine_Classes
                                 optionalAction?.Invoke(this);
                             });
                             return;
-                        case UIEventType.Scroll:
-                            Task.Run(() =>
-                            {
-                                optionalAction?.Invoke(this);
-                            });
-                            return;
+                        //case UIEventType.Scroll:
+                        //    Task.Run(() =>
+                        //    {
+                        //        optionalAction?.Invoke(this);
+                        //    });
+                        //    return;
                     }
                 }
                 else if (type == UIEventType.Hover)
@@ -721,6 +829,12 @@ namespace MortalDungeon.Engine_Classes
                 //    Children[i].Parent = null;
                 //    Children.RemoveAt(i);
                 //}
+
+                foreach(var child in Children)
+                {
+                    child.CleanUp();
+                    child.Parent = null;
+                }
 
                 Children.Clear();
 

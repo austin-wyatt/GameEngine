@@ -259,6 +259,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
             if (objects.Count == 0)
                 return;
 
+            if (objects[0] == null)
+                return;
+
             Shaders.FAST_DEFAULT_SHADER.Use();
 
             Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", enableLighting ? 1 : 0);

@@ -32,7 +32,10 @@ namespace MortalDungeon.Game.SceneDefinitions
             exitButton.Click += (s, e) =>
             {
                 SoundPlayer.FreeAllSources();
-                Window.CloseWindow?.Invoke();
+                RenderEnd += (s) =>
+                {
+                    Window.CloseWindow?.Invoke();
+                };
             };
 
             escapeMenu.AddChild(exitButton);

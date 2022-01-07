@@ -514,7 +514,7 @@ namespace MortalDungeon.Engine_Classes
             return Transformations.ExtractRotation().ToEulerAngles();
         }
 
-        private void CalculateTransformationMatrix() 
+        public void CalculateTransformationMatrix() 
         {
             Transformations = Scale * Rotation * Translation;
         }

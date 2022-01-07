@@ -456,9 +456,10 @@ namespace MortalDungeon
 
                 bool updateTileMaps = scene.ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate);
 
-
-                scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
+                lock (scene._tileMapController._mapLoadLock)
                 {
+                    scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
+                    {
                     //Renderer.QueueTileObjectsForRender(tileMap.Tiles);
                     //tileMap.TileChunks.ForEach(chunk =>
                     //{
@@ -470,19 +471,19 @@ namespace MortalDungeon
                     //});
 
                     if (tileMap.DynamicTextureInfo.Initialize)
-                    {
-                        tileMap.InitializeTexturedQuad();
-                        tileMap.DynamicTextureInfo.Initialize = false;
-                    }
+                        {
+                            tileMap.InitializeTexturedQuad();
+                            tileMap.DynamicTextureInfo.Initialize = false;
+                        }
 
-                    if (updateTileMaps && tileMap.DynamicTextureInfo.TextureChanged)
-                    {
-                        tileMap.UpdateDynamicTexture();
-                    }
+                        if (updateTileMaps && tileMap.DynamicTextureInfo.TextureChanged)
+                        {
+                            tileMap.UpdateDynamicTexture();
+                        }
 
-                    RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
-                }); //TileMap
-
+                        RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
+                    }); //TileMap
+                }
                 RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles.ToList());
 
                 RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
@@ -695,18 +696,24 @@ namespace MortalDungeon
 
                     Task tileMapTask = new Task(() =>
                     {
-                        scene._tileMapController.TileMaps.ForEach(tileMap =>
+                        lock (scene._tileMapController._mapLoadLock)
                         {
-                            tileMap.Tick();
-                        });
+                            scene._tileMapController.TileMaps.ForEach(tileMap =>
+                            {
+                                tileMap.Tick();
+                            });
+                        }
                     });
 
                     Task uiTask = new Task(() =>
                     {
-                        scene.UIManager.TopLevelObjects.ForEach(ui =>
+                        lock (scene.UIManager._UILock)
                         {
-                            ui.Tick();
-                        });
+                            foreach(var ui in scene.UIManager.TopLevelObjects)
+                            {
+                                ui.Tick();
+                            }
+                        }
                     });
 
                     Task tickableObjectsTask = new Task(() =>

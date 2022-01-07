@@ -775,7 +775,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void OnUnitClicked(Unit unit, MouseButton button) { }
         public virtual void OnUIClicked(UIObject uiObj) { }
-        public virtual void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags) { }
+
+        public delegate void TileEventHandler(BaseTile tile, MouseButton button);
+        public event TileEventHandler TileClicked;
+        public virtual void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags) 
+        {
+            TileClicked?.Invoke(tile, button);
+        }
 
         public virtual void OnCameraMoved()
         {

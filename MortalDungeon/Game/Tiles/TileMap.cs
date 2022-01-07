@@ -63,11 +63,12 @@ namespace MortalDungeon.Game.Tiles
         public Texture DynamicTexture;
         public FrameBufferObject FrameBuffer;
         public DynamicTextureInfo DynamicTextureInfo = new DynamicTextureInfo();
-        public ConcurrentBag<BaseTile> TilesToUpdate = new ConcurrentBag<BaseTile>();
+        public HashSet<BaseTile> TilesToUpdate = new HashSet<BaseTile>();
 
         private const int TILE_QUEUES = 5;
         protected int _currentTileQueue = 0;
-        protected List<ConcurrentBag<BaseTile>> _tilesToUpdate = new List<ConcurrentBag<BaseTile>>();
+        protected List<HashSet<BaseTile>> _tilesToUpdate = new List<HashSet<BaseTile>>();
+        protected List<object> _tileUpdateLocks = new List<object>();
 
         public GameObject TexturedQuad;
 
@@ -81,7 +82,8 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i < TILE_QUEUES; i++) 
             {
-                _tilesToUpdate.Add(new ConcurrentBag<BaseTile>());
+                _tilesToUpdate.Add(new HashSet<BaseTile>());
+                _tileUpdateLocks.Add(new object());
             }
         }
 
@@ -249,20 +251,26 @@ namespace MortalDungeon.Game.Tiles
         public void UpdateDynamicTexture() 
         {
             //DynamicTexture.UpdateTextureArray(DynamicTextureInfo.MinChangedBounds, DynamicTextureInfo.MaxChangedBounds, this);
-            TilesToUpdate = _tilesToUpdate[_currentTileQueue];
+            lock (_tileUpdateLocks[_currentTileQueue])
+            {
+                TilesToUpdate = _tilesToUpdate[_currentTileQueue];
 
-            _currentTileQueue++;
-            _currentTileQueue %= _tilesToUpdate.Count;
+                _currentTileQueue++;
+                _currentTileQueue %= _tilesToUpdate.Count;
 
-            TileTexturer.UpdateTexture(this);
-            TilesToUpdate.Clear();
-            //DynamicTextureInfo.TextureChanged = false;
-            DynamicTextureInfo.TextureChanged = _tilesToUpdate[_currentTileQueue].Count > 0;
+                TileTexturer.UpdateTexture(this);
+                TilesToUpdate.Clear();
+                //DynamicTextureInfo.TextureChanged = false;
+                DynamicTextureInfo.TextureChanged = _tilesToUpdate[_currentTileQueue].Count > 0;
+            }
         }
 
         public void UpdateTile(BaseTile tile) 
         {
-            _tilesToUpdate[_currentTileQueue].Add(tile);
+            lock (_tileUpdateLocks[_currentTileQueue])
+            {
+                _tilesToUpdate[_currentTileQueue].Add(tile);
+            }
         }
 
         public override void CleanUp()

@@ -37,8 +37,9 @@ namespace MortalDungeon.Engine_Classes
 
         public bool Cull = false; //whether the object was determined to be outside of the camera's view and should be culled
         public bool Render = true;
-        public bool Clickable = false; //Note: The BaseObject's Clickable property and this property must be true for UI objects
-        public bool Hoverable = false;
+        public virtual bool Clickable { get; set; } //Note: The BaseObject's Clickable property and this property must be true for UI objects
+        public virtual bool Hoverable { get; set; }
+
         public bool Draggable = false;
         public bool HasTimedHoverEffect = false;
 
@@ -180,6 +181,18 @@ namespace MortalDungeon.Engine_Classes
             });
 
             Scale *= f;
+        }
+
+        public virtual void ScaleXY(float x, float y)
+        {
+            BaseObjects.ForEach(obj =>
+            {
+                obj.BaseFrame.ScaleX(x);
+                obj.BaseFrame.ScaleY(y);
+            });
+
+            Scale.X *= x;
+            Scale.Y *= y;
         }
 
         public virtual void SetScale(float f) 

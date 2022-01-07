@@ -1,6 +1,8 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Save;
+using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -139,6 +141,18 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("Fela")]
         public int Layer = 0;
 
+        [XmlElement("Feasn")]
+        public string AnimationSetName = "";
+
+        [XmlElement("Fems")]
+        public int MapSize = 0;
+
+        [XmlElement("Fents")]
+        public int NameTextEntry = 0;
+
+        [XmlElement("Fegn")]
+        public string GroupName = "";
+
         public Feature() { }
 
 
@@ -158,14 +172,98 @@ namespace MortalDungeon.Game.Serializers
                 featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
             }
 
-            foreach(var val in BoundingPoints)
+            TileMapPoint top = null;
+            TileMapPoint bot = null;
+            TileMapPoint left = null;
+            TileMapPoint right = null;
+
+            foreach (var val in BoundingPoints)
             {
                 var point = CubeMethods.CubeToOffset(val);
 
                 FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
 
+                var tileMapPoint = FeatureEquation.FeaturePointToTileMapCoords(newPoint);
+
+                #region get extreme tile maps
+                if (top == null)
+                {
+                    top = tileMapPoint;
+                    bot = tileMapPoint;
+                    left = tileMapPoint;
+                    right = tileMapPoint;
+                }
+                else
+                {
+                    if(tileMapPoint.X > right.X)
+                    {
+                        right = tileMapPoint;
+                    }
+                    if (tileMapPoint.X < left.X)
+                    {
+                        left = tileMapPoint;
+                    }
+                    if (tileMapPoint.Y > bot.Y)
+                    {
+                        bot = tileMapPoint;
+                    }
+                    if (tileMapPoint.Y < top.Y)
+                    {
+                        top = tileMapPoint;
+                    }
+                }
+                #endregion
+
                 featureEquation.BoundingPoints.Add(newPoint);
-                featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
+
+                if(BoundPointsId != 0)
+                {
+                    //featureEquation.AffectedMaps.Add(tileMapPoint);
+                }
+            }
+
+            //get the farthest north, south, east, and west affected maps and use those to form a bounding box
+            //then walk every map inside that box and text its top left, top right, bottom left, and bottom right points
+            //to see if they are within the bounding points. If they are then add to the affected maps
+
+            if (top != null && BoundPointsId != 0)
+            {
+                int horizontalMapCount = right.X - left.X + 1;
+                int verticalMapCount = bot.Y - top.Y + 1;
+
+                int tileMapWidth = 50;
+                int tileMapHeight = 50;
+
+                int stepWidth = 3;
+                int stepHeight = 3;
+                int steps = tileMapWidth / stepWidth + 1;
+
+                Vector2i topLeftPoint = new Vector2i(left.X * tileMapWidth, top.Y * tileMapHeight);
+
+                for(int x = 0; x < horizontalMapCount; x++)
+                {
+                    for(int y = 0; y < verticalMapCount; y++)
+                    {
+                        for(int i = 0; i < steps; i++) //width of the current map
+                        {
+                            for(int j = 0; j < steps; j++) //height of the current map
+                            {
+                                Vector2i currPoint = new Vector2i(topLeftPoint.X + x * tileMapWidth + i * stepWidth, 
+                                    topLeftPoint.Y + y * tileMapHeight + j * stepHeight);
+
+                                //check every 5 tiles to see if one is found to be inside the bounds
+                                if (FeaturePoint.PointInPolygon(featureEquation.BoundingPoints, currPoint))
+                                {
+                                    var tileMapPoint = FeatureEquation.FeaturePointToTileMapCoords(new FeaturePoint(currPoint));
+                                    featureEquation.AffectedMaps.Add(tileMapPoint);
+
+                                    i = steps + 1; //we've found a point on the current map inside of the bounds so break
+                                    j = steps + 1; //out of the current map
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             featureEquation.FeatureTemplate = FeatureType;
@@ -182,6 +280,10 @@ namespace MortalDungeon.Game.Serializers
             featureEquation.DescriptiveName = DescriptiveName;
 
             featureEquation.LoadPriority = LoadPriority;
+
+            featureEquation.NumberGen = new ConsistentRandom(new ConsistentRandom(Origin.X).Next() + new ConsistentRandom(Origin.Y).Next());
+
+            featureEquation.NameTextEntry = NameTextEntry;
 
             return featureEquation;
         }

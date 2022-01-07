@@ -18,7 +18,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void LoadTextTables()
         {
-            string[] files = Directory.GetFiles("Data/");
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
             List<string> filesToLoad = new List<string>();
 

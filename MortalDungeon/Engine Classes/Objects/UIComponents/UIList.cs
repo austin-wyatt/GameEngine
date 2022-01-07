@@ -99,8 +99,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             //newItem._backdrop.SetColor(new Vector4((float)new Random().NextDouble(), (float)new Random().NextDouble(), 0, 1));
 
+            if(onClickAction != null)
+            {
+                newItem.Click += (s, e) =>
+                {
+                    onClickAction?.Invoke(newItem);
+                };
+            }
 
-            newItem.OnClickAction = onClickAction;
             newItem.Clickable = true;
             newItem.Hoverable = true;
 
@@ -190,7 +196,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public Vector4 _textColor = Colors.White;
         public Vector4 _itemColor = Colors.UIHoveredGray;
 
-        public new Action<ListItem> OnClickAction;
         public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor, bool outline = false) 
         {
             //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));

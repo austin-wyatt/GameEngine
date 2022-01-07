@@ -30,6 +30,14 @@ namespace MortalDungeon.Game.Serializers
 
         public FeaturePoint Origin;
 
+        public int MapSize = 0;
+
+        public string AnimationSetName = "";
+
+        public string GroupName = "";
+
+        public int NameTextEntry = 0;
+
         public FeatureListNode() { }
         public FeatureListNode(Feature feature)
         {
@@ -38,6 +46,12 @@ namespace MortalDungeon.Game.Serializers
             Origin = feature.Origin;
             Layer = feature.Layer;
             LoadRadius = feature.LoadRadius;
+
+            MapSize = feature.MapSize;
+            AnimationSetName = feature.AnimationSetName;
+
+            GroupName = feature.GroupName;
+            NameTextEntry = feature.NameTextEntry;
         }
     }
 }

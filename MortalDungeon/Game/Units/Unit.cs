@@ -925,7 +925,7 @@ namespace MortalDungeon.Game.Units
         {
             BaseObject obj = new BaseObject(AnimationSet.BuildAnimationsFromSet(), ObjectID, "", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
 
-            obj.BaseFrame.BaseColor = Color;
+            obj.BaseFrame.SetBaseColor(Color);
 
             return obj;
         }

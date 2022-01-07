@@ -332,6 +332,29 @@ namespace MortalDungeon.Engine_Classes
                 Console.WriteLine("Point " + side + ": " + point3.X + ", " + point3.Y);
             }
         }
+
+        public static bool Contains(List<Vector2i> points, Vector2i point)
+        {
+            int intersections = 0;
+
+            for (int side = 0; side < points.Count; side++)
+            {
+                int nextSide = (side + 1) % points.Count;
+
+                if (MiscOperations.MiscOperations.GFG.get_line_intersection(point.X, point.Y, point.X, point.Y + 1000,
+                    points[side].X, points[side].Y, points[nextSide].X, points[nextSide].Y))
+                {
+                    intersections++;
+                }
+            }
+
+            if (intersections % 2 == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     public class OutlineParameters 

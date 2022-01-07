@@ -247,7 +247,7 @@ namespace MortalDungeon.Game.UI
                 item.BaseComponent.AddChild(shieldBar);
 
                 int index = i;
-                item.OnClickAction = (_) =>
+                item.Click += (s, e) =>
                 {
                     if (isSecondaryUnit) 
                     {

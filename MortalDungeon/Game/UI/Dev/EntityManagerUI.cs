@@ -4,9 +4,12 @@ using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -114,10 +117,12 @@ namespace MortalDungeon.Game.UI.Dev
 
             foreach (Entity entity in EntityManager.Entities) 
             {
-                EntityList.AddItem($"{(entity.Loaded ? "(L)" : "(U)")} " + entity.Handle.Name, (_) => 
+                var item = EntityList.AddItem($"{(entity.Loaded ? "(L)" : "(U)")} " + entity.Handle.Name);
+
+                item.Click += (s, e) =>
                 {
                     CreateContextMenuFromEntity(entity);
-                });
+                };
             }
         }
 
@@ -138,8 +143,16 @@ namespace MortalDungeon.Game.UI.Dev
             {
                 list.AddItem("Load Entity", (item) =>
                 {
-                    entity.Load(new FeaturePoint(Scene._debugSelectedTile));
-                    PopulateEntityList();
+                    void loadEntityOnTile(BaseTile tile, MouseButton button)
+                    {
+                        entity.Load(new FeaturePoint(tile));
+
+                        Scene.TileClicked -= loadEntityOnTile;
+                        PopulateEntityList();
+                    }
+
+                    Scene.TileClicked += loadEntityOnTile;
+
                     Scene.CloseContextMenu();
                 });
             }
@@ -273,17 +286,13 @@ namespace MortalDungeon.Game.UI.Dev
             AddEntityWindow.AddChild(prefabSelect, 100);
 
 
-            Window.AddChild(AddEntityWindow, 10000);
+            Window.AddChild(AddEntityWindow, 1000000);
         }
 
         private void AddUnitsToAddEntityArea(UIObject scrollableArea) 
         {
-            List<UnitProfile> unitProfiles = new List<UnitProfile>();
+            List<UnitCreationInfo> unitInfo = UnitCreationInfoSerializer.LoadAllUnitCreationInfo();
 
-            UnitProfiles.Profiles.ForEach(p =>
-            {
-                unitProfiles.Add(p);
-            });
 
             Vector3 position = scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0);
 
@@ -291,9 +300,9 @@ namespace MortalDungeon.Game.UI.Dev
 
             const int units_per_row = 4;
 
-            foreach (UnitProfile profile in unitProfiles) 
+            foreach (UnitCreationInfo info in unitInfo) 
             {
-                Unit u = profile.CreateUnit(Scene);
+                Unit u = info.CreateUnit(Scene);
 
                 BaseObject obj = u.CreateBaseObject();
 
@@ -314,13 +323,13 @@ namespace MortalDungeon.Game.UI.Dev
 
                 block.Clickable = true;
 
-                UIHelpers.AddTimedHoverTooltip(block, profile.Name, Scene);
+                UIHelpers.AddTimedHoverTooltip(block, info.Name, Scene);
 
                 block.Click += (s, e) =>
                 {
-                    Entity newEntity = new Entity(profile.CreateUnit(Scene));
+                    Entity newEntity = new Entity(info.CreateUnit(Scene));
 
-                    newEntity.Handle.Name = $"{profile.Name} {newEntity.EntityID}";
+                    newEntity.Handle.Name = $"{info.Name} {newEntity.EntityID}";
 
                     EntityManager.AddEntity(newEntity);
                     PopulateEntityList();
