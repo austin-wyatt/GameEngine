@@ -207,7 +207,7 @@ namespace MortalDungeon.Game.UI
 
 
 
-            EventLog = new EventLog();
+            EventLog = new EventLog(Scene);
 
             EventLog.LogArea.SetVisibleAreaPosition(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
 

@@ -10,7 +10,7 @@ namespace MortalDungeon.Game.Serializers
 {
     [XmlType(TypeName = "TT")]
     [Serializable]
-    public class TextTable
+    public class TextTable : ISerializable
     {
 
         [XmlIgnore]
@@ -79,6 +79,17 @@ namespace MortalDungeon.Game.Serializers
             }
 
             return list[^1] + 1;
+        }
+
+        public void PrepareForSerialization()
+        {
+            _strings = new DeserializableDictionary<int, TextEntry>(Strings);
+        }
+
+        public void CompleteDeserialization()
+        {
+            _strings.FillDictionary(Strings);
+            _strings = new DeserializableDictionary<int, TextEntry>();
         }
 
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.LuaHandling;
 
 namespace MortalDungeon.Game.Ledger
 {
@@ -18,26 +19,31 @@ namespace MortalDungeon.Game.Ledger
 
     public static class Ledgers
     {
-        public static List<StateIDValuePair> StateSubscribers = new List<StateIDValuePair>();
+        public static List<StateSubscriber> StateSubscribers = new List<StateSubscriber>();
 
         public static void LedgerUpdated(StateIDValuePair stateValue)
         {
-            List<StateIDValuePair> currentSubscribers = new List<StateIDValuePair>(StateSubscribers);
+            List<StateSubscriber> currentSubscribers = new List<StateSubscriber>(StateSubscribers);
 
             for(int i = currentSubscribers.Count - 1; i >= 0; i--)
             {
-                if(currentSubscribers[i].Type == stateValue.Type && currentSubscribers[i].StateID == stateValue.StateID
-                    && currentSubscribers[i].ObjectHash == stateValue.ObjectHash && stateValue.Data == currentSubscribers[i].Data)
+                if(currentSubscribers[i].TriggerValue.Type == stateValue.Type && currentSubscribers[i].TriggerValue.StateID == stateValue.StateID
+                    && currentSubscribers[i].TriggerValue.ObjectHash == stateValue.ObjectHash && stateValue.Data == currentSubscribers[i].TriggerValue.Data)
                 {
-                    if(currentSubscribers[i].Values.Count > 0)
+                    //if(currentSubscribers[i].Values.Count > 0)
+                    //{
+                    //    ApplyStateValues(currentSubscribers[i].Values);
+                    //}
+
+                    string script = currentSubscribers[i].Script;
+
+
+                    if(!currentSubscribers[i].Permanent)
                     {
-                        ApplyStateValues(currentSubscribers[i].Values);
+                        StateSubscribers.RemoveAt(i);
                     }
 
-                    if(currentSubscribers[i].Instruction != (short)StateInstructions.PermanentSubscriber)
-                    {
-                        currentSubscribers.RemoveAt(i);
-                    }
+                    LuaManager.ApplyScript(script);
                 }
             }
 
@@ -60,7 +66,7 @@ namespace MortalDungeon.Game.Ledger
                     Data = (int)FeatureInteraction.Killed,
                 };
 
-                SetStateValue(killUnitState);
+                ApplyStateValue(killUnitState);
             }
         }
 
@@ -77,15 +83,21 @@ namespace MortalDungeon.Game.Ledger
                     Data = (int)FeatureInteraction.Revived,
                 };
 
-                SetStateValue(killUnitState);
+                ApplyStateValue(killUnitState);
             }
         }
 
-        public static void SetStateValue(StateIDValuePair val)
+        public static void ApplyStateValue(StateIDValuePair val)
         {
             if(val.Instruction == (int)StateInstructions.Subscribe || val.Instruction == (int)StateInstructions.PermanentSubscriber)
             {
-                StateSubscribers.Add(val);
+                StateSubscriber subscriber = new StateSubscriber();
+                subscriber.TriggerValue = val;
+                subscriber.SubscribedValues = new List<StateIDValuePair>(val.Values);
+
+                subscriber.Permanent = val.Instruction == (int)StateInstructions.PermanentSubscriber;
+
+                StateSubscribers.Add(subscriber);
             }
             else if(val.Instruction == (int)StateInstructions.Set)
             {
@@ -129,8 +141,26 @@ namespace MortalDungeon.Game.Ledger
         {
             foreach (StateIDValuePair val in data)
             {
-                SetStateValue(val);
+                ApplyStateValue(val);
             }
+        }
+
+        public static void AddSubscriber(StateSubscriber subscriber)
+        {
+            StateSubscribers.Add(subscriber);
+        }
+
+        public static void EvaluateInstructions(List<Instructions> instructions)
+        {
+            for(int i = 0; i < instructions.Count; i++)
+            {
+                EvaluateInstruction(instructions[i]);
+            }
+        }
+
+        public static void EvaluateInstruction(Instructions instruction)
+        {
+            LuaManager.ApplyScript(instruction.Script);
         }
     }
 

@@ -14,5 +14,8 @@ namespace MortalDungeon.Game.Save
 
         [XmlElement("Fi", Namespace = "Fsi")]
         public DeserializableDictionary<long, short> SignificantInteractions;
+
+        [XmlElement("Fhd", Namespace = "Fshd")]
+        public DeserializableDictionary<long, DeserializableDictionary<string, string>> HashData;
     }
 }

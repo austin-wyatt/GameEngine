@@ -175,7 +175,7 @@ namespace MortalDungeon.Game.Abilities
 
             void removeArrow(SceneEventArgs args) 
             {
-                Scene.TimedTickableObjects.Remove(shootAnimation);
+                Scene.Tick -= shootAnimation.Tick;
                 Scene._genericObjects.Remove(arrow);
 
                 DamageInstance damage = GetDamageInstance();
@@ -188,7 +188,8 @@ namespace MortalDungeon.Game.Abilities
 
 
             shootAnimation.Play();
-            Scene.TimedTickableObjects.Add(shootAnimation);
+            Scene.Tick -= shootAnimation.Tick;
+            Scene.Tick += shootAnimation.Tick;
         }
 
         public override DamageInstance GetDamageInstance()

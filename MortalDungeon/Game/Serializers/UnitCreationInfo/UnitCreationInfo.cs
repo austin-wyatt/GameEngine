@@ -109,6 +109,9 @@ namespace MortalDungeon.Game.Serializers
             unit.Info.Focus = MaxFocus;
             unit.Info.CurrentShields = CurrentShields;
 
+            unit.Info.MaxHealth = MaxHealth;
+            unit.Info.Health = MaxHealth;
+
             unit.Info.Species = Species;
 
             unit.Info.NonCombatant = NonCombatant > 0;

@@ -238,9 +238,9 @@ namespace MortalDungeon.Game
                     DialogueLedger.SetStateValue(updatedState);
                 }
 
-                if(_currentNode.Responses[0].StateValues.Count > 0)
+                if(_currentNode.Responses[0].Instructions.Count > 0)
                 {
-                    Ledgers.ApplyStateValues(_currentNode.Responses[0].StateValues);
+                    Ledgers.EvaluateInstructions(_currentNode.Responses[0].Instructions);
                 }
 
                 dialogue.DialogueOutcome = _currentNode.Responses[0].Outcome;
@@ -289,9 +289,9 @@ namespace MortalDungeon.Game
                             DialogueLedger.SetStateValue(updatedState);
                         }
 
-                        if (res.StateValues.Count > 0)
+                        if (res.Instructions.Count > 0)
                         {
-                            Ledgers.ApplyStateValues(res.StateValues);
+                            Ledgers.EvaluateInstructions(res.Instructions);
                         }
 
                         dialogue.DialogueOutcome = res.Outcome;

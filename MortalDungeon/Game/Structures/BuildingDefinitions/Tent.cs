@@ -52,7 +52,18 @@ namespace MortalDungeon.Game.Structures
             BaseObject.BaseFrame.SetScale(0.5f, 0.5f, 0.25f);
             BaseObject.BaseFrame.RotateZ(Rotations * 60);
 
+            BaseObject.BaseFrame.CameraPerspective = true;
+
             LoadTexture(this);
+        }
+
+        public override BaseObject CreateBaseObject()
+        {
+            BaseObject obj = _3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.Tent, default);
+
+            obj.BaseFrame.SetBaseColor(Color);
+
+            return obj;
         }
 
         public override void TileAction()

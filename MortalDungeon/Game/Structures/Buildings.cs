@@ -9,22 +9,15 @@ namespace MortalDungeon.Game.Structures
 {
     public static class Buildings
     {
-        public static List<Func<SerialiableBuildingSkeleton, Building>> CreateBuildings = new List<Func<SerialiableBuildingSkeleton, Building>>();
+        public static List<Func<SerialiableBuildingSkeleton, Building>> CreateBuilding = new List<Func<SerialiableBuildingSkeleton, Building>>();
         static Buildings()
         {
             //tent
-            CreateBuildings.Add((skeleton) =>
+            CreateBuilding.Add((skeleton) =>
             {
                 Tent tent = new Tent();
 
-                List<Vector3i> cubeCoords = new List<Vector3i>();
-
-                foreach(var point in skeleton.TilePattern)
-                {
-                    cubeCoords.Add(CubeMethods.OffsetToCube(point));
-                }
-
-                tent.TilePattern = cubeCoords;
+                tent.TilePattern = skeleton.TilePattern;
 
                 tent.RotateTilePattern(skeleton.Rotations);
 

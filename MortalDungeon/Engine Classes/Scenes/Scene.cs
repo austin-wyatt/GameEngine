@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Objects.PropertyAnimations;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -79,6 +80,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public List<Unit> _collatedUnits = new List<Unit>();
         private HashSet<Unit> _renderedUnits = new HashSet<Unit>();
+
+        protected object _structureLock = new object();
+        public HashSet<Structure> _structures = new HashSet<Structure>();
 
         public static GameObject LightObstructionObject = null;
         public static GameObject LightObject = null;
@@ -668,6 +672,21 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         }
 
+        public void AddStructure(Structure structure)
+        {
+            lock (_structureLock)
+            {
+                _structures.Add(structure);
+            }
+        }
+        public void RemoveStructure(Structure structure)
+        {
+            lock (_structureLock)
+            {
+                _structures.Remove(structure);
+            }
+        }
+
         public virtual bool OnKeyDown(KeyboardKeyEventArgs e)
         {
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
@@ -853,6 +872,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public event SceneEventHandler RenderEnd;
 
+        public delegate void TickEventHandler();
+        public TickEventHandler Tick;
+        public TickEventHandler HighFreqTick;
 
         protected void NumberPressed(SceneEventArgs args)
         {
@@ -866,6 +888,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public void PostTickAction() 
         {
             PostTickEvent?.Invoke(new SceneEventArgs(this, EventAction.PostTickAction));
+        }
+
+        public void OnTick()
+        {
+            Tick?.Invoke();
+        }
+
+        public void OnHighFreqTick()
+        {
+            HighFreqTick?.Invoke();
         }
 
         #endregion
@@ -1025,6 +1057,17 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _collatedUnits = _renderedUnits.ToList();
             }
             ContextManager.SetFlag(GeneralContextFlags.UnitCollationRequired, false);
+        }
+
+        public void SyncToRender(Action action)
+        {
+            void renderFunc(SceneEventArgs args)
+            {
+                action?.Invoke();
+                RenderEnd -= renderFunc;
+            }
+
+            RenderEnd += renderFunc;
         }
 
         //public virtual void UpdateLightObstructionMap()

@@ -41,6 +41,18 @@ namespace MortalDungeon.Game.Serializers
             }
         }
 
+        public static bool QuestAvailable(int id)
+        {
+            bool questCompleted = QuestLedger.GetStateValue(id, (int)QuestStates.Completed);
+
+            if (!questCompleted && !Quests.Exists(q => q.ID == id))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static void CompleteQuest(Quest quest)
         {
             bool questCompleted = QuestLedger.GetStateValue(quest.ID, (int)QuestStates.Completed);
@@ -60,7 +72,7 @@ namespace MortalDungeon.Game.Serializers
                 Data = (int)QuestStates.Completed,
             };
 
-            Ledgers.SetStateValue(completeQuestStateValue);
+            Ledgers.ApplyStateValue(completeQuestStateValue);
 
             lock (_questLock)
             {

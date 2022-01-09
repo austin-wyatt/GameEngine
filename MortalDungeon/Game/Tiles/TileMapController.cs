@@ -16,6 +16,7 @@ using MortalDungeon.Engine_Classes;
 using MortalDungeon.Game.Serializers;
 using System.Threading.Tasks;
 using System.Threading;
+using MortalDungeon.Engine_Classes.Rendering;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -274,9 +275,36 @@ namespace MortalDungeon.Game.Tiles
         const int LOADED_MAP_DIMENSIONS = 3;
         public object _mapLoadLock = new object();
 
-        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, 
-            bool forceMapRegeneration = false, Action onFinish = null, int layer = 0) 
+        public void LoadMapsWithFade(TileMapPoint point, bool applyFeatures = true,
+            bool forceMapRegeneration = false, Action onFinish = null, int layer = 0)
         {
+            void loadMaps()
+            {
+                RenderFunctions.FadeParameters.FadeComplete -= loadMaps;
+
+                Scene.SyncToRender(() =>
+                {
+                    LoadSurroundingTileMaps(point, applyFeatures, forceMapRegeneration, onFinish, layer, withFade: false);
+                });
+            }
+
+            RenderFunctions.FadeParameters.StepSize = 0.05f;
+            //RenderFunctions.FadeParameters.TimeDelay = 25;
+            RenderFunctions.FadeParameters.TimeDelay = 15;
+            RenderFunctions.FadeParameters.StartFade(FadeDirection.Out);
+
+            RenderFunctions.FadeParameters.FadeComplete += loadMaps;
+        }
+
+        public void LoadSurroundingTileMaps(TileMapPoint point, bool applyFeatures = true, 
+            bool forceMapRegeneration = false, Action onFinish = null, int layer = 0, bool withFade = true) 
+        {
+            if (withFade)
+            {
+                LoadMapsWithFade(point, applyFeatures, forceMapRegeneration, onFinish, layer);
+                return;
+            }
+
             lock (_mapLoadLock)
             {
                 TileMapPoint currPoint = new TileMapPoint(point.X - 1, point.Y - 1);
@@ -368,8 +396,19 @@ namespace MortalDungeon.Game.Tiles
                 //Scene.UpdateVisionMap(() => Scene.FillInTeamFog());
                 //Scene.FillInTeamFog();
 
-            
+                Scene.SyncToRender(() =>
+                {
+                    RenderFunctions.FadeParameters.StartFade(FadeDirection.In);
 
+                    void fadeEnd()
+                    {
+                        RenderFunctions.FadeParameters.EndFade();
+                        RenderFunctions.FadeParameters.FadeComplete -= fadeEnd;
+
+                    }
+
+                    RenderFunctions.FadeParameters.FadeComplete += fadeEnd;
+                });
 
                 Scene.Controller.CullObjects();
 
@@ -395,6 +434,9 @@ namespace MortalDungeon.Game.Tiles
                     Scene.LightObstructions.HandleQueuedItems();
 
                     Scene.UpdateVisionMap();
+
+                    Scene.OnStructureMoved();
+
 
                     Scene.RenderEvent -= updateVisionMap;
                 }

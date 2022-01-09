@@ -506,7 +506,11 @@ namespace MortalDungeon.Engine_Classes
             {
                 icon.RemovePropertyAnimation(anim.AnimationID);
                 scene._genericObjects.Remove(icon);
+                scene.Tick -= icon.Tick;
             };
+
+            scene.Tick -= icon.Tick;
+            scene.Tick += icon.Tick;
         }
     }
 

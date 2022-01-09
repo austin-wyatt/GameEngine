@@ -11,6 +11,7 @@ using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.LuaHandling;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.SceneDefinitions;
 using MortalDungeon.Game.Serializers;
@@ -206,6 +207,8 @@ namespace MortalDungeon
 
             VisionMap.Initialize();
             FeatureManager.Initialize();
+
+            LuaManager.Initialize();
 
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
@@ -661,10 +664,12 @@ namespace MortalDungeon
                 highFreqLastTick = highFreqTick;
                 _sceneController.Scenes.ForEach(scene =>
                 {
-                    scene.HighFreqTickableObjects.ForEach(obj =>
-                    {
-                        obj.Tick();
-                    });
+                    //scene.HighFreqTickableObjects.ForEach(obj =>
+                    //{
+                    //    obj.Tick();
+                    //});
+
+                    scene.OnHighFreqTick();
                 });
             }
 
@@ -678,69 +683,7 @@ namespace MortalDungeon
                     //if (scene.PauseTicks)
                     //    return;
 
-                    Task renderedObjectTask = new Task(() =>
-                    {
-                        scene._genericObjects.ForEach(gameObject =>
-                        {
-                            gameObject.Tick();
-                        });
-                    });
-
-                    Task unitTask = new Task(() =>
-                    {
-                        scene._units.ForEach(unit =>
-                        {
-                            unit.Tick();
-                        });
-                    });
-
-                    Task tileMapTask = new Task(() =>
-                    {
-                        lock (scene._tileMapController._mapLoadLock)
-                        {
-                            scene._tileMapController.TileMaps.ForEach(tileMap =>
-                            {
-                                tileMap.Tick();
-                            });
-                        }
-                    });
-
-                    Task uiTask = new Task(() =>
-                    {
-                        lock (scene.UIManager._UILock)
-                        {
-                            foreach(var ui in scene.UIManager.TopLevelObjects)
-                            {
-                                ui.Tick();
-                            }
-                        }
-                    });
-
-                    Task tickableObjectsTask = new Task(() =>
-                    {
-                        scene.TickableObjects.ForEach(obj =>
-                        {
-                            obj.Tick();
-                        });
-
-                        scene._particleGenerators.ForEach(gen =>
-                        {
-                            gen.Tick();
-                        });
-                    });
-
-
-                    renderedObjectTask.Start();
-                    unitTask.Start();
-                    tileMapTask.Start();
-                    uiTask.Start();
-                    tickableObjectsTask.Start();
-
-                    renderedObjectTask.Wait();
-                    unitTask.Wait();
-                    tileMapTask.Wait();
-                    uiTask.Wait();
-                    tickableObjectsTask.Wait();
+                    scene.OnTick();
 
                     scene.PostTickAction();
                 });

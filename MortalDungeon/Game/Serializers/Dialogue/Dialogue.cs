@@ -130,7 +130,7 @@ namespace MortalDungeon.Game.Serializers
         public DialogueNode Next;
 
         [XmlElement("rSTv")]
-        public List<StateIDValuePair> StateValues = new List<StateIDValuePair>();
+        public List<Instructions> Instructions = new List<Instructions>();
 
         public Response() { }
         public Response(ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0, int questStart = -1)

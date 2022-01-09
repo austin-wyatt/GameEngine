@@ -42,7 +42,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 Data = 3
             };
 
-            Ledgers.SetStateValue(killRequirementState);
+            Ledgers.ApplyStateValue(killRequirementState);
 
             StateIDValuePair availableToClearState = new StateIDValuePair()
             {
@@ -52,7 +52,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 Data = 1
             };
 
-            Ledgers.SetStateValue(availableToClearState);
+            Ledgers.ApplyStateValue(availableToClearState);
         }
 
         public override void ApplyToTile(BaseTile tile, bool freshGeneration = true)
@@ -69,65 +69,65 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     tile.Properties.Type = TileType.Dead_Grass;
                     tile.Update();
                 }
-                else if (GetBit(value, 1))
-                {
-                    BuildingSkeleton tentSkeleton = TentSkeletons.Find(t => t.TilePattern.Contains(affectedPoint));
+                //else if (GetBit(value, 1))
+                //{
+                //    BuildingSkeleton tentSkeleton = TentSkeletons.Find(t => t.TilePattern.Contains(affectedPoint));
 
-                    if (tentSkeleton != null && tentSkeleton.Loaded == false)
-                    {
-                        tentSkeleton.Loaded = true;
-                        tentSkeleton._skeletonTouchedThisCycle = true;
+                //    if (tentSkeleton != null && tentSkeleton.Loaded == false)
+                //    {
+                //        tentSkeleton.Loaded = true;
+                //        tentSkeleton._skeletonTouchedThisCycle = true;
 
-                        Tent tent = new Tent(tile.GetScene());
+                //        Tent tent = new Tent(tile.GetScene());
 
-                        tent.SkeletonReference = tentSkeleton;
-                        tentSkeleton.Handle = tent;
+                //        tent.SkeletonReference = tentSkeleton;
+                //        tentSkeleton.Handle = tent;
 
-                        tent.RotateTilePattern(tentSkeleton.Rotations);
+                //        tent.RotateTilePattern(tentSkeleton.Rotations);
 
-                        tent.InitializeVisualComponent();
+                //        tent.InitializeVisualComponent();
 
-                        Vector3 tileSize = tile.GetDimensions();
-                        Vector3 posDiff = new Vector3();
+                //        Vector3 tileSize = tile.GetDimensions();
+                //        Vector3 posDiff = new Vector3();
 
-                        if (affectedPoint != tentSkeleton.IdealCenter)
-                        {
-                            posDiff.X = tileSize.X * (tentSkeleton.IdealCenter.X - affectedPoint.X);
-                            posDiff.Y = tileSize.Y * (tentSkeleton.IdealCenter.Y - affectedPoint.Y);
+                //        if (affectedPoint != tentSkeleton.IdealCenter)
+                //        {
+                //            posDiff.X = tileSize.X * (tentSkeleton.IdealCenter.X - affectedPoint.X);
+                //            posDiff.Y = tileSize.Y * (tentSkeleton.IdealCenter.Y - affectedPoint.Y);
 
                             
 
-                            if(affectedPoint.X % 2 == 0) 
-                            {
-                                posDiff.Y -= tileSize.Y / 2;
-                            }
-                            if (affectedPoint.X % 2 == 1)
-                            {
-                                posDiff.Y += tileSize.Y / 2;
-                            }
+                //            if(affectedPoint.X % 2 == 0) 
+                //            {
+                //                posDiff.Y -= tileSize.Y / 2;
+                //            }
+                //            if (affectedPoint.X % 2 == 1)
+                //            {
+                //                posDiff.Y += tileSize.Y / 2;
+                //            }
 
-                            if (affectedPoint.X < tentSkeleton.IdealCenter.X)
-                            {
-                                posDiff.X -= tileSize.X / 4;
-                            }
-                            else
-                            {
-                                posDiff.X += tileSize.X / 4;
-                            }
-                        }
+                //            if (affectedPoint.X < tentSkeleton.IdealCenter.X)
+                //            {
+                //                posDiff.X -= tileSize.X / 4;
+                //            }
+                //            else
+                //            {
+                //                posDiff.X += tileSize.X / 4;
+                //            }
+                //        }
 
-                        tent.SetPosition(tile.Position + posDiff + new Vector3(0, 0, 0.2f));
+                //        tent.SetPosition(tile.Position + posDiff + new Vector3(0, 0, 0.2f));
 
-                        tent.SetTileMapPosition(tile);
-                    }
-                    else if (tentSkeleton != null && tentSkeleton.Handle != null && tentSkeleton.Loaded && !tentSkeleton._skeletonTouchedThisCycle) 
-                    {
-                        tentSkeleton._skeletonTouchedThisCycle = true;
+                //        tent.SetTileMapPosition(tile);
+                //    }
+                //    else if (tentSkeleton != null && tentSkeleton.Handle != null && tentSkeleton.Loaded && !tentSkeleton._skeletonTouchedThisCycle) 
+                //    {
+                //        tentSkeleton._skeletonTouchedThisCycle = true;
 
-                        tentSkeleton.Handle.TileAction();
-                        //tentSkeleton.Handle.SetColor(new Vector4(1, 0, 0, 1));
-                    }
-                }
+                //        tentSkeleton.Handle.TileAction();
+                //        //tentSkeleton.Handle.SetColor(new Vector4(1, 0, 0, 1));
+                //    }
+                //}
 
 
                 long pointHash = affectedPoint.GetUniqueHash();
@@ -194,7 +194,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     AddAffectedPoint(point, (int)CampFeatures.Tent);
                 }
 
-                TentSkeletons.Add(new BuildingSkeleton() { IdealCenter = tentLocations[i], TilePattern = tentPoints.ToHashSet(), Rotations = tent1.Rotations });
+                //TentSkeletons.Add(new BuildingSkeleton() { IdealCenter = tentLocations[i], TilePattern = tentPoints.ToHashSet(), Rotations = tent1.Rotations });
             }
 
             int count = 0;

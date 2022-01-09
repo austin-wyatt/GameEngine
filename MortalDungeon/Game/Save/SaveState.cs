@@ -35,7 +35,10 @@ namespace MortalDungeon.Game.Save
 
         public List<Quest> ActiveQuests = new List<Quest>();
         public List<Quest> CompletedQuests = new List<Quest>();
-        public List<StateIDValuePair> StateSubscribers = new List<StateIDValuePair>();
+        public List<StateSubscriber> StateSubscribers = new List<StateSubscriber>();
+
+        //these will actually evaluate a bool based on current state values instead of trying to exactly match a passed value
+        public List<Instructions> SubscribedInstructions = new List<Instructions>();
 
         public DeserializableDictionary<long, GeneralLedgerNode> GeneralLedgerInfo = new DeserializableDictionary<long, GeneralLedgerNode>();
 
@@ -70,6 +73,17 @@ namespace MortalDungeon.Game.Save
                     ID = f.Value.ID,
                     SignificantInteractions = new DeserializableDictionary<long, short>(f.Value.SignificantInteractions)
                 };
+
+                var hashData = new Dictionary<long, DeserializableDictionary<string, string>>();
+
+                foreach(var dict in f.Value.HashData)
+                {
+                    hashData.Add(dict.Key, new DeserializableDictionary<string, string>(dict.Value));
+                }
+
+                var finalHashData = new DeserializableDictionary<long, DeserializableDictionary<string, string>>(hashData);
+
+                info.HashData = finalHashData;
 
                 returnState.FeatureSaveInfo.Add(info);
             }
@@ -151,6 +165,24 @@ namespace MortalDungeon.Game.Save
 
                 node.ID = info.ID;
                 info.SignificantInteractions.FillDictionary(node.SignificantInteractions);
+
+                var hashData = new Dictionary<long, DeserializableDictionary<string, string>>();
+
+                info.HashData.FillDictionary(hashData);
+
+                var finalHashData = new Dictionary<long, Dictionary<string, string>>();
+
+                foreach (var dict in hashData)
+                {
+                    var temp = new Dictionary<string, string>();
+
+                    dict.Value.FillDictionary(temp);
+
+                    finalHashData.Add(dict.Key, temp);
+                }
+
+
+                node.HashData = finalHashData;
             }
 
             DialogueLedger.LedgeredDialogues.Clear();

@@ -29,15 +29,14 @@ namespace MortalDungeon.Game.Serializers
             reader.Close();
             fs.Close();
 
-            loadedState._strings.FillDictionary(loadedState.Strings);
-            loadedState._strings = new DeserializableDictionary<int, TextEntry>();
+            loadedState.CompleteDeserialization();
 
             return loadedState;
         }
 
         public static void WriteTextTableToFile(TextTable state)
         {
-            state._strings = new DeserializableDictionary<int, TextEntry>(state.Strings);
+            state.PrepareForSerialization();
 
             string path = SerializerParams.DATA_BASE_PATH + _textTableCharSet.CreateRandom(state.TableID, _fileNameLength) + ".T";
 

@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MortalDungeon.Engine_Classes.Rendering;
 
 namespace MortalDungeon.Game.UI
 {
@@ -236,18 +237,20 @@ namespace MortalDungeon.Game.UI
 
             Button plusButton = CreateButton("Measure Obj Size", () =>
             {
-                var tent = new Structures.Tent();
+                //var tent = new Structures.Tent();
 
-                long preObj = GC.GetTotalMemory(true);
-                //var list1 = tent.TilePattern.ToList();
-                //var rotations = (int)tent.Rotations;
-                //var idealCenter = new Map.FeaturePoint(10, 25);
+                //long preObj = GC.GetTotalMemory(true);
+                ////var list1 = tent.TilePattern.ToList();
+                ////var rotations = (int)tent.Rotations;
+                ////var idealCenter = new Map.FeaturePoint(10, 25);
 
-                //var tempList = Scene._tileMapController.LoadedFeatures[1].AffectedPoints.ToList();
+                ////var tempList = Scene._tileMapController.LoadedFeatures[1].AffectedPoints.ToList();
 
-                long postObj = GC.GetTotalMemory(true);
+                //long postObj = GC.GetTotalMemory(true);
 
-                Console.WriteLine("Size of object is: " + (postObj - preObj) + " bytes");
+                //Console.WriteLine("Size of object is: " + (postObj - preObj) + " bytes");
+
+                Scene.SyncToRender(() => RenderingQueue.GenerateStructureInstancedRenderData(Scene._structures.ToList()));
             }, turboButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button visionTestButton = CreateButton("Music test", () =>

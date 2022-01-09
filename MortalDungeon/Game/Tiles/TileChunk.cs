@@ -72,19 +72,19 @@ namespace MortalDungeon.Game.Tiles
             if (Tiles.Count == 0)
                 return;
 
-            CombatScene scene = Tiles[0].GetScene();
+            //CombatScene scene = Tiles[0].GetScene();
 
-            Structures.ForEach(structure =>
-            {
-                if (!Cull)
-                {
-                    scene.CollateUnit(structure);
-                }
-                else 
-                {
-                    scene.DecollateUnit(structure);
-                }
-            });
+            //Structures.ForEach(structure =>
+            //{
+            //    if (!Cull)
+            //    {
+            //        scene.CollateUnit(structure);
+            //    }
+            //    else 
+            //    {
+            //        scene.DecollateUnit(structure);
+            //    }
+            //});
         }
     }
 }

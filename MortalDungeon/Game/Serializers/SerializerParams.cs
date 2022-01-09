@@ -4,6 +4,12 @@ using System.Text;
 
 namespace MortalDungeon.Game.Serializers
 {
+    public interface ISerializable
+    {
+        public void PrepareForSerialization();
+        public void CompleteDeserialization();
+    }
+
     public static class SerializerParams
     {
         public static string DATA_BASE_PATH = "Data/";

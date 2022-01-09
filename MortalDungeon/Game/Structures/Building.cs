@@ -38,6 +38,8 @@ namespace MortalDungeon.Game.Structures
 
         public int BuildingProfileId = 0;
 
+        public FeaturePoint FeatureOrigin = new FeaturePoint();
+
         /// <summary>
         /// This will initialize nothing. Any buildings created with this must create a valid GameObject before attempting to be rendered.
         /// </summary>
@@ -79,7 +81,7 @@ namespace MortalDungeon.Game.Structures
             if (SkeletonReference != null)
             {
                 SkeletonReference.Loaded = false;
-                SkeletonReference.Handle = null;
+                //SkeletonReference.Handle = null;
                 SkeletonReference = null;
             }
 
@@ -88,7 +90,7 @@ namespace MortalDungeon.Game.Structures
 
         public override void InitializeVisualComponent()
         {
-            base.InitializeVisualComponent();
+            //base.InitializeVisualComponent();
 
             VisibleThroughFog = true;
 
@@ -126,7 +128,9 @@ namespace MortalDungeon.Game.Structures
             if (SkeletonReference != null)
             {
                 var featurePoint = Info.TileMapPosition.ToFeaturePoint();
-                Vector2i tileOffset = new Vector2i(featurePoint.X - SkeletonReference.IdealCenter.X, featurePoint.Y - SkeletonReference.IdealCenter.Y);
+                Vector2i tileOffset = new Vector2i(
+                    featurePoint.X - (SkeletonReference.IdealCenter.X + FeatureOrigin.X),
+                    featurePoint.Y - (SkeletonReference.IdealCenter.Y + FeatureOrigin.Y));
 
                 tilePoint -= tileOffset;
             }
@@ -189,7 +193,7 @@ namespace MortalDungeon.Game.Structures
     public class BuildingSkeleton
     {
         public FeaturePoint IdealCenter;
-        public HashSet<FeaturePoint> TilePattern;
+        public HashSet<Vector3i> TilePattern;
         public int Rotations;
 
         public bool Loaded;
@@ -204,6 +208,9 @@ namespace MortalDungeon.Game.Structures
 
         public static BuildingSkeleton CreateFromSerialized(SerialiableBuildingSkeleton skele)
         {
+            if(skele.BuildingID < 0 || skele.BuildingID > Buildings.CreateBuilding.Count - 1)
+                return null;
+
             BuildingSkeleton newSkele = new BuildingSkeleton();
 
             newSkele.TilePattern = skele.TilePattern.ToHashSet();
@@ -211,6 +218,16 @@ namespace MortalDungeon.Game.Structures
             newSkele.Rotations = skele.Rotations;
 
             //using the BuildingID, create the skeleton's handle.
+
+            newSkele.Handle = Buildings.CreateBuilding[skele.BuildingID](skele);
+
+            newSkele.Handle.InitializeUnitInfo();
+
+            //newSkele.Handle.RotateTilePattern(newSkele.Rotations);
+
+            newSkele.Handle.Rotations = newSkele.Rotations;
+
+            newSkele.Handle.InitializeVisualComponent();
 
             return newSkele;
         }

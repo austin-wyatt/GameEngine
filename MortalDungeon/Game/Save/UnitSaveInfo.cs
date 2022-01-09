@@ -93,6 +93,9 @@ namespace MortalDungeon.Game.Save
         [XmlElement("Ugs")]
         public int GroupStatus;
 
+        [XmlElement("Upar")]
+        public ParameterDict UnitParameters = new ParameterDict();
+
         public UnitSaveInfo() { }
 
         public UnitSaveInfo(Unit unit)
@@ -166,6 +169,10 @@ namespace MortalDungeon.Game.Save
             {
                 GroupStatus = 1;
             }
+
+            UnitParameters = unit.UnitParameters;
+
+            UnitParameters.PrepareForSerialization();
         }
 
         public void ApplyUnitInfoToUnit(Unit unit)
@@ -211,6 +218,12 @@ namespace MortalDungeon.Game.Save
 
             unit.AbilityLoadout = AbilityLoadout;
             unit.UnitCreationInfoId = UnitCreationInfoId;
+
+
+            UnitParameters.CompleteDeserialization();
+            unit.UnitParameters = UnitParameters;
+
+            unit.ApplyUnitParameters(UnitParameters.Parameters);
         }
 
     }

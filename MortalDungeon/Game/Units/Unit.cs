@@ -71,6 +71,8 @@ namespace MortalDungeon.Game.Units
 
         public int UnitCreationInfoId = 0;
 
+        public ParameterDict UnitParameters = new ParameterDict();
+
         public Unit() { }
 
         public Unit(CombatScene scene) 
@@ -82,6 +84,9 @@ namespace MortalDungeon.Game.Units
             Hoverable = true;
             Clickable = true;
             Selectable = true;
+
+            Scene.Tick -= Tick;
+            Scene.Tick += Tick;
         }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
@@ -92,6 +97,9 @@ namespace MortalDungeon.Game.Units
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
             SetTeam(UnitTeam.Unknown);
+
+            Scene.Tick -= Tick;
+            Scene.Tick += Tick;
         }
 
         public virtual void InitializeUnitInfo() 
@@ -118,6 +126,9 @@ namespace MortalDungeon.Game.Units
 
         public virtual void EntityLoad(FeaturePoint position, bool placeOnTileMap = true) 
         {
+            Scene.Tick -= Tick;
+            Scene.Tick += Tick;
+
             Position = new Vector3();
 
             
@@ -199,12 +210,6 @@ namespace MortalDungeon.Game.Units
 
         public void ApplyStateValue(StateIDValuePair state)
         {
-            //here instructions will exist that allow the unit to be modified based on a passed state value
-            //if(state.Instruction == (int)UnitStateInstructions.GeneratePackName)
-            //{
-            //    pack_name = new Random(state.Data).Next().ToString();
-            //}
-
             switch (state.Instruction)
             {
                 case (int)UnitStateInstructions.GeneratePackName:
@@ -226,6 +231,19 @@ namespace MortalDungeon.Game.Units
             }
         }
 
+        public void ApplyUnitParameters(Dictionary<string, string> parameters)
+        {
+            if(parameters.TryGetValue("name", out var name))
+            {
+                Name = name;
+            }
+
+            foreach(var param in parameters)
+            {
+                UnitParameters.Parameters.TryAdd(param.Key, param.Value);
+            }
+        }
+
         public override void CleanUp()
         {
             base.CleanUp();
@@ -243,6 +261,8 @@ namespace MortalDungeon.Game.Units
 
             Scene.DecollateUnit(this);
             Scene.RemoveUnit(this);
+
+            Scene.Tick -= Tick;
         }
 
         public void RemoveFromTile() 

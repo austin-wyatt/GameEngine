@@ -1,5 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Serializers;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -22,8 +24,12 @@ namespace MortalDungeon.Game.UI
 
         public float TextScale = 0.04f;
 
-        public EventLog()
+        public CombatScene Scene;
+
+        public EventLog(CombatScene scene)
         {
+            Scene = scene;
+
             LogArea = new ScrollableArea(default, new UIScale(1.5f, 0.26f), default, new UIScale(1.5f, 2f));
             LogArea.BaseComponent.SetColor(new Vector4(0.33f, 0.33f, 0.25f, 1));
 
@@ -48,6 +54,26 @@ namespace MortalDungeon.Game.UI
                         Events[i].SetRender(true);
                     }
                 }
+            };
+
+            FeatureManager.FeatureEnter += (feature, unit) =>
+            {
+                Scene.SyncToRender(() =>
+                {
+                    string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
+
+                    AddEvent("Entering " + text);
+                });
+            };
+
+            FeatureManager.FeatureExit += (feature, unit) =>
+            {
+                Scene.SyncToRender(() =>
+                {
+                    string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
+
+                    AddEvent("Leaving " + text);
+                });
             };
         }
 

@@ -5,6 +5,8 @@ using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Objects.PropertyAnimations;
+using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Game.Units;
@@ -1112,6 +1114,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }, unit.AI.Team);
 
             ObjectCulling.CullListOfGameObjects(new List<Unit>() { unit });
+
+            if(prevTile != null)
+            {
+                Task.Run(() =>
+                {
+                    FeatureManager.OnUnitMoved(unit);
+                });
+            }
         }
 
         public void OnStructureMoved() 
@@ -1119,6 +1129,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             LightObstructions.ManuallyIncrementChangeToken(); //indicate that something about the light obstructions has changed
 
             UpdateVisionMap();
+
+            if (!ContextManager.GetFlag(GeneralContextFlags.TileMapLoadInProgress))
+            {
+                SyncToRender(() => RenderingQueue.GenerateStructureInstancedRenderData(_structures.ToList()));
+            }
         }
 
         public override void OnRender()
@@ -1375,6 +1390,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 EndCombat();
             }
+
+            FeatureManager.OnUnitKilled(unit);
         }
 
         public override void OnUnitClicked(Unit unit, MouseButton button)

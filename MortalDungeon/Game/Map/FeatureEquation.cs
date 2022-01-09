@@ -2,7 +2,9 @@
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.Ledger;
+using MortalDungeon.Game.LuaHandling;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -20,7 +22,9 @@ namespace MortalDungeon.Game.Map
         TileEnd = 150000,
 
         UnitStart = 1000000,
-        UnitEnd = 2000000
+        UnitEnd = 2000000,
+        BuildingStart = 2000000,
+        BuildingEnd = 2100000
     }
 
     public class FeatureEquation
@@ -33,7 +37,13 @@ namespace MortalDungeon.Game.Map
 
         public HashSet<TileMapPoint> AffectedMaps = new HashSet<TileMapPoint>();
 
-        public List<FeaturePoint> BoundingPoints = new List<FeaturePoint>();
+        public List<BoundingPoints> BoundingPoints = new List<BoundingPoints>();
+
+        public Dictionary<FeaturePoint, Dictionary<string, string>> Parameters = new Dictionary<FeaturePoint, Dictionary<string, string>>();
+
+        public List<BuildingSkeleton> BuildingSkeletons = new List<BuildingSkeleton>();
+
+        public List<ClearParamaters> ClearParamaters = new List<ClearParamaters>();
 
         public FeaturePoint Origin = new FeaturePoint();
 
@@ -44,7 +54,9 @@ namespace MortalDungeon.Game.Map
         /// <summary>
         /// These get applied to the state when the player enters the load radius.
         /// </summary>
-        public List<StateIDValuePair> StateValues = new List<StateIDValuePair>();
+        public List<Instructions> Instructions = new List<Instructions>();
+
+
 
         /// <summary>
         /// If the tile map we are loading is within this load radius of maps then we should load and check this feature.
@@ -58,7 +70,6 @@ namespace MortalDungeon.Game.Map
         public long FeatureID = -1;
 
         public int FeatureTemplate = 0;
-        public int BoundPointsId = 0;
 
         public int Layer = 0;
         /// <summary>
@@ -77,26 +88,36 @@ namespace MortalDungeon.Game.Map
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
 
+            if(Parameters.TryGetValue(affectedPoint, out var param))
+            {
+                if(param.TryGetValue("GEN_SCRIPT", out var script))
+                {
+                    LuaManager.ApplyScript(script);
+                }
+            }
+
             if(AffectedPoints.TryGetValue(affectedPoint, out int value))
             {
                 long pointHash = affectedPoint.GetUniqueHash();
 
-                var interaction = FeatureLedger.GetInteraction(FeatureID, pointHash);
+                var unitAlive = FeatureLedger.GetHashBoolean(FeatureID, pointHash, "alive");
 
-                if(value == 50000)
-                {
-                    tile.Properties.Type = new Random().NextDouble() > 0.3 ? TileType.Water : TileType.AltWater;
-                    tile.Properties.Classification = TileClassification.Water;
-                    tile.Outline = false;
-                    tile.NeverOutline = true;
 
-                    tile.Update();
 
-                    return;
-                }
+                //if(value == 50000)
+                //{
+                //    tile.Properties.Type = new Random().NextDouble() > 0.3 ? TileType.Water : TileType.AltWater;
+                //    tile.Properties.Classification = TileClassification.Water;
+                //    tile.Outline = false;
+                //    tile.NeverOutline = true;
+
+                //    tile.Update();
+
+                //    return;
+                //}
 
                 if (value >= (int)FeatureEquationPointValues.UnitStart && value <= (int)FeatureEquationPointValues.UnitEnd && freshGeneration &&
-                    interaction != FeatureInteraction.Killed &&
+                    unitAlive != HashBoolean.False &&
                     !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.ObjectHash == pointHash))
                 {
                     var unitInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(value - (int)FeatureEquationPointValues.UnitStart);
@@ -104,6 +125,12 @@ namespace MortalDungeon.Game.Map
                     if(unitInfo != null)
                     {
                         Unit unit = unitInfo.CreateUnit(tile.GetScene());
+
+                        if(Parameters.TryGetValue(affectedPoint, out var parameters))
+                        {
+                            unit.ApplyUnitParameters(parameters);
+                        }
+                        
 
                         Entity unitEntity = new Entity(unit);
                         EntityManager.AddEntity(unitEntity);
@@ -115,43 +142,114 @@ namespace MortalDungeon.Game.Map
 
                         unitEntity.Load(affectedPoint);
 
-                        var stateValue = StateValues.FindAll(v => v.ObjectHash == pointHash && v.Type == (int)LedgerUpdateType.Unit);
-                        if(stateValue.Count != 0)
+                        FeatureLedger.SetHashBoolean(FeatureID, pointHash, "alive", true);
+                    }
+                }
+
+                if(value >= (int)FeatureEquationPointValues.BuildingStart && value <= (int)FeatureEquationPointValues.BuildingEnd)
+                {
+                    BuildingSkeleton skeleton = BuildingSkeletons[value - (int)FeatureEquationPointValues.BuildingStart];
+
+                    if (skeleton != null && skeleton.Loaded == false)
+                    {
+                        skeleton.Loaded = true;
+                        skeleton._skeletonTouchedThisCycle = true;
+
+                        var building = skeleton.Handle;
+                        building.Scene = tile.GetScene();
+                        building.InitializeUnitInfo();
+
+                        building.FeatureOrigin = Origin;
+
+                        building.SkeletonReference = skeleton;
+
+                        //building.InitializeVisualComponent();
+
+                        Vector3 tileSize = tile.GetDimensions();
+                        Vector3 posDiff = new Vector3();
+
+                        if (affectedPoint != skeleton.IdealCenter)
                         {
-                            foreach(var state in stateValue)
+                            posDiff.X = tileSize.X * (skeleton.IdealCenter.X + Origin.X - affectedPoint.X);
+                            posDiff.Y = tileSize.Y * (skeleton.IdealCenter.Y + Origin.Y - affectedPoint.Y);
+
+
+
+                            if (Math.Abs((skeleton.IdealCenter.X + Origin.X)) % 2 == 0)
                             {
-                                unit.ApplyStateValue(state);
+                                posDiff.Y += tileSize.Y / 2;
+                            }
+
+                            if (Math.Abs((skeleton.IdealCenter.X + Origin.X)) % 2 == 1)
+                            {
+                                posDiff.Y -= tileSize.Y / 2;
+                            }
+
+                            if (affectedPoint.X < skeleton.IdealCenter.X)
+                            {
+                                posDiff.X -= tileSize.X / 4;
+                            }
+                            else
+                            {
+                                posDiff.X += tileSize.X / 4;
                             }
                         }
 
-                        return;
+                        building.SetPosition(tile.Position + posDiff + new Vector3(0, 0, 0.2f));
+
+                        building.SetTileMapPosition(tile);
+                    }
+                    else if (skeleton != null && skeleton.Handle != null && skeleton.Loaded && !skeleton._skeletonTouchedThisCycle)
+                    {
+                        skeleton._skeletonTouchedThisCycle = true;
+
+                        skeleton.Handle.TileAction();
                     }
                 }
             }
 
-            //if(BoundingPoints.Count > 2 && FeaturePoint.BoundsContains(BoundingPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
-            if(BoundingPoints.Count > 2 && FeaturePoint.PointInPolygon(BoundingPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
+            foreach (var bound in BoundingPoints)
             {
-                switch (BoundPointsId)
+                if (bound.BoundingPointsId == 0)
+                    continue;
+
+                if (bound.OffsetPoints.Count > 2 && FeaturePoint.PointInPolygon(bound.OffsetPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
                 {
-                    case 1:
-                        if (NumberGen.NextDouble() > 0.9)
-                        {
-                            new Structures.Tree(tile.TileMap, tile, NumberGen.Next() % 2);
-                        }
-                        break;
-                    case 2:
-                        if (NumberGen.NextDouble() > 0.3)
-                        {
-                            tile.Properties.Type = TileType.Water;
-                        }
-                        else
-                        {
-                            tile.Properties.Type = TileType.AltWater;
-                        }
-                        break;
+                    switch (bound.BoundingPointsId)
+                    {
+                        case 1:
+                            double density = 0.9;
+                            if(bound.Parameters.TryGetValue("density", out var val))
+                            {
+                                if(double.TryParse(val, out var d))
+                                {
+                                    density = d;
+                                }
+                            }
+
+                            if (NumberGen.NextDouble() > density)
+                            {
+                                var tree = new Tree(tile.TileMap, tile, NumberGen.Next() % 2);
+
+                                tile.GetScene().Tick -= tree.Tick;
+                            }
+                            break;
+                        case 2:
+                            if (NumberGen.NextDouble() > 0.3)
+                            {
+                                tile.Properties.Type = TileType.Water;
+                            }
+                            else
+                            {
+                                tile.Properties.Type = TileType.AltWater;
+                            }
+                            break;
+                        case 3:
+                            tile.Properties.Type = TileType.Dirt;
+                            break;
+                    }
+
                 }
-                
             }
         }
 
@@ -180,6 +278,25 @@ namespace MortalDungeon.Game.Map
         public virtual void OnAppliedToMaps() 
         {
 
+        }
+
+        public bool CheckCleared()
+        {
+            if(FeatureLedger.GetFeatureStateValue(FeatureID, FeatureStateValues.Cleared) != 1)
+            {
+                foreach(var parameters in ClearParamaters)
+                {
+                    foreach(var param in parameters.ExpectedValues)
+                    {
+                        if(FeatureLedger.GetHashData(FeatureID, parameters.ObjectHash, param.Key) != param.Value)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -586,157 +703,21 @@ namespace MortalDungeon.Game.Map
         {
             return (num & (1 << bitNumber)) != 0;
         }
-    }
-
-    [XmlType(TypeName = "FP")]
-    [Serializable]
-    public struct FeaturePoint
-    {
-        public int X;
-        public int Y;
 
 
-        [XmlElement("FPv")]
-        public bool _visited;
+        public delegate void FeatureEnterHandler(FeatureEquation eq, Unit unit);
 
-        public FeaturePoint(int x, int y) 
+        public FeatureEnterHandler Enter;
+        public FeatureEnterHandler Exit;
+
+        public void OnEnter(Unit unit)
         {
-            X = x;
-            Y = y;
-
-            _visited = false;
+            Enter?.Invoke(this, unit);
         }
 
-        public FeaturePoint(TilePoint tilePoint) 
+        public void OnExit(Unit unit)
         {
-            Vector2i coords = FeatureEquation.PointToMapCoords(tilePoint);
-
-            X = coords.X;
-            Y = coords.Y;
-
-            _visited = false;
+            Exit?.Invoke(this, unit);
         }
-
-        public FeaturePoint(BaseTile tile) 
-        {
-            this = new FeaturePoint(tile.TilePoint);
-        }
-
-        public FeaturePoint(Vector2i coords)
-        {
-            X = coords.X;
-            Y = coords.Y;
-
-            _visited = false;
-        }
-
-        public FeaturePoint(FeaturePoint coords)
-        {
-            X = coords.X;
-            Y = coords.Y;
-
-            _visited = false;
-        }
-
-        public static bool operator ==(FeaturePoint a, FeaturePoint b) => a.X == b.X && a.Y == b.Y;
-        public static bool operator !=(FeaturePoint a, FeaturePoint b) => !(a == b);
-
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public long GetUniqueHash()
-        {
-            return ((long)X << 32) + Y;
-        }
-
-        public override string ToString()
-        {
-            return $"{{{X}, {Y}}}";
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(X, Y);
-        }
-
-        /// <summary>
-        /// Returns whether the given point is contained within the polygon formed by the passed list of points
-        /// </summary>
-        /// <param name="points">The bounding points sorted to create a perimeter</param>
-        /// <param name="point">The point to test</param>
-        /// <returns></returns>
-        //public static bool BoundsContains(List<FeaturePoint> points, Vector2i point)
-        //{
-        //    int intersections = 0;
-
-        //    for (int side = 0; side < points.Count; side++)
-        //    {
-        //        int nextSide = (side + 1) % points.Count;
-
-        //        if (MiscOperations.GFG.GetLinesIntersect(new Vector2(point.X, point.Y), new Vector2(point.X + 1000, point.Y + 100000),
-        //            new Vector2(points[side].X, points[side].Y), new Vector2(points[nextSide].X, points[nextSide].Y)))
-        //        {
-        //            intersections++;
-        //        }
-        //    }
-
-        //    if (intersections % 2 == 0)
-        //    {
-        //        return false;
-        //    }
-
-        //    return true;
-        //}
-
-        public static bool PointInPolygon(List<FeaturePoint> points, Vector2i point)
-        {
-            bool oddNodes = false;
-
-            int j = points.Count - 1;
-
-            for (int i = 0; i < points.Count; i++)
-            {
-                if ((float)points[i].Y < point.Y && (float)points[j].Y >= point.Y
-                || (float)points[j].Y < point.Y && (float)points[i].Y >= point.Y)
-                {
-                    if (points[i].X + (float)((float)point.Y - points[i].Y) / ((float)points[j].Y - points[i].Y) * ((float)points[j].X - points[i].X) < point.X)
-                    {
-                        oddNodes = !oddNodes;
-                    }
-                }
-
-                j = i;
-            }
-
-            return oddNodes;
-        }
-    }
-
-    public class FeaturePointWithParent 
-    {
-        public FeaturePoint Point;
-        public FeaturePoint Parent;
-        public bool IsRoot;
-
-        public FeaturePointWithParent(FeaturePoint point, FeaturePoint parent, bool isRoot = false) 
-        {
-            Point = point;
-            Parent = parent;
-
-            IsRoot = isRoot;
-        }
-    }
-
-    public enum FeatureType 
-    {
-        None,
-        Grass,
-        Water_1,
-        Water_2,
-        Tree_1,
-        Tree_2,
-        StonePath
     }
 }

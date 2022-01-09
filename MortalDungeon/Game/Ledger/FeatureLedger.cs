@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game
 {
@@ -93,7 +94,7 @@ namespace MortalDungeon.Game
                     break;
             }
 
-            node.CheckNodeCleared();
+            //node.CheckNodeCleared();
 
             if(state.Data != (int)FeatureInteraction.None)
             {
@@ -147,6 +148,51 @@ namespace MortalDungeon.Game
             }
         }
 
+        public static void SetFeatureStateValue(long stateId, FeatureStateValues stateValue, int data)
+        {
+            if (LedgeredFeatures.TryGetValue(stateId, out var n))
+            {
+                n.SetStateValue(stateValue, (short)data);
+            }
+            else
+            {
+                FeatureLedgerNode node = new FeatureLedgerNode() { ID = stateId };
+                LedgeredFeatures.Add(stateId, node);
+
+                node.SetStateValue(stateValue, (short)data);
+            }
+        }
+
+        public static void IncrementStateValue(long stateId, FeatureStateValues stateValue)
+        {
+            if (LedgeredFeatures.TryGetValue(stateId, out var n))
+            {
+                n.IncrementStateValue(stateValue);
+            }
+            else
+            {
+                FeatureLedgerNode node = new FeatureLedgerNode() { ID = stateId };
+                LedgeredFeatures.Add(stateId, node);
+
+                n.IncrementStateValue(stateValue);
+            }
+        }
+
+        public static void DecrementStateValue(long stateId, FeatureStateValues stateValue)
+        {
+            if (LedgeredFeatures.TryGetValue(stateId, out var n))
+            {
+                n.DecrementStateValue(stateValue);
+            }
+            else
+            {
+                FeatureLedgerNode node = new FeatureLedgerNode() { ID = stateId };
+                LedgeredFeatures.Add(stateId, node);
+
+                node.DecrementStateValue(stateValue);
+            }
+        }
+
         public static void RemoveFeatureStateValue(StateIDValuePair stateValue)
         {
             if (LedgeredFeatures.TryGetValue(stateValue.StateID, out var n))
@@ -165,6 +211,68 @@ namespace MortalDungeon.Game
 
             return 0;
         }
+
+
+        public static string GetHashData(long featureId, long objectHash, string property)
+        {
+            if (LedgeredFeatures.TryGetValue(featureId, out var n))
+            {
+                if(n.HashData.TryGetValue(objectHash, out var data))
+                {
+                    return data.LazyGet(property);
+                }
+            }
+
+            return "";
+        }
+
+        public static void AddHashData(long featureId, long objectHash, string key, string property)
+        {
+            FeatureLedgerNode node;
+
+            LedgeredFeatures.GetOrAdd(featureId, out node);
+            node.ID = featureId;
+
+            node.HashData.GetOrAdd(objectHash, out var data);
+            data.AddOrSet(key, property);
+
+            //check if feature is cleared here
+            
+            if(FeatureManager.LoadedFeatures.TryGetValue(featureId, out var eq))
+            {
+                if (eq.CheckCleared())
+                {
+                    SetFeatureStateValue(featureId, FeatureStateValues.Cleared, 1);
+                }
+            }
+        }
+
+        public static HashBoolean GetHashBoolean(long featureId, long objectHash, string property)
+        {
+            string value = GetHashData(featureId, objectHash, property);
+
+            switch (value)
+            {
+                case "t":
+                    return HashBoolean.True;
+                case "f":
+                    return HashBoolean.False;
+                default:
+                    return HashBoolean.NotSet;
+            }
+        }
+
+        public static void SetHashBoolean(long featureId, long objectHash, string key, bool property)
+        {
+            AddHashData(featureId, objectHash, key, property ? "t" : "f");
+        }
+    }
+
+    public enum HashBoolean
+    {
+        True,
+        False,
+        NotSet
     }
 
     /// <summary>
@@ -189,6 +297,11 @@ namespace MortalDungeon.Game
         SpecialInteractionCount = long.MaxValue - 53,
 
         SpecifyFeatureInteraction = long.MaxValue - 100,
+
+        PlayerInside = long.MaxValue - 200,
+        PlayerInsideCounter = long.MaxValue - 201,
+
+        FeatureLoaded = long.MaxValue - 500
     }
 
     public class FeatureLedgerNode
@@ -197,11 +310,13 @@ namespace MortalDungeon.Game
 
         /// <summary>
         /// The key will represent the hash of point that the interactable object was on. 
-        /// For example, if a skeleton was spawned on point (0, 1) and the killed then 
+        /// For example, if a skeleton was spawned on point (0, 1) and then killed then 
         /// the hash of (0, 1) and a short casted from the FeatureInteraction enum will be stored <para/>
         /// SignificantInteractions will also encode state data for the feature
         /// </summary>
         public Dictionary<long, short> SignificantInteractions = new Dictionary<long, short>();
+
+        public Dictionary<long, Dictionary<string, string>> HashData = new Dictionary<long, Dictionary<string, string>>();
 
         public void IncrementStateValue(FeatureStateValues objHash)
         {
@@ -229,6 +344,32 @@ namespace MortalDungeon.Game
             Ledgers.LedgerUpdated(updatedState);
         }
 
+        public void DecrementStateValue(FeatureStateValues objHash)
+        {
+            int val = 0;
+
+            if (SignificantInteractions.TryGetValue((long)objHash, out var a))
+            {
+                val = a - 1;
+                SignificantInteractions[(long)objHash] = (short)(val);
+            }
+            else
+            {
+                val = -1;
+                SignificantInteractions.Add((long)objHash, (short)val);
+            }
+
+            StateIDValuePair updatedState = new StateIDValuePair()
+            {
+                Type = (int)LedgerUpdateType.Feature,
+                StateID = ID,
+                ObjectHash = (long)objHash,
+                Data = val,
+            };
+
+            Ledgers.LedgerUpdated(updatedState);
+        }
+
         public void SetStateValue(FeatureStateValues objHash, short value)
         {
             if (SignificantInteractions.TryGetValue((long)objHash, out var a))
@@ -239,6 +380,7 @@ namespace MortalDungeon.Game
             {
                 SignificantInteractions.Add((long)objHash, value);
             }
+
 
             StateIDValuePair updatedState = new StateIDValuePair()
             {
@@ -271,25 +413,25 @@ namespace MortalDungeon.Game
             }
         }
 
-        public void CheckNodeCleared()
-        {
-            short requiredNormal = GetStateValue(FeatureStateValues.NormalKillRequirements);
-            short requiredBoss = GetStateValue(FeatureStateValues.BossKillRequirements);
-            short requiredLoot = GetStateValue(FeatureStateValues.LootInteractionRequirements);
-            short requiredInteraction = GetStateValue(FeatureStateValues.SpecialInteractionRequirements);
+        //public void CheckNodeCleared()
+        //{
+        //    short requiredNormal = GetStateValue(FeatureStateValues.NormalKillRequirements);
+        //    short requiredBoss = GetStateValue(FeatureStateValues.BossKillRequirements);
+        //    short requiredLoot = GetStateValue(FeatureStateValues.LootInteractionRequirements);
+        //    short requiredInteraction = GetStateValue(FeatureStateValues.SpecialInteractionRequirements);
 
-            short countNormal = GetStateValue(FeatureStateValues.NormalKillCount);
-            short countBoss = GetStateValue(FeatureStateValues.BossKillCount);
-            short countLoot = GetStateValue(FeatureStateValues.LootInteractionCount);
-            short countInteraction = GetStateValue(FeatureStateValues.SpecialInteractionCount);
+        //    short countNormal = GetStateValue(FeatureStateValues.NormalKillCount);
+        //    short countBoss = GetStateValue(FeatureStateValues.BossKillCount);
+        //    short countLoot = GetStateValue(FeatureStateValues.LootInteractionCount);
+        //    short countInteraction = GetStateValue(FeatureStateValues.SpecialInteractionCount);
 
-            if(countNormal >= requiredNormal &&
-               countBoss >= requiredBoss &&
-               countLoot >= requiredLoot &&
-               countInteraction >= requiredInteraction)
-            {
-                SetStateValue(FeatureStateValues.Cleared, 1);
-            }
-        }
+        //    if(countNormal >= requiredNormal &&
+        //       countBoss >= requiredBoss &&
+        //       countLoot >= requiredLoot &&
+        //       countInteraction >= requiredInteraction)
+        //    {
+        //        SetStateValue(FeatureStateValues.Cleared, 1);
+        //    }
+        //}
     }
 }

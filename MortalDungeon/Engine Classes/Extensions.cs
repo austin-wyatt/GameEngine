@@ -52,5 +52,39 @@ namespace MortalDungeon.Engine_Classes
 
             return finalString;
         }
+
+        public static bool GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, out TValue data)
+        {
+            if(!dict.TryGetValue(key, out data))
+            {
+                data = (TValue)GetDefaultValue(typeof(TValue));
+                dict.AddOrSet(key, data);
+            }
+
+            return true;
+        }
+
+        public static void AddOrSet<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue value)
+        {
+            if(!dict.TryAdd(key, value))
+            {
+                dict[key] = value;
+            }
+        }
+
+        public static TValue LazyGet<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key)
+        {
+            if(dict.TryGetValue(key, out TValue value))
+            {
+                return value;
+            }
+
+            return (TValue)GetDefaultValue(typeof(TValue));
+        }
+
+        public static object GetDefaultValue(Type t)
+        {
+            return Activator.CreateInstance(t);
+        }
     }
 }

@@ -162,6 +162,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             EnableInstancedShaderAttributes();
 
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
             GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
 
@@ -309,7 +310,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             TextureUnit currentTextureUnit = TextureUnit.Texture2;
 
-            void draw(int itemCount, float[] renderDataArray) 
+            void draw(int itemCount, ref float[] renderDataArray) 
             {
                 GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.DynamicDraw);
 
@@ -339,7 +340,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                     if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag) 
                     {
-                        draw(count, _instancedRenderDataArray);
+                        draw(count, ref _instancedRenderDataArray);
                         count = 0;
                         currIndex = 0;
 
@@ -437,7 +438,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 }
             }
 
-            draw(count, _instancedRenderDataArray);
+            draw(count, ref _instancedRenderDataArray);
 
             //if (instantiateRenderFunc)
             DisableInstancedShaderAttributes();
@@ -447,6 +448,47 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, null, true, enableLighting);
             }
+        }
+
+        public static void RenderInstancedRenderData(List<InstancedRenderData> data)
+        {
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+
+            for (int i = 0; i < data.Count; i++)
+            {
+                Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", data[i].EnableLighting ? 1 : 0);
+
+
+                foreach (var Tex in data[i].Textures)
+                {
+                    Tex.Key.Use(Tex.Value);
+
+                    int texIndex = (int)Tex.Value - 33984;
+                    int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
+                    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
+                    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 16);
+                    //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
+                    Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+                }
+
+                Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 16);
+                Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].diffuse", 0);
+                Shaders.FAST_DEFAULT_SHADER.SetFloat("material[0].shininess", 16);
+
+                //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
+
+                EnableInstancedShaderAttributes();
+                InstancedRenderData.PrepareInstancedRenderFunc(data[i]);
+
+
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, data[i].VerticesCount, DrawElementsType.UnsignedInt, new IntPtr(), data[i].ItemCount);
+
+                DrawCount++;
+                ObjectsDrawn += data[i].ItemCount;
+            }
+
+            DisableInstancedShaderAttributes();
         }
 
         public static void RenderBaseObjectsInstanced(List<BaseObject> objects, List<MultiTextureData> multiTextureData, RenderableObject display = null)
@@ -577,6 +619,17 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Shaders.SIMPLE_SHADER.Use();
             }
+
+
+            if (RenderingQueue.RenderStateManager.GetFlag(RenderingStates.Fade))
+            {
+                Shaders.SIMPLE_SHADER.SetFloat("Alpha", RenderFunctions.FadeParameters.Alpha);
+            }
+            else
+            {
+                Shaders.SIMPLE_SHADER.SetFloat("Alpha", 1);
+            }
+            
 
             GL.EnableVertexAttribArray(0);
 
@@ -1097,6 +1150,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static void EnableInstancedShaderAttributes()
         {
+            GL.EnableVertexAttribArray(0);
+            GL.EnableVertexAttribArray(1);
             GL.EnableVertexAttribArray(2);
             GL.EnableVertexAttribArray(3);
             GL.EnableVertexAttribArray(4);
@@ -1146,6 +1201,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static void EnableParticleShaderAttributes()
         {
+            GL.EnableVertexAttribArray(0);
             GL.EnableVertexAttribArray(1);
             GL.EnableVertexAttribArray(2);
             GL.EnableVertexAttribArray(3);

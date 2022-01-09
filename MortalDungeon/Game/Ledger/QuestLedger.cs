@@ -63,12 +63,39 @@ namespace MortalDungeon.Game
 
             return false;
         }
+
+
+
+        public static void CompleteQuestObjective(int questId, int stateIndex, int objectiveIndex)
+        {
+            StateIDValuePair state = new StateIDValuePair();
+
+            state.Type = (int)LedgerUpdateType.Quest;
+            state.StateID = questId;
+            state.Data = (int)QuestStates.State0 + (int)QuestStates.StateOffset * stateIndex + objectiveIndex + 1;
+
+            Ledgers.ApplyStateValue(state);
+        }
+
+        public static void StartQuest(int questId)
+        {
+            StateIDValuePair state = new StateIDValuePair();
+            state.Type = (int)LedgerUpdateType.Quest;
+            state.StateID = questId;
+            state.Data = (int)QuestStates.Start;
+
+            Ledgers.ApplyStateValue(state);
+        }
     }
 
     public enum QuestStates
     {
         Completed = 99857,
-        Start = 99858
+        Start = 99858,
+
+        StateOffset = 10000,
+        State0 = 100000, 
+        Objective0 = 100001,
     }
 
     public class QuestLedgerNode

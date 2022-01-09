@@ -39,8 +39,7 @@ namespace MortalDungeon.Game.Serializers
 
             Feature loadedState = (Feature)serializer.Deserialize(reader);
 
-            loadedState._affectedPoints.FillDictionary(loadedState.AffectedPoints);
-            loadedState._affectedPoints = null;
+            loadedState.CompleteDeserialization();
 
             reader.Close();
             fs.Close();
@@ -59,7 +58,7 @@ namespace MortalDungeon.Game.Serializers
         {
             string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(feature.Id, _fileNameLength) + ".f";
 
-            feature._affectedPoints = new DeserializableDictionary<Vector3i, int>(feature.AffectedPoints);
+            feature.PrepareForSerialization();
 
             XmlSerializer serializer = new XmlSerializer(typeof(Feature));
 

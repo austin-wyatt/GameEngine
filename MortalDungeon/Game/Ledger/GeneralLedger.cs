@@ -16,7 +16,6 @@ namespace MortalDungeon.Game
         [XmlIgnore]
         public static Dictionary<long, GeneralLedgerNode> LedgeredGeneralState = new Dictionary<long, GeneralLedgerNode>();
 
-
         /// <summary>
         /// 
         /// </summary>

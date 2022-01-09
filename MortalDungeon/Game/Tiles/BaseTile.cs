@@ -306,12 +306,16 @@ namespace MortalDungeon.Game.Tiles
                 //return;
             }
 
+            GetScene().AddStructure(structure);
+
             Chunk.Structures.Add(structure);
             Structure = structure;
         }
 
         public void RemoveStructure<T>(T structure) where T : Structure
         {
+            GetScene().RemoveStructure(structure);
+
             Chunk.Structures.Remove(structure);
             Structure = null;
         }

@@ -19,13 +19,19 @@ namespace MortalDungeon.Game.Serializers
 
         [XmlElement("Qsn")]
         public string Name = "";
+        [XmlElement("QsHe")]
+        public int Title = 0;
+
+        [XmlElement("QsBo")]
+        public int Body = 0;
+
         public Quest() { }
 
         public void CheckObjectives()
         {
             if(CurrentState < QuestStates.Count)
             {
-                if (QuestStates[CurrentState].IsStateCompleted(ID))
+                if (QuestStates[CurrentState].IsStateCompleted(ID, CurrentState))
                 {
                     AdvanceQuestState();
                 }
@@ -41,8 +47,6 @@ namespace MortalDungeon.Game.Serializers
         /// </summary>
         public void AdvanceQuestState()
         {
-            QuestStates[CurrentState].ClearState(ID);
-
             CurrentState++;
 
             if (CurrentState >= QuestStates.Count)
@@ -59,7 +63,7 @@ namespace MortalDungeon.Game.Serializers
         {
             foreach(var obj in QuestStates[CurrentState].QuestObjectives)
             {
-                Ledgers.SetStateValue(obj.State);
+                Ledgers.EvaluateInstruction(obj.Instruction);
             }
         }
     }
@@ -78,36 +82,38 @@ namespace MortalDungeon.Game.Serializers
 
         public QuestState() { }
 
-        public bool IsStateCompleted(int questID)
+        public bool IsStateCompleted(int questID, int stateIndex)
         {
             int count = 0;
             foreach (var obj in QuestObjectives)
             {
-                if (!QuestLedger.GetStateValue(questID, (int)QuestStates.CompleteObjective0 + count))
+                if (!QuestLedger.GetStateValue(questID, (int)QuestStates.State0 + (int)QuestStates.StateOffset * stateIndex + count + 1))
                 {
                     return false;
                 }
+
+                count++;
             }
 
             return true;
         }
 
-        public void ClearState(int questID)
-        {
-            for(int i = 0; i < QuestObjectives.Count; i++)
-            {
-                StateIDValuePair clearValue = new StateIDValuePair()
-                {
-                    Type = (int)LedgerUpdateType.Quest,
-                    StateID = questID,
-                    ObjectHash = 0,
-                    Data = (int)QuestStates.CompleteObjective0 + i,
-                    Instruction = (short)StateInstructions.Clear
-                };
+        //public void ClearState(int questID)
+        //{
+        //    for(int i = 0; i < QuestObjectives.Count; i++)
+        //    {
+        //        StateIDValuePair clearValue = new StateIDValuePair()
+        //        {
+        //            Type = (int)LedgerUpdateType.Quest,
+        //            StateID = questID,
+        //            ObjectHash = 0,
+        //            Data = (int)QuestStates.CompleteObjective0 + i,
+        //            Instruction = (short)StateInstructions.Clear
+        //        };
 
-                Ledgers.SetStateValue(clearValue);
-            }
-        }
+        //        Ledgers.ApplyStateValue(clearValue);
+        //    }
+        //}
     }
 
     public enum QuestObjectiveType
@@ -127,21 +133,10 @@ namespace MortalDungeon.Game.Serializers
 
     }
 
-    public enum QuestStates
-    {
-        Completed = 99857,
-        Start = 99858,
-        CompleteObjective0 = 100000, //Completes objective 0 of the current state of the quest id included in the StateID
-        CompleteObjective1 = 100001, //Completes objective 1 of the current state 
-    }
-
     [XmlType(TypeName = "QO")]
     public class QuestObjective
     {
-        public StateIDValuePair State = new StateIDValuePair()
-        {
-            Instruction = (short)StateInstructions.Subscribe,
-        };
+        public Instructions Instruction = new Instructions();
 
         [XmlElement("QOn")]
         public string Name;

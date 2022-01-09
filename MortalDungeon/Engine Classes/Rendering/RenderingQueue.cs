@@ -11,7 +11,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 {
     public enum RenderingStates 
     {
-        GuassianBlur
+        GuassianBlur,
+        Fade,
     }
     public static class RenderingQueue
     {
@@ -33,6 +34,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
 
+        public static List<InstancedRenderData> StructureRenderData = new List<InstancedRenderData>();
+
         public static Action RenderSkybox = null;
 
         /// <summary>
@@ -42,6 +45,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             RenderSkybox?.Invoke();
 
+            if (RenderStateManager.GetFlag(RenderingStates.Fade))
+            {
+                RenderFunctions.Fade();
+                return;
+            }
 
             if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur)) 
             {
@@ -51,14 +59,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             GL.Enable(EnableCap.FramebufferSrgb);
 
-            //RenderFrameBuffer(MainFBO);
-
-            //MainFBO.UnbindFrameBuffer();
-            //MainFBO.ClearColorBuffer(false);
-
-            //DrawToFrameBuffer(MainFBO); 
-
-            //RenderQueuedLetters();
 
             RenderTileQueue();
 
@@ -66,16 +66,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderQueuedParticles();
 
-            //RenderQueuedStructures();
             RenderQueuedObjects();
             RenderQueuedUnits();
+            RenderInstancedStructureData();
 
             RenderLowPriorityQueue();
 
-            //RenderSkybox?.Invoke();
-
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            //RenderLightQueue();
 
             if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur))
             {
@@ -330,6 +327,25 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             _LowPriorityQueue.Clear();
         }
+        #endregion
+
+
+        #region Structure instanced render data
+        public static void GenerateStructureInstancedRenderData(List<Structure> structures)
+        {
+            for (int i = 0; i < StructureRenderData.Count; i++)
+            {
+                StructureRenderData[i].CleanUp();
+            }
+
+            StructureRenderData = InstancedRenderData.GenerateInstancedRenderData(structures);
+        }
+
+        public static void RenderInstancedStructureData()
+        {
+            Renderer.RenderInstancedRenderData(StructureRenderData);
+        }
+
         #endregion
     }
 }

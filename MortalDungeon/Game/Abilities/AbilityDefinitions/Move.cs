@@ -176,6 +176,7 @@ namespace MortalDungeon.Game.Abilities
                             }
 
                             CastingUnit.SetTileMapPosition(currentTile);
+
                             //Scene.Controller.CullObjects();
 
                             currentTile.Properties.Type.SimplifiedType().FootstepSound().Play();
