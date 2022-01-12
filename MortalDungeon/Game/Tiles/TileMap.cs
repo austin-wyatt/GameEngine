@@ -205,10 +205,10 @@ namespace MortalDungeon.Game.Tiles
 
             obj.Material = new Material() { Diffuse = DynamicTexture };
 
-            obj.Material.Diffuse.TextureName = TextureName.DynamicTexture;
-            obj.Textures.Textures[0] = TextureName.DynamicTexture;
+            obj.Material.Diffuse.TextureId = (int)TextureName.DynamicTexture;
+            obj.Textures.TextureIds[0] = (int)TextureName.DynamicTexture;
 
-            Renderer.LoadTextureFromTextureObj(obj.Material.Diffuse, TextureName.DynamicTexture);
+            Renderer.LoadTextureFromTextureObj(obj.Material.Diffuse, (int)TextureName.DynamicTexture);
 
             Animation Idle = new Animation()
             {
@@ -459,12 +459,12 @@ namespace MortalDungeon.Game.Tiles
             if (up)
             {
                 tile.BaseObjects[0].SetAnimation((int)HeightIndicatorTile.Animations.Up);
-                tile.SetColor(Colors.MoreTranslucentRed);
+                tile.SetColor(_Colors.MoreTranslucentRed);
             }
             else 
             {
                 tile.BaseObjects[0].SetAnimation((int)HeightIndicatorTile.Animations.Down);
-                tile.SetColor(Colors.MoreTranslucentBlue);
+                tile.SetColor(_Colors.MoreTranslucentBlue);
             }
 
             Controller.Scene._genericObjects.Add(tile);

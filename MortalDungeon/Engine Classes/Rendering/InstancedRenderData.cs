@@ -47,6 +47,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             List<InstancedRenderData> data = new List<InstancedRenderData>();
 
 
+
+
             if(objects.Count > 0)
             {
                 GenerateInstancedRenderData(ref data, objects, display, enableLighting);
@@ -72,7 +74,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Display = display;
             }
 
-            TextureName currTexture = Display.Textures.Textures[0];
+            int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
 
             FillVertexAndElementBuffers(Display, ref instancedRenderData);
@@ -84,14 +86,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
             int count = 0;
             List<T> recursiveCallList = new List<T>();
 
-            Dictionary<TextureName, TextureUnit> usedTextures = new Dictionary<TextureName, TextureUnit>();
+            Dictionary<int, TextureUnit> usedTextures = new Dictionary<int, TextureUnit>();
             Dictionary<Texture, TextureUnit> textureReferences = new Dictionary<Texture, TextureUnit>();
 
             usedTextures.Add(currTexture, TextureUnit.Texture0);
             textureReferences.Add(Display.Material.Diffuse, TextureUnit.Texture0);
 
             BaseObject obj;
-            TextureName tex;
+            int texId;
 
             TextureUnit currentTextureUnit = TextureUnit.Texture2;
 
@@ -121,13 +123,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
                             }
 
                             obj = objects[i].BaseObjects[j];
-                            tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
+                            texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
 
-                            if (tex != currTexture)
+                            if (texId != currTexture)
                             {
-                                if (!usedTextures.ContainsKey(tex))
+                                if (!usedTextures.ContainsKey(texId))
                                 {
-                                    usedTextures.Add(tex, currentTextureUnit);
+                                    usedTextures.Add(texId, currentTextureUnit);
                                     textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
 
                                     obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
@@ -149,7 +151,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                             }
                             else
                             {
-                                InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedDataArray, ref currIndex, (usedTextures[tex] - TextureUnit.Texture0));
+                                InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
 
                                 count++;
                             }

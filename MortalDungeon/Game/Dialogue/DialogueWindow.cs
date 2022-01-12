@@ -88,7 +88,7 @@ namespace MortalDungeon.Game
 
             _buttonParent = new UIBlock();
             _buttonParent.MultiTextureData.MixTexture = false;
-            _buttonParent.SetColor(Colors.Transparent);
+            _buttonParent.SetColor(_Colors.Transparent);
             _buttonParent.SetAllInline(0);
 
             //Window.AddChild(_buttonParent);
@@ -96,7 +96,7 @@ namespace MortalDungeon.Game
 
             _dialogueParent = new UIBlock();
             _dialogueParent.MultiTextureData.MixTexture = false;
-            _dialogueParent.SetColor(Colors.Transparent);
+            _dialogueParent.SetColor(_Colors.Transparent);
             _dialogueParent.SetAllInline(0);
 
             //Window.AddChild(_dialogueParent);
@@ -104,7 +104,7 @@ namespace MortalDungeon.Game
 
             _speakerParent = new UIBlock();
             _speakerParent.MultiTextureData.MixTexture = false;
-            _speakerParent.SetColor(Colors.Transparent);
+            _speakerParent.SetColor(_Colors.Transparent);
             _speakerParent.SetAllInline(0);
 
             //Window.AddChild(_speakerParent);
@@ -144,14 +144,14 @@ namespace MortalDungeon.Game
                 obj._currentAnimation.Play();
             }
 
-            uiObj.SetColor(Colors.Transparent);
+            uiObj.SetColor(_Colors.Transparent);
             uiObj.MultiTextureData.MixTexture = false;
             uiObj.SetScale(0.18f / WindowConstants.AspectRatio, 0.18f, 0.18f);
             uiObj.SetAllInline(0);
 
             TextComponent dialogueText = new TextComponent();
             dialogueText.SetTextScale(0.04f);
-            dialogueText._textField.SetColor(Colors.Tan);
+            dialogueText._textField.SetColor(_Colors.Tan);
 
             string dialogueMessage = EventLog.WrapString(_currentNode.GetMessage(), textWrapLength);
 
@@ -266,7 +266,7 @@ namespace MortalDungeon.Game
                 {
                     string responseString = EventLog.WrapString(res.ToString(), textWrapLength);
 
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.043f, Colors.UILightGray, Colors.UITextBlack);
+                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.2f, _Colors.UILightGray, _Colors.UITextBlack);
                     button.BaseComponent.MultiTextureData.MixTexture = false;
 
                     button.BaseComponent.SetSize(button.TextBox.BaseComponent.Size + new UIScale(0.05f, 0.05f));
@@ -345,7 +345,7 @@ namespace MortalDungeon.Game
         {
             TextComponent dialogueText = new TextComponent();
             dialogueText.SetTextScale(0.04f);
-            dialogueText._textField.SetColor(Colors.Green);
+            dialogueText._textField.SetColor(_Colors.Green);
 
             string dialogueMessage = EventLog.WrapString(response, textWrapLength);
 

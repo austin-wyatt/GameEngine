@@ -12,7 +12,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             UIBlock mainBlock = new UIBlock();
             mainBlock.MultiTextureData.MixPercent = 0.1f;
-            mainBlock.SetColor(Colors.UILightGray);
+            mainBlock.SetColor(_Colors.UILightGray);
 
             BaseComponent = mainBlock;
 

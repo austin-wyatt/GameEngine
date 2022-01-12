@@ -64,8 +64,8 @@ namespace MortalDungeon.Game.Tiles
             {
                 baseTile = new BaseTile(tilePosition, new TilePoint(i, -1, null));
                 baseTile.SetRender(false);
-                baseTile._tileObject.OutlineParameters.OutlineColor = Colors.TranslucentBlue;
-                baseTile._tileObject.OutlineParameters.InlineColor = Colors.TranslucentBlue;
+                baseTile._tileObject.OutlineParameters.OutlineColor = _Colors.TranslucentBlue;
+                baseTile._tileObject.OutlineParameters.InlineColor = _Colors.TranslucentBlue;
                 //baseTile._tileObject.OutlineParameters.OutlineThickness = 2;
                 baseTile._tileObject.OutlineParameters.SetAllInline(4);
                 baseTile.SetAnimation(Objects.BaseTileAnimationType.SolidWhite);
@@ -74,8 +74,8 @@ namespace MortalDungeon.Game.Tiles
                 //baseTile.DefaultColor = Colors.TranslucentBlue;
                 //baseTile.SetColor(Colors.TranslucentBlue);
 
-                baseTile.DefaultColor = Colors.Transparent;
-                baseTile.SetColor(Colors.Transparent);
+                baseTile.DefaultColor = _Colors.Transparent;
+                baseTile.SetColor(_Colors.Transparent);
 
                 //SelectionTiles.Add(baseTile);
                 _selectionTilePool.Add(baseTile);
@@ -93,7 +93,7 @@ namespace MortalDungeon.Game.Tiles
             HoveredTile.SetAnimation(Objects.BaseTileAnimationType.Transparent);
             HoveredTile.DefaultAnimation = Objects.BaseTileAnimationType.Transparent;
 
-            HoveredTile.SetColor(Colors.Red);
+            HoveredTile.SetColor(_Colors.Red);
             HoveredTile._tileObject.OutlineParameters.SetAllInline(0);
 
             GameObject.LoadTexture(HoveredTile);

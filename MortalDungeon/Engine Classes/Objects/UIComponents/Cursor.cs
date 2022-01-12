@@ -19,7 +19,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             BaseComponent = block;
 
-            block.SetColor(Colors.White);
+            block.SetColor(_Colors.White);
             block.MultiTextureData.MixTexture = false;
             block._baseObject.OutlineParameters.SetAllInline(0);
             block._baseObject.OutlineParameters.SetAllOutline(0);

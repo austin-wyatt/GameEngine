@@ -96,13 +96,13 @@ namespace MortalDungeon.Game.UI.Dev
 
             ScrollableArea scrollableArea = new ScrollableArea(default, new UIScale(1.3f, 1.25f), default, new UIScale(1.3f, 5));
             scrollableArea.SetVisibleAreaPosition(Window.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 50, 0), UIAnchorPosition.TopLeft);
-            scrollableArea.BaseComponent.SetColor(Colors.UIDisabledGray);
+            scrollableArea.BaseComponent.SetColor(_Colors.UIDisabledGray);
 
             EntityArea = scrollableArea;
 
             Window.AddChild(scrollableArea);
 
-            UIList entityList = new UIList(default, new UIScale(1, 0.1f), 0.05f);
+            UIList entityList = new UIList(default, new UIScale(1, 0.1f), 0.075f);
             entityList.SetPositionFromAnchor(scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
             scrollableArea.BaseComponent.AddChild(entityList);
 
@@ -255,7 +255,7 @@ namespace MortalDungeon.Game.UI.Dev
 
             ScrollableArea scrollableArea = new ScrollableArea(default, new UIScale(0.8f, 0.4f), default, new UIScale(0.9f, 5), 0.05f);
             scrollableArea.SetVisibleAreaPosition(AddEntityWindow.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
-            scrollableArea.BaseComponent.SetColor(Colors.UIDisabledGray);
+            scrollableArea.BaseComponent.SetColor(_Colors.UIDisabledGray);
             scrollableArea.OnScroll(0);
 
             AddEntityWindow.AddChild(scrollableArea);
@@ -314,7 +314,7 @@ namespace MortalDungeon.Game.UI.Dev
 
                 UIBlock block = new UIBlock(default, new UIScale(0.15f, 0.15f));
                 block.MultiTextureData.MixTexture = false;
-                block.SetColor(Colors.UILightGray);
+                block.SetColor(_Colors.UILightGray);
 
                 block.BaseObjects.Insert(0, obj);
                 block._baseObject = obj;
@@ -374,7 +374,7 @@ namespace MortalDungeon.Game.UI.Dev
 
 
             Input nameField = new Input(default, new UIScale(0.8f, 0.1f), entity.Handle.Name, 0.075f);
-            nameField._textBox.SetTextColor(Colors.UITextBlack);
+            //nameField._textBox.SetTextColor(_Colors.UITextBlack);
 
             nameField.OnTypeAction = (name) =>
             {
@@ -470,12 +470,12 @@ namespace MortalDungeon.Game.UI.Dev
 
             ScrollableArea scrollableArea = new ScrollableArea(default, new UIScale(0.8f, 0.4f), default, new UIScale(0.9f, 3), 0.05f);
             scrollableArea.SetVisibleAreaPosition(EntityAbilitiesWindow.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 50, 0), UIAnchorPosition.TopLeft);
-            scrollableArea.BaseComponent.SetColor(Colors.UIDisabledGray);
+            scrollableArea.BaseComponent.SetColor(_Colors.UIDisabledGray);
             scrollableArea.OnScroll(0);
 
             EntityAbilitiesWindow.AddChild(scrollableArea);
 
-            UIList abilityList = new UIList(default, new UIScale(1, 0.1f), 0.05f);
+            UIList abilityList = new UIList(default, new UIScale(1, 0.1f), 0.075f);
             abilityList.SetPositionFromAnchor(scrollableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
             scrollableArea.BaseComponent.AddChild(abilityList);
 

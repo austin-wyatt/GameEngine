@@ -361,8 +361,8 @@ namespace MortalDungeon.Engine_Classes
     {
         public int OutlineThickness = 0;
         public int InlineThickness = 0;
-        public Vector4 OutlineColor = Colors.Black;
-        public Vector4 InlineColor = Colors.Black;
+        public Vector4 OutlineColor = _Colors.Black;
+        public Vector4 InlineColor = _Colors.Black;
 
         public int BaseOutlineThickness = 0;
         public int BaseInlineThickness = 0;

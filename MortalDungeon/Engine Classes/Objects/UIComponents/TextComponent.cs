@@ -7,14 +7,14 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class TextComponent : UIObject
     {
-        public Text _textField;
+        public _Text _textField;
         public TextComponent(TextRenderData textRenderData = null) 
         {
             UIBlock mainBlock = new UIBlock(new Vector3(0,0,0));
             mainBlock.MultiTextureData.MixPercent = 0.1f;
             mainBlock.MultiTextureData.MixTexture = false;
             //mainBlock.SetColor(Colors.Red);
-            mainBlock.SetColor(Colors.Transparent);
+            mainBlock.SetColor(_Colors.Transparent);
             mainBlock.SetAllInline(0);
             mainBlock.SetRender(true);
 
@@ -23,7 +23,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             AddChild(BaseComponent, -10);
 
 
-            _textField = new Text() { ScissorData = ScissorData };
+            _textField = new _Text() { ScissorData = ScissorData };
 
             if(textRenderData != null) 
             {

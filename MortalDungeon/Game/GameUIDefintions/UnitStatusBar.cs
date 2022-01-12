@@ -1,10 +1,13 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.UI
 {
@@ -13,7 +16,7 @@ namespace MortalDungeon.Game.UI
         public Camera _camera;
         public Unit _unit;
 
-        public TextComponent _mainTextBox;
+        public Text _mainTextBox;
         public TextBox _turnDisplay;
         public HealthBar HealthBar;
         public ShieldBar ShieldBar;
@@ -34,24 +37,22 @@ namespace MortalDungeon.Game.UI
             BaseComponent = new UIBlock(screenSpace, scale);
 
             BaseComponent.MultiTextureData.MixTexture = false;
-            BaseComponent.SetColor(Colors.UILightGray);
+            BaseComponent.SetColor(_Colors.UILightGray);
 
 
-            TextComponent nameBox = new TextComponent();
-            nameBox.SetText(unit.Name);
-            nameBox.SetColor(Colors.UITextBlack);
+            Text nameBox = new Text(unit.Name, Text.DEFAULT_FONT, 32, Brushes.Black);
             nameBox.SetPositionFromAnchor(BaseComponent.Position, UIAnchorPosition.Center);
 
             _mainTextBox = nameBox;
 
             //_mainTextBox = textBox;
             //BaseComponent.AddChild(textBox);
-            BaseComponent.AddChild(nameBox);
+            BaseComponent.AddChild(nameBox, 100);
 
 
             _turnDisplay = new TextBox(new Vector3(), new UIScale(scale.X / 4, scale.Y / 2), " ", 0.07f, false, new UIDimensions(0, 0));
             _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
-            _turnDisplay.BaseComponent.SetColor(Colors.Transparent);
+            _turnDisplay.BaseComponent.SetColor(_Colors.Transparent);
             _turnDisplay.BaseComponent.GetBaseObject().OutlineParameters.SetAllInline(0);
             _turnDisplay.GetBaseObject().RenderData = new RenderData() { AlphaThreshold = 1 };
             _turnDisplay.BaseComponent.MultiTextureData.MixTexture = false;
@@ -87,91 +88,97 @@ namespace MortalDungeon.Game.UI
             UpdateUnitStatusPosition();
         }
 
+        private object _updateLock = new object();
         public void UpdateUnitStatusPosition() 
         {
             if (_unit.BaseObjects.Count == 0)
                 return;
 
-            Vector4 unitPos = new Vector4(0, 0, 0, 1) * _unit.GetDisplay().Transformations * _camera.GetViewMatrix() * _camera.ProjectionMatrix;
-            unitPos.X /= unitPos.W;
-            unitPos.Y /= unitPos.W;
-            unitPos.Z /= unitPos.W;
-
-            if (WillDisplay)
+            lock (_updateLock)
             {
-                _mainTextBox.SetRender(true);
-                BaseComponent.SetColor(Colors.UILightGray);
-                BaseComponent.SetAllInline(2);
+                Vector4 unitPos = new Vector4(0, 0, 0, 1) * _unit.GetDisplay().Transformations * _camera.GetViewMatrix() * _camera.ProjectionMatrix;
+                unitPos.X /= unitPos.W;
+                unitPos.Y /= unitPos.W;
+                unitPos.Z /= unitPos.W;
 
-                if (_camera.Position.Z < 2)
+                if (WillDisplay)
                 {
-                    SetRender(false);
-                }
-                else
-                {
-                    SetRender(true);
-                }
+                    _mainTextBox.SetRender(true);
+                    BaseComponent.SetColor(_Colors.UILightGray);
+                    BaseComponent.SetAllInline(2);
 
-                UIScale zoomScale = Size;
+                    if (_camera.Position.Z < 2)
+                    {
+                        SetRender(false);
+                    }
+                    else
+                    {
+                        SetRender(true);
+                    }
+
+                    UIScale zoomScale = Size;
 
 
-                if (_camera.Position.Z < 4 && _camera.Position.Z > 2)
-                {
-                    //zoomScale = new UIScale(0.5f, 0.085f);
-                    zoomScale = new UIScale(0.3f, 0.06f);
+                    if (_camera.Position.Z < 4 && _camera.Position.Z > 2)
+                    {
+                        //zoomScale = new UIScale(0.5f, 0.085f);
+                        zoomScale = new UIScale(0.3f, 0.06f);
 
-                    unitPos.Y += 0.25f;
-                    SetSize(zoomScale);
-                    _mainTextBox.SetTextScale(0.03f);
+                        unitPos.Y += 0.25f;
+                        SetSize(zoomScale);
+                        _mainTextBox.SetTextScale(0.065f);
+                        UpdateInfoBarScales(zoomScale);
+                    }
+                    else if (_camera.Position.Z >= 4 && _camera.Position.Z < 8)
+                    {
+                        zoomScale = new UIScale(0.18f, 0.045f);
+                        unitPos.Y += 0.17f;
+
+                        SetSize(zoomScale);
+                        _mainTextBox.SetTextScale(0.055f);
+                        UpdateInfoBarScales(zoomScale);
+                    }
+                    else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
+                    {
+                        zoomScale = new UIScale(0.15f, 0.040f);
+                        unitPos.Y += 0.12f;
+
+                        SetSize(zoomScale);
+                        _mainTextBox.SetTextScale(0.045f);
+                    }
+                    else if (_camera.Position.Z >= 10)
+                    {
+                        zoomScale = new UIScale(0.1f, 0.04f);
+
+                        SetSize(zoomScale);
+
+                        _mainTextBox.SetRender(false);
+                        BaseComponent.SetColor(_Colors.Transparent);
+                        BaseComponent.SetAllInline(0);
+                        //SetRender(false);
+                    }
+                    else if (_camera.Position.Z >= 10)
+                    {
+                        SetRender(false);
+                    }
+
                     UpdateInfoBarScales(zoomScale);
+
+
+                    Vector3 screenSpace = WindowConstants.ConvertLocalToScreenSpaceCoordinates(unitPos.Xy);
+
+                    screenSpace.Z = Position.Z;
+                    //screenSpace.Z = 0.01f;
+
+                    BaseComponent.SetPosition(screenSpace);
+
+                    _mainTextBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+                    _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
+                    HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
+                    ShieldBar.SetPositionFromAnchor(HealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
+
+                    //ForceTreeRegeneration();
                 }
-                else if (_camera.Position.Z >= 4 && _camera.Position.Z < 8)
-                {
-                    zoomScale = new UIScale(0.18f, 0.045f);
-                    unitPos.Y += 0.17f;
-
-                    SetSize(zoomScale);
-                    _mainTextBox.SetTextScale(0.02f);
-                    UpdateInfoBarScales(zoomScale);
-                }
-                else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
-                {
-                    zoomScale = new UIScale(0.15f, 0.040f);
-                    unitPos.Y += 0.12f;
-
-                    SetSize(zoomScale);
-                    _mainTextBox.SetTextScale(0.02f);
-                }
-                else if (_camera.Position.Z >= 10)
-                {
-                    zoomScale = new UIScale(0.1f, 0.04f);
-
-                    SetSize(zoomScale);
-
-                    _mainTextBox.SetRender(false);
-                    BaseComponent.SetColor(Colors.Transparent);
-                    BaseComponent.SetAllInline(0);
-                    //SetRender(false);
-                }
-                else if (_camera.Position.Z >= 10)
-                {
-                    SetRender(false);
-                }
-
-                UpdateInfoBarScales(zoomScale);
-
-
-                Vector3 screenSpace = WindowConstants.ConvertLocalToScreenSpaceCoordinates(unitPos.Xy);
-
-                screenSpace.Z = Position.Z;
-                //screenSpace.Z = 0.01f;
-
-                BaseComponent.SetPosition(screenSpace);
-
-                _mainTextBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
-                _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
-                HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
-                ShieldBar.SetPositionFromAnchor(HealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
             }
         }
 
@@ -215,6 +222,11 @@ namespace MortalDungeon.Game.UI
             base.OnCameraMove();
 
             UpdateUnitStatusPosition();
+
+            //Task.Run(() =>
+            //{
+            //    UpdateUnitStatusPosition();
+            //});
         }
 
         private UIScale _healthBarScale = new UIScale();

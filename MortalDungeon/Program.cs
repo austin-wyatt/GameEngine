@@ -7,11 +7,11 @@ using System.Threading;
 
 namespace MortalDungeon
 {
-    class Program
+    public class Program
     {
         public static Window Window;
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             InitializeSoundPlayer();
 
@@ -23,6 +23,7 @@ namespace MortalDungeon
                 //Size = new Vector2i(800, 800),
                 Title = "Test Window",
                 WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable,
+                StartFocused = false,
             };
 
             var gameWindowSettings = GameWindowSettings.Default;
@@ -34,6 +35,7 @@ namespace MortalDungeon
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {
                 Window = game;
+                Window.Context.MakeCurrent();
 
                 game.VSync = OpenTK.Windowing.Common.VSyncMode.Off;
                 game.Run();

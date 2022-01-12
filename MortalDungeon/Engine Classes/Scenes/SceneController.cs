@@ -6,6 +6,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MortalDungeon.Engine_Classes.Scenes
@@ -243,9 +244,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             Scenes.ForEach(scene =>
             {
-                //for now don't cull generic objects as they are being used for background textures
-                //ObjectCulling.CullListOfGameObjects(scene._genericObjects);
-
                 lock (scene._tileMapController._mapLoadLock)
                 {
                     scene._tileMapController.TileMaps.ForEach(map =>
@@ -258,6 +256,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         //ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
                     });
                 }
+
 
 
                 ObjectCulling.CullListOfGameObjects(scene._units);

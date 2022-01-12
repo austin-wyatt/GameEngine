@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.UI
         public TabMenu() 
         {
             UIBlock mainWindow = new UIBlock(WindowConstants.CenterScreen, new UIDimensions(WindowConstants.ScreenUnits.X * 0.75f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 2));
-            mainWindow.SetColor(Colors.UILightGray);
+            mainWindow.SetColor(_Colors.UILightGray);
             //mainWindow.MultiTextureData.MixTexture = false;
 
             mainWindow.SetPositionFromAnchor(WindowConstants.CenterScreen * new Vector3(2, 1, 1), UIAnchorPosition.RightCenter);
@@ -61,7 +61,7 @@ namespace MortalDungeon.Game.UI
             ScrollableArea tab = new ScrollableArea(default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 1.8f), 
                 default, new UIDimensions(WindowConstants.ScreenUnits.X * 0.7f * WindowConstants.AspectRatio, WindowConstants.ScreenUnits.Y * 3f));
 
-            tab.SetColor(Colors.UILightGray);
+            tab.SetColor(_Colors.UILightGray);
             tab.MultiTextureData.MixTexture = false;
 
             //tab.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new UIScale(0.0125f, -0.0125f).ToDimensions(), UIAnchorPosition.BottomLeft);
@@ -77,7 +77,7 @@ namespace MortalDungeon.Game.UI
 
         public void CreateTabAccessButton(int tab, string name) 
         {
-            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.24f, BaseComponent.Size.Y / 15), name, 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.24f, BaseComponent.Size.Y / 15), name, 0.2f, _Colors.UILightGray, _Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>
@@ -141,7 +141,7 @@ namespace MortalDungeon.Game.UI
 
         private void PopulateMenus() 
         {
-            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle combat", 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle combat", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>
@@ -162,7 +162,7 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].BaseComponent.AddChild(button);
 
-            Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Tile Tooltips", 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Tile Tooltips", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
             unitButton.BaseComponent.MultiTextureData.MixTexture = false;
 
             unitButton.Click += (s, e) =>
@@ -174,7 +174,7 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].BaseComponent.AddChild(unitButton);
 
-            Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "(-)Pattern Tool", 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "(-)Pattern Tool", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
             unitButton2.BaseComponent.MultiTextureData.MixTexture = false;
 
             unitButton2.Click += (s, e) =>
@@ -194,7 +194,7 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].BaseComponent.AddChild(unitButton2);
 
-            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Skele AI", 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Skele AI", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
             toggleAI.BaseComponent.MultiTextureData.MixTexture = false;
 
 
@@ -301,8 +301,8 @@ namespace MortalDungeon.Game.UI
 
         private Button CreateButton(string text, Action action, Vector3 prevButtonPos) 
         {
-            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), text, 0.043f, Colors.UILightGray, Colors.UITextBlack);
-            button.BaseComponent.MultiTextureData.MixTexture = false;
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), text, 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
+            //button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>
             {

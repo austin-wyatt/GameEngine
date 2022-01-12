@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Tiles;
@@ -8,12 +9,14 @@ using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using static MortalDungeon.Game.Units.Disposition;
+using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -229,9 +232,7 @@ namespace MortalDungeon.Game.Abilities
                 float textScale = 0.05f;
 
 
-                TextComponent energyCostBox = new TextComponent();
-                energyCostBox.SetColor(Colors.UITextBlack);
-                energyCostBox.SetText(energyString);
+                Text energyCostBox = new Text(energyString, Text.DEFAULT_FONT, 16, Brushes.White);
                 energyCostBox.SetTextScale(textScale);
                 
 
@@ -247,12 +248,12 @@ namespace MortalDungeon.Game.Abilities
                 if (ActionCost > 0)
                 {
                     energyCostBackground = new UIBlock(default, null, default, (int)IconSheetIcons.Channel, true, false, Spritesheets.IconSheet);
-                    energyCostBackground.SetColor(Colors.White);
+                    energyCostBackground.SetColor(_Colors.White);
                 }
                 else 
                 {
                     energyCostBackground = new UIBlock();
-                    energyCostBackground.SetColor(Colors.UILightGray);
+                    energyCostBackground.SetColor(_Colors.UILightGray);
                 }
 
 
@@ -298,12 +299,10 @@ namespace MortalDungeon.Game.Abilities
                 UIScale textBoxSize = icon.Size;
                 textBoxSize *= 0.2f;
 
-                float textScale = 0.03f;
+                float textScale = 0.07f;
 
 
-                TextComponent hotkeyBox = new TextComponent(new TextRenderData() { Bold = false });
-                hotkeyBox.SetColor(Colors.White);
-                hotkeyBox.SetText(hotkey);
+                Text hotkeyBox = new Text(hotkey, Text.DEFAULT_FONT, 16, Brushes.White);
                 hotkeyBox.SetTextScale(textScale);
 
                 UIScale textDimensions = hotkeyBox.GetDimensions();
@@ -314,7 +313,7 @@ namespace MortalDungeon.Game.Abilities
                 }
 
                 UIBlock hotkeyBackground = new UIBlock();
-                hotkeyBackground.SetColor(Colors.UITextBlack);
+                hotkeyBackground.SetColor(_Colors.UITextBlack);
                 hotkeyBackground.MultiTextureData.MixTexture = false;
 
                 hotkeyBackground.SetSize(textBoxSize);

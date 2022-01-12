@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.Structures
         /// </summary>
         public override void InitializeVisualComponent()
         {
-            base.InitializeVisualComponent();
+            //base.InitializeVisualComponent();
 
             VisibleThroughFog = true;
 

@@ -48,7 +48,7 @@ namespace MortalDungeon.Game.UI
 
             Icon minimizeIcon = new Icon(new UIScale(0.07f, 0.07f), UISheetIcons.Minimize, Spritesheets.UISheet);
             minimizeIcon.Clickable = true;
-            minimizeIcon.SetColor(Colors.UILightGray);
+            minimizeIcon.SetColor(_Colors.UILightGray);
             UIHelpers.AddTimedHoverTooltip(minimizeIcon, "Minimize", scene);
 
             minimizeIcon.Click += (s, e) =>
@@ -87,7 +87,7 @@ namespace MortalDungeon.Game.UI
             UIHelpers.AddTimedHoverTooltip(moveIcon, "Enable right click movement", scene);
             moveIcon.RenderAfterParent = true;
 
-            moveIcon.SelectedColor = Colors.IconSelected;
+            moveIcon.SelectedColor = _Colors.IconSelected;
 
             moveIcon.Click += (s, e) =>
             {
@@ -190,7 +190,7 @@ namespace MortalDungeon.Game.UI
                 Name = "party_window_scrollable_area" 
             };
 
-            UIList list = new UIList(default, new UIScale(0.3f, 0.13f), 0.05f);
+            UIList list = new UIList(default, new UIScale(0.3f, 0.13f), 0.075f);
 
             var unitList = Scene._units.FindAll(u => u.AI.ControlType == ControlType.Controlled && u.AI.Team == UnitTeam.PlayerUnits);
 
@@ -206,7 +206,7 @@ namespace MortalDungeon.Game.UI
             {
                 var item = list.AddItem("");
 
-                Vector4 textColor = Colors.UITextBlack;
+                Vector4 textColor = _Colors.UITextBlack;
 
                 bool isSecondaryUnit = false;
 

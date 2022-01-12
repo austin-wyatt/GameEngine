@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Audio;
+using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
@@ -70,8 +71,8 @@ namespace MortalDungeon.Game.Tiles
 
         public TileProperties Properties;
 
-        public Vector4 Color = Colors.White; //color that will be applied to the tile on the dynamic texture
-        public Vector4 OutlineColor = Colors.Black; //outline color that will be applied to the dynamic texture
+        public Vector4 Color = _Colors.White; //color that will be applied to the tile on the dynamic texture
+        public Vector4 OutlineColor = _Colors.Black; //outline color that will be applied to the dynamic texture
         public bool Outline = false; //whether the tile should be outline on the dynamic texture
         public bool NeverOutline = false; //whether this tile should never be outlined (used for contiguous tiles like water)
 
@@ -116,8 +117,8 @@ namespace MortalDungeon.Game.Tiles
             BaseTile.BaseFrame.CameraPerspective = true;
 
             BaseTile.OutlineParameters.SetAllInline(2);
-            BaseTile.OutlineParameters.InlineColor = Colors.Black;
-            BaseTile.OutlineParameters.OutlineColor = Colors.Red;
+            BaseTile.OutlineParameters.InlineColor = _Colors.Black;
+            BaseTile.OutlineParameters.OutlineColor = _Colors.Red;
 
             Hoverable = true;
             Clickable = true;
@@ -226,7 +227,7 @@ namespace MortalDungeon.Game.Tiles
             if (selected)
             {
                 _tileObject.OutlineParameters.OutlineThickness = _tileObject.OutlineParameters.BaseOutlineThickness;
-                _tileObject.OutlineParameters.OutlineColor = Colors.Blue;
+                _tileObject.OutlineParameters.OutlineColor = _Colors.Blue;
             }
             else
             {
@@ -283,6 +284,8 @@ namespace MortalDungeon.Game.Tiles
         public override void CleanUp()
         {
             base.CleanUp();
+
+            GetScene().Tick -= Tick;
 
             if (Structure != null) 
             {
@@ -499,12 +502,12 @@ namespace MortalDungeon.Game.Tiles
 
             TextComponent header = new TextComponent();
             header.SetTextScale(0.1f);
-            header.SetColor(Colors.UITextBlack);
+            header.SetColor(_Colors.UITextBlack);
             header.SetText("Tile " + ObjectID);
 
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
-            description.SetColor(Colors.UITextBlack);
+            description.SetColor(_Colors.UITextBlack);
             description.SetText(GetTooltipString(this, GetScene()));
 
             menu.AddChild(header);
@@ -532,6 +535,11 @@ namespace MortalDungeon.Game.Tiles
         public FeaturePoint ToFeaturePoint()
         {
             return new FeaturePoint(this);
+        }
+
+        public void LoadTexture()
+        {
+            Renderer.LoadTextureFromGameObj(this, false);
         }
     }
 
@@ -606,6 +614,8 @@ namespace MortalDungeon.Game.Tiles
         public TileType Type;
         public TileClassification Classification;
 
+        public List<TileOverlay> TileOverlays = new List<TileOverlay>();
+
         public bool MustExplore = false;
 
         public float DamageOnEnter = 0;
@@ -618,4 +628,6 @@ namespace MortalDungeon.Game.Tiles
         {
         }
     }
+
+    
 }

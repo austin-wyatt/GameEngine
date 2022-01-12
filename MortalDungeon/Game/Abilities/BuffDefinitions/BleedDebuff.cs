@@ -50,12 +50,12 @@ namespace MortalDungeon.Game.Abilities
 
             TextComponent header = new TextComponent();
             header.SetTextScale(0.1f);
-            header.SetColor(Colors.UITextBlack);
+            header.SetColor(_Colors.UITextBlack);
             header.SetText(Name);
 
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
-            description.SetColor(Colors.UITextBlack);
+            description.SetColor(_Colors.UITextBlack);
             description.SetText("At the beginning of the unit's turn \nit will suffer " + Damage.ToString("n1").Replace(".0", "") + " bleed damage." +
                 "\n\n" + Duration + " turns remaining.");
 

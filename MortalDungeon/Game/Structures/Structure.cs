@@ -16,6 +16,7 @@ namespace MortalDungeon.Game.Structures
 
         Tree_1 = 2,
         Tree_2 = 3,
+        Grass = 4,
 
         Rock_1 = 10,
         Rock_2 = 11,

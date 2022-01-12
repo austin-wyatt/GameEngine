@@ -67,7 +67,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                     {
                         Tree tree =new Tree(tile.TileMap, tile, 0);
 
-                        tree.BaseObject.BaseFrame.AddAppliedColor(new Color(0.3f, 0.3f, 0.3f, 1));
+                        tree.BaseObject.BaseFrame.AddAppliedColor(new _Color(0.3f, 0.3f, 0.3f, 1));
                     }
                 }
                 if(GetBit(value, 4))

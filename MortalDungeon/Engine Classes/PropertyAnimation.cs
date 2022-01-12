@@ -87,17 +87,6 @@ namespace MortalDungeon.Engine_Classes
 
                 tick++;
             }
-
-            if (WindowConstants.ShowTicksPerSecond)
-            {
-                if (timer.ElapsedMilliseconds > 1000)
-                {
-                    Console.WriteLine("Ticks per second: " + count);
-                    count = 0;
-                    timer.Restart();
-                }
-                count++;
-            }
         }
 
         /// <summary>

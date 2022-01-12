@@ -73,7 +73,7 @@ namespace MortalDungeon.Game.Abilities
 
             CastingUnit.Info.AddBuff(stealthBuff);
 
-            Color stealthColor = new Color(1, 1, 1, 0.5f);
+            _Color stealthColor = new _Color(1, 1, 1, 0.5f);
 
             void hidingBroken() 
             {

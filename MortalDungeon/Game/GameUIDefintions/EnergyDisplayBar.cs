@@ -98,13 +98,13 @@ namespace MortalDungeon.Game.UI
 
             PropertyAnimation hoverColorShift = new PropertyAnimation(GetBaseObject().BaseFrame) { Repeat = true };
 
-            Color shiftedColor = new Color(0.11f, 0.48f, 0.11f, 1);
-            Color color = new Color(Pips[0].EnergizedColor);
+            _Color shiftedColor = new _Color(0.11f, 0.48f, 0.11f, 1);
+            _Color color = new _Color(Pips[0].EnergizedColor);
 
             int shiftDelay = 2;
             int shifts = 30;
 
-            Color deltaColor = (color - shiftedColor) / (shifts / 2);
+            _Color deltaColor = (color - shiftedColor) / (shifts / 2);
 
             for (int i = 0; i < Pips.Count; i++) 
             {

@@ -107,7 +107,7 @@ namespace MortalDungeon.Game.UI
                 PopulateFeatures();
             };
 
-            MapArea.BaseComponent.SetColor(Colors.UILightGray);
+            MapArea.BaseComponent.SetColor(_Colors.UILightGray);
 
             Window.AddChild(MapArea);
 

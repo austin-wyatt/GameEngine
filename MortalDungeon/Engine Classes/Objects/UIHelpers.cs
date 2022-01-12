@@ -1,11 +1,14 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
+using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Engine_Classes
 {
@@ -101,8 +104,8 @@ namespace MortalDungeon.Engine_Classes
                 TooltipFlag = GeneralContextFlags.UITooltipOpen;
                 Position = default;
                 Anchor = UIAnchorPosition.BottomLeft;
-                BackgroundColor = Colors.UILightGray;
-                TextScale = 0.05f;
+                BackgroundColor = _Colors.UILightGray;
+                TextScale = 0.1f;
 
                 EnforceScreenBounds = true;
             }
@@ -127,11 +130,12 @@ namespace MortalDungeon.Engine_Classes
 
             Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
-            TextComponent tooltip = new TextComponent(new TextRenderData() { Bold = false});
-            tooltip.SetColor(Colors.UITextBlack);
+            Text tooltip = new Text("", Text.DEFAULT_FONT, 32, Brushes.Black);
             tooltip.SetText(param.Text);
             tooltip.SetTextScale(param.TextScale);
             tooltip.Hoverable = true;
+
+            //tooltip.RenderAfterParent = true;
 
             if (param.Position == default)
             {
@@ -155,13 +159,14 @@ namespace MortalDungeon.Engine_Classes
             tooltipBackground.SetColor(param.BackgroundColor);
             tooltipBackground.MultiTextureData.MixTexture = false;
 
-            UIScale tooltipScale = tooltip.GetScale();
-            tooltipScale.Y += 0.05f;
-            tooltipScale.X += 0.05f;
+            UIScale tooltipScale = new UIScale(tooltip.Size);
+            //tooltipScale.Y += 0.05f;
+            //tooltipScale.X += 0.05f;
 
             tooltipBackground.SetSize(tooltipScale);
-            tooltipBackground.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + backgroundOffset, UIAnchorPosition.TopLeft);
-            tooltip.SetPosition(new Vector3(tooltip.Position.X, tooltip.Position.Y, tooltipBackground.Position.Z - 0.001f));
+            tooltipBackground.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+            //tooltip.SetPosition(new Vector3(tooltip.Position.X, tooltip.Position.Y, tooltipBackground.Position.Z - 0.001f));
+            tooltip.SetPosition(tooltip.Position);
 
             tooltipBackground.AddChild(tooltip);
 
@@ -176,7 +181,7 @@ namespace MortalDungeon.Engine_Classes
                 if (args.EventAction != EventAction.CloseTooltip) return;
 
                 //param.TooltipParent.RemoveChild(tooltip.ObjectID);
-                param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
+                param.TooltipParent.RemoveChild(tooltipBackground);
                 param.HoverParent.HoverEnd -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
 
@@ -186,7 +191,7 @@ namespace MortalDungeon.Engine_Classes
             void tempGameObj(GameObject obj)
             {
                 //param.TooltipParent.RemoveChild(tooltip.ObjectID);
-                param.TooltipParent.RemoveChild(tooltipBackground.ObjectID);
+                param.TooltipParent.RemoveChild(tooltipBackground);
                 param.HoverParent.HoverEnd -= tempGameObj;
                 param.Scene.ContextManager.SetFlag(param.TooltipFlag, false);
 
@@ -218,7 +223,7 @@ namespace MortalDungeon.Engine_Classes
             {
                 if (args.EventAction != EventAction.CloseTooltip) return;
 
-                baseObject.RemoveChild(tooltip.ObjectID);
+                baseObject.RemoveChild(tooltip);
                 tooltipParent.HoverEnd -= tempGameObj;
                 scene.ContextManager.SetFlag(tooltipFlag, false);
 
@@ -227,7 +232,7 @@ namespace MortalDungeon.Engine_Classes
 
             void tempGameObj(GameObject args)
             {
-                baseObject.RemoveChild(tooltip.ObjectID);
+                baseObject.RemoveChild(tooltip);
                 tooltipParent.HoverEnd -= tempGameObj;
                 scene.ContextManager.SetFlag(tooltipFlag, false);
 
@@ -257,22 +262,18 @@ namespace MortalDungeon.Engine_Classes
         {
             Tooltip tooltip = new Tooltip();
 
-            TextComponent header = new TextComponent();
+            Text header = new Text(headerText, Text.DEFAULT_FONT, 64, Brushes.Black);
             header.SetTextScale(0.1f);
-            header.SetColor(Colors.UITextBlack);
-            header.SetText(headerText);
 
-            TextComponent description = new TextComponent(new TextRenderData() { Bold = false });
-            description.SetTextScale(0.05f);
-            description.SetColor(Colors.UITextBlack);
+            Text description = new Text(bodyText, Text.DEFAULT_FONT, 64, Brushes.Black);
+            description.SetTextScale(0.075f);
+            description.SetColor(_Colors.UITextBlack);
             description.SetText(bodyText);
 
             tooltip.AddChild(header);
             tooltip.AddChild(description);
 
-            UIDimensions letterScale = header._textField.Letters[0].GetDimensions();
-
-            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
             description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
 
             tooltip.Margins = new UIDimensions(0, 30);
@@ -280,7 +281,7 @@ namespace MortalDungeon.Engine_Classes
             tooltip.FitContents();
             tooltip.BaseComponent.SetPosition(tooltip.Position);
 
-            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
             description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
 
             return tooltip;
@@ -306,7 +307,7 @@ namespace MortalDungeon.Engine_Classes
 
             void temp()
             {
-                baseObject.RemoveChild(tooltip.ObjectID);
+                baseObject.RemoveChild(tooltip);
                 scene.ContextManager.SetFlag(contextFlag, false);
             }
 
@@ -319,15 +320,13 @@ namespace MortalDungeon.Engine_Classes
         {
             Tooltip menu = new Tooltip();
 
-            TextComponent header = new TextComponent();
-            header.SetTextScale(0.05f);
-            header.SetColor(Colors.UITextBlack);
-            header.SetText(headerText);
+            Text header = new Text(headerText, Text.DEFAULT_FONT, 64, Brushes.Black);
+            header.SetTextScale(0.1f);
 
             menu.AddChild(header);
 
-            float textScale = 0.04f;
-            UIList list = new UIList(default, Text.GetTextDimensions(20, 1, textScale).ToScale() + new UIScale(0, 0.05f), textScale, default, Colors.UITextBlack, Colors.UILightGray);
+            float textScale = 0.075f;
+            UIList list = new UIList(default, new UIScale(header.Scale.X > 0.75f ? 0.75f : header.Scale.X, 0.1f), textScale, default, _Colors.UITextBlack, _Colors.UILightGray);
 
 
             menu.AddChild(list);

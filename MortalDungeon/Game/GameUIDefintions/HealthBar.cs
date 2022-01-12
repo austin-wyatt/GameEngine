@@ -97,7 +97,6 @@ namespace MortalDungeon.Game.UI
             base.SetSize(size);
 
             SetHealthPercent(_healthPercent);
-
         }
 
         public override void SetInlineColor(Vector4 color)

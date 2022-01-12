@@ -49,7 +49,7 @@ namespace MortalDungeon.Game.UI.Dev
             _tableArea.SetVisibleAreaPosition(TabAccessButtons[0].GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
 
-            _featureList = new UIList(default, new UIScale(1.5f, 0.075f), 0.05f);
+            _featureList = new UIList(default, new UIScale(1.5f, 0.075f), 0.075f);
 
             _tableArea.BaseComponent.AddChild(_featureList);
             _featureList.SetPositionFromAnchor(_tableArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
@@ -60,7 +60,7 @@ namespace MortalDungeon.Game.UI.Dev
             refresh.Clickable = true;
             refresh.Hoverable = true;
 
-            refresh.HoverColor = Colors.UILightGray;
+            refresh.HoverColor = _Colors.UILightGray;
 
             refresh.Click += (s, e) =>
             {
@@ -75,7 +75,7 @@ namespace MortalDungeon.Game.UI.Dev
 
         public void CreateTabAccessButton(int tab, string name)
         {
-            Button button = new Button(default, new UIScale(0.6f, 0.1f), name, 0.043f, Colors.UILightGray, Colors.UITextBlack);
+            Button button = new Button(default, new UIScale(0.6f, 0.1f), name, 0.5f, _Colors.UILightGray, _Colors.UITextBlack);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>

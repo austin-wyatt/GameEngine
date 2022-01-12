@@ -33,12 +33,12 @@ namespace MortalDungeon.Game.Abilities
 
             TextComponent header = new TextComponent();
             header.SetTextScale(0.1f);
-            header.SetColor(Colors.UITextBlack);
+            header.SetColor(_Colors.UITextBlack);
             header.SetText(Name);
 
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
-            description.SetColor(Colors.UITextBlack);
+            description.SetColor(_Colors.UITextBlack);
             description.SetText("Unit's speed is reduced by " + ((1 - SpeedModifier.Multiplier) * -1).ToString("p") +
                 "\n\n" + Duration + " turns remaining.");
 

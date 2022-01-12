@@ -41,6 +41,7 @@ namespace MortalDungeon.Game.Serializers
 
             loadedState.CompleteDeserialization();
 
+
             reader.Close();
             fs.Close();
 
@@ -52,6 +53,11 @@ namespace MortalDungeon.Game.Serializers
             string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(id, _fileNameLength) + ".f";
 
             return LoadFeatureFromFile(path);
+        }
+
+        public static string HashFeatureId(int id)
+        {
+            return _featureCharSet.CreateRandom(id, _fileNameLength);
         }
 
         public static void WriteFeatureToFile(Feature feature)
@@ -84,7 +90,7 @@ namespace MortalDungeon.Game.Serializers
 
             foreach (string file in files)
             {
-                if (file.Contains(".f"))
+                if (file.Contains(".f") && !file.Contains("qqqqqqqq"))
                 {
                     filesToLoad.Add(file);
                 }
@@ -106,7 +112,7 @@ namespace MortalDungeon.Game.Serializers
         {
             List<Feature> features = LoadAllFeatures();
 
-            string featureListPath = SerializerParams.DATA_BASE_PATH + "qqqqqqqqqqqqqqqq.f";
+            string featureListPath = SerializerParams.DATA_BASE_PATH +"qqqqqqqqqqqqqqqq.f";
 
             if (File.Exists(featureListPath))
             {
@@ -153,6 +159,23 @@ namespace MortalDungeon.Game.Serializers
             fs.Close();
 
             return featureList;
+        }
+
+        public static List<Feature> GetGroupedFeatures(Feature feature)
+        {
+            List<Feature> group = new List<Feature>();
+
+            FeatureList list = LoadFeatureListFile();
+
+            foreach (FeatureListNode groupFeature in list.Features)
+            {
+                if (groupFeature.Id != feature.Id && groupFeature.GroupName != "" && groupFeature.GroupName == feature.GroupName)
+                {
+                    group.Add(LoadFeatureFromFile(groupFeature.Id));
+                }
+            }
+
+            return group;
         }
     }
 }

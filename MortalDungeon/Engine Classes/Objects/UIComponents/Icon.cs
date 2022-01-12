@@ -6,6 +6,8 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
+using MortalDungeon.Engine_Classes.TextHandling;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
@@ -115,6 +117,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void SetCameraPerspective(bool camPerspective) 
         {
+            CameraPerspective = camPerspective;
             BaseObjects.ForEach(b =>
             {
                 b.BaseFrame.CameraPerspective = camPerspective;
@@ -131,9 +134,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             float textScale = 0.05f;
 
 
-            TextComponent energyCostBox = new TextComponent();
-            energyCostBox.SetColor(Colors.UITextBlack);
-            energyCostBox.SetText(energyString);
+            Text energyCostBox = new Text(energyString, Text.DEFAULT_FONT, 16, Brushes.Black);
             energyCostBox.SetTextScale(textScale);
 
             UIScale textDimensions = energyCostBox.GetDimensions();
@@ -144,7 +145,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
 
             UIBlock energyCostBackground = new UIBlock();
-            energyCostBackground.SetColor(Colors.UILightGray);
+            energyCostBackground.SetColor(_Colors.UILightGray);
             energyCostBackground.MultiTextureData.MixTexture = false;
 
             energyCostBackground.SetSize(textBoxSize);
@@ -154,7 +155,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             if (ability.GetCharges() == 0) 
             {
-                energyCostBackground.SetColor(Colors.LessAggressiveRed);
+                energyCostBackground.SetColor(_Colors.LessAggressiveRed);
             }
 
             energyCostBackground.Clickable = true;
@@ -220,7 +221,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             for (int i = 0; i < ability.ActionCost; i++) 
             {
                 UIBlock actionCost = new UIBlock(default, null, default, (int)IconSheetIcons.Channel, true, false, Spritesheets.IconSheet);
-                actionCost.SetColor(Colors.White);
+                actionCost.SetColor(_Colors.White);
 
 
                 actionCost.MultiTextureData.MixTexture = false;
@@ -254,11 +255,11 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 UIBlock comboIndicator = new UIBlock(default, null, default, (int)IconSheetIcons.Circle, true, false, Spritesheets.IconSheet);
                 if (i == posInCombo)
                 {
-                    comboIndicator.SetColor(Colors.LessAggressiveRed);
+                    comboIndicator.SetColor(_Colors.LessAggressiveRed);
                 }
                 else 
                 {
-                    comboIndicator.SetColor(Colors.White);
+                    comboIndicator.SetColor(_Colors.White);
                 }
                 
                 comboIndicator.MultiTextureData.MixTexture = false;

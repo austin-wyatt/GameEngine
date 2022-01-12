@@ -176,7 +176,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             block2.Draggable = true;
             block2.Clickable = true;
             block2.Hoverable = true;
-            block2.SetColor(Colors.Red);
+            block2.SetColor(_Colors.Red);
 
             block1.LoadTexture();
             block2.LoadTexture();
@@ -187,7 +187,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             UIBlock blockt = new UIBlock(default, new UIScale(0.5f, 0.5f));
             blockt.SetPositionFromAnchor(block2.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
-            blockt.SetColor(Colors.Blue);
+            blockt.SetColor(_Colors.Blue);
             blockt.LoadTexture();
 
             block2.AddChild(blockt);

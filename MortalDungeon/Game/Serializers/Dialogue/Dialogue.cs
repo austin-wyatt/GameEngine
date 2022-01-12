@@ -116,7 +116,7 @@ namespace MortalDungeon.Game.Serializers
     public class Response
     {
         [XmlElement("rm")]
-        public int TextTableEntry = 0;
+        public int TextEntry = 0;
         [XmlElement("t")]
         public ResponseType ResponseType = ResponseType.Ok;
 
@@ -144,7 +144,7 @@ namespace MortalDungeon.Game.Serializers
                 ResponseType = type;
             }
 
-            TextTableEntry = messageID;
+            TextEntry = messageID;
 
             Outcome = outcome;
         }
@@ -163,7 +163,7 @@ namespace MortalDungeon.Game.Serializers
 
         public override string ToString()
         {
-            return ResponseType == ResponseType.Custom ? TextTableManager.GetTextEntry(0, TextTableEntry) : ResponseType.ToString();
+            return ResponseType == ResponseType.Custom ? TextTableManager.GetTextEntry(0, TextEntry) : ResponseType.ToString();
         }
     }
 }

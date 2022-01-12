@@ -12,13 +12,18 @@ namespace MortalDungeon.Game.Serializers
         private static string _questCharSet = "qrstuHIJKLMNOPQRbcdefghiklSTUVavwxyzABCDEFGmnop";
         private static int _fileNameLength = 10;
 
-        public static Quest LoadQuestFromFile(int id)
+        public static Quest LoadQuestFromFile(string filePath)
         {
-            string path = SerializerParams.DATA_BASE_PATH + _questCharSet.CreateRandom(id, _fileNameLength) + ".q";
+            string path = filePath;
+
+            if (!File.Exists(path))
+            {
+                return null;
+            }
 
             XmlSerializer serializer = new XmlSerializer(typeof(Quest));
 
-            FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
+            FileStream fs = new FileStream(path, FileMode.Open);
 
             TextReader reader = new StreamReader(fs);
 
@@ -29,6 +34,13 @@ namespace MortalDungeon.Game.Serializers
             fs.Close();
 
             return loadedState;
+        }
+
+        public static Quest LoadQuestFromFile(int id)
+        {
+            string path = SerializerParams.DATA_BASE_PATH + _questCharSet.CreateRandom(id, _fileNameLength) + ".q";
+
+            return LoadQuestFromFile(path);
         }
 
         public static void WriteQuestToFile(Quest state)
@@ -42,6 +54,38 @@ namespace MortalDungeon.Game.Serializers
             serializer.Serialize(writer, state);
 
             writer.Close();
+        }
+
+        public static void DeleteQuest(int id)
+        {
+            string path = SerializerParams.DATA_BASE_PATH + _questCharSet.CreateRandom(id, _fileNameLength) + ".q";
+
+            File.Delete(path);
+        }
+
+        public static List<Quest> LoadAllQuests()
+        {
+            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
+
+            List<string> filesToLoad = new List<string>();
+
+            foreach (string file in files)
+            {
+                if (file.Contains(".q"))
+                {
+                    filesToLoad.Add(file);
+                }
+            }
+
+            List<Quest> quests = new List<Quest>();
+
+            foreach (string file in filesToLoad)
+            {
+                var quest = LoadQuestFromFile(file);
+                quests.Add(quest);
+            }
+
+            return quests;
         }
     }
 }

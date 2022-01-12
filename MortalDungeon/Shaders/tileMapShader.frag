@@ -5,10 +5,13 @@ layout(location = 0) out vec4 outputColor;
 in vec2 primaryTextureCoordinates;
 in vec2 mixedTextureCoordinates;
 
+
 in vec2 outlineTextureCoordinates;
 in float outline;
 in vec4 outlineColor;
 
+in vec2[4] _overlayTextureCoordinates;
+in vec4 _overlayMixPercents;
 
 in vec4 primaryColor;
 in float mixPercent;
@@ -18,6 +21,7 @@ in float alpha_threshold;
 
 
 uniform sampler2D texture0;
+uniform sampler2D texture1;
 
 
 void main()
@@ -37,6 +41,19 @@ void main()
 		outputColor = mix(mainTexColor, mixTexColor, mixPercent);
 		
 		outputColor[3] = mainTexColor[3]; //we want the alpha value from the original texture to stay
+	}
+
+	for(int i = 0; i < 4; i++)
+	{
+		if(_overlayMixPercents[i] > 0)
+		{
+			vec4 col = texture(texture1, _overlayTextureCoordinates[i]);
+
+			if(col[3] != 0)
+			{
+				outputColor = mix(outputColor, col, _overlayMixPercents[i]);
+			}
+		}
 	}
 
 	//Handle outline

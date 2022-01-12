@@ -215,10 +215,12 @@ namespace MortalDungeon.Game.Map
 
                 if (bound.OffsetPoints.Count > 2 && FeaturePoint.PointInPolygon(bound.OffsetPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
                 {
+                    double density;
+
                     switch (bound.BoundingPointsId)
                     {
                         case 1:
-                            double density = 0.9;
+                            density = 0.9;
                             if(bound.Parameters.TryGetValue("density", out var val))
                             {
                                 if(double.TryParse(val, out var d))
@@ -246,6 +248,43 @@ namespace MortalDungeon.Game.Map
                             break;
                         case 3:
                             tile.Properties.Type = TileType.Dirt;
+                            break;
+                        case 4:
+                            density = 0.5;
+                            if (bound.Parameters.TryGetValue("density", out var grass_density))
+                            {
+                                if (double.TryParse(grass_density, out var d))
+                                {
+                                    density = d;
+                                }
+                            }
+
+                            if ((NumberGen.NextDouble() > density))
+                            {
+                                TileOverlay grassOverlay = new TileOverlay(TileOverlayType.Grass_1, 1);
+                                tile.Properties.TileOverlays.Add(grassOverlay);
+
+                                PropertyAnimation tileAnimation = new PropertyAnimation();
+
+                                Keyframe frame = new Keyframe(10, () =>
+                                {
+                                    grassOverlay.TileOverlayType = (TileOverlayType)(((int)grassOverlay.TileOverlayType + 1) % 3 + 1);
+                                    tile.Update();
+                                });
+
+                                tileAnimation.Keyframes.Add(frame);
+
+                                tileAnimation.SetStartDelay(new Random().Next() % 25);
+                                tileAnimation.Repeat = true;
+                                tileAnimation.Play();
+
+                                tile.PropertyAnimations.Add(tileAnimation);
+
+                                tile.GetScene().Tick -= tile.Tick;
+                                tile.GetScene().Tick += tile.Tick;
+
+                                tile.Update();
+                            }
                             break;
                     }
 

@@ -7,6 +7,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Xml.Serialization;
 
 namespace MortalDungeon.Engine_Classes
@@ -476,7 +477,7 @@ namespace MortalDungeon.Engine_Classes
                 {
                     obj.ForEach(item =>
                     {
-                        Renderer.LoadTextureFromGameObj(item);
+                        Renderer.LoadTextureFromGameObj(item, false);
                     });
 
                     Renderer.OnRender -= loadTex;
@@ -495,6 +496,22 @@ namespace MortalDungeon.Engine_Classes
         public override int GetHashCode()
         {
             return HashCode.Combine(ObjectID);
+        }
+
+        public object this[string propertyName]
+        {
+            get
+            {
+                Type type = typeof(GameObject);
+                PropertyInfo propertyInfo = type.GetProperty(propertyName);
+                return propertyInfo.GetValue(this, null);
+            }
+            set
+            {
+                Type type = typeof(GameObject);
+                PropertyInfo propertyInfo = type.GetProperty(propertyName);
+                propertyInfo.SetValue(this, value, null);
+            }
         }
     }
 

@@ -12,7 +12,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             Name = "ToggleableButton";
 
-            BaseColor = Colors.UISelectedGray;
+            BaseColor = _Colors.UISelectedGray;
             SetColor(BaseColor);
         }
 

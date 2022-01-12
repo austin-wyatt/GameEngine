@@ -61,7 +61,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public SceneController Controller;
 
         public QueuedObjectList<GameObject> _genericObjects = new QueuedObjectList<GameObject>(); //GameObjects that are not Units and are being rendered independently
-        public List<Text> _text = new List<Text>();
+        public List<_Text> _text = new List<_Text>();
         public TileMapController _tileMapController = new TileMapController();
         public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
         //public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
@@ -138,7 +138,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected virtual void InitializeFields()
         {
             _genericObjects = new QueuedObjectList<GameObject>();
-            _text = new List<Text>();
+            _text = new List<_Text>();
             _units = new QueuedObjectList<Unit>(); //The units to render
             //_UI = new QueuedUIList<UIObject>();
             _tileMapController = new TileMapController();
@@ -566,78 +566,81 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _mouseTimer.Restart();
                 _hoverTimer.Reset();
 
-                Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
+                //Task.Run(() =>
+                //{
+                    Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(_cursorObject.Position.X, _cursorObject.Position.Y), WindowConstants.ClientSize);
 
-                if (MouseState != null && MouseState.IsButtonDown(MouseButton.Left))
-                {
-                    if (_grabbedObj == null)
+                    if (MouseState != null && MouseState.IsButtonDown(MouseButton.Left))
                     {
-                        lock (UIManager._clickableObjectLock)
+                        if (_grabbedObj == null)
                         {
-                            bool handled = false;
-
-                            foreach(var uiObj in UIManager.ClickableObjects)
+                            lock (UIManager._clickableObjectLock)
                             {
-                                if (handled)
-                                    break;
+                                bool handled = false;
 
-                                uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => 
+                                foreach(var uiObj in UIManager.ClickableObjects)
                                 {
-                                    _grabbedObj = obj;
-                                    handled = true;
-                                }, UIEventType.Grab);
+                                    if (handled)
+                                        break;
+
+                                    uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) => 
+                                    {
+                                        _grabbedObj = obj;
+                                        handled = true;
+                                    }, UIEventType.Grab);
+                                }
                             }
-                        }
-                    }
-                    else
-                    {
-                        Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position);
-                        //_grabbedObj.SetPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
-                        _grabbedObj.SetDragPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
-                    }
-                } //resolve all ongoing grab effects
-
-                if (MouseState != null && !MouseState.IsButtonDown(MouseButton.Left) && _grabbedObj != null)
-                {
-                    _grabbedObj.GrabEnd();
-                    _grabbedObj = null;
-                } //resolve all grabbed effects
-
-
-                lock (UIManager._hoverableObjectLock)
-                {
-                    bool hovered = false;
-                    bool timedHover = false;
-                    //check hovered objects
-                    foreach (var uiObj in UIManager.HoverableObjects)
-                    {
-                        if (hovered)
-                        {
-                            uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
                         }
                         else
                         {
-                            uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                            Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(_cursorObject.Position);
+                            //_grabbedObj.SetPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
+                            _grabbedObj.SetDragPosition(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos);
+                        }
+                    } //resolve all ongoing grab effects
+
+                    if (MouseState != null && !MouseState.IsButtonDown(MouseButton.Left) && _grabbedObj != null)
+                    {
+                        _grabbedObj.GrabEnd();
+                        _grabbedObj = null;
+                    } //resolve all grabbed effects
+
+
+                    lock (UIManager._hoverableObjectLock)
+                    {
+                        bool hovered = false;
+                        bool timedHover = false;
+                        //check hovered objects
+                        foreach (var uiObj in UIManager.HoverableObjects)
+                        {
+                            if (hovered)
                             {
-                                hovered = true;
-
-                                if (obj.HasTimedHoverEffect && !timedHover)
+                                uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
+                            }
+                            else
+                            {
+                                uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
                                 {
-                                    _hoverTimer.Restart();
-                                    _hoveredObject = obj;
+                                    hovered = true;
 
-                                    timedHover = true;
-                                }
-                            }, UIEventType.Hover);
+                                    if (obj.HasTimedHoverEffect && !timedHover)
+                                    {
+                                        _hoverTimer.Restart();
+                                        _hoveredObject = obj;
+
+                                        timedHover = true;
+                                    }
+                                }, UIEventType.Hover);
+                            }
                         }
                     }
-                }
 
 
-                Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
-                Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
+                    Vector3 mouseRayNear = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 0, _camera, WindowConstants.ClientSize); // start of ray (near plane)
+                    Vector3 mouseRayFar = _mouseRay.UnProject(_cursorObject.Position.X, _cursorObject.Position.Y, 1, _camera, WindowConstants.ClientSize); // end of ray (far plane)
 
-                EvaluateObjectHover(mouseRayNear, mouseRayFar);
+                    EvaluateObjectHover(mouseRayNear, mouseRayFar);
+                //});
 
                 return true;
             }
@@ -693,10 +696,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             if (!interceptKeystrokes)
             {
-                GetUI().ForEach(obj =>
+                //GetUI().ForEach(obj =>
+                //{
+                //    obj.OnKeyDown(e);
+                //});
+
+                foreach(var obj in UIManager.KeyDownObjects)
                 {
                     obj.OnKeyDown(e);
-                });
+                }
+
+                if(_focusedObj != null)
+                {
+                    _focusedObj.OnKeyDown(e);
+                }
                 
 
                 if (!e.IsRepeat)
@@ -746,10 +759,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             if (!interceptKeystrokes)
             {
-                GetUI().ForEach(obj =>
+                //GetUI().ForEach(obj =>
+                //{
+                //    obj.OnKeyUp(e);
+                //});
+
+                if (_focusedObj != null)
                 {
-                    obj.OnKeyUp(e);
-                });
+                    _focusedObj.OnKeyUp(e);
+                }
             }
 
             return !interceptKeystrokes;
@@ -802,18 +820,23 @@ namespace MortalDungeon.Engine_Classes.Scenes
             TileClicked?.Invoke(tile, button);
         }
 
+        private void _UpdateUnitStatusBars()
+        {
+            HighFreqTick -= _UpdateUnitStatusBars;
+
+            _units.ForEach(u =>
+            {
+                if (u.StatusBarComp != null)
+                {
+                    u.StatusBarComp.OnCameraMove();
+                }
+            });
+        }
+
         public virtual void OnCameraMoved()
         {
-            lock (_units._lock)
-            {
-                _units.ForEach(u =>
-                {
-                    if (u.StatusBarComp != null)
-                    {
-                        u.StatusBarComp.OnCameraMove();
-                    }
-                });
-            }
+            HighFreqTick -= _UpdateUnitStatusBars;
+            HighFreqTick += _UpdateUnitStatusBars;
         }
 
         public void FocusObject(UIObject obj)

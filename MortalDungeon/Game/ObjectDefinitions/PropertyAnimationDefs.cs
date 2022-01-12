@@ -60,10 +60,10 @@ namespace MortalDungeon.Game.Objects
 
         public class DayNightCycle : TimedAnimation 
         {
-            private static Color NightColor = new Color(0.1f, 0.1f, 0.2f, 1f);
-            private static Color MorningColor = new Color(0.5f, 0.5f, 0.43f, 1f);
-            private static Color MiddayColor = new Color(0.52f, 0.52f, 0.52f, 1f);
-            private static Color EveningColor = new Color(0.5f, 0.47f, 0.42f, 1f);
+            private static _Color NightColor = new _Color(0.1f, 0.1f, 0.2f, 1f);
+            private static _Color MorningColor = new _Color(0.5f, 0.5f, 0.43f, 1f);
+            private static _Color MiddayColor = new _Color(0.52f, 0.52f, 0.52f, 1f);
+            private static _Color EveningColor = new _Color(0.5f, 0.47f, 0.42f, 1f);
 
 
             private const int STATIC_PERIOD = 24;
@@ -98,12 +98,12 @@ namespace MortalDungeon.Game.Objects
 
                 StartTime = WindowConstants.GlobalTimer.ElapsedMilliseconds - startTime * timeDelay;
 
-                Color startColor = new Color(NightColor);
+                _Color startColor = new _Color(NightColor);
 
                 for (int i = 0; i < DAY_PERIOD; i++) 
                 {
                     TimedKeyframe frame = new TimedKeyframe(i * timeDelay);
-                    Color colorDif = new Color(0, 0, 0, 0);
+                    _Color colorDif = new _Color(0, 0, 0, 0);
 
                     if (i >= NightEnd && i < MorningStart) 
                     {

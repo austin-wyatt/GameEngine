@@ -7,6 +7,8 @@ layout(location = 3) in vec4 compositeType_PPMO;  //spritesheet position [0], se
 layout(location = 4) in vec4 appliedColorOutline;
 layout(location = 5) in vec4 tileParameters;	  //tile X [0] and Y [1] position, empty [2] empty [3]
 layout(location = 6) in vec4 compositeType_WH;    //framebuffer texture width [0] and height [1], client size x [2] and y [3]
+layout(location = 7) in vec4 overlayIndexes;    
+layout(location = 8) in vec4 overlayMixPercents;    
 
 out vec2 primaryTextureCoordinates;
 out vec2 mixedTextureCoordinates;
@@ -20,6 +22,9 @@ out float outline;
 out float alpha_threshold;
 
 flat out int InstanceID; 
+
+out vec2[4] _overlayTextureCoordinates;
+out vec4 _overlayMixPercents;
 
 
 const int tile_width = 124; //individual tile width
@@ -38,6 +43,8 @@ void main(void)
 	primaryColor = appliedColorPrimary;
 	mixPercent = compositeType_PPMO[2];
 
+	
+
 	const float columns = 20;
 	const float rows = 20;
 
@@ -55,6 +62,17 @@ void main(void)
 	row = 2;
 	column = 0;
 	outlineTextureCoordinates = setTexCoord(aTexCoord, columns, rows, column, row);
+
+
+	_overlayMixPercents = overlayMixPercents;
+
+	for(int i = 0; i < 4; i++)
+	{
+		row =  floor(overlayIndexes[i] / rows);
+		column = overlayIndexes[i] - row * rows;
+
+		_overlayTextureCoordinates[i] = setTexCoord(aTexCoord, columns, rows, column, row);
+	}
 
 	//Outline handling
 	outlineColor = appliedColorOutline;

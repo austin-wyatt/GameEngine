@@ -18,6 +18,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Units
@@ -152,7 +153,7 @@ namespace MortalDungeon.Game.Units
 
             if (StatusBarComp != null) 
             {
-                Scene.AddUI(StatusBarComp, Unit.BaseStatusBarZIndex);
+                Scene._unitStatusBlock.AddChild(StatusBarComp, BaseStatusBarZIndex);
             }
 
             Info.Energy = Info.CurrentEnergy;
@@ -233,14 +234,25 @@ namespace MortalDungeon.Game.Units
 
         public void ApplyUnitParameters(Dictionary<string, string> parameters)
         {
-            if(parameters.TryGetValue("name", out var name))
-            {
-                Name = name;
-            }
+            //if(parameters.TryGetValue("name", out var name))
+            //{
+            //    Name = name;
+            //}
 
             foreach(var param in parameters)
             {
                 UnitParameters.Parameters.TryAdd(param.Key, param.Value);
+
+                FieldInfo info = typeof(Unit).GetField(param.Key);
+                if(info == null)
+                {
+                    info = typeof(UnitInfo).GetField(param.Key);
+                }
+
+                if (info != null)
+                {
+                    info.SetValue(Info, Convert.ChangeType(param.Value, info.FieldType));
+                }
             }
         }
 
@@ -250,7 +262,7 @@ namespace MortalDungeon.Game.Units
 
             //remove the objects that are related to the unit but not created by the unit
             Scene._genericObjects.Remove(SelectionTile);
-            Scene.RemoveUI(StatusBarComp);
+            Scene._unitStatusBlock.RemoveChild(StatusBarComp);
 
             SelectionTile = null;
 
@@ -536,7 +548,7 @@ namespace MortalDungeon.Game.Units
                     SelectionTile.SetColor(new Vector4(0.75f, 0, 0, 1));
                     break;
                 case Relation.Neutral:
-                    SelectionTile.SetColor(Colors.Tan);
+                    SelectionTile.SetColor(_Colors.Tan);
                     break;
                 default:
                     SelectionTile.SetColor(new Vector4(0, 0, 0.75f, 1));
@@ -948,6 +960,22 @@ namespace MortalDungeon.Game.Units
             obj.BaseFrame.SetBaseColor(Color);
 
             return obj;
+        }
+
+        public object this[string propertyName]
+        {
+            get
+            {
+                Type type = typeof(Unit);
+                FieldInfo propertyInfo = type.GetField(propertyName);
+                return propertyInfo.GetValue(this);
+            }
+            set
+            {
+                Type type = typeof(Unit);
+                FieldInfo propertyInfo = type.GetField(propertyName);
+                propertyInfo.SetValue(this, value);
+            }
         }
     }
 

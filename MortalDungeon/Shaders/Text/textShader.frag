@@ -58,13 +58,13 @@ void main()
 		outputColor = OUTLINE_COLOR;
 	}
 
-	if(BOLD > 0 && distAlphaMask >= 0.4 && distAlphaMask <= 0.5)
+	if(BOLD > -1 && distAlphaMask >= 0.4 && distAlphaMask <= 0.5)
 	{
 		outputColor = appliedColor;
 	}
 	
 	//if the alpha is below the alpha threshold the pixel is discarded
-	if(outputColor.a < alpha_threshold)
+	if(outputColor.a < 0.3)
 	{
 		discard;
 	}

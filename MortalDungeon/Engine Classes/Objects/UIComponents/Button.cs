@@ -1,14 +1,15 @@
 ﻿using OpenTK.Mathematics;
 using System;
+using System.Drawing;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
     public class Button : UIObject
     {
-        public TextComponent TextBox;
+        public TextHandling.Text TextBox;
         public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
 
-        public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.1f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
+        public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.5f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
         {
             Position = position;
             Size = size;
@@ -19,7 +20,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Name = "Button";
 
             BaseComponent = new UIBlock();
-            BaseComponent.SetColor(Colors.UILightGray);
+            BaseComponent.SetColor(_Colors.UILightGray);
             BaseComponent.SetPosition(Position);
 
             BaseComponent.SetSize(size);
@@ -29,10 +30,16 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //BaseComponent = textBox;
 
             //AddChild(textBox);
-            TextComponent textBox = new TextComponent();
-            textBox.SetText(text);
-            textBox.SetTextScale(textScale);
-            
+            //TextComponent textBox = new TextComponent();
+            //textBox.SetText(text);
+            //textBox.SetTextScale(textScale);
+
+            var textBox = new TextHandling.Text(text, TextHandling.Text.DEFAULT_FONT, 64, Brushes.Black);
+
+            float ratio = size.X / size.Y;
+
+            textBox.SetTextScale(textScale / ratio);
+
             TextBox = textBox;
             
 
@@ -110,7 +117,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         {
             if (Disabled) 
             {
-                BaseComponent.SetColor(Colors.UIDisabledGray);
+                BaseComponent.SetColor(_Colors.UIDisabledGray);
             }
             else if (!Selected)
                 BaseComponent.SetColor(color);

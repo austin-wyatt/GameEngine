@@ -35,7 +35,7 @@ struct Material {
     float shininess;
 }; 
 
-uniform Material[4] material;
+uniform Material[8] material;
 int materialIndex = primaryTextureTarget > 1 ? int(primaryTextureTarget - 1) : 0;
 
 struct Light {

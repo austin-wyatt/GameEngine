@@ -13,6 +13,8 @@ namespace MortalDungeon.Game.Serializers
         private static string _animationCharSet = "DKLMNabfCHTikGvIJstezABUopgmncdwxyPhqEFuOQlrRSV";
         private static int _fileNameLength = 10;
 
+        public static Dictionary<string, AnimationSet> AllAnimationSets = new Dictionary<string, AnimationSet>();
+
         public static AnimationSet LoadAnimationFromFileWithName(string name)
         {
             string path = SerializerParams.DATA_BASE_PATH + name + ".a";
@@ -87,6 +89,16 @@ namespace MortalDungeon.Game.Serializers
             }
 
             return animations;
+        }
+
+        public static void Initialize()
+        {
+            var animations = LoadAllAnimations();
+
+            foreach (var animation in animations)
+            {
+                AllAnimationSets.TryAdd(animation.Name, animation);
+            }
         }
     }
 }

@@ -96,6 +96,8 @@ namespace MortalDungeon.Engine_Classes
 
         public override void SetScale(float scale) 
         {
+            //scale *= 2;
+
             LetterObject.BaseFrame.SetScaleAll(scale);
 
             Scale = scale;
@@ -305,7 +307,7 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class Text
+    public class _Text
     {
         public List<Letter> Letters = new List<Letter>();
         public string TextString = "";
@@ -319,7 +321,7 @@ namespace MortalDungeon.Engine_Classes
 
         public static float NewLineHeight = 700f;
 
-        public Vector4 Color = Colors.White;
+        public Vector4 Color = _Colors.White;
 
         public bool Render = true;
 
@@ -327,8 +329,8 @@ namespace MortalDungeon.Engine_Classes
         public TextRenderData TextRenderData = new TextRenderData();
 
 
-        public Text() { }
-        public Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
+        public _Text() { }
+        public _Text(string textString, Vector3 position = new Vector3(), bool cameraPerspective = false) 
         {
             TextString = textString;
             Position = position;

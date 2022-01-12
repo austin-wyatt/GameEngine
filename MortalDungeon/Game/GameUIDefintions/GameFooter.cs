@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Units;
@@ -10,8 +11,10 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
+using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Game.UI
 {
@@ -19,7 +22,7 @@ namespace MortalDungeon.Game.UI
     {
         CombatScene Scene;
 
-        private TextComponent _unitNameTextBox;
+        private Text _unitNameTextBox;
         private HealthBar _unitHealthBar;
         private UIBlock _containingBlock;
         private ShieldBar _unitShieldBar;
@@ -45,10 +48,10 @@ namespace MortalDungeon.Game.UI
         {
             Scene = scene;
 
-
+            Typeable = true;
 
             #region end turn button
-            Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", 0.075f, default, default, false);
+            Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", 0.375f, default, default, false);
 
             EndTurnButton = endTurnButton;
 
@@ -57,7 +60,7 @@ namespace MortalDungeon.Game.UI
 
             //UIScale textScale = endTurnButton.TextBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 3;
             //textScale.Y *= -1;
-            endTurnButton.SetSize(endTurnButton.TextBox.GetScale() + textOffset.ToScale());
+            endTurnButton.SetSize(endTurnButton.TextBox.Size + textOffset.ToScale());
 
             endTurnButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -8, 0), UIAnchorPosition.BottomRight);
 
@@ -68,18 +71,18 @@ namespace MortalDungeon.Game.UI
                 //Scene.DeselectUnits();
             };
 
-            AddChild(endTurnButton, 100);
+            AddChild(endTurnButton, 10000);
             #endregion
 
             #region venture forth button
-            Button ventureForthButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "Venture Forth", 0.075f, default, default, false);
+            Button ventureForthButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "Venture Forth", 0.375f, default, default, false);
             ventureForthButton.SetRender(false);
 
             VentureForthButton = ventureForthButton;
 
             textOffset = new UIDimensions(80, 100);
 
-            ventureForthButton.SetSize(ventureForthButton.TextBox.GetScale() + textOffset.ToScale());
+            ventureForthButton.SetSize(ventureForthButton.TextBox.Size + textOffset.ToScale());
 
             ventureForthButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -200, 0), UIAnchorPosition.BottomRight);
 
@@ -134,11 +137,9 @@ namespace MortalDungeon.Game.UI
             Vector3 nameBoxPos = _containingBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
             nameBoxPos.X = nameBoxPos.X + containingBlockDimensions.X / 6;
 
-            _unitNameTextBox = new TextComponent();
-            _unitNameTextBox.SetColor(Colors.UITextBlack);
+            _unitNameTextBox = new Text("", Text.DEFAULT_FONT, 64, Brushes.Black);
             _unitNameTextBox.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
-            _unitNameTextBox.SetTextScale(0.075f);
-            //_unitNameTextBox.BaseComponent.SetColor(new Vector4(0, 0, 0, 0.5f));
+            _unitNameTextBox.SetTextScale(0.1f);
 
             _infoBlock.AddChild(_unitNameTextBox, 100);
             #endregion
@@ -263,7 +264,7 @@ namespace MortalDungeon.Game.UI
 
                 for (int i = 0; i < _currentIcons.Count; i++)
                 {
-                    RemoveChild(_currentIcons[i].ObjectID);
+                    RemoveChild(_currentIcons[i]);
                 }
 
                 _currentIcons.Clear();
@@ -323,7 +324,7 @@ namespace MortalDungeon.Game.UI
             Vector3 nameBoxPos = _infoBlock.GetAnchorPosition(UIAnchorPosition.TopLeft);
             UIDimensions nameBoxDim = _unitNameTextBox.GetDimensions();
 
-            _unitNameTextBox.SetPositionFromAnchor(nameBoxPos + new Vector3(2, nameBoxDim.Y / 2 - 5, 0), UIAnchorPosition.TopLeft);
+            _unitNameTextBox.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, 2, 0), UIAnchorPosition.BottomCenter);
 
             
             _buffBlock.SetSize(new UIDimensions(infoBarDimensions.X * 0.4f, infoBarDimensions.Y));
@@ -348,6 +349,8 @@ namespace MortalDungeon.Game.UI
                 _currentBuffs.Clear();
                 CreateBuffIcons(isPlayerUnitTakingTurn);
             }
+
+            ForceTreeRegeneration();
 
             _updatingFooterInfo = false;
             if (_updateAction != null) 
@@ -427,7 +430,7 @@ namespace MortalDungeon.Game.UI
         {
             for (int i = 0; i < _currentIcons.Count; i++)
             {
-                RemoveChild(_currentIcons[i].ObjectID);
+                RemoveChild(_currentIcons[i]);
             }
 
             _currentIcons.Clear();
@@ -455,9 +458,9 @@ namespace MortalDungeon.Game.UI
 
                     int currIndex = count;
 
-                    abilityIcon.DisabledColor = Colors.IconDisabled;
-                    abilityIcon.SelectedColor = Colors.IconSelected;
-                    abilityIcon.HoverColor = Colors.IconHover;
+                    abilityIcon.DisabledColor = _Colors.IconDisabled;
+                    abilityIcon.SelectedColor = _Colors.IconSelected;
+                    abilityIcon.HoverColor = _Colors.IconHover;
 
                     if (_currentIcons.Count == 0)
                     {
@@ -539,6 +542,8 @@ namespace MortalDungeon.Game.UI
                     _selectAbilityByNumList.Add(currIndex, selectAbilityByNum);
 
 
+
+
                     void cleanUp(GameObject obj)
                     {
                         Scene._onSelectAbilityActions.Remove(onAbilitySelected);
@@ -559,6 +564,8 @@ namespace MortalDungeon.Game.UI
                     abilityIcon.TimedHover += abilityHover;
 
                     abilityIcon.Name = ability.Name + " Icon";
+
+                    abilityIcon.Name = "Icon " + count;
 
                     _currentIcons.Add(abilityIcon);
                     AddChild(abilityIcon, 100);
@@ -653,7 +660,7 @@ namespace MortalDungeon.Game.UI
 
             _meditationIcon = new Icon(new UIScale(0.13f, 0.13f), IconSheetIcons.MonkBig, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
 
-            _meditationIcon.HoverColor = Colors.IconHover;
+            _meditationIcon.HoverColor = _Colors.IconHover;
 
             UIHelpers.AddTimedHoverTooltip(_meditationIcon, "Meditate to regain ability uses.", Scene);
 
@@ -690,7 +697,7 @@ namespace MortalDungeon.Game.UI
 
             scrollableArea.SetVisibleAreaPosition(window.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
 
-            UIList uiList = new UIList(default, new UIScale(0.5f, 0.05f), 0.03f);
+            UIList uiList = new UIList(default, new UIScale(0.5f, 0.05f), 0.075f);
 
             foreach (var ability in _currentUnit.Info.Abilities) 
             {
@@ -708,7 +715,7 @@ namespace MortalDungeon.Game.UI
                 TextComponent focusCostAdornment = new TextComponent();
                 focusCostAdornment.SetTextScale(0.03f);
                 focusCostAdornment.SetText(ability.ChargeRechargeCost.ToString());
-                focusCostAdornment.SetColor(Colors.UITextBlack);
+                focusCostAdornment.SetColor(_Colors.UITextBlack);
 
                 focusCostAdornment.SetPositionFromAnchor(listItem.BaseComponent.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(-10, 0, 0), UIAnchorPosition.RightCenter);
 

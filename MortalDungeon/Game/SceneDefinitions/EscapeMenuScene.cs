@@ -40,7 +40,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "Toggle Vsync", 0.05f);
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "Toggle Vsync", 0.4f);
 
             testButton.Click += (s, e) =>
             {
@@ -66,7 +66,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             escapeMenu.AddChild(testButton);
 
 
-            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Load Audio", 0.05f);
+            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Load Audio", 0.4f);
 
             loadButton.Click += (s, e) =>
             {
@@ -75,7 +75,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             escapeMenu.AddChild(loadButton);
 
-            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Play", 0.05f);
+            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Play", 0.4f);
 
             playButton.Click += (s, e) =>
             {
@@ -86,7 +86,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             escapeMenu.AddChild(playButton);
 
-            Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Dispose", 0.05f);
+            Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Dispose", 0.4f);
 
             disposeButton.Click += (s, e) =>
             {

@@ -71,7 +71,7 @@ namespace MortalDungeon
         public static float AspectRatio => (float)ClientSize.X / ClientSize.Y;
 
         public static bool ShowFPS = true;
-        public static bool ShowTicksPerSecond = false;
+        public static bool ShowTicksPerSecond = true;
         public static bool EnableBoundsTestingTools = false;
         public static bool ShowCulledChunks = true;
 
@@ -158,7 +158,7 @@ namespace MortalDungeon
 
         //private List<Scene> _scenes = new List<Scene>();
 
-        private SceneController _sceneController;
+        public SceneController _sceneController;
 
         private Stopwatch _timer;
         private Stopwatch _gameTimer;
@@ -177,7 +177,7 @@ namespace MortalDungeon
         private uint highFreqLastTick = 0;
 
         private const float tickRate = (float)1 / WindowConstants.TickDenominator;
-        private const float highFreqTickRate = (float)1 / 90;
+        private const float highFreqTickRate = (float)1 / 135;
 
         public CubeMap SkyBox = new CubeMap();
 
@@ -209,6 +209,8 @@ namespace MortalDungeon
             FeatureManager.Initialize();
 
             LuaManager.Initialize();
+
+            AnimationSerializer.Initialize();
 
             SetWindowSize();
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
@@ -292,7 +294,6 @@ namespace MortalDungeon
             {
                 double timeValue;
 
-                int waitTime = (int)(highFreqTickRate * 500);
                 while (true) 
                 {
                     timeValue = _gameTimer.Elapsed.TotalSeconds;
@@ -309,6 +310,11 @@ namespace MortalDungeon
                                 _sceneController.Scenes[i].TimedTickableObjects[j].Tick();
                             }
                         }
+
+                        if (highFreqTick % 3 == 0)
+                        {
+                            tick++;
+                        }
                     }
 
                     //if (timeValue > tickRate)
@@ -316,12 +322,9 @@ namespace MortalDungeon
                     //    _gameTimer.Restart();
                     //    tick++;
                     //}
-                    if (highFreqTick % 4 == 0)
-                    {
-                        tick++;
-                    }
+                    
 
-                    Thread.Sleep(5);
+                    Thread.Sleep(3);
                 }
             }, TaskCreationOptions.LongRunning);
 
@@ -338,6 +341,8 @@ namespace MortalDungeon
             Renderer.RenderStart();
 
             double timeValue;
+
+            
 
             //if (frames > 10000)
             //{
@@ -366,11 +371,15 @@ namespace MortalDungeon
                     Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
                 }
 
-                //Console.Write("   High freq ticks: " + _highFreqTickCounter);
-                //_highFreqTickCounter = 0;
+                if (WindowConstants.ShowTicksPerSecond)
+                {
+                    Console.Write("   High freq ticks: " + _highFreqTickCounter);
+                    _highFreqTickCounter = 0;
 
-                //Console.Write("   Ticks: " + _tickCounter);
-                //_tickCounter = 0;
+                    Console.Write("   Ticks: " + _tickCounter);
+                    _tickCounter = 0;
+                }
+                
 
                 Console.Write("   Objects drawn: " + Renderer.ObjectsDrawn / Renderer.FPSCount);
 
@@ -427,9 +436,13 @@ namespace MortalDungeon
             //Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, -1));
             Shaders.FAST_DEFAULT_SHADER.SetFloat("dirLight.enabled", 1);
 
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("light.constant", 1.0f);
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("light.linear", 0.022f);
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("light.quadratic", 0.0019f);
+
+            //Shaders.FAST_DEFAULT_SHADER.SetVector3("pointLight.position", new Vector3(0, 0, 2f));
+            //Shaders.FAST_DEFAULT_SHADER.SetVector3("pointLight.diffuse", new Vector3(1, 1, 1));
+            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.enabled", 1);
+            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.constant", 1.0f);
+            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.linear", 0.022f);
+            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.quadratic", 0.0019f);
 
             //Shaders.FAST_DEFAULT_SHADER.SetVector3("spotlight.position", _camera.Position);
             //Shaders.FAST_DEFAULT_SHADER.SetVector3("spotlight.direction", _camera.Front);
@@ -437,11 +450,6 @@ namespace MortalDungeon
             //Shaders.FAST_DEFAULT_SHADER.SetFloat("spotlight.outerCutoff", (float)Math.Cos(MathHelper.DegreesToRadians(17.5f)));
             //Shaders.FAST_DEFAULT_SHADER.SetFloat("spotlight.enabled", 1);
 
-            //if (BoundsTestScene.SPECULAR_TEST != null)
-            //{
-            //    BoundsTestScene.SPECULAR_TEST.Use(TextureUnit.Texture15);
-            //    Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 15);
-            //}
 
             Shaders.FAST_DEFAULT_SHADER.SetVector3("viewPosition", _camera.Position);
 
@@ -487,7 +495,7 @@ namespace MortalDungeon
                         RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
                     }); //TileMap
                 }
-                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles.ToList());
+                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles);
 
                 RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
 
@@ -495,12 +503,13 @@ namespace MortalDungeon
 
                 RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
 
-                lock (scene.UIManager._UILock) 
-                {
-                    RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
-                }
+                //lock (scene.UIManager._UILock) 
+                //{
+                //    RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
+                //}
+                RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
 
-                scene.GetRenderTarget<Text>(ObjectType.Text).ForEach(text =>
+                scene.GetRenderTarget<_Text>(ObjectType.Text).ForEach(text =>
                 {
                     if (text.Render && text.Letters.Count > 0)
                     {
@@ -577,8 +586,19 @@ namespace MortalDungeon
                 scene.OnRenderEnd();
             });
 
-            Renderer.RenderEnd();
+            OnRenderEnd();
         }
+
+
+        public delegate void WindowRenderEventArgs();
+        public static event WindowRenderEventArgs RenderEnd;
+
+        private static void OnRenderEnd()
+        {
+            Renderer.RenderEnd();
+            RenderEnd?.Invoke();
+        }
+
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
@@ -586,11 +606,6 @@ namespace MortalDungeon
             {
                 return;
             }
-
-            _sceneController.Scenes.ForEach(scene =>
-            {
-                scene.OnUpdateFrame(args);
-            });
 
             //TickAllObjects();
 
@@ -640,6 +655,11 @@ namespace MortalDungeon
 
             _lastPos = new Vector2(mouse.X, mouse.Y);
 
+            _sceneController.Scenes.ForEach(scene =>
+            {
+                scene.OnUpdateFrame(args);
+            });
+
             base.OnUpdateFrame(args);
         }
 
@@ -662,15 +682,10 @@ namespace MortalDungeon
                 _highFreqTickCounter++;
 
                 highFreqLastTick = highFreqTick;
-                _sceneController.Scenes.ForEach(scene =>
+                for(int i = 0; i < _sceneController.Scenes.Count; i++)
                 {
-                    //scene.HighFreqTickableObjects.ForEach(obj =>
-                    //{
-                    //    obj.Tick();
-                    //});
-
-                    scene.OnHighFreqTick();
-                });
+                    _sceneController.Scenes[i].OnHighFreqTick();
+                }
             }
 
             if (tick != lastTick)
@@ -678,15 +693,22 @@ namespace MortalDungeon
                 _tickCounter++;
 
                 lastTick = tick;
-                _sceneController.Scenes.ForEach(scene =>
+
+                for(int i = 0; i < _sceneController.Scenes.Count; i++)
                 {
-                    //if (scene.PauseTicks)
-                    //    return;
+                    _sceneController.Scenes[i].OnTick();
+                    _sceneController.Scenes[i].PostTickAction();
+                }
 
-                    scene.OnTick();
+                //_sceneController.Scenes.ForEach(scene =>
+                //{
+                //    //if (scene.PauseTicks)
+                //    //    return;
 
-                    scene.PostTickAction();
-                });
+                //    scene.OnTick();
+
+                //    scene.PostTickAction();
+                //});
             }
         }
         private void SetWindowSize() 

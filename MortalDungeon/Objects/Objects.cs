@@ -26,11 +26,13 @@ namespace MortalDungeon.Objects
         DynamicTexture,
 
         Lighting,
-        LightObstructionMap
+        LightObstructionMap,
+
+        TileOverlaySpritesheet
     }
     public class TextureInfo
     {
-        public TextureName[] Textures;
+        public int[] TextureIds;
         public string[] TextureFilenames; //filename of texture/spritesheet
         public int[] TexturePositions; //which index of the spritesheet a texture resides in
 
@@ -39,7 +41,7 @@ namespace MortalDungeon.Objects
         public TextureInfo() { }
         public TextureInfo(string texture, Spritesheet spritesheet = null)
         {
-            Textures = new TextureName[] { TextureName.Unknown };
+            TextureIds = new int[] { (int)TextureName.Unknown };
             TexturePositions = new int[] { 0 };
             TextureFilenames = new string[] { texture };
 
@@ -47,14 +49,14 @@ namespace MortalDungeon.Objects
         }
         public TextureInfo(TextureName texture, Spritesheet spritesheet = null) 
         {
-            Textures = new TextureName[] { texture };
+            TextureIds = new int[] { (int)texture };
             TexturePositions = new int[] { 0 };
 
             Spritesheet = spritesheet;
         }
-        public TextureInfo(TextureName[] textures, int[] positions, Spritesheet spritesheet = null)
+        public TextureInfo(int[] textures, int[] positions, Spritesheet spritesheet = null)
         {
-            Textures = textures;
+            TextureIds = textures;
             TexturePositions = positions;
 
             Spritesheet = spritesheet;
@@ -62,7 +64,7 @@ namespace MortalDungeon.Objects
 
         public TextureInfo(TextureName texture, int position, Spritesheet spritesheet = null)
         {
-            Textures = new TextureName[] { texture };
+            TextureIds = new int[] { (int)texture };
             TexturePositions = new int[] { position };
 
             Spritesheet = spritesheet;
@@ -70,14 +72,14 @@ namespace MortalDungeon.Objects
 
         public TextureInfo(Spritesheet spritesheet, int[] positions )
         {
-            TextureName[] textures = new TextureName[positions.Length];
+            int[] textures = new int[positions.Length];
             string[] textureFilename = new string[positions.Length];
             for(int i = 0; i < textures.Length; i++)
             {
-                textures[i] = spritesheet.TextureName;
+                textures[i] = spritesheet.TextureId;
                 textureFilename[i] = spritesheet.File;
             }
-            Textures = textures;
+            TextureIds = textures;
             TexturePositions = positions;
             TextureFilenames = textureFilename;
 

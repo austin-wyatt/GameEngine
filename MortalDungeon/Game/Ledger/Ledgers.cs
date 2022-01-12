@@ -177,6 +177,6 @@ namespace MortalDungeon.Game.Ledger
 
         PermanentSubscriber, //Subscribes to a state value in exactly the same way as 
                              //the subscribe instruction but is not removed when triggered
-
+        EndReservedInstructions = 20
     }
 }

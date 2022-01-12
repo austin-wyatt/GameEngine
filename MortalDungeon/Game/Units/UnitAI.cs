@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Tiles;
 using System;
@@ -231,7 +232,7 @@ namespace MortalDungeon.Game.Units
         private static Dictionary<long, Relation> TeamRelations = new Dictionary<long, Relation>();
         public static void SetTeamRelation(UnitTeam a, UnitTeam b, Relation relation) 
         {
-            TeamRelations.Add(a.Hash(b), relation);
+            TeamRelations.AddOrSet(a.Hash(b), relation);
         }
 
         public static Relation GetTeamRelation(UnitTeam a, UnitTeam b) 

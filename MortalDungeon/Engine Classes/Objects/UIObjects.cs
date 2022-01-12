@@ -29,7 +29,7 @@ namespace MortalDungeon.Engine_Classes
     public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
-        public List<Text> TextObjects = new List<Text>();
+        public List<_Text> TextObjects = new List<_Text>();
         public Vector3 Origin = default; //this will be the top left of the UIBlock
         public UIScale Size = new UIScale(1, 1);
         public bool CameraPerspective = false;
@@ -411,6 +411,11 @@ namespace MortalDungeon.Engine_Classes
 
         public override void SetPosition(Vector3 position)
         {
+            if (!CameraPerspective)
+            {
+                position.Z = Position.Z;
+            }
+
             Vector3 deltaPos = Position - position;
             //base.SetPosition(new Vector3(position.X, position.Y, ZPos));
             base.SetPosition(position);
@@ -474,6 +479,8 @@ namespace MortalDungeon.Engine_Classes
             UIDimensions anchorOffset = GetAnchorOffset(anchor);
 
             _anchorOffset = anchorOffset;
+
+
 
              SetPosition(position - anchorOffset);
         }
@@ -704,7 +711,7 @@ namespace MortalDungeon.Engine_Classes
                     item.UIObject.SetZPosition(currVal);
 
                     //currVal += 0.000000001f;
-                    currVal += 0.0000001f;
+                    currVal += 0.00000015f;
                 }
             }
         }
@@ -771,7 +778,7 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void RemoveChild(int objectID) 
+        public void RemoveChild(UIObject obj) 
         {
             object lockObj = new object();
 
@@ -782,15 +789,13 @@ namespace MortalDungeon.Engine_Classes
 
             lock (lockObj)
             {
-                UIObject child = Children.Find(c => c.ObjectID == objectID);
-
-                if (child != null)
+                if (obj != null)
                 {
-                    child.CleanUp();
+                    obj.CleanUp();
 
-                    Children.Remove(child);
+                    Children.Remove(obj);
 
-                    child.Parent = null;
+                    obj.Parent = null;
 
                     //if (Parent == null)
                     //{
@@ -804,11 +809,6 @@ namespace MortalDungeon.Engine_Classes
                     ForceTreeRegeneration();
                 }
             }
-        }
-
-        public void RemoveChild(UIObject obj) 
-        {
-            RemoveChild(obj.ObjectID);
 
             ForceTreeRegeneration();
         }
@@ -849,11 +849,6 @@ namespace MortalDungeon.Engine_Classes
 
                 ForceTreeRegeneration();
             }
-        }
-
-        public void RemoveChildren(List<int> objectIDs) 
-        {
-            objectIDs.ForEach(id => RemoveChild(id));
         }
 
         public void SetDisabled(bool disable) 

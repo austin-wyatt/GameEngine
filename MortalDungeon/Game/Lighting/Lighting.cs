@@ -335,7 +335,7 @@ namespace MortalDungeon.Game.Lighting
         }
 
 
-        public GameObject CreateTexturedQuad(FrameBufferObject fbo, TextureName texName)
+        public GameObject CreateTexturedQuad(FrameBufferObject fbo, int texName)
         {
             Texture texture = new Texture(fbo.RenderTexture, texName);
 
@@ -345,8 +345,8 @@ namespace MortalDungeon.Game.Lighting
             };
 
 
-            obj.Material.Diffuse.TextureName = texName;
-            obj.Textures.Textures[0] = texName;
+            obj.Material.Diffuse.TextureId = texName;
+            obj.Textures.TextureIds[0] = texName;
 
             Renderer.LoadTextureFromTextureObj(obj.Material.Diffuse, texName);
 

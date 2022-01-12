@@ -52,7 +52,7 @@ namespace MortalDungeon.Game.Structures
             HasContextMenu = true;
 
             BaseObject.BaseFrame.SpritesheetPosition = (int)Type;
-            SetColor(Colors.Transparent);
+            SetColor(_Colors.Transparent);
 
             RemoveBaseObject(BaseObject);
 

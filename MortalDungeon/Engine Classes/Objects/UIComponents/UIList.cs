@@ -1,6 +1,8 @@
-﻿using OpenTK.Mathematics;
+﻿using MortalDungeon.Engine_Classes.TextHandling;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
@@ -18,8 +20,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public float TextScale = 1;
 
-        public Vector4 _textColor = Colors.UITextBlack;
-        public Vector4 _itemColor = Colors.UILightGray;
+        public Vector4 _textColor = _Colors.UITextBlack;
+        public Vector4 _itemColor = _Colors.UILightGray;
         public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
         {
             Position = position;
@@ -53,7 +55,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
             else
             {
-                BaseComponent.SetColor(Colors.UIDefaultGray);
+                BaseComponent.SetColor(_Colors.UIDefaultGray);
             }
 
             //BaseComponent.SetColor(Colors.Transparent); //temp
@@ -189,20 +191,18 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
     public class ListItem : UIObject 
     {
-        public TextComponent _textBox;
+        public Text _textBox;
         public UIBlock _backdrop;
         public int Index = -1;
 
-        public Vector4 _textColor = Colors.White;
-        public Vector4 _itemColor = Colors.UIHoveredGray;
+        public Vector4 _textColor = _Colors.White;
+        public Vector4 _itemColor = _Colors.UIHoveredGray;
 
         public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor, bool outline = false) 
         {
             //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
-            TextComponent textBox = new TextComponent();
+            Text textBox = new Text(text, Text.DEFAULT_FONT, 48, Brushes.Black);
             textBox.SetTextScale(textScale);
-            textBox.SetText(text);
-            textBox.SetColor(textColor);
 
             _textBox = textBox;
             
@@ -293,7 +293,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             if (Disabled)
             {
                 //BaseComponent.SetColor(Colors.UIDisabledGray);
-                _textBox.SetColor(Colors.UIDisabledGray);
+                _textBox.SetColor(_Colors.UIDisabledGray);
             }
             else 
             {

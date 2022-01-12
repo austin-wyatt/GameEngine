@@ -25,7 +25,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             List = new UIList(default, listItemSize, textScale);
 
             Chevron = new Icon(new UIScale(listItemSize.Y, listItemSize.Y), UISheetIcons.Chevron, Spritesheets.UISheet);
-            Chevron.SetColor(Colors.UITextBlack);
+            Chevron.SetColor(_Colors.UITextBlack);
 
             Chevron.BaseObject.BaseFrame.RotateZ(270);
             Chevron.BaseObject.BaseFrame.ScaleY(1 / WindowConstants.AspectRatio);

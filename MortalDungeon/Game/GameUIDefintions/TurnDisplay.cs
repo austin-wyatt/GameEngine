@@ -20,7 +20,7 @@ namespace MortalDungeon.Game.UI
             BaseComponent = new UIBlock();
             BaseComponent.SetAllInline(0);
 
-            BaseComponent.SetColor(Colors.Transparent);
+            BaseComponent.SetColor(_Colors.Transparent);
 
             AddChild(BaseComponent);
 
@@ -70,7 +70,7 @@ namespace MortalDungeon.Game.UI
 
                     UIBlock block = new UIBlock(default, new UIScale(0.18f, 0.18f));
                     block.MultiTextureData.MixTexture = false;
-                    block.SetColor(Colors.UILightGray - new Vector4(0, 0, 0, 0.25f));
+                    block.SetColor(_Colors.UILightGray - new Vector4(0, 0, 0, 0.25f));
 
                     block.BaseObjects.Insert(0, obj);
                     block._baseObject = obj;

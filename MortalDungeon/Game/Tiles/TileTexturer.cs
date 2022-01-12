@@ -20,6 +20,7 @@ namespace MortalDungeon.Game.Tiles
         private const int tile_height_partial = 54; //stacked height
 
         private static readonly Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
+        private static readonly Texture TileOverlaySpritesheet = Texture.LoadFromFile("Resources/TileOverlaySpritesheet.png");
 
         private static readonly Random random = new ConsistentRandom();
 
@@ -32,7 +33,13 @@ namespace MortalDungeon.Game.Tiles
 
         public static void InitializeTileTexturer() 
         {
+
             TileSpritesheet.Use(TextureUnit.Texture0);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            TileOverlaySpritesheet.Use(TextureUnit.Texture1);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
@@ -46,8 +53,8 @@ namespace MortalDungeon.Game.Tiles
 
         public static void InitializeTexture(TileMap map)
         {
-            TileSpritesheet.Use(TextureUnit.Texture0);
-
+            //TileSpritesheet.Use(TextureUnit.Texture0);
+            //TileOverlaySpritesheet.Use(TextureUnit.Texture1);
 
             //if (map.FrameBuffer != null) 
             //{
@@ -79,7 +86,7 @@ namespace MortalDungeon.Game.Tiles
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
-            map.DynamicTexture = new Texture(map.FrameBuffer.RenderTexture, TextureName.DynamicTexture);
+            map.DynamicTexture = new Texture(map.FrameBuffer.RenderTexture, (int)TextureName.DynamicTexture);
 
             map.Tiles.ForEach(tile => tile.Update());
             RenderTilesToFramebuffer(map);
@@ -160,7 +167,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
 
-        private const int _dataOffset = 20;
+        private const int _dataOffset = 28;
 
         private static void RenderTiles(HashSet<BaseTile> objects, ref float[] _instancedRenderDataArray, TileMap map)
         {
@@ -173,6 +180,10 @@ namespace MortalDungeon.Game.Tiles
             RenderableObject Display = objects.First().BaseObjects[0]._currentAnimation.CurrentFrame;
 
             TileSpritesheet.Use(TextureUnit.Texture0);
+            TileOverlaySpritesheet.Use(TextureUnit.Texture1);
+
+            Shaders.TILE_MAP_SHADER.SetInt("texture1", 1);
+
             EnableInstancedShaderAttributes();
 
 
@@ -193,6 +204,9 @@ namespace MortalDungeon.Game.Tiles
             GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, _dataOffset, 8 * sizeof(float));  //color that will be applied to the outline
             GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, _dataOffset, 12 * sizeof(float)); //X position of tile [0], Y position of tile[1], map width [2] and height [3]
             GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, _dataOffset, 16 * sizeof(float)); //width of the FBO render texture [0], height of the FBO render texture [1], empty [2, 3]
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, _dataOffset, 16 * sizeof(float)); //width of the FBO render texture [0], height of the FBO render texture [1], empty [2, 3]
+            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, _dataOffset, 20 * sizeof(float)); //indexes 0 through 4 of the tile overlays
+            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, _dataOffset, 24 * sizeof(float)); //mix percents of the 4 tile overlays
             int currIndex = 0;
 
             int count = 0;
@@ -202,12 +216,27 @@ namespace MortalDungeon.Game.Tiles
 
             Vector4 color;
 
+            float[] overlayIndexes = new float[4];
+            float[] overlayMixPercents = new float[4];
+
             foreach (BaseTile tile in objects) 
             {
                 tile.Updating = false;
 
                 if (tile.Render)
                 {
+                    for(int i = 3; i > tile.Properties.TileOverlays.Count - 1; i--)
+                    {
+                        overlayIndexes[i] = 0;
+                        overlayMixPercents[i] = 0;
+                    }
+
+                    for(int i = 0; i < tile.Properties.TileOverlays.Count; i++)
+                    {
+                        overlayIndexes[i] = (int)tile.Properties.TileOverlays[i].TileOverlayType;
+                        overlayMixPercents[i] = tile.Properties.TileOverlays[i].MixPercent;
+                    }
+
                     Vector4 heightColorCorrection = new Vector4(0, 0, 0, 0);
 
                     if (tile.InFog[tile.GetScene().CurrentTeam])
@@ -305,6 +334,16 @@ namespace MortalDungeon.Game.Tiles
                             _instancedRenderDataArray[currIndex++] = WindowConstants.ClientSize.X;
                             _instancedRenderDataArray[currIndex++] = WindowConstants.ClientSize.Y;
 
+                            _instancedRenderDataArray[currIndex++] = overlayIndexes[0];
+                            _instancedRenderDataArray[currIndex++] = overlayIndexes[1];
+                            _instancedRenderDataArray[currIndex++] = overlayIndexes[2];
+                            _instancedRenderDataArray[currIndex++] = overlayIndexes[3];
+
+                            _instancedRenderDataArray[currIndex++] = overlayMixPercents[0];
+                            _instancedRenderDataArray[currIndex++] = overlayMixPercents[1];
+                            _instancedRenderDataArray[currIndex++] = overlayMixPercents[2];
+                            _instancedRenderDataArray[currIndex++] = overlayMixPercents[3];
+
                             count++;
                         }
                     }
@@ -338,11 +377,15 @@ namespace MortalDungeon.Game.Tiles
             GL.EnableVertexAttribArray(4);
             GL.EnableVertexAttribArray(5);
             GL.EnableVertexAttribArray(6);
+            GL.EnableVertexAttribArray(7);
+            GL.EnableVertexAttribArray(8);
             GL.VertexAttribDivisor(2, 1);
             GL.VertexAttribDivisor(3, 1);
             GL.VertexAttribDivisor(4, 1);
             GL.VertexAttribDivisor(5, 1);
             GL.VertexAttribDivisor(6, 1);
+            GL.VertexAttribDivisor(7, 1);
+            GL.VertexAttribDivisor(8, 1);
         }
 
         private static void DisableInstancedShaderAttributes()
@@ -352,11 +395,15 @@ namespace MortalDungeon.Game.Tiles
             GL.DisableVertexAttribArray(4);
             GL.DisableVertexAttribArray(5);
             GL.DisableVertexAttribArray(6);
+            GL.DisableVertexAttribArray(7);
+            GL.DisableVertexAttribArray(8);
             GL.VertexAttribDivisor(2, 0);
             GL.VertexAttribDivisor(3, 0);
             GL.VertexAttribDivisor(4, 0);
             GL.VertexAttribDivisor(5, 0);
             GL.VertexAttribDivisor(6, 0);
+            GL.VertexAttribDivisor(7, 0);
+            GL.VertexAttribDivisor(8, 0);
         }
     }
 }

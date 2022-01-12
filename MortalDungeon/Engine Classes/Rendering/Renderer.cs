@@ -39,7 +39,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         private const int particleDataLength = particleDataOffset * sizeof(float);
 
         private static readonly List<Texture> _textures = new List<Texture>();
-        private static readonly Dictionary<TextureName, int> _loadedTextures = new Dictionary<TextureName, int>();
+        private static readonly Dictionary<int, int> _loadedTextures = new Dictionary<int, int>();
 
 
         public static FrameBufferObject MainFBO;
@@ -280,15 +280,15 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Display = display;
             }
 
-            TextureName currTexture = Display.Textures.Textures[0];
+            int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 16);
+            Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 0);
             Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].diffuse", 0);
             Shaders.FAST_DEFAULT_SHADER.SetFloat("material[0].shininess", 16);
 
             Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
-            
+
 
             PrepareInstancedRenderFunc(Display);
 
@@ -297,7 +297,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             int count = 0;
             List<T> recursiveCallList = new List<T>();
 
-            Dictionary<TextureName, TextureUnit> usedTextures = new Dictionary<TextureName, TextureUnit>();
+            Dictionary<int, TextureUnit> usedTextures = new Dictionary<int, TextureUnit>();
             Dictionary<Texture, TextureUnit> textureReferences = new Dictionary<Texture, TextureUnit>();
 
             List<T> scissorCallList = new List<T>();
@@ -306,7 +306,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             textureReferences.Add(Display.Material.Diffuse, TextureUnit.Texture0);
 
             BaseObject obj;
-            TextureName tex;
+            int texId;
 
             TextureUnit currentTextureUnit = TextureUnit.Texture2;
 
@@ -389,49 +389,97 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     }
                     else
                     {
+                        int objCount = 0;
+                        BaseObject[] baseObjects = new BaseObject[objects[i].BaseObjects.Count];
+                        int[] texIds = new int[objects[i].BaseObjects.Count];
+                        bool multipleBaseObjects = objects[i].BaseObjects.Count > 1;
+
                         for (int j = 0; j < objects[i].BaseObjects.Count; j++)
                         {
                             if (objects[i].BaseObjects[j].Render)
                             {
                                 if (objects[i].BaseObjects[j].BaseFrame.VerticeType != Display.VerticeType) 
                                 {
-                                    recursiveCallList.Add(objects[i]);
+                                    if (!multipleBaseObjects)
+                                        recursiveCallList.Add(objects[i]);
                                     continue;
                                 }
 
                                 obj = objects[i].BaseObjects[j];
-                                tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
+                                texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
 
-                                if (tex != currTexture)
+                                texIds[j] = texId;
+
+                                if (texId != currTexture)
                                 {
-                                    if (!usedTextures.ContainsKey(tex))
+                                    if (!usedTextures.ContainsKey(texId))
                                     {
-                                        usedTextures.Add(tex, currentTextureUnit);
-                                        textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
+                                        if (currentTextureUnit > TextureUnit.Texture8)
+                                        {
+                                            if(!multipleBaseObjects)
+                                                recursiveCallList.Add(objects[i]);
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            usedTextures.Add(texId, currentTextureUnit);
+                                            textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
 
-                                        obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
+                                            obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
 
-                                        int texIndex = (int)currentTextureUnit - 33984;
-                                        int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
-                                        Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
-                                        Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
-                                        //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
-                                        Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+                                            int texIndex = (int)currentTextureUnit - 33984;
+                                            int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
 
-                                        currentTextureUnit++;
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
+                                            //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+
+                                            currentTextureUnit++;
+                                        }
                                     }
                                 }
+                                baseObjects[j] = objects[i].BaseObjects[j];
 
-                                if (count == ObjectBufferCount)
+                                objCount++;
+
+                                if(!multipleBaseObjects)
+                                {
+                                    if (count == ObjectBufferCount)
+                                    {
+                                        recursiveCallList.Add(objects[i]);
+                                    }
+                                    else
+                                    {
+                                        InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
+
+                                        count++;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (multipleBaseObjects)
+                        {
+                            if (objCount == objects[i].BaseObjects.Count)
+                            {
+                                if (count + baseObjects.Length >= ObjectBufferCount)
                                 {
                                     recursiveCallList.Add(objects[i]);
                                 }
                                 else
                                 {
-                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[tex] - TextureUnit.Texture0));
+                                    for (int k = 0; k < baseObjects.Length; k++)
+                                    {
+                                        InsertDataIntoInstancedRenderArray(baseObjects[k], objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texIds[k]] - TextureUnit.Texture0));
 
-                                    count++;
+                                        count++;
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                recursiveCallList.Add(objects[i]);
                             }
                         }
                     }
@@ -446,7 +494,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, null, true, enableLighting);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
             }
         }
 
@@ -458,7 +506,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             for (int i = 0; i < data.Count; i++)
             {
                 Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", data[i].EnableLighting ? 1 : 0);
-
 
                 foreach (var Tex in data[i].Textures)
                 {
@@ -508,7 +555,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Display = display;
             }
-            TextureName currTexture = Display.Textures.Textures[0];
+            int currTexture = Display.Textures.TextureIds[0];
 
 
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
@@ -526,7 +573,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             List<MultiTextureData> multiTextureList = new List<MultiTextureData>();
 
-            TextureName tex;
+            int texId;
 
             int objIndex = 0;
 
@@ -534,13 +581,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 if (obj.Render)
                 {
-                    tex = obj._currentAnimation.CurrentFrame.Textures.Textures[0];
+                    texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
                     if (count == ObjectBufferCount)
                     {
                         recursiveCallList.Add(obj);
                         multiTextureList.Add(multiTextureData[objIndex]);
                     }
-                    else if (tex != currTexture)
+                    else if (texId != currTexture)
                     {
                         difTextureCallList.Add(obj);
                         multiTextureList.Add(multiTextureData[objIndex]);
@@ -962,23 +1009,23 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 {
                     for (int o = 0; o < entry.Value.Frames.Count; o++)
                     {
-                        for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
+                        for (int p = 0; p < entry.Value.Frames[o].Textures.TextureIds.Length; p++)
                         {
                             if (entry.Value.Frames[o].Material.Diffuse == null) 
                             {
-                                if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                                if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.TextureIds[p], out int handle))
                                 {
                                     Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
-                                    newTexture.TextureName = entry.Value.Frames[o].Textures.Textures[p];
+                                    newTexture.TextureId = entry.Value.Frames[o].Textures.TextureIds[p];
 
                                     _textures.Add(newTexture);
-                                    _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
+                                    _loadedTextures.Add(entry.Value.Frames[o].Textures.TextureIds[p], newTexture.Handle);
 
                                     entry.Value.Frames[o].Material.Diffuse = newTexture;
                                 }
                                 else
                                 {
-                                    entry.Value.Frames[o].Material.Diffuse = new Texture(handle, entry.Value.Frames[o].Textures.Textures[p]);
+                                    entry.Value.Frames[o].Material.Diffuse = new Texture(handle, entry.Value.Frames[o].Textures.TextureIds[p]);
                                 }
                             }
                         }
@@ -994,23 +1041,23 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 for (int o = 0; o < entry.Value.Frames.Count; o++)
                 {
-                    for (int p = 0; p < entry.Value.Frames[o].Textures.Textures.Length; p++)
+                    for (int p = 0; p < entry.Value.Frames[o].Textures.TextureIds.Length; p++)
                     {
                         if (entry.Value.Frames[o].Material.Diffuse == null) 
                         {
-                            if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.Textures[p], out int handle))
+                            if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.TextureIds[p], out int handle))
                             {
                                 Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest, default, generateMipMaps);
-                                newTexture.TextureName = entry.Value.Frames[o].Textures.Textures[p];
+                                newTexture.TextureId = entry.Value.Frames[o].Textures.TextureIds[p];
 
                                 _textures.Add(newTexture);
-                                _loadedTextures.Add(entry.Value.Frames[o].Textures.Textures[p], newTexture.Handle);
+                                _loadedTextures.Add(entry.Value.Frames[o].Textures.TextureIds[p], newTexture.Handle);
 
                                 entry.Value.Frames[o].Material.Diffuse = newTexture;
                             }
                             else
                             {
-                                entry.Value.Frames[o].Material.Diffuse = new Texture(handle, entry.Value.Frames[o].Textures.Textures[p]);
+                                entry.Value.Frames[o].Material.Diffuse = new Texture(handle, entry.Value.Frames[o].Textures.TextureIds[p]);
                             }
                         }
 
@@ -1023,40 +1070,40 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             if (obj.Material.Diffuse == null || obj.Material.Diffuse.ImageData == null)
             {
-                if (!_loadedTextures.TryGetValue(obj.Textures.Textures[0], out int handle))
+                if (!_loadedTextures.TryGetValue(obj.Textures.TextureIds[0], out int handle))
                 {
                     Texture newTexture = Texture.LoadFromFile(obj.Textures.TextureFilenames[0], nearest);
-                    newTexture.TextureName = obj.Textures.Textures[0];
+                    newTexture.TextureId = obj.Textures.TextureIds[0];
 
                     _textures.Add(newTexture);
-                    _loadedTextures.Add(obj.Textures.Textures[0], newTexture.Handle);
+                    _loadedTextures.Add(obj.Textures.TextureIds[0], newTexture.Handle);
 
                     obj.Material.Diffuse = newTexture;
                 }
                 else
                 {
-                    obj.Material.Diffuse = new Texture(handle, obj.Textures.Textures[0]);
+                    obj.Material.Diffuse = new Texture(handle, obj.Textures.TextureIds[0]);
                 }
             }
         }
 
         public static void LoadTextureFromParticleGen(ParticleGenerator generator)
         {
-            for (int p = 0; p < generator.ParticleDisplay.Textures.Textures.Length; p++)
+            for (int p = 0; p < generator.ParticleDisplay.Textures.TextureIds.Length; p++)
             {
-                if (!_loadedTextures.TryGetValue(generator.ParticleDisplay.Textures.Textures[p], out int handle))
+                if (!_loadedTextures.TryGetValue(generator.ParticleDisplay.Textures.TextureIds[p], out int handle))
                 {
                     Texture newTexture = Texture.LoadFromFile(generator.ParticleDisplay.Textures.TextureFilenames[p]);
-                    newTexture.TextureName = generator.ParticleDisplay.Textures.Textures[p];
+                    newTexture.TextureId = generator.ParticleDisplay.Textures.TextureIds[p];
 
                     _textures.Add(newTexture);
-                    _loadedTextures.Add(generator.ParticleDisplay.Textures.Textures[p], newTexture.Handle);
+                    _loadedTextures.Add(generator.ParticleDisplay.Textures.TextureIds[p], newTexture.Handle);
 
                     generator.ParticleDisplay.Material.Diffuse = newTexture;
                 }
                 else
                 {
-                    generator.ParticleDisplay.Material.Diffuse = new Texture(handle, generator.ParticleDisplay.Textures.Textures[p]);
+                    generator.ParticleDisplay.Material.Diffuse = new Texture(handle, generator.ParticleDisplay.Textures.TextureIds[p]);
                 }
             }
         }
@@ -1082,7 +1129,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             UIObj.TextureLoaded = true;
         }
 
-        public static void LoadTextureFromTextureObj(Texture texture, TextureName textureName) 
+        public static void LoadTextureFromTextureObj(Texture texture, int textureName) 
         {
             if (!_loadedTextures.TryGetValue(textureName, out _))
             {
@@ -1091,13 +1138,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
         }
 
-        public static void UnloadTexture(TextureName textureName) 
+        public static void UnloadTexture(int textureName) 
         {
-            Texture tex = _textures.Find(tex => tex.TextureName == textureName);
+            Texture tex = _textures.Find(tex => tex.TextureId == textureName);
             if (tex != null) 
             {
                 GL.DeleteTexture(tex.Handle);
-                _loadedTextures.Remove(tex.TextureName);
+                _loadedTextures.Remove(tex.TextureId);
             }
         }
         public static void UnloadAllTextures() 

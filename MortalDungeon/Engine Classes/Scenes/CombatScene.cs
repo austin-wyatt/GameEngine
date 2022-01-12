@@ -62,7 +62,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public QueuedList<TemporaryVision> TemporaryVision = new QueuedList<TemporaryVision>();
 
-        public static Color EnvironmentColor = new Color(0.25f, 0.25f, 0.25f, 0.25f);
+        public static _Color EnvironmentColor = new _Color(0.25f, 0.25f, 0.25f, 0.25f);
         public int Time = 0;
         public static int Days = 0;
         public DayNightCycle DayNightCycle;
@@ -99,9 +99,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public BaseTile _debugSelectedTile;
 
+        public UIBlock _unitStatusBlock;
+
         public CombatScene() 
         {
-            Texture fogTex = Texture.LoadFromFile("Resources/FogTexture.png", default, TextureName.FogTexture);
+            Texture fogTex = Texture.LoadFromFile("Resources/FogTexture.png", default, (int)TextureName.FogTexture);
 
             fogTex.Use(TextureUnit.Texture1);
         }
@@ -114,10 +116,17 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             _tooltipBlock = new UIBlock(new Vector3());
             _tooltipBlock.MultiTextureData.MixTexture = false;
-            _tooltipBlock.SetColor(Colors.Transparent);
+            _tooltipBlock.SetColor(_Colors.Transparent);
             _tooltipBlock.SetAllInline(0);
 
             AddUI(_tooltipBlock, 99999999);
+
+            _unitStatusBlock = new UIBlock(new Vector3());
+            _unitStatusBlock.MultiTextureData.MixTexture = false;
+            _unitStatusBlock.SetColor(_Colors.Transparent);
+            _unitStatusBlock.SetAllInline(0);
+
+            AddUI(_unitStatusBlock, -50);
 
             TabMenu.AddToScene(this);
             TabMenu.Display(false);
@@ -1150,55 +1159,59 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
-            lock (_tileMapController._mapLoadLock)
+            Task.Run(() =>
             {
-                _tileMapController.EndHover();
-
-                _tileMapController.TileMaps.ForEach(map =>
+                lock (_tileMapController._mapLoadLock)
                 {
-                    if (!map.Render)
-                        return;
+                    _tileMapController.EndHover();
 
-                    map.TileChunks.ForEach(chunk =>
+                    _tileMapController.TileMaps.ForEach(map =>
                     {
-                        if (!chunk.Cull) 
+                        if (!map.Render)
+                            return;
+
+                        map.TileChunks.ForEach(chunk =>
                         {
-                            ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar, (tile) =>
+                            if (!chunk.Cull) 
                             {
-                                if (tile.Hoverable)
+                                ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar, (tile) =>
                                 {
-                                    map.Controller.HoverTile(tile);
-                                    if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
+                                    if (tile.Hoverable)
                                     {
-                                        _selectedAbility.OnHover(tile, map);
-                                    }
-
-                                    if (Game.Settings.EnableTileTooltips) 
-                                    {
-                                        UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, BaseTile.GetTooltipString(tile, this), tile, _tooltipBlock)
+                                        map.Controller.HoverTile(tile);
+                                        if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
                                         {
-                                            TooltipFlag = GeneralContextFlags.TileTooltipOpen,
-                                            Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
-                                            Anchor = UIAnchorPosition.TopRight,
-                                            BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
-                                            TextScale = 0.04f,
-                                            EnforceScreenBounds = false
-                                        };
+                                            _selectedAbility.OnHover(tile, map);
+                                        }
 
-                                        UIHelpers.CreateToolTip(param);
+                                        if (Game.Settings.EnableTileTooltips) 
+                                        {
+                                            UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, BaseTile.GetTooltipString(tile, this), tile, _tooltipBlock)
+                                            {
+                                                TooltipFlag = GeneralContextFlags.TileTooltipOpen,
+                                                Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
+                                                Anchor = UIAnchorPosition.TopRight,
+                                                BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
+                                                TextScale = 0.07f,
+                                                EnforceScreenBounds = false
+                                            };
+
+                                            UIHelpers.CreateToolTip(param);
+                                        }
                                     }
-                                }
 
-                                if (tile.HasTimedHoverEffect)
-                                {
-                                    _hoverTimer.Restart();
-                                    _hoveredObject = tile;
-                                }
-                            });
-                        }
+                                    if (tile.HasTimedHoverEffect)
+                                    {
+                                        _hoverTimer.Restart();
+                                        _hoveredObject = tile;
+                                    }
+                                });
+                            }
+                        });
                     });
-                });
-            }
+                }
+            });
+
 
 
             ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar, (unit) =>

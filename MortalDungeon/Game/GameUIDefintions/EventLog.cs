@@ -1,10 +1,12 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Serializers;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 
 namespace MortalDungeon.Game.UI
@@ -22,7 +24,7 @@ namespace MortalDungeon.Game.UI
         public ScrollableArea LogArea;
         public List<UIObject> Events = new List<UIObject>();
 
-        public float TextScale = 0.04f;
+        public float TextScale = 0.075f;
 
         public CombatScene Scene;
 
@@ -86,27 +88,28 @@ namespace MortalDungeon.Game.UI
                 eventText = WrapString(eventText, maxEventWidth);
             }
 
-            TextComponent textComponent = new TextComponent();
-            textComponent.SetTextScale(TextScale);
-            textComponent.SetText(eventText);
+            Brush brush;
+
 
             switch (severity)
             {
-                case EventSeverity.Info:
-                    textComponent.SetColor(new Vector4(0.72f, 0.4f, 0.8f, 1));
-                    break;
                 case EventSeverity.Caution:
-                    textComponent.SetColor(new Vector4(0.75f, 0.75f, 0, 1));
+                    brush = Brushes.LightGoldenrodYellow;
                     break;
                 case EventSeverity.Severe:
-                    textComponent.SetColor(new Vector4(0.58f, 0.16f, 0f, 1));
+                    brush = Brushes.IndianRed;
                     break;
                 case EventSeverity.Positive:
-                    textComponent.SetColor(new Vector4(0.04f, 0.52f, 0.13f, 1));
+                    brush = Brushes.LimeGreen;
+                    break;
+                default:
+                    brush = Brushes.LightPink;
                     break;
             }
 
-            textComponent._textField.SetScissorData(LogArea.BaseComponent.ScissorData);
+            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 32, brush);
+            textComponent.SetTextScale(TextScale);
+
 
             //textComponent.BaseComponent.SetColor(new Vector4(1, 0, 0, 1));
 

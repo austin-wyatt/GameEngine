@@ -30,6 +30,7 @@ using System.Xml.Serialization;
 using System.IO;
 using MortalDungeon.Game.Save;
 using MortalDungeon.Game.Serializers;
+using System.Drawing;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -51,7 +52,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             UIBlock inputCapture = new UIBlock(WindowConstants.CenterScreen, new UIScale(10, 10));
             inputCapture.Scrollable = true;
 
-            inputCapture.SetColor(Colors.Transparent);
+            inputCapture.SetColor(_Colors.Transparent);
 
             inputCapture.Scroll += (s, e) =>
             {
@@ -189,7 +190,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             float footerHeight = 300;
 
             Footer = new GameFooter(footerHeight, this);
-            AddUI(Footer);
+            AddUI(Footer, 100);
 
             OnNumberPressed += (args) =>
             {
@@ -225,57 +226,76 @@ namespace MortalDungeon.Game.SceneDefinitions
             AddUI(TurnDisplay);
 
 
-            if (true) 
-            {
-                //Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
-                //guy.SetTeam(UnitTeam.PlayerUnits);
-                //CurrentUnit = guy;
+            //Guy guy = new Guy(this, tileMap[0, 0]) { Clickable = true };
+            //guy.SetTeam(UnitTeam.PlayerUnits);
+            //CurrentUnit = guy;
 
-                //guy.pack_name = "player_party";
+            //guy.pack_name = "player_party";
 
 
 
-                //guy.Info.PrimaryUnit = true;
+            //guy.Info.PrimaryUnit = true;
 
-                //var creationInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(2);
+            //var creationInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(2);
 
-                //Unit guy = creationInfo.CreateUnit(this);
-
-
-                //Guy badGuy = new Guy(this, tileMap[1, 1]) { Clickable = true };
-                //badGuy.SetTeam(UnitTeam.PlayerUnits);
-
-                //badGuy.AI.ControlType = ControlType.Controlled;
-
-                //badGuy.Name = "Frend";
-                //badGuy.pack_name = "player_party";
+            //Unit guy = creationInfo.CreateUnit(this);
 
 
-                //Skeleton skeleton = new Skeleton(this, tileMap[20, 5]) { };
-                //skeleton.Name = "John";
+            //Guy badGuy = new Guy(this, tileMap[1, 1]) { Clickable = true };
+            //badGuy.SetTeam(UnitTeam.PlayerUnits);
 
-                //skeleton.SetTeam(UnitTeam.Skeletons);
-                //skeleton.AI.ControlType = ControlType.Basic_AI;
+            //badGuy.AI.ControlType = ControlType.Controlled;
 
-
-                //badGuy.SetShields(5);
-                //guy.SetShields(5);
+            //badGuy.Name = "Frend";
+            //badGuy.pack_name = "player_party";
 
 
-                //Entity guyEntity = new Entity(guy);
-                //guyEntity.Load(new FeaturePoint(0, 0));
-                //EntityManager.AddEntity(guyEntity);
+            //Skeleton skeleton = new Skeleton(this, tileMap[20, 5]) { };
+            //skeleton.Name = "John";
 
-                //Entity badGuyEntity = new Entity(badGuy);
-                //badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
-                //EntityManager.AddEntity(badGuyEntity);
+            //skeleton.SetTeam(UnitTeam.Skeletons);
+            //skeleton.AI.ControlType = ControlType.Basic_AI;
 
-                //badGuyEntity.Handle.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
 
-                //Entity skeletonEntity = new Entity(skeleton);
-                //skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
-                //EntityManager.AddEntity(skeletonEntity);
-            }
+            //badGuy.SetShields(5);
+            //guy.SetShields(5);
+
+
+            //Entity guyEntity = new Entity(guy);
+            //guyEntity.Load(new FeaturePoint(0, 0));
+            //EntityManager.AddEntity(guyEntity);
+
+            //Entity badGuyEntity = new Entity(badGuy);
+            //badGuyEntity.Load(new FeaturePoint(badGuy.Info.TileMapPosition));
+            //EntityManager.AddEntity(badGuyEntity);
+
+            //badGuyEntity.Handle.SetColor(new Vector4(0.76f, 0.14f, 0.26f, 1));
+
+            //Entity skeletonEntity = new Entity(skeleton);
+            //skeletonEntity.Load(new FeaturePoint(skeleton.Info.TileMapPosition));
+            //EntityManager.AddEntity(skeletonEntity);
+
+
+            //var test = new Engine_Classes.TextHandling.Text("This is a text string that is very very very very very long", "Moshita Mono", 64, Brushes.Black);
+            //test.SetPosition(WindowConstants.CenterScreen);
+
+            //test.SetSize(new UIScale(0.5f, 0.5f));
+
+            //AddUI(test);
+
+            //var test2 = new Engine_Classes.TextHandling.Text("This is a text string", "Moshita Mono", 26, Brushes.Black);
+            //test2.SetPositionFromAnchor(test.GetAnchorPosition(UIAnchorPosition.BottomCenter), UIAnchorPosition.TopCenter);
+
+            //test2.SetSize(new UIScale(0.3f, 0.3f));
+
+            //AddUI(test2);
+
+            //var test3 = new Engine_Classes.TextHandling.Text("This is a text string", "Moshita Mono", 26, Brushes.Black);
+            //test3.SetPositionFromAnchor(test2.GetAnchorPosition(UIAnchorPosition.BottomCenter), UIAnchorPosition.TopCenter);
+
+            //test3.SetSize(new UIScale(0.2f, 0.2f));
+
+            //AddUI(test3);
 
 
             //GameObject tent1 = new GameObject();
@@ -765,7 +785,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                         Vector3i cubeCoords = CubeMethods.OffsetToCube(new FeaturePoint(tile));
                         _cubeCoordinates.Add(cubeCoords);
 
-                        tile.Color = Colors.Red;
+                        tile.Color = _Colors.Red;
                         tile.Update();
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F9))
@@ -801,7 +821,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                         Vector3i cubeCoords = CubeMethods.OffsetToCube(new FeaturePoint(tile));
                         _cubeCoordinates.Remove(cubeCoords);
 
-                        tile.Color = Colors.White;
+                        tile.Color = _Colors.White;
                         tile.Update();
 
                         return;

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MortalDungeon.Engine_Classes
 {
-    public class Color
+    public class _Color
     {
         public float A = 1;
         public float R = 1;
@@ -15,9 +15,9 @@ namespace MortalDungeon.Engine_Classes
         public bool Use = true;
 
         public event EventHandler OnChangeEvent;
-        public Color() { }
+        public _Color() { }
 
-        public Color(float r, float g, float b, float a) 
+        public _Color(float r, float g, float b, float a) 
         {
             A = a;
             R = r;
@@ -25,7 +25,7 @@ namespace MortalDungeon.Engine_Classes
             B = b;
         }
 
-        public Color(Vector4 color) 
+        public _Color(Vector4 color) 
         {
             A = color.W;
             R = color.X;
@@ -33,7 +33,7 @@ namespace MortalDungeon.Engine_Classes
             B = color.Z;
         }
 
-        public Color(Color color)
+        public _Color(_Color color)
         {
             A = color.A;
             R = color.R;
@@ -41,9 +41,9 @@ namespace MortalDungeon.Engine_Classes
             B = color.B;
         }
 
-        public static Color operator -(Color color1, Color color2) 
+        public static _Color operator -(_Color color1, _Color color2) 
         {
-            Color newCol = new Color();
+            _Color newCol = new _Color();
             newCol.A = color1.A - color2.A;
             newCol.R = color1.R - color2.R;
             newCol.G = color1.G - color2.G;
@@ -52,9 +52,9 @@ namespace MortalDungeon.Engine_Classes
             return newCol;
         }
 
-        public static Color operator +(Color color1, Color color2)
+        public static _Color operator +(_Color color1, _Color color2)
         {
-            Color newCol = new Color();
+            _Color newCol = new _Color();
             newCol.A = color1.A + color2.A;
             newCol.R = color1.R + color2.R;
             newCol.G = color1.G + color2.G;
@@ -63,9 +63,9 @@ namespace MortalDungeon.Engine_Classes
             return newCol;
         }
 
-        public static Color operator /(Color color, float num) 
+        public static _Color operator /(_Color color, float num) 
         {
-            Color newCol = new Color();
+            _Color newCol = new _Color();
             newCol.A = color.A / num;
             newCol.R = color.R / num;
             newCol.G = color.G / num;
@@ -74,9 +74,9 @@ namespace MortalDungeon.Engine_Classes
             return newCol;
         }
 
-        public static Color operator *(Color color, float num)
+        public static _Color operator *(_Color color, float num)
         {
-            Color newCol = new Color();
+            _Color newCol = new _Color();
             newCol.A = color.A * num;
             newCol.R = color.R * num;
             newCol.G = color.G * num;
@@ -85,7 +85,7 @@ namespace MortalDungeon.Engine_Classes
             return newCol;
         }
 
-        public Color Add(Color color) 
+        public _Color Add(_Color color) 
         {
             A += color.A;
             R += color.R;
@@ -99,7 +99,7 @@ namespace MortalDungeon.Engine_Classes
             return this;
         }
 
-        public Color Sub(Color color)
+        public _Color Sub(_Color color)
         {
             A -= color.A;
             R -= color.R;

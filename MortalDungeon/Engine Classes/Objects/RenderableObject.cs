@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
 using MortalDungeon.Engine_Classes.Lighting;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Game.Objects;
@@ -17,7 +18,7 @@ namespace MortalDungeon.Engine_Classes
         Particle
     }
 
-    public static class Colors 
+    public static class _Colors 
     {
         public static Vector4 Black = new Vector4(0, 0, 0, 1);
         public static Vector4 White = new Vector4(1, 1, 1, 1);
@@ -100,7 +101,7 @@ namespace MortalDungeon.Engine_Classes
         public Vector4 InterpolatedColor = new Vector4();
         public float ColorProportion = 0;
 
-        public List<Color> AppliedColors = new List<Color>(); 
+        public List<_Color> AppliedColors = new List<_Color>(); 
 
         public bool CameraPerspective = false;
 
@@ -275,14 +276,14 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
-        public void AddAppliedColor(Color color) 
+        public void AddAppliedColor(_Color color) 
         {
             AppliedColors.Add(color);
 
             CalculateInterpolatedColor();
         }
 
-        public void RemoveAppliedColor(Color color) 
+        public void RemoveAppliedColor(_Color color) 
         {
             AppliedColors.Remove(color);
 

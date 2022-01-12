@@ -39,7 +39,7 @@ namespace MortalDungeon.Game.Serializers
             foreach(int frameIndex in FrameIndices)
             {
                 RenderableObject frame = new RenderableObject(
-                    new SpritesheetObject(frameIndex, Spritesheets.AllSpritesheets[Spritesheet]).CreateObjectDefinition(true), 
+                    new SpritesheetObject(frameIndex, Spritesheets.AllSpritesheets[(int)Spritesheet]).CreateObjectDefinition(true), 
                     WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
                 builtAnim.Frames.Add(frame);

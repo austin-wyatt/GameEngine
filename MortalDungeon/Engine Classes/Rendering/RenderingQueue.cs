@@ -114,7 +114,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 _LettersToRender.Add(letters[i]);
             }
         }
-        public static void QueueTextForRender(List<Text> text)
+        public static void QueueTextForRender(List<_Text> text)
         {
             for (int i = 0;i < text.Count; i++)
             {
@@ -125,7 +125,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #endregion
 
         #region UI queue
-        public static void QueueUITextForRender(List<Text> text, bool scissorFlag = false)
+        public static void QueueUITextForRender(List<_Text> text, bool scissorFlag = false)
         {
             for(int i = 0; i < text.Count; i++)
             {

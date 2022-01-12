@@ -11,13 +11,13 @@ namespace MortalDungeon.Objects
         public int Offset = 64;
         public int Rows = 10;
         public int Columns = 10;
-        public TextureName TextureName;
+        public int TextureId;
 
         public Spritesheet() { }
         public Spritesheet(string file, TextureName textureName)
         {
             File = file;
-            TextureName = textureName;
+            TextureId = (int)textureName;
         }
     }
 
@@ -40,6 +40,14 @@ namespace MortalDungeon.Objects
             Rows = 20,
             Columns = 20
         };
+
+        public static Spritesheet TileOverlaySpritesheet = new Spritesheet("Resources/TileOverlaySpritesheet.png", TextureName.TileOverlaySpritesheet)
+        {
+            Offset = 128,
+            Rows = 20,
+            Columns = 20
+        };
+
         public static Spritesheet StructureSheet = new Spritesheet("Resources/StructureSpritesheet.png", TextureName.StructureSpritesheet);
         public static Spritesheet ObjectSheet = new Spritesheet("Resources/ObjectSheet.png", TextureName.ObjectSpritesheet);
 
@@ -55,21 +63,21 @@ namespace MortalDungeon.Objects
             Columns = 1
         };
 
-        public static Dictionary<TextureName, Spritesheet> AllSpritesheets = new Dictionary<TextureName, Spritesheet>();
+        public static Dictionary<int, Spritesheet> AllSpritesheets = new Dictionary<int, Spritesheet>();
 
         static Spritesheets()
         {
-            AllSpritesheets.Add(TestSheet.TextureName, TestSheet);
-            AllSpritesheets.Add(ObjectSheet.TextureName, ObjectSheet);
-            AllSpritesheets.Add(StructureSheet.TextureName, StructureSheet);
-            AllSpritesheets.Add(TileSheet.TextureName, TileSheet);
-            AllSpritesheets.Add(IconSheet.TextureName, IconSheet);
-            AllSpritesheets.Add(UISheet.TextureName, UISheet);
-            AllSpritesheets.Add(CharacterSheet.TextureName, CharacterSheet);
+            AllSpritesheets.Add(TestSheet.TextureId, TestSheet);
+            AllSpritesheets.Add(ObjectSheet.TextureId, ObjectSheet);
+            AllSpritesheets.Add(StructureSheet.TextureId, StructureSheet);
+            AllSpritesheets.Add(TileSheet.TextureId, TileSheet);
+            AllSpritesheets.Add(IconSheet.TextureId, IconSheet);
+            AllSpritesheets.Add(UISheet.TextureId, UISheet);
+            AllSpritesheets.Add(CharacterSheet.TextureId, CharacterSheet);
 
-            AllSpritesheets.Add(CharacterSheetSDF.TextureName, CharacterSheetSDF);
-            AllSpritesheets.Add(SphereTexture.TextureName, SphereTexture);
-            AllSpritesheets.Add(CubeTexture.TextureName, CubeTexture);
+            AllSpritesheets.Add(CharacterSheetSDF.TextureId, CharacterSheetSDF);
+            AllSpritesheets.Add(SphereTexture.TextureId, SphereTexture);
+            AllSpritesheets.Add(CubeTexture.TextureId, CubeTexture);
         }
     }
 
