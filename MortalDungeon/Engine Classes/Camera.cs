@@ -16,6 +16,8 @@ namespace MortalDungeon.Engine_Classes
         private float _yaw = -MathHelper.PiOver2; // Without this you would be started rotated 90 degrees right
 
         private float _fov = MathHelper.PiOver2;
+        //private float _fov = 0.78f;
+        //private float _fov = 0.35f;
 
         public Matrix4 ProjectionMatrix;
 
@@ -27,9 +29,9 @@ namespace MortalDungeon.Engine_Classes
             AspectRatio = aspectRatio;
         }
 
-        public Vector3 Position { get; set; }
+        public Vector3 Position;
 
-        public float AspectRatio { private get; set; }
+        public float AspectRatio;
 
         public Vector3 Front => _front;
 
@@ -80,12 +82,12 @@ namespace MortalDungeon.Engine_Classes
 
         public Matrix4 GetProjectionMatrix()
         {
-            return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 40f);
+            return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 100f);
         }
 
         public void UpdateProjectionMatrix() 
         {
-            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 40f);
+            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 100f);
         }
 
         private void UpdateVectors()
@@ -99,14 +101,64 @@ namespace MortalDungeon.Engine_Classes
             _right = Vector3.Normalize(Vector3.Cross(_front, Vector3.UnitY));
             _up = Vector3.Normalize(Vector3.Cross(_right, _front));
 
-            onUpdate?.Invoke();
+            Update?.Invoke(this);
+        }
+
+
+        private int _lateralRotations = 4; //start in the positive Y direction
+        private int _verticalSteps = 1;
+        public float CameraAngle = 0;
+        public void RotateByAmount(int lateralStep = 0, int verticalStep = 0)
+        {
+            _lateralRotations += lateralStep;
+
+            if (_lateralRotations > 15)
+            {
+                _lateralRotations = _lateralRotations % 16;
+            }
+            else if(_lateralRotations < 0)
+            {
+                _lateralRotations = 16 + _lateralRotations % 16;
+            }
+
+            _verticalSteps += verticalStep;
+
+            if(_verticalSteps < 1)
+            {
+                _verticalSteps = 1;
+            }
+            else if(_verticalSteps > 5)
+            {
+                _verticalSteps = 5;
+            }
+
+            float alpha = (float)Math.PI / 8 * _lateralRotations;
+            float beta = (float)-Math.PI / 2 - (float)-Math.PI / 16 * _verticalSteps;
+
+            Vector3 rotatedVec = new Vector3((float)(Math.Cos(alpha) * Math.Cos(beta)), (float)(Math.Sin(alpha) * Math.Cos(beta)), (float)Math.Sin(beta));
+
+            _front = Vector3.Normalize(rotatedVec);
+
+            beta += (float)Math.PI / 2;
+
+            rotatedVec = new Vector3((float)(Math.Cos(alpha) * Math.Cos(beta)), (float)(Math.Sin(alpha) * Math.Cos(beta)), (float)Math.Sin(beta));
+            _up = Vector3.Normalize(rotatedVec);
+
+            CameraAngle = alpha - (float)Math.PI / 2;
+
+            Update?.Invoke(this);
+            Rotate?.Invoke(this);
         }
 
         public void SetPosition(Vector3 pos) 
         {
             Position = pos;
 
-            onUpdate?.Invoke();
+            Update?.Invoke(this);
         }
+
+        public delegate void CameraEventHandler(Camera camera);
+        public CameraEventHandler Update;
+        public CameraEventHandler Rotate;
     }
 }

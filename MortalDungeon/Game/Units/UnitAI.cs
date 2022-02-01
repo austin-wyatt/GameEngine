@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
 using System;
 using System.Collections.Generic;
@@ -34,22 +35,27 @@ namespace MortalDungeon.Game.Units
         Basic_AI,
     }
 
-
-    public class UnitAI
+    [Serializable]
+    public class UnitAI : ISerializable
     {
         public UnitTeam Team = UnitTeam.Skeletons;
         public ControlType ControlType = ControlType.Controlled;
 
         //public Dispositions Dispositions;
 
+        [XmlIgnore]
         private Unit _unit;
 
+        [XmlIgnore]
         private CombatScene Scene => _unit.Scene;
 
+        [XmlIgnore]
         private TileMap Map => _unit.GetTileMap();
 
+        [XmlIgnore]
         private TilePoint TilePosition => _unit.Info.TileMapPosition.TilePoint;
 
+        [XmlIgnore]
         private BaseTile Tile => _unit.Info.TileMapPosition;
 
         public bool Fighting = true; //if a unit surrenders they will no longer be considered fighting
@@ -84,6 +90,7 @@ namespace MortalDungeon.Game.Units
             BeginNextAction();
         }
 
+        [XmlIgnore]
         private int _depth = 0;
         public void BeginNextAction() 
         {
@@ -250,6 +257,21 @@ namespace MortalDungeon.Game.Units
         public static Dictionary<long, Relation> GetTeamRelationsDictionary()
         {
             return TeamRelations;
+        }
+
+        public void PrepareForSerialization()
+        {
+
+        }
+
+        public void CompleteDeserialization()
+        {
+
+        }
+
+        public static void AttachUnitToAI(UnitAI ai, Unit unit)
+        {
+            ai._unit = unit;
         }
     }
 

@@ -33,6 +33,26 @@ namespace MortalDungeon.Game.Serializers
             reader.Close();
             fs.Close();
 
+            int i = 0;
+            
+            foreach(var state in loadedState.QuestStates)
+            {
+                int j = 0;
+
+                state.Parent = loadedState;
+                state._stateIndex = i;
+
+                foreach(var obj in state.QuestObjectives)
+                {
+                    obj.Parent = state;
+                    obj._objectiveIndex = j;
+
+                    j++;
+                }
+
+                i++;
+            }
+
             return loadedState;
         }
 

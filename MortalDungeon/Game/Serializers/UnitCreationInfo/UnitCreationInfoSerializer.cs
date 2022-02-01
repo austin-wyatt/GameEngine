@@ -40,6 +40,8 @@ namespace MortalDungeon.Game.Serializers
 
             UnitCreationInfo loadedState = (UnitCreationInfo)serializer.Deserialize(reader);
 
+            loadedState.CompleteDeserialization();
+
             reader.Close();
             fs.Close();
 
@@ -53,6 +55,8 @@ namespace MortalDungeon.Game.Serializers
             XmlSerializer serializer = new XmlSerializer(typeof(UnitCreationInfo));
 
             TextWriter writer = new StreamWriter(path);
+
+            state.PrepareForSerialization();
 
             serializer.Serialize(writer, state);
 

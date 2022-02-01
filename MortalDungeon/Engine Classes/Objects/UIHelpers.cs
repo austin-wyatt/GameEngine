@@ -130,8 +130,7 @@ namespace MortalDungeon.Engine_Classes
 
             Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
-            Text tooltip = new Text("", Text.DEFAULT_FONT, 32, Brushes.Black);
-            tooltip.SetText(param.Text);
+            Text tooltip = new Text(param.Text, Text.DEFAULT_FONT, 32, Brushes.Black);
             tooltip.SetTextScale(param.TextScale);
             tooltip.Hoverable = true;
 
@@ -139,7 +138,7 @@ namespace MortalDungeon.Engine_Classes
 
             if (param.Position == default)
             {
-                tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(param.Scene._cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
+                tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Window._cursorCoords) + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
             }
             else
             {
@@ -215,7 +214,7 @@ namespace MortalDungeon.Engine_Classes
 
             scene.ContextManager.SetFlag(tooltipFlag, true);
 
-            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Window._cursorCoords) + new Vector3(0, -30, 0)), UIAnchorPosition.BottomLeft);
 
             baseObject.AddChild(tooltip, 100000);
 
@@ -268,7 +267,6 @@ namespace MortalDungeon.Engine_Classes
             Text description = new Text(bodyText, Text.DEFAULT_FONT, 64, Brushes.Black);
             description.SetTextScale(0.075f);
             description.SetColor(_Colors.UITextBlack);
-            description.SetText(bodyText);
 
             tooltip.AddChild(header);
             tooltip.AddChild(description);
@@ -301,7 +299,7 @@ namespace MortalDungeon.Engine_Classes
             scene.ContextManager.SetFlag(contextFlag, true);
 
 
-            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position) + new Vector3(10, 0, 0), UIAnchorPosition.BottomLeft);
+            tooltip.SetPositionFromAnchor(WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Window._cursorCoords)) + new Vector3(10, 0, 0), UIAnchorPosition.BottomLeft);
 
             baseObject.AddChild(tooltip, 100000);
 
@@ -382,7 +380,7 @@ namespace MortalDungeon.Engine_Classes
             if (!(right || top || bot))
                 return;
 
-            Vector3 mousePos = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(scene._cursorObject.Position);
+            Vector3 mousePos = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Window._cursorCoords));
 
             mousePos.Z = tooltip.Position.Z;
 
@@ -475,6 +473,11 @@ namespace MortalDungeon.Engine_Classes
         public static void CreateIconHoverEffect(Icon icon, CombatScene scene, Vector3 position) 
         {
             icon.SetCameraPerspective(true);
+
+            foreach(var item in icon.BaseObjects)
+            {
+                item.EnableLighting = true;
+            }
 
             icon.SetPosition(position);
 

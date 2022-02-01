@@ -99,7 +99,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
                         skele.DestroyOnUnload = true;
 
-                        skele.Load(affectedPoint);
+                        EntityManager.LoadEntity(skele, affectedPoint);
                     }
                 }
             }

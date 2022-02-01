@@ -24,12 +24,38 @@ namespace MortalDungeon.Game.Objects
         public static Animation Idle = new Animation() 
         { 
             Frames = new List<RenderableObject>() { cursor_Idle_1 },
-            Frequency = 30
+            Frequency = -1
         };
 
         public static List<Animation> List = new List<Animation>()
         {
             Idle
+        };
+    }
+
+    public static class CURSOR_1_ANIMATION
+    {
+        private static RenderableObject cursor_Idle_1 = new RenderableObject(new SpritesheetObject(0, Spritesheets.Cursor_1).CreateObjectDefinition(), _Colors.White, Shaders.FAST_DEFAULT_SHADER);
+        private static RenderableObject cursor_Die_1 = new RenderableObject(new SpritesheetObject(1, Spritesheets.Cursor_1).CreateObjectDefinition(), _Colors.White, Shaders.FAST_DEFAULT_SHADER);
+
+
+        public static Animation Idle = new Animation()
+        {
+            Frames = new List<RenderableObject>() { cursor_Idle_1 },
+            Frequency = -1
+        };
+
+        public static Animation Die = new Animation()
+        {
+            Frames = new List<RenderableObject>() { cursor_Die_1 },
+            Frequency = -1,
+            Type = AnimationType.Die
+        };
+
+        public static List<Animation> List = new List<Animation>()
+        {
+            Idle,
+            Die
         };
     }
 

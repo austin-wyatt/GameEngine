@@ -12,6 +12,10 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Tiles;
+using MortalDungeon.Game.Player;
+using System.Linq;
+using MortalDungeon.Game.Items;
 
 namespace MortalDungeon.Game.Save
 {
@@ -40,31 +44,35 @@ namespace MortalDungeon.Game.Save
         //these will actually evaluate a bool based on current state values instead of trying to exactly match a passed value
         public List<Instructions> SubscribedInstructions = new List<Instructions>();
 
+        [XmlElement(Namespace = "gledgerinfo")]
         public DeserializableDictionary<long, GeneralLedgerNode> GeneralLedgerInfo = new DeserializableDictionary<long, GeneralLedgerNode>();
+
+        public List<UnitSaveInfo> PlayerPartySaveInfo = new List<UnitSaveInfo>();
+        public bool PartyGrouped = false;
+        public Inventory PartyInventory;
 
         public static SaveState CreateSaveState(CombatScene scene) 
         {
             SaveState returnState = new SaveState();
 
+            #region Units
+            HashSet<Unit> playerPartySet = PlayerParty.UnitsInParty.ToHashSet();
             foreach(var unit in scene._units)
             {
-                returnState.UnitSaveInfo.Add(new UnitSaveInfo(unit));
-            }
-
-            if(scene.UnitGroup != null)
-            {
-                foreach (var unit in scene.UnitGroup.SecondaryUnitsInGroup)
+                if (!playerPartySet.Contains(unit))
                 {
                     returnState.UnitSaveInfo.Add(new UnitSaveInfo(unit));
                 }
             }
+            #endregion
 
             returnState.Time = scene.Time;
 
-            returnState.TileMapCoords = scene._tileMapController.GetCenterMapCoords();
+            returnState.TileMapCoords = new Vector2i(TileMapManager.LoadedCenter.X, TileMapManager.LoadedCenter.Y);
 
             returnState.UnitRelations = new DeserializableDictionary<long, Relation>(UnitAI.GetTeamRelationsDictionary());
 
+            #region Feature ledger
             returnState.FeatureSaveInfo = new List<FeatureSaveInfo>();
             foreach(var f in FeatureLedger.LedgeredFeatures)
             {
@@ -74,20 +82,22 @@ namespace MortalDungeon.Game.Save
                     SignificantInteractions = new DeserializableDictionary<long, short>(f.Value.SignificantInteractions)
                 };
 
-                var hashData = new Dictionary<long, DeserializableDictionary<string, string>>();
+                var hashData = new Dictionary<long, DeserializableDictionary_<string, string>>();
 
                 foreach(var dict in f.Value.HashData)
                 {
-                    hashData.Add(dict.Key, new DeserializableDictionary<string, string>(dict.Value));
+                    hashData.Add(dict.Key, new DeserializableDictionary_<string, string>(dict.Value));
                 }
 
-                var finalHashData = new DeserializableDictionary<long, DeserializableDictionary<string, string>>(hashData);
+                var finalHashData = new DeserializableDictionary<long, DeserializableDictionary_<string, string>>(hashData);
 
                 info.HashData = finalHashData;
 
                 returnState.FeatureSaveInfo.Add(info);
             }
+            #endregion
 
+            #region Quest ledger
             returnState.QuestSaveInfo = new List<QuestSaveInfo>();
             foreach (var q in QuestLedger.LedgeredQuests)
             {
@@ -99,7 +109,9 @@ namespace MortalDungeon.Game.Save
 
                 returnState.QuestSaveInfo.Add(info);
             }
+            #endregion
 
+            #region Dialogue ledger
             returnState.DialogueSaveInfo = new List<DialogueSaveInfo>();
             foreach (var d in DialogueLedger.LedgeredDialogues)
             {
@@ -111,14 +123,28 @@ namespace MortalDungeon.Game.Save
 
                 returnState.DialogueSaveInfo.Add(info);
             }
+            #endregion
 
+            #region General ledger
             foreach (var g in GeneralLedger.LedgeredGeneralState)
             {
                 g.Value._stateValues = new DeserializableDictionary<long, int>(g.Value.StateValues);
             }
 
             returnState.GeneralLedgerInfo = new DeserializableDictionary<long, GeneralLedgerNode>(GeneralLedger.LedgeredGeneralState);
+            #endregion
 
+            #region Player party
+            returnState.PlayerPartySaveInfo = new List<UnitSaveInfo>();
+            foreach (var unit in PlayerParty.UnitsInParty)
+            {
+                returnState.PlayerPartySaveInfo.Add(new UnitSaveInfo(unit));
+            }
+            returnState.PartyGrouped = PlayerParty.Grouped;
+            returnState.PartyInventory = PlayerParty.Inventory;
+
+            returnState.PartyInventory.PrepareForSerialization();
+            #endregion
 
             returnState.ActiveQuests = QuestManager.Quests;
             returnState.CompletedQuests = QuestManager.CompletedQuests;
@@ -136,18 +162,18 @@ namespace MortalDungeon.Game.Save
             scene.UnitVisionGenerators.Clear();
             scene.LightObstructions.Clear();
 
-            scene.UnitGroup = new UnitGroup(scene);
+            //TODO, player party save info
 
             QuestManager.Quests = state.ActiveQuests;
             QuestManager.CompletedQuests = state.CompletedQuests;
 
-             Ledgers.StateSubscribers = state.StateSubscribers;
+            Ledgers.StateSubscribers = state.StateSubscribers;
 
             for (int i = EntityManager.Entities.Count - 1; i >= 0; i--)
             {
                 EntityManager.RemoveEntity(EntityManager.Entities[i]);
             }
-
+            #region Feature ledger
             FeatureLedger.LedgeredFeatures.Clear();
             foreach (var info in state.FeatureSaveInfo)
             {
@@ -166,7 +192,7 @@ namespace MortalDungeon.Game.Save
                 node.ID = info.ID;
                 info.SignificantInteractions.FillDictionary(node.SignificantInteractions);
 
-                var hashData = new Dictionary<long, DeserializableDictionary<string, string>>();
+                var hashData = new Dictionary<long, DeserializableDictionary_<string, string>>();
 
                 info.HashData.FillDictionary(hashData);
 
@@ -184,7 +210,9 @@ namespace MortalDungeon.Game.Save
 
                 node.HashData = finalHashData;
             }
+            #endregion
 
+            #region Dialogue ledger
             DialogueLedger.LedgeredDialogues.Clear();
             foreach (var info in state.DialogueSaveInfo)
             {
@@ -203,7 +231,9 @@ namespace MortalDungeon.Game.Save
                 node.ID = info.ID;
                 info.RecievedOutcomes.FillHashSet(node.RecievedOutcomes);
             }
+            #endregion
 
+            #region Quest ledger
             QuestLedger.LedgeredQuests.Clear();
             foreach (var info in state.QuestSaveInfo)
             {
@@ -222,7 +252,9 @@ namespace MortalDungeon.Game.Save
                 node.ID = info.ID;
                 info.QuestState.FillHashSet(node.QuestState);
             }
+            #endregion
 
+            #region General ledger
             GeneralLedger.LedgeredGeneralState.Clear();
             
             foreach(var g in state.GeneralLedgerInfo.Values)
@@ -232,12 +264,60 @@ namespace MortalDungeon.Game.Save
             }
 
             state.GeneralLedgerInfo.FillDictionary(GeneralLedger.LedgeredGeneralState);
+            #endregion
+
+            #region Map load
+            TileMapManager.SetCenter(new TileMapPoint(state.TileMapCoords));
+            TileMapManager.LoadMapsAroundCenter();
+            #endregion
 
 
+            #region Player party
+            PlayerParty.UnitsInParty.Clear();
 
+            PlayerParty.Grouped = state.PartyGrouped;
 
-            scene._tileMapController.LoadSurroundingTileMaps(new Tiles.TileMapPoint(state.TileMapCoords), applyFeatures: false, forceMapRegeneration: true);
+            foreach (var item in state.PlayerPartySaveInfo)
+            {
+                UnitCreationInfo info = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(item.UnitCreationInfoId);
 
+                if (info == null)
+                    continue;
+
+                Unit unit = info.CreateUnit(scene);
+
+                item.ApplyUnitInfoToUnit(unit);
+
+                Entity entity = new Entity(unit);
+                EntityManager.AddEntity(entity);
+
+                if (!item.Grouped)
+                {
+                    EntityManager.LoadEntity(entity, item.Position);
+
+                    if (PlayerParty.Grouped)
+                    {
+                        PlayerParty.PrimaryUnit = unit;
+                    }
+                }
+
+                unit.SetColor(item.Color);
+
+                if (unit.Info.Health <= 0)
+                {
+                    unit.Kill();
+                }
+
+                PlayerParty.UnitsInParty.Add(unit);
+            }
+
+            state.PartyInventory.CompleteDeserialization();
+            PlayerParty.Inventory = state.PartyInventory;
+            #endregion
+
+            //scene._tileMapController.LoadSurroundingTileMaps(new TileMapPoint(state.TileMapCoords), applyFeatures: false, forceMapRegeneration: true);
+
+            #region Units
             state.UnitRelations.FillDictionary(UnitAI.GetTeamRelationsDictionary());
 
             foreach(var unitInfo in state.UnitSaveInfo)
@@ -254,7 +334,7 @@ namespace MortalDungeon.Game.Save
                 Entity entity = new Entity(unit);
                 EntityManager.AddEntity(entity);
 
-                entity.Load(unitInfo.Position, unitInfo.GroupStatus != 2);
+                EntityManager.LoadEntity(entity, unitInfo.Position);
 
                 unit.SetColor(unitInfo.Color);
 
@@ -262,23 +342,15 @@ namespace MortalDungeon.Game.Save
                 {
                     unit.Kill();
                 }
-
-                if (unitInfo.GroupStatus == 1)
-                {
-                    scene.UnitGroup.SetPrimaryUnit(unit);
-                }
-                else if (unitInfo.GroupStatus == 2)
-                {
-                    scene.UnitGroup.AddUnitToGroup(unit);
-                }
             }
+            #endregion
 
             void finishLoad(SceneEventArgs _)
             {
                 scene.ContextManager.SetFlag(GeneralContextFlags.SaveStateLoadInProgress, false);
                 scene.ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, false);
 
-                scene._tileMapController.ApplyLoadedFeaturesToMaps(scene._tileMapController.TileMaps);
+                TileMapManager.ApplyLoadedFeaturesToMaps(TileMapManager.ActiveMaps);
 
                 scene.QueueLightObstructionUpdate();
                 scene.UpdateVisionMap();
@@ -334,6 +406,7 @@ namespace MortalDungeon.Game.Save
 
             XmlWriter writer = XmlWriter.Create(path, settings);
 
+
             serializer.Serialize(writer, state);
 
             writer.Close();
@@ -350,6 +423,7 @@ namespace MortalDungeon.Game.Save
         public List<T> Keys = new List<T>();
         [XmlElement("Dv")]
         public List<Y> Values = new List<Y>();
+
 
         public DeserializableDictionary() { }
 
@@ -373,7 +447,31 @@ namespace MortalDungeon.Game.Save
             }
         }
 
+        public void Clear()
+        {
+            Keys.Clear();
+            Values.Clear();
+        }
     }
+
+    /// <summary>
+    /// A copy of the DeserializableDictionary class but with a different XML namespace to allow nesting
+    /// a DeserializableDictionary_ inside of a DeserializableDictionary
+    /// </summary>
+    [XmlType(TypeName = "DD_", Namespace = "dd_")]
+    public class DeserializableDictionary_<T, Y> : DeserializableDictionary<T, Y> 
+    {
+        public DeserializableDictionary_() { }
+        public DeserializableDictionary_(Dictionary<T, Y> dict)
+        {
+            foreach (var kvp in dict)
+            {
+                Keys.Add(kvp.Key);
+                Values.Add(kvp.Value);
+            }
+        }
+    }
+
 
     [XmlType(TypeName = "DHs")]
     [Serializable]

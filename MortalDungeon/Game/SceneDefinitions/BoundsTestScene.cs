@@ -27,9 +27,9 @@ namespace MortalDungeon.Game.SceneDefinitions
         //public static float[] imageData = new float[512 * 512 * 4];
         //public static Texture tex;
 
-        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        public override void Load(Camera camera = null, MouseRay mouseRay = null)
         {
-            base.Load(camera, cursorObject, mouseRay);
+            base.Load(camera, mouseRay);
 
             //load object here without camera perspective and use Q, R, and P to outline the object and get the bounds
 
@@ -214,8 +214,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z - movement.Z < 26)
                     {
                         _camera.SetPosition(_camera.Position - movement); // Backwards
-                        OnMouseMove();
-                        OnCameraMoved();
+                        //OnMouseMove();
+                        //OnCameraMoved();
                     }
                 }
                 else if (MouseState.ScrollDelta[1] > 0)
@@ -224,8 +224,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                     if (_camera.Position.Z + movement.Z > 0)
                     {
                         _camera.SetPosition(_camera.Position + movement); // Forward
-                        OnMouseMove();
-                        OnCameraMoved();
+                        //OnMouseMove();
+                        //OnCameraMoved();
                     }
                 }
 
@@ -238,8 +238,8 @@ namespace MortalDungeon.Game.SceneDefinitions
                 if (KeyboardState.IsKeyDown(Keys.W))
                 {
                     _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
+                    //OnMouseMove();
+                    //OnCameraMoved();
                 }
 
                 if (KeyboardState.IsKeyDown(Keys.S))
@@ -247,22 +247,22 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
                     //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
                     _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
+                    //OnMouseMove();
+                    //OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.A))
                 {
                     //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
                     _camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
+                    //OnMouseMove();
+                    //OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.D))
                 {
                     //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
                     _camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
-                    OnMouseMove();
-                    OnCameraMoved();
+                    //OnMouseMove();
+                    //OnCameraMoved();
                 }
                 if (KeyboardState.IsKeyDown(Keys.Space))
                 {

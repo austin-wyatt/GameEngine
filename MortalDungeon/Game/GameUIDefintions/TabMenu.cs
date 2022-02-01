@@ -250,7 +250,7 @@ namespace MortalDungeon.Game.UI
 
                 //Console.WriteLine("Size of object is: " + (postObj - preObj) + " bytes");
 
-                Scene.SyncToRender(() => RenderingQueue.GenerateStructureInstancedRenderData(Scene._structures.ToList()));
+                GC.Collect();
             }, turboButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button visionTestButton = CreateButton("Music test", () =>
@@ -274,13 +274,13 @@ namespace MortalDungeon.Game.UI
 
             Button minusBlue = CreateButton("Save BMP", () =>
             {
-                VisionMap.SaveObstructionMap();
+                //VisionMap.SaveObstructionMap();
 
-                VisionMap._saveToBitmap = true;
-                Scene.UpdateVisionMap();
-                Scene.VisionMapTask.Wait();
+                //VisionMap._saveToBitmap = true;
+                //Scene.UpdateVisionMap();
+                //Scene.VisionMapTask.Wait();
 
-                VisionMap.SaveOperationMap();
+                //VisionMap.SaveOperationMap();
             }, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button removeEntity = CreateButton("Entity Parser", () =>

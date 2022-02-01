@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Objects.PropertyAnimations;
+using MortalDungeon.Game.Player;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -145,7 +146,7 @@ namespace MortalDungeon.Game.UI
             {
                 Task.Run(() => 
                 {
-                    Scene.CreateUnitGroup();
+                    //Scene.CreateUnitGroup();
                     CreatePartyWindowList();
                 });
             };
@@ -161,7 +162,7 @@ namespace MortalDungeon.Game.UI
 
             dissolveGroup.Click += (s, e) =>
             {
-                Task.Run(() => Scene.DissolveUnitGroup(true, CreatePartyWindowList));
+                //Task.Run(() => Scene.DissolveUnitGroup(true, CreatePartyWindowList));
             };
 
             dissolveGroup.SetPositionFromAnchor(createGroup.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(-0, 10, -0.000001f), UIAnchorPosition.TopLeft);
@@ -194,72 +195,72 @@ namespace MortalDungeon.Game.UI
 
             var unitList = Scene._units.FindAll(u => u.AI.ControlType == ControlType.Controlled && u.AI.Team == UnitTeam.PlayerUnits);
 
-            if(Scene.UnitGroup != null) 
-            {
-                foreach (var unit in Scene.UnitGroup.SecondaryUnitsInGroup) 
-                {
-                    unitList.Add(unit);
-                }
-            }
+            //if(Scene.UnitGroup != null) 
+            //{
+            //    foreach (var unit in Scene.UnitGroup.SecondaryUnitsInGroup) 
+            //    {
+            //        unitList.Add(unit);
+            //    }
+            //}
 
-            for (int i = 0; i < unitList.Count; i++)
-            {
-                var item = list.AddItem("");
+            //for (int i = 0; i < unitList.Count; i++)
+            //{
+            //    var item = list.AddItem("");
 
-                Vector4 textColor = _Colors.UITextBlack;
+            //    Vector4 textColor = _Colors.UITextBlack;
 
-                bool isSecondaryUnit = false;
+            //    bool isSecondaryUnit = false;
 
-                string unitName = unitList[i].Name;
-                if (Scene.UnitGroup != null)
-                {
-                    if (Scene.UnitGroup.PrimaryUnit == unitList[i])
-                    {
-                        textColor = new Vector4(0f, 0.32f, 0.07f, 1);
-                    }
-                    else if (Scene.UnitGroup.SecondaryUnitsInGroup.Contains(unitList[i]))
-                    {
-                        textColor = new Vector4(0.56f, 0.05f, 0.55f, 1);
-                        isSecondaryUnit = true;
-                    }
-                }
+            //    string unitName = unitList[i].Name;
+            //    if (Scene.UnitGroup != null)
+            //    {
+            //        if (Scene.UnitGroup.PrimaryUnit == unitList[i])
+            //        {
+            //            textColor = new Vector4(0f, 0.32f, 0.07f, 1);
+            //        }
+            //        else if (Scene.UnitGroup.SecondaryUnitsInGroup.Contains(unitList[i]))
+            //        {
+            //            textColor = new Vector4(0.56f, 0.05f, 0.55f, 1);
+            //            isSecondaryUnit = true;
+            //        }
+            //    }
 
-                TextComponent nameBox = new TextComponent();
-                nameBox.SetTextScale(0.03f);
-                nameBox.SetText(unitName);
-                nameBox.SetColor(textColor);
+            //    TextComponent nameBox = new TextComponent();
+            //    nameBox.SetTextScale(0.03f);
+            //    nameBox.SetText(unitName);
+            //    nameBox.SetColor(textColor);
 
-                nameBox.SetPositionFromAnchor(item.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, 3, 0), UIAnchorPosition.TopCenter);
+            //    nameBox.SetPositionFromAnchor(item.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, 3, 0), UIAnchorPosition.TopCenter);
 
-                item.BaseComponent.AddChild(nameBox);
+            //    item.BaseComponent.AddChild(nameBox);
 
-                HealthBar bar = new HealthBar(default, new UIScale(0.25f, 0.03f));
+            //    HealthBar bar = new HealthBar(default, new UIScale(0.25f, 0.03f));
 
-                bar.SetHealthPercent(unitList[i].Info.Health / unitList[i].Info.MaxHealth, UnitTeam.PlayerUnits);
-                bar.SetPositionFromAnchor(nameBox.GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 3, 0), UIAnchorPosition.TopCenter);
+            //    bar.SetHealthPercent(unitList[i].Info.Health / unitList[i].Info.MaxHealth, UnitTeam.PlayerUnits);
+            //    bar.SetPositionFromAnchor(nameBox.GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 3, 0), UIAnchorPosition.TopCenter);
 
-                item.BaseComponent.AddChild(bar);
+            //    item.BaseComponent.AddChild(bar);
 
-                ShieldBar shieldBar = new ShieldBar(default, new UIScale(0.15f, 0.04f));
-                shieldBar.SetCurrentShields(unitList[i].Info.CurrentShields);
-                shieldBar.SetPositionFromAnchor(bar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 3, 0), UIAnchorPosition.TopLeft);
+            //    ShieldBar shieldBar = new ShieldBar(default, new UIScale(0.15f, 0.04f));
+            //    shieldBar.SetCurrentShields(unitList[i].Info.CurrentShields);
+            //    shieldBar.SetPositionFromAnchor(bar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 3, 0), UIAnchorPosition.TopLeft);
 
-                item.BaseComponent.AddChild(shieldBar);
+            //    item.BaseComponent.AddChild(shieldBar);
 
-                int index = i;
-                item.Click += (s, e) =>
-                {
-                    if (isSecondaryUnit) 
-                    {
-                        Scene.SmoothPanCameraToUnit(Scene.UnitGroup.PrimaryUnit, 1);
-                    }
-                    else
-                    {
-                        Scene.SmoothPanCameraToUnit(unitList[index], 1);
-                        Scene.SelectUnit(unitList[index]);
-                    }
-                };
-            }
+            //    int index = i;
+            //    item.Click += (s, e) =>
+            //    {
+            //        if (isSecondaryUnit) 
+            //        {
+            //            Scene.SmoothPanCameraToUnit(Scene.UnitGroup.PrimaryUnit, 1);
+            //        }
+            //        else
+            //        {
+            //            Scene.SmoothPanCameraToUnit(unitList[index], 1);
+            //            Scene.SelectUnit(unitList[index]);
+            //        }
+            //    };
+            //}
 
 
             scrollableArea.SetVisibleAreaPosition(PartyWindow.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(5, 5, 0), UIAnchorPosition.TopLeft);
@@ -289,18 +290,18 @@ namespace MortalDungeon.Game.UI
             {
                 if (!Scene.InCombat) 
                 {
-                    foreach(var unit in Scene._units) 
+                    foreach(var unit in PlayerParty.UnitsInParty) 
                     {
                         unit.Rest();
                     }
 
-                    if(Scene.UnitGroup != null) 
-                    {
-                        foreach (var unit in Scene.UnitGroup.SecondaryUnitsInGroup)
-                        {
-                            unit.Rest();
-                        }
-                    }
+                    //if(Scene.UnitGroup != null) 
+                    //{
+                    //    foreach (var unit in Scene.UnitGroup.SecondaryUnitsInGroup)
+                    //    {
+                    //        unit.Rest();
+                    //    }
+                    //}
 
                     Scene.SetTime(Scene.Time + DayNightCycle.HOUR * 4);
                 }

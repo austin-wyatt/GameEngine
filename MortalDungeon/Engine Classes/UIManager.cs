@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MortalDungeon.Engine_Classes.Rendering;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,6 +31,7 @@ namespace MortalDungeon.Engine_Classes
         public List<UIObject> ScrollableObjects = new List<UIObject>();
         public HashSet<UIObject> _scrollableObjects = new HashSet<UIObject>();
 
+        //public Dictionary<int, List<UIInstancedRenderData>> UIRenderData = new Dictionary<int, List<UIInstancedRenderData>>();
 
         public object _clickableObjectLock = new object();
         public object _hoverableObjectLock = new object();
@@ -76,12 +78,15 @@ namespace MortalDungeon.Engine_Classes
 
                     //baseZVal += 0.001f;
 
-                    GenerateReverseTree(obj);
+                    GenerateReverseTree(obj, generateRenderData: false);
                 }
             }
+
+            //Window.RenderEnd -= GenerateUIRenderData;
+            //Window.RenderEnd += GenerateUIRenderData;
         }
 
-        public void GenerateReverseTree(UIObject obj)
+        public void GenerateReverseTree(UIObject obj, bool generateRenderData = true)
         {
             int index = TopLevelObjects.IndexOf(obj);
 
@@ -91,18 +96,22 @@ namespace MortalDungeon.Engine_Classes
             {
                 //obj.GenerateZPositions(0.0001f * index);
                 obj.GenerateZPositions(0.001f * index);
+                //obj.GenerateZPositions(1 * index);
 
-                //Console.WriteLine("Generated Z positions for object: " + obj.Name);
+                //if (generateRenderData)
+                //{
+                //    void generateInstancedRenderData()
+                //    {
+                //        Window.RenderEnd -= generateInstancedRenderData;
+                //        UIRenderData.AddOrSet(index, CreateUIRenderDataForObject(obj));
+                //    }
+
+                //    Window.RenderEnd -= generateInstancedRenderData;
+                //    Window.RenderEnd += generateInstancedRenderData;
+                //}
             }
-
-            //float stepAmount = 1 / (float)obj.ReverseTree.Count;
-            //int count = 0;
-            //foreach(var item in obj.ReverseTree)
-            //{
-            //    item.UIObject.SetColor(new OpenTK.Mathematics.Vector4(stepAmount * count, 0, 0, 1));
-            //    count++;
-            //}
         }
+
 
         #region clickable objects
         private object _clickableSetLock = new object();

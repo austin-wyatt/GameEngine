@@ -51,34 +51,25 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 return;
             }
 
-            if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur)) 
-            {
-                Renderer.DrawToFrameBuffer(Renderer.MainFBO); //Framebuffer should only be used when we want to do post processing
-                Renderer.MainFBO.ClearBuffers();
-            }
+            //if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur)) 
+            //{
+            //    Renderer.DrawToFrameBuffer(Renderer.MainFBO); //Framebuffer should only be used when we want to do post processing
+            //    Renderer.MainFBO.ClearBuffers();
+            //}
 
             GL.Enable(EnableCap.FramebufferSrgb);
 
 
-            RenderTileQueue();
-
-            RenderTileQuadQueue();
-
-            RenderQueuedParticles();
-
-            RenderQueuedObjects();
-            RenderQueuedUnits();
-            RenderInstancedStructureData();
-
-            RenderLowPriorityQueue();
+            RenderFunctions.DrawGame();
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
-            if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur))
-            {
-                Renderer.RenderFrameBuffer(Renderer.MainFBO);
-                Renderer.MainFBO.UnbindFrameBuffer();
-            }
+
+            //if (RenderStateManager.GetFlag(RenderingStates.GuassianBlur))
+            //{
+            //    Renderer.RenderFrameBuffer(Renderer.MainFBO);
+            //    Renderer.MainFBO.UnbindFrameBuffer();
+            //}
 
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
@@ -87,6 +78,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.Disable(EnableCap.FramebufferSrgb);
 
             RenderQueuedUI();
+
+            //RenderInstancedUIData();
         }
 
 
@@ -347,5 +340,96 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
         #endregion
+
+        #region Tile instanced render data
+        private static List<InstancedRenderData> _tileRenderData = new List<InstancedRenderData>();
+
+        public static void ClearTileInstancedRenderData()
+        {
+            _tileRenderData.Clear();
+            _fogTileRenderData.Clear();
+            _tilePillarRenderData.Clear();
+        }
+        public static void QueueTileInstancedRenderData(InstancedRenderData tileData)
+        {
+            _tileRenderData.Add(tileData);
+        }
+
+        public static void RenderInstancedTileData()
+        {
+            TileMapController.TileOverlaySpritesheet.Use(TextureUnit.Texture1);
+
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+
+            //GL.Clear(ClearBufferMask.StencilBufferBit);
+            GL.Enable(EnableCap.StencilTest);
+            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+            GL.StencilMask(0xFF);
+
+            Renderer.RenderInstancedRenderData(_tileRenderData);
+
+            GL.StencilMask(0x00);
+            Renderer.RenderInstancedRenderData(_fogTileRenderData);
+
+            GL.StencilMask(0xFF);
+            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
+            GL.Disable(EnableCap.DepthTest);
+            RenderFogQuad();
+            GL.Enable(EnableCap.DepthTest);
+
+            GL.Disable(EnableCap.StencilTest);
+
+            Renderer.RenderInstancedRenderData(_tilePillarRenderData);
+
+            ClearTileInstancedRenderData();
+        }
+
+        private static List<InstancedRenderData> _fogTileRenderData = new List<InstancedRenderData>();
+
+        public static void QueueFogTileInstancedRenderData(InstancedRenderData tileData)
+        {
+            _fogTileRenderData.Add(tileData);
+        }
+
+        private static List<InstancedRenderData> _tilePillarRenderData = new List<InstancedRenderData>();
+        public static void QueueTilePillarInstancedRenderData(InstancedRenderData pillarData)
+        {
+            _tilePillarRenderData.Add(pillarData);
+        }
+
+        #endregion
+
+        #region UI instanced render data
+        private static List<UIInstancedRenderData> _uiRenderData = new List<UIInstancedRenderData>();
+        public static void QueueUIInstancedRenderData(UIInstancedRenderData renderData)
+        {
+            _uiRenderData.Add(renderData);
+        }
+
+        public static void RenderInstancedUIData()
+        {
+            Renderer.RenderInstancedRenderData(_uiRenderData);
+
+            _uiRenderData.Clear();
+        }
+
+        #endregion
+
+        #region Fog render data
+        private static List<GameObject> _fogQuad = new List<GameObject>();
+
+        public static void SetFogQuad(GameObject quad)
+        {
+            _fogQuad.Clear();
+            _fogQuad.Add(quad);
+        }
+
+        public static void RenderFogQuad()
+        {
+            Renderer.RenderObjectsInstancedGeneric(_fogQuad, ref Renderer._instancedRenderArray);
+        }
+
+        #endregion
+
     }
 }

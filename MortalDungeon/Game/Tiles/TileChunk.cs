@@ -42,10 +42,10 @@ namespace MortalDungeon.Game.Tiles
 
         public void ClearChunk() 
         {
-            Tiles.ForEach(tile =>
+            for(int i = 0; i < Tiles.Count; i++)
             {
-                tile.CleanUp();
-            });
+                Tiles[i].CleanUp();
+            }
 
             Tiles.Clear();
             Structures.Clear();
@@ -55,7 +55,7 @@ namespace MortalDungeon.Game.Tiles
         public void CalculateValues() 
         {
             Center = (Tiles[0].Position + Tiles[^1].Position) / 2;
-            Radius = new Vector3(Tiles[0].Position - Center).Length;
+            Radius = new Vector3(Tiles[0].Position - Center).Length * 1.5f;
 
             SideLengths = WindowConstants.ConvertGlobalToLocalCoordinates(new Vector3(Tiles[0].Position - Center));
             LocalRadius = WindowConstants.ConvertGlobalToLocalCoordinates(new Vector3(Tiles[0].Position - Center)).Length;

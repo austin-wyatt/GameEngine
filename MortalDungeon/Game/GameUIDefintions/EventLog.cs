@@ -107,7 +107,7 @@ namespace MortalDungeon.Game.UI
                     break;
             }
 
-            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 32, brush);
+            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 20, brush);
             textComponent.SetTextScale(TextScale);
 
 

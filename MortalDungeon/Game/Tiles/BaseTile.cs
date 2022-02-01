@@ -13,6 +13,7 @@ using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles.HelperTiles;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using static MortalDungeon.Engine_Classes.Scenes.Scene;
 
@@ -112,13 +113,17 @@ namespace MortalDungeon.Game.Tiles
             Name = "Tile";
             TilePoint = point;
 
-            BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, ObjectID, "Base Tile " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
-            DefaultColor = BaseTile.BaseFrame.BaseColor;
-            BaseTile.BaseFrame.CameraPerspective = true;
+            //BaseObject BaseTile = new BaseObject(BASE_TILE_ANIMATION.List, ObjectID, "Base Tile " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
+            //DefaultColor = BaseTile.BaseFrame.BaseColor;
+            //BaseTile.BaseFrame.CameraPerspective = true;
 
-            BaseTile.OutlineParameters.SetAllInline(2);
-            BaseTile.OutlineParameters.InlineColor = _Colors.Black;
-            BaseTile.OutlineParameters.OutlineColor = _Colors.Red;
+            BaseObject BaseTile = _3DObjects.CreateBaseObject(new SpritesheetObject((int)TileType.Grass, Spritesheets.TileSheet), _3DObjects.Hexagon, default);
+            DefaultColor = _Colors.White;
+            BaseTile.BaseFrame.CameraPerspective = true;
+            BaseTile.BaseFrame.ScaleAll(0.5f);
+            //BaseTile.BaseFrame.RotateZ(-30);
+
+            BaseTile.Bounds = new Bounds(EnvironmentObjects.BaseTileBounds_2x, BaseTile.BaseFrame);
 
             Hoverable = true;
             Clickable = true;
@@ -126,7 +131,7 @@ namespace MortalDungeon.Game.Tiles
             AddBaseObject(BaseTile);
             _tileObject = BaseTile;
 
-            Properties = new TileProperties() 
+            Properties = new TileProperties(this) 
             {
                 Type = TileType.Grass,
                 Classification = TileClassification.Ground
@@ -168,14 +173,24 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-
-        public void SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
+        private static _Color _fogColor = new _Color(0.5f, 0.5f, 0.5f, 0.5f);
+        //returns a bool indicating whether the tile should/has been updated
+        public bool SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
         {
+            bool updated = false;
+
             if (inFog != InFog[team])
             {
                 InFog[team] = inFog;
 
-                Update();
+                var scene = GetScene();
+
+                updated = scene.VisibleTeam == team;
+
+                if (team == scene.VisibleTeam && !scene.ContextManager.GetFlag(GeneralContextFlags.ClearingTeamVision))
+                {
+                    Update();
+                }
 
                 if (inFog && !Explored[team])
                 {
@@ -186,11 +201,13 @@ namespace MortalDungeon.Game.Tiles
                     Outline = !NeverOutline;
                 }
             }
+
+            return updated;
         }
 
         public bool InVision(UnitTeam team)
         {
-            Vector2i clusterPos = GetScene()._tileMapController.PointToClusterPosition(this);
+            Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(this);
 
             return VisionMap.InVision(clusterPos.X, clusterPos.Y, team);
         }
@@ -201,7 +218,10 @@ namespace MortalDungeon.Game.Tiles
             {
                 Explored[team] = explored;
 
-                Update();
+                if(team == GetScene().VisibleTeam)
+                {
+                    Update();
+                }
             }
         }
 
@@ -325,12 +345,7 @@ namespace MortalDungeon.Game.Tiles
 
         public void Update()
         {
-            if (Updating) return;
-
-            Updating = true;
             TileMap.UpdateTile(this);
-
-            TileMap.DynamicTextureInfo.TextureChanged = true;
         }
 
         public void ClearCliff() 
@@ -550,7 +565,19 @@ namespace MortalDungeon.Game.Tiles
 
         public TileMap ParentTileMap;
 
-        public bool _visited = false; //using for pathing
+        private bool _visited = false;
+        public bool Visited 
+        { 
+            get => _visited; 
+            set  
+            {
+                _visited = value;
+                if (_visited)
+                {
+                    TileMapHelpers.AddVisitedTile(this);
+                }
+            }
+        } //using for pathing
 
         public TilePoint() { }
         public TilePoint(int x, int y, TileMap map) 
@@ -611,7 +638,17 @@ namespace MortalDungeon.Game.Tiles
 
     public class TileProperties 
     {
-        public TileType Type;
+        private TileType _type;
+        public TileType Type 
+        {
+            get => _type;
+            set 
+            {
+                _type = value;
+                Tile.BaseObject._currentAnimation.CurrentFrame.SpritesheetPosition = (int)value;
+            } 
+        }
+
         public TileClassification Classification;
 
         public List<TileOverlay> TileOverlays = new List<TileOverlay>();
@@ -624,8 +661,10 @@ namespace MortalDungeon.Game.Tiles
         public int Height = 0; //the tile's height for vision and movement purposes
         public float MovementCost = 1; //how expensive this tile is to move across compared to normal
 
-        public TileProperties() 
+        public BaseTile Tile;
+        public TileProperties(BaseTile tile) 
         {
+            Tile = tile;
         }
     }
 

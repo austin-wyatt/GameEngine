@@ -174,6 +174,11 @@ namespace MortalDungeon.Game.Serializers
                 TileMapPoint left = null;
                 TileMapPoint right = null;
 
+                int minX = int.MinValue;
+                int minY = int.MinValue;
+                int maxX = int.MinValue;
+                int maxY = int.MinValue;
+
 
                 foreach (var val in bound.CubePoints)
                 {
@@ -212,8 +217,42 @@ namespace MortalDungeon.Game.Serializers
                     }
                     #endregion
 
+                    #region get extreme feature points
+                    if (minX == int.MinValue)
+                    {
+                        minX = newPoint.X;
+                        minY = newPoint.Y;
+                        maxX = newPoint.X;
+                        maxY = newPoint.Y;
+                    }
+                    else
+                    {
+                        if (newPoint.X > maxX)
+                        {
+                            maxX = newPoint.X;
+                        }
+                        if (newPoint.X < minX)
+                        {
+                            minX = newPoint.X;
+                        }
+                        if (newPoint.Y > maxY)
+                        {
+                            maxY = newPoint.Y;
+                        }
+                        if (newPoint.Y < minY)
+                        {
+                            minY = newPoint.Y;
+                        }
+                    }
+                    #endregion
+
                     bound.OffsetPoints.Add(newPoint);
                 }
+
+                bound.BoundingSquare.Add(new FeaturePoint(minX, maxY));
+                bound.BoundingSquare.Add(new FeaturePoint(maxX, maxY));
+                bound.BoundingSquare.Add(new FeaturePoint(maxX, minY));
+                bound.BoundingSquare.Add(new FeaturePoint(minX, minY));
 
                 featureEquation.BoundingPoints.Add(bound);
 
@@ -226,8 +265,8 @@ namespace MortalDungeon.Game.Serializers
                     int horizontalMapCount = right.X - left.X + 1;
                     int verticalMapCount = bot.Y - top.Y + 1;
 
-                    int tileMapWidth = 50;
-                    int tileMapHeight = 50;
+                    int tileMapWidth = TileMapManager.TILE_MAP_DIMENSIONS.X;
+                    int tileMapHeight = TileMapManager.TILE_MAP_DIMENSIONS.Y;
 
                     int stepWidth = 3;
                     int stepHeight = 3;

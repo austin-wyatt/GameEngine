@@ -20,7 +20,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Name = "Button";
 
             BaseComponent = new UIBlock();
-            BaseComponent.SetColor(_Colors.UILightGray);
+            //BaseComponent.SetColor(_Colors.UILightGray);
             BaseComponent.SetPosition(Position);
 
             BaseComponent.SetSize(size);
@@ -60,6 +60,9 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 BaseComponent.SetColor(BaseColor);
             }
 
+            SetColor(BaseColor);
+            HoverColor = new Vector4(Math.Clamp(BaseColor.X - 0.1f, 0, 1), Math.Clamp(BaseColor.Y - 0.1f, 0, 1), Math.Clamp(BaseColor.Z - 0.1f, 0, 1), BaseColor.W);
+
             if (textColor != default)
             {
                 textBox.SetColor(textColor);
@@ -68,41 +71,41 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
-        public override void OnHover()
-        {
-            if (!Hovered)
-            {
-                Vector4 hoveredColor = new Vector4(BaseColor.X - 0.1f, BaseColor.Y - 0.1f, BaseColor.Z - 0.1f, BaseColor.W);
+        //public override void OnHover()
+        //{
+        //    if (!Hovered)
+        //    {
+        //        Vector4 hoveredColor = new Vector4(BaseColor.X - 0.1f, BaseColor.Y - 0.1f, BaseColor.Z - 0.1f, BaseColor.W);
 
-                SetColor(hoveredColor);
-            }
+        //        SetColor(hoveredColor);
+        //    }
 
-            base.OnHover();
-        }
+        //    base.OnHover();
+        //}
 
-        public override void OnHoverEnd()
-        {
-            if (Hovered)
-            {
-                SetColor(BaseColor);
-            }
+        //public override void OnHoverEnd()
+        //{
+        //    if (Hovered)
+        //    {
+        //        SetColor(BaseColor);
+        //    }
 
-            base.OnHoverEnd();
-        }
+        //    base.OnHoverEnd();
+        //}
 
         public override void OnMouseDown()
         {
             base.OnMouseDown();
-            Vector4 mouseDownColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
+            //Vector4 mouseDownColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
 
-            SetColor(mouseDownColor);
+            //SetColor(mouseDownColor);
         }
         public override void OnMouseUp()
         {
             base.OnMouseUp();
-            Vector4 hoveredColor = new Vector4(BaseColor.X - 0.1f, BaseColor.Y - 0.1f, BaseColor.Z - 0.1f, BaseColor.W);
+            //Vector4 hoveredColor = new Vector4(BaseColor.X - 0.1f, BaseColor.Y - 0.1f, BaseColor.Z - 0.1f, BaseColor.W);
 
-            SetColor(hoveredColor);
+            //SetColor(hoveredColor);
         }
 
         public override void OnClick()
@@ -113,19 +116,27 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             sound.Play();
         }
 
-        public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
+        //public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)
+        //{
+        //    if (Disabled) 
+        //    {
+        //        BaseComponent.SetColor(_Colors.UIDisabledGray);
+        //    }
+        //    else if (!Selected)
+        //        BaseComponent.SetColor(color);
+        //    else 
+        //    {
+        //        Vector4 hoveredColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
+        //        BaseComponent.SetColor(hoveredColor);
+        //    }
+        //}
+
+        public override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
         {
-            if (Disabled) 
-            {
-                BaseComponent.SetColor(_Colors.UIDisabledGray);
-            }
-            else if (!Selected)
-                BaseComponent.SetColor(color);
-            else 
-            {
-                Vector4 hoveredColor = new Vector4(BaseColor.X - 0.2f, BaseColor.Y - 0.2f, BaseColor.Z - 0.2f, BaseColor.W);
-                BaseComponent.SetColor(hoveredColor);
-            }
+            if (flag == SetColorFlag.Base)
+                DefaultColor = color;
+
+            BaseComponent.SetColor(color);
         }
 
         public override void OnDisabled(bool disable)

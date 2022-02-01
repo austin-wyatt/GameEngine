@@ -148,7 +148,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
 
                     enemy.DestroyOnUnload = true;
 
-                    enemy.Load(affectedPoint);
+                    EntityManager.LoadEntity(enemy, affectedPoint);
                 }
 
 

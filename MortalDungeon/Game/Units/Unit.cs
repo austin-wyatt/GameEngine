@@ -5,12 +5,15 @@ using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Items;
 using MortalDungeon.Game.Ledger;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Particles;
+using MortalDungeon.Game.Save;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Serializers.Abilities;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.UI;
 using MortalDungeon.Objects;
@@ -115,10 +118,12 @@ namespace MortalDungeon.Game.Units
         public virtual void InitializeVisualComponent()
         {
             //using the AnimationSetName create a base object with those animations
+            TextureLoaded = false;
 
             BaseObject obj = CreateBaseObject();
             obj.BaseFrame.CameraPerspective = true;
             obj.BaseFrame.RotateX(_xRotation);
+            obj.BaseFrame.RotateZ(MathHelper.RadiansToDegrees(Scene._camera.CameraAngle));
 
             AddBaseObject(obj);
 
@@ -149,6 +154,7 @@ namespace MortalDungeon.Game.Units
             if (StatusBarComp == null && _createStatusBar) 
             {
                 new UnitStatusBar(this, Scene._camera);
+                StatusBarComp.SetWillDisplay(false);
             }
 
             if (StatusBarComp != null) 
@@ -161,7 +167,7 @@ namespace MortalDungeon.Game.Units
 
             if (placeOnTileMap)
             {
-                SetTileMapPosition(Scene._tileMapController.GetTile(position));
+                SetTileMapPosition(TileMapHelpers.GetTile(position));
 
                 SetPosition(Info.TileMapPosition.Position + TileOffset);
             }
@@ -174,6 +180,8 @@ namespace MortalDungeon.Game.Units
             }
             
             SelectionTile.SetPosition(Position);
+
+            LoadTexture(this);
         }
 
         public virtual void EntityUnload() 
@@ -183,23 +191,31 @@ namespace MortalDungeon.Game.Units
             Info.TileMapPosition = null;
 
             //might not wanna clear buffs or abilities depending on how things shake out.
-            lock (Info.Abilities) 
-            {
-                Info.Abilities.Clear();
-            }
-            lock (Info.Buffs)
-            {
-                Info.Buffs.Clear();
-            }
+            //lock (Info.Abilities) 
+            //{
+            //    Info.Abilities.Clear();
+            //}
+            //lock (Info.Buffs)
+            //{
+            //    Info.Buffs.Clear();
+            //}
 
             BaseObjects.Clear();
         }
 
         public virtual void ApplyAbilityLoadout()
         {
+            foreach(var ability in Info.Abilities)
+            {
+                ability.RemoveAbilityFromUnit();
+            }
+
+            Info.Abilities.Clear();
+
             Move movement = new Move(this);
             movement.EnergyCost = 0.3f;
             Info.Abilities.Add(movement);
+            movement.AddAbilityToUnit();
 
             Info._movementAbility = movement;
 
@@ -207,6 +223,24 @@ namespace MortalDungeon.Game.Units
             {
                 AbilityLoadout.ApplyLoadoutToUnit(this);
             }
+        }
+
+        public void AddAbility(AbilityLoadoutItem item)
+        {
+            AbilityLoadout.Items.Add(item);
+            ApplyAbilityLoadout();
+        }
+
+        public void ReplaceAbility(AbilityLoadoutItem item, AbilityLoadoutItem newItem)
+        {
+            AbilityLoadout.Items.Replace(item, newItem);
+            ApplyAbilityLoadout();
+        }
+
+        public void RemoveAbility(AbilityLoadoutItem item)
+        {
+            AbilityLoadout.Items.Remove(item);
+            ApplyAbilityLoadout();
         }
 
         public void ApplyStateValue(StateIDValuePair state)
@@ -264,6 +298,7 @@ namespace MortalDungeon.Game.Units
             Scene._genericObjects.Remove(SelectionTile);
             Scene._unitStatusBlock.RemoveChild(StatusBarComp);
 
+            StatusBarComp = null;
             SelectionTile = null;
 
             RemoveFromTile();
@@ -352,7 +387,8 @@ namespace MortalDungeon.Game.Units
 
             if (StatusBarComp != null) 
             {
-                StatusBarComp.UpdateUnitStatusPosition();
+                Scene.SyncToRender(() => StatusBarComp.UpdateUnitStatusPosition());
+                //StatusBarComp.UpdateUnitStatusPosition();
             }
 
             if (SelectionTile != null) 
@@ -961,22 +997,6 @@ namespace MortalDungeon.Game.Units
 
             return obj;
         }
-
-        public object this[string propertyName]
-        {
-            get
-            {
-                Type type = typeof(Unit);
-                FieldInfo propertyInfo = type.GetField(propertyName);
-                return propertyInfo.GetValue(this);
-            }
-            set
-            {
-                Type type = typeof(Unit);
-                FieldInfo propertyInfo = type.GetField(propertyName);
-                propertyInfo.SetValue(this, value);
-            }
-        }
     }
 
 
@@ -1001,7 +1021,8 @@ namespace MortalDungeon.Game.Units
         Blinded = 1024, //reduces vision radius by a certain amount
     }
 
-    public class UnitInfo
+    [Serializable]
+    public class UnitInfo : ISerializable
     {
         public static int OUT_OF_COMBAT_VISION = 5;
 
@@ -1013,24 +1034,41 @@ namespace MortalDungeon.Game.Units
 
             Stealth = new Hidden(unit);
             Scouting = new Scouting(unit);
+            Equipment = new Equipment(unit);
         }
 
+
+        [XmlIgnore]
         public Unit Unit;
 
+        [XmlIgnore]
         public BaseTile TileMapPosition;
 
+        [XmlIgnore]
         public TilePoint TemporaryPosition = null; //used as a placeholder position for calculating things like vision before a unit moves
 
+        [XmlIgnore]
         public TilePoint Point => TileMapPosition.TilePoint;
 
+        [XmlIgnore]
         public CombatScene Scene => TileMapPosition.GetScene();
 
+        [XmlIgnore]
         public TileMap Map => TileMapPosition.TileMap;
 
+        [XmlIgnore]
         public List<Ability> Abilities = new List<Ability>();
 
+        public Equipment Equipment;
+
+        //public List<AbilityCreationInfo> _abilityCreationInfo = new List<AbilityCreationInfo>();
+
+        [XmlIgnore]
         public List<Buff> Buffs = new List<Buff>();
 
+        //private List<BuffCreationInfo> _buffCreationInfo = new List<BuffCreationInfo>();
+
+        [XmlIgnore]
         public Move _movementAbility = null;
 
         public float MaxEnergy = 10;
@@ -1080,12 +1118,13 @@ namespace MortalDungeon.Game.Units
 
         public float DamageBlockedByShields = 0;
 
-
+        [XmlIgnore]
         public Dictionary<DamageType, float> BaseDamageResistances = new Dictionary<DamageType, float>();
 
-        public bool NonCombatant = false;
+        [XmlElement(Namespace = "UIbdr")]
+        private DeserializableDictionary<DamageType, float> _baseDamageResistances = new DeserializableDictionary<DamageType, float>();
 
-        public bool PrimaryUnit = false;
+        public bool NonCombatant = false;
 
         public int Height = 1;
         //public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
@@ -1100,6 +1139,9 @@ namespace MortalDungeon.Game.Units
         public StatusCondition Status = StatusCondition.None;
 
         public Species Species = Species.Human;
+
+        public bool PartyMember = false;
+
 
         /// <summary>
         /// If true, this unit/structure can always be seen through
@@ -1121,9 +1163,13 @@ namespace MortalDungeon.Game.Units
         public Hidden Stealth;
         public Scouting Scouting;
 
+        [XmlIgnore]
         private object _buffLock = new object();
         public void AddBuff(Buff buff) 
         {
+            if (buff == null)
+                return;
+
             lock (_buffLock) 
             {
                 Buffs.Add(buff);
@@ -1151,6 +1197,9 @@ namespace MortalDungeon.Game.Units
 
         public void RemoveBuff(Buff buff)
         {
+            if (buff == null)
+                return;
+
             lock (_buffLock)
             {
                 Buffs.Remove(buff);
@@ -1213,11 +1262,50 @@ namespace MortalDungeon.Game.Units
 
             return true;
         }
+
+        public void PrepareForSerialization()
+        {
+            Stealth.PrepareForSerialization();
+            Scouting.PrepareForSerialization();
+            Equipment.PrepareForSerialization();
+
+            //foreach (var item in _abilityCreationInfo)
+            //{
+            //    item.PrepareForSerialization();
+            //}
+
+            _baseDamageResistances = new DeserializableDictionary<DamageType, float>(BaseDamageResistances);
+        }
+
+        public void CompleteDeserialization()
+        {
+            Stealth.CompleteDeserialization();
+            Scouting.CompleteDeserialization();
+            Equipment.CompleteDeserialization();
+
+            //foreach (var item in _abilityCreationInfo)
+            //{
+            //    item.CompleteDeserialization();
+            //}
+
+            BaseDamageResistances.Clear();
+            _baseDamageResistances.FillDictionary(BaseDamageResistances);
+        }
+
+        public static void AttachUnitToInfo(UnitInfo info, Unit unit)
+        {
+            info.Unit = unit;
+            info.Stealth.Unit = unit;
+            info.Scouting.Unit = unit;
+            info.Equipment.Unit = unit;
+        }
     }
 
-    public class Hidden 
+    [Serializable]
+    public class Hidden : ISerializable
     {
-        private Unit Unit;
+        [XmlIgnore]
+        public Unit Unit;
         /// <summary>
         /// Whether a unit is currently attemping to hide
         /// </summary>
@@ -1226,10 +1314,14 @@ namespace MortalDungeon.Game.Units
         /// <summary>
         /// The teams that can see this unit
         /// </summary>
+        [XmlIgnore]
         public Dictionary<UnitTeam, bool> Revealed = new Dictionary<UnitTeam, bool>();
+        [XmlElement(Namespace = "Hir")]
+        private DeserializableDictionary<UnitTeam, bool> _revealed = new DeserializableDictionary<UnitTeam, bool>();
 
         public float Skill = 0;
 
+        [XmlIgnore]
         public QueuedList<Action> HidingBrokenActions = new QueuedList<Action>();
 
         public Hidden() { }
@@ -1307,11 +1399,23 @@ namespace MortalDungeon.Game.Units
 
             return inFog;
         }
+
+        public void PrepareForSerialization()
+        {
+            _revealed = new DeserializableDictionary<UnitTeam, bool>(Revealed);
+        }
+
+        public void CompleteDeserialization()
+        {
+            _revealed.FillDictionary(Revealed);
+        }
     }
 
-    public class Scouting 
+    [Serializable]
+    public class Scouting : ISerializable
     {
-        private Unit Unit;
+        [XmlIgnore]
+        public Unit Unit;
 
         public const int DEFAULT_RANGE = 5;
 
@@ -1332,6 +1436,16 @@ namespace MortalDungeon.Game.Units
                 return true;
 
             return Skill - unit.Info.Stealth.Skill - (distance - DEFAULT_RANGE) >= 0;
+        }
+
+        public void PrepareForSerialization()
+        {
+            
+        }
+
+        public void CompleteDeserialization()
+        {
+            
         }
     }
 }

@@ -28,7 +28,10 @@ namespace MortalDungeon.Objects
         Lighting,
         LightObstructionMap,
 
-        TileOverlaySpritesheet
+        TileOverlaySpritesheet,
+        UnitSpritesheet,
+
+        Cursor
     }
     public class TextureInfo
     {

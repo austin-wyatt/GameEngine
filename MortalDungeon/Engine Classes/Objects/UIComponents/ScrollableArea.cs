@@ -363,7 +363,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Bounds = bounds;
         }
 
-        public override void SetDragPosition(Vector3 position)
+        public override void DragEvent(Vector3 position, Vector3 mouseCoord, Vector3 deltaDrag)
         {
             UIAnchorPosition anchor = UIAnchorPosition.Center;
             if (Bounds.ScrollX)

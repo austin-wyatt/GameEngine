@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Serializers.Abilities;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
@@ -11,7 +12,7 @@ using System.Xml.Serialization;
 namespace MortalDungeon.Game.Serializers
 {
     [Serializable]
-    public class UnitCreationInfo
+    public class UnitCreationInfo : ISerializable
     {
         #region very important to set
         [XmlElement("UdN")]
@@ -25,6 +26,7 @@ namespace MortalDungeon.Game.Serializers
         public int AbilityLoadoutId;
         [XmlElement("Uans")]
         public string AnimationSetName;
+
         #endregion
 
         #region pretty important to set
@@ -159,6 +161,22 @@ namespace MortalDungeon.Game.Serializers
             }
 
             return unit;
+        }
+
+        public void CompleteDeserialization()
+        {
+            //foreach (var item in AbilityCreationList)
+            //{
+            //    item.CompleteDeserialization();
+            //}
+        }
+
+        public void PrepareForSerialization()
+        {
+            //foreach (var item in AbilityCreationList)
+            //{
+            //    item.PrepareForSerialization();
+            //}
         }
     }
 }

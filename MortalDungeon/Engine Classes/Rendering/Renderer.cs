@@ -51,6 +51,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static int DrawCount = 0;
         public static int FPSCount = 0;
         public static int ObjectsDrawn = 0;
+
         public static Stopwatch _internalTimer = new Stopwatch();
 
         public static readonly Vector4 ClearColor = new Vector4(0.2f, 0.3f, 0.3f, 1);
@@ -66,6 +67,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
 
+            GL.ClearStencil(0x00);
 
             _vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -254,7 +256,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _instancedRenderArray[currIndex++] = 0;
         }
 
-
         public static void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true) where T : GameObject
         {
             if (objects.Count == 0)
@@ -265,9 +266,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             Shaders.FAST_DEFAULT_SHADER.Use();
 
-            Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", enableLighting ? 1 : 0);
-
-
+            //Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", enableLighting ? 1 : 0);
 
             RenderableObject Display;
 
@@ -280,14 +279,20 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 Display = display;
             }
 
+            //for (int i = 0; i < 8; i++)
+            //{
+            //    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{i}].specular", 2);
+            //    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{i}].diffuse", 2);
+            //    Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{i}].shininess", 16);
+            //}
+
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
             Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 0);
             Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].diffuse", 0);
             Shaders.FAST_DEFAULT_SHADER.SetFloat("material[0].shininess", 16);
 
-            Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
-
+            //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
 
             PrepareInstancedRenderFunc(Display);
@@ -308,7 +313,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             BaseObject obj;
             int texId;
 
-            TextureUnit currentTextureUnit = TextureUnit.Texture2;
+            TextureUnit currentTextureUnit = TextureUnit.Texture1;
 
             void draw(int itemCount, ref float[] renderDataArray) 
             {
@@ -324,20 +329,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 if (objects[i] != null && objects[i].TextureLoaded && objects[i].Render && !objects[i].Cull)
                 {
-                    //if (objects[i].MultiTextureData.MixedTexture != null && objects[i].MultiTextureData.MixTexture)
-                    //{
-                    //    if (!Texture.UsedTextures.TryGetValue(objects[i].MultiTextureData.MixedTextureLocation, out tex) && tex != objects[i].MultiTextureData.MixedTextureName)
-                    //    {
-                    //        int texIndex = (int)objects[i].MultiTextureData.MixedTextureLocation - 33984;
-                    //        int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
-
-                    //        objects[i].MultiTextureData.MixedTexture.Use(objects[i].MultiTextureData.MixedTextureLocation);
-                    //        Shaders.FAST_DEFAULT_SHADER.SetInt("texture" + texIndex, texIndex);
-                    //        Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
-                    //    }
-                    //}
-
-
                     if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag) 
                     {
                         draw(count, ref _instancedRenderDataArray);
@@ -351,30 +342,40 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         GL.Scissor(scissorData.X, scissorData.Y, scissorData.Width, scissorData.Height);
                         GL.Enable(EnableCap.ScissorTest);
 
-                        int totalObjCount = 0;
+                        //int totalObjCount = 0;
 
-                        for (int l = 0; l < scissorCallList.Count; l++) 
-                        {
-                            totalObjCount += scissorCallList[l].BaseObjects.Count;
-                        }
+                        //for (int l = 0; l < scissorCallList.Count; l++) 
+                        //{
+                        //    totalObjCount += scissorCallList[l].BaseObjects.Count;
+                        //}
 
-                        float[] instancedArr = new float[totalObjCount * instanceDataOffset];
+                        //float[] instancedArr = new float[totalObjCount * instanceDataOffset];
+
+                        textureReferences.Clear();
+                        usedTextures.Clear();
+
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, Display, false, enableLighting);
+                        //RenderObjectsInstancedGeneric(scissorCallList, ref instancedArr, Display, false, enableLighting);
 
 
 
-                        RenderObjectsInstancedGeneric(scissorCallList, ref instancedArr, Display, false, enableLighting);
+                        //foreach (Texture texture in textureReferences.Keys)
+                        //{
+                        //    int texIndex = (int)textureReferences[texture] - 33984;
+                        //    int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
 
-                        foreach (Texture texture in textureReferences.Keys) 
-                        {
-                            int texIndex = (int)textureReferences[texture] - 33984;
-                            int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
+                        //    texture.Use(textureReferences[texture]);
+                        //    //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
+                        //    //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
+                        //    ////Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
+                        //    //Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 8);
+                        //    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{texIndex}].diffuse", texIndex);
+                        //    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{texIndex}].specular", texIndex);
+                        //    Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{texIndex}].shininess", 8);
+                        //}
 
-                            texture.Use(textureReferences[texture]);
-                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
-                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
-                            //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
-                            Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 8);
-                        }
+                        currentTextureUnit = TextureUnit.Texture0;
+                        currTexture = int.MaxValue;
 
                         GL.Disable(EnableCap.ScissorTest);
  
@@ -414,10 +415,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
                                 {
                                     if (!usedTextures.ContainsKey(texId))
                                     {
-                                        if (currentTextureUnit > TextureUnit.Texture8)
+                                        if (currentTextureUnit > TextureUnit.Texture4)
                                         {
-                                            if(!multipleBaseObjects)
-                                                recursiveCallList.Add(objects[i]);
+                                            //if(!multipleBaseObjects)
+                                            recursiveCallList.Add(objects[i]);
                                             continue;
                                         }
                                         else
@@ -430,10 +431,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
                                             int texIndex = (int)currentTextureUnit - 33984;
                                             int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
-                                            //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+                                            //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
+                                            //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
+                                            ////Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
+                                            //Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{texIndex}].diffuse", texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{texIndex}].specular", texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{texIndex}].shininess", 16);
 
                                             currentTextureUnit++;
                                         }
@@ -498,35 +503,26 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
         }
 
-        public static void RenderInstancedRenderData(List<InstancedRenderData> data)
+        public static void RenderInstancedRenderData<T>(List<T> data) where T : InstancedRenderData
         {
-            Shaders.FAST_DEFAULT_SHADER.Use();
-
-
             for (int i = 0; i < data.Count; i++)
             {
-                Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", data[i].EnableLighting ? 1 : 0);
+                data[i].Shader.Use();
+                //data[i].Shader.SetFloat("enableLighting", data[i].EnableLighting ? 1 : 0);
 
                 foreach (var Tex in data[i].Textures)
                 {
                     Tex.Key.Use(Tex.Value);
 
                     int texIndex = (int)Tex.Value - 33984;
-                    int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
-                    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
-                    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 16);
-                    //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
-                    Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+                    //int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
+                    data[i].Shader.SetInt($"material[{texIndex}].diffuse", texIndex);
+                    data[i].Shader.SetInt($"material[{texIndex}].specular", 16);
+                    data[i].Shader.SetFloat($"material[{texIndex}].shininess", 16);
                 }
 
-                Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 16);
-                Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].diffuse", 0);
-                Shaders.FAST_DEFAULT_SHADER.SetFloat("material[0].shininess", 16);
-
-                //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
-
-                EnableInstancedShaderAttributes();
-                InstancedRenderData.PrepareInstancedRenderFunc(data[i]);
+                data[i].EnableInstancedShaderAttributes();
+                data[i].PrepareInstancedRenderFunc();
 
 
                 GL.DrawElementsInstanced(PrimitiveType.Triangles, data[i].VerticesCount, DrawElementsType.UnsignedInt, new IntPtr(), data[i].ItemCount);
@@ -535,7 +531,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 ObjectsDrawn += data[i].ItemCount;
             }
 
-            DisableInstancedShaderAttributes();
+            if(data.Count > 0)
+            {
+                data[0].DisableInstancedShaderAttributes();
+            }
         }
 
         public static void RenderBaseObjectsInstanced(List<BaseObject> objects, List<MultiTextureData> multiTextureData, RenderableObject display = null)
@@ -1000,9 +999,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
 
         #region Load/unload textures
-        public static void LoadTextureFromGameObj<T>(T gameObj, bool nearest = true) where T : GameObject 
+        public static void LoadTextureFromGameObj<T>(T gameObj, bool nearest = true, bool generateMipMaps = true) where T : GameObject 
         {
-            lock(gameObj.BaseObjects)
+            if (!gameObj._canLoadTexture)
+                return;
+
             gameObj.BaseObjects.ForEach(obj =>
             {
                 foreach (KeyValuePair<AnimationType, Animation> entry in obj.Animations)
@@ -1015,7 +1016,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                             {
                                 if (!_loadedTextures.TryGetValue(entry.Value.Frames[o].Textures.TextureIds[p], out int handle))
                                 {
-                                    Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest);
+                                    Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest, generateMipMaps: generateMipMaps);
                                     newTexture.TextureId = entry.Value.Frames[o].Textures.TextureIds[p];
 
                                     _textures.Add(newTexture);
@@ -1027,13 +1028,17 @@ namespace MortalDungeon.Engine_Classes.Rendering
                                 {
                                     entry.Value.Frames[o].Material.Diffuse = new Texture(handle, entry.Value.Frames[o].Textures.TextureIds[p]);
                                 }
+
+                                gameObj.TextureLoaded = true;
+                            }
+                            else
+                            {
+                                gameObj.TextureLoaded = true;
                             }
                         }
                     }
                 }
             });
-
-            gameObj.TextureLoaded = true;
         }
         public static void LoadTextureFromBaseObject(BaseObject obj, bool nearest = true, bool generateMipMaps = true)
         {
@@ -1111,7 +1116,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             UIObj.BaseObjects.ForEach(obj => 
             {
-                LoadTextureFromBaseObject(obj, true);
+                if (UIObj._canLoadTexture)
+                {
+                    LoadTextureFromBaseObject(obj, true);
+                }
             });
             UIObj.TextObjects.ForEach(obj =>
             {
@@ -1126,7 +1134,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 LoadTextureFromUIObject(obj);
             });
 
-            UIObj.TextureLoaded = true;
+            if (UIObj._canLoadTexture)
+            {
+                UIObj.TextureLoaded = true;
+            }
         }
 
         public static void LoadTextureFromTextureObj(Texture texture, int textureName) 
@@ -1136,26 +1147,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 _textures.Add(texture);
                 _loadedTextures.Add(textureName, texture.Handle);
             }
-        }
-
-        public static void UnloadTexture(int textureName) 
-        {
-            Texture tex = _textures.Find(tex => tex.TextureId == textureName);
-            if (tex != null) 
-            {
-                GL.DeleteTexture(tex.Handle);
-                _loadedTextures.Remove(tex.TextureId);
-            }
-        }
-        public static void UnloadAllTextures() 
-        {
-            for (int i = 0; i < _textures.Count; i++)
-            {
-                GL.DeleteTexture(_textures[i].Handle);
-            }
-
-            _textures.Clear();
-            _loadedTextures.Clear();
         }
         #endregion
 
@@ -1318,6 +1309,16 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static void RenderEnd()
         {
             OnRenderEnd?.Invoke();
+        }
+
+        public static void CheckError()
+        {
+            var error = GL.GetError();
+
+            if(error != ErrorCode.NoError)
+            {
+
+            }
         }
     }
 }

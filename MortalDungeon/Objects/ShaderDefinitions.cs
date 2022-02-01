@@ -38,5 +38,7 @@ namespace MortalDungeon.Objects
         public static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");
 
         public static readonly Shader TEXT_SHADER = new Shader("Shaders/Text/textShader.vert", "Shaders/Text/textShader.frag");
+        public static readonly Shader TILE_SHADER = new Shader("Shaders/Tiles/tileShader.vert", "Shaders/Tiles/tileShader.frag");
+        public static readonly Shader UI_SHADER = new Shader("Shaders/UI/uiShader.vert", "Shaders/UI/uiShader.frag");
     }
 }

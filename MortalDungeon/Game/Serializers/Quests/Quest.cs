@@ -31,7 +31,7 @@ namespace MortalDungeon.Game.Serializers
         {
             if(CurrentState < QuestStates.Count)
             {
-                if (QuestStates[CurrentState].IsStateCompleted(ID, CurrentState))
+                if (QuestStates[CurrentState].IsStateCompleted())
                 {
                     AdvanceQuestState();
                 }
@@ -80,14 +80,20 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("QSte")]
         public int TextEntry = 0;
 
+        [XmlIgnore]
+        public Quest Parent;
+
+        [XmlIgnore]
+        public int _stateIndex;
+
         public QuestState() { }
 
-        public bool IsStateCompleted(int questID, int stateIndex)
+        public bool IsStateCompleted()
         {
             int count = 0;
             foreach (var obj in QuestObjectives)
             {
-                if (!QuestLedger.GetStateValue(questID, (int)QuestStates.State0 + (int)QuestStates.StateOffset * stateIndex + count + 1))
+                if (!obj.IsCompleted())
                 {
                     return false;
                 }
@@ -144,6 +150,17 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("QOte")]
         public int TextEntry = 0;
 
+        [XmlIgnore]
+        public QuestState Parent;
+
+        [XmlIgnore]
+        public int _objectiveIndex;
+
         public QuestObjective() { }
+
+        public bool IsCompleted()
+        {
+            return QuestLedger.GetStateValue(Parent.Parent.ID, (int)QuestStates.State0 + (int)QuestStates.StateOffset * Parent._stateIndex + _objectiveIndex + 1);
+        }
     }
 }

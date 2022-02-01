@@ -19,7 +19,7 @@ in vec4 inlineColor;
 
 uniform sampler2D texture1;
 
-uniform float enableLighting;
+in float enableLighting;
 
 in float alpha_threshold;
 
@@ -36,7 +36,7 @@ struct Material {
 }; 
 
 uniform Material[8] material;
-int materialIndex = primaryTextureTarget > 1 ? int(primaryTextureTarget - 1) : 0;
+int materialIndex = int(primaryTextureTarget);
 
 struct Light {
 	vec3 position;
@@ -117,22 +117,22 @@ void main()
 {
 	vec4 texColor = texture(material[materialIndex].diffuse, texCoord);
 
-	if(twoTextures == 0)
-	{
+//	if(twoTextures == 0)
+//	{
 		outputColor = texColor * appliedColor;
-	}
-	else
-	{
-		vec4 texColor2 = texture(texture1, texCoord2);
-
-		texColor = mixPercent < 1 ? texColor * appliedColor : texColor;
-
-		outputColor = mix(texColor, texColor2, mixPercent);
-		
-		 
-
-		outputColor[3] = texColor[3]; //we want the alpha value from the original texture to stay
-	}
+//	}
+//	else
+//	{
+//		vec4 texColor2 = texture(texture1, texCoord2);
+//
+//		texColor = mixPercent < 1 ? texColor * appliedColor : texColor;
+//
+//		outputColor = mix(texColor, texColor2, mixPercent);
+//		
+//		 
+//
+//		outputColor[3] = texColor[3]; //we want the alpha value from the original texture to stay
+//	}
 
 
 	//Handle outline and inline
@@ -169,28 +169,27 @@ void main()
 	if(spotlight.enabled != 0)
 		result += CalcSpotLight(spotlight, norm, FragPos, viewDir, outputColor.xyz);
 
-	outputColor = vec4(result, 1);
+	outputColor = vec4(result, outputColor.a);
 
 
-	if(FragPos.x > 71)
-		outputColor[3] = (72 - FragPos.x);
-	else if(FragPos.x < -37)
-		outputColor[3] = (FragPos.x + 38);
-
-	float alphaColor = outputColor[3];
-
-	if(FragPos.y < -82.5)
-	{
-		alphaColor = FragPos.y + 83.5;
-		outputColor[3] = outputColor[3] < alphaColor ? outputColor[3] : alphaColor;
-	}
-	else if(FragPos.y > 43.5)
-	{
-		alphaColor = 44.5 - FragPos.y;
-
-		outputColor[3] = outputColor[3] < alphaColor ? outputColor[3] : alphaColor;
-	}
-		
+//	if(FragPos.x > 71)
+//		outputColor[3] = (72 - FragPos.x);
+//	else if(FragPos.x < -37)
+//		outputColor[3] = (FragPos.x + 38);
+//
+//	float alphaColor = outputColor[3];
+//
+//	if(FragPos.y < -82.5)
+//	{
+//		alphaColor = FragPos.y + 83.5;
+//		outputColor[3] = outputColor[3] < alphaColor ? outputColor[3] : alphaColor;
+//	}
+//	else if(FragPos.y > 43.5)
+//	{
+//		alphaColor = 44.5 - FragPos.y;
+//
+//		outputColor[3] = outputColor[3] < alphaColor ? outputColor[3] : alphaColor;
+//	}
 	
 }
 

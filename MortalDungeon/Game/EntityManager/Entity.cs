@@ -37,7 +37,7 @@ namespace MortalDungeon.Game.Entities
         {
             if (!Loaded) 
             {
-                if (Handle.Scene._tileMapController.IsValidTile(position)) 
+                if (TileMapHelpers.IsValidTile(position)) 
                 {
                     Loaded = true;
                     Handle.EntityLoad(position, placeOnTileMap);

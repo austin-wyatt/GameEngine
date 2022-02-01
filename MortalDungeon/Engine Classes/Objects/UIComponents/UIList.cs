@@ -169,10 +169,12 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void ClearItems() 
         {
-            for (int i = 0; i < Items.Count; i++) 
-            {
-                RemoveChild(Items[i]);
-            }
+            //for (int i = 0; i < Items.Count; i++) 
+            //{
+            //    RemoveChild(Items[i]);
+            //}
+
+            RemoveChildren(Items);
 
             Items.Clear();
 

@@ -307,9 +307,7 @@ namespace MortalDungeon.Engine_Classes
             Vector4 transform = new Vector4(x, y, z, 1);
 
 
-            transform *= Display.Rotation;
-            transform *= Display.Scale;
-            transform *= Display.Translation;
+            transform *= Display.Transformations;
 
             //Console.WriteLine("transformed coordinates: " + transform.X + ", " + transform.Y + ", " + transform.Z );
 

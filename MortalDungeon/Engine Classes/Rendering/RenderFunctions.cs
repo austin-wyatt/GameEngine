@@ -78,7 +78,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
     public static class RenderFunctions
     {
-
         public static FadeParameters FadeParameters = new FadeParameters(FadeDirection.Out);
         public static void Fade()
         {
@@ -115,18 +114,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             GL.Enable(EnableCap.FramebufferSrgb);
 
-
-            RenderingQueue.RenderTileQueue();
-
-            RenderingQueue.RenderTileQuadQueue();
-
-            RenderingQueue.RenderQueuedParticles();
-
-            RenderingQueue.RenderQueuedObjects();
-            RenderingQueue.RenderQueuedUnits();
-            RenderingQueue.RenderInstancedStructureData();
-
-            RenderingQueue.RenderLowPriorityQueue();
+            DrawGame();
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -139,8 +127,45 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             GL.Disable(EnableCap.FramebufferSrgb);
 
-            RenderingQueue.RenderQueuedUI();
+            //RenderingQueue.RenderQueuedUI();
+            RenderingQueue.RenderInstancedUIData();
         }
+
+        public static void DrawGame()
+        {
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+
+            //RenderingQueue.RenderTileQuadQueue();
+            RenderingQueue.RenderInstancedTileData();
+            //DrawFog();
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+
+
+            RenderingQueue.RenderQueuedParticles();
+
+            RenderingQueue.RenderQueuedObjects();
+            RenderingQueue.RenderQueuedUnits();
+            RenderingQueue.RenderInstancedStructureData();
+
+            RenderingQueue.RenderTileQueue();
+
+            RenderingQueue.RenderLowPriorityQueue();
+
+        }
+
+        //public static void DrawFog()
+        //{
+        //    GL.Enable(EnableCap.StencilTest);
+        //    GL.Disable(EnableCap.DepthTest);
+        //    GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
+        //    GL.StencilMask(0x00);
+
+        //    RenderingQueue.RenderFogQuad();
+
+
+        //    GL.Enable(EnableCap.DepthTest);
+        //    GL.Disable(EnableCap.StencilTest);
+        //}
     }
 
 }

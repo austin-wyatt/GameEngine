@@ -101,6 +101,8 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("ALm")]
         public int MaxCharges = -1;
 
+
+
         /// <summary>
         /// Descriptive name because we have to manually map all of these without an automatic process
         /// </summary>
@@ -115,6 +117,33 @@ namespace MortalDungeon.Game.Serializers
             NodeID = nodeID;
             NodeName = name;
             BasicAbility = isBasic ? 1 : 0;
+        }
+
+        public Ability GetAbilityFromLoadoutItem(Unit unit)
+        {
+            if (AbilityTrees.FindTree(AbilityTreeType, out var tree))
+            {
+                if (BasicAbility > 0)
+                {
+                    return tree.BasicAbility[0].CreateAbility(unit);
+                }
+                else if (NodeName != "")
+                {
+                    if (tree.GetNodeFromTreeByName(NodeName, out var node))
+                    {
+                        return node.CreateAbility(unit);
+                    }
+                }
+                else if (NodeID != -1)
+                {
+                    if (tree.GetNodeFromTreeByID(NodeID, out var node))
+                    {
+                        return node.CreateAbility(unit);
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

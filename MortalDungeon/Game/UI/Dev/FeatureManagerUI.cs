@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -124,9 +125,9 @@ namespace MortalDungeon.Game.UI.Dev
 
                 listItem.Click += (s, e) =>
                 {
-                    if (Scene._tileMapController.IsValidTile(feature.Value.Origin))
+                    if (TileMapHelpers.IsValidTile(feature.Value.Origin))
                     {
-                        var tile = Scene._tileMapController.GetTile(feature.Value.Origin);
+                        var tile = TileMapHelpers.GetTile(feature.Value.Origin);
 
                         var featurePos = new Vector3(tile.BaseObject.BaseFrame.Position.X, tile.BaseObject.BaseFrame.Position.Y, Scene._camera.Position.Z);
 
@@ -156,26 +157,40 @@ namespace MortalDungeon.Game.UI.Dev
 
                     loadFeature.Click += (s, e) =>
                     {
-                        var tileMapPoint = new Tiles.TileMapPoint(feature.Origin.X / 50, feature.Origin.Y / 50);
+                        var tileMapPoint = new TileMapPoint(feature.Origin.X / TileMapManager.TILE_MAP_DIMENSIONS.X, feature.Origin.Y / TileMapManager.TILE_MAP_DIMENSIONS.Y);
 
-                        void loadTileMaps(SceneEventArgs args)
+
+                        TileMapManager.SetCenter(tileMapPoint);
+
+                        TileMapManager.LoadMapsAroundCenter();
+
+                        if (TileMapHelpers.IsValidTile(feature.Origin))
                         {
-                            Scene._tileMapController.LoadSurroundingTileMaps(tileMapPoint, onFinish: () =>
-                            {
-                                if (Scene._tileMapController.IsValidTile(feature.Origin))
-                                {
-                                    var tile = Scene._tileMapController.GetTile(feature.Origin);
+                            var tile = TileMapHelpers.GetTile(feature.Origin);
 
-                                    var featurePos = new Vector3(tile.BaseObject.BaseFrame.Position.X, tile.BaseObject.BaseFrame.Position.Y, Scene._camera.Position.Z);
+                            var featurePos = new Vector3(tile.BaseObject.BaseFrame.Position.X, tile.BaseObject.BaseFrame.Position.Y, Scene._camera.Position.Z);
 
-                                    Scene.SmoothPanCamera(featurePos, 1);
-                                }
-                            });
-
-                            Scene.RenderEnd -= loadTileMaps;
+                            Scene.SmoothPanCamera(featurePos, 1);
                         }
 
-                        Scene.RenderEnd += loadTileMaps;
+                        //void loadTileMaps(SceneEventArgs args)
+                        //{
+                        //    //Scene._tileMapController.LoadSurroundingTileMaps(tileMapPoint, onFinish: () =>
+                        //    //{
+                        //    //    if (TileMapHelpers.IsValidTile(feature.Origin))
+                        //    //    {
+                        //    //        var tile = TileMapHelpers.GetTile(feature.Origin);
+
+                        //    //        var featurePos = new Vector3(tile.BaseObject.BaseFrame.Position.X, tile.BaseObject.BaseFrame.Position.Y, Scene._camera.Position.Z);
+
+                        //    //        Scene.SmoothPanCamera(featurePos, 1);
+                        //    //    }
+                        //    //});
+
+                        //    Scene.RenderEnd -= loadTileMaps;
+                        //}
+
+                        //Scene.RenderEnd += loadTileMaps;
                     };
 
                     Scene.OpenContextMenu(tooltip);

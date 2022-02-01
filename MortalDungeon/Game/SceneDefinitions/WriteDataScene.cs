@@ -24,9 +24,9 @@ namespace MortalDungeon.Game.SceneDefinitions
         }
 
 
-        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        public override void Load(Camera camera = null, MouseRay mouseRay = null)
         {
-            base.Load(camera, cursorObject, mouseRay);
+            base.Load(camera, mouseRay);
 
 
         }

@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Tiles;
+﻿using MortalDungeon.Engine_Classes.Rendering;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Threading;
 using System.Threading.Tasks;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
@@ -39,7 +41,6 @@ namespace MortalDungeon.Engine_Classes
             // Generate handle
             int handle = GL.GenTexture();
 
-
             // Bind the handle
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
@@ -65,6 +66,7 @@ namespace MortalDungeon.Engine_Classes
 
             if (generateMipMaps)
             {
+
                 if (nearest)
                 {
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
@@ -72,8 +74,8 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else
                 {
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
                 }
 
 
@@ -100,7 +102,6 @@ namespace MortalDungeon.Engine_Classes
         {
             // Generate handle
             int handle = GL.GenTexture();
-
 
             // Bind the handle
             GL.ActiveTexture(TextureUnit.Texture0);
@@ -162,7 +163,7 @@ namespace MortalDungeon.Engine_Classes
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
-
+            
             GL.TexImage2D(TextureTarget.Texture2D,
                 0,
                 PixelInternalFormat.Rgba,
@@ -258,8 +259,8 @@ namespace MortalDungeon.Engine_Classes
 
         private void _Dispose()
         {
-            Window.RenderEnd -= _Dispose;
             GL.DeleteTexture(Handle);
+            Window.RenderEnd -= _Dispose;
         }
         public void Dispose()
         {

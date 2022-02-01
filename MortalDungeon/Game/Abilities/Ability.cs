@@ -44,7 +44,12 @@ namespace MortalDungeon.Game.Abilities
     {
         Unknown,
         Skeleton,
-        Bandit
+        Bandit,
+
+
+        Item_Normal,
+        Item_Magical,
+        Item_Divine
     }
 
     /// <summary>
@@ -196,6 +201,16 @@ namespace MortalDungeon.Game.Abilities
         public Ability()
         {
 
+        }
+
+        public virtual void AddAbilityToUnit()
+        {
+            ApplyPassives();
+        }
+
+        public virtual void RemoveAbilityFromUnit()
+        {
+            RemovePassives();
         }
 
         public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -940,6 +955,8 @@ namespace MortalDungeon.Game.Abilities
             ComboDecayCount = 0;
             ComboAdvanceCount = 0;
 
+            ApplyPassives();
+
             if (Scene.Footer != null && Scene.Footer._currentUnit == CastingUnit)
             {
                 Scene.Footer.UpdateFooterInfo(CastingUnit);
@@ -951,6 +968,8 @@ namespace MortalDungeon.Game.Abilities
             lock (CastingUnit.Info.Abilities)
             {
                 CastingUnit.Info.Abilities.Replace(this, ability);
+                RemovePassives();
+
                 ability.OnSwappedTo();
             }
         }
@@ -1031,6 +1050,22 @@ namespace MortalDungeon.Game.Abilities
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// Apply any passive effects to a unit with this ability equipped
+        /// </summary>
+        public virtual void ApplyPassives()
+        {
+
+        }
+
+        /// <summary>
+        /// Remove any passive effects to a unit with this ability equipped
+        /// </summary>
+        public virtual void RemovePassives()
+        {
+
         }
 
         public virtual DamageInstance GetDamageInstance() 

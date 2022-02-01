@@ -82,6 +82,15 @@ namespace MortalDungeon.Game.Objects
         0.2578125f, 0.41388887f, 0.0f,
         0.49843752f, -0.0055555105f, 0.0f,
         };
+        public static readonly float[] BaseTileBounds_2x = new float[]{
+        0.26093745f * 2, -0.44166672f * 2, 0.0f,
+        -0.253125f * 2, -0.44166672f * 2, 0.0f,
+        -0.484375f * 2, -0.008333325f * 2, 0.0f,
+        -0.24843752f * 2, 0.41388887f * 2, 0.0f,
+        0.2578125f * 2, 0.41388887f * 2, 0.0f,
+        0.49843752f * 2, -0.0055555105f * 2, 0.0f,
+        };
+
         public static readonly ObjectDefinition BASE_TILE = new SpritesheetObject(11, Spritesheets.TestSheet).CreateObjectDefinition(ObjectIDs.BASE_TILE, BaseTileBounds, true);
 
         public static readonly float[] UIBlockBounds = new float[] 
@@ -104,6 +113,8 @@ namespace MortalDungeon.Game.Objects
         public static Object3D WallCorner3D = OBJParser.ParseOBJ("Resources/WallCornerObj.obj");
         public static Object3D Tent = OBJParser.ParseOBJ("Resources/3D models/Tent.obj");
         //public static Object3D Grass = OBJParser.ParseOBJ("Resources/3D models/Grass.obj");
+        public static Object3D TilePillar = OBJParser.ParseOBJ("Resources/3D models/TilePillar.obj");
+        public static Object3D Hexagon = OBJParser.ParseOBJ("Resources/3D models/Hexagon.obj");
 
         public static RenderableObject CreateObject(SpritesheetObject spritesheet, Object3D obj) 
         {

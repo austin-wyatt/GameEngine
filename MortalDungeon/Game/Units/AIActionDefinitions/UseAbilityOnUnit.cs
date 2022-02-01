@@ -32,7 +32,7 @@ namespace MortalDungeon.Game.Units.AI
                     Console.WriteLine("How did this happen?");
                 }
 
-                Vector2i clusterPos = Scene._tileMapController.PointToClusterPosition(Ability.SelectedUnit.Info.TileMapPosition);
+                Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(Ability.SelectedUnit.Info.TileMapPosition);
 
                 if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
                 {

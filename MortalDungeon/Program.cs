@@ -4,6 +4,7 @@ using System;
 using System.Resources;
 using MortalDungeon.Engine_Classes.Audio;
 using System.Threading;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace MortalDungeon
 {
@@ -14,7 +15,6 @@ namespace MortalDungeon
         public static void Main(string[] args)
         {
             InitializeSoundPlayer();
-
             
             var nativeWindowSettings = new NativeWindowSettings()
             {
@@ -27,17 +27,18 @@ namespace MortalDungeon
             };
 
             var gameWindowSettings = GameWindowSettings.Default;
-
+            //gameWindowSettings.IsMultiThreaded = true;
             //gameWindowSettings.RenderFrequency = 30;
             //gameWindowSettings.RenderFrequency = 60;
-
 
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {
                 Window = game;
-                Window.Context.MakeCurrent();
+                //Window.Context.MakeCurrent();
 
                 game.VSync = OpenTK.Windowing.Common.VSyncMode.Off;
+                Window.CursorGrabbed = true;
+
                 game.Run();
             }
         }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Tiles;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -7,6 +9,8 @@ namespace MortalDungeon.Game.Entities
     public static class EntityManager
     {
         public static List<Entity> Entities = new List<Entity>();
+        public static HashSet<Entity> LoadedEntities = new HashSet<Entity>();
+
 
         /// <summary>
         /// Adds the entity to the list of all entities. This doesn't imply anything about whether it is loaded or unloaded.
@@ -29,6 +33,27 @@ namespace MortalDungeon.Game.Entities
             {
                 entity.Unload();
                 Entities.Remove(entity);
+                LoadedEntities.Remove(entity);
+            }
+        }
+
+        public static void UnloadEntity(Entity entity)
+        {
+            lock (Entities)
+            {
+                //when unloading an entity, save their position so that they can potentially be reloaded into the same place.
+
+                entity.Unload();
+                LoadedEntities.Remove(entity);
+            }
+        }
+
+        public static void LoadEntity(Entity entity, FeaturePoint position, bool placeOnTileMap = true)
+        {
+            lock (Entities)
+            {
+                entity.Load(position, placeOnTileMap);
+                LoadedEntities.Add(entity);
             }
         }
     }

@@ -1,11 +1,13 @@
 ﻿using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -29,6 +31,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 ObjectCulling.UpdateValues(Camera);
                 CullObjectsInScene();
             };
+
+            Camera.Update -= _onCameraUpdate;
+            Camera.Update += _onCameraUpdate;
         }
 
         public int AddScene(Scene scene, int priority) 
@@ -44,9 +49,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return scene.SceneID;
         }
 
-        public void LoadScene(int id, Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
+        public void LoadScene(int id, Camera camera = null, MouseRay mouseRay = null) 
         {
-            GetScene(id)?.Load(camera, cursorObject, mouseRay);
+            GetScene(id)?.Load(camera, mouseRay);
 
             CullObjectsInScene();
         }
@@ -97,31 +102,31 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         Renderer.LoadTextureFromGameObj(obj);
                     });
 
-                    Scenes[u]._tileMapController.TileMaps.ForEach(obj =>
-                    {
-                        if (!obj.Render)
-                            return;
-
-                        if (obj.Tiles.Count > 0) 
-                        {
-                            obj.Tiles.ForEach(tile =>
-                            {
-                                Renderer.LoadTextureFromGameObj(tile);
-                            });
-                        }
-
-                        foreach (var tile in obj.Controller.GetSelectionTilePool()) 
-                        {
-                            Renderer.LoadTextureFromGameObj(tile);
-                        }
-                    });
-
                     Scenes[u].UIManager.TopLevelObjects.ForEach(obj =>
                     {
                         Renderer.LoadTextureFromUIObject(obj);
                     });
                 }
             }
+
+            TileMapManager.ActiveMaps.ForEach(obj =>
+            {
+                if (!obj.Render)
+                    return;
+
+                if (obj.Tiles.Count > 0)
+                {
+                    obj.Tiles.ForEach(tile =>
+                    {
+                        Renderer.LoadTextureFromGameObj(tile);
+                    });
+                }
+
+                foreach (var tile in obj.Controller.GetSelectionTilePool())
+                {
+                    Renderer.LoadTextureFromGameObj(tile);
+                }
+            });
         }
 
         public void RemoveScene(int id)
@@ -242,32 +247,29 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             ObjectCulling._culledChunks = 0;
 
+            Stopwatch timer = new Stopwatch();
+            timer.Restart();
+
+            TileMapManager.ActiveMaps.ForEach(map =>
+            {
+                map.TileChunks.ForEach(chunk =>
+                {
+                    ObjectCulling.CullTileChunk(chunk);
+                });
+            });
+
             Scenes.ForEach(scene =>
             {
-                lock (scene._tileMapController._mapLoadLock)
-                {
-                    scene._tileMapController.TileMaps.ForEach(map =>
-                    {
-                        map.TileChunks.ForEach(chunk =>
-                        {
-                            ObjectCulling.CullTileChunk(chunk);
-                        });
-
-                        //ObjectCulling.CullListOfGameObjects(map.SelectionTiles);
-                    });
-                }
-
-
-
-                ObjectCulling.CullListOfGameObjects(scene._units);
-
-                //ObjectCulling.CullListOfGameObjects(scene._UI); //UI shouldnt ever need to be culled
-
-                //scene._text.ForEach(text =>
-                //{
-                //    ObjectCulling.CullListOfGameObjects(text.Letters);
-                //});
+                ObjectCulling.CullListOfUnits(scene._units);
             });
+
+            //Console.WriteLine($"Cull completed in {timer.ElapsedTicks} ticks");
+        }
+
+        private void _onCameraUpdate(Camera cam)
+        {
+            ObjectCulling.UpdateValues(Camera);
+            CullObjectsInScene();
         }
     }
 

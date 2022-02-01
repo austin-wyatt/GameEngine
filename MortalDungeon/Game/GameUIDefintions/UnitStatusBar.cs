@@ -6,6 +6,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,7 +17,7 @@ namespace MortalDungeon.Game.UI
         public Camera _camera;
         public Unit _unit;
 
-        public Text _mainTextBox;
+        public Text _nameBox;
         public TextBox _turnDisplay;
         public HealthBar HealthBar;
         public ShieldBar ShieldBar;
@@ -37,13 +38,18 @@ namespace MortalDungeon.Game.UI
             BaseComponent = new UIBlock(screenSpace, scale);
 
             BaseComponent.MultiTextureData.MixTexture = false;
-            BaseComponent.SetColor(_Colors.UILightGray);
+            //BaseComponent.SetColor(_Colors.UILightGray);
+            BaseComponent.SetColor(_Colors.Transparent);
 
+            Name = "UnitStatusBar";
 
-            Text nameBox = new Text(unit.Name, Text.DEFAULT_FONT, 32, Brushes.Black);
+            Text nameBox = new Text(unit.Name, Text.DEFAULT_FONT, 32, Brushes.White);
             nameBox.SetPositionFromAnchor(BaseComponent.Position, UIAnchorPosition.Center);
+            nameBox.SetColor(_Colors.Black);
 
-            _mainTextBox = nameBox;
+            _nameBox = nameBox;
+
+            _nameBox.Name = "NameBox";
 
             //_mainTextBox = textBox;
             //BaseComponent.AddChild(textBox);
@@ -74,7 +80,6 @@ namespace MortalDungeon.Game.UI
             BaseComponent.AddChild(ShieldBar);
 
 
-
             _camera = camera;
             _unit = unit;
 
@@ -89,23 +94,37 @@ namespace MortalDungeon.Game.UI
         }
 
         private object _updateLock = new object();
-        public void UpdateUnitStatusPosition() 
+        public void UpdateUnitStatusPosition([Optional]Matrix4 cameraMatrices) 
         {
             if (_unit.BaseObjects.Count == 0)
                 return;
 
+            if (_unit.Cull)
+                return;
+
             lock (_updateLock)
             {
-                Vector4 unitPos = new Vector4(0, 0, 0, 1) * _unit.GetDisplay().Transformations * _camera.GetViewMatrix() * _camera.ProjectionMatrix;
+                Vector4 unitPos = new Vector4(0, 0, 0, 1);
+                if(cameraMatrices != Matrix4.Zero)
+                {
+                    unitPos *= _unit.GetDisplay().Transformations * cameraMatrices;
+                }
+                else
+                {
+                    unitPos *= _unit.GetDisplay().Transformations * _camera.GetViewMatrix() * _camera.ProjectionMatrix;
+                }
+
                 unitPos.X /= unitPos.W;
                 unitPos.Y /= unitPos.W;
                 unitPos.Z /= unitPos.W;
 
                 if (WillDisplay)
                 {
-                    _mainTextBox.SetRender(true);
-                    BaseComponent.SetColor(_Colors.UILightGray);
-                    BaseComponent.SetAllInline(2);
+                    _nameBox.SetRender(true);
+                    //BaseComponent.SetColor(_Colors.UILightGray);
+                    BaseComponent.SetColor(_Colors.Transparent);
+                    //BaseComponent.SetAllInline(2);
+                    BaseComponent.SetAllInline(0);
 
                     if (_camera.Position.Z < 2)
                     {
@@ -126,7 +145,7 @@ namespace MortalDungeon.Game.UI
 
                         unitPos.Y += 0.25f;
                         SetSize(zoomScale);
-                        _mainTextBox.SetTextScale(0.065f);
+                        _nameBox.SetTextScale(0.065f);
                         UpdateInfoBarScales(zoomScale);
                     }
                     else if (_camera.Position.Z >= 4 && _camera.Position.Z < 8)
@@ -135,7 +154,7 @@ namespace MortalDungeon.Game.UI
                         unitPos.Y += 0.17f;
 
                         SetSize(zoomScale);
-                        _mainTextBox.SetTextScale(0.055f);
+                        _nameBox.SetTextScale(0.055f);
                         UpdateInfoBarScales(zoomScale);
                     }
                     else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
@@ -144,7 +163,7 @@ namespace MortalDungeon.Game.UI
                         unitPos.Y += 0.12f;
 
                         SetSize(zoomScale);
-                        _mainTextBox.SetTextScale(0.045f);
+                        _nameBox.SetTextScale(0.045f);
                     }
                     else if (_camera.Position.Z >= 10)
                     {
@@ -152,7 +171,7 @@ namespace MortalDungeon.Game.UI
 
                         SetSize(zoomScale);
 
-                        _mainTextBox.SetRender(false);
+                        _nameBox.SetRender(false);
                         BaseComponent.SetColor(_Colors.Transparent);
                         BaseComponent.SetAllInline(0);
                         //SetRender(false);
@@ -172,7 +191,7 @@ namespace MortalDungeon.Game.UI
 
                     BaseComponent.SetPosition(screenSpace);
 
-                    _mainTextBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+                    _nameBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
                     _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
                     HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
                     ShieldBar.SetPositionFromAnchor(HealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
@@ -214,14 +233,17 @@ namespace MortalDungeon.Game.UI
         {
             HealthBar.SetHealthPercent(_unit.Info.Health / _unit.Info.MaxHealth, _unit.AI.Team);
             ShieldBar.SetCurrentShields(_unit.Info.CurrentShields);
-            _mainTextBox.SetText(_unit.Name);
+
+            if(_nameBox.TextString != _unit.Name)
+            {
+                _nameBox.SetText(_unit.Name);
+            }
         }
 
         public override void OnCameraMove()
         {
             base.OnCameraMove();
-
-            UpdateUnitStatusPosition();
+            //UpdateUnitStatusPosition();
 
             //Task.Run(() =>
             //{

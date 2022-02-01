@@ -37,8 +37,8 @@ namespace MortalDungeon.Engine_Classes.TextHandling
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
         }
 
-
-        public static (Texture, Vector2 dimensions) DrawString(string text, string fontName, int fontSize, Brush color)
+        private static object _gLock = new object();
+        public static Vector2 DrawString(string text, string fontName, int fontSize, Brush color, Action<Texture> setTexture)
         {
             if(text == "")
                 text = " ";
@@ -66,15 +66,18 @@ namespace MortalDungeon.Engine_Classes.TextHandling
 
             for(int i = 0; i < textArr.Length; i++)
             {
-                var temp = g.MeasureString(textArr[i], font, new PointF(0, 0), format);
+                lock (_gLock)
+                {
+                    var temp = g.MeasureString(textArr[i], font, new PointF(0, 0), format);
 
-                if (i == 0)
-                {
-                    dim = temp;
-                }
-                else if(temp.Width > dim.Width)
-                {
-                    dim = temp;
+                    if (i == 0)
+                    {
+                        dim = temp;
+                    }
+                    else if (temp.Width > dim.Width)
+                    {
+                        dim = temp;
+                    }
                 }
             }
 
@@ -101,42 +104,31 @@ namespace MortalDungeon.Engine_Classes.TextHandling
             }
 
 
-            if (Thread.CurrentThread.ManagedThreadId == WindowConstants.MainThreadId)
+            Texture tex = null;
+            Vector2 dimensions = new Vector2(dim.Width, dim.Height);
+
+            Stopwatch timer = new Stopwatch();
+            timer.Restart();
+
+            void loadTex()
             {
-                return (Texture.LoadFromBitmap(map, false, _textureType--, generateMipMaps: false), new Vector2(dim.Width, dim.Height));
-            }
-            else
-            {
-                Texture tex = null;
-                Vector2 dimensions = new Vector2(dim.Width, dim.Height);
-                bool taskCompleted = false;
+                Window.RenderEnd -= loadTex;
 
-                Stopwatch timer = new Stopwatch();
-                timer.Restart();
+                //int type = _textureType--;
 
-                void loadTex()
+                try
                 {
-                    Window.RenderEnd -= loadTex;
-                    try
-                    {
-                        tex = Texture.LoadFromBitmap(map, false, _textureType--, generateMipMaps: false);
-                    }
-                    finally
-                    {
-                        taskCompleted = true;
-                    }
+                    tex = Texture.LoadFromBitmap(map, false, --_textureType, generateMipMaps: false);
+                    setTexture(tex);
                 }
-
-                Window.RenderEnd += loadTex;
-
-                while(timer.ElapsedMilliseconds < 10000 && !taskCompleted)
-                {
-
-                }
-
-                return (tex, dimensions);
+                catch { }
             }
 
+            //Window.QueueToRenderCycle(loadTex);
+
+            Window.RenderEnd += loadTex;
+
+            return dimensions;
         }
 
 

@@ -134,7 +134,7 @@ namespace MortalDungeon.Game.UI.Dev
             {
                 list.AddItem("Unload Entity", (item) =>
                 {
-                    entity.Unload();
+                    EntityManager.UnloadEntity(entity);
                     PopulateEntityList();
                     Scene.CloseContextMenu();
                 });
@@ -145,7 +145,7 @@ namespace MortalDungeon.Game.UI.Dev
                 {
                     void loadEntityOnTile(BaseTile tile, MouseButton button)
                     {
-                        entity.Load(new FeaturePoint(tile));
+                        EntityManager.LoadEntity(entity, new FeaturePoint(tile));
 
                         Scene.TileClicked -= loadEntityOnTile;
                         PopulateEntityList();

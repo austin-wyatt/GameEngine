@@ -290,7 +290,7 @@ namespace MortalDungeon.Game.Structures
                 List<BaseTile> tiles = new List<BaseTile>();
                 map.GetNeighboringTiles(currWall.Info.TileMapPosition, tiles, false);
 
-                tiles.ForEach(t => t.TilePoint._visited = false);
+                tiles.ForEach(t => t.TilePoint.Visited = false);
 
                 if (visitedSecondaryDirection) 
                 {

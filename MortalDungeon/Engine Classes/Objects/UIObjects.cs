@@ -26,6 +26,14 @@ namespace MortalDungeon.Engine_Classes
         Fire = 59
     }
 
+    public enum ColorOverride
+    {
+        None,
+        Hover,
+        Select,
+        Disabled
+    }
+
     public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
@@ -43,7 +51,6 @@ namespace MortalDungeon.Engine_Classes
         public UIDimensions _anchorOffset = new UIDimensions();
 
         public float ZIndex = 0; //higher values get rendered in front
-
 
         #region relevant event flags
         private bool _focusable = false;
@@ -169,7 +176,7 @@ namespace MortalDungeon.Engine_Classes
         protected bool _scaleAspectRatio = true;
 
         private object _reverseTreeLock = new object();
-        public List<UITreeNode> ReverseTree = null; //must be generated for all top level UIObjects
+        public List<UIObject> ReverseTree = null; //must be generated for all top level UIObjects
 
         public BoundingArea ScissorBounds = new BoundingArea();
         public Bounds AdditionalBounds = null;
@@ -307,7 +314,8 @@ namespace MortalDungeon.Engine_Classes
             {
                 if (type == UIEventType.HoverEnd)
                 {
-                    Task.Run(OnHoverEnd);
+                    //Task.Run(OnHoverEnd);
+                    OnHoverEnd();
                 }
                 else if (InsideBounds(MouseCoordinates, camera))
                 {
@@ -322,7 +330,8 @@ namespace MortalDungeon.Engine_Classes
                             Task.Run(OnRightClick);
                             return;
                         case UIEventType.Hover:
-                            Task.Run(OnHover);
+                            //Task.Run(OnHover);
+                            OnHover();
                             break;
                         case UIEventType.TimedHover:
                             Task.Run(() => optionalAction?.Invoke(this));
@@ -358,7 +367,8 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else if (type == UIEventType.Hover)
                 {
-                    Task.Run(OnHoverEnd);
+                    //Task.Run(OnHoverEnd);
+                    OnHoverEnd();
                 }
             }
         }
@@ -436,30 +446,33 @@ namespace MortalDungeon.Engine_Classes
 
             base.SetPosition(new Vector3(Position.X, Position.Y, ZPos));
 
-            if (Clickable)
+            if (ManagerHandle != null)
             {
-                ManagerHandle.AddClickableObject(this);
-            }
+                if (Clickable)
+                {
+                    ManagerHandle.AddClickableObject(this);
+                }
 
-            if (Hoverable)
-            {
-                ManagerHandle.AddHoverableObject(this);
-            }
+                if (Hoverable)
+                {
+                    ManagerHandle.AddHoverableObject(this);
+                }
 
-            if (Focusable)
-            {
-                ManagerHandle.AddFocusableObject(this);
-            }
+                if (Focusable)
+                {
+                    ManagerHandle.AddFocusableObject(this);
+                }
 
-            if (Typeable)
-            {
-                ManagerHandle.AddKeyDownObject(this);
-                ManagerHandle.AddKeyUpObject(this);
-            }
+                if (Typeable)
+                {
+                    ManagerHandle.AddKeyDownObject(this);
+                    ManagerHandle.AddKeyUpObject(this);
+                }
 
-            if (Scrollable)
-            {
-                ManagerHandle.AddScrollableObject(this);
+                if (Scrollable)
+                {
+                    ManagerHandle.AddScrollableObject(this);
+                }
             }
 
             foreach(var text in TextObjects)
@@ -578,9 +591,9 @@ namespace MortalDungeon.Engine_Classes
         /// <summary>
         /// Actually a preorder search now but I'm leaving the breadth first search code commented out
         /// </summary>
-        public List<UITreeNode> BreadthFirstSearch(UIManager handle) 
+        public List<UIObject> BreadthFirstSearch(UIManager handle) 
         {
-            List<UITreeNode> tree = new List<UITreeNode>();
+            List<UIObject> tree = new List<UIObject>();
             //List<UIObject> nodesToTraverse = new List<UIObject>();
 
             //List<UIObject> temp = new List<UIObject>();
@@ -611,7 +624,7 @@ namespace MortalDungeon.Engine_Classes
 
             void queueChildren(UIObject parentObject, int depth, int childIndex) 
             {
-                tree.Add(new UITreeNode(parentObject, depth, GetBaseObject(parentObject)));
+                tree.Add(parentObject);
 
                 parentObject.ManagerHandle = handle;
 
@@ -673,7 +686,7 @@ namespace MortalDungeon.Engine_Classes
             lock (_reverseTreeLock)
             {
                 ReverseTree = BreadthFirstSearch(handle);
-                ReverseTree.Reverse();
+                //ReverseTree.Reverse();
             }
         }
 
@@ -706,12 +719,13 @@ namespace MortalDungeon.Engine_Classes
 
             lock (_reverseTreeLock)
             {
-                foreach (var item in ReverseTree)
+                for(int i = ReverseTree.Count - 1; i >= 0; i--)
                 {
-                    item.UIObject.SetZPosition(currVal);
+                    ReverseTree[i].SetZPosition(currVal);
 
                     //currVal += 0.000000001f;
                     currVal += 0.00000015f;
+                    //currVal += 0.00001f;
                 }
             }
         }
@@ -811,6 +825,28 @@ namespace MortalDungeon.Engine_Classes
             }
 
             ForceTreeRegeneration();
+        }
+
+        public void RemoveChildren(IEnumerable<UIObject> children)
+        {
+            object lockObj = new object();
+
+            if (ManagerHandle != null)
+            {
+                lockObj = ManagerHandle._UILock;
+            }
+
+            lock (lockObj)
+            {
+                foreach (UIObject child in children)
+                {
+                    child.CleanUp();
+                    child.Parent = null;
+                    Children.Remove(child);
+                }
+
+                ForceTreeRegeneration();
+            }
         }
 
         public void RemoveChildren()
@@ -1063,6 +1099,8 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void OnCameraMove() { }
 
+
+        public ColorOverride _colorOverride = ColorOverride.None; 
         public void EvaluateColor()
         {
             Vector4 color = DefaultColor;
@@ -1071,19 +1109,19 @@ namespace MortalDungeon.Engine_Classes
             // these cases should be laid out from least important to most important
             // so that the later ones overwrite the former
 
-            if (HoverColor != default && Hovered)
+            if (HoverColor != default && (Hovered || _colorOverride == ColorOverride.Hover))
             {
                 color = HoverColor;
                 reason = SetColorFlag.Hover;
             }
 
-            if (DisabledColor != default && Disabled)
+            if (DisabledColor != default && (Disabled || _colorOverride == ColorOverride.Disabled))
             {
                 color = DisabledColor; 
                 reason = SetColorFlag.Disabled;
             }
 
-            if (SelectedColor != default && Selected)
+            if (SelectedColor != default && (Selected || _colorOverride == ColorOverride.Disabled))
             {
                 color = SelectedColor;
                 reason = SetColorFlag.Selected;
@@ -1128,29 +1166,29 @@ namespace MortalDungeon.Engine_Classes
     }
 
 
-    public class UITreeNode 
-    {
-        public UIObject UIObject;
-        public int Depth = 0;
-        public BaseObject BoundingObject;
+    //public class UITreeNode 
+    //{
+    //    public UIObject UIObject;
+    //    public int Depth = 0;
+    //    public BaseObject BoundingObject;
 
-        public UITreeNode(UIObject obj, int depth, BaseObject baseObject) 
-        {
-            UIObject = obj;
-            Depth = depth;
-            BoundingObject = baseObject;
-        }
+    //    public UITreeNode(UIObject obj, int depth, BaseObject baseObject) 
+    //    {
+    //        UIObject = obj;
+    //        Depth = depth;
+    //        BoundingObject = baseObject;
+    //    }
 
-        public bool InsideBounds(Vector2 point, Camera camera = null)
-        {
-            if (UIObject.AdditionalBounds == null)
-            {
-                return BoundingObject.Bounds.Contains(point, camera);
-            }
-            else 
-            {
-                return BoundingObject.Bounds.Contains(point, camera) && UIObject.AdditionalBounds.Contains(point, camera);
-            }
-        }
-    }
+    //    public bool InsideBounds(Vector2 point, Camera camera = null)
+    //    {
+    //        if (UIObject.AdditionalBounds == null)
+    //        {
+    //            return BoundingObject.Bounds.Contains(point, camera);
+    //        }
+    //        else 
+    //        {
+    //            return BoundingObject.Bounds.Contains(point, camera) && UIObject.AdditionalBounds.Contains(point, camera);
+    //        }
+    //    }
+    //}
 }

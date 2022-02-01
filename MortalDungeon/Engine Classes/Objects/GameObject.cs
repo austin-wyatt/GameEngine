@@ -50,6 +50,7 @@ namespace MortalDungeon.Engine_Classes
         public bool HasContextMenu = false;
 
         public bool TextureLoaded = false;
+        public bool _canLoadTexture = true;
 
         public int ObjectID => _objectID;
         protected int _objectID = currentObjectID++;
@@ -130,9 +131,21 @@ namespace MortalDungeon.Engine_Classes
             Position = position;
         }
 
-        public virtual void SetDragPosition(Vector3 position)
+
+        public delegate void DragEventHandler(object sender, Vector3 mouseCoordinates, Vector3 position, Vector3 deltaDrag);
+        public DragEventHandler Drag;
+
+        public delegate bool DragPreviewHandler(object sender, Vector3 mouseCoordinates, Vector3 position, Vector3 deltaDrag);
+        public DragPreviewHandler PreviewDrag;
+
+        public virtual void DragEvent(Vector3 position, Vector3 mouseCoord, Vector3 deltaDrag)
         {
-            SetPosition(position);
+            if (PreviewDrag == null || PreviewDrag.Invoke(this, mouseCoord, position, deltaDrag))
+            {
+                SetPosition(position);
+
+                Drag?.Invoke(this, mouseCoord, position, deltaDrag);
+            }
         }
 
         public virtual void AddBaseObject(BaseObject obj) 
@@ -469,7 +482,7 @@ namespace MortalDungeon.Engine_Classes
             Renderer.OnRender += loadTex;
         }
 
-        public static void LoadTextures<T>(List<T> obj) where T : GameObject
+        public static void LoadTextures<T>(List<T> obj, bool nearest = true, bool generateMipMaps = true) where T : GameObject
         {
             void loadTex()
             {
@@ -477,7 +490,7 @@ namespace MortalDungeon.Engine_Classes
                 {
                     obj.ForEach(item =>
                     {
-                        Renderer.LoadTextureFromGameObj(item, false);
+                        Renderer.LoadTextureFromGameObj(item, nearest, generateMipMaps);
                     });
 
                     Renderer.OnRender -= loadTex;

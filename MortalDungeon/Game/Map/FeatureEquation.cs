@@ -29,8 +29,8 @@ namespace MortalDungeon.Game.Map
 
     public class FeatureEquation
     {
-        public const int MAP_WIDTH = 50;
-        public const int MAP_HEIGHT = 50;
+        public int MAP_WIDTH = TileMapManager.TILE_MAP_DIMENSIONS.X;
+        public int MAP_HEIGHT = TileMapManager.TILE_MAP_DIMENSIONS.Y;
 
         public Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
         public HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
@@ -140,7 +140,7 @@ namespace MortalDungeon.Game.Map
 
                         unitEntity.DestroyOnUnload = true;
 
-                        unitEntity.Load(affectedPoint);
+                        EntityManager.LoadEntity(unitEntity, affectedPoint);
 
                         FeatureLedger.SetHashBoolean(FeatureID, pointHash, "alive", true);
                     }
@@ -213,9 +213,12 @@ namespace MortalDungeon.Game.Map
                 if (bound.BoundingPointsId == 0)
                     continue;
 
-                if (bound.OffsetPoints.Count > 2 && FeaturePoint.PointInPolygon(bound.OffsetPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
+                bool inBoundingSquare = FeaturePoint.PointInPolygon(bound.BoundingSquare, new Vector2i(affectedPoint.X, affectedPoint.Y));
+
+                if (inBoundingSquare && bound.OffsetPoints.Count > 2 && FeaturePoint.PointInPolygon(bound.OffsetPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
                 {
                     double density;
+                    int height;
 
                     switch (bound.BoundingPointsId)
                     {
@@ -286,6 +289,37 @@ namespace MortalDungeon.Game.Map
                                 tile.Update();
                             }
                             break;
+                        case 5:
+                            height = 0;
+                            if (bound.Parameters.TryGetValue("height", out var tileHeight))
+                            {
+                                if (int.TryParse(tileHeight, out var d))
+                                {
+                                    height = d;
+                                }
+                            }
+
+                            if (height > 0)
+                            {
+                                tile.Properties.Height = height;
+
+                                Vector3 pos = new Vector3(tile.Position.X, tile.Position.Y, 0);
+
+                                tile.SetPosition(pos + new Vector3(0, 0, height * 0.5f));
+                                tile.Update();
+                            }
+                            break;
+                        case 6:
+                            if(NumberGen.NextDouble() > 0.5)
+                            {
+                                tile.Properties.Type = TileType.Stone_1;
+                            }
+                            else
+                            {
+                                tile.Properties.Type = TileType.Stone_2;
+                            }
+                            tile.Update();
+                            break;
                     }
 
                 }
@@ -354,8 +388,17 @@ namespace MortalDungeon.Game.Map
             return coords;
         }
 
-        public static TileMapPoint FeaturePointToTileMapCoords(FeaturePoint point, int mapWidth = 50, int mapHeight = 50)
+        public static TileMapPoint FeaturePointToTileMapCoords(FeaturePoint point, int mapWidth = -1, int mapHeight = -1)
         {
+            if(mapWidth == -1)
+            {
+                mapWidth = TileMapManager.TILE_MAP_DIMENSIONS.X;
+            }
+            if(mapHeight == -1)
+            {
+                mapHeight = TileMapManager.TILE_MAP_DIMENSIONS.Y;
+            }
+
             TileMapPoint coords = new TileMapPoint((int)Math.Floor((float)point.X / mapWidth), (int)Math.Floor((float)point.Y / mapHeight));
 
             return coords;

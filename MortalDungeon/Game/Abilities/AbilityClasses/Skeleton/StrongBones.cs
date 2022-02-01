@@ -30,8 +30,24 @@ namespace MortalDungeon.Game.Abilities
             Icon = new Icon(Icon.DefaultIconSize, Character.s, Spritesheets.CharacterSheet, true);
 
             AbilityClass = AbilityClass.Skeleton;
+        }
 
-            CastingUnit.Info.AddBuff(new StrongBonesBuff(castingUnit));
+        private StrongBonesBuff _strongBonesBuff = null;
+
+        public override void ApplyPassives()
+        {
+            base.ApplyPassives();
+
+            _strongBonesBuff = new StrongBonesBuff(CastingUnit);
+
+            CastingUnit.Info.AddBuff(_strongBonesBuff);
+        }
+
+        public override void RemovePassives()
+        {
+            base.RemovePassives();
+
+            CastingUnit.Info.RemoveBuff(_strongBonesBuff);
         }
     }
 

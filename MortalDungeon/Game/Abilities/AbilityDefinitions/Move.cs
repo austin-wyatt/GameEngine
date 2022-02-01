@@ -85,20 +85,29 @@ namespace MortalDungeon.Game.Abilities
             Range = CastingUnit.Info.Energy / GetEnergyCost(); //special case for general move ability
         }
 
+        private object _currentTilesLock = new object();
         public override void EnactEffect()
         {
             base.EnactEffect();
 
-            List<BaseTile> tiles = new List<BaseTile>(CurrentTiles);
+            List<BaseTile> tiles;
+
+            lock (_currentTilesLock)
+            {
+                tiles = new List<BaseTile>(CurrentTiles);
+            }
 
             if (_path.Count > 0)
             {
                 int startingIndex = 0;
-
-                for (int i = startingIndex; i < _path.Count; i++)
+                lock (_currentTilesLock)
                 {
-                    CurrentTiles.Add(_path[i].AttachedTile);
-                    tiles.Add(_path[i].AttachedTile);
+
+                    for (int i = startingIndex; i < _path.Count; i++)
+                    {
+                        CurrentTiles.Add(_path[i].AttachedTile);
+                        tiles.Add(_path[i].AttachedTile);
+                    }
                 }
 
                 ClearSelectedTiles();
@@ -128,8 +137,6 @@ namespace MortalDungeon.Game.Abilities
                         return;
                     }
 
-                    //Task.Run(() =>
-                    //{
                     PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
 
                     //float speed = CastingUnit.Info.Speed;
@@ -225,7 +232,6 @@ namespace MortalDungeon.Game.Abilities
                         Moving = false;
                         _moveCanceled = false;
                     };
-                    //});
                 }
             }
             catch (Exception e)
@@ -255,14 +261,16 @@ namespace MortalDungeon.Game.Abilities
 
             base.OnCast();
 
-            CurrentTiles.Clear();
+            lock(_currentTilesLock)
+                CurrentTiles.Clear();
         }
 
         public override void OnAICast()
         {
             base.OnAICast();
 
-            CurrentTiles.Clear();
+            lock (_currentTilesLock)
+                CurrentTiles.Clear();
         }
 
         public override void ApplyEnergyCost()
@@ -348,7 +356,8 @@ namespace MortalDungeon.Game.Abilities
             {
                 if (!_evaluatingPath) 
                 {
-                    Task.Run(() => EvaluateHoverPath(tile, map));
+                    //Task.Run(() => EvaluateHoverPath(tile, map));
+                    EvaluateHoverPath(tile, map);
                 }
             }
         }
@@ -512,10 +521,9 @@ namespace MortalDungeon.Game.Abilities
 
                 for (int i = 0; i < _path.Count; i++) 
                 {
-                    _baseSelectionColor = _path[i]._tileObject.OutlineParameters.InlineColor;
+                    _baseSelectionColor = _path[i]._tileObject.BaseFrame.InterpolatedColor;
 
-                    _path[i]._tileObject.OutlineParameters.InlineColor = _pathColor;
-                    _path[i]._tileObject.OutlineParameters.InlineThickness = 5;
+                    _path[i]._tileObject.BaseFrame.SetBaseColor(_pathColor);
                 }
 
                 //_path.ForEach(p =>
@@ -610,8 +618,7 @@ namespace MortalDungeon.Game.Abilities
 
         private void ClearTile(BaseTile tile)
         {
-            tile._tileObject.OutlineParameters.InlineColor = _baseSelectionColor;
-            tile._tileObject.OutlineParameters.InlineThickness = tile._tileObject.OutlineParameters.BaseInlineThickness;
+            tile._tileObject.BaseFrame.SetBaseColor(_baseSelectionColor);
         }
 
         public override void OnRightClick()

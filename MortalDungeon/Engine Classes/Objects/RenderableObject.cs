@@ -26,6 +26,7 @@ namespace MortalDungeon.Engine_Classes
         public static Vector4 Green = new Vector4(0, 1, 0, 1);
         public static Vector4 Blue = new Vector4(0, 0, 1, 1);
         public static Vector4 Tan = new Vector4(0.68f, 0.66f, 0.48f, 1);
+        public static Vector4 Purple = new Vector4(0.66f, 0.03f, 0.71f, 1);
 
         public static Vector4 TranslucentRed = new Vector4(1, 0, 0, 0.5f);
         public static Vector4 MoreTranslucentRed = new Vector4(1, 0, 0, 0.35f);
@@ -101,7 +102,7 @@ namespace MortalDungeon.Engine_Classes
         public Vector4 InterpolatedColor = new Vector4();
         public float ColorProportion = 0;
 
-        public List<_Color> AppliedColors = new List<_Color>(); 
+        public HashSet<_Color> AppliedColors = new HashSet<_Color>(); 
 
         public bool CameraPerspective = false;
 
@@ -276,16 +277,24 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        private object _colorLock = new object();
+
         public void AddAppliedColor(_Color color) 
         {
-            AppliedColors.Add(color);
+            lock (_colorLock)
+            {
+                AppliedColors.Add(color);
+            }
 
             CalculateInterpolatedColor();
         }
 
         public void RemoveAppliedColor(_Color color) 
         {
-            AppliedColors.Remove(color);
+            lock (_colorLock)
+            {
+                AppliedColors.Remove(color);
+            }
 
             CalculateInterpolatedColor();
         }
@@ -299,26 +308,29 @@ namespace MortalDungeon.Engine_Classes
 
             if (_useAppliedColors) 
             {
-                for (int i = 0; i < AppliedColors.Count; i++) 
+                lock (_colorLock)
                 {
-                    if (!AppliedColors[i].Use)
-                        continue;
-
-
-                    InterpolatedColor.X += AppliedColors[i].R;
-                    InterpolatedColor.Y += AppliedColors[i].G;
-                    InterpolatedColor.Z += AppliedColors[i].B;
-
-                    if (i == 0)
+                    foreach(var color in AppliedColors)
                     {
-                        alpha = AppliedColors[i].A;
-                    }
-                    else 
-                    {
-                        alpha += AppliedColors[i].A;
-                    }
+                        if (!color.Use)
+                            continue;
 
-                    count++;
+
+                        InterpolatedColor.X += color.R;
+                        InterpolatedColor.Y += color.G;
+                        InterpolatedColor.Z += color.B;
+
+                        if (count == 0)
+                        {
+                            alpha = color.A;
+                        }
+                        else
+                        {
+                            alpha += color.A;
+                        }
+
+                        count++;
+                    }
                 }
 
                 if (count > 0) 

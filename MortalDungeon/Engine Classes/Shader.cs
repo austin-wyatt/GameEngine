@@ -100,7 +100,8 @@ namespace MortalDungeon.Engine_Classes
         /// <param name="data">The data to set</param>
         public void SetInt(string name, int data)
         {
-            GL.Uniform1(_uniformLocations[name], data);
+            if(_uniformLocations.ContainsKey(name))
+                GL.Uniform1(_uniformLocations[name], data);
         }
 
         /// <summary>
@@ -110,7 +111,8 @@ namespace MortalDungeon.Engine_Classes
         /// <param name="data">The data to set</param>
         public void SetFloat(string name, float data)
         {
-            GL.Uniform1(_uniformLocations[name], data);
+            if (_uniformLocations.ContainsKey(name))
+                GL.Uniform1(_uniformLocations[name], data);
         }
 
         /// <summary>
@@ -125,7 +127,8 @@ namespace MortalDungeon.Engine_Classes
         /// </remarks>
         public void SetMatrix4(string name, Matrix4 data)
         {
-            GL.UniformMatrix4(_uniformLocations[name], true, ref data);
+            if (_uniformLocations.ContainsKey(name))
+                GL.UniformMatrix4(_uniformLocations[name], true, ref data);
         }
 
         /// <summary>
@@ -135,7 +138,8 @@ namespace MortalDungeon.Engine_Classes
         /// <param name="data">The data to set</param>
         public void SetVector3(string name, Vector3 data)
         {
-            GL.Uniform3(_uniformLocations[name], data);
+            if (_uniformLocations.ContainsKey(name))
+                GL.Uniform3(_uniformLocations[name], data);
         }
 
         /// <summary>
@@ -145,7 +149,8 @@ namespace MortalDungeon.Engine_Classes
         /// <param name="data">The data to set</param>
         public void SetVector4(string name, Vector4 data)
         {
-            GL.Uniform4(_uniformLocations[name], data);
+            if (_uniformLocations.ContainsKey(name))
+                GL.Uniform4(_uniformLocations[name], data);
         }
 
         /// <summary>
@@ -155,7 +160,8 @@ namespace MortalDungeon.Engine_Classes
         /// <param name="data">The data to set</param>
         public void SetBool(string name, bool data)
         {
-            GL.Uniform1(_uniformLocations[name], data ? 1 : 0);
+            if (_uniformLocations.ContainsKey(name))
+                GL.Uniform1(_uniformLocations[name], data ? 1 : 0);
         }
     }
 }

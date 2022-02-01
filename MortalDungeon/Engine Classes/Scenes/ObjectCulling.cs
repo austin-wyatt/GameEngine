@@ -59,11 +59,67 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
         }
 
+        public static void CullListOfUnits<T>(List<T> objList) where T : Unit
+        {
+            objList.ForEach(obj =>
+            {
+                if(!(obj.Info.TileMapPosition != null && obj.Info.TileMapPosition.TileMap.Visible))
+                {
+                    obj.Cull = true;
+                    obj.OnCull();
+                    return;
+                }
+
+                _localPos.X = obj.Position.X;
+                _localPos.Y = obj.Position.Y;
+                _localPos.Z = obj.Position.Z;
+
+                float scaleMax = 1;
+
+                if (obj.BaseObjects.Count > 0)
+                {
+                    Vector3 scale = obj.BaseObjects[0].BaseFrame.Scale.ExtractScale();
+
+                    scaleMax = scale.X;
+                    scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
+                    scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
+                }
+
+                scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjuntion with the scale 
+
+                WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+                if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
+                {
+                    obj.Cull = false;
+                }
+                else
+                {
+                    obj.Cull = true;
+                }
+
+                obj.OnCull();
+            });
+        }
+
         public static int _culledChunks = 0;
         public static void CullTileChunk(TileChunk obj)
         {
             if (obj.Tiles.Count == 0)
                 return;
+
+            bool prevCull = obj.Cull;
+
+            if (!obj.Tiles[0].TileMap.Visible)
+            {
+                obj.Cull = true;
+
+                if(prevCull != obj.Cull)
+                {
+                    obj.OnCull();
+                }
+                return;
+            }
+
 
             _localPos.X = obj.Center.X;
             _localPos.Y = obj.Center.Y;
@@ -77,13 +133,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
             scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
             scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
 
-            scaleMax *= 0.5f; //another magic number that works pretty well
+            //scaleMax *= 0.5f; //another magic number that works pretty well
 
             scaleMax *= obj.LocalRadius;
 
             WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
 
-            bool prevCull = obj.Cull;
 
             if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
             {

@@ -65,13 +65,10 @@ namespace MortalDungeon.Game.UI
 
             MapArea.VisibleArea.Scroll += (s, mouseState) =>
             {
-                Vector3 localCoord = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(Scene._cursorObject.Position);
-
-                //Vector3 prevTopleft = MapArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft);
+                Vector3 localCoord = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(MortalDungeon.Window._cursorCoords));
 
                 UIDimensions prevDimension = MapArea.BaseComponent.GetDimensions();
 
-                //Vector3 mousePosOnObj = localCoord - prevTopleft;
                 Vector3 mousePosOnObj = localCoord - MapArea.BaseComponent.Position;
 
                 Vector3 ratioFromEdge = new Vector3(mousePosOnObj.X / prevDimension.X, mousePosOnObj.Y / prevDimension.Y, 0);

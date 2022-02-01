@@ -111,7 +111,7 @@ namespace MortalDungeon.Game.Abilities
             EntityManager.AddEntity(skele);
             skele.DestroyOnUnload = true;
 
-            skele.Load(SelectedTile.ToFeaturePoint());
+            EntityManager.LoadEntity(skele, SelectedTile.ToFeaturePoint());
 
 
             Explosion.ExplosionParams parameters = new Explosion.ExplosionParams(Explosion.ExplosionParams.Default)

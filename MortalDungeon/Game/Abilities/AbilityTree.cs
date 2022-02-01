@@ -1,5 +1,6 @@
 ﻿using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Units;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -39,15 +40,24 @@ namespace MortalDungeon.Game.Abilities
 
             while (nodeQueue.Count > 0)
             {
-                foreach (AbilityTreeNode child in nodeQueue[0].Children)
-                {
-                    if (!visited.Contains(child.ID))
-                    {
-                        nodeQueue.Add(child);
-                        visited.Add(child.ID);
-                    }
-                }
-                foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
+                //foreach (AbilityTreeNode child in nodeQueue[0].Children)
+                //{
+                //    if (!visited.Contains(child.ID))
+                //    {
+                //        nodeQueue.Add(child);
+                //        visited.Add(child.ID);
+                //    }
+                //}
+                //foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
+                //{
+                //    if (!visited.Contains(parent.ID))
+                //    {
+                //        nodeQueue.Add(parent);
+                //        visited.Add(parent.ID);
+                //    }
+                //}
+
+                foreach (AbilityTreeNode parent in nodeQueue[0].ConnectedNodes)
                 {
                     if (!visited.Contains(parent.ID))
                     {
@@ -91,15 +101,24 @@ namespace MortalDungeon.Game.Abilities
                 }
                 else
                 {
-                    foreach(AbilityTreeNode child in nodeQueue[0].Children)
-                    {
-                        if (!visited.Contains(child.ID))
-                        {
-                            nodeQueue.Add(child);
-                            visited.Add(child.ID);
-                        }
-                    }
-                    foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
+                    //foreach(AbilityTreeNode child in nodeQueue[0].Children)
+                    //{
+                    //    if (!visited.Contains(child.ID))
+                    //    {
+                    //        nodeQueue.Add(child);
+                    //        visited.Add(child.ID);
+                    //    }
+                    //}
+                    //foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
+                    //{
+                    //    if (!visited.Contains(parent.ID))
+                    //    {
+                    //        nodeQueue.Add(parent);
+                    //        visited.Add(parent.ID);
+                    //    }
+                    //}
+
+                    foreach (AbilityTreeNode parent in nodeQueue[0].ConnectedNodes)
                     {
                         if (!visited.Contains(parent.ID))
                         {
@@ -133,15 +152,24 @@ namespace MortalDungeon.Game.Abilities
                 }
                 else
                 {
-                    foreach (AbilityTreeNode child in nodeQueue[0].Children)
-                    {
-                        if (!visited.Contains(child.ID))
-                        {
-                            nodeQueue.Add(child);
-                            visited.Add(child.ID);
-                        }
-                    }
-                    foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
+                    //foreach (AbilityTreeNode child in nodeQueue[0].Children)
+                    //{
+                    //    if (!visited.Contains(child.ID))
+                    //    {
+                    //        nodeQueue.Add(child);
+                    //        visited.Add(child.ID);
+                    //    }
+                    //}
+                    //foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
+                    //{
+                    //    if (!visited.Contains(parent.ID))
+                    //    {
+                    //        nodeQueue.Add(parent);
+                    //        visited.Add(parent.ID);
+                    //    }
+                    //}
+
+                    foreach (AbilityTreeNode parent in nodeQueue[0].ConnectedNodes)
                     {
                         if (!visited.Contains(parent.ID))
                         {
@@ -161,8 +189,10 @@ namespace MortalDungeon.Game.Abilities
 
     public class AbilityTreeNode 
     {
-        public List<AbilityTreeNode> Parents = new List<AbilityTreeNode>();
-        public List<AbilityTreeNode> Children = new List<AbilityTreeNode>();
+        //public List<AbilityTreeNode> Parents = new List<AbilityTreeNode>();
+        //public List<AbilityTreeNode> Children = new List<AbilityTreeNode>();
+
+        public List<AbilityTreeNode> ConnectedNodes = new List<AbilityTreeNode>();
 
         //ID should roughly correlate to strength of the ability (although that should be added as an actual field)
         public int ID = 0;
@@ -170,16 +200,17 @@ namespace MortalDungeon.Game.Abilities
         public string Name;
         public Func<Unit, Ability> CreateAbility;
 
-        public void AddChild(AbilityTreeNode child) 
-        {
-            Children.Add(child);
-            child.Parents.Add(this);
-        }
+        /// <summary>
+        /// How far along this tree node should be placed when building the ability tree
+        /// </summary>
+        public Vector2 RelativePosition = new Vector2(0.5f, 0.5f);
 
-        public void AddParent(AbilityTreeNode parent)
+        public bool Unlocked = true;
+
+        public void AddConnection(AbilityTreeNode node)
         {
-            Parents.Add(parent);
-            parent.Children.Add(this);
+            ConnectedNodes.Add(node);
+            node.ConnectedNodes.Add(this);
         }
 
         public void ApplyToUnit(Unit unit, AbilityLoadoutItem item)
@@ -203,6 +234,7 @@ namespace MortalDungeon.Game.Abilities
             ability.BasicAbility = item.BasicAbility > 0;
 
             unit.Info.Abilities.Add(ability);
+            ability.AddAbilityToUnit();
         }
     }
 }

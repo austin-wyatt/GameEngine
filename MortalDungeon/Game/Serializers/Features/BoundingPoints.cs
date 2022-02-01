@@ -16,6 +16,9 @@ namespace MortalDungeon.Game.Serializers
         [XmlIgnore]
         public List<FeaturePoint> OffsetPoints = new List<FeaturePoint>();
 
+        [XmlIgnore]
+        public List<FeaturePoint> BoundingSquare = new List<FeaturePoint>();
+
         /// <summary>
         /// What "style" to apply to the inside of the bounding points. This would be like generic forest, generic desert, etc.
         /// If the value is 0 then no style will be applied.

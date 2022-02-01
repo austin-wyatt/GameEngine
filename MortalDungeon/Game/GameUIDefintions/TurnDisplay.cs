@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
@@ -55,6 +56,8 @@ namespace MortalDungeon.Game.UI
                     obj.BaseFrame.ScaleX(0.18f / WindowConstants.AspectRatio);
                     obj.BaseFrame.ScaleY(0.18f);
 
+                    obj.EnableLighting = false;
+
                     UnitObjects.Add(uiObj);
 
                     Vector3 pos;
@@ -91,7 +94,7 @@ namespace MortalDungeon.Game.UI
                         chevron.MultiTextureData.MixTexture = false;
 
                         chevron.SetPositionFromAnchor(pos + new Vector3(unitSpacing * 0.7f, 0, 0), UIAnchorPosition.Center);
-                        chevron.SetColor(Units[i + 1].StatusBarComp.HealthBar.BarColor);
+                        //chevron.SetColor(Units[i + 1].StatusBarComp.HealthBar.BarColor);
 
                         uiObj.AddChild(chevron);
                     }
@@ -100,7 +103,7 @@ namespace MortalDungeon.Game.UI
                     uiObj.Clickable = true;
                     uiObj.Click += (s, e) =>
                     {
-                        Vector2i clusterPos = scene._tileMapController.PointToClusterPosition(Units[index].Info.TileMapPosition);
+                        Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(Units[index].Info.TileMapPosition);
 
                         if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
                         {

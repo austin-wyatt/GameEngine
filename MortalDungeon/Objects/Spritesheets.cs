@@ -48,6 +48,13 @@ namespace MortalDungeon.Objects
             Columns = 20
         };
 
+        public static Spritesheet UnitSpritesheet = new Spritesheet("Resources/UnitSpritesheet.png", TextureName.UnitSpritesheet)
+        {
+            Offset = 32,
+            Rows = 32,
+            Columns = 32
+        };
+
         public static Spritesheet StructureSheet = new Spritesheet("Resources/StructureSpritesheet.png", TextureName.StructureSpritesheet);
         public static Spritesheet ObjectSheet = new Spritesheet("Resources/ObjectSheet.png", TextureName.ObjectSpritesheet);
 
@@ -63,6 +70,13 @@ namespace MortalDungeon.Objects
             Columns = 1
         };
 
+        public static Spritesheet Cursor_1 = new Spritesheet("Resources/Cursor_1.png", TextureName.Cursor)
+        {
+            Offset = 19,
+            Rows = 2,
+            Columns = 2
+        };
+
         public static Dictionary<int, Spritesheet> AllSpritesheets = new Dictionary<int, Spritesheet>();
 
         static Spritesheets()
@@ -74,6 +88,7 @@ namespace MortalDungeon.Objects
             AllSpritesheets.Add(IconSheet.TextureId, IconSheet);
             AllSpritesheets.Add(UISheet.TextureId, UISheet);
             AllSpritesheets.Add(CharacterSheet.TextureId, CharacterSheet);
+            AllSpritesheets.Add(UnitSpritesheet.TextureId, UnitSpritesheet);
 
             AllSpritesheets.Add(CharacterSheetSDF.TextureId, CharacterSheetSDF);
             AllSpritesheets.Add(SphereTexture.TextureId, SphereTexture);

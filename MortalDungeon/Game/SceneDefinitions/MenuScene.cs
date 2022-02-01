@@ -31,6 +31,9 @@ using System.IO;
 using MortalDungeon.Game.Save;
 using MortalDungeon.Game.Serializers;
 using System.Drawing;
+using System.Threading.Tasks;
+using MortalDungeon.Game.Player;
+using MortalDungeon.Game.Items;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -39,15 +42,19 @@ namespace MortalDungeon.Game.SceneDefinitions
         private EntityManagerUI _entityManager;
         private FeatureManagerUI _featureManagerUI;
 
+        public QuestLog QuestLog;
+        public AbilityTreeUI AbilityTreeUI;
+
         public MenuScene() : base()
         {
             InitializeFields();
         }
 
-        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null) 
+        public override void Load(Camera camera = null, MouseRay mouseRay = null) 
         {
-            base.Load(camera, cursorObject, mouseRay);
+            base.Load(camera, mouseRay);
 
+            _camera.RotateByAmount(0);
 
             UIBlock inputCapture = new UIBlock(WindowConstants.CenterScreen, new UIScale(10, 10));
             inputCapture.Scrollable = true;
@@ -56,24 +63,27 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             inputCapture.Scroll += (s, e) =>
             {
-                if (MouseState.ScrollDelta[1] < 0)
+                if (!ContextManager.GetFlag(GeneralContextFlags.DisallowCameraMovement))
                 {
-                    Vector3 movement = _camera.Front * 1.0f;
-                    if (_camera.Position.Z - movement.Z < 26)
+                    if (MouseState.ScrollDelta[1] < 0)
                     {
-                        _camera.SetPosition(_camera.Position - movement); // Backwards
-                        OnMouseMove();
-                        OnCameraMoved();
+                        Vector3 movement = _camera.Front * 1.0f;
+                        if (_camera.Position.Z - movement.Z < 26)
+                        {
+                            _camera.SetPosition(_camera.Position - movement); // Backwards
+                                                                              //OnMouseMove();
+                                                                              //OnCameraMoved();
+                        }
                     }
-                }
-                else if (MouseState.ScrollDelta[1] > 0)
-                {
-                    Vector3 movement = _camera.Front * 1.0f;
-                    if (_camera.Position.Z + movement.Z > 1)
+                    else if (MouseState.ScrollDelta[1] > 0)
                     {
-                        _camera.SetPosition(_camera.Position + movement); // Forward
-                        OnMouseMove();
-                        OnCameraMoved();
+                        Vector3 movement = _camera.Front * 1.0f;
+                        if (_camera.Position.Z + movement.Z > 1)
+                        {
+                            _camera.SetPosition(_camera.Position + movement); // Forward
+                                                                              //OnMouseMove();
+                                                                              //OnCameraMoved();
+                        }
                     }
                 }
             };
@@ -83,57 +93,55 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             _entityManager = new EntityManagerUI(this);
 
-            PathParams riverParams = new PathParams(new FeaturePoint(-1000, 27), new FeaturePoint(1000, 50), 3);
-            riverParams.AddStop(new FeaturePoint(25, 45));
-            riverParams.AddStop(new FeaturePoint(40, 30));
-            riverParams.AddStop(new FeaturePoint(80, 35));
 
-            River_1 river = new River_1(riverParams);
+            //TileMapPoint cameraPos = _tileMapController.GlobalPositionToMapPoint(_camera.Position);
+            TileMapPoint cameraPos = TileMapHelpers.GlobalPositionToMapPoint(_camera.Position);
+            _camera.Update += (cam) =>
+            {
+                Window.RenderBegin -= UpdateUnitStatusBars;
+                Window.RenderBegin += UpdateUnitStatusBars;
+
+                //TileMapPoint newPos = _tileMapController.GlobalPositionToMapPoint(cam.Position);
+                TileMapPoint newPos = TileMapHelpers.GlobalPositionToMapPoint(cam.Position);
+
+                if(newPos != cameraPos && newPos != null && !ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
+                {
+                    //ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                    cameraPos = newPos;
+
+                    var maps = TileMapManager.GetTileMapsInDiameter(cameraPos, 5);
+
+                    if(maps.Count < 5 * 5 && ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate) && !InCombat && PlayerParty.Grouped)
+                    {
+                        ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                        Task.Run(() =>
+                        {
+                            TileMapManager.SetCenter(cameraPos);
+                            TileMapManager.LoadMapsAroundCenter();
+                            maps = TileMapManager.GetTileMapsInDiameter(cameraPos, 5);
+
+                            SyncToRender(() =>
+                            {
+                                TileMapManager.SetVisibleMaps(maps);
+                                ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
+                            });
+                        });
+                    }
+                    else
+                    {
+                        TileMapManager.SetVisibleMaps(maps);
+                    }
+
+                    //Console.WriteLine(maps.Count);
+                }
+            };
 
 
-            PathParams pathParams = new PathParams(new FeaturePoint(-45, -3000), new FeaturePoint(0, 1000), 3);
-            pathParams.AddMeanderingPoints(20, 0.25f, 1, 0, 123456);
+            //_tileMapController.LoadSurroundingTileMaps(new TileMapPoint(0, 0));
+            TileMapManager.Scene = this;
+            TileMapManager.LoadMapsAroundCenter();
 
-            Path_1 path = new Path_1(pathParams);
-
-
-            ForestParams forestParams = new ForestParams(new FeaturePoint(0, 0), 200, 0.1);
-            Forest_1 forest = new Forest_1(forestParams);
-
-            GraveyardParams graveyardParams = new GraveyardParams(new FeaturePoint(0, 100), 30, 15, 0.1f);
-            Graveyard_1 graveyard = new Graveyard_1(graveyardParams);
-
-
-            BanditCamp camp = new BanditCamp(new BanditCampParams() { Origin = new FeaturePoint(-15, -100) });
-
-
-
-
-            //river.GenerateFeature();
-            //_tileMapController.AddFeature(river);
-
-            //path.GenerateFeature();
-            //_tileMapController.AddFeature(path);
-
-            //graveyard.GenerateFeature();
-            //_tileMapController.AddFeature(graveyard);
-
-            //forest.GenerateFeature();
-            //_tileMapController.AddFeature(forest);
-
-            //camp.GenerateFeature();
-            //_tileMapController.AddFeature(camp);
-
-
-
-            //TestTileMap tileMap = new TestTileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-            //tileMap.PopulateTileMap();
-
-            //_tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
-            //_tileMapController.ApplyLoadedFeaturesToMap(tileMap);
-
-            //_tileMapController.LoadSurroundingTileMaps(tileMap.TileMapCoords);
-            _tileMapController.LoadSurroundingTileMaps(new TileMapPoint(0, 0));
+            PlayerParty.Scene = this;
 
 
 
@@ -141,7 +149,8 @@ namespace MortalDungeon.Game.SceneDefinitions
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.PlayerUnits, Relation.Friendly);
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.BadGuys, Relation.Neutral);
 
-
+            QuestLog = new QuestLog(this);
+            AbilityTreeUI = new AbilityTreeUI(this);
 
             //UIBlock statusBarContainer = new UIBlock(new Vector3());
             //statusBarContainer.MultiTextureData.MixTexture = false;
@@ -299,11 +308,11 @@ namespace MortalDungeon.Game.SceneDefinitions
 
 
             //GameObject tent1 = new GameObject();
-            //tent1.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.Tent, default));
+            //tent1.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.TilePillar, default));
 
-            //tent1.SetPosition(new Vector3(2000, 0, 0.2f));
+            //tent1.SetPosition(new Vector3(0, 200, 0f));
 
-            //tent1.BaseObject.BaseFrame.SetScale(0.5f, 0.5f, 0.25f);
+            //tent1.BaseObject.BaseFrame.SetScale(1.55f, 1.55f, 1);
             //_genericObjects.Add(tent1);
 
 
@@ -404,6 +413,38 @@ namespace MortalDungeon.Game.SceneDefinitions
                         Footer.EndTurnButton.OnClick();
                     }
                     break;
+                case Keys.KeyPad7:
+                    _camera.RotateByAmount(-1);
+                    break;
+                case Keys.KeyPad8:
+                    _camera.RotateByAmount(1);
+                    break;
+                case Keys.KeyPad4:
+                    _camera.RotateByAmount(verticalStep: 1);
+                    break;
+                case Keys.KeyPad5:
+                    _camera.RotateByAmount(verticalStep: -1);
+                    break;
+                case Keys.J:
+                    if (QuestLog.Displayed)
+                    {
+                        QuestLog.RemoveWindow();
+                    }
+                    else
+                    {
+                        QuestLog.CreateWindow();
+                    }
+                    break;
+                case Keys.K:
+                    if (AbilityTreeUI.Displayed)
+                    {
+                        AbilityTreeUI.RemoveWindow();
+                    }
+                    else
+                    {
+                        AbilityTreeUI.CreateWindow();
+                    }
+                    break;
             }
 
             return true;
@@ -418,32 +459,11 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.OnUpdateFrame(args);
 
-            float _cameraSpeed = 8.0f;
+            float _cameraSpeed = 16.0f;
             float _zoomSpeed = 1.0f;
 
             if (!GetBit(_interceptKeystrokes, ObjectType.All) && _focusedObj == null)
             {
-                //if (MouseState.ScrollDelta[1] < 0)
-                //{
-                //    Vector3 movement = _camera.Front * _zoomSpeed;
-                //    if (_camera.Position.Z - movement.Z < 26)
-                //    {
-                //        _camera.SetPosition(_camera.Position - movement); // Backwards
-                //        OnMouseMove();
-                //        OnCameraMoved();
-                //    }
-                //}
-                //else if (MouseState.ScrollDelta[1] > 0)
-                //{
-                //    Vector3 movement = _camera.Front * _zoomSpeed;
-                //    if (_camera.Position.Z + movement.Z > 1)
-                //    {
-                //        _camera.SetPosition(_camera.Position + movement); // Forward
-                //        OnMouseMove();
-                //        OnCameraMoved();
-                //    }
-                //}
-
                 if (_camera.Position.Z > 20)
                 {
                     _cameraSpeed += 16;
@@ -462,42 +482,61 @@ namespace MortalDungeon.Game.SceneDefinitions
                     _cameraSpeed *= 20;
                 }
 
-                if (!ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
+                if (!ContextManager.GetFlag(GeneralContextFlags.CameraPanning) && !ContextManager.GetFlag(GeneralContextFlags.DisallowCameraMovement))
                 {
+                    Vector3 camDelta = new Vector3();
+
                     if (KeyboardState.IsKeyDown(Keys.W))
                     {
-                        _camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                        OnMouseMove();
-                        OnCameraMoved();
+                        camDelta += Vector3.NormalizeFast(new Vector3(_camera.Front.X, _camera.Front.Y, 0)) * _cameraSpeed * (float)args.Time;
+
+                        //_camera.SetPosition(_camera.Position + Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                        //_camera.SetPosition(_camera.Position + Vector3.NormalizeFast(new Vector3(_camera.Front.X, _camera.Front.Y, 0)) * _cameraSpeed * (float)args.Time);
+                        //OnMouseMove();
+                        //OnCameraMoved();
                     }
 
                     if (KeyboardState.IsKeyDown(Keys.S))
                     {
+                        camDelta -= Vector3.NormalizeFast(new Vector3(_camera.Front.X, _camera.Front.Y, 0)) * _cameraSpeed * (float)args.Time;
+
                         //_camera.Position -= _camera.Front * cameraSpeed * (float)args.Time; // Backwards
                         //_camera.Position -= _camera.Up * cameraSpeed * (float)args.Time; // Down
-                        _camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
-                        OnMouseMove();
-                        OnCameraMoved();
+                        //_camera.SetPosition(_camera.Position - Vector3.UnitY * _cameraSpeed * (float)args.Time);
+                        //_camera.SetPosition(_camera.Position - Vector3.NormalizeFast(new Vector3(_camera.Front.X, _camera.Front.Y, 0)) * _cameraSpeed * (float)args.Time);
+                        //OnMouseMove();
+                        //OnCameraMoved();
                     }
                     if (KeyboardState.IsKeyDown(Keys.A))
                     {
+                        camDelta += Vector3.NormalizeFast(new Vector3(-_camera.Front.Y, _camera.Front.X, 0)) * _cameraSpeed * (float)args.Time;
+
                         //_camera.Position -= _camera.Right * _cameraSpeed * (float)args.Time; // Left
                         //_camera.SetPosition(_camera.Position - _camera.Right * _cameraSpeed * (float)args.Time);
-                        _camera.SetPosition(_camera.Position - Vector3.UnitX * _cameraSpeed * (float)args.Time);
-                        OnMouseMove();
-                        OnCameraMoved();
+                        //_camera.SetPosition(_camera.Position - Vector3.UnitX * _cameraSpeed * (float)args.Time);
+                        //_camera.SetPosition(_camera.Position + Vector3.NormalizeFast(new Vector3(-_camera.Front.Y, _camera.Front.X, 0)) * _cameraSpeed * (float)args.Time);
+                        //OnMouseMove();
+                        //OnCameraMoved();
                     }
                     if (KeyboardState.IsKeyDown(Keys.D))
                     {
+                        camDelta -= Vector3.NormalizeFast(new Vector3(-_camera.Front.Y, _camera.Front.X, 0)) * _cameraSpeed * (float)args.Time;
+
                         //_camera.Position += _camera.Right * _cameraSpeed * (float)args.Time; // Right
                         //_camera.SetPosition(_camera.Position + _camera.Right * _cameraSpeed * (float)args.Time);
-                        _camera.SetPosition(_camera.Position + Vector3.UnitX * _cameraSpeed * (float)args.Time);
-                        OnMouseMove();
-                        OnCameraMoved();
+                        //_camera.SetPosition(_camera.Position + Vector3.UnitX * _cameraSpeed * (float)args.Time);
+                        //_camera.SetPosition(_camera.Position - Vector3.NormalizeFast(new Vector3(-_camera.Front.Y, _camera.Front.X, 0)) * _cameraSpeed * (float)args.Time);
+                        //OnMouseMove();
+                        //OnCameraMoved();
                     }
                     if (KeyboardState.IsKeyDown(Keys.Space))
                     {
                         //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
+                    }
+
+                    if(camDelta.X != 0 || camDelta.Y != 0)
+                    {
+                        _camera.SetPosition(_camera.Position + camDelta);
                     }
                 }
             }
@@ -525,7 +564,10 @@ namespace MortalDungeon.Game.SceneDefinitions
                 }
                 else if (_selectedAbility != null)
                 {
-                    _selectedAbility.OnTileClicked(map, tile);
+                    Task.Run(() =>
+                    {
+                        _selectedAbility.OnTileClicked(map, tile);
+                    });
                 }
                 else
                 {
@@ -538,7 +580,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.RightAlt))
                     {
-                        _tileMapController.TileMaps.ForEach(m => m.PopulateFeatures());
+                        TileMapManager.ActiveMaps.ForEach(m => m.PopulateFeatures());
                     }
                     else if (KeyboardState.IsKeyDown(Keys.RightShift))
                     {
@@ -563,17 +605,6 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         QuestManager.StartQuest(0);
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.V))
-                    {
-                        List<BaseTile> tiles = new List<BaseTile>();
-
-                        tiles = map.GetVisionInRadius(tile.TilePoint, 6);
-
-                        tiles.ForEach(tile =>
-                        {
-                            tile.Properties.Height -= 2;
-                        });
-                    }
                     else if (KeyboardState.IsKeyDown(Keys.G))
                     {
                         _tileMapController.TileMaps.ForEach(m => m.GenerateCliffs());
@@ -586,30 +617,12 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         tile.Properties.Height++;
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.KeyPad1))
-                    {
-                        TileMapPoint temp = new TileMapPoint(map.TileMapCoords.X, map.TileMapCoords.Y);
-                        if (KeyboardState.IsKeyDown(Keys.KeyPadAdd))
-                        {
-                            temp.X++;
-                            TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
-                            tileMap.PopulateTileMap();
-
-                            _tileMapController.AddTileMap(temp, tileMap);
-                        }
-                        else if (KeyboardState.IsKeyDown(Keys.KeyPadSubtract))
-                        {
-                            temp.X--;
-                            TestTileMap tileMap = new TestTileMap(default, temp, _tileMapController) { Width = 50, Height = 50 };
-                            tileMap.PopulateTileMap();
-
-                            _tileMapController.AddTileMap(temp, tileMap);
-                        }
-                    }
                     else if (KeyboardState.IsKeyDown(Keys.KeyPad2))
                     {
-                        Console.WriteLine(_camera.Position);
-                        Console.WriteLine(_units[0].Position);
+                        Task.Run(() =>
+                        {
+                            EventLog.AddEvent("Super very very very very long text\nmeant to hopefully cause whatever bug that has been\noccurring to occur");
+                        });
                     }
                     else if (KeyboardState.IsKeyDown(Keys.KeyPad3))
                     {
@@ -684,39 +697,63 @@ namespace MortalDungeon.Game.SceneDefinitions
                         //    wall.CreateDoor(tile);
                         //}
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.F1))
+                    else if (KeyboardState.IsKeyDown(Keys.Z))
                     {
-                        //List<BaseTile> tiles = new List<BaseTile>();
-
-                        //tiles = map.GetVisionInRadius(tile.TilePoint, 6);
-
-                        //tiles.ForEach(tile =>
-                        //{
-                        //    tile.Properties.Type = (TileType)(rand.Next(3) + (int)TileType.Stone_1);
-
-                        //    if (rand.NextDouble() > 0.9)
-                        //    {
-                        //        tile.Properties.Type = TileType.Gravel;
-                        //    }
-
-                        //    tile.Update();
-                        //});
+                        PlayerParty.InitializeParty();
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.F2))
+                    else if (KeyboardState.IsKeyDown(Keys.X))
                     {
-                        List<BaseTile> tiles = new List<BaseTile>();
+                        PlayerParty.PlaceUnits(tile);
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.C))
+                    {
+                        PlayerParty.GroupUnits(CurrentUnit);
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.V))
+                    {
+                        PlayerParty.UngroupUnits(PlayerParty.PrimaryUnit.Info.TileMapPosition, false);
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.B))
+                    {
+                        Dictionary<int, UIObject> textureHandles = new Dictionary<int, UIObject>();
 
-                        tiles = map.GetVisionInRadius(tile.TilePoint, 6);
-
-                        tiles.ForEach(tile =>
+                        void handleObject(UIObject obj)
                         {
-                            if (rand.NextDouble() > 0.8)
+                            foreach(var item in obj.Children)
                             {
-                                tile.Properties.Type = TileType.Dirt;
+                                handleObject(item);
                             }
 
-                            tile.Update();
-                        });
+                            foreach(var item in obj.BaseObjects)
+                            {
+                                if (item._currentAnimation.CurrentFrame.Material.Diffuse == null)
+                                    continue;
+
+                                int texId = item._currentAnimation.CurrentFrame.Material.Diffuse.Handle;
+                                int texName = item._currentAnimation.CurrentFrame.Textures.TextureIds[0];
+
+                                if (textureHandles.ContainsKey(texId) && texName < 0)
+                                {
+
+                                }
+                                else
+                                {
+                                    textureHandles.TryAdd(texId, obj);
+                                }
+                            }
+                        }
+
+                        foreach(var item in UIManager.TopLevelObjects)
+                        {
+                            handleObject(item);
+                        }
+                    }
+                    else if (KeyboardState.IsKeyDown(Keys.N))
+                    {
+                        var item = ItemManager.GetItemByID(1);
+                        PlayerParty.Inventory.AddItemToInventory(item);
+
+                        CurrentUnit.Info.Equipment.EquipItem(item, EquipmentSlot.Weapon_1);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F3))
                     {

@@ -45,7 +45,7 @@ namespace MortalDungeon.Game.Units
 
     public static class VisionMap
     {
-        public const int DIMENSIONS = 150;
+        public static int DIMENSIONS = TileMapManager.TILE_MAP_DIMENSIONS.X * TileMapManager.LOAD_DIAMETER;
         public static int[,] Vision = new int[DIMENSIONS, DIMENSIONS];
 
         public static Vector2[,] ObstructionMap = new Vector2[DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE, DIMENSIONS * OBSTRUCTIONS_TEXELS_PER_TILE];
@@ -58,7 +58,7 @@ namespace MortalDungeon.Game.Units
 
         }
 
-        public static void Clear(UnitTeam teamToUpdate) 
+        public static void Clear(UnitTeam teamToUpdate, ref List<BaseTile> tilesToUpdate) 
         {
             int bitMask = 0;
 
@@ -121,7 +121,7 @@ namespace MortalDungeon.Game.Units
                 obstructionsCopied.Add(obstructions[i]);
             }
 
-            Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
+            Vector2i zeroPoint = TileMapHelpers.GetTopLeftTilePosition();
 
 
             const int BATCH_SIZE = 100;
@@ -234,8 +234,14 @@ namespace MortalDungeon.Game.Units
 
             _visionChangeToken = visionGenerators.CHANGE_TOKEN;
 
+            scene.ContextManager.SetFlag(GeneralContextFlags.ClearingTeamVision, true);
 
-            Clear(teamToUpdate);
+
+            List<BaseTile> tilesToUpdate = new List<BaseTile>();
+            Clear(teamToUpdate, ref tilesToUpdate);
+
+            scene.ContextManager.SetFlag(GeneralContextFlags.ClearingTeamVision, false);
+
 
             List<VisionGenerator> generatorsCopied = new List<VisionGenerator>();
 
@@ -245,7 +251,7 @@ namespace MortalDungeon.Game.Units
             }
 
 
-            Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
+            Vector2i zeroPoint = TileMapHelpers.GetTopLeftTilePosition();
 
             int counter = 0;
 
@@ -336,7 +342,7 @@ namespace MortalDungeon.Game.Units
                                 currTile.X = i + CenterTile.X;
                                 currTile.Y = j + CenterTile.Y;
 
-                                if (currTile.X < 0 || currTile.Y < 0 || currTile.X > 149 || currTile.Y > 149) //throw out impossible situations
+                                if (currTile.X < 0 || currTile.Y < 0 || currTile.X >= DIMENSIONS || currTile.Y >= DIMENSIONS) //throw out impossible situations
                                     continue;
 
                                 if (InVision((int)currTile.X, (int)currTile.Y, generator.Team)) //don't bother calculating if we already did the work
@@ -419,14 +425,30 @@ namespace MortalDungeon.Game.Units
                                         }
                                     }
                                 }
-                                //if (successes > 128) //out of 256 (256 being 100% vision coverage of a tile (16x16 samples))
-                                //if (successes > 32) //out of 64 (64 being 100% vision coverage of a tile (8x8 samples))
-                                //if (successes >= 8) //out of 16
+
+                                //var tile = TileMapHelpers.GetTile((int)currTile.X, (int)currTile.Y, TileMapHelpers._topLeftMap);
+
                                 if (successes >= REQUIRED_SUCCESSES) //out of 4
                                 {
                                     Vision[(int)currTile.X, (int)currTile.Y] |= BitFromUnitTeam(generator.Team);
                                     counter++;
+
+                                    //if (tile != null)
+                                    //{
+                                    //    tile.SetFog(false, generator.Team);
+                                    //}
                                 }
+                                //else if (tile != null)
+                                //{
+                                //    if (generator.Team == UnitTeam.PlayerUnits && !tile.GetScene().InCombat && !tile.Properties.MustExplore)
+                                //    {
+                                //        tile.SetFog(false, generator.Team);
+                                //    }
+                                //    else
+                                //    {
+                                //        tile.SetFog(true, generator.Team);
+                                //    }
+                                //}
                             }
                         }
                     }
@@ -459,6 +481,11 @@ namespace MortalDungeon.Game.Units
             {
                 generatorTasks[i].Wait();
             }
+
+            //for(int i = 0; i < tilesToUpdate.Count; i++)
+            //{
+            //    tilesToUpdate[i].Update();
+            //}
 
             //Console.WriteLine($"Vision updated in {stopwatch.ElapsedMilliseconds}ms");
         }
@@ -537,7 +564,7 @@ namespace MortalDungeon.Game.Units
             VisionGenerator generator = new VisionGenerator() { Radius = radius };
             generator.SetPosition(startPoint);
 
-            Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
+            Vector2i zeroPoint = TileMapHelpers.GetTopLeftTilePosition();
 
             Vector2 currTile = new Vector2();
             Vector2 currTileTexel = new Vector2();
@@ -705,7 +732,7 @@ namespace MortalDungeon.Game.Units
                 Vector2 workingTile = new Vector2();
                 Vector2 workingTileTexel;
 
-                Vector2i zeroPoint = scene._tileMapController.GetTopLeftTilePosition();
+                Vector2i zeroPoint = TileMapHelpers.GetTopLeftTilePosition();
 
                 Vector2 CenterTile = generator.Position - zeroPoint;
                 Vector2 CenterTileTexels = CenterTile * TEXELS_PER_TILE_APPROX;
@@ -734,7 +761,7 @@ namespace MortalDungeon.Game.Units
                         currTile.X = i + CenterTile.X;
                         currTile.Y = j + CenterTile.Y;
 
-                        if (currTile.X < 0 || currTile.Y < 0 || currTile.X > 149 || currTile.Y > 149) //throw out impossible situations
+                        if (currTile.X < 0 || currTile.Y < 0 || currTile.X >= DIMENSIONS || currTile.Y >= DIMENSIONS) //throw out impossible situations
                             continue;
 
                         currTileTexel.X = currTile.X * TEXELS_PER_TILE_APPROX;

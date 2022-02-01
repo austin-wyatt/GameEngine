@@ -80,35 +80,6 @@ namespace MortalDungeon.Game.Map
             return HashCode.Combine(X, Y);
         }
 
-        /// <summary>
-        /// Returns whether the given point is contained within the polygon formed by the passed list of points
-        /// </summary>
-        /// <param name="points">The bounding points sorted to create a perimeter</param>
-        /// <param name="point">The point to test</param>
-        /// <returns></returns>
-        //public static bool BoundsContains(List<FeaturePoint> points, Vector2i point)
-        //{
-        //    int intersections = 0;
-
-        //    for (int side = 0; side < points.Count; side++)
-        //    {
-        //        int nextSide = (side + 1) % points.Count;
-
-        //        if (MiscOperations.GFG.GetLinesIntersect(new Vector2(point.X, point.Y), new Vector2(point.X + 1000, point.Y + 100000),
-        //            new Vector2(points[side].X, points[side].Y), new Vector2(points[nextSide].X, points[nextSide].Y)))
-        //        {
-        //            intersections++;
-        //        }
-        //    }
-
-        //    if (intersections % 2 == 0)
-        //    {
-        //        return false;
-        //    }
-
-        //    return true;
-        //}
-
         public static bool PointInPolygon(List<FeaturePoint> points, Vector2i point)
         {
             bool oddNodes = false;
@@ -131,6 +102,8 @@ namespace MortalDungeon.Game.Map
 
             return oddNodes;
         }
+
+        public static FeaturePoint MinPoint = new FeaturePoint(int.MinValue, int.MinValue);
     }
 
     public class FeaturePointWithParent

@@ -86,7 +86,7 @@ namespace MortalDungeon.Game.Abilities
 
             List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene, new List<VisionMap.TemporaryVisionParams>() { tempVision });
 
-            Vector2i clusterPos = Scene._tileMapController.PointToClusterPosition(unit.Info.TileMapPosition);
+            Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(unit.Info.TileMapPosition);
 
             if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange)
             {

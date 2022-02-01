@@ -20,9 +20,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             InitializeFields();
         }
 
-        public override void Load(Camera camera = null, BaseObject cursorObject = null, MouseRay mouseRay = null)
+        public override void Load(Camera camera = null, MouseRay mouseRay = null)
         {
-            base.Load(camera, cursorObject, mouseRay);
+            base.Load(camera, mouseRay);
            
             UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true, Hoverable = true };
             UIDimensions menuDimensions = escapeMenu.GetDimensions();

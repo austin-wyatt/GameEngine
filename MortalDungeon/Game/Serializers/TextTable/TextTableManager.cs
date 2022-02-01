@@ -59,6 +59,10 @@ namespace MortalDungeon.Game.Serializers
                 {
                     entry.Text = text;
                 }
+                else
+                {
+                    AddTextEntry(tableID, text, out var _, textEntryID);
+                }
             }
         }
 

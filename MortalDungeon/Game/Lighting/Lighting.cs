@@ -159,7 +159,7 @@ namespace MortalDungeon.Game.Lighting
 
             int count = 0;
 
-            Vector2i zeroPoint = Scene._tileMapController.GetTopLeftTilePosition();
+            Vector2i zeroPoint = TileMapHelpers.GetTopLeftTilePosition();
 
             foreach (LightObstruction obstruction in objects)
             {
@@ -261,7 +261,7 @@ namespace MortalDungeon.Game.Lighting
 
             int count = 0;
 
-            Vector2i zeroPoint = Scene._tileMapController.GetTopLeftTilePosition();
+            Vector2i zeroPoint = TileMapHelpers.GetTopLeftTilePosition();
 
             foreach (LightGenerator generator in generators)
             {

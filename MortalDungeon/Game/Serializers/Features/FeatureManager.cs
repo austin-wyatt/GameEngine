@@ -32,16 +32,16 @@ namespace MortalDungeon.Game.Serializers
             AllFeatures = FeatureSerializer.LoadFeatureListFile();
         }
         //when loading a feature, apply any passed state values as well.
-        public static void EvaluateLoadedFeatures(FeaturePoint currPosition, int layer)
+        public static void EvaluateLoadedFeatures(FeaturePoint currPosition, int layer, int minLoadRadius = 150)
         {
             List<long> featuresToRemove = new List<long>();
             lock (_featureLock)
             {
                 foreach (var eq in LoadedFeatures)
                 {
-                    int loadRadius = eq.Value.LoadRadius < 150 ? 150 : eq.Value.LoadRadius;
+                    int loadRadius = eq.Value.LoadRadius < minLoadRadius ? minLoadRadius : eq.Value.LoadRadius;
 
-                    loadRadius += 200; //we don't want to unload the feature as soon as we leave the load radius since that could
+                    loadRadius += (int)(minLoadRadius * 1.5f); //we don't want to unload the feature as soon as we leave the load radius since that could
                                        //cause some issues if the user walks back and forth between 2 maps repeatedly.
 
                     if (layer != eq.Value.Layer || !CheckDistance(eq.Value.Origin, currPosition, loadRadius))
@@ -67,7 +67,7 @@ namespace MortalDungeon.Game.Serializers
                         continue;
                     }
 
-                    int loadRadius = AllFeatures.Features[i].LoadRadius < 150 ? 150 : AllFeatures.Features[i].LoadRadius;
+                    int loadRadius = AllFeatures.Features[i].LoadRadius < minLoadRadius ? minLoadRadius : AllFeatures.Features[i].LoadRadius;
 
                     if (layer == AllFeatures.Features[i].Layer && CheckDistance(AllFeatures.Features[i].Origin, currPosition, loadRadius))
                     {
@@ -134,7 +134,8 @@ namespace MortalDungeon.Game.Serializers
                         //first check if the unit is controlled by the player and the player is not in combat
                         if (unit.AI.ControlType == ControlType.Controlled && !unit.Scene.InCombat)
                         {
-                            bool unitIsInside = FeaturePoint.PointInPolygon(bound.OffsetPoints, unitPos);
+                            bool unitIsInside = FeaturePoint.PointInPolygon(bound.BoundingSquare, unitPos) 
+                                && FeaturePoint.PointInPolygon(bound.OffsetPoints, unitPos);
 
                             int testValue = 3;
 
