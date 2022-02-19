@@ -73,13 +73,13 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            RenderQueuedLetters();
+            //RenderQueuedLetters();
 
             GL.Disable(EnableCap.FramebufferSrgb);
 
             RenderQueuedUI();
 
-            //RenderInstancedUIData();
+            RenderInstancedUIData();
         }
 
 
@@ -120,7 +120,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         #region UI queue
         public static void QueueUITextForRender(List<_Text> text, bool scissorFlag = false)
         {
-            for(int i = 0; i < text.Count; i++)
+            for (int i = 0; i < text.Count; i++)
             {
                 //if (text[i].Render)
                 //    QueueUIForRender(text[i].Letters, scissorFlag);
@@ -146,11 +146,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     {
                         if (uiObjects[i].Render && !uiObjects[i].Cull)
                         {
-                            if (uiObjects[i].RenderAfterParent && renderAfterParent != null && !overrideRender)
-                            {
-                                renderAfterParentList.Add(uiObjects[i]);
-                                continue;
-                            }
+                            //if (uiObjects[i].RenderAfterParent && renderAfterParent != null && !overrideRender)
+                            //{
+                            //    renderAfterParentList.Add(uiObjects[i]);
+                            //    continue;
+                            //}
 
                             if (uiObjects[i].ScissorData.Scissor == true)
                             {
@@ -174,7 +174,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                             if (uiObjects[i].Children.Count > 0)
                             {
-                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, (list) => 
+                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, (list) =>
                                 {
                                     objsToRenderAfterParent = list;
                                 });
@@ -182,17 +182,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                             QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
 
-                            if (objsToRenderAfterParent.Count > 0) 
+                            if (objsToRenderAfterParent.Count > 0)
                             {
                                 QueueNestedUI(objsToRenderAfterParent, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, null, true);
                             }
                         }
                     }
-
-                    //RenderableObject display = uiObjects[0].GetDisplay();
-
-                    //RenderObjectsInstancedGeneric(uiObjects, display);
-                    //QueueUIForRender(uiObjects);
                 }
 
                 if (renderAfterParentList.Count > 0 && renderAfterParent != null)
@@ -200,11 +195,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     renderAfterParent(renderAfterParentList);
                 }
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 Console.WriteLine("Exception in QueueNestedUI: " + e.Message);
             }
         }
+
         public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
         {
             for (int i = 0; i < objList.Count; i++)
@@ -251,7 +247,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static void RenderQueuedUnits()
         {
-            for(int i = 0; i < _UnitsToRender.Count; i ++)
+            for(int i = 0; i < _UnitsToRender.Count; i++)
             {
                 Renderer.RenderObjectsInstancedGeneric(_UnitsToRender[i], ref Renderer._instancedRenderArray);
             }
@@ -401,9 +397,15 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         #region UI instanced render data
         private static List<UIInstancedRenderData> _uiRenderData = new List<UIInstancedRenderData>();
-        public static void QueueUIInstancedRenderData(UIInstancedRenderData renderData)
+        public static void QueueUIInstancedRenderData(UIManager manager)
         {
-            _uiRenderData.Add(renderData);
+            for(int i = 0; i < manager.UIRenderGroups.Count; i++)
+            {
+                for(int j = 0; j < manager.UIRenderGroups[i].RenderBatches.Count; j++)
+                {
+                    _uiRenderData.Add(manager.UIRenderGroups[i].RenderBatches[j].RenderData);
+                }
+            }
         }
 
         public static void RenderInstancedUIData()

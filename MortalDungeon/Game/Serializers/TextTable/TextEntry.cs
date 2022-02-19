@@ -18,6 +18,9 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("Tti")]
         public int TableID = 0;
 
+        [XmlElement("Ttn")]
+        public string Name = "";
+
         [XmlElement("Tdd")]
         public DeserializableDictionary<int, TextEntry> _strings = new DeserializableDictionary<int, TextEntry>();
 
@@ -63,6 +66,11 @@ namespace MortalDungeon.Game.Serializers
 
             int id = 0;
 
+            if(list.Count == 0)
+            {
+                return 1;
+            }
+
             int lastId = 0;
             foreach (var key in list)
             {
@@ -107,5 +115,47 @@ namespace MortalDungeon.Game.Serializers
         public string Text = "";
 
         public TextEntry() { }
+    }
+
+    [XmlType(TypeName = "TIn")]
+    [Serializable]
+    public class TextInfo
+    {
+        [XmlElement("i")]
+        public int Id = 0;
+        [XmlElement("T")]
+        public int TableId = 0;
+
+        [XmlIgnore]
+        public List<TextReplacementParameter> TextReplacementParameters = new List<TextReplacementParameter>();
+
+        public TextInfo() { }
+
+        public TextInfo(int id, int tableId = 0) 
+        {
+            Id = id;
+            TableId = tableId;
+        }
+
+        public override string ToString()
+        {
+            string val = TextTableManager.GetTextEntry(this);
+
+            if(TextReplacementParameters.Count > 0)
+            {
+                for(int i = 0; i < TextReplacementParameters.Count; i++)
+                {
+                    val = val.Replace($"{{{TextReplacementParameters[i].Key}}}", TextReplacementParameters[i].Value());
+                }
+            }
+
+            return val;
+        }
+    }
+
+    public struct TextReplacementParameter
+    {
+        public string Key;
+        public Func<string> Value;
     }
 }

@@ -1,6 +1,8 @@
 ﻿using MortalDungeon.Definitions.Items;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace MortalDungeon.Game.Items
@@ -12,7 +14,23 @@ namespace MortalDungeon.Game.Items
         static ItemManager()
         {
             Items.Add(0, typeof(Item));
-            Items.Add(1, typeof(Dagger_1));
+
+
+            var itemTypes = from t in Assembly.GetExecutingAssembly().GetTypes()
+                       where t.IsClass && t.Namespace == "MortalDungeon.Definitions.Items" && !t.IsSealed &&
+                       t.IsSubclassOf(typeof(Item))
+                       select t;
+
+            var list = itemTypes.ToList();
+
+            foreach (var type in list)
+            {
+                var prop = type.GetField("ID");
+                if (prop != null)
+                {
+                    Items.Add((int)prop.GetValue(null), type);
+                }
+            }
         }
 
         public static Item GetItemByID(int id)

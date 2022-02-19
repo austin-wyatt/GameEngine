@@ -411,6 +411,7 @@ namespace MortalDungeon.Game.Units
             public UnitCheckEnum IsFriendly = UnitCheckEnum.NotSet;
             public UnitCheckEnum IsNeutral = UnitCheckEnum.NotSet;
             public UnitCheckEnum Self = UnitCheckEnum.NotSet;
+            public UnitCheckEnum IsControlled = UnitCheckEnum.NotSet;
 
             public UnitSearchParams() { }
 
@@ -534,6 +535,25 @@ namespace MortalDungeon.Game.Units
                 else if (Self.IsSoft())
                 {
                     if (unit == castingUnit == Self.BoolValue())
+                    {
+                        softCheck = true;
+                    }
+
+                    softCheckUsed = true;
+                }
+                #endregion
+
+                #region Controlled Check
+                if (IsControlled != UnitCheckEnum.NotSet && !IsControlled.IsSoft())
+                {
+                    if (unit.AI.ControlType == ControlType.Controlled != IsControlled.BoolValue())
+                    {
+                        return false;
+                    }
+                }
+                else if (IsControlled.IsSoft())
+                {
+                    if (unit.AI.ControlType == ControlType.Controlled == IsControlled.BoolValue())
                     {
                         softCheck = true;
                     }

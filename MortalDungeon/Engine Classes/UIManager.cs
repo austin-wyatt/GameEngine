@@ -31,14 +31,20 @@ namespace MortalDungeon.Engine_Classes
         public List<UIObject> ScrollableObjects = new List<UIObject>();
         public HashSet<UIObject> _scrollableObjects = new HashSet<UIObject>();
 
-        //public Dictionary<int, List<UIInstancedRenderData>> UIRenderData = new Dictionary<int, List<UIInstancedRenderData>>();
-
         public object _clickableObjectLock = new object();
         public object _hoverableObjectLock = new object();
         public object _focusableObjectLock = new object();
         public object _keyDownObjectLock = new object();
         public object _keyUpObjectLock = new object();
         public object _scrollableObjectLock = new object();
+
+
+        public HashSet<UIObject> ExclusiveFocusSet = new HashSet<UIObject>();
+        public object _exclusiveFocusLock = new object();
+
+
+        public List<UIRenderGroup> UIRenderGroups = new List<UIRenderGroup>();
+        public object _renderGroupLock = new object();
 
         public void AddUIObject(UIObject obj, int zIndex)
         {
@@ -59,6 +65,16 @@ namespace MortalDungeon.Engine_Classes
             {
                 TopLevelObjects.Remove(obj);
                 obj.CleanUp();
+
+                lock (_renderGroupLock)
+                {
+                    var batch = UIRenderGroups.Find(g => g.Root == obj);
+                    if (batch != null)
+                    {
+                        UIRenderGroups.Remove(batch);
+                        batch.CleanUp();
+                    }
+                }
             }
         }
 
@@ -82,8 +98,7 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
 
-            //Window.RenderEnd -= GenerateUIRenderData;
-            //Window.RenderEnd += GenerateUIRenderData;
+            RegenerateRenderData();
         }
 
         public void GenerateReverseTree(UIObject obj, bool generateRenderData = true)
@@ -97,21 +112,40 @@ namespace MortalDungeon.Engine_Classes
                 //obj.GenerateZPositions(0.0001f * index);
                 obj.GenerateZPositions(0.001f * index);
                 //obj.GenerateZPositions(1 * index);
-
-                //if (generateRenderData)
-                //{
-                //    void generateInstancedRenderData()
-                //    {
-                //        Window.RenderEnd -= generateInstancedRenderData;
-                //        UIRenderData.AddOrSet(index, CreateUIRenderDataForObject(obj));
-                //    }
-
-                //    Window.RenderEnd -= generateInstancedRenderData;
-                //    Window.RenderEnd += generateInstancedRenderData;
-                //}
             }
+
+            obj.Update();
         }
 
+        public void UpdateTopLevelObject(UIObject obj)
+        {
+            //lock (_renderGroupLock)
+            //{
+            //    var group = UIRenderGroups.Find(g => g.Root.ObjectID == obj.ObjectID);
+
+            //    if (group != null)
+            //    {
+            //        group.GenerateGroups();
+            //    }
+            //    else
+            //    {
+            //        UIRenderGroups.Add(new UIRenderGroup(obj));
+            //    }
+            //}
+        }
+
+        public void RegenerateRenderData()
+        {
+            //lock (_renderGroupLock)
+            //{
+            //    UIRenderGroups.Clear();
+
+            //    foreach (var obj in TopLevelObjects)
+            //    {
+            //        UpdateTopLevelObject(obj);
+            //    }
+            //}
+        }
 
         #region clickable objects
         private object _clickableSetLock = new object();
@@ -475,6 +509,39 @@ namespace MortalDungeon.Engine_Classes
 
                 //ScrollableObjects.Sort((a, b) => b.Position.Z.CompareTo(a.Position.Z));
             }
+        }
+        #endregion
+
+        #region exclusive focus
+        public void ExclusiveFocusObject(UIObject obj)
+        {
+            void walkTree(UIObject parentObject)
+            {
+                foreach(var item in parentObject.Children)
+                {
+                    walkTree(item);
+                }
+
+                ExclusiveFocusSet.Add(parentObject);
+            }
+
+            lock (_exclusiveFocusLock)
+            {
+                walkTree(obj);
+            }
+        }
+
+        public void ClearExclusiveFocus()
+        {
+            lock (_exclusiveFocusLock)
+            {
+                ExclusiveFocusSet.Clear();
+            }
+        }
+
+        public bool ExclusiveFocusCheckObject(UIObject obj)
+        {
+            return ExclusiveFocusSet.Count == 0 || ExclusiveFocusSet.Contains(obj);
         }
         #endregion
     }

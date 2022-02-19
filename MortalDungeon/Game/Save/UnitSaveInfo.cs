@@ -87,8 +87,7 @@ namespace MortalDungeon.Game.Save
             foreach (var ability in unit.Info.Abilities)
             {
                 var loadout = AbilityLoadout.Items.Find(a => a.NodeID == ability.NodeID 
-                    && a.AbilityTreeType == ability.AbilityTreeType 
-                    && (a.BasicAbility > 0) == ability.BasicAbility);
+                    && a.AbilityTreeType == ability.AbilityTreeType);
 
                 if(loadout != null)
                 {

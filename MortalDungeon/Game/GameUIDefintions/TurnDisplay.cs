@@ -105,7 +105,7 @@ namespace MortalDungeon.Game.UI
                     {
                         Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(Units[index].Info.TileMapPosition);
 
-                        if (VisionMap.InVision(clusterPos.X, clusterPos.Y, UnitTeam.PlayerUnits)) 
+                        if (VisionManager.ConsolidatedVision[scene.VisibleTeam].TryGetValue(Units[index].Info.TileMapPosition, out bool inVision) && inVision) 
                         {
                             scene.SmoothPanCameraToUnit(Units[index], 1);
                         }

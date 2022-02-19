@@ -25,9 +25,7 @@ struct Material {
 uniform Material[8] material;
 in float materialIndex;
 
-
 void CreateInline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture);
-void DoWork(in sampler2D primaryTexture);
 
 void main()
 {
@@ -35,7 +33,7 @@ void main()
 
 	outputColor = texColor * appliedColor;
 
-	gl_FragDepth = fragDepth;
+//	gl_FragDepth = fragDepth;
 
 	if(inlineThickness > 0)
 	{

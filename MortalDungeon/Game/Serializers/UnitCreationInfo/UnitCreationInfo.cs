@@ -1,4 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Events;
+using MortalDungeon.Game.Items;
 using MortalDungeon.Game.Serializers.Abilities;
 using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
@@ -24,8 +26,28 @@ namespace MortalDungeon.Game.Serializers
 
         [XmlElement("Ual")]
         public int AbilityLoadoutId;
+
         [XmlElement("Uans")]
-        public string AnimationSetName;
+        public int AnimationSetId;
+
+        [XmlElement("UaEV")]
+        public List<EventActionBuilder> EventActionBuilders = new List<EventActionBuilder>();
+
+        [XmlElement("UaDi")]
+        public List<int> UnitDialogueIDs = new List<int>();
+
+        /// <summary>
+        /// Maybe a new object dedicated to adding items to units should be created to simplify things. <para/>
+        /// (ie all it needs is Id, modifier, stack size, charges, and whether to equip it and in what slot)
+        /// </summary>
+        [XmlElement("UaIt")]
+        public List<UnitItemEntry> UnitItems = new List<UnitItemEntry>();
+
+        [XmlElement("UaGo")]
+        public long Gold = 0;
+
+        [XmlElement("UAl")]
+        public AbilityLoadout AbilityLoadout = new AbilityLoadout();
 
         #endregion
 
@@ -81,12 +103,18 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("Uxr")]
         public int XRotation = 25;
         [XmlElement("UtO")]
-        public string TileOffset = "0, -213.8889f, 0.2f";
+        public string TileOffset = "0f, 0f, 0f";
         [XmlElement("UstO")]
-        public string SelectionTileOffset = "0, 213.8889f, -0.19f";
+        public string SelectionTileOffset = "0f, 0f, 0f";
+
+        [XmlElement("UciSc")]
+        public float Scale = 1;
         #endregion
 
-        public UnitCreationInfo() { }
+        public UnitCreationInfo() 
+        {
+            
+        }
 
         public Unit CreateUnit(CombatScene scene) 
         {
@@ -94,9 +122,24 @@ namespace MortalDungeon.Game.Serializers
 
             unit.UnitCreationInfoId = Id;
 
-            //create an ability and animation manager that manages loading and unloading these files so that units aren't directly reading from files
-            unit.AbilityLoadout = AbilityLoadoutSerializer.LoadAbilityLoadoutFromFile(AbilityLoadoutId); //Check to see if this has already been loaded
-            unit.AnimationSet = AnimationSerializer.LoadAnimationFromFileWithName(AnimationSetName); //Check to see if this has already been loaded
+            unit.AbilityLoadout = new AbilityLoadout(AbilityLoadout);
+            unit.AnimationSet = AnimationSetManager.GetAnimationSet(AnimationSetId); //Check to see if this has already been loaded
+
+            foreach(var entry in UnitItems)
+            {
+                var item = entry.ItemEntry.GetItemFromEntry();
+
+                if(entry.Location == ItemLocation.Equipment)
+                {
+                    unit.Info.Equipment.EquipItem(item, entry.EquipmentSlot);
+                }
+                else
+                {
+                    unit.Info.Inventory.AddItemToInventory(item);
+                }
+            }
+
+            unit.Info.Inventory.Gold = Gold;
 
             unit.Name = Name;
 
@@ -131,12 +174,14 @@ namespace MortalDungeon.Game.Serializers
                     unit.Color = new Vector4(float.Parse(colorVals[0]), float.Parse(colorVals[1]), 
                         float.Parse(colorVals[2]), float.Parse(colorVals[3]));
                 }
-                catch(Exception ex) { }
+                catch { }
             }
 
             unit._createStatusBar = CreateStatusBar > 0;
 
             unit._xRotation = XRotation;
+            unit._scale = Scale;
+
 
             TileOffset = TileOffset.Replace(" ", "").Replace("f", "");
             string[] tileOffsetVals = TileOffset.Split(",");
@@ -146,7 +191,7 @@ namespace MortalDungeon.Game.Serializers
                 {
                     unit.TileOffset = new Vector3(float.Parse(tileOffsetVals[0]), float.Parse(tileOffsetVals[1]), float.Parse(tileOffsetVals[2]));
                 }
-                catch (Exception ex) { }
+                catch { }
             }
 
             SelectionTileOffset = SelectionTileOffset.Replace(" ", "").Replace("f", "");
@@ -157,7 +202,20 @@ namespace MortalDungeon.Game.Serializers
                 {
                     unit.SelectionTileOffset = new Vector3(float.Parse(selectionTileOffsetVals[0]), float.Parse(selectionTileOffsetVals[1]), float.Parse(selectionTileOffsetVals[2]));
                 }
-                catch (Exception ex) { }
+                catch { }
+            }
+
+            foreach(var eventActionBuilder in EventActionBuilders)
+            {
+                var action = eventActionBuilder.BuildAction();
+                if(unit.EventActions.TryGetValue(action.EventTrigger, out var list))
+                {
+                    list.Add(action);
+                }
+                else
+                {
+                    unit.EventActions.Add(action.EventTrigger, new List<EventAction> { action });
+                }
             }
 
             return unit;

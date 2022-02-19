@@ -164,7 +164,7 @@ namespace MortalDungeon.Game.UI
                 //UIBlock featureDisplay = new UIBlock(default, new UIScale(0.01f, 0.01f));
                 UIBlock featureDisplay = new UIBlock(default, new UIScale(scaleFactor, scaleFactor));
 
-                var animationList = AnimationManager.AnimationSets[item.AnimationSetName].BuildAnimationsFromSet();
+                var animationList = AnimationSetManager.GetAnimationSet(item.AnimationSetId)?.BuildAnimationsFromSet();
 
                 var baseObject = new BaseObject(animationList, 0, "", default, EnvironmentObjects.BaseTileBounds);
 

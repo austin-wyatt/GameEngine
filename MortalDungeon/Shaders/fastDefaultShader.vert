@@ -52,11 +52,11 @@ void main(void)
 	texCoord = vec2(aTexCoord);
 	twoTextures = compositeType_2[2];
 
-	float columns = compositeType_2[1];
-	float rows = compositeType_2[0];
+	float columns = compositeType_2[0];
+	float rows = compositeType_2[1];
 
-    float row =  floor(compositeType[1] / rows);
-	float column = compositeType[1] - row * rows;
+    float row =  floor(compositeType[1] / columns);
+	float column = compositeType[1] - row * columns;
 
 //    if(rows != 2){
 //		texCoord = setTexCoord(texCoord, columns, rows, column, row);
@@ -81,7 +81,7 @@ void main(void)
 
 	//Position handling
 	float aspectRatio = compositeType[2] / compositeType[3];
-
+	 
 	vec3 pos = aPosition; 
 	pos[0] *= aspectRatio; //allow for non-square objects
 

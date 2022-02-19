@@ -73,7 +73,7 @@ namespace MortalDungeon.Game.Map.FeatureEquations
                 if(GetBit(value, 4))
                 {
                     tile.Properties.MustExplore = true;
-                    tile.Explored[Units.UnitTeam.PlayerUnits] = false;
+                    //tile.Explored[Units.UnitTeam.PlayerUnits] = false;
                 }
                 if (GetBit(value, 5)) 
                 {

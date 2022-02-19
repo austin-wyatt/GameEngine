@@ -279,7 +279,7 @@ namespace MortalDungeon.Game.Save
 
             foreach (var item in state.PlayerPartySaveInfo)
             {
-                UnitCreationInfo info = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(item.UnitCreationInfoId);
+                UnitCreationInfo info = UnitInfoBlockManager.GetUnit(item.UnitCreationInfoId);
 
                 if (info == null)
                     continue;
@@ -322,7 +322,7 @@ namespace MortalDungeon.Game.Save
 
             foreach(var unitInfo in state.UnitSaveInfo)
             {
-                UnitCreationInfo info = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(unitInfo.UnitCreationInfoId);
+                UnitCreationInfo info = UnitInfoBlockManager.GetUnit(unitInfo.UnitCreationInfoId);
 
                 if (info == null)
                     continue;
@@ -353,7 +353,7 @@ namespace MortalDungeon.Game.Save
                 TileMapManager.ApplyLoadedFeaturesToMaps(TileMapManager.ActiveMaps);
 
                 scene.QueueLightObstructionUpdate();
-                scene.UpdateVisionMap();
+                scene.UnitVisionGenerators.ManuallyIncrementChangeToken(); //causes a recalculation of vision
 
                 scene.SetTime(state.Time);
 

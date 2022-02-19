@@ -21,8 +21,8 @@ void main(void)
 	appliedColor = aColor;
 	texCoord = vec2(aTexCoord);
 
-	float columns = compositeType_2[1];
-	float rows = compositeType_2[0];
+	float columns = compositeType_2[0];
+	float rows = compositeType_2[1];
 
     float row =  floor(compositeType[1] / rows);
 	float column = compositeType[1] - row * rows;

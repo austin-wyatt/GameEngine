@@ -24,8 +24,8 @@ namespace MortalDungeon.Game.Abilities
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
             UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
-            Name = name;
-            _description = description;
+            //Name = name;
+            //Description = description;
 
             var iconPos = icon == null ? IconSheetIcons.Channel : icon;
             Spritesheet iconSpritesheet = spritesheet == null ? Spritesheets.IconSheet : spritesheet;

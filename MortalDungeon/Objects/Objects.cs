@@ -30,6 +30,9 @@ namespace MortalDungeon.Objects
 
         TileOverlaySpritesheet,
         UnitSpritesheet,
+        ItemSpritesheet_1,
+        UISpritesheet_1,
+        UIControlsSpritesheet,
 
         Cursor
     }

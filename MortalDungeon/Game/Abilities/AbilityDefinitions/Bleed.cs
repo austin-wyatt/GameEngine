@@ -21,7 +21,7 @@ namespace MortalDungeon.Game.Abilities
             Duration = duration;
             Damage = bleedDamage;
 
-            Name = "Bleed";
+            //Name = "Bleed";
 
             CanTargetGround = false;
 

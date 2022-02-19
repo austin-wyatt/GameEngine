@@ -33,25 +33,7 @@ namespace MortalDungeon.Game.Serializers
             reader.Close();
             fs.Close();
 
-            int i = 0;
-            
-            foreach(var state in loadedState.QuestStates)
-            {
-                int j = 0;
-
-                state.Parent = loadedState;
-                state._stateIndex = i;
-
-                foreach(var obj in state.QuestObjectives)
-                {
-                    obj.Parent = state;
-                    obj._objectiveIndex = j;
-
-                    j++;
-                }
-
-                i++;
-            }
+            loadedState.CompleteDeserialization();
 
             return loadedState;
         }
@@ -70,6 +52,8 @@ namespace MortalDungeon.Game.Serializers
             XmlSerializer serializer = new XmlSerializer(typeof(Quest));
 
             TextWriter writer = new StreamWriter(path);
+
+            state.PrepareForSerialization();
 
             serializer.Serialize(writer, state);
 
@@ -91,7 +75,7 @@ namespace MortalDungeon.Game.Serializers
 
             foreach (string file in files)
             {
-                if (file.Contains(".q"))
+                if (file.EndsWith(".q"))
                 {
                     filesToLoad.Add(file);
                 }

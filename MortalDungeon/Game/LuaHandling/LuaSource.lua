@@ -23,6 +23,16 @@ LONG_MAX_VALUE = 9223372036854775807
 --Script
 --Permanent
 
+function SetStateValue(type, id, hash, data, instruction)
+    stateValue = StateIDValuePair()
+    stateValue.Type = type
+    stateValue.StateID = id
+    stateValue.ObjectHash = hash
+    stateValue.Data = data
+    stateValue.Instruction = instruction
+
+    Ledgers.ApplyStateValue(stateValue)
+end
 
 
 function SubscribeToFeatureTrigger(id, type, callback)
@@ -65,6 +75,11 @@ function CQ(id, callback)
     if(QuestManager.QuestAvailable(id)) then
         callback()
     end
+end
+
+--Sets the state value associated with a given ability to the maximum unlocked variant. (variants for ability tree nodes are essentially upgraded versions of the ability)
+function UnlockAbility(treeId, abilityId, variant)
+    SetStateValue(3, treeId, abilityId, variant)
 end
 
 

@@ -48,6 +48,7 @@ namespace MortalDungeon.Game.Structures
             VisibleThroughFog = true;
 
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+
             AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.Tent, default));
             BaseObject.BaseFrame.SetScale(0.5f, 0.5f, 0.25f);
             BaseObject.BaseFrame.RotateZ(Rotations * 60);

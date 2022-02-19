@@ -26,7 +26,7 @@ namespace MortalDungeon.Game.Abilities
 
             CastingMethod |= CastingMethod.Magic;
 
-            Name = "Slow";
+            //Name = "Slow";
 
             CanTargetGround = false;
 

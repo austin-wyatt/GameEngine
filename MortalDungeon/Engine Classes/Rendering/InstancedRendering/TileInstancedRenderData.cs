@@ -84,6 +84,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                 instancedRenderData.ItemCount = itemCount;
                 instancedRenderData.VerticesCount = Display.VerticesDrawOrder.Length;
+
+                instancedRenderData.IsValid = true;
             }
 
             for (int i = 0; i < objects.Count; i++)

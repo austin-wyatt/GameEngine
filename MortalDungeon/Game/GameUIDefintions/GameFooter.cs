@@ -4,6 +4,8 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Abilities.AbilityDefinitions;
+using MortalDungeon.Game.Player;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
@@ -25,6 +27,12 @@ namespace MortalDungeon.Game.UI
         Consumables
     }
 
+    public enum FooterMode
+    {
+        SingleUnit,
+        MultiUnit
+    }
+
     public class GameFooter : Footer
     {
         CombatScene Scene;
@@ -39,12 +47,12 @@ namespace MortalDungeon.Game.UI
 
         private UIBlock _infoBlock;
 
-        public Unit _currentUnit;
+        public Unit CurrentUnit;
+        public FooterMode CurrentFooterMode;
 
         public Icon _meditationIcon;
 
         public Button EndTurnButton;
-        public Button VentureForthButton;
 
         private ScrollableArea _scrollableAreaBuff;
         private ScrollableArea _scrollableAreaAbility;
@@ -87,32 +95,6 @@ namespace MortalDungeon.Game.UI
             AddChild(endTurnButton, 10000);
             #endregion
 
-            #region venture forth button
-            Button ventureForthButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "Venture Forth", 0.375f, default, default, false);
-            ventureForthButton.SetRender(false);
-
-            VentureForthButton = ventureForthButton;
-
-            textOffset = new UIDimensions(80, 100);
-
-            ventureForthButton.SetSize(ventureForthButton.TextBox.Size + textOffset.ToScale());
-
-            ventureForthButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -200, 0), UIAnchorPosition.BottomRight);
-
-            ventureForthButton.Click += (s, e) =>
-            {
-                if (Scene.CurrentUnit == null)
-                    return;
-
-                Scene.DeselectAbility();
-                Scene._tileMapController.LoadSurroundingTileMaps(Scene.CurrentUnit.GetTileMap().TileMapCoords);
-                ventureForthButton.SetRender(false);
-
-                Scene.EventLog.AddEvent("You venture onwards...", EventSeverity.Positive);
-            };
-
-            AddChild(ventureForthButton, 100);
-            #endregion
 
             #region containing blocks
 
@@ -128,7 +110,7 @@ namespace MortalDungeon.Game.UI
             _containingBlock.SetSize(containingBlockDimensions);
             _containingBlock.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.LeftCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
 
-            AddChild(_containingBlock, 1);
+            AddChild(_containingBlock, 2);
 
 
             Vector3 infoBarPos = _containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(20, -4, 0);
@@ -136,7 +118,7 @@ namespace MortalDungeon.Game.UI
             float sizeDiff = WindowConstants.ScreenUnits.X - infoBarPos.X;
             UIDimensions infoBarDimensions = new UIDimensions(sizeDiff * 2 * WindowConstants.AspectRatio, 200);
 
-            _infoBlock = new UIBlock(default, infoBarDimensions);
+            _infoBlock = new UIBlock(new Vector3(), infoBarDimensions);
             _infoBlock.MultiTextureData.MixTexture = false;
             _infoBlock.SetColor(new Vector4(0.447f, 0.51f, 0.639f, 0.3f));
             _infoBlock.SetSize(infoBarDimensions);
@@ -162,7 +144,7 @@ namespace MortalDungeon.Game.UI
 
             void healthBarHover(GameObject obj) 
             {
-                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Health + "/" + _currentUnit.Info.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentUnit.Info.Health + "/" + CurrentUnit.Info.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
                 UIHelpers.CreateToolTip(param);
             }
 
@@ -174,7 +156,7 @@ namespace MortalDungeon.Game.UI
             _unitFocusBar = new FocusBar(new Vector3(), new UIScale(0.4f, 0.03f)) { Hoverable = true, HasTimedHoverEffect = true };
             void focusBarHover(GameObject obj)
             {
-                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, _currentUnit.Info.Focus + "/" + _currentUnit.Info.MaxFocus, _unitFocusBar, Scene._tooltipBlock);
+                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentUnit.Info.Focus + "/" + CurrentUnit.Info.MaxFocus, _unitFocusBar, Scene._tooltipBlock);
                 UIHelpers.CreateToolTip(param);
             }
 
@@ -189,11 +171,11 @@ namespace MortalDungeon.Game.UI
 
             void shieldBarHover(GameObject obj)
             {
-                if (_currentUnit.Info.CurrentShields >= 0)
+                if (CurrentUnit.Info.CurrentShields >= 0)
                 {
                     UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, "", _unitShieldBar, Scene._tooltipBlock)
                     {
-                        Text = _currentUnit.Info.CurrentShields * _currentUnit.Info.ShieldBlock + " Damage will be blocked from the next attack"
+                        Text = CurrentUnit.Info.CurrentShields * CurrentUnit.Info.ShieldBlock + " Damage will be blocked from the next attack"
                     };
                     UIHelpers.CreateToolTip(param);
                 }
@@ -201,7 +183,7 @@ namespace MortalDungeon.Game.UI
                 {
                     UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, "", _unitShieldBar, Scene._tooltipBlock)
                     {
-                        Text = "Next attack recieved will deal " + _currentUnit.Info.CurrentShields * -1 * 25 + "% more damage"
+                        Text = "Next attack recieved will deal " + CurrentUnit.Info.CurrentShields * -1 * 25 + "% more damage"
                     };
                     UIHelpers.CreateToolTip(param);
                 }
@@ -225,7 +207,7 @@ namespace MortalDungeon.Game.UI
                 _itemToggle.OnSelect(false);
                 _consumableToggle.OnSelect(false);
 
-                UpdateFooterInfo(_currentUnit);
+                UpdateFooterInfo(CurrentUnit);
             };
             _abilityToggle.SelectedColor = _Colors.Blue - new Vector4(0.1f, 0.1f, 0.1f, 0);
             
@@ -242,7 +224,7 @@ namespace MortalDungeon.Game.UI
                 _itemToggle.OnSelect(true);
                 _consumableToggle.OnSelect(false);
 
-                UpdateFooterInfo(_currentUnit);
+                UpdateFooterInfo(CurrentUnit);
             };
             _itemToggle.SelectedColor = _Colors.Red - new Vector4(0.1f, 0.1f, 0.1f, 0);
 
@@ -259,7 +241,7 @@ namespace MortalDungeon.Game.UI
                 _itemToggle.OnSelect(false);
                 _consumableToggle.OnSelect(true);
 
-                UpdateFooterInfo(_currentUnit);
+                UpdateFooterInfo(CurrentUnit);
             };
             _consumableToggle.SelectedColor = _Colors.LessAggressiveRed - new Vector4(0.1f, 0.1f, 0.1f, 0);
             #endregion
@@ -297,61 +279,99 @@ namespace MortalDungeon.Game.UI
         }
 
 
+        public void RefreshFooterInfo(bool forceUpdate = false)
+        {
+            UpdateFooterInfo(CurrentUnit, forceUpdate: forceUpdate, footerMode: CurrentFooterMode);
+        }
+
         private List<Ability> _currentAbilities = new List<Ability>();
         private List<Buff> _currentBuffs = new List<Buff>();
 
         private List<Icon> _currentIcons = new List<Icon>();
         private bool _updatingFooterInfo = false;
         private Action _updateAction = null;
-        public void UpdateFooterInfo(Unit unit = null, bool setNull = false, bool forceUpdate = false) 
+        public void UpdateFooterInfo(Unit unit = null, bool setNull = false, bool forceUpdate = false, FooterMode footerMode = FooterMode.SingleUnit) 
         {
             if (_updatingFooterInfo) 
             {
                 _updateAction = () => 
                 {
                     _updateAction = null;
-                    UpdateFooterInfo(unit);
+                    Scene.QueueToRenderCycle(() =>
+                    {
+                        UpdateFooterInfo(unit, setNull, forceUpdate, footerMode);
+                    });
                 };
                 return;
             }
+            
 
-            _updatingFooterInfo = true;
-
-            bool refreshingFooter = unit == null;
-
-            if (unit != null) 
+            Scene.QueueToRenderCycle(() =>
             {
-                _currentUnit = unit;
-            }
+                _updatingFooterInfo = true;
 
-            if (_currentUnit == null && !setNull)
-            {
-                _updatingFooterInfo = false;
-                ToggleUnitInfo(false);
-                return;
-            }
-            else if(setNull)
-            {
-                _currentUnit = null;
+                CurrentFooterMode = footerMode;
 
-                for (int i = 0; i < _currentIcons.Count; i++)
+                if (unit != null)
                 {
-                    RemoveChild(_currentIcons[i]);
+                    CurrentUnit = unit;
                 }
 
-                _currentIcons.Clear();
-                _currentAbilities.Clear();
-                _currentBuffs.Clear();
+                if (CurrentUnit == null && !setNull)
+                {
+                    _updatingFooterInfo = false;
+                    ToggleUnitInfo(false);
+                    return;
+                }
+                else if (setNull)
+                {
+                    CurrentUnit = null;
 
-                //_scrollableAreaBuff.SetRender(false);
-                ToggleUnitInfo(false);
+                    for (int i = 0; i < _currentIcons.Count; i++)
+                    {
+                        RemoveChild(_currentIcons[i]);
+                    }
+
+                    _currentIcons.Clear();
+                    _currentAbilities.Clear();
+                    _currentBuffs.Clear();
+
+                    //_scrollableAreaBuff.SetRender(false);
+                    ToggleUnitInfo(false);
+                    _updatingFooterInfo = false;
+                    return;
+                }
+
+                if (Scene.InCombat)
+                    footerMode = FooterMode.SingleUnit;
+
+                switch (footerMode)
+                {
+                    case FooterMode.SingleUnit:
+                        PopulateSingleUnitFooter(forceUpdate);
+                        break;
+                    case FooterMode.MultiUnit:
+                        PopulateMultiUnitFooter();
+                        break;
+                }
+
+
+
+                ForceTreeRegeneration();
+
                 _updatingFooterInfo = false;
-                return;
-            }
+                if (_updateAction != null)
+                {
+                    _updateAction.Invoke();
+                }
+            });
+        }
 
+        public void PopulateSingleUnitFooter(bool forceUpdate)
+        {
             ToggleUnitInfo(true);
 
-            bool isPlayerUnitTakingTurn = _currentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ? _currentUnit == Scene.CurrentUnit : true);
+            bool isPlayerUnitTakingTurn = CurrentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ? CurrentUnit == Scene.CurrentUnit : true);
 
             #region unit status box
 
@@ -362,61 +382,59 @@ namespace MortalDungeon.Game.UI
             _infoBlock.SetColor(new Vector4(0.447f, 0.51f, 0.639f, 0.75f));
 
 
-            _unitNameTextBox.SetText(_currentUnit.Name);
-            
-            
+            _unitNameTextBox.SetText(CurrentUnit.Name);
+
+
             _unitHealthBar.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(25, -9, 0), UIAnchorPosition.BottomLeft);
-            _unitHealthBar.SetHealthPercent(_currentUnit.Info.Health / _currentUnit.Info.MaxHealth, _currentUnit.AI.Team);
+            _unitHealthBar.SetHealthPercent(CurrentUnit.Info.Health / CurrentUnit.Info.MaxHealth, CurrentUnit.AI.Team);
 
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(5, 0, 0), UIAnchorPosition.LeftCenter);
-            _unitShieldBar.SetCurrentShields(_currentUnit.Info.CurrentShields);
+            _unitShieldBar.SetCurrentShields(CurrentUnit.Info.CurrentShields);
 
             if (isPlayerUnitTakingTurn)
             {
                 _unitHealthBar.SetPositionFromAnchor(_containingBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(25, -24, 0), UIAnchorPosition.BottomLeft);
                 _unitFocusBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 0, 0), UIAnchorPosition.TopCenter);
-                _unitFocusBar.SetFocusPercent(_currentUnit.Info.Focus / _currentUnit.Info.MaxFocus);
+                _unitFocusBar.SetFocusPercent(CurrentUnit.Info.Focus / CurrentUnit.Info.MaxFocus);
                 _unitFocusBar.SetRender(true);
 
                 if (Scene.EnergyDisplayBar != null && Scene.ActionEnergyBar != null)
                 {
-                    Scene.EnergyDisplayBar.SetActiveEnergy(_currentUnit.Info.Energy);
-                    Scene.ActionEnergyBar.SetActiveEnergy(_currentUnit.Info.ActionEnergy);
+                    Scene.EnergyDisplayBar.SetActiveEnergy(CurrentUnit.Info.Energy);
+                    Scene.ActionEnergyBar.SetActiveEnergy(CurrentUnit.Info.ActionEnergy);
                 }
             }
             else
             {
                 _unitFocusBar.SetRender(false);
             }
-            
+
 
             Vector3 nameBoxPos = _infoBlock.GetAnchorPosition(UIAnchorPosition.TopLeft);
             UIDimensions nameBoxDim = _unitNameTextBox.GetDimensions();
 
             _unitNameTextBox.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, 2, 0), UIAnchorPosition.BottomCenter);
 
-            
+
             _buffBlock.SetSize(new UIDimensions(infoBarDimensions.X * 0.4f, infoBarDimensions.Y));
             Vector3 buffBlockPos = _infoBlock.GetAnchorPosition(UIAnchorPosition.TopLeft);
             _buffBlock.SetPositionFromAnchor(buffBlockPos, UIAnchorPosition.BottomLeft);
             _buffBlock.SetColor(new Vector4(0, 0, 0, 0));
 
             #endregion
-           
 
-            VentureForthButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -102, 0), UIAnchorPosition.BottomRight);
 
             #region Abilities
             switch (AbilityState)
             {
                 case FooterAbilityState.Abilities:
-                    if (!Enumerable.SequenceEqual(_currentAbilities, _currentUnit.Info.Abilities) || forceUpdate)
+                    if (!Enumerable.SequenceEqual(_currentAbilities, CurrentUnit.Info.Abilities) || forceUpdate)
                     {
-                        CreateAbilityIcons(isPlayerUnitTakingTurn, _currentUnit.Info.Abilities);
+                        CreateAbilityIcons(isPlayerUnitTakingTurn, CurrentUnit.Info.Abilities);
                     }
                     break;
                 case FooterAbilityState.Items:
-                    var items = _currentUnit.Info.Equipment.GetItems().Where(i => i.ItemAbility != null).Select(i => i.ItemAbility).ToList();
+                    var items = CurrentUnit.Info.Equipment.GetItems().Where(i => i.ItemAbility != null).Select(i => i.ItemAbility).ToList();
 
                     if (!Enumerable.SequenceEqual(_currentAbilities, items) || forceUpdate)
                     {
@@ -424,7 +442,7 @@ namespace MortalDungeon.Game.UI
                     }
                     break;
                 case FooterAbilityState.Consumables:
-                    var consumables = _currentUnit.Info.Equipment.GetConsumables().Where(i => i.ItemAbility != null).Select(i => i.ItemAbility).ToList();
+                    var consumables = CurrentUnit.Info.Equipment.GetConsumables().Where(i => i.ItemAbility != null).Select(i => i.ItemAbility).ToList();
 
                     if (!Enumerable.SequenceEqual(_currentAbilities, consumables) || forceUpdate)
                     {
@@ -435,22 +453,52 @@ namespace MortalDungeon.Game.UI
             #endregion
 
             #region Buffs
-            if (!Enumerable.SequenceEqual(_currentBuffs, _currentUnit.Info.Buffs) || forceUpdate)
+            if (!Enumerable.SequenceEqual(_currentBuffs, CurrentUnit.Info.Buffs) || forceUpdate)
             {
                 _currentBuffs.Clear();
                 CreateBuffIcons(isPlayerUnitTakingTurn);
             }
             #endregion
-
-            ForceTreeRegeneration();
-
-            _updatingFooterInfo = false;
-            if (_updateAction != null) 
-            {
-                _updateAction.Invoke();
-            }
         }
 
+        public void PopulateMultiUnitFooter()
+        {
+            var castingUnit = Scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
+
+
+            if (castingUnit != null)
+            {
+                var selectedUnits = Scene._selectedUnits.ToHashSet();
+
+                List<Ability> abilities = new List<Ability>();
+
+                #region Group move
+                GroupMove move = new GroupMove(castingUnit);
+                abilities.Add(move);
+                #endregion
+
+                #region Create/dissolve group
+                //bool wholeParty = true;
+                //foreach(var partyUnit in PlayerParty.UnitsInParty)
+                //{
+                //    if (!selectedUnits.Contains(partyUnit))
+                //    {
+                //        wholeParty = false;
+                //        break;
+                //    }
+                //}
+
+                //if (wholeParty)
+                //{
+                //    GroupCreate create = new GroupCreate(castingUnit);
+                //    abilities.Add(create);
+                //}
+                #endregion
+
+                CreateAbilityIcons(true, abilities);
+            }
+
+        }
 
         public override void OnResize()
         {
@@ -535,13 +583,13 @@ namespace MortalDungeon.Game.UI
             {
                 _currentAbilities.Add(ability);
                 string hotkey = null;
-                if (_currentUnit.AI.ControlType == ControlType.Controlled)
+                if (CurrentUnit.AI.ControlType == ControlType.Controlled)
                 {
                     hotkey = (count + 1).ToString();
                 }
 
                 Icon abilityIcon = ability.GenerateIcon(iconSize, true,
-                    _currentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
+                    CurrentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
                     false, null, isPlayerUnitTakingTurn && ability.CanCast() ? hotkey : null, showCharges: true);
 
                 int currIndex = count;
@@ -581,7 +629,7 @@ namespace MortalDungeon.Game.UI
                 {
                     if (isPlayerUnitTakingTurn && ability.CanCast())
                     {
-                        Scene.SelectAbility(ability, _currentUnit);
+                        Scene.SelectAbility(ability, CurrentUnit);
                     }
                 };
 
@@ -617,7 +665,7 @@ namespace MortalDungeon.Game.UI
                 {
                     if (numPressed == currIndex && isPlayerUnitTakingTurn && ability.CanCast() && _currentAbilities.Count > 0)
                     {
-                        Scene.SelectAbility(ability, _currentUnit);
+                        Scene.SelectAbility(ability, CurrentUnit);
                     }
 
                     if (numPressed == currIndex && !isPlayerUnitTakingTurn && Scene.CurrentUnit != null
@@ -627,9 +675,7 @@ namespace MortalDungeon.Game.UI
                     }
                 }
 
-                _selectAbilityByNumList.Add(currIndex, selectAbilityByNum);
-
-
+                _selectAbilityByNumList.AddOrSet(currIndex, selectAbilityByNum);
 
 
                 void cleanUp(GameObject obj)
@@ -683,7 +729,7 @@ namespace MortalDungeon.Game.UI
             List<Icon> icons = new List<Icon>();
             int count = 0;
             int delimiter = -1;
-            foreach (Buff buff in _currentUnit.Info.Buffs)
+            foreach (Buff buff in CurrentUnit.Info.Buffs)
             {
                 if (buff.Hidden)
                     continue;

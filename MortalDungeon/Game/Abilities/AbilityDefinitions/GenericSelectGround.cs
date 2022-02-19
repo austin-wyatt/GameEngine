@@ -26,7 +26,7 @@ namespace MortalDungeon.Game.Abilities
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
             UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
-            Name = "Generic Select Ground";
+            //Name = "Generic Select Ground";
 
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.QuestionMark, Spritesheets.IconSheet, true);
         }

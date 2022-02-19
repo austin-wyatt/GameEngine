@@ -26,6 +26,19 @@ namespace MortalDungeon.Game.Items
         Consumable_4 = 1024,
     }
 
+    public enum ItemType
+    {
+        BasicItem,
+        CraftingComponent,
+        Weapon,
+        Trinket,
+        Boots,
+        Gloves,
+        Armor,
+        Jewelry,
+        Consumable
+    }
+
     public enum EquipItemError
     {
         None,
@@ -39,7 +52,16 @@ namespace MortalDungeon.Game.Items
     {
         [XmlIgnore]
         public Dictionary<EquipmentSlot, Item> EquippedItems = new Dictionary<EquipmentSlot, Item>();
-        public EquipmentSlot AvailableSlots = EquipmentSlot.Consumable_1 | EquipmentSlot.Consumable_2 | EquipmentSlot.Weapon_1;
+
+        [XmlIgnore]
+        public EquipmentSlot AvailableSlots = (EquipmentSlot)2047;
+
+        [XmlElement("AvailableSlots")]
+        public int _availableSlot
+        {
+            get { return (int)AvailableSlots; }
+            set { AvailableSlots = (EquipmentSlot)value; }
+        }
 
         [XmlIgnore]
         public Unit Unit;
@@ -52,10 +74,9 @@ namespace MortalDungeon.Game.Items
 
         public EquipItemError EquipItem(Item item, EquipmentSlot slot)
         {
-            //check if equipment slot is available
             Item removedItem;
 
-            if((item.ValidEquipmentSlots & slot) == EquipmentSlot.None)
+            if((item.ItemType.EquipmentSlot() & slot) == EquipmentSlot.None)
             {
                 return EquipItemError.InvalidEquipmentSlot;
             }
@@ -69,6 +90,11 @@ namespace MortalDungeon.Game.Items
 
                 EquippedItems.AddOrSet(slot, item);
                 item.OnEquipped();
+
+                if (Unit.Info.PartyMember)
+                {
+                    PlayerParty.Inventory.RemoveItemFromInventory(item);
+                }
             }
             else
             {
@@ -82,6 +108,13 @@ namespace MortalDungeon.Game.Items
                 removedItem.OnUnequipped();
 
                 PlayerParty.Inventory.AddItemToInventory(removedItem);
+            }
+            else if(removedItem != null)
+            {
+                removedItem.EquipmentHandle = null;
+                removedItem.OnUnequipped();
+
+                Unit.Info.Inventory.AddItemToInventory(removedItem);
             }
 
             return EquipItemError.None;
@@ -119,7 +152,7 @@ namespace MortalDungeon.Game.Items
 
             foreach (var kvp in EquippedItems)
             {
-                if (kvp.Key >= EquipmentSlot.Consumable_1)
+                if (kvp.Value.ItemType == ItemType.Consumable)
                 {
                     items.Add(kvp.Value);
                 }
@@ -135,7 +168,7 @@ namespace MortalDungeon.Game.Items
         {
             EquippedItems.Clear();
 
-            for (int i = 0; i < _equippedItems.Keys.Count; i++)
+            for (int i = 0; i < (_equippedItems?.Keys.Count ?? 0); i++)
             {
                 Item item = _equippedItems.Values[i].GetItemFromEntry();
 

@@ -14,13 +14,14 @@ namespace MortalDungeon.Game.Abilities
 {
     public class BonyBash : Ability
     {
-        public BonyBash(Unit castingUnit, int range = 1, float damage = 3)
+        public BonyBash() { }
+        public BonyBash(Unit castingUnit)
         {
             Type = AbilityTypes.MeleeAttack;
             DamageType = DamageType.Blunt;
-            Range = range;
+            Range = 1;
             CastingUnit = castingUnit;
-            Damage = damage;
+            Damage = 3;
             ActionCost = 3;
 
             CastingMethod |= CastingMethod.BruteForce | CastingMethod.Weapon;
@@ -31,13 +32,10 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            BasicAbility = true;
+            Name = new Serializers.TextInfo(3, 3);
+            Description = new Serializers.TextInfo(4, 3);
 
-            Name = "Bony Bash";
-
-            _description = "Bop.";
-
-            Icon = new Icon(Icon.DefaultIconSize, Character.B, Spritesheets.CharacterSheet, true);
+            SetIcon(Character.B, Spritesheets.CharacterSheet);
 
             AbilityClass = AbilityClass.Skeleton;
         }

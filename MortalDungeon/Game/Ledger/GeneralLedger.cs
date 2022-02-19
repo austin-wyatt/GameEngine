@@ -52,6 +52,26 @@ namespace MortalDungeon.Game
             }
         }
 
+        public static void SetStateValue(long id, long hash, int data)
+        {
+            if (data < 0)
+            {
+                return; //put instructions here
+            }
+
+            if (LedgeredGeneralState.TryGetValue(id, out var n))
+            {
+                n.SetStateValue(hash, data);
+            }
+            else
+            {
+                GeneralLedgerNode node = new GeneralLedgerNode() { ID = id };
+                LedgeredGeneralState.Add(id, node);
+
+                node.SetStateValue(hash, data);
+            }
+        }
+
         public static void RemoveStateValue(StateIDValuePair stateValue)
         {
             if (LedgeredGeneralState.TryGetValue(stateValue.StateID, out var n))

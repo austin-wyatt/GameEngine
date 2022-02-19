@@ -351,6 +351,11 @@ namespace MortalDungeon.Engine_Classes
             Render = render;
         }
 
+        public virtual void SetTextureLoaded(bool textureLoaded)
+        {
+            TextureLoaded = textureLoaded;
+        }
+
         private int _animationID = 0;
 
         public int NextAnimationID 

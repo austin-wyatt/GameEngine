@@ -8,6 +8,7 @@ using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Abilities.AbilityDefinitions;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Structures;
@@ -29,6 +30,8 @@ namespace MortalDungeon.Game.Tiles
 
     public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
+        Selection = 2,
+
         Stone_1 = 20,
         Stone_2 = 21,
         Stone_3 = 22,
@@ -77,18 +80,16 @@ namespace MortalDungeon.Game.Tiles
         public bool Outline = false; //whether the tile should be outline on the dynamic texture
         public bool NeverOutline = false; //whether this tile should never be outlined (used for contiguous tiles like water)
 
-        public Dictionary<UnitTeam, bool> InFog = new Dictionary<UnitTeam, bool>();
+        //public Dictionary<UnitTeam, bool> InFog = new Dictionary<UnitTeam, bool>();
         public bool Selected = false;
 
-        public Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
+        //public Dictionary<UnitTeam, bool> Explored = new Dictionary<UnitTeam, bool>();
 
         private Vector4 _fogColorOffset = new Vector4(0.5f, 0.5f, 0.5f, 0);
 
         public BaseObject _tileObject;
 
-        public BaseTile AttachedTile; //for selection tiles 
         public Structure Structure;
-        public Unit UnitOnTile;
 
         public Cliff Cliff;
 
@@ -99,14 +100,12 @@ namespace MortalDungeon.Game.Tiles
 
         public bool Updating = false;
 
-        public List<TileEffect> TileEffects = new List<TileEffect>();
-
 
         public new bool HasContextMenu = true;
 
         public BaseTile()
         {
-            FillExploredDictionary();
+            //FillExploredDictionary();
         }
         public BaseTile(Vector3 position, TilePoint point)
         {
@@ -139,7 +138,7 @@ namespace MortalDungeon.Game.Tiles
 
             //_tileObject.BaseFrame.ScaleAddition(1);
 
-            FillExploredDictionary();
+            //FillExploredDictionary();
             SetPosition(position);
         }
 
@@ -157,87 +156,50 @@ namespace MortalDungeon.Game.Tiles
             CurrentAnimation = type;
         }
 
-        public Vector4 SetFogColor()
-        {
-            SetColor(DefaultColor - _fogColorOffset);
-            return DefaultColor - _fogColorOffset;
-        }
 
-        protected void FillExploredDictionary()
+        public bool InFog(UnitTeam team)
         {
-            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
+            if (Properties.AlwaysVisible || (VisionManager.RevealAll && team == VisionManager.Scene.VisibleTeam && !Properties.MustExplore))
+                return false;
+
+            if (VisionManager.ConsolidatedVision.TryGetValue(team, out var dict))
             {
-                //Explored.Add(team, false);
-                Explored.Add(team, true);
-                InFog.Add(team, true);
-            }
-        }
-
-        private static _Color _fogColor = new _Color(0.5f, 0.5f, 0.5f, 0.5f);
-        //returns a bool indicating whether the tile should/has been updated
-        public bool SetFog(bool inFog, UnitTeam team = UnitTeam.PlayerUnits)
-        {
-            bool updated = false;
-
-            if (inFog != InFog[team])
-            {
-                InFog[team] = inFog;
-
-                var scene = GetScene();
-
-                updated = scene.VisibleTeam == team;
-
-                if (team == scene.VisibleTeam && !scene.ContextManager.GetFlag(GeneralContextFlags.ClearingTeamVision))
+                if(dict.TryGetValue(TilePoint, out bool value))
                 {
-                    Update();
-                }
-
-                if (inFog && !Explored[team])
-                {
-                    Outline = false;
-                }
-                else
-                {
-                    Outline = !NeverOutline;
+                    return !value;
                 }
             }
 
-            return updated;
+            return true;
         }
 
         public bool InVision(UnitTeam team)
         {
-            Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(this);
-
-            return VisionMap.InVision(clusterPos.X, clusterPos.Y, team);
+            return !InFog(team);
         }
+
+        public bool Explored(UnitTeam team)
+        {
+            return true;
+        }
+
 
         public void SetExplored(bool explored = true, UnitTeam team = UnitTeam.PlayerUnits)
         {
-            if (explored != Explored[team])
-            {
-                Explored[team] = explored;
+            //if (explored != Explored[team])
+            //{
+            //    Explored[team] = explored;
 
-                if(team == GetScene().VisibleTeam)
-                {
-                    Update();
-                }
-            }
+            //    if(team == GetScene().VisibleTeam)
+            //    {
+            //        Update();
+            //    }
+            //}
         }
 
         public void SetHovered(bool hovered)
         {
             Hovered = hovered;
-
-            //if (hovered)
-            //{
-            //    _tileObject.OutlineParameters.OutlineThickness = _tileObject.OutlineParameters.BaseOutlineThickness;
-            //    _tileObject.OutlineParameters.OutlineColor = Colors.Red;
-            //}
-            //else
-            //{
-            //    _tileObject.OutlineParameters.OutlineThickness = 0;
-            //}
         }
 
         public void SetSelected(bool selected)
@@ -279,25 +241,33 @@ namespace MortalDungeon.Game.Tiles
 
         public void OnSteppedOn(Unit unit) 
         {
-            for(int i = 0; i < TileEffects.Count; i++) 
+            foreach(var effect in TileEffectManager.GetTileEffectsOnTilePoint(this))
             {
-                TileEffects[i].OnSteppedOn(unit, this);
+                effect.OnSteppedOn(unit, this);
+            }
+        }
+
+        public void OnSteppedOff(Unit unit)
+        {
+            foreach (var effect in TileEffectManager.GetTileEffectsOnTilePoint(this))
+            {
+                effect.OnSteppedOff(unit, this);
             }
         }
 
         public void OnTurnStart(Unit unit)
         {
-            for (int i = 0; i < TileEffects.Count; i++)
+            foreach (var effect in TileEffectManager.GetTileEffectsOnTilePoint(this))
             {
-                TileEffects[i].OnTurnStart(unit, this);
+                effect.OnTurnStart(unit, this);
             }
         }
 
         public void OnTurnEnd(Unit unit)
         {
-            for (int i = 0; i < TileEffects.Count; i++)
+            foreach (var effect in TileEffectManager.GetTileEffectsOnTilePoint(this))
             {
-                TileEffects[i].OnTurnEnd(unit, this);
+                effect.OnTurnEnd(unit, this);
             }
         }
 
@@ -313,11 +283,10 @@ namespace MortalDungeon.Game.Tiles
                 RemoveStructure(Structure);
             }
 
-            if (UnitOnTile != null) 
+            foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(TilePoint))
             {
-                GetScene().RemoveUnit(UnitOnTile);
-                UnitOnTile.CleanUp();
-                UnitOnTile = null;
+                GetScene().RemoveUnit(unit);
+                unit?.CleanUp();
             }
         }
 
@@ -364,7 +333,7 @@ namespace MortalDungeon.Game.Tiles
             if (scene.CurrentUnit == null)
                 return "";
 
-            if (tile.InFog[scene.CurrentUnit.AI.Team] && !tile.Explored[scene.CurrentUnit.AI.Team])
+            if (tile.InFog(scene.CurrentUnit.AI.Team) && !tile.Explored(scene.CurrentUnit.AI.Team))
             {
                 tooltip = "Unexplored tile";
             }
@@ -424,7 +393,7 @@ namespace MortalDungeon.Game.Tiles
             if (scene.CurrentUnit != null)
             {
                 int distance = TileMap.GetDistanceBetweenPoints(scene.CurrentUnit.Info.Point, TilePoint);
-                isCurrentUnit = scene.CurrentUnit.AI.Team == UnitTeam.PlayerUnits && scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
+                isCurrentUnit = scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
 
                 int interactDistance = 5;
                 int inspectDistance = 10;
@@ -436,10 +405,14 @@ namespace MortalDungeon.Game.Tiles
                     objects.Add(Structure);
                 }
 
-                if (UnitOnTile != null && UnitOnTile.HasContextMenu && distance <= inspectDistance && isCurrentUnit)
+                foreach (var unit in UnitPositionManager.GetUnitsOnTilePoint(TilePoint))
                 {
-                    objects.Add(UnitOnTile);
+                    if (unit.HasContextMenu && distance <= inspectDistance && isCurrentUnit)
+                    {
+                        objects.Add(unit);
+                    }
                 }
+                    
 
                 if (HasContextMenu && isCurrentUnit)
                 {
@@ -449,11 +422,46 @@ namespace MortalDungeon.Game.Tiles
             }
 
             #region right click movement
-            if (scene.CurrentUnit != null && isCurrentUnit) 
+            if (scene._selectedUnits.Count > 1)
+            {
+                var mainUnit = scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
+
+                if (mainUnit != null)
+                {
+                    if (scene.ContextManager.GetFlag(GeneralContextFlags.RightClickMovementEnabled))
+                    {
+                        GroupMove groupMove = new GroupMove(mainUnit);
+                        groupMove.OnTileClicked(TileMap, this);
+
+                        //if (unit.Info._movementAbility.Moving)
+                        //{
+                        //    unit.Info._movementAbility.CancelMovement();
+                        //}
+                        //else
+                        //{
+                        //    unit.Info._movementAbility.MoveToTile(this);
+                        //}
+                    }
+                    else
+                    {
+                        (Tooltip moveMenu, UIList moveList) = UIHelpers.GenerateContextMenuWithList("Move");
+
+                        moveList.AddItem("Move here", (item) =>
+                        {
+                            scene.CloseContextMenu();
+                            GroupMove groupMove = new GroupMove(mainUnit);
+                            groupMove.OnTileClicked(TileMap, this);
+                        });
+
+                        scene.OpenContextMenu(moveMenu);
+                    }
+                }
+            }
+            else if (scene._selectedUnits.Count == 1 && isCurrentUnit) 
             {
                 if (scene.ContextManager.GetFlag(GeneralContextFlags.RightClickMovementEnabled))
                 {
-                    Unit unit = scene.CurrentUnit;
+                    Unit unit = scene._selectedUnits[0];
                     if (unit.Info._movementAbility.Moving)
                     {
                         unit.Info._movementAbility.CancelMovement();
@@ -467,7 +475,7 @@ namespace MortalDungeon.Game.Tiles
                 {
                     (Tooltip moveMenu, UIList moveList) = UIHelpers.GenerateContextMenuWithList("Move");
 
-                    Unit unit = scene.CurrentUnit;
+                    Unit unit = scene._selectedUnits[0]; ;
                     moveList.AddItem("Move here", (item) =>
                     {
                         scene.CloseContextMenu();
@@ -479,31 +487,6 @@ namespace MortalDungeon.Game.Tiles
             }
             #endregion
 
-
-            //if (objects.Count > 1)
-            //{
-            //    (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList("Options");
-
-            //    for (int i = 0; i < objects.Count; i++)
-            //    {
-            //        int index = i;
-            //        list.AddItem(objects[i].Name, (item) =>
-            //        {
-            //            scene.CloseContextMenu();
-            //            scene.OpenContextMenu(objects[index].CreateContextMenu());
-
-            //            Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.75f, 0.75f) };
-            //            sound.Play();
-            //        });
-            //    }
-
-            //    scene.OpenContextMenu(menu);
-            //}
-            //else if (objects.Count == 1) 
-            //{
-            //    scene.CloseContextMenu();
-            //    scene.OpenContextMenu(objects[0].CreateContextMenu());
-            //}
 
             Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
             sound.Play();
@@ -654,6 +637,7 @@ namespace MortalDungeon.Game.Tiles
         public List<TileOverlay> TileOverlays = new List<TileOverlay>();
 
         public bool MustExplore = false;
+        public bool AlwaysVisible = false;
 
         public float DamageOnEnter = 0;
         public float Slow = 0;

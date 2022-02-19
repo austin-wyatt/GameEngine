@@ -76,7 +76,7 @@ namespace MortalDungeon.Game.Units
 
             TileOffset = new Vector3(0, -Info.TileMapPosition.GetDimensions().Y / 2, 0.2f);
 
-            SetPosition(Info.TileMapPosition.Position + TileOffset);
+            SetPositionOffset(Info.TileMapPosition.Position);
 
 
             SelectionTile.UnitOffset.Y += Info.TileMapPosition.GetDimensions().Y / 2;

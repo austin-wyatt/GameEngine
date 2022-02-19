@@ -9,6 +9,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,6 +44,8 @@ namespace MortalDungeon.Engine_Classes
         public bool CameraPerspective = false;
 
         public new ObjectType ObjectType = ObjectType.UI;
+
+        public new BaseObject BaseObject => BaseObjects.Count > 0 ? BaseObjects[0] : BaseComponent != null ? BaseComponent.BaseObject : null;
 
         public UIObject BaseComponent;
         public BaseObject _baseObject;
@@ -171,6 +174,7 @@ namespace MortalDungeon.Engine_Classes
         public bool Focused = false; //determines whether this object should be taking key presses
 
         public UIObject Parent = null;
+        public UIObject RootHandle = null;
 
         protected Vector3 _originOffset = default;
         protected bool _scaleAspectRatio = true;
@@ -248,6 +252,8 @@ namespace MortalDungeon.Engine_Classes
 
             Size = size;
             SetOrigin(aspectRatio, Size);
+
+            Update();
         }
 
         public override void ScaleAll(float f)
@@ -255,6 +261,7 @@ namespace MortalDungeon.Engine_Classes
             ScaleAllRecursive(this, f);
 
             Scale *= f;
+
         }
         private void ScaleAllRecursive(UIObject uiObj, float f) 
         {
@@ -267,6 +274,8 @@ namespace MortalDungeon.Engine_Classes
             {
                 obj.ScaleAllRecursive(obj, f);
             });
+
+            Update();
         }
 
         public override void ScaleAddition(float f)
@@ -288,6 +297,8 @@ namespace MortalDungeon.Engine_Classes
             {
                 obj.ScaleAdditionRecursive(obj, f);
             });
+
+            Update();
         }
 
         public override void AddBaseObject(BaseObject obj)
@@ -295,6 +306,8 @@ namespace MortalDungeon.Engine_Classes
             obj.EnableLighting = false;
 
             BaseObjects.Add(obj);
+
+            Update();
         }
 
         public virtual void SetInlineColor(Vector4 color) 
@@ -317,7 +330,7 @@ namespace MortalDungeon.Engine_Classes
                     //Task.Run(OnHoverEnd);
                     OnHoverEnd();
                 }
-                else if (InsideBounds(MouseCoordinates, camera))
+                else if (ManagerHandle.ExclusiveFocusCheckObject(this) && InsideBounds(MouseCoordinates, camera))
                 {
                     optionalAction?.Invoke(this);
 
@@ -438,6 +451,8 @@ namespace MortalDungeon.Engine_Classes
 
                 Children[i].SetPosition(childPos - deltaPos);
             }
+
+            Update();
         }
 
         public void SetZPosition(float zPos)
@@ -498,6 +513,29 @@ namespace MortalDungeon.Engine_Classes
              SetPosition(position - anchorOffset);
         }
 
+        /// <summary>
+        /// Shorthand for SetPositionFromAnchor
+        /// </summary>
+        public void SAP(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center)
+        {
+            SetPositionFromAnchor(position, anchor);
+        }
+
+        /// <summary>
+        /// Shorthand for GetAnchorPosition
+        /// </summary>
+        public Vector3 GAP(UIAnchorPosition anchorPosition)
+        {
+            return GetAnchorPosition(anchorPosition);
+        }
+
+        /// <summary>
+        /// Shorthand for GetAnchorPosition
+        /// </summary>
+        public Vector3 GAP(UIAnchorPosition anchorPosition, Vector3 position)
+        {
+            return GetAnchorPosition(anchorPosition, position);
+        }
 
         public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition) 
         {
@@ -621,6 +659,8 @@ namespace MortalDungeon.Engine_Classes
             //    }
             //}
 
+            UIObject root = this;
+
 
             void queueChildren(UIObject parentObject, int depth, int childIndex) 
             {
@@ -630,6 +670,8 @@ namespace MortalDungeon.Engine_Classes
 
                 parentObject._depth = depth;
                 parentObject._childIndex = childIndex;
+
+                parentObject.RootHandle = root;
 
                 //float zPos = parentObject.ZPos;
 
@@ -719,19 +761,29 @@ namespace MortalDungeon.Engine_Classes
 
             lock (_reverseTreeLock)
             {
-                for(int i = ReverseTree.Count - 1; i >= 0; i--)
+                for(int i = 0; i < ReverseTree.Count; i++)
                 {
                     ReverseTree[i].SetZPosition(currVal);
 
-                    //currVal += 0.000000001f;
-                    currVal += 0.00000015f;
-                    //currVal += 0.00001f;
+                    currVal -= 0.00000015f;
                 }
+
+                //for(int i = ReverseTree.Count - 1; i >= 0; i--)
+                //{
+                //    ReverseTree[i].SetZPosition(currVal);
+
+                //    //currVal += 0.000000001f;
+                //    //currVal += 0.00000015f;
+                //    currVal -= 0.00000015f;
+                //    //currVal += 0.00001f;
+                //}
             }
         }
 
         public override void CleanUp()
         {
+            RootHandle = null;
+
             Children.ForEach(child =>
             {
                 child.CleanUp();
@@ -771,7 +823,7 @@ namespace MortalDungeon.Engine_Classes
                 }
                 else
                 {
-                    uiObj.ZIndex = 0;
+                    uiObj.ZIndex = 1;
                 }
 
                 Children.Sort();
@@ -887,6 +939,31 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        private void UpdateInstancedRenderData()
+        {
+            //Window.RenderEnd -= UpdateInstancedRenderData;
+            //ManagerHandle.UpdateTopLevelObject(this);
+        }
+
+        public void Update()
+        {
+            //if (RootHandle == null)
+            //    return;
+
+            //if (RootHandle == this)
+            //{
+            //    if (ManagerHandle != null)
+            //    {
+            //        Window.RenderEnd -= UpdateInstancedRenderData;
+            //        Window.RenderEnd += UpdateInstancedRenderData;
+            //    }
+            //}
+            //else
+            //{
+            //    RootHandle.Update();
+            //}
+        }
+
         public void SetDisabled(bool disable) 
         {
             ForEach(obj => obj.OnDisabled(disable));
@@ -948,6 +1025,22 @@ namespace MortalDungeon.Engine_Classes
                 DefaultColor = color;
 
             base.SetColor(color);
+
+            Update();
+        }
+
+        public override void SetRender(bool render)
+        {
+            base.SetRender(render);
+
+            Update();
+        }
+
+        public override void SetTextureLoaded(bool textureLoaded)
+        {
+            base.SetTextureLoaded(textureLoaded);
+
+            Update();
         }
 
 
@@ -1130,6 +1223,12 @@ namespace MortalDungeon.Engine_Classes
             SetColor(color, reason);
         }
 
+        public void SetColorOverride(ColorOverride colOverride)
+        {
+            _colorOverride = colOverride;
+            EvaluateColor();
+        }
+
         public virtual void UpdateScissorBounds()
         {
             Vector3 botLeft = BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
@@ -1149,12 +1248,26 @@ namespace MortalDungeon.Engine_Classes
 
         public void LoadTexture(UIObject obj)
         {
-            Renderer.LoadTextureFromUIObject(obj);
+            void loadTexture()
+            {
+                Window.RenderEnd -= loadTexture;
+
+                Renderer.LoadTextureFromUIObject(obj);
+            }
+
+            Window.RenderEnd += loadTexture;
         }
 
         public void LoadTexture()
         {
-            Renderer.LoadTextureFromUIObject(this);
+            void loadTexture()
+            {
+                Window.RenderEnd -= loadTexture;
+
+                Renderer.LoadTextureFromUIObject(this);
+            }
+
+            Window.RenderEnd += loadTexture;
         }
         protected static void ValidateObject(UIObject obj) 
         {
@@ -1162,6 +1275,13 @@ namespace MortalDungeon.Engine_Classes
                 throw new Exception("Invalid base fields for UIObject " + obj.ObjectID);
             else
                 obj.LoadTexture();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is UIObject @object &&
+                   base.Equals(obj) &&
+                   _objectID == @object._objectID;
         }
     }
 

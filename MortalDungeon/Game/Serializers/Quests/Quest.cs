@@ -1,13 +1,15 @@
 ﻿using MortalDungeon.Game.Ledger;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Serializers
 {
     [Serializable]
-    public class Quest
+    public class Quest : ISerializable
     {
         public int ID = 0;
 
@@ -20,10 +22,19 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("Qsn")]
         public string Name = "";
         [XmlElement("QsHe")]
-        public int Title = 0;
+        public TextInfo Title = new TextInfo();
 
         [XmlElement("QsBo")]
-        public int Body = 0;
+        public TextInfo Body = new TextInfo();
+
+        [XmlElement("Qsrew")]
+        public QuestReward QuestReward = new QuestReward();
+
+        [XmlElement("QsS")]
+        public double Scale = 1;
+
+        [XmlElement("QsPs")]
+        public Vector2 _position = new Vector2();
 
         public Quest() { }
 
@@ -66,6 +77,36 @@ namespace MortalDungeon.Game.Serializers
                 Ledgers.EvaluateInstruction(obj.Instruction);
             }
         }
+
+        public void PrepareForSerialization()
+        {
+            QuestReward.PrepareForSerialization();
+        }
+
+        public void CompleteDeserialization()
+        {
+            QuestReward.CompleteDeserialization();
+
+            int i = 0;
+
+            foreach (var state in QuestStates)
+            {
+                int j = 0;
+
+                state.Parent = this;
+                state._stateIndex = i;
+
+                foreach (var obj in state.QuestObjectives)
+                {
+                    obj.Parent = state;
+                    obj._objectiveIndex = j;
+
+                    j++;
+                }
+
+                i++;
+            }
+        }
     }
 
     [XmlType(TypeName = "QST")]
@@ -75,16 +116,19 @@ namespace MortalDungeon.Game.Serializers
         public List<QuestObjective> QuestObjectives = new List<QuestObjective>();
 
         [XmlElement("QSt")]
-        public string StateText = "";
+        public string DescriptiveName = "";
 
         [XmlElement("QSte")]
-        public int TextEntry = 0;
+        public TextInfo TextInfo = new TextInfo();
 
         [XmlIgnore]
         public Quest Parent;
 
         [XmlIgnore]
         public int _stateIndex;
+
+        [XmlElement("QSps")]
+        public Vector2 _position = new Vector2();
 
         public QuestState() { }
 
@@ -145,16 +189,19 @@ namespace MortalDungeon.Game.Serializers
         public Instructions Instruction = new Instructions();
 
         [XmlElement("QOn")]
-        public string Name;
+        public string DescriptiveName;
 
         [XmlElement("QOte")]
-        public int TextEntry = 0;
+        public TextInfo TextInfo = new TextInfo();
 
         [XmlIgnore]
         public QuestState Parent;
 
         [XmlIgnore]
         public int _objectiveIndex;
+
+        [XmlElement("QOps")]
+        public Vector2 _position = new Vector2();
 
         public QuestObjective() { }
 

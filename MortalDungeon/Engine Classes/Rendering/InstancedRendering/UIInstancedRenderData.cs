@@ -83,6 +83,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                 instancedRenderData.ItemCount = itemCount;
                 instancedRenderData.VerticesCount = Display.VerticesDrawOrder.Length;
+
+                instancedRenderData.IsValid = true;
             }
 
             for (int i = 0; i < objects.Count; i++)
@@ -106,7 +108,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                             {
                                 if (!usedTextures.ContainsKey(texId))
                                 {
-                                    if(usedTextures.Count > 7)
+                                    if(usedTextures.Count >= 8)
                                     {
                                         recursiveCallList.Add(objects[i]);
                                         continue;

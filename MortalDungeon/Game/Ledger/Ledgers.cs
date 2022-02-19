@@ -137,6 +137,36 @@ namespace MortalDungeon.Game.Ledger
             }
         }
 
+        public static int GetStateValue(StateIDValuePair val)
+        {
+            switch (val.Type)
+            {
+                case (int)LedgerUpdateType.Dialogue:
+                    return DialogueLedger.GetStateValue((int)val.StateID, val.Data) ? 1 : 0;
+                case (int)LedgerUpdateType.Quest:
+                    return QuestLedger.GetStateValue((int)val.StateID, val.Data) ? 1 : 0;
+                case (int)LedgerUpdateType.Feature:
+                    return FeatureLedger.GetFeatureStateValue(val.StateID, (FeatureStateValues)val.ObjectHash);
+                case (int)LedgerUpdateType.GeneralState:
+                    return GeneralLedger.GetStateValue(val.StateID, val.ObjectHash);
+            }
+
+            return 0;
+        }
+
+        public static int GetStateValue(LedgerUpdateType type, int stateId, int objectHash, int data)
+        {
+            StateIDValuePair newStateValue = new StateIDValuePair
+            {
+                Type = (int)type,
+                StateID = stateId,
+                ObjectHash = objectHash,
+                Data = data
+            };
+
+            return GetStateValue(newStateValue);
+        }
+
         public static void ApplyStateValues(List<StateIDValuePair> data)
         {
             foreach (StateIDValuePair val in data)

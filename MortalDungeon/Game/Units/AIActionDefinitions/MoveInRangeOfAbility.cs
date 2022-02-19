@@ -24,7 +24,7 @@ namespace MortalDungeon.Game.Units.AI
 
             List<BaseTile> validTiles = CastingUnit.Info._movementAbility.GetValidTileTargets(Map, Scene._units);
 
-            validTiles = validTiles.FindAll(tile => tile.TileMap.GetDistanceBetweenPoints(tile, TargetedUnit.Info.TileMapPosition) <= Ability.Range);
+            validTiles = validTiles.FindAll(tile => TileMap.GetDistanceBetweenPoints(tile, TargetedUnit.Info.TileMapPosition) <= Ability.Range);
 
             float pathCost = -1;
 

@@ -42,7 +42,7 @@ namespace MortalDungeon.Game.Units
         {
             base.InitializeUnitInfo();
 
-            Info.Species = Species.Skeleton;
+            Info.Species = Species.Undead;
 
             VisionGenerator.Radius = 12;
 
@@ -84,7 +84,7 @@ namespace MortalDungeon.Game.Units
 
             TileOffset = new Vector3(0, -Info.TileMapPosition.GetDimensions().Y / 2, 0.2f);
 
-            SetPosition(Info.TileMapPosition.Position + TileOffset);
+            SetPositionOffset(Info.TileMapPosition.Position);
 
             SelectionTile.UnitOffset.Y += Info.TileMapPosition.GetDimensions().Y / 2;
             SelectionTile.SetPosition(Position);

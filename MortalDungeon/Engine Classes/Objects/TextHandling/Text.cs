@@ -25,7 +25,8 @@ namespace MortalDungeon.Engine_Classes.TextHandling
         /// </summary>
         public float TextScale = 1;
 
-        public static string DEFAULT_FONT = "Moshita Mono";
+        //public static string DEFAULT_FONT = "Moshita Mono";
+        public static string DEFAULT_FONT = "Arial";
 
         public Text(string text, string font, int fontSize, Brush fontColor)
         {
@@ -70,7 +71,6 @@ namespace MortalDungeon.Engine_Classes.TextHandling
                 baseObj.SetPosition(Position);
                 _baseObject = baseObj;
                 _baseObject.RenderData.AlphaThreshold = 0.7f;
-
 
                 AddBaseObject(baseObj);
 
@@ -118,8 +118,17 @@ namespace MortalDungeon.Engine_Classes.TextHandling
             var baseObj = CreateBaseObjectFromSpritesheet(temp, 0);
             baseObj.BaseFrame.CameraPerspective = false;
 
-            TextureLoaded = false;
-            SetRender(false);
+            //TextureLoaded = false;
+            //SetRender(false);
+
+            var oldTexture = _texture;
+
+            if(_texture == null)
+            {
+                TextureLoaded = false;
+                SetRender(false);
+            }
+
 
             var dimensions = TextBuilder.DrawString(TextString, _font, _fontSize, _fontColor, (texture) =>
             {
@@ -132,6 +141,11 @@ namespace MortalDungeon.Engine_Classes.TextHandling
                 if (_cleanedUp)
                 {
                     _texture.Dispose();
+                }
+
+                if(oldTexture != null)
+                {
+                    oldTexture.Dispose();
                 }
             });
 

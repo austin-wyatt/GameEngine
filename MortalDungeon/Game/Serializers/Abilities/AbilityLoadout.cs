@@ -21,7 +21,7 @@ namespace MortalDungeon.Game.Serializers
         public string Name = "";
 
         [XmlElement("AId")]
-        public int Id = 0;
+        public int Id = -1;
 
         public static AbilityLoadout GenerateLoadoutFromTree(AbilityTreeType type, int abilityCount = 2)
         {
@@ -29,7 +29,7 @@ namespace MortalDungeon.Game.Serializers
 
             if (AbilityTrees.FindTree(type, out var tree))
             {
-                loadout.Items.Add(new AbilityLoadoutItem(type, isBasic: true));
+                loadout.Items.Add(new AbilityLoadoutItem(type));
                 abilityCount--;
 
                 List<int> nodeIds = new List<int>();
@@ -57,21 +57,14 @@ namespace MortalDungeon.Game.Serializers
             foreach (var item in Items)
             {
                 if (AbilityTrees.FindTree(item.AbilityTreeType, out var tree))
-                {
-                    if (item.BasicAbility > 0)
+                {               
+                    if (tree.GetNodeFromTreeByID(item.NodeID, out var n))
                     {
-                        tree.BasicAbility[0].ApplyToUnit(unit, item);
+                        n.ApplyToUnit(unit, item);
                     }
                     else if (item.NodeName != "")
                     {
                         if (tree.GetNodeFromTreeByName(item.NodeName, out var node))
-                        {
-                            node.ApplyToUnit(unit, item);
-                        }
-                    }
-                    else if (item.NodeID != -1)
-                    {
-                        if (tree.GetNodeFromTreeByID(item.NodeID, out var node))
                         {
                             node.ApplyToUnit(unit, item);
                         }
@@ -81,6 +74,17 @@ namespace MortalDungeon.Game.Serializers
         }
 
         public AbilityLoadout() { }
+
+        public AbilityLoadout(AbilityLoadout loadout)
+        {
+            foreach(var item in loadout.Items)
+            {
+                Items.Add(new AbilityLoadoutItem(item));
+            }
+
+            Name = loadout.Name;
+            Id = loadout.Id;
+        }
     }
 
     [XmlType(TypeName = "ALI")]
@@ -93,13 +97,14 @@ namespace MortalDungeon.Game.Serializers
         public int NodeID = -1;
         [XmlElement("Ana")]
         public string NodeName = "";
-        [XmlElement("Ab")]
-        public int BasicAbility = 0;
 
         [XmlElement("Acc")]
         public int CurrentCharges = -1;
         [XmlElement("ALm")]
         public int MaxCharges = -1;
+
+        [XmlElement("ALmod")]
+        public int Modifier = 0;
 
 
 
@@ -111,23 +116,40 @@ namespace MortalDungeon.Game.Serializers
 
         public AbilityLoadoutItem() { }
 
-        public AbilityLoadoutItem(AbilityTreeType type, int nodeID = -1, string name = "", bool isBasic = false)
+        public AbilityLoadoutItem(AbilityTreeType type, int nodeID = -1, string name = "")
         {
             AbilityTreeType = type;
             NodeID = nodeID;
             NodeName = name;
-            BasicAbility = isBasic ? 1 : 0;
+        }
+
+        public AbilityLoadoutItem(AbilityTreeNode node)
+        {
+            AbilityTreeType = node.TreeType;
+            NodeID = node.ID;
+            NodeName = node.Name;
+        }
+
+        public AbilityLoadoutItem(AbilityLoadoutItem item)
+        {
+            AbilityTreeType = item.AbilityTreeType;
+            NodeID = item.NodeID;
+            NodeName = item.NodeName;
+            CurrentCharges = item.CurrentCharges;
+            MaxCharges = item.MaxCharges;
+            Modifier = item.Modifier;
         }
 
         public Ability GetAbilityFromLoadoutItem(Unit unit)
         {
             if (AbilityTrees.FindTree(AbilityTreeType, out var tree))
             {
-                if (BasicAbility > 0)
-                {
-                    return tree.BasicAbility[0].CreateAbility(unit);
-                }
-                else if (NodeName != "")
+                //if (BasicAbility > 0)
+                //{
+                //    return tree.BasicAbility[0].CreateAbility(unit);
+                //}
+                //else if (NodeName != "")
+                if (NodeName != "")
                 {
                     if (tree.GetNodeFromTreeByName(NodeName, out var node))
                     {

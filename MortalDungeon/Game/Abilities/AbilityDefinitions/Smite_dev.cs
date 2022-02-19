@@ -17,14 +17,15 @@ namespace MortalDungeon.Game.Abilities
 {
     public class Smite_dev : Ability
     {
-        public Smite_dev(Unit castingUnit, int range = 15, int minRange = 0, float damage = 10)
+        public Smite_dev() { }
+        public Smite_dev(Unit castingUnit)
         {
             Type = AbilityTypes.RangedAttack;
             DamageType = DamageType.Piercing;
-            Range = range;
-            MinRange = minRange;
+            Range = 15;
+            MinRange = 0;
             CastingUnit = castingUnit;
-            Damage = damage;
+            Damage = 10;
 
             ActionCost = 0;
 
@@ -37,11 +38,11 @@ namespace MortalDungeon.Game.Abilities
             UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
 
 
-            Name = "Smite";
+            Name = new Serializers.TextInfo(11, 3);
+            Description = new Serializers.TextInfo(12, 3);
 
-            _description = "Kills enemy";
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.Circle, Spritesheets.IconSheet, true);
+            SetIcon(IconSheetIcons.Circle, Spritesheets.IconSheet);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -51,7 +52,7 @@ namespace MortalDungeon.Game.Abilities
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
             //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-            List<Unit> unitsInRadius = VisionMap.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
+            List<Unit> unitsInRadius = VisionHelpers.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
 
             TrimUnits(unitsInRadius, false, MinRange);
 
@@ -66,23 +67,18 @@ namespace MortalDungeon.Game.Abilities
 
             bool inRange = false;
 
-            var tempVision = new VisionMap.TemporaryVisionParams()
-            {
-                Unit = CastingUnit,
-                TemporaryPosition = point
-            };
-
-            List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene, new List<VisionMap.TemporaryVisionParams>() { tempVision });
-
-            Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(unit.Info.TileMapPosition);
-
             if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange)
             {
                 return false;
             }
 
-            if ((teamVision.Exists(p => p == clusterPos) || VisionMap.InVision(clusterPos.X, clusterPos.Y, CastingUnit.AI.Team))
-                && VisionMap.TargetInVision(point, unit.Info.TileMapPosition, (int)Range, Scene))
+            var tempVision = new TemporaryVisionParams()
+            {
+                Unit = CastingUnit,
+                TemporaryPosition = point
+            };
+
+            if (VisionHelpers.PointInVision(unit.Info.TileMapPosition, CastingUnit.AI.Team, new List<TemporaryVisionParams>{ tempVision }))
             {
                 return true;
             }

@@ -22,9 +22,9 @@ namespace MortalDungeon.Game.Abilities
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
             UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
-            Name = "Self Cast";
+            //Name = "Self Cast";
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.QuestionMark, Spritesheets.IconSheet, true);
+            SetIcon(IconSheetIcons.QuestionMark, Spritesheets.IconSheet);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)

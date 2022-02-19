@@ -57,6 +57,11 @@ namespace MortalDungeon.Engine_Classes.Audio
             {
                 Buffer.Load(() =>
                 {
+                    if (SoundPlayer.DISPLAY_DEBUG_MESSAGES)
+                    {
+                        Console.WriteLine("Buffer loaded: " + Buffer.Name);
+                    }
+
                     ProcureSource();
                     onFinish?.Invoke();
                 });
@@ -65,7 +70,11 @@ namespace MortalDungeon.Engine_Classes.Audio
             {
                 bool successful = ProcureSource();
 
-                onFinish?.Invoke();
+                if (successful)
+                {
+                    onFinish?.Invoke();
+                }
+                
                 return successful;
             }
 
@@ -74,6 +83,9 @@ namespace MortalDungeon.Engine_Classes.Audio
 
         private bool ProcureSource() 
         {
+            if(SoundPlayer.ActiveSources.Count == SoundPlayer.MAX_SOURCES)
+                return false;
+
             bool successful = SoundPlayer.AssignSourceToSound(this);
 
             if (successful) SetSourceParams();
@@ -102,7 +114,10 @@ namespace MortalDungeon.Engine_Classes.Audio
 
         public void Play()
         {
-            if (Valid) Source.Play();
+            if (Valid) 
+            {
+                Source.Play();
+            }
             else 
             {
                 Prepare(Play);

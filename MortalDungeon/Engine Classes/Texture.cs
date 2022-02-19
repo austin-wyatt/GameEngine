@@ -42,7 +42,7 @@ namespace MortalDungeon.Engine_Classes
             int handle = GL.GenTexture();
 
             // Bind the handle
-            GL.ActiveTexture(TextureUnit.Texture0);
+            //GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
             using (var image = new Bitmap(path))
@@ -95,6 +95,8 @@ namespace MortalDungeon.Engine_Classes
 
             Texture tex = new Texture(handle, name);
 
+            LoadedTextures.Add(tex);
+
             return tex;
         }
 
@@ -104,7 +106,7 @@ namespace MortalDungeon.Engine_Classes
             int handle = GL.GenTexture();
 
             // Bind the handle
-            GL.ActiveTexture(TextureUnit.Texture0);
+            //GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
             var data = bitmap.LockBits(
@@ -142,14 +144,25 @@ namespace MortalDungeon.Engine_Classes
             }
             else
             {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                if (nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+                
             }
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
             Texture tex = new Texture(handle, name);
+
+            LoadedTextures.Add(tex);
 
             return tex;
         }
@@ -160,7 +173,7 @@ namespace MortalDungeon.Engine_Classes
             int handle = GL.GenTexture();
 
             // Bind the handle
-            GL.ActiveTexture(TextureUnit.Texture0);
+            //GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
             
@@ -196,6 +209,8 @@ namespace MortalDungeon.Engine_Classes
                 ImageData = new BitmapImageData(data, imageDimensions)
             };
 
+
+            LoadedTextures.Add(tex);
 
             return tex;
         }
@@ -242,6 +257,11 @@ namespace MortalDungeon.Engine_Classes
         //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         //}
 
+        public static HashSet<Texture> LoadedTextures = new HashSet<Texture>();
+
+        private static int[] HandlesToDispose = new int[500];
+        private static int _handlesToDisposeLength = 0;
+
         public Texture(int glHandle, int name)
         {
             Handle = glHandle;
@@ -259,13 +279,35 @@ namespace MortalDungeon.Engine_Classes
 
         private void _Dispose()
         {
-            GL.DeleteTexture(Handle);
             Window.RenderEnd -= _Dispose;
+            LoadedTextures.Remove(this);
+
+            //GL.DeleteTexture(Handle);
+
+            HandlesToDispose[_handlesToDisposeLength] = Handle;
+
+            _handlesToDisposeLength++;
+            if (_handlesToDisposeLength >= 500)
+            {
+                GL.DeleteTextures(_handlesToDisposeLength, HandlesToDispose);
+                _handlesToDisposeLength = 0;
+            }
         }
         public void Dispose()
         {
             Window.RenderEnd -= _Dispose;
             Window.RenderEnd += _Dispose;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Texture texture &&
+                   Handle == texture.Handle;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Handle);
         }
     }
 }

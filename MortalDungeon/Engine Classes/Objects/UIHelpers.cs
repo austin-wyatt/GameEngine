@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
+using MortalDungeon.Definitions;
 
 namespace MortalDungeon.Engine_Classes
 {
@@ -177,7 +178,7 @@ namespace MortalDungeon.Engine_Classes
 
             void tempScene(SceneEventArgs args)
             {
-                if (args.EventAction != EventAction.CloseTooltip) return;
+                if (args.EventAction != EventHandlerAction.CloseTooltip) return;
 
                 //param.TooltipParent.RemoveChild(tooltip.ObjectID);
                 param.TooltipParent.RemoveChild(tooltipBackground);
@@ -220,7 +221,7 @@ namespace MortalDungeon.Engine_Classes
 
             void tempScene(SceneEventArgs args)
             {
-                if (args.EventAction != EventAction.CloseTooltip) return;
+                if (args.EventAction != EventHandlerAction.CloseTooltip) return;
 
                 baseObject.RemoveChild(tooltip);
                 tooltipParent.HoverEnd -= tempGameObj;
@@ -423,6 +424,28 @@ namespace MortalDungeon.Engine_Classes
             obj.OnCleanUp += onCleanUp;
         }
 
+        public static void AddTimedHoverTooltip(UIObject obj, string header, string body, CombatScene scene)
+        {
+            obj.HasTimedHoverEffect = true;
+            obj.Hoverable = true;
+
+            void timedHover(GameObject _)
+            {
+                var tooltip = GenerateTooltipWithHeader(header, body);
+                CreateToolTip(scene, tooltip, obj, scene._tooltipBlock);
+            }
+
+            obj.TimedHover += timedHover;
+
+            void onCleanUp(GameObject _)
+            {
+                _.OnHoverEnd();
+                obj.TimedHover -= timedHover;
+            }
+
+            obj.OnCleanUp += onCleanUp;
+        }
+
         public static UIObject CreateWindow(UIScale size, string name, UIObject parent, CombatScene scene, 
             bool enforceUniqueness = false, bool createExitButton = true, Action customExitAction = null) 
         {
@@ -448,7 +471,7 @@ namespace MortalDungeon.Engine_Classes
 
             if (createExitButton) 
             {
-                Icon exit = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.CrossedSwords, Spritesheets.IconSheet);
+                Icon exit = new Icon(new UIScale(0.075f, 0.075f), UI_1.Exit, Spritesheets.UISpritesheet_1);
                 exit.Clickable = true;
                 exit.Click += (s, e) =>
                 {
@@ -459,7 +482,7 @@ namespace MortalDungeon.Engine_Classes
 
                     exit.OnHoverEnd();
                 };
-                exit.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopRight);
+                exit.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-5, 5, 0), UIAnchorPosition.TopRight);
 
                 AddTimedHoverTooltip(exit, "Exit", scene);
 
@@ -513,6 +536,165 @@ namespace MortalDungeon.Engine_Classes
 
             scene.Tick -= icon.Tick;
             scene.Tick += icon.Tick;
+        }
+
+        public enum FocusedPopupOptions
+        {
+            Ok,
+            OkCancel,
+            YesNo,
+            YesNoCancel,
+        }
+        public static void CreateFocusedPopup(string text, CombatScene scene, FocusedPopupOptions options, Action okYes, Action no = null, Action cancel = null)
+        {
+            Text message = new Text(WrapString(text, 50), Text.DEFAULT_FONT, 32, Brushes.Black);
+            message.SetTextScale(0.075f);
+
+            UIBlock window = new UIBlock(default, new UIScale(message.Size.X + 0.1f, message.Size.Y + 0.15f));
+
+            message.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+            window.AddChild(message);
+
+            window.SetPosition(WindowConstants.CenterScreen);
+
+            Button createOkButton()
+            {
+                Button okButton = new Button(default, new UIScale(0.2f, 0.075f), "Ok", 0.2f);
+                okButton.Click += (s, e) =>
+                {
+                    onClose();
+                    okYes?.Invoke();
+                };
+
+                okButton.SetPositionFromAnchor(window.GetAnchorPosition(UIAnchorPosition.BottomRight) + new Vector3(-5, -5, 0), UIAnchorPosition.BottomRight);
+                window.AddChild(okButton);
+
+                return okButton;
+            }
+
+            Button createCancelButton()
+            {
+                Button cancelButton = new Button(default, new UIScale(0.2f, 0.075f), "Cancel", 0.19f);
+                cancelButton.Click += (s, e) =>
+                {
+                    onClose();
+                    cancel?.Invoke();
+                };
+
+                window.AddChild(cancelButton);
+
+                return cancelButton;
+            }
+
+            switch (options)
+            {
+                case FocusedPopupOptions.Ok:
+                    createOkButton();
+                    break;
+                case FocusedPopupOptions.OkCancel:
+                    var okButton = createOkButton();
+                    var cancelButton = createCancelButton();
+
+                    cancelButton.SetPositionFromAnchor(okButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(-5, 0, 0), UIAnchorPosition.BottomRight);
+                    break;
+            }
+
+
+            void onClose()
+            {
+                scene.UIManager.RemoveUIObject(window);
+                scene.UIManager.ClearExclusiveFocus();
+            }
+
+            scene.UIManager.AddUIObject(window, 99999);
+            scene.UIManager.ExclusiveFocusObject(window);
+        }
+
+
+        public static string WrapString(string line, int maxWidth)
+        {
+            if (line.Length < maxWidth)
+                return line;
+
+            string returnString = "";
+
+            char[] testChars = new char[] { ' ', '"', '@' };
+
+            //search for space
+            bool matchFound = false;
+
+            foreach (char c in testChars)
+            {
+                if (matchFound)
+                    break;
+
+                for (int i = maxWidth; i > 1; i--)
+                {
+                    bool foundChar = false;
+
+                    switch (c)
+                    {
+                        case ' ':
+                            foundChar = line[i] == ' ';
+                            break;
+                        case '"':
+                            foundChar = line[i] == '"' || line[i] == '\'' || line[i] == '.' || line[i] == ',' || line[i] == '!' ||
+                                        line[i] == ':' || line[i] == ';' || line[i] == '?';
+                            break;
+                        case '@':
+                            foundChar = line[i] == '@' || line[i] == '#' || line[i] == '$' || line[i] == '%' || line[i] == '^' ||
+                                        line[i] == '&' || line[i] == '*' || line[i] == '(' || line[i] == ')' || line[i] == '{' ||
+                                        line[i] == '}' || line[i] == '[' || line[i] == ']' || line[i] == '/' || line[i] == '\\' ||
+                                        line[i] == '|' || line[i] == '<' || line[i] == '>';
+                            break;
+                    }
+
+                    if (foundChar)
+                    {
+                        if (c == ' ')
+                        {
+                            returnString = line.Substring(0, i) + "\n";
+                            line = line.Substring(i + 1);
+                        }
+                        else
+                        {
+                            returnString = line.Substring(0, i + 1) + "\n";
+                            line = line.Substring(i + 1);
+                        }
+
+
+                        if (line.Length > maxWidth)
+                        {
+                            returnString += WrapString(line, maxWidth);
+                        }
+                        else
+                        {
+                            returnString += line;
+                        }
+                        matchFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (matchFound == false)
+            {
+                returnString = line.Substring(0, maxWidth) + "\n";
+
+                line = line.Substring(maxWidth + 1);
+
+                if (line.Length > maxWidth)
+                {
+                    returnString += WrapString(line, maxWidth);
+                }
+                else
+                {
+                    returnString += line;
+                }
+            }
+
+
+            return returnString;
         }
     }
 

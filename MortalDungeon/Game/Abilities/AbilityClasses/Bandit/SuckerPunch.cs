@@ -30,11 +30,10 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            BasicAbility = true;
 
-            Name = "Sucker Punch";
+            Name = new Serializers.TextInfo(9, 3);
+            Description = new Serializers.TextInfo(10, 3);
 
-            _description = "Rude";
 
             Icon = new Icon(Icon.DefaultIconSize, Character.P, Spritesheets.CharacterSheet, true);
 

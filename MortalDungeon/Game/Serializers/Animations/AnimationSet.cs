@@ -9,13 +9,15 @@ namespace MortalDungeon.Game.Serializers
 {
     [XmlType(TypeName = "ANS")]
     [Serializable]
-    public class AnimationSet
+    public class AnimationSet : ISerializable
     {
         [XmlElement("AnSas")]
         public List<Animation> Animations = new List<Animation>();
 
         [XmlElement("AnSn")]
         public string Name = "";
+
+        public int Id = 0;
 
         public List<Engine_Classes.Animation> BuildAnimationsFromSet() 
         {
@@ -27,6 +29,16 @@ namespace MortalDungeon.Game.Serializers
             }
 
             return builtAnimations;
+        }
+
+        public void CompleteDeserialization()
+        {
+
+        }
+
+        public void PrepareForSerialization()
+        {
+
         }
     }
 }

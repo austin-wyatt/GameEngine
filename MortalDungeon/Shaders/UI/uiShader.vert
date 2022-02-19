@@ -54,7 +54,7 @@ void main(void)
 
 	gl_Position = vec4(pos, 1.0) * transform;
 
-	fragDepth = compositeType[1];
+//	fragDepth = compositeType[1];
 
 	InstanceID = gl_InstanceID; 
 }

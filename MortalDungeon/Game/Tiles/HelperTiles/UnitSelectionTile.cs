@@ -67,6 +67,15 @@ namespace MortalDungeon.Game.GameObjects
 
             SetPosition(unit.Position + UnitOffset);
             //base.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
+
+            VisionManager.Scene.Tick += Tick;
+        }
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            VisionManager.Scene.Tick -= Tick;
         }
 
         public override void SetPosition(Vector3 position)

@@ -23,11 +23,10 @@ namespace MortalDungeon.Game.Abilities
 
             Grade = 1;
 
-            Name = "Strong Bones";
+            Name = new Serializers.TextInfo(7, 3);
+            Description = new Serializers.TextInfo(8, 3);
 
-            _description = "Sufficient calcium has been achieved.";
-
-            Icon = new Icon(Icon.DefaultIconSize, Character.s, Spritesheets.CharacterSheet, true);
+            SetIcon(Character.s, Spritesheets.CharacterSheet);
 
             AbilityClass = AbilityClass.Skeleton;
         }

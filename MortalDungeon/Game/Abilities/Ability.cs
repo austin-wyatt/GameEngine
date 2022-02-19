@@ -3,6 +3,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -104,10 +105,7 @@ namespace MortalDungeon.Game.Abilities
 
 
         public int Grade = 1;
-        /// <summary>
-        /// Denotes abilities that do not have charges and that act as a base ability in an ability tree.
-        /// </summary>
-        public bool BasicAbility = false;
+
         public AbilityTreeType AbilityTreeType = AbilityTreeType.None;
         public int NodeID = -1;
 
@@ -153,8 +151,8 @@ namespace MortalDungeon.Game.Abilities
 
         public CombatScene Scene => CastingUnit.Scene;
 
-        public string Name = "";
-        public string Description = "";
+        public TextInfo Name = new TextInfo();
+        public TextInfo Description = new TextInfo();
 
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
         public bool MustCast = false;
@@ -196,11 +194,20 @@ namespace MortalDungeon.Game.Abilities
         public bool UsedThisTurn = false;
         public bool OneUsePerTurn = true;
 
-        public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
+        //public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
+        public Icon Icon;
 
         public Ability()
         {
+            
+        }
 
+        public void SetIcon(Enum spriteSheetPosition, Spritesheet spritesheet)
+        {
+            if (WindowConstants.GameRunning)
+            {
+                Icon = new Icon(Icon.DefaultIconSize, spriteSheetPosition, spritesheet, true);
+            }
         }
 
         public virtual void AddAbilityToUnit()
@@ -666,6 +673,11 @@ namespace MortalDungeon.Game.Abilities
             vision.TilesToReveal = SelectedUnit.Info.TileMapPosition.TileMap.GetVisionInRadius(CastingUnit.Info.Point, 1);
             vision.Duration = 1;
 
+            for (int i = 0; i < vision.TilesToReveal.Count; i++)
+            {
+                vision.AffectedMaps.Add(vision.TilesToReveal[i].TileMap);
+            }
+
             Scene.TemporaryVision.Add(vision);
         }
 
@@ -721,7 +733,6 @@ namespace MortalDungeon.Game.Abilities
                 {
                     Thread.Sleep(200);
                 }
-                EffectEndedAction?.Invoke();
 
                 Scene.SetAbilityInProgress(false);
 
@@ -730,10 +741,16 @@ namespace MortalDungeon.Game.Abilities
                     AdvanceCombo();
                 }
 
-                Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
+                if (RefreshFooterOnFinish)
+                {
+                    Scene.Footer.RefreshFooterInfo();
+                }
+
+                EffectEndedAction?.Invoke();
             });
         }
         public Action EffectEndedAction = null;
+        public bool RefreshFooterOnFinish = true;
 
         //remove invalid tiles from the list
         protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0, List<Unit> validUnits = null)
@@ -768,7 +785,7 @@ namespace MortalDungeon.Game.Abilities
                 }
 
 
-                if ((!validTiles[i].InVision(CastingUnit.AI.Team) && !validTiles[i].Explored[CastingUnit.AI.Team] && trimFog) || (!validTiles[i].InVision(CastingUnit.AI.Team) && !CanTargetThroughFog))
+                if ((!validTiles[i].InVision(CastingUnit.AI.Team) && !validTiles[i].Explored(CastingUnit.AI.Team) && trimFog) || (!validTiles[i].InVision(CastingUnit.AI.Team) && !CanTargetThroughFog))
                 {
                     validTilesSet.Remove(validTiles[i]);
                     validTiles.RemoveAt(i);
@@ -816,7 +833,7 @@ namespace MortalDungeon.Game.Abilities
                     validTilesSet.Remove(tile);
                     continue;
                 }
-                else if ((tile.InFog[CastingUnit.AI.Team] && !tile.Explored[CastingUnit.AI.Team] && trimFog) || (tile.InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
+                else if ((tile.InFog(CastingUnit.AI.Team) && !tile.Explored(CastingUnit.AI.Team) && trimFog) || (tile.InFog(CastingUnit.AI.Team) && !CanTargetThroughFog))
                 {
                     validTiles.Remove(tile);
                     validTilesSet.Remove(tile);
@@ -857,7 +874,7 @@ namespace MortalDungeon.Game.Abilities
                 {
                     continue;
                 }
-                else if ((tile.InFog[CastingUnit.AI.Team] && !tile.Explored[CastingUnit.AI.Team] && trimFog) || (tile.InFog[CastingUnit.AI.Team] && !CanTargetThroughFog))
+                else if ((tile.InFog(CastingUnit.AI.Team) && !tile.Explored(CastingUnit.AI.Team) && trimFog) || (tile.InFog(CastingUnit.AI.Team) && !CanTargetThroughFog))
                 {
                     continue;
                 }
@@ -869,10 +886,9 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        protected string _description = "ability description text";
         public virtual Tooltip GenerateTooltip()
         {
-            string body = _description;
+            string body = Description.ToString();
 
             body += $"\n\n";
 
@@ -896,7 +912,7 @@ namespace MortalDungeon.Game.Abilities
                 }
             }
 
-            Tooltip tooltip = UIHelpers.GenerateTooltipWithHeader(Name, body);
+            Tooltip tooltip = UIHelpers.GenerateTooltipWithHeader(Name.ToString(), body);
 
             return tooltip;
         }
@@ -957,9 +973,9 @@ namespace MortalDungeon.Game.Abilities
 
             ApplyPassives();
 
-            if (Scene.Footer != null && Scene.Footer._currentUnit == CastingUnit)
+            if (Scene.Footer != null && Scene.Footer.CurrentUnit == CastingUnit)
             {
-                Scene.Footer.UpdateFooterInfo(CastingUnit);
+                Scene.Footer.RefreshFooterInfo();
             }
         }
 

@@ -250,13 +250,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
             Stopwatch timer = new Stopwatch();
             timer.Restart();
 
-            TileMapManager.ActiveMaps.ForEach(map =>
+            lock (TileMapManager._loadLock)
             {
-                map.TileChunks.ForEach(chunk =>
+                TileMapManager.ActiveMaps.ForEach(map =>
                 {
-                    ObjectCulling.CullTileChunk(chunk);
+                    map.TileChunks.ForEach(chunk =>
+                    {
+                        ObjectCulling.CullTileChunk(chunk);
+                    });
                 });
-            });
+            }
 
             Scenes.ForEach(scene =>
             {

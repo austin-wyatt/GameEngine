@@ -180,6 +180,14 @@ namespace MortalDungeon.Engine_Classes
             return _itemsToAdd[_currentQueue].Count > 0 || _itemsToRemove[_currentQueue].Count > 0;
         }
 
+        /// <summary>
+        /// Allows us to extract information about what is being added or removed before they get handled
+        /// </summary>
+        public (List<T> itemsToAdd, List<T> itemsToRemove) GetQueuedItems()
+        {
+            return (_itemsToAdd[_currentQueue], _itemsToRemove[_currentQueue]);
+        }
+
         public void ManuallyIncrementChangeToken() 
         {
             CHANGE_TOKEN++;

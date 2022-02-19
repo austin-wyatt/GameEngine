@@ -1,9 +1,11 @@
-﻿using MortalDungeon.Engine_Classes;
+﻿using MortalDungeon.Definitions.EventActions;
+using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Entities;
+using MortalDungeon.Game.Events;
 using MortalDungeon.Game.GameObjects;
 using MortalDungeon.Game.Items;
 using MortalDungeon.Game.Ledger;
@@ -32,7 +34,7 @@ namespace MortalDungeon.Game.Units
         PanToOnLoad = 501,
     }
 
-    public class Unit : GameObject, ILoadableEntity
+    public class Unit : GameObject, ILoadableEntity, IEventTarget
     {
         public UnitAI AI;
         public UnitInfo Info;
@@ -63,6 +65,7 @@ namespace MortalDungeon.Game.Units
         public bool _createStatusBar = false;
         public int _xRotation = 25;
         public string pack_name = "";
+        public float _scale = 1;
 
         public UnitProfileType ProfileType = UnitProfileType.Unknown;
 
@@ -76,6 +79,9 @@ namespace MortalDungeon.Game.Units
         public int UnitCreationInfoId = 0;
 
         public ParameterDict UnitParameters = new ParameterDict();
+
+        public Dictionary<string, List<EventAction>> EventActions { get; set; }
+        public Dictionary<string, dynamic> EventObjects { get; set; }
 
         public Unit() { }
 
@@ -110,7 +116,15 @@ namespace MortalDungeon.Game.Units
         {
             AI = new UnitAI(this);
             Info = new UnitInfo(this);
+
+            EventActions = new Dictionary<string, List<EventAction>>();
+            EventObjects = new Dictionary<string, dynamic>();
         }
+
+        /// <summary>
+        /// The calculated tile offset of the unit to place its bottom center point in a tile
+        /// </summary>
+        private Vector3 _innateTileOffset = new Vector3();
 
         /// <summary>
         /// Create and add the base object to the unit
@@ -118,16 +132,49 @@ namespace MortalDungeon.Game.Units
         public virtual void InitializeVisualComponent()
         {
             //using the AnimationSetName create a base object with those animations
-            TextureLoaded = false;
+            SetTextureLoaded(false);
 
             BaseObject obj = CreateBaseObject();
             obj.BaseFrame.CameraPerspective = true;
+            obj.BaseFrame.ScaleAll(_scale);
             obj.BaseFrame.RotateX(_xRotation);
             obj.BaseFrame.RotateZ(MathHelper.RadiansToDegrees(Scene._camera.CameraAngle));
 
             AddBaseObject(obj);
 
+            //calculate innate tile offset
+            CalculateInnateTileOffset();
+
+
             BaseObject.BaseFrame.SetBaseColor(Color);
+        }
+
+        public void CalculateInnateTileOffset()
+        {
+            BaseObject obj = BaseObject;
+
+            if (obj == null)
+                return;
+
+            float minZ = float.MaxValue;
+
+            for (int i = 0; i < obj.BaseFrame.Vertices.Length; i += obj.BaseFrame.Stride / obj.BaseFrame.Points)
+            {
+                Vector4 transformedPos = new Vector4(obj.BaseFrame.Vertices[i], obj.BaseFrame.Vertices[i + 1], obj.BaseFrame.Vertices[i + 2], 1);
+                transformedPos *= obj.BaseFrame.Scale * obj.BaseFrame.Rotation;
+
+                if (transformedPos.Z < minZ)
+                {
+                    minZ = transformedPos.Z;
+                }
+            }
+
+            _innateTileOffset = WindowConstants.ConvertLocalToGlobalCoordinates(new Vector3(0, 0, -minZ));
+            _innateTileOffset.Y -= obj.Dimensions.Y / 3;
+
+
+            CalculateSelectionTileOffset();
+            SetPositionOffset(_actualPosition);
         }
 
         public virtual void EntityLoad(FeaturePoint position, bool placeOnTileMap = true) 
@@ -138,7 +185,7 @@ namespace MortalDungeon.Game.Units
             Position = new Vector3();
 
             
-            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
+            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, 0));
             SetSelectionTileColor();
 
 
@@ -169,19 +216,34 @@ namespace MortalDungeon.Game.Units
             {
                 SetTileMapPosition(TileMapHelpers.GetTile(position));
 
-                SetPosition(Info.TileMapPosition.Position + TileOffset);
+                SetPositionOffset(Info.TileMapPosition.Position);
             }
 
             ApplyAbilityLoadout();
 
-            if(SelectionTileOffset.Z != 0)
+            CalculateSelectionTileOffset();
+
+            LoadTexture(this);
+        }
+
+        private void CalculateSelectionTileOffset()
+        {
+            if (SelectionTileOffset == null)
+                return;
+
+            SelectionTile.UnitOffset.X = 0;
+            SelectionTile.UnitOffset.Y = 0;
+            SelectionTile.UnitOffset.Z = 0;
+
+            if (SelectionTileOffset.Z != 0)
             {
                 SelectionTile.UnitOffset = SelectionTileOffset;
             }
-            
-            SelectionTile.SetPosition(Position);
 
-            LoadTexture(this);
+            SelectionTile.UnitOffset.Y -= _innateTileOffset.Y;
+            SelectionTile.UnitOffset.Z -= _innateTileOffset.Z - 0.005f;
+
+            SelectionTile.SetPosition(Position);
         }
 
         public virtual void EntityUnload() 
@@ -268,11 +330,6 @@ namespace MortalDungeon.Game.Units
 
         public void ApplyUnitParameters(Dictionary<string, string> parameters)
         {
-            //if(parameters.TryGetValue("name", out var name))
-            //{
-            //    Name = name;
-            //}
-
             foreach(var param in parameters)
             {
                 UnitParameters.Parameters.TryAdd(param.Key, param.Value);
@@ -281,11 +338,16 @@ namespace MortalDungeon.Game.Units
                 if(info == null)
                 {
                     info = typeof(UnitInfo).GetField(param.Key);
-                }
 
-                if (info != null)
+                    if (info != null)
+                    {
+                        info.SetValue(Info, Convert.ChangeType(param.Value, info.FieldType));
+                        continue;
+                    }
+                }
+                else
                 {
-                    info.SetValue(Info, Convert.ChangeType(param.Value, info.FieldType));
+                    info.SetValue(this, Convert.ChangeType(param.Value, info.FieldType));
                 }
             }
         }
@@ -297,6 +359,8 @@ namespace MortalDungeon.Game.Units
             //remove the objects that are related to the unit but not created by the unit
             Scene._genericObjects.Remove(SelectionTile);
             Scene._unitStatusBlock.RemoveChild(StatusBarComp);
+
+            SelectionTile?.CleanUp();
 
             StatusBarComp = null;
             SelectionTile = null;
@@ -314,10 +378,9 @@ namespace MortalDungeon.Game.Units
 
         public void RemoveFromTile() 
         {
-            if (Info.TileMapPosition != null)
+            if (Info?.TileMapPosition != null)
             {
-                Info.TileMapPosition.UnitOnTile = null;
-                Info.TileMapPosition = null;
+                UnitPositionManager.RemoveUnitPosition(this, Info.TileMapPosition);
             }
         }
 
@@ -381,6 +444,15 @@ namespace MortalDungeon.Game.Units
             }
         }
 
+        public void SetPositionOffset(Vector3 position)
+        {
+            SetPosition(position + TileOffset + _innateTileOffset);
+
+            _actualPosition = position;
+        }
+
+
+        private Vector3 _actualPosition = new Vector3();
         public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
@@ -425,12 +497,15 @@ namespace MortalDungeon.Game.Units
 
         public virtual void SetTileMapPosition(BaseTile baseTile) 
         {
-            BaseTile prevTile = Info.TileMapPosition;
+            BaseTile prevTile = null;
 
-            if (prevTile != null)
-                prevTile.UnitOnTile = null;
-
-            baseTile.UnitOnTile = this;
+            if (Info.TileMapPosition != null)
+            {
+                prevTile = Info.TileMapPosition;
+                UnitPositionManager.RemoveUnitPosition(this, Info.TileMapPosition);
+            }
+                
+            UnitPositionManager.SetUnitPosition(this, baseTile);
 
             Info.TileMapPosition = baseTile;
 
@@ -438,8 +513,18 @@ namespace MortalDungeon.Game.Units
             LightObstruction.SetPosition(baseTile);
 
             Info.TileMapPosition.OnSteppedOn(this);
+            prevTile?.OnSteppedOff(this);
 
             Scene.OnUnitMoved(this, prevTile);
+        }
+
+        public void ScaleUnit(float x, float y)
+        {
+            if(BaseObject != null)
+            {
+                BaseObject.BaseFrame.SetScale(BaseObject.BaseFrame.CurrentScale.X * x, BaseObject.BaseFrame.CurrentScale.Y * y, 1);
+                CalculateInnateTileOffset();
+            }
         }
 
 
@@ -509,7 +594,7 @@ namespace MortalDungeon.Game.Units
             }
 
             if(Info.TileMapPosition != null)
-            foreach (var effect in Info.TileMapPosition.TileEffects)
+            foreach (var effect in TileEffectManager.GetTileEffectsOnTilePoint(Info.TileMapPosition))
             {
                 effect.OnTurnStart(this, Info.TileMapPosition);
             }
@@ -537,7 +622,7 @@ namespace MortalDungeon.Game.Units
             }
 
             if(Info.TileMapPosition != null)
-            foreach (var effect in Info.TileMapPosition.TileEffects)
+            foreach (var effect in TileEffectManager.GetTileEffectsOnTilePoint(Info.TileMapPosition))
             {
                 effect.OnTurnEnd(this, Info.TileMapPosition);
             }
@@ -601,9 +686,9 @@ namespace MortalDungeon.Game.Units
                 StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
             }
 
-            if(Scene.Footer._currentUnit == this) 
+            if(Scene.Footer.CurrentUnit == this) 
             {
-                Scene.Footer.UpdateFooterInfo();
+                Scene.Footer.RefreshFooterInfo();
             }
 
             if (Scene.SideBar.PartyWindow != null && Scene.SideBar.PartyWindow.Parent != null && AI.ControlType == ControlType.Controlled && AI.Team == UnitTeam.PlayerUnits)
@@ -618,7 +703,7 @@ namespace MortalDungeon.Game.Units
 
             StatusBarComp.HealthBar.SetHealthPercent(Info.Health / Info.MaxHealth, AI.Team);
 
-            Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
+            Scene.Footer.RefreshFooterInfo();
 
             if (Scene.SideBar.PartyWindow != null && Scene.SideBar.PartyWindow.Parent != null && AI.ControlType == ControlType.Controlled && AI.Team == UnitTeam.PlayerUnits)
             {
@@ -941,7 +1026,6 @@ namespace MortalDungeon.Game.Units
             if (SelectionTile == null)
                 return;
 
-            Scene.Footer.UpdateFooterInfo(this);
             SelectionTile.Select();
             Selected = true;
         }
@@ -951,7 +1035,6 @@ namespace MortalDungeon.Game.Units
             if (SelectionTile == null)
                 return;
 
-            Scene.Footer.UpdateFooterInfo(Scene.Footer._currentUnit);
             SelectionTile.Deselect();
             Selected = false;
         }
@@ -1000,452 +1083,5 @@ namespace MortalDungeon.Game.Units
     }
 
 
-    public enum Species
-    {
-        Human,
-        Skeleton,
-    }
-
-    public enum StatusCondition
-    {
-        None,
-        Stunned = 1, //disables all
-        Silenced = 2, //disables vocal
-        Weakened = 4, //disables brute force
-        Debilitated = 8, //disables dexterity
-        Disarmed = 16, //disables weapon
-        MagicBlocked = 64, //disables magic
-        Confused = 128, //disables intelligence
-        Exposed = 256, //disables passives
-        Rooted = 512, //disables movement
-        Blinded = 1024, //reduces vision radius by a certain amount
-    }
-
-    [Serializable]
-    public class UnitInfo : ISerializable
-    {
-        public static int OUT_OF_COMBAT_VISION = 5;
-
-        public UnitInfo() { }
-
-        public UnitInfo(Unit unit)
-        {
-            Unit = unit;
-
-            Stealth = new Hidden(unit);
-            Scouting = new Scouting(unit);
-            Equipment = new Equipment(unit);
-        }
-
-
-        [XmlIgnore]
-        public Unit Unit;
-
-        [XmlIgnore]
-        public BaseTile TileMapPosition;
-
-        [XmlIgnore]
-        public TilePoint TemporaryPosition = null; //used as a placeholder position for calculating things like vision before a unit moves
-
-        [XmlIgnore]
-        public TilePoint Point => TileMapPosition.TilePoint;
-
-        [XmlIgnore]
-        public CombatScene Scene => TileMapPosition.GetScene();
-
-        [XmlIgnore]
-        public TileMap Map => TileMapPosition.TileMap;
-
-        [XmlIgnore]
-        public List<Ability> Abilities = new List<Ability>();
-
-        public Equipment Equipment;
-
-        //public List<AbilityCreationInfo> _abilityCreationInfo = new List<AbilityCreationInfo>();
-
-        [XmlIgnore]
-        public List<Buff> Buffs = new List<Buff>();
-
-        //private List<BuffCreationInfo> _buffCreationInfo = new List<BuffCreationInfo>();
-
-        [XmlIgnore]
-        public Move _movementAbility = null;
-
-        public float MaxEnergy = 10;
-        public float CurrentEnergy => MaxEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyBoost.Additive + seed); //Energy at the start of the turn
-        public float Energy = 10; //public unit energy tracker
-
-        public float MaxActionEnergy = 4;
-
-        public float MaxFocus = 40;
-        public float Focus = 40;
-
-        public float CurrentActionEnergy => MaxActionEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ActionEnergyBoost.Additive + seed); //Energy at the start of the turn
-        public float ActionEnergy = 0;
-
-        public float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
-        public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
-        public float ActionEnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
-        public float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
-        public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
-        public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.SpeedModifier.Multiplier * seed);
-        public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.SpeedModifier.Additive + seed);
-
-
-
-        public float Speed => _movementAbility != null ? _movementAbility.GetEnergyCost() : 10;
-
-        public float Health = 100;
-        public float MaxHealth = 100;
-
-        public int CurrentShields = 0;
-
-        public float ShieldBlockMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.ShieldBlock.Multiplier * seed);
-
-        public float ShieldBlock 
-        {
-            get
-            {
-                float shieldBlock = Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ShieldBlock.Additive + seed);
-
-                shieldBlock += ApplyBuffAdditiveShieldBlockModifications();
-
-                shieldBlock *= ShieldBlockMultiplier;
-                return shieldBlock;
-            }
-        }
-            
-
-        public float DamageBlockedByShields = 0;
-
-        [XmlIgnore]
-        public Dictionary<DamageType, float> BaseDamageResistances = new Dictionary<DamageType, float>();
-
-        [XmlElement(Namespace = "UIbdr")]
-        private DeserializableDictionary<DamageType, float> _baseDamageResistances = new DeserializableDictionary<DamageType, float>();
-
-        public bool NonCombatant = false;
-
-        public int Height = 1;
-        //public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
-        //public int _visionRadius = 6;
-
-        public Direction Facing = Direction.North;
-
-        public bool Dead = false;
-        public bool BlocksSpace = true;
-        public bool PhasedMovement = false;
-
-        public StatusCondition Status = StatusCondition.None;
-
-        public Species Species = Species.Human;
-
-        public bool PartyMember = false;
-
-
-        /// <summary>
-        /// If true, this unit/structure can always be seen through
-        /// </summary>
-        public bool Transparent = false;
-
-        public bool Visible(UnitTeam team) 
-        {
-            if (TileMapPosition == null)
-                return false;
-
-            if (Unit.VisibleThroughFog && TileMapPosition.Explored[team])
-                return true;
-
-            return !TileMapPosition.InFog[team] && Stealth.Revealed[team];
-        }
-
-
-        public Hidden Stealth;
-        public Scouting Scouting;
-
-        [XmlIgnore]
-        private object _buffLock = new object();
-        public void AddBuff(Buff buff) 
-        {
-            if (buff == null)
-                return;
-
-            lock (_buffLock) 
-            {
-                Buffs.Add(buff);
-                buff.AffectedUnit = Unit;
-
-                EvaluateStatusCondition();
-
-                Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
-
-                switch (buff.BuffType)
-                {
-                    case BuffType.Debuff:
-                        backgroundType = Icon.BackgroundType.DebuffBackground;
-                        break;
-                    case BuffType.Buff:
-                        backgroundType = Icon.BackgroundType.BuffBackground;
-                        break;
-                }
-
-                Icon icon = buff.GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType);
-                Vector3 pos = Unit.Position + new Vector3(0, -400, 0.3f);
-                UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
-            }
-        }
-
-        public void RemoveBuff(Buff buff)
-        {
-            if (buff == null)
-                return;
-
-            lock (_buffLock)
-            {
-                Buffs.Remove(buff);
-                buff.AffectedUnit = null;
-
-                EvaluateStatusCondition();
-
-                Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
-
-                switch (buff.BuffType)
-                {
-                    case BuffType.Debuff:
-                        backgroundType = Icon.BackgroundType.DebuffBackground;
-                        break;
-                    case BuffType.Buff:
-                        backgroundType = Icon.BackgroundType.BuffBackground;
-                        break;
-                }
-
-                Icon icon = buff.GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType);
-                Vector3 pos = Unit.Position + new Vector3(0, -400, 0.3f);
-                UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
-            }
-        }
-
-        private float ApplyBuffAdditiveShieldBlockModifications()
-        {
-            float modifications = 0;
-            foreach (var buff in Unit.Info.Buffs)
-            {
-                modifications += buff.ModifyShieldBlockAdditive(Unit);
-            }
-
-            return modifications;
-        }
-
-        public void EvaluateStatusCondition() 
-        {
-            StatusCondition condition = StatusCondition.None;
-
-            for(int i = 0; i < Buffs.Count; i++)
-            {
-                condition |= Buffs[i].StatusCondition;
-            }
-
-            Status = condition;
-        }
-
-        public bool CanUseAbility(Ability ability)
-        {
-            CastingMethod method = ability.CastingMethod;
-
-            int propertyCount = Enum.GetValues(typeof(CastingMethod)).Length;
-
-            for(int i = 0; i < propertyCount; i++)
-            {
-                if (BitOps.GetBit((int)method, i) && BitOps.GetBit((int)Status, i))
-                    return false;
-            }
-
-            return true;
-        }
-
-        public void PrepareForSerialization()
-        {
-            Stealth.PrepareForSerialization();
-            Scouting.PrepareForSerialization();
-            Equipment.PrepareForSerialization();
-
-            //foreach (var item in _abilityCreationInfo)
-            //{
-            //    item.PrepareForSerialization();
-            //}
-
-            _baseDamageResistances = new DeserializableDictionary<DamageType, float>(BaseDamageResistances);
-        }
-
-        public void CompleteDeserialization()
-        {
-            Stealth.CompleteDeserialization();
-            Scouting.CompleteDeserialization();
-            Equipment.CompleteDeserialization();
-
-            //foreach (var item in _abilityCreationInfo)
-            //{
-            //    item.CompleteDeserialization();
-            //}
-
-            BaseDamageResistances.Clear();
-            _baseDamageResistances.FillDictionary(BaseDamageResistances);
-        }
-
-        public static void AttachUnitToInfo(UnitInfo info, Unit unit)
-        {
-            info.Unit = unit;
-            info.Stealth.Unit = unit;
-            info.Scouting.Unit = unit;
-            info.Equipment.Unit = unit;
-        }
-    }
-
-    [Serializable]
-    public class Hidden : ISerializable
-    {
-        [XmlIgnore]
-        public Unit Unit;
-        /// <summary>
-        /// Whether a unit is currently attemping to hide
-        /// </summary>
-        public bool Hiding = false;
-
-        /// <summary>
-        /// The teams that can see this unit
-        /// </summary>
-        [XmlIgnore]
-        public Dictionary<UnitTeam, bool> Revealed = new Dictionary<UnitTeam, bool>();
-        [XmlElement(Namespace = "Hir")]
-        private DeserializableDictionary<UnitTeam, bool> _revealed = new DeserializableDictionary<UnitTeam, bool>();
-
-        public float Skill = 0;
-
-        [XmlIgnore]
-        public QueuedList<Action> HidingBrokenActions = new QueuedList<Action>();
-
-        public Hidden() { }
-        public Hidden(Unit unit) 
-        {
-            Unit = unit;
-
-            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam))) 
-            {
-                Revealed.TryAdd(team, true);
-            }
-        }
-
-        public void SetHiding(bool hiding) 
-        {
-            if (Hiding && !hiding) 
-            {
-                Hiding = false;
-                HidingBroken();
-            }
-            else 
-            {
-                Hiding = hiding;
-            }
-        }
-
-        private void HidingBroken() 
-        {
-            SetAllRevealed();
-            HidingBrokenActions.ForEach(a => a.Invoke());
-        }
-
-        public void SetAllRevealed(bool revealed = true) 
-        {
-            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
-            {
-                Revealed[team] = revealed;
-            }
-
-            Revealed[Unit.AI.Team] = true;
-        }
-
-        public void SetRevealed(UnitTeam team, bool revealed) 
-        {
-            Revealed[team] = revealed;
-        }
-
-        /// <summary>
-        /// Returns false if any team that isn't the unit's team has vision of the space
-        /// </summary>
-        /// <returns></returns>
-        public bool EnemyHasVision()
-        {
-            bool hasVision = false;
-
-            foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
-            {
-                if (team != Unit.AI.Team && !Unit.Info.TileMapPosition.InFog[team])
-                {
-                    hasVision = true;
-                }
-            }
-
-            return hasVision;
-        }
-
-        public bool PositionInFog(UnitTeam team) 
-        {
-            bool inFog = true;
-
-            if (team != Unit.AI.Team && !Unit.Info.TileMapPosition.InFog[team]) 
-            {
-                inFog = false;
-            }
-
-            return inFog;
-        }
-
-        public void PrepareForSerialization()
-        {
-            _revealed = new DeserializableDictionary<UnitTeam, bool>(Revealed);
-        }
-
-        public void CompleteDeserialization()
-        {
-            _revealed.FillDictionary(Revealed);
-        }
-    }
-
-    [Serializable]
-    public class Scouting : ISerializable
-    {
-        [XmlIgnore]
-        public Unit Unit;
-
-        public const int DEFAULT_RANGE = 5;
-
-        public float Skill = 0;
-
-        public Scouting() { }
-        public Scouting(Unit unit) 
-        {
-            Unit = unit;
-        }
-
-        /// <summary>
-        /// Calculates whether a unit can scout a hiding unit. This does not take into account whether the tiles are actually/would be in vision.
-        /// </summary>
-        public bool CouldSeeUnit(Unit unit, int distance)
-        {
-            if (!unit.Info.Stealth.Hiding)
-                return true;
-
-            return Skill - unit.Info.Stealth.Skill - (distance - DEFAULT_RANGE) >= 0;
-        }
-
-        public void PrepareForSerialization()
-        {
-            
-        }
-
-        public void CompleteDeserialization()
-        {
-            
-        }
-    }
+    
 }

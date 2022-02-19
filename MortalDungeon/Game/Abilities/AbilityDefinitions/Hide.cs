@@ -22,7 +22,7 @@ namespace MortalDungeon.Game.Abilities
             Range = 1;
             CastingUnit = castingUnit;
 
-            Name = "Hide";
+            //Name = "Hide";
 
             CanTargetGround = false;
             CanTargetSelf = true;
@@ -79,7 +79,7 @@ namespace MortalDungeon.Game.Abilities
             {
                 CastingUnit.Info.Stealth.HidingBrokenActions.Remove(hidingBroken);
                 CastingUnit.Info.RemoveBuff(stealthBuff);
-                Scene.Footer.UpdateFooterInfo();
+                Scene.Footer.RefreshFooterInfo();
 
                 CastingUnit.BaseObject.BaseFrame.RemoveAppliedColor(stealthColor);
 
@@ -89,7 +89,7 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit.Info.Stealth.HidingBrokenActions.Add(hidingBroken);
             CastingUnit.BaseObject.BaseFrame.AddAppliedColor(stealthColor);
 
-            Scene.Footer.UpdateFooterInfo();
+            Scene.Footer.RefreshFooterInfo();
 
             if (CastingUnit.Info.Stealth.EnemyHasVision()) 
             {

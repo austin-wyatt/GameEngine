@@ -48,5 +48,15 @@ namespace MortalDungeon.Game.Serializers
 
             writer.Close();
         }
+
+        public static void DeleteTextTable(int id)
+        {
+            string path = SerializerParams.DATA_BASE_PATH + _textTableCharSet.CreateRandom(id, _fileNameLength) + ".T";
+
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
     }
 }

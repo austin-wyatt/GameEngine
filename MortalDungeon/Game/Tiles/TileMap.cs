@@ -109,7 +109,7 @@ namespace MortalDungeon.Game.Tiles
             get { return TileMapHelpers.GetTile(point.X, point.Y, point.ParentTileMap); }
         }
 
-        private BaseTile GetTile(int x, int y) 
+        public BaseTile GetTile(int x, int y) 
         {
             return TileMapHelpers.GetTile(x, y, this);
         }
@@ -225,7 +225,7 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i < Tiles.Count; i++)
             {
-                if(Tiles[i].InFog[Controller.Scene.VisibleTeam])
+                if(Tiles[i].InFog(TileMapManager.Scene.VisibleTeam))
                     _fogTiles.Add(Tiles[i]);
                 else
                     _visTiles.Add(Tiles[i]);
@@ -362,9 +362,9 @@ namespace MortalDungeon.Game.Tiles
             {
                 t.SetPosition(t.Position - offset);
 
-                if (t.UnitOnTile != null)
+                foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(t))
                 {
-                    t.UnitOnTile.SetPosition(t.UnitOnTile.Position - offset);
+                    unit.SetPosition(unit.Position - offset);
                 }
 
                 if (t.Structure != null)
@@ -487,14 +487,14 @@ namespace MortalDungeon.Game.Tiles
         }
 
         #region Distance between points
-        public int GetDistanceBetweenPoints(TilePoint start, TilePoint end)
+        public static int GetDistanceBetweenPoints(TilePoint start, TilePoint end)
         {
-            Vector3i a = OffsetToCube(start);
-            Vector3i b = OffsetToCube(end);
+            Vector3i a = CubeMethods.OffsetToCube(start);
+            Vector3i b = CubeMethods.OffsetToCube(end);
 
             return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
-        public int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
+        public static int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
         {
             return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
@@ -569,7 +569,9 @@ namespace MortalDungeon.Game.Tiles
 
                     if(param.Units != null)
                     {
-                        unitIndex = (int)(param.Units?.FindIndex(u => u == neighbors[j].UnitOnTile));
+                        var unitsOnTile = UnitPositionManager.GetUnitsOnTilePoint(neighbors[j]);
+
+                        unitIndex = (int)(param.Units?.FindIndex(u => unitsOnTile.Contains(u)));
                     }
 
                     //param.Units?.Exists(u =>
@@ -1078,7 +1080,7 @@ namespace MortalDungeon.Game.Tiles
         /// <param name="tile"></param>
         /// <param name="neighborList"></param>
         /// <param name="visitedTiles"></param>
-        public void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, bool checkTileHigher = false, bool checkTileLower = false, bool attachHeightIndicator = false)
+        public void GetNeighboringTiles(BaseTile tile, List<BaseTile> neighborList, bool shuffle = true, bool checkTileHigher = false, bool checkTileLower = false, bool attachHeightIndicator = false, bool setVisited = true)
         {
             TilePoint neighborPos = new TilePoint(tile.TilePoint.X, tile.TilePoint.Y, tile.TilePoint.ParentTileMap);
             int yOffset = tile.TilePoint.X % 2 == 0 ? 1 : 0;
@@ -1116,7 +1118,7 @@ namespace MortalDungeon.Game.Tiles
                 if (IsValidTile(neighborPos))
                 {
                     BaseTile neighborTile = tile.TileMap[neighborPos];
-                    if (!neighborTile.TilePoint.Visited)
+                    if (neighborTile != null && !neighborTile.TilePoint.Visited)
                     {
                         if (checkTileHigher && (!neighborTile.StructurePathable() || neighborTile.GetPathableHeight() - tile.GetPathableHeight() > 1)) 
                         {
@@ -1135,7 +1137,7 @@ namespace MortalDungeon.Game.Tiles
                         }
 
                         neighborList.Add(neighborTile);
-                        neighborTile.TilePoint.Visited = true;
+                        neighborTile.TilePoint.Visited = setVisited ? true : neighborTile.TilePoint.Visited;
                     }
                 }
             }
@@ -1224,8 +1226,6 @@ namespace MortalDungeon.Game.Tiles
     {
         public int X;
         public int Y;
-
-        public MapPosition MapPosition = MapPosition.None;
 
         public TileMapPoint(int x, int y)
         {

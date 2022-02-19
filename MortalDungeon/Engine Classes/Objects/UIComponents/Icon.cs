@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using MortalDungeon.Engine_Classes.TextHandling;
+using System.Linq;
 
 namespace MortalDungeon.Engine_Classes.UIComponents
 {
@@ -41,6 +42,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public Spritesheet _spritesheet;
         public Enum _spritesheetPosition;
 
+        private UIObject _background;
+
         public UIObject ChargeDisplay = null;
 
         public static UIScale DefaultIconSize = new UIScale(0.25f, 0.25f);
@@ -65,13 +68,18 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 Repeats = 0
             };
 
-            BaseObject windowObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
-            windowObj.BaseFrame.CameraPerspective = CameraPerspective;
+            //BaseObject windowObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
+            //windowObj.BaseFrame.CameraPerspective = CameraPerspective;
 
-            AddBaseObject(windowObj);
-            _baseObject = windowObj;
+            //AddBaseObject(windowObj);
+            //_baseObject = windowObj;
 
-            //windowObj.OutlineParameters.SetAllInline(2);
+            UIBlock mainBlock = new UIBlock(new List<Animation>() { tempAnimation }, default, size);
+            BaseComponent = mainBlock;
+
+            mainBlock.SetAllInline(0);
+
+            AddChild(mainBlock, -10);
 
             if (withBackground) 
             {
@@ -85,19 +93,15 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                     Repeats = 0
                 };
 
-                BaseObject backgroundObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
-                AddBaseObject(backgroundObj);
-                //UIObject iconBackground = new UIObject();
-                //iconBackground.Name = "IconBackground";
-                //iconBackground._baseObject = backgroundObj;
-                //iconBackground.AddBaseObject(backgroundObj);
+                //BaseObject backgroundObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
+                //AddBaseObject(backgroundObj);
 
-                //BaseComponent = iconBackground;
-                //_baseObject = null;
-                //BaseObjects.Clear();
+                UIBlock backgroundBlock = new UIBlock(new List<Animation>() { tempAnimation }, default, size);
+                backgroundBlock.SetAllInline(0);
 
+                AddChild(backgroundBlock, -20);
 
-                //AddChild(iconBackground);
+                _background = backgroundBlock;
             }
 
             SetSize(Size);
@@ -107,12 +111,85 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             LoadTexture(this);
         }
 
-        public Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground) 
-            : this(size, icon._spritesheetPosition, icon._spritesheet, withBackground, backgroundType) { }
+        public Icon(UIScale size, List<Animation> animations, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground)
+        {
+            Size = size;
+            Name = "Icon";
+
+            Animation tempAnimation;
+
+            UIBlock block = new UIBlock(animations, default, size);
+            block.SetAllInline(0);
+
+            BaseComponent = block;
+            AddChild(block, -10);
+
+            //BaseObject windowObj = new BaseObject(animations, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
+            //windowObj.BaseFrame.CameraPerspective = CameraPerspective;
+
+            //AddBaseObject(windowObj);
+            //_baseObject = windowObj;
+
+            if (withBackground)
+            {
+                RenderableObject background = new RenderableObject(new SpritesheetObject(Convert.ToInt32(backgroundType), Spritesheets.IconSheet, 2, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+
+                //window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
+                tempAnimation = new Animation()
+                {
+                    Frames = new List<RenderableObject>() { background },
+                    Frequency = 0,
+                    Repeats = 0
+                };
+
+                UIBlock backgroundBlock = new UIBlock(new List<Animation>() { tempAnimation }, default, size);
+                backgroundBlock.SetAllInline(0);
+
+                AddChild(backgroundBlock, -20);
+                _background = backgroundBlock;
+
+                //BaseObject backgroundObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
+                //AddBaseObject(backgroundObj);
+            }
+
+            SetSize(Size);
+
+            ValidateObject(this);
+
+            LoadTexture(this);
+        }
+
+        //public Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground) 
+        //    : this(size, icon._spritesheetPosition, icon._spritesheet, withBackground, backgroundType) { }
+
+        public Icon(Icon icon, UIScale size, bool withBackground = false, BackgroundType backgroundType = BackgroundType.NeutralBackground)
+            : this(size, icon.BaseComponent.BaseObject.Animations.Values.ToList(), withBackground, backgroundType) { }
 
         public override void OnClick()
         {
             base.OnClick();
+        }
+
+        public override void SetSize(UIScale size)
+        {
+            base.SetSize(size);
+
+            if(_background != null)
+            {
+                _background.SetSize(size);
+            }
+        }
+
+        public override void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base)
+        {
+            base.SetColor(color, flag);
+
+            BaseComponent.SetColor(color, flag);
+
+            if(_background != null)
+            {
+                _background.SetColor(color, flag);
+            }
         }
 
         public void SetCameraPerspective(bool camPerspective) 
@@ -167,7 +244,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
                     ability.RestoreCharges(1);
                     ability.Scene.ActionEnergyBar.HoverAmount(0);
-                    ability.Scene.Footer.UpdateFooterInfo(forceUpdate: true);
+                    ability.Scene.Footer.RefreshFooterInfo(forceUpdate: true);
                 }
                 else if (ability.Scene._selectedAbility != null) 
                 {

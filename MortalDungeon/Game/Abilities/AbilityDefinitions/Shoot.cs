@@ -30,9 +30,9 @@ namespace MortalDungeon.Game.Abilities
 
             CastingMethod |= CastingMethod.Weapon | CastingMethod.PhysicalDexterity;
 
-            Name = "Shoot";
+            //Name = "Shoot";
 
-            _description = "Fire an arrow at a target within range. \nA direct line to the target must be present.";
+            //Description = "Fire an arrow at a target within range. \nA direct line to the target must be present.";
 
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
@@ -44,7 +44,7 @@ namespace MortalDungeon.Game.Abilities
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
 
             //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-            List<Unit> unitsInCastRadius = VisionMap.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
+            List<Unit> unitsInCastRadius = VisionHelpers.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
             
             TrimUnits(unitsInCastRadius, false, MinRange);
 
@@ -56,31 +56,24 @@ namespace MortalDungeon.Game.Abilities
         public override bool UnitInRange(Unit unit, BaseTile position = null)
         {
             TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-            
-            bool inRange = false;
 
-            var tempVision = new VisionMap.TemporaryVisionParams()
+            if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange)
+            {
+                return false;
+            }
+
+            var tempVision = new TemporaryVisionParams()
             {
                 Unit = CastingUnit,
                 TemporaryPosition = point
             };
 
-            List<Vector2i> teamVision = VisionMap.GetTeamVision(CastingUnit.AI.Team, Scene, new List<VisionMap.TemporaryVisionParams>() { tempVision });
-
-            Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(unit.Info.TileMapPosition);
-
-            if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange) 
-            {
-                return false;
-            }
-
-            if ((teamVision.Exists(p => p == clusterPos) || VisionMap.InVision(clusterPos.X, clusterPos.Y, CastingUnit.AI.Team))
-                && VisionMap.TargetInVision(point, unit.Info.TileMapPosition, (int)Range, Scene)) 
+            if (VisionHelpers.PointInVision(unit.Info.TileMapPosition, CastingUnit.AI.Team, new List<TemporaryVisionParams> { tempVision }))
             {
                 return true;
             }
 
-            return inRange;
+            return false;
         }
 
         public override bool OnUnitClicked(Unit unit)

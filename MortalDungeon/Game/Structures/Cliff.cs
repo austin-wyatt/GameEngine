@@ -137,6 +137,7 @@ namespace MortalDungeon.Game.Structures
             cliffStructure.SetColor(new Vector4(0.5f, 0.5f, 0.5f, 1) + Tile.Properties.Height * new Vector4(0.05f, 0.05f, 0.05f, 0));
             CliffStructure.Add(cliffStructure);
 
+            cliffStructure.SelectionTile.CleanUp();
             cliffStructure.SelectionTile = null;
 
             Tile.Chunk.Structures.Add(cliffStructure);

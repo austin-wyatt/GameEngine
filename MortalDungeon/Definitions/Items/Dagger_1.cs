@@ -1,6 +1,7 @@
 ﻿using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Items;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using System;
@@ -11,18 +12,53 @@ namespace MortalDungeon.Definitions.Items
 {
     public class Dagger_1 : Item
     {
-        public Dagger_1()
+        public static int ID = 1;
+
+        public Dagger_1() : base()
         {
-            Id = 1;
+            Id = ID;
 
-            ItemAbility = new Stab();
+            if (WindowConstants.GameRunning)
+            {
+                ItemAbility = new Stab()
+                {
+                    Icon = new Icon(Icon.DefaultIconSize, AnimationSet.BuildAnimationsFromSet(), true)
+                };
+            }
 
-            ValidEquipmentSlots = EquipmentSlot.Weapon_1;
+            ItemType = ItemType.Weapon;
+
+            Name = new TextInfo(1, 1);
+            Description = new TextInfo(3, 1)
+            {
+                TextReplacementParameters =
+                {
+                    new TextReplacementParameter()
+                    {
+                        Key = "damage",
+                        Value = () => ItemAbility.Damage.ToString()
+                    }
+                }
+            };
         }
 
         public Dagger_1(Item item) : base(item) 
         {
-            
+
+        }
+
+        public override void BuildAnimationSet()
+        {
+            base.BuildAnimationSet();
+
+            AnimationSet = new AnimationSet();
+
+            Animation anim = new Animation();
+
+            anim.Spritesheet = (int)TextureName.ItemSpritesheet_1;
+            anim.FrameIndices = new List<int>() { (int)Item_1.Dagger_1 };
+
+            AnimationSet.Animations.Add(anim);
         }
     }
 
@@ -34,11 +70,9 @@ namespace MortalDungeon.Definitions.Items
 
             CastingMethod = CastingMethod.Base | CastingMethod.PhysicalDexterity | CastingMethod.Weapon;
 
-            Name = "Stab";
+            //Name = "Stab";
 
-            _description = "A template ability for variable range single target abilities.";
-
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BleedingDagger, Spritesheets.IconSheet, true);
+            //Description = "A template ability for variable range single target abilities.";
         }
     }
 }

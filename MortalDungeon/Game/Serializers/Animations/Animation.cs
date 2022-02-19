@@ -19,10 +19,10 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("AnR")]
         public int Repeats = -1;
         [XmlElement("AnS")]
-        public TextureName Spritesheet = TextureName.SpritesheetTest;
+        public int Spritesheet = 1;
 
         [XmlElement("AnT")]
-        public AnimationType Type = AnimationType.Idle;
+        public int Type = 0;
 
         [XmlElement("AnFI")]
         public List<int> FrameIndices = new List<int>();
@@ -34,12 +34,12 @@ namespace MortalDungeon.Game.Serializers
             builtAnim.Frequency = Frequency;
             builtAnim.Repeats = Repeats;
 
-            builtAnim.Type = Type;
+            builtAnim.Type = (AnimationType)Type;
 
             foreach(int frameIndex in FrameIndices)
             {
                 RenderableObject frame = new RenderableObject(
-                    new SpritesheetObject(frameIndex, Spritesheets.AllSpritesheets[(int)Spritesheet]).CreateObjectDefinition(true), 
+                    new SpritesheetObject(frameIndex, SpritesheetManager.GetSpritesheet(Spritesheet)).CreateObjectDefinition(true), 
                     WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
                 builtAnim.Frames.Add(frame);

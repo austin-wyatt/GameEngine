@@ -20,6 +20,8 @@ namespace MortalDungeon.Game.Serializers
         {
             string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
+            TextTables.Clear();
+
             List<string> filesToLoad = new List<string>();
 
             foreach (string file in files)
@@ -42,6 +44,22 @@ namespace MortalDungeon.Game.Serializers
             if (TextTables.TryGetValue(tableID, out var table))
             {
                 if (table.TryGetTextEntry(textEntryID, out var entry))
+                {
+                    return entry.Text;
+                }
+            }
+
+            return "";
+        }
+
+        public static string GetTextEntry(TextInfo info)
+        {
+            if (info == null)
+                return "";
+
+            if (TextTables.TryGetValue(info.TableId, out var table))
+            {
+                if (table.TryGetTextEntry(info.Id, out var entry))
                 {
                     return entry.Text;
                 }

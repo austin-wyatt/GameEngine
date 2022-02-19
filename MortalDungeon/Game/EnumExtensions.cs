@@ -1,4 +1,6 @@
-﻿using MortalDungeon.Game.Structures;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Items;
+using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using System;
@@ -172,6 +174,68 @@ namespace MortalDungeon.Game
                 default:
                     return "<Control Type>";
             }
+        }
+
+        public static EquipmentSlot EquipmentSlot(this ItemType itemType)
+        {
+            switch (itemType)
+            {
+                case ItemType.Weapon:
+                    return Items.EquipmentSlot.Weapon_1;
+                case ItemType.Armor:
+                    return Items.EquipmentSlot.Armor;
+                case ItemType.Gloves:
+                    return Items.EquipmentSlot.Gloves;
+                case ItemType.Jewelry:
+                    return Items.EquipmentSlot.Jewelry_1 | Items.EquipmentSlot.Jewelry_2;
+                case ItemType.Trinket:
+                    return Items.EquipmentSlot.Trinket;
+                case ItemType.Consumable:
+                    return Items.EquipmentSlot.Consumable_1 | Items.EquipmentSlot.Consumable_2 | 
+                        Items.EquipmentSlot.Consumable_3 | Items.EquipmentSlot.Consumable_4;
+                default:
+                    return Items.EquipmentSlot.None;
+            }
+        }
+
+        public static string Name(this ItemType itemType)
+        {
+            switch (itemType)
+            {
+                case ItemType.Weapon:
+                    return "Weapon";
+                case ItemType.Armor:
+                    return "Armor";
+                case ItemType.Gloves:
+                    return "Gloves";
+                case ItemType.Jewelry:
+                    return "Jewelry";
+                case ItemType.Trinket:
+                    return "Trinket";
+                case ItemType.Consumable:
+                    return "Consumable";
+                case ItemType.CraftingComponent:
+                    return "Crafting material";
+                case ItemType.BasicItem:
+                    return "Item";
+                default:
+                    return "Item";
+            }
+        }
+
+        public static string Name(this AnimationType animationType)
+        {
+            AnimationType[] types = (AnimationType[])Enum.GetValues(typeof(AnimationType));
+
+            for(int i = types.Length - 1; i >= 0; i--)
+            {
+                if(types[i] <= animationType)
+                {
+                    return types[i].ToString() + "_" + (animationType - types[i]);
+                }
+            }
+
+            return animationType.ToString();
         }
     }
 }

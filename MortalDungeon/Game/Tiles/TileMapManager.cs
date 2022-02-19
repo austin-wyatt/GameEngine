@@ -49,7 +49,7 @@ namespace MortalDungeon.Game.Tiles
             LoadedCenter = center;
         }
 
-        private static object _loadLock = new object();
+        public static object _loadLock = new object();
         public static void LoadMapsAroundCenter(int loadDiameter = -1, int layer = 0)
         {
             lock (_loadLock)
@@ -244,11 +244,14 @@ namespace MortalDungeon.Game.Tiles
                 {
                     List<Entity> entitiesToUnload = new List<Entity>();
 
-                    foreach(var entity in EntityManager.LoadedEntities)
+                    lock (EntityManager.Entities)
                     {
-                        if (entity.Handle.OnTileMap(map))
+                        foreach (var entity in EntityManager.LoadedEntities)
                         {
-                            entitiesToUnload.Add(entity);
+                            if (entity.Handle.OnTileMap(map))
+                            {
+                                entitiesToUnload.Add(entity);
+                            }
                         }
                     }
                    
@@ -347,19 +350,39 @@ namespace MortalDungeon.Game.Tiles
 
             List<InstancedRenderData> data;
 
+            List<BaseTile> neighborList = new List<BaseTile>();
+
             for (int j = 0; j < map.Tiles.Count; j++)
             {
-                GameObject tent1 = new GameObject();
-                tent1.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.TilePillar, default));
+                var tile = map.Tiles[j];
 
-                tent1.SetPosition(map.Tiles[j].Position + new Vector3(0, 217, -1.0f));
+                neighborList.Clear();
+                map.GetNeighboringTiles(tile, neighborList, shuffle: false, setVisited: false);
 
-                tent1.BaseObject.BaseFrame.SetScale(1.64f, 1.64f, 1);
+                bool createPillar = false;
 
-                Renderer.LoadTextureFromGameObj(tent1);
+                for (int i = 0; i < neighborList.Count; i++)
+                {
+                    if (tile.Properties.Height > neighborList[i].Properties.Height)
+                    {
+                        createPillar = true;
+                        break;
+                    }
+                }
 
-                tilePillars.Add(tent1);
+                if (createPillar)
+                {
+                    GameObject pillar = new GameObject();
+                    pillar.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.TilePillar, default));
 
+                    pillar.SetPosition(map.Tiles[j].Position + new Vector3(0, 217, -1.0f));
+
+                    pillar.BaseObject.BaseFrame.SetScale(1.64f, 1.64f, 1);
+
+                    Renderer.LoadTextureFromGameObj(pillar);
+
+                    tilePillars.Add(pillar);
+                }
             }
 
             data = InstancedRenderData.GenerateInstancedRenderData(tilePillars);

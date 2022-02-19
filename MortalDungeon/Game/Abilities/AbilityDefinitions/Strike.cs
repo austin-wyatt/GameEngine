@@ -23,7 +23,7 @@ namespace MortalDungeon.Game.Abilities
 
             CastingMethod |= CastingMethod.Weapon | CastingMethod.PhysicalDexterity | CastingMethod.BruteForce;
 
-            Name = "Strike";
+            //Name = "Strike";
 
             Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
         }

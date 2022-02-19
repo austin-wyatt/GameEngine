@@ -32,7 +32,7 @@ namespace MortalDungeon.Game.Serializers
 
         public int MapSize = 0;
 
-        public string AnimationSetName = "";
+        public int AnimationSetId = 0;
 
         public string GroupName = "";
 
@@ -48,7 +48,7 @@ namespace MortalDungeon.Game.Serializers
             LoadRadius = feature.LoadRadius;
 
             MapSize = feature.MapSize;
-            AnimationSetName = feature.AnimationSetName;
+            AnimationSetId = feature.AnimationSetId;
 
             GroupName = feature.GroupName;
             NameTextEntry = feature.NameTextEntry;

@@ -12,6 +12,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Engine_Classes.TextHandling;
+using System.Drawing;
 
 namespace MortalDungeon.Game
 {
@@ -35,7 +37,7 @@ namespace MortalDungeon.Game
 
         private DialogueNode _currentNode;
         private DialogueNode _prevNode;
-        private TextComponent _prevDialogueText;
+        private Text _prevDialogueText;
         private UIObject _buttonParent;
         private UIObject _dialogueParent;
         private UIObject _speakerParent;
@@ -46,7 +48,7 @@ namespace MortalDungeon.Game
 
         public void StartDialogue(Dialogue dialogue, List<Unit> participants)
         {
-            Scene.ExclusiveUIObjects.Add(Window);
+            Scene.UIManager.ExclusiveFocusObject(Window);
 
             Window.RemoveChildren();
             Window.SetPosition(WindowConstants.CenterScreen);
@@ -65,6 +67,7 @@ namespace MortalDungeon.Game
 
                     obj._currentAnimation.Reset();
                     obj._currentAnimation.Pause();
+                    obj._currentAnimation.Play();
 
                     obj.BaseFrame.ScaleX(0.18f / WindowConstants.AspectRatio);
                     obj.BaseFrame.ScaleY(0.18f);
@@ -115,7 +118,7 @@ namespace MortalDungeon.Game
 
         public void EndDialogue()
         {
-            Scene.ExclusiveUIObjects.Remove(Window);
+            Scene.UIManager.ClearExclusiveFocus();
 
             Window.RemoveChildren();
             Window.SetRender(false);
@@ -140,22 +143,28 @@ namespace MortalDungeon.Game
                 _createdObjects.Add(obj);
 
                 uiObj.AddBaseObject(obj);
+                uiObj.RemoveBaseObject(uiObj._baseObject);
+                uiObj._baseObject = obj;
+
+                Scene.Tick += uiObj.Tick;
+                uiObj.OnCleanUp += (s) => Scene.Tick -= uiObj.Tick;
 
                 obj._currentAnimation.Play();
             }
+            else
+            {
+                uiObj.SetColor(_Colors.Transparent);
+            }
 
-            uiObj.SetColor(_Colors.Transparent);
+            //uiObj.SetColor(_Colors.Transparent);
             uiObj.MultiTextureData.MixTexture = false;
             uiObj.SetScale(0.18f / WindowConstants.AspectRatio, 0.18f, 0.18f);
             uiObj.SetAllInline(0);
 
-            TextComponent dialogueText = new TextComponent();
-            dialogueText.SetTextScale(0.04f);
-            dialogueText._textField.SetColor(_Colors.Tan);
-
-            string dialogueMessage = EventLog.WrapString(_currentNode.GetMessage(), textWrapLength);
-
-            dialogueText.SetText(dialogueMessage);
+            string dialogueMessage = UIHelpers.WrapString(_currentNode.GetMessage(), textWrapLength);
+            Text dialogueText = new Text(dialogueMessage, Text.DEFAULT_FONT, 32, Brushes.Tan);
+            //dialogueText.SetColor(_Colors.Tan);
+            dialogueText.SetTextScale(0.075f);
 
 
             if (_prevDialogueText == null)
@@ -225,7 +234,7 @@ namespace MortalDungeon.Game
 
             if (_currentNode.Responses[0].ResponseType == ResponseType.None)
             {
-                if(_currentNode.Responses[0].Outcome > 0)
+                if (_currentNode.Responses[0].Outcome > 0)
                 {
                     StateIDValuePair updatedState = new StateIDValuePair()
                     {
@@ -238,7 +247,7 @@ namespace MortalDungeon.Game
                     DialogueLedger.SetStateValue(updatedState);
                 }
 
-                if(_currentNode.Responses[0].Instructions.Count > 0)
+                if (_currentNode.Responses[0].Instructions.Count > 0)
                 {
                     Ledgers.EvaluateInstructions(_currentNode.Responses[0].Instructions);
                 }
@@ -264,13 +273,13 @@ namespace MortalDungeon.Game
                 //create buttons
                 foreach (var res in _currentNode.Responses)
                 {
-                    string responseString = EventLog.WrapString(res.ToString(), textWrapLength);
+                    string responseString = UIHelpers.WrapString(res.ToString(), textWrapLength);
 
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.2f, _Colors.UILightGray, _Colors.UITextBlack);
+                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.1f, _Colors.UILightGray, _Colors.UITextBlack);
                     button.BaseComponent.MultiTextureData.MixTexture = false;
 
-                    button.BaseComponent.SetSize(button.TextBox.BaseComponent.Size + new UIScale(0.05f, 0.05f));
-                    button.BaseComponent.SetPosition(button.TextBox.BaseComponent.GetAnchorPosition(UIAnchorPosition.Center));
+                    button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));
+                    button.BaseComponent.SetPosition(button.TextBox.GetAnchorPosition(UIAnchorPosition.Center));
 
                     button.Click += (s, e) =>
                     {
@@ -343,13 +352,10 @@ namespace MortalDungeon.Game
         private const int textWrapLength = 25;
         public void AddResponseText(Dialogue dialogue, string response)
         {
-            TextComponent dialogueText = new TextComponent();
-            dialogueText.SetTextScale(0.04f);
-            dialogueText._textField.SetColor(_Colors.Green);
+            string dialogueMessage = UIHelpers.WrapString(response, textWrapLength);
 
-            string dialogueMessage = EventLog.WrapString(response, textWrapLength);
-
-            dialogueText.SetText(dialogueMessage);
+            Text dialogueText = new Text(dialogueMessage, Text.DEFAULT_FONT, 32, Brushes.LightGreen);
+            dialogueText.SetTextScale(0.075f);
 
 
             if (_prevDialogueText == null)

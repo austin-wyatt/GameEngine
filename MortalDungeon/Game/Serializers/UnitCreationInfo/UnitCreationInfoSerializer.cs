@@ -78,7 +78,7 @@ namespace MortalDungeon.Game.Serializers
 
             foreach (string file in files)
             {
-                if (file.Contains(".U"))
+                if (file.EndsWith(".U"))
                 {
                     filesToLoad.Add(file);
                 }

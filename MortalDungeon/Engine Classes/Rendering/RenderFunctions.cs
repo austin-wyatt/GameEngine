@@ -123,7 +123,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            RenderingQueue.RenderQueuedLetters();
+            //RenderingQueue.RenderQueuedLetters();
 
             GL.Disable(EnableCap.FramebufferSrgb);
 

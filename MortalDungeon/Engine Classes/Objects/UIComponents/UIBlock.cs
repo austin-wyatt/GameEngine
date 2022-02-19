@@ -66,6 +66,44 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             ValidateObject(this);
         }
 
+        public UIBlock(List<Animation> animations, Vector3 position = default, UIScale size = default, bool scaleAspectRatio = true, bool cameraPerspective = false)
+        {
+            //if (position == default)
+            //{
+            //    position = new Vector3(-1000, 0, 0);
+            //}
+
+            Position = position;
+            Size = size == null ? Size : size;
+            _scaleAspectRatio = scaleAspectRatio;
+            Name = "UIBlock";
+            CameraPerspective = cameraPerspective;
+
+
+            float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
+
+            BaseObject windowObj = new BaseObject(animations, 0, "UIWindow", position, EnvironmentObjects.UIBlockBounds);
+            windowObj.BaseFrame.CameraPerspective = CameraPerspective;
+
+            AddBaseObject(windowObj);
+            _baseObject = windowObj;
+
+            windowObj.OutlineParameters.SetAllInline(2);
+
+            //MultiTextureData.MixTexture = true;
+            //MultiTextureData.MixPercent = 0.5f;
+            //MultiTextureData.MixedTexture = new Texture(UIHelpers.UI_BACKGROUND.Handle, TextureName.FogTexture);
+            //MultiTextureData.MixedTextureLocation = OpenTK.Graphics.OpenGL4.TextureUnit.Texture1;
+            //MultiTextureData.MixedTextureName = TextureName.FogTexture;
+
+
+            SetSize(Size);
+
+            SetOrigin(aspectRatio, Size);
+
+            ValidateObject(this);
+        }
+
         public override void SetSize(UIScale size)
         {
             float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;

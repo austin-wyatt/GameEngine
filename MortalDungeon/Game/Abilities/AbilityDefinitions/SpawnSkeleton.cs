@@ -29,23 +29,23 @@ namespace MortalDungeon.Game.Abilities
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
             UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
-            Name = "Spawn Skeleton";
+            //Name = "Spawn Skeleton";
 
-            _description = "Spawn a skeleton after channeling three times.";
+            //Description = "Spawn a skeleton after channeling three times.";
 
             Icon = new Icon(Icon.DefaultIconSize, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet, true);
 
-            Channel first = new Channel(castingUnit, "Spawn Skeleton (1)", _description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
-            Channel second = new Channel(castingUnit, "Spawn Skeleton (2)", _description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
-            Channel third = new Channel(castingUnit, "Spawn Skeleton (3)", _description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
+            //Channel first = new Channel(castingUnit, "Spawn Skeleton (1)", Description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
+            //Channel second = new Channel(castingUnit, "Spawn Skeleton (2)", Description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
+            //Channel third = new Channel(castingUnit, "Spawn Skeleton (3)", Description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
 
-            first.AddCombo(second, null, false);
-            second.AddCombo(third, first, false);
-            third.AddCombo(this, second, false);
+            //    first.AddCombo(second, null, false);
+            //    second.AddCombo(third, first, false);
+            //    third.AddCombo(this, second, false);
 
-            first.CastingMethod = CastingMethod;
-            second.CastingMethod = CastingMethod;
-            third.CastingMethod = CastingMethod;
+            //    first.CastingMethod = CastingMethod;
+            //    second.CastingMethod = CastingMethod;
+            //    third.CastingMethod = CastingMethod;
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)

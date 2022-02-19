@@ -11,7 +11,7 @@ namespace MortalDungeon.Engine_Classes.Audio
 {
     public static class SoundPlayer
     {
-        private const int MAX_SOURCES = 32;
+        public const int MAX_SOURCES = 32;
 
         public static float Volume
         {
@@ -27,7 +27,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         }
 
         private static Source[] Sources = new Source[MAX_SOURCES];
-        public static List<Source> ActiveSources = new List<Source>(MAX_SOURCES);
+        public static HashSet<Source> ActiveSources = new HashSet<Source>(MAX_SOURCES);
         public static List<AudioBuffer> LoadedBuffers = new List<AudioBuffer>();
 
 
@@ -54,6 +54,8 @@ namespace MortalDungeon.Engine_Classes.Audio
             StartBufferWatchdog();
         }
 
+        public static object _activeSourcesLock = new object();
+
         private static void StartSourceWatchdog() 
         {
             Task sourceWatchdog = new Task(() =>
@@ -61,38 +63,40 @@ namespace MortalDungeon.Engine_Classes.Audio
                 List<Source> sourcesToRemove = new List<Source>();
                 while (true)
                 {
-                    for(int i = 0; i < ActiveSources.Count; i++)
+                    lock (_activeSourcesLock)
                     {
-                        Source source = ActiveSources[i];
-                        if (source.State == ALSourceState.Stopped && !source.KeepAlive)
+                        foreach (var source in ActiveSources)
                         {
-                            sourcesToRemove.Add(source);
-
-                            source.ApplyDefaultValues();
-
-                            if (DISPLAY_DEBUG_MESSAGES)
-                                Console.WriteLine($"Freed source {source.Handle}");
-
-                            if (source.ActiveSound != null)
+                            if (source.State == ALSourceState.Stopped && !source.KeepAlive)
                             {
-                                source.ActiveSound.Dispose();
+                                sourcesToRemove.Add(source);
+
+                                source.ApplyDefaultValues();
+
+                                if (DISPLAY_DEBUG_MESSAGES)
+                                    Console.WriteLine($"Freed source {source.Handle}");
+
+                                if (source.ActiveSound != null)
+                                {
+                                    source.ActiveSound.Dispose();
+                                }
+                            }
+
+                            if (source.EndTime < source.PlaybackPosition)
+                            {
+                                source.PlaybackPosition = source.Duration;
                             }
                         }
 
-                        if (ActiveSources[i].EndTime < ActiveSources[i].PlaybackPosition) 
+                        for (int i = 0; i < sourcesToRemove.Count; i++)
                         {
-                            ActiveSources[i].PlaybackPosition = ActiveSources[i].Duration;
+                            ActiveSources.Remove(sourcesToRemove[i]);
                         }
-                    }
-
-                    for (int i = 0; i < sourcesToRemove.Count; i++)
-                    {
-                        ActiveSources.Remove(sourcesToRemove[i]);
                     }
 
                     sourcesToRemove.Clear();
 
-                    Thread.Sleep(250);
+                    Thread.Sleep(100);
                 }
             }, TaskCreationOptions.LongRunning);
 
@@ -207,8 +211,7 @@ namespace MortalDungeon.Engine_Classes.Audio
         {
             for (int i = 0; i < Sources.Length; i++)
             {
-                //if (!ActiveSources.TryGetValue(Sources[i], out var _))
-                if (!ActiveSources.Exists(s => s == Sources[i]))
+                if (!ActiveSources.Contains(Sources[i]))
                 {
                     return Sources[i];
                 }
@@ -227,9 +230,17 @@ namespace MortalDungeon.Engine_Classes.Audio
                     Console.WriteLine("Source limit reached");
                 return false;
             }
-                
 
-            ActiveSources.Add(foundSource);
+            if (DISPLAY_DEBUG_MESSAGES)
+            {
+                Console.WriteLine("Procured source " + ActiveSources.Count);
+            }
+
+            lock (_activeSourcesLock)
+            {
+                ActiveSources.Add(foundSource);
+            }
+            
             foundSource.SetBuffer(sound.Buffer);
 
             foundSource.ActiveSound = sound;

@@ -41,11 +41,10 @@ namespace MortalDungeon.Game.Abilities
 
             AbilityClass = AbilityClass.Skeleton;
 
-            Name = "Ancient Armor";
+            Name = new Serializers.TextInfo(1, 3);
+            Description = new Serializers.TextInfo(2, 3);
 
-            _description = "Some old armor or something.";
-
-            Icon = new Icon(Icon.DefaultIconSize, Character.A, Spritesheets.CharacterSheet, true);
+            SetIcon(Character.A, Spritesheets.CharacterSheet);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)

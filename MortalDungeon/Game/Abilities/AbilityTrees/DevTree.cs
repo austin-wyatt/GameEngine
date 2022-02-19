@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,21 +11,36 @@ namespace MortalDungeon.Game.Abilities
         {
             AbilityTree devTree = new AbilityTree() { TreeType = AbilityTreeType.Dev };
 
-            devTree.BasicAbility.Add(new AbilityTreeNode()
-            {
-                ID = 0,
-                Name = "Strike",
-                CreateAbility = (unit) => new Strike(unit),
-            });
+            //devTree.BasicAbility.Add(new AbilityTreeNode()
+            //{
+            //    ID = -1,
+            //    Name = "Strike",
+            //    AbilityType = typeof(Strike),
+            //    RelativePosition = new Vector2(1, 1)
+            //});
 
-            var mendBones = new AbilityTreeNode()
+            int id = 0;
+
+            var smiteDev = new AbilityTreeNode()
             {
-                ID = 0,
+                ID = id++,
                 Name = "Smite_dev",
-                CreateAbility = (unit) => new Smite_dev(unit),
+                AbilityType = typeof(Smite_dev),
+                RelativePosition = new Vector2(0.31635115f, 0.78735596f),
+                TreeType = AbilityTreeType.Dev
             };
 
-            devTree.EntryPoint = mendBones;
+            var rangedAoe = new AbilityTreeNode()
+            {
+                ID = id++,
+                Name = "RangedAOE",
+                AbilityType = typeof(TemplateRangedAOE),
+                RelativePosition = new Vector2(0, 0),
+                TreeType = AbilityTreeType.Dev
+            };
+            smiteDev.AddConnection(rangedAoe);
+
+            devTree.EntryPoint = smiteDev;
 
 
             AbilityTrees.AddTree(devTree);

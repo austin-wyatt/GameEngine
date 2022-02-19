@@ -19,7 +19,7 @@ namespace MortalDungeon.Game.Player
 
     public static class PlayerParty
     {
-        public static List<Unit> UnitsInParty = new List<Unit>();
+        public static HashSet<Unit> UnitsInParty = new HashSet<Unit>();
         
         public static Unit PrimaryUnit;
 
@@ -30,6 +30,23 @@ namespace MortalDungeon.Game.Player
         public static CombatScene Scene;
 
         public static Inventory Inventory = new Inventory();
+
+
+
+        /// <summary>
+        /// Checks whether the units can be grouped.
+        /// </summary>
+        public static bool CanGroupUnits()
+        {
+            if (Scene.InCombat)
+            {
+                return false;
+            }
+
+            //TODO, check unit proximity from primary unit
+
+            return true;
+        }
 
         /// <summary>
         /// Attempts to group the units in the UnitsInParty list. <para/>
@@ -53,6 +70,8 @@ namespace MortalDungeon.Game.Player
 
             PrimaryUnit.StatusBarComp._nameBox.SetColor(_Colors.Blue);
 
+            Grouped = true;
+
             return true;
         }
 
@@ -72,10 +91,14 @@ namespace MortalDungeon.Game.Player
 
                 List<Unit> units = new List<Unit>(UnitsInParty);
 
-                if(targetTile.UnitOnTile == PrimaryUnit && PrimaryUnit != null)
+                foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(targetTile))
                 {
-                    units.Remove(PrimaryUnit);
+                    if (unit == PrimaryUnit && PrimaryUnit != null)
+                    {
+                        units.Remove(PrimaryUnit);
+                    }
                 }
+                
 
                 int currUnit = 0;
 
@@ -155,7 +178,7 @@ namespace MortalDungeon.Game.Player
 
             foreach(var item in UnitCreationList)
             {
-                var creationInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(item);
+                var creationInfo = UnitInfoBlockManager.GetUnit(item);
 
                 var unit = creationInfo.CreateUnit(Scene);
 
@@ -194,27 +217,47 @@ namespace MortalDungeon.Game.Player
                 else
                 {
                     PrimaryUnit.SetTileMapPosition(validTiles[tileIndex++]);
-                    PrimaryUnit.SetPosition(PrimaryUnit.Info.TileMapPosition.Position + PrimaryUnit.TileOffset);
+                    PrimaryUnit.SetPositionOffset(PrimaryUnit.Info.TileMapPosition.Position);
                 }
             }
 
-            for(int i = 0; i < UnitsInParty.Count; i++)
+            foreach(var unit in UnitsInParty)
             {
-                if(UnitsInParty[i] != PrimaryUnit)
+                if(unit != PrimaryUnit)
                 {
-                    if(!UnitsInParty[i].EntityHandle.Loaded)
+                    if(!unit.EntityHandle.Loaded)
                     {
-                        EntityManager.LoadEntity(UnitsInParty[i].EntityHandle, validTiles[tileIndex++].ToFeaturePoint());
+                        EntityManager.LoadEntity(unit.EntityHandle, validTiles[tileIndex++].ToFeaturePoint());
                     }
                     else
                     {
-                        UnitsInParty[i].SetTileMapPosition(validTiles[tileIndex++]);
-                        UnitsInParty[i].SetPosition(UnitsInParty[i].Info.TileMapPosition.Position + UnitsInParty[i].TileOffset);
+                        unit.SetTileMapPosition(validTiles[tileIndex++]);
+                        unit.SetPositionOffset(unit.Info.TileMapPosition.Position);
                     }
                 }
             }
 
             return true;
+        }
+
+        public static void EnterCombat()
+        {
+            VisionManager.SetRevealAll(false);
+        }
+
+        public static void ExitCombat()
+        {
+            VisionManager.SetRevealAll(true);
+        }
+
+        /// <summary>
+        /// Checks whether a member of the player party will be unloaded by a tile map load
+        /// </summary>
+        public static bool CheckPartyMemberWillBeUnloaded()
+        {
+            //add check for whether any party member will be unloaded
+
+            return false;
         }
     }
 }

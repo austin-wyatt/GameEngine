@@ -53,6 +53,7 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("FbP")]
         public List<BoundingPoints> BoundingPoints = new List<BoundingPoints>();
 
+        public List<FeatureUnit> FeatureUnits = new List<FeatureUnit>();
 
         public int Id = 0;
 
@@ -108,7 +109,7 @@ namespace MortalDungeon.Game.Serializers
         public int Layer = 0;
 
         [XmlElement("Feasn")]
-        public string AnimationSetName = "";
+        public int AnimationSetId = 0;
 
         [XmlElement("Fems")]
         public int MapSize = 0;
@@ -128,7 +129,8 @@ namespace MortalDungeon.Game.Serializers
 
             featureEquation.LoadRadius = LoadRadius;
 
-            foreach(var val in AffectedPoints)
+            #region Affected Points
+            foreach (var val in AffectedPoints)
             {
                 var point = CubeMethods.CubeToOffset(val.Point);
 
@@ -166,7 +168,50 @@ namespace MortalDungeon.Game.Serializers
                     LuaManager.ApplyScript(script);
                 }
             }
+            #endregion
 
+            #region Unit Affected Points
+            foreach (var val in FeatureUnits)
+            {
+                var point = CubeMethods.CubeToOffset(val.AffectedPoint.Point);
+
+                FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
+
+                featureEquation.AffectedPoints.TryAdd(newPoint, val.UnitId + (int)FeatureEquationPointValues.UnitStart);
+                featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
+
+                featureEquation.Parameters.Add(newPoint, val.AffectedPoint.Parameters);
+
+                if (val.AffectedPoint.Parameters.TryGetValue("rfc", out var featureParamString))
+                {
+                    featureParamString = featureParamString.Replace(" ", "");
+
+                    string[] featureParams = featureParamString.Split(",");
+
+                    var clearParameters = new ClearParamaters();
+                    clearParameters.ObjectHash = newPoint.GetUniqueHash();
+
+                    foreach (var param in featureParams)
+                    {
+                        string[] finalParam = param.Split("=");
+
+                        if (finalParam.Length == 2)
+                        {
+                            clearParameters.ExpectedValues.Add(finalParam[0], finalParam[1]);
+                        }
+                    }
+
+                    featureEquation.ClearParamaters.Add(clearParameters);
+                }
+
+                if (val.AffectedPoint.Parameters.TryGetValue("LOAD_SCRIPT", out var script))
+                {
+                    LuaManager.ApplyScript(script);
+                }
+            }
+            #endregion
+
+            #region Bounding Points
             foreach (var bound in BoundingPoints)
             {
                 TileMapPoint top = null;
@@ -300,7 +345,9 @@ namespace MortalDungeon.Game.Serializers
                     }
                 }
             }
+            #endregion
 
+            #region Building Skeletons
             int skeleCount = 0;
             foreach(var skele in BuildingSkeletons)
             {
@@ -321,6 +368,7 @@ namespace MortalDungeon.Game.Serializers
 
                 skeleCount++;
             }
+            #endregion
 
             featureEquation.FeatureTemplate = FeatureType;
 
@@ -386,6 +434,10 @@ namespace MortalDungeon.Game.Serializers
                 point.PrepareForSerialization();
             }
 
+            foreach (var item in FeatureUnits)
+            {
+                item.PrepareForSerialization();
+            }
 
             //_affectedPoints = new DeserializableDictionary<Vector3i, int>(AffectedPoints);
         }
@@ -403,6 +455,11 @@ namespace MortalDungeon.Game.Serializers
             foreach (var point in BoundingPoints)
             {
                 point.CompleteDeserialization();
+            }
+
+            foreach (var item in FeatureUnits)
+            {
+                item.CompleteDeserialization();
             }
         }
     }

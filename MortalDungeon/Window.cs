@@ -79,6 +79,15 @@ namespace MortalDungeon
         public static Stopwatch GlobalTimer = new Stopwatch();
 
         public static int MainThreadId = -1;
+        /// <summary>
+        /// Indicates whether the game is running or if it is being loaded as a dll (user has to set manually)
+        /// </summary>
+        public static bool GameRunning = true;
+
+
+        //Global position = position of objects in the world
+        //Local position = [-1:1] opengl coordinates
+        //Screen space = [0:ScreenUnits]
 
         public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
         {
@@ -213,7 +222,6 @@ namespace MortalDungeon
             Renderer.Initialize();
             CalculationThread.Initialize();
 
-            VisionMap.Initialize();
             FeatureManager.Initialize();
 
             LuaManager.Initialize();
@@ -507,47 +515,11 @@ namespace MortalDungeon
 
                 bool updateTileMaps = scene.ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate);
 
-                lock (scene._tileMapController._mapLoadLock)
+
+                var combatScene = scene as CombatScene;
+                if (combatScene != null)
                 {
-                    //RenderingQueue.ClearTileInstancedRenderData();
-                    //scene.GetRenderTarget<TileMap>(ObjectType.Tile).ForEach(tileMap =>
-                    //{
-                    //    //Renderer.QueueTileObjectsForRender(tileMap.Tiles);
-                    //    //tileMap.TileChunks.ForEach(chunk =>
-                    //    //{
-                    //    //    if (!chunk.Cull)
-                    //    //    {
-                    //    //        RenderingQueue.QueueStructuresForRender(chunk.Structures);
-                    //    //        RenderingQueue.QueueObjectsForRender(chunk.GenericObjects);
-                    //    //    }
-                    //    //});
-
-                    //    //if (tileMap.DynamicTextureInfo.Initialize)
-                    //    //{
-                    //    //    tileMap.InitializeTexturedQuad();
-                    //    //    tileMap.DynamicTextureInfo.Initialize = false;
-                    //    //}
-
-                    //    //if (updateTileMaps && tileMap.DynamicTextureInfo.TextureChanged)
-                    //    //{
-                    //    //    tileMap.UpdateDynamicTexture();
-                    //    //}
-
-                    //    //RenderingQueue.QueueTileQuadForRender(tileMap.TexturedQuad);
-
-                    //    if (tileMap.TileRenderData != null)
-                    //    {
-                    //        RenderingQueue.QueueTileInstancedRenderData(tileMap.TileRenderData);
-                    //        RenderingQueue.QueueFogTileInstancedRenderData(tileMap.FogTileRenderData);
-                    //    }
-                    //}); //TileMap
-
-
-                    var combScene = scene as CombatScene;
-                    if (combScene != null)
-                    {
-                        RenderingQueue.SetFogQuad(combScene._fogQuad);
-                    }
+                    RenderingQueue.SetFogQuad(combatScene._fogQuad);
                 }
 
                 RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles);
@@ -561,12 +533,9 @@ namespace MortalDungeon
                     RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
                 }
 
-                //foreach (var kvp in scene.UIManager.UIRenderData)
+                //lock (scene.UIManager._renderGroupLock)
                 //{
-                //    foreach(var data in kvp.Value)
-                //    {
-                //        RenderingQueue.QueueUIInstancedRenderData(data);
-                //    }
+                //    RenderingQueue.QueueUIInstancedRenderData(scene.UIManager);
                 //}
 
                 scene.GetRenderTarget<_Text>(ObjectType.Text).ForEach(text =>
@@ -1002,7 +971,12 @@ namespace MortalDungeon
             {
                 lock (_renderActionQueueLock)
                 {
-                    _renderActionQueue.Dequeue().Invoke();
+                    int count = _renderActionQueue.Count;
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        _renderActionQueue.Dequeue().Invoke();
+                    }
                 }
             }
         }

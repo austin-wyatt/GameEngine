@@ -3,6 +3,7 @@ using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace MortalDungeon.Game.Abilities
@@ -92,6 +93,16 @@ namespace MortalDungeon.Game.Abilities
 
             nodeQueue.Add(EntryPoint);
 
+            if(id < 0)
+            {
+                node = BasicAbility.Find(n => n.ID == id);
+
+                if(node != null)
+                {
+                    return true;
+                }
+            }
+
             while(nodeQueue.Count > 0)
             {
                 if(nodeQueue[0].ID == id) 
@@ -101,23 +112,6 @@ namespace MortalDungeon.Game.Abilities
                 }
                 else
                 {
-                    //foreach(AbilityTreeNode child in nodeQueue[0].Children)
-                    //{
-                    //    if (!visited.Contains(child.ID))
-                    //    {
-                    //        nodeQueue.Add(child);
-                    //        visited.Add(child.ID);
-                    //    }
-                    //}
-                    //foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
-                    //{
-                    //    if (!visited.Contains(parent.ID))
-                    //    {
-                    //        nodeQueue.Add(parent);
-                    //        visited.Add(parent.ID);
-                    //    }
-                    //}
-
                     foreach (AbilityTreeNode parent in nodeQueue[0].ConnectedNodes)
                     {
                         if (!visited.Contains(parent.ID))
@@ -152,23 +146,6 @@ namespace MortalDungeon.Game.Abilities
                 }
                 else
                 {
-                    //foreach (AbilityTreeNode child in nodeQueue[0].Children)
-                    //{
-                    //    if (!visited.Contains(child.ID))
-                    //    {
-                    //        nodeQueue.Add(child);
-                    //        visited.Add(child.ID);
-                    //    }
-                    //}
-                    //foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
-                    //{
-                    //    if (!visited.Contains(parent.ID))
-                    //    {
-                    //        nodeQueue.Add(parent);
-                    //        visited.Add(parent.ID);
-                    //    }
-                    //}
-
                     foreach (AbilityTreeNode parent in nodeQueue[0].ConnectedNodes)
                     {
                         if (!visited.Contains(parent.ID))
@@ -198,14 +175,20 @@ namespace MortalDungeon.Game.Abilities
         public int ID = 0;
 
         public string Name;
-        public Func<Unit, Ability> CreateAbility;
+        public Type AbilityType;
+
+        public AbilityTreeType TreeType;
 
         /// <summary>
         /// How far along this tree node should be placed when building the ability tree
         /// </summary>
         public Vector2 RelativePosition = new Vector2(0.5f, 0.5f);
 
-        public bool Unlocked = true;
+        public int MaxVariantUnlocked
+        {
+            get => GeneralLedger.GetStateValue((int)TreeType, ID);
+            set => GeneralLedger.SetStateValue((int)TreeType, ID, value);
+        }
 
         public void AddConnection(AbilityTreeNode node)
         {
@@ -227,14 +210,17 @@ namespace MortalDungeon.Game.Abilities
                 ability.MaxCharges = item.MaxCharges;
             }
 
-            ability.Name = Name;
-
             ability.AbilityTreeType = item.AbilityTreeType;
             ability.NodeID = item.NodeID;
-            ability.BasicAbility = item.BasicAbility > 0;
+            //ability.BasicAbility = item.BasicAbility > 0;
 
             unit.Info.Abilities.Add(ability);
             ability.AddAbilityToUnit();
+        }
+
+        public Ability CreateAbility(Unit unit)
+        {
+            return (Ability)Activator.CreateInstance(AbilityType, new object[] { unit });
         }
     }
 }

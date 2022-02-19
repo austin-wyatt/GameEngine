@@ -12,7 +12,7 @@ namespace MortalDungeon.Game.Abilities
 {
     public class TemplateRangedSingleTarget : Ability
     {
-        public TemplateRangedSingleTarget(Unit castingUnit, AbilityClass abilityClass, int range = 1, float damage = 0)
+        public TemplateRangedSingleTarget(Unit castingUnit, AbilityClass abilityClass = AbilityClass.Unknown, int range = 1, float damage = 0)
         {
             Type = AbilityTypes.MeleeAttack;
             DamageType = DamageType.Slashing;
@@ -29,11 +29,7 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            Name = "TemplateRangedSingleTarget";
-
-            _description = "A template ability for variable range single target abilities.";
-
-            Icon = new Icon(Icon.DefaultIconSize, Character.T, Spritesheets.CharacterSheet, true);
+            SetIcon(Character.T, Spritesheets.CharacterSheet);
 
             AbilityClass = abilityClass;
         }

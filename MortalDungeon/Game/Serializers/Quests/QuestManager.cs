@@ -18,7 +18,7 @@ namespace MortalDungeon.Game.Serializers
 
             if (!questCompleted && !Quests.Exists(q => q.ID == id))
             {
-                Quest quest = QuestSerializer.LoadQuestFromFile(id);
+                Quest quest = QuestBlockManager.GetQuest(id);
 
                 if (quest != null)
                 {
@@ -64,6 +64,8 @@ namespace MortalDungeon.Game.Serializers
 
             Console.WriteLine($"Quest {quest.ID} has been completed");
 
+            quest.QuestReward.ApplyRewards();
+
             StateIDValuePair completeQuestStateValue = new StateIDValuePair()
             {
                 Type = (int)LedgerUpdateType.Quest,
@@ -79,6 +81,11 @@ namespace MortalDungeon.Game.Serializers
                 CompletedQuests.Add(quest);
                 Quests.Remove(quest);
             }
+        }
+
+        public static bool GetQuestCompleted(int questId)
+        {
+            return QuestLedger.GetStateValue(questId, (int)QuestStates.Completed);
         }
     }
 }

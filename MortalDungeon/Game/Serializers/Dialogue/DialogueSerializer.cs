@@ -12,6 +12,8 @@ namespace MortalDungeon.Game.Serializers
         private static string _dialogueCharSet = "abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV";
         private static int _fileNameLength = 10;
 
+        private static int _currentDialogueId = 100;
+
         public static Dialogue LoadDialogueFromFile(int id)
         {
             string path = SerializerParams.DATA_BASE_PATH + _dialogueCharSet.CreateRandom(id, _fileNameLength) + ".d";
@@ -71,7 +73,7 @@ namespace MortalDungeon.Game.Serializers
 
             foreach (string file in files)
             {
-                if (file.Contains(".d"))
+                if (file.EndsWith(".d"))
                 {
                     filesToLoad.Add(file);
                 }

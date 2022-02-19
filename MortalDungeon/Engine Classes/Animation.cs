@@ -10,12 +10,12 @@ namespace MortalDungeon.Engine_Classes
 {
     public enum AnimationType
     {
-        Idle,
-        Misc_One,
-        Die,
-        Transparent,
-        Grass,
-        Misc
+        Idle = 0,
+        Die = 10,
+        Attack = 20,
+        Hurt = 30,
+        Interact = 40,
+        Misc = 100
     }
     public class Animation : ITickable
     {

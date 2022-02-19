@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
@@ -9,9 +10,6 @@ namespace MortalDungeon.Game.Serializers
     {
         None,
         Custom,
-        Ok,
-        Yes,
-        No
     }
 
     public enum DialogueStates
@@ -21,7 +19,7 @@ namespace MortalDungeon.Game.Serializers
     }
 
     [Serializable]
-    public class Dialogue
+    public class Dialogue : ISerializable
     {
         [XmlElement("entry")]
         public DialogueNode EntryPoint;
@@ -39,10 +37,25 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("name")]
         public string Name = "";
 
-        public Dialogue() { }
+        public double Scale = 1;
+
+        public Dialogue() 
+        {
+            
+        }
         public Dialogue(DialogueNode node)
         {
             EntryPoint = node;
+        }
+
+        public void CompleteDeserialization()
+        {
+            
+        }
+
+        public void PrepareForSerialization()
+        {
+            
         }
     }
 
@@ -57,7 +70,7 @@ namespace MortalDungeon.Game.Serializers
         /// </summary>
         public int Speaker = 0;
         [XmlElement("m")]
-        public int TextEntry = 0;
+        public TextInfo TextInfo = new TextInfo();
 
         [XmlElement("d")]
         /// <summary>
@@ -65,6 +78,11 @@ namespace MortalDungeon.Game.Serializers
         /// </summary>
         public int Delay = 0;
 
+        [XmlElement("dno")]
+        public int Outcome = 0;
+
+        [XmlElement("drp")]
+        public Vector2 RelativePosition = new Vector2();
 
         [XmlElement("res")]
         /// <summary>
@@ -72,38 +90,19 @@ namespace MortalDungeon.Game.Serializers
         /// </summary>
         public List<Response> Responses = new List<Response>();
 
+        [XmlElement("dnDesc")]
+        public string Description = "";
+
         public DialogueNode() { }
-        public DialogueNode(int speaker, int messageID)
-        {
-            Speaker = speaker;
-            TextEntry = messageID;
-        }
-
-        public Response AddResponse(Response node)
-        {
-            Responses.Add(node);
-
-            return node;
-        }
-
-        public Response AddResponse(out Response res, ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0)
-        {
-            Response node = new Response(type, messageID, outcome);
-            Responses.Add(node);
-
-            res = node;
-
-            return node;
-        }
-
-        public Response AddResponse(ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0)
-        {
-            return AddResponse(out var val, type, messageID, outcome);
-        }
+        //public DialogueNode(int speaker, int messageID)
+        //{
+        //    Speaker = speaker;
+        //    TextEntry = messageID;
+        //}
 
         public string GetMessage()
         {
-            return TextTableManager.GetTextEntry(0, TextEntry);
+            return TextInfo.ToString();
         }
     }
 
@@ -116,15 +115,19 @@ namespace MortalDungeon.Game.Serializers
     public class Response
     {
         [XmlElement("rm")]
-        public int TextEntry = 0;
-        [XmlElement("t")]
-        public ResponseType ResponseType = ResponseType.Ok;
+        public TextInfo TextInfo = new TextInfo();
 
         [XmlElement("out")]
         /// <summary>
         /// This value will be stored in the DialogueOutcome field and be used to determine which branch was taken in a dialogue
         /// </summary>
         public int Outcome = 0;
+
+        [XmlElement("rt")]
+        public ResponseType ResponseType = ResponseType.Custom;
+
+        [XmlElement("rDesc")]
+        public string Description = "";
 
         [XmlElement("N")]
         public DialogueNode Next;
@@ -133,37 +136,10 @@ namespace MortalDungeon.Game.Serializers
         public List<Instructions> Instructions = new List<Instructions>();
 
         public Response() { }
-        public Response(ResponseType type = ResponseType.None, int messageID = 0, int outcome = 0, int questStart = -1)
-        {
-            if (messageID != 0)
-            {
-                ResponseType = ResponseType.Custom;
-            }
-            else
-            {
-                ResponseType = type;
-            }
-
-            TextEntry = messageID;
-
-            Outcome = outcome;
-        }
-
-        public DialogueNode AddNext(DialogueNode next)
-        {
-            Next = next;
-            return next;
-        }
-
-        public DialogueNode AddNext(int speaker, int messageID)
-        {
-            Next = new DialogueNode(speaker, messageID);
-            return Next;
-        }
 
         public override string ToString()
         {
-            return ResponseType == ResponseType.Custom ? TextTableManager.GetTextEntry(0, TextEntry) : ResponseType.ToString();
+            return TextInfo.ToString();
         }
     }
 }

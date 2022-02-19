@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Objects.PropertyAnimations;
+using MortalDungeon.Game.SceneHelpers;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
@@ -32,7 +33,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         All = 7
     }
 
-    public enum EventAction 
+    public enum EventHandlerAction 
     {
         NumberKeyDown,
 
@@ -46,9 +47,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
     public class SceneEventArgs
     {
         public Scene Scene;
-        public EventAction EventAction;
+        public EventHandlerAction EventAction;
         public int ExtraInfo;
-        public SceneEventArgs(Scene scene, EventAction action, int extraInfo = 0) 
+        public SceneEventArgs(Scene scene, EventHandlerAction action, int extraInfo = 0) 
         {
             Scene = scene;
             EventAction = action;
@@ -71,11 +72,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public QueuedObjectList<GameObject> _lowPriorityObjects = new QueuedObjectList<GameObject>(); //the last objects that will be rendered in the scene
 
-        /// <summary>
-        /// When there are objects in this list any window interaction checks only apply to these objects
-        /// </summary>
-        public List<UIObject> ExclusiveUIObjects = new List<UIObject>();
-
         public HashSet<UnitTeam> ActiveTeams = new HashSet<UnitTeam>();
 
         public List<Unit> _collatedUnits = new List<Unit>();
@@ -89,6 +85,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
         //public static List<GameObject> LightObjects = new List<GameObject>();
         public static bool RenderLight = true;
 
+        /// <summary>
+        /// Determines whether tiles will be considered for UI events
+        /// </summary>
+        public bool TileMapsFocused = true;
 
         public QueuedList<ITickable> TickableObjects = new QueuedList<ITickable>();
         public QueuedList<ITickable> HighFreqTickableObjects = new QueuedList<ITickable>();
@@ -118,7 +118,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         //public Lighting Lighting;
         public QueuedList<LightObstruction> LightObstructions = new QueuedList<LightObstruction>();
-        public QueuedList<LightGenerator> LightGenerators = new QueuedList<LightGenerator>();
         public QueuedList<VisionGenerator> UnitVisionGenerators = new QueuedList<VisionGenerator>();
 
         public Camera _camera;
@@ -134,6 +133,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected Stopwatch _hoverTimer = new Stopwatch();
         protected GameObject _hoveredObject;
 
+        public BoxSelectHelper BoxSelectHelper = new BoxSelectHelper();
+
         protected virtual void InitializeFields()
         {
             _genericObjects = new QueuedObjectList<GameObject>();
@@ -148,7 +149,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             };
 
             ScenePosition = new Vector3(0, 0, 0);
-
 
             //Lighting = new Lighting(this);
         }
@@ -264,75 +264,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #endregion
 
 
-        private bool _updatingVisionMap = false;
-        private bool _shouldRepeatVisionMap = false;
-        public void UpdateVisionMap(Action onFinish = null, UnitTeam teamToUpdate = UnitTeam.Unknown)
-        {
-            if (ContextManager.GetFlag(GeneralContextFlags.DisableVisionMapUpdate) || ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading)) 
-            {
-                onFinish?.Invoke();
-                return;
-            }
 
-            if (_updatingVisionMap) 
-            {
-                _shouldRepeatVisionMap = true;
-                return;
-            }
-
-            //Stopwatch timer = new Stopwatch();
-            //timer.Start();
-
-            CalculationThread.AddCalculation(() =>
-            {
-                _updatingVisionMap = true;
-
-                VisionMap.SetObstructions(LightObstructions, this);
-
-                if (teamToUpdate == UnitTeam.Unknown)
-                {
-                    HashSet<UnitTeam> activeTeams = null;
-                    lock (_units._lock)
-                    {
-                        activeTeams = _units.Select(u => u.AI.Team).ToHashSet();
-                    }
-
-                    foreach (UnitTeam team in activeTeams)
-                    {
-                        UnitVisionGenerators.ManuallyIncrementChangeToken();
-                        LightObstructions.ManuallyIncrementChangeToken();
-
-                        VisionMap.CalculateVision(UnitVisionGenerators, this, team);
-                    }
-                }
-                else
-                {
-                    VisionMap.CalculateVision(UnitVisionGenerators, this, teamToUpdate);
-                }
-
-                _updatingVisionMap = false;
-
-                //Console.WriteLine($"Vision map updated in {timer.ElapsedMilliseconds}ms");
-
-                if (_shouldRepeatVisionMap)
-                {
-                    _shouldRepeatVisionMap = false;
-
-                    UpdateVisionMap(null, teamToUpdate);
-
-                    onFinish?.Invoke();
-                    OnVisionMapUpdated();
-                }
-                else
-                {
-                    onFinish?.Invoke();
-                    OnVisionMapUpdated();
-                }
-            });
-        }
-
-
-        public virtual void OnVisionMapUpdated() { }
 
         protected object _activeTeamsLock = new object();
         public void CalculateActiveTeams() 
@@ -368,25 +300,23 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (LightObstructions.HasQueuedItems())
             {
                 LightObstructions.HandleQueuedItems();
-                ContextManager.SetFlag(GeneralContextFlags.UpdateLightObstructionMap, true);
-                UpdateVisionMap();
-            }
-
-            if (LightGenerators.HasQueuedItems())
-            {
-                LightGenerators.HandleQueuedItems();
-                ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, true);
+                //UpdateVisionMap();
+                VisionManager.PrepareLightObstructions(LightObstructions);
             }
 
             if (UnitVisionGenerators.HasQueuedItems())
             {
                 UnitVisionGenerators.HandleQueuedItems();
-                UpdateVisionMap();
+                //UpdateVisionMap();
+                foreach(var team in ActiveTeams)
+                {
+                    VisionManager.ConsolidateVision(team);
+                }
             }
 
             _tileMapController.SelectionTiles.HandleQueuedItems();
 
-            RenderEvent?.Invoke(new SceneEventArgs(this, EventAction.Render));
+            RenderEvent?.Invoke(new SceneEventArgs(this, EventHandlerAction.Render));
         }
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
@@ -420,6 +350,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y), WindowConstants.ClientSize);
 
+                BoxSelectHelper.PreliminarySelection = false;
+                if (BoxSelectHelper.BoxSelecting)
+                {
+                    BoxSelectHelper.CurrentPoint = MouseCoordinates;
+                    BoxSelectHelper.CurrentMouseCoords = new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y);
+
+                    BoxSelectHelper.EndSelection();
+
+                    MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
+                    return;
+                }
+
                 if (!GetBit(_interceptClicks, ObjectType.UI))
                 {
                     //this is lazy but errors are minor enough that dumping them isn't a big deal
@@ -431,7 +373,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             for (int i = 0; i < UIManager.ClickableObjects.Count; i++)
                             {
-
                                 if (UIManager.ClickableObjects[i].Render && !UIManager.ClickableObjects[i].Disabled)
                                 {
                                     UIManager.ClickableObjects[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
@@ -485,7 +426,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
                     return; //stop further clicks from being processed
 
-                if (!GetBit(_interceptClicks, ObjectType.Tile))
+                if (!GetBit(_interceptClicks, ObjectType.Tile) && TileMapsFocused)
                 {
                     var chunksByDistance = TileMapHelpers.GetChunksByDistance(mouseRayNear, mouseRayFar);
 
@@ -513,10 +454,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
 
         protected UIObject _focusedObj = null;
+
         public virtual void OnMouseDown(MouseButtonEventArgs e)
         {
             if (e.Button == MouseButton.Left && e.Action == InputAction.Press)
             {
+                bool handled = false;
+
                 Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y), WindowConstants.ClientSize);
 
                 UIObject tempFocusedObj = null;
@@ -525,7 +469,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     foreach(var uiObj in UIManager.ClickableObjects)
                     {
-                        uiObj.BoundsCheck(MouseCoordinates, _camera, null, UIEventType.MouseDown);
+                        uiObj.BoundsCheck(MouseCoordinates, _camera, (_) => handled = true, UIEventType.MouseDown);
                     }
                 }
 
@@ -542,6 +486,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                 _focusedObj = tempFocusedObj;
                             }
                             OnObjectFocused();
+
+                            handled = true;
                         }, UIEventType.Focus);
                     }
                 }
@@ -550,6 +496,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (_focusedObj != null && (tempFocusedObj == null || tempFocusedObj.ObjectID != _focusedObj.ObjectID))
                 {
                     EndObjectFocus(_focusedObj, tempFocusedObj);
+                }
+
+                if(!handled && TileMapsFocused && BoxSelectHelper.AllowSelection)
+                {
+                    BoxSelectHelper.StartPreliminarySelection();
+                    BoxSelectHelper.CurrentPoint = MouseCoordinates;
+                    BoxSelectHelper.AnchorPoint = MouseCoordinates;
+
+                    BoxSelectHelper.AnchorMouseCoords = new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y);
+                    BoxSelectHelper.CurrentMouseCoords = new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y);
                 }
             }
         }
@@ -563,91 +519,115 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _mouseTimer.Restart();
                 _hoverTimer.Reset();
 
-                Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y), WindowConstants.ClientSize);
-
-                if (MouseState != null && MouseState.IsButtonDown(MouseButton.Left))
-                {
-                    if (_grabbedObj == null)
-                    {
-                        lock (UIManager._clickableObjectLock)
-                        {
-                            bool handled = false;
-
-                            foreach (var uiObj in UIManager.ClickableObjects)
-                            {
-                                if (handled)
-                                    break;
-
-                                uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
-                                {
-                                    _grabbedObj = obj;
-                                    handled = true;
-                                }, UIEventType.Grab);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Vector3 deltaDrag = new Vector3();
-                        Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Window._cursorCoords));
-
-                        if (_prevGrabPosition != Vector3.PositiveInfinity)
-                        {
-                            deltaDrag = mouseCoordScreenSpace - _prevGrabPosition;
-                        }
-
-                        _prevGrabPosition = mouseCoordScreenSpace;
-
-                        _grabbedObj.DragEvent(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos, mouseCoordScreenSpace, deltaDrag);
-                    }
-                } //resolve all ongoing grab effects
-
-                if (MouseState != null && !MouseState.IsButtonDown(MouseButton.Left) && _grabbedObj != null)
-                {
-                    _grabbedObj.GrabEnd();
-                    _grabbedObj = null;
-                    _prevGrabPosition = Vector3.PositiveInfinity;
-                } //resolve all grabbed effects
-
-
+                bool handleUI = true;
                 bool hoverHandled = false;
 
-                var isLocked = !System.Threading.Monitor.TryEnter(UIManager._hoverableObjectLock);
-                if (!isLocked)
+                Vector2 MouseCoordinates = NormalizeGlobalCoordinates(new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y), WindowConstants.ClientSize);
+
+                
+
+                if (BoxSelectHelper.BoxSelecting)
                 {
-                    System.Threading.Monitor.Exit(UIManager._hoverableObjectLock);
+                    BoxSelectHelper.CurrentPoint = MouseCoordinates;
+                    BoxSelectHelper.CurrentMouseCoords = new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y);
+
+                    BoxSelectHelper.DrawSelectionBox();
+                    handleUI = false;
                 }
-                else
+                else if (BoxSelectHelper.PreliminarySelection)
                 {
-                    Console.WriteLine("Hoverable objects were locked");
+                    BoxSelectHelper.CheckPreliminarySelection();
+
+                    BoxSelectHelper.CurrentPoint = MouseCoordinates;
+                    BoxSelectHelper.CurrentMouseCoords = new Vector2(Window._cursorCoords.X, Window._cursorCoords.Y);
+
+                    handleUI = false;
                 }
 
-                lock (UIManager._hoverableObjectLock)
+                if (handleUI)
                 {
-                    bool hovered = false;
-                    bool timedHover = false;
-                    //check hovered objects
-                    for(int i = 0; i < UIManager.HoverableObjects.Count; i++)
+                    if (MouseState != null && MouseState.IsButtonDown(MouseButton.Left))
                     {
-                        if (hovered)
+                        if (_grabbedObj == null)
                         {
-                            UIManager.HoverableObjects[i].BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
+                            lock (UIManager._clickableObjectLock)
+                            {
+                                bool handled = false;
+
+                                foreach (var uiObj in UIManager.ClickableObjects)
+                                {
+                                    if (handled)
+                                        break;
+
+                                    uiObj.BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                                    {
+                                        _grabbedObj = obj;
+                                        handled = true;
+                                    }, UIEventType.Grab);
+                                }
+                            }
                         }
                         else
                         {
-                            UIManager.HoverableObjects[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                            Vector3 deltaDrag = new Vector3();
+                            Vector3 mouseCoordScreenSpace = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Window._cursorCoords));
+
+                            if (_prevGrabPosition != Vector3.PositiveInfinity)
                             {
-                                hovered = true;
-                                hoverHandled = true;
+                                deltaDrag = mouseCoordScreenSpace - _prevGrabPosition;
+                            }
 
-                                if (obj.HasTimedHoverEffect && !timedHover)
+                            _prevGrabPosition = mouseCoordScreenSpace;
+
+                            _grabbedObj.DragEvent(mouseCoordScreenSpace - _grabbedObj._grabbedDeltaPos, mouseCoordScreenSpace, deltaDrag);
+                        }
+                    } //resolve all ongoing grab effects
+
+                    if (MouseState != null && !MouseState.IsButtonDown(MouseButton.Left) && _grabbedObj != null)
+                    {
+                        _grabbedObj.GrabEnd();
+                        _grabbedObj = null;
+                        _prevGrabPosition = Vector3.PositiveInfinity;
+                    } //resolve all grabbed effects
+
+
+                    var isLocked = !System.Threading.Monitor.TryEnter(UIManager._hoverableObjectLock);
+                    if (!isLocked)
+                    {
+                        System.Threading.Monitor.Exit(UIManager._hoverableObjectLock);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Hoverable objects were locked");
+                    }
+
+                    lock (UIManager._hoverableObjectLock)
+                    {
+                        bool hovered = false;
+                        bool timedHover = false;
+                        //check hovered objects
+                        for (int i = 0; i < UIManager.HoverableObjects.Count; i++)
+                        {
+                            if (hovered)
+                            {
+                                UIManager.HoverableObjects[i].BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
+                            }
+                            else
+                            {
+                                UIManager.HoverableObjects[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
                                 {
-                                    _hoverTimer.Restart();
-                                    _hoveredObject = obj;
+                                    hovered = true;
+                                    hoverHandled = true;
 
-                                    timedHover = true;
-                                }
-                            }, UIEventType.Hover);
+                                    if (obj.HasTimedHoverEffect && !timedHover)
+                                    {
+                                        _hoverTimer.Restart();
+                                        _hoveredObject = obj;
+
+                                        timedHover = true;
+                                    }
+                                }, UIEventType.Hover);
+                            }
                         }
                     }
                 }
@@ -719,34 +699,34 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     switch (e.Key)
                     {
                         case Keys.D1:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 1));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 1));
                             break;
                         case Keys.D2:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 2));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 2));
                             break;
                         case Keys.D3:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 3));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 3));
                             break;
                         case Keys.D4:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 4));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 4));
                             break;
                         case Keys.D5:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 5));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 5));
                             break;
                         case Keys.D6:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 6));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 6));
                             break;
                         case Keys.D7:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 7));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 7));
                             break;
                         case Keys.D8:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 8));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 8));
                             break;
                         case Keys.D9:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 9));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 9));
                             break;
                         case Keys.D0:
-                            NumberPressed(new SceneEventArgs(this, EventAction.NumberKeyDown, 0));
+                            NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 0));
                             break;
                     }
                 }
@@ -868,20 +848,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual void OnRenderEnd() 
         {
-            RenderEnd?.Invoke(new SceneEventArgs(this, EventAction.RenderEnd));
+            RenderEnd?.Invoke(new SceneEventArgs(this, EventHandlerAction.RenderEnd));
         }
         #endregion
 
         public List<UIObject> GetUI()
         {
-            if (ExclusiveUIObjects.Count == 0)
-            {
-                return UIManager.TopLevelObjects;
-            }
-            else
-            {
-                return ExclusiveUIObjects;
-            }
+            return UIManager.TopLevelObjects;
         }
 
         #region event actions
@@ -913,7 +886,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void PostTickAction() 
         {
-            PostTickEvent?.Invoke(new SceneEventArgs(this, EventAction.PostTickAction));
+            PostTickEvent?.Invoke(new SceneEventArgs(this, EventHandlerAction.PostTickAction));
         }
 
         public void OnTick()
@@ -1130,14 +1103,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         //    Lighting.UpdateLightTexture(LightGenerators, ref Rendering.Renderer._instancedRenderArray);
         //}
 
-        public void QueueLightUpdate() 
-        {
-            ContextManager.SetFlag(GeneralContextFlags.UpdateLighting, true);
-        }
         public void QueueLightObstructionUpdate()
         {
             RefillLightObstructions();
-            ContextManager.SetFlag(GeneralContextFlags.UpdateLightObstructionMap, true);
         }
 
         public void RefillLightObstructions()

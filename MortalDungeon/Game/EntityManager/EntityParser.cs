@@ -304,9 +304,6 @@ namespace MortalDungeon.Game.Entities
 
                 switch (key)
                 {
-                    case "AbilityName":
-                        ability.Name = (string)objVal;
-                        break;
                     case "DamageType":
                         ability.DamageType = (DamageType)Convert.ToInt32(objVal);
                         break;

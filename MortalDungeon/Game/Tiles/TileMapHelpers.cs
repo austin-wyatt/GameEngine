@@ -93,7 +93,7 @@ namespace MortalDungeon.Game.Tiles
             {
                 if (xIndex < 0)
                 {
-                    currX = TileMapManager.TILE_MAP_DIMENSIONS.X - Math.Abs(xIndex % TileMapManager.TILE_MAP_DIMENSIONS.X);
+                    currX = TileMapManager.TILE_MAP_DIMENSIONS.X - Math.Abs(xIndex) % TileMapManager.TILE_MAP_DIMENSIONS.X;
                 }
                 else
                 {
@@ -102,11 +102,11 @@ namespace MortalDungeon.Game.Tiles
 
                 if (yIndex < 0)
                 {
-                    currY = TileMapManager.TILE_MAP_DIMENSIONS.Y - Math.Abs(yIndex % TileMapManager.TILE_MAP_DIMENSIONS.Y);
+                    currY = TileMapManager.TILE_MAP_DIMENSIONS.Y - Math.Abs(yIndex) % TileMapManager.TILE_MAP_DIMENSIONS.Y;
                 }
                 else
                 {
-                    currY = Math.Abs(yIndex % TileMapManager.TILE_MAP_DIMENSIONS.Y);
+                    currY = Math.Abs(yIndex) % TileMapManager.TILE_MAP_DIMENSIONS.Y;
                 }
 
                 return foundMap.GetLocalTile(currX, currY);
@@ -126,6 +126,11 @@ namespace MortalDungeon.Game.Tiles
             Vector2i topLeftCoord = GetTopLeftTilePosition();
 
             return GetTile(point.X - topLeftCoord.X, point.Y - topLeftCoord.Y);
+        }
+
+        public static BaseTile GetTile(TilePoint point)
+        {
+            return GetTile(point.X, point.Y, point.ParentTileMap);
         }
 
         private static List<TilePoint> _visitedTiles = new List<TilePoint>();

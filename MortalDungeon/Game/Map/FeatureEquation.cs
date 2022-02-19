@@ -33,6 +33,7 @@ namespace MortalDungeon.Game.Map
         public int MAP_HEIGHT = TileMapManager.TILE_MAP_DIMENSIONS.Y;
 
         public Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
+
         public HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
 
         public HashSet<TileMapPoint> AffectedMaps = new HashSet<TileMapPoint>();
@@ -120,7 +121,7 @@ namespace MortalDungeon.Game.Map
                     unitAlive != HashBoolean.False &&
                     !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.ObjectHash == pointHash))
                 {
-                    var unitInfo = UnitCreationInfoSerializer.LoadUnitCreationInfoFromFile(value - (int)FeatureEquationPointValues.UnitStart);
+                    var unitInfo = UnitInfoBlockManager.GetUnit(value - (int)FeatureEquationPointValues.UnitStart);
 
                     if(unitInfo != null)
                     {
@@ -305,7 +306,7 @@ namespace MortalDungeon.Game.Map
 
                                 Vector3 pos = new Vector3(tile.Position.X, tile.Position.Y, 0);
 
-                                tile.SetPosition(pos + new Vector3(0, 0, height * 0.5f));
+                                tile.SetPosition(pos + new Vector3(0, 0, height * 0.2f));
                                 tile.Update();
                             }
                             break;

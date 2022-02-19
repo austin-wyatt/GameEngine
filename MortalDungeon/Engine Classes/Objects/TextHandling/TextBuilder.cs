@@ -90,9 +90,11 @@ namespace MortalDungeon.Engine_Classes.TextHandling
             //RectangleF rect = new RectangleF(0, 0, dim.Width, dim.Height);
 
             Graphics graphics = Graphics.FromImage(map);
+            graphics.Clear(Color.Transparent);
             graphics.SmoothingMode = SmoothingMode.HighQuality;
-            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
             graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 
 
             for (int i = 0; i < textArr.Length; i++)

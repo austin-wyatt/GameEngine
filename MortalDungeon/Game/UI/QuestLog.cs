@@ -3,11 +3,13 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.Serializers;
+using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Game.UI
 {
@@ -83,14 +85,14 @@ namespace MortalDungeon.Game.UI
 
             foreach (var quest in QuestManager.Quests)
             {
-                activeQuestsList.AddItem(TextTableManager.GetTextEntry(0, quest.Title), (_) =>
+                activeQuestsList.AddItem(quest.Title.ToString(), (_) =>
                 {
                     SelectedQuest = quest;
                     PopulateQuestInfo();
                 });
             }
 
-            _selectedQuestBlock = new UIBlock(default, new UIScale(1.4f, 1.55f));
+            _selectedQuestBlock = new UIBlock(default, new UIScale(1.4f, 1.25f));
             _selectedQuestBlock.SetColor(_Colors.UILightGray);
             _selectedQuestBlock.SetPositionFromAnchor(activeQuestsScrollArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(10, 0, 0), UIAnchorPosition.TopLeft);
 
@@ -101,13 +103,13 @@ namespace MortalDungeon.Game.UI
         {
             _selectedQuestBlock.RemoveChildren();
 
-            Text title = new Text(TextTableManager.GetTextEntry(0, SelectedQuest.Title), Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text title = new Text(SelectedQuest.Title.ToString(), Text.DEFAULT_FONT, 48, Brushes.Black);
             title.SetTextScale(0.1f);
 
             title.SetPositionFromAnchor(_selectedQuestBlock.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(5, 5, 0), UIAnchorPosition.TopLeft);
             _selectedQuestBlock.AddChild(title);
 
-            Text body = new Text(EventLog.WrapString(TextTableManager.GetTextEntry(0, SelectedQuest.Body), 40), Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text body = new Text(UIHelpers.WrapString(SelectedQuest.Body.ToString(), 40), Text.DEFAULT_FONT, 48, Brushes.Black);
             body.SetTextScale(0.075f);
 
             body.SetPositionFromAnchor(title.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(2, 5, 0), UIAnchorPosition.TopLeft);
@@ -127,7 +129,7 @@ namespace MortalDungeon.Game.UI
 
                 currentPos.Y += 20;
 
-                Text stateText = new Text(EventLog.WrapString(TextTableManager.GetTextEntry(0, state.TextEntry), 40), Text.DEFAULT_FONT, 48, Brushes.Black);
+                Text stateText = new Text(UIHelpers.WrapString(state.TextInfo.ToString(), 40), Text.DEFAULT_FONT, 48, Brushes.Black);
                 stateText.SetTextScale(0.075f);
 
                 stateText.SetPositionFromAnchor(currentPos, UIAnchorPosition.TopLeft);
@@ -148,7 +150,7 @@ namespace MortalDungeon.Game.UI
 
                 foreach (var obj in state.QuestObjectives)
                 {
-                    Text objectiveText = new Text(EventLog.WrapString(TextTableManager.GetTextEntry(0, obj.TextEntry), 45), Text.DEFAULT_FONT, 28, Brushes.Black);
+                    Text objectiveText = new Text(UIHelpers.WrapString(obj.TextInfo.ToString(), 45), Text.DEFAULT_FONT, 28, Brushes.Black);
                     objectiveText.SetTextScale(0.06f);
 
                     objectiveText.SetPositionFromAnchor(currentPos, UIAnchorPosition.TopLeft);
@@ -172,6 +174,58 @@ namespace MortalDungeon.Game.UI
 
                 count++;
             }
+
+            //show reward information at bottom of info
+            #region reward info
+            UIBlock questRewardsBlock = new UIBlock(default, new UIScale(1.4f, 0.3f));
+            questRewardsBlock.SetColor(_Colors.Tan);
+            questRewardsBlock.SAP(_selectedQuestBlock.GAP(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
+
+            Text rewardLabel = new Text(TextTableManager.GetTextEntry(0, 27), Text.DEFAULT_FONT, 32, Brushes.Black);
+            rewardLabel.SetTextScale(0.075f);
+            rewardLabel.SAP(questRewardsBlock.GAP(UIAnchorPosition.TopLeft) + new Vector3(5, 5, 0), UIAnchorPosition.TopLeft);
+            questRewardsBlock.AddChild(rewardLabel);
+
+            float xPos = questRewardsBlock.GAP(UIAnchorPosition.LeftCenter).X + 10;
+            float yPos = questRewardsBlock.GAP(UIAnchorPosition.LeftCenter).Y;
+
+            if (SelectedQuest.QuestReward.GoldReward != 0)
+            {
+                Icon goldIcon = new Icon(new UIScale(0.1f, 0.1f), UIControls.Gold, Spritesheets.UIControlsSpritesheet);
+                goldIcon.SAP(new Vector3(xPos, yPos, 0), UIAnchorPosition.LeftCenter);
+                questRewardsBlock.AddChild(goldIcon);
+
+                Text goldLabel = new Text($"{SelectedQuest.QuestReward.GoldReward}", Text.DEFAULT_FONT, 32, Brushes.Black);
+                goldLabel.SetTextScale(0.06f);
+                goldLabel.SAP(goldIcon.GAP(UIAnchorPosition.RightCenter) + new Vector3(0, 0, 0), UIAnchorPosition.LeftCenter);
+
+                questRewardsBlock.AddChild(goldLabel);
+
+                xPos = goldLabel.GAP(UIAnchorPosition.RightCenter).X + 10;
+            }
+
+            foreach(var item in SelectedQuest.QuestReward.ItemRewards)
+            {
+                var foundItem = item.GetItemFromEntry();
+
+                if (foundItem != null)
+                {
+                    var icon = new Icon(new UIScale(0.25f, 0.25f), foundItem.AnimationSet.BuildAnimationsFromSet());
+                    icon.HoverColor = _Colors.IconHover;
+                    icon.Hoverable = true;
+
+                    UIHelpers.AddTimedHoverTooltip(icon, foundItem.Name.ToString(), UIHelpers.WrapString(foundItem.Description.ToString(), 30), Scene);
+
+                    icon.SAP(new Vector3(xPos, yPos, 0), UIAnchorPosition.LeftCenter);
+                    xPos = icon.GAP(UIAnchorPosition.RightCenter).X + 10;
+
+                    questRewardsBlock.AddChild(icon);
+                }
+            }
+            
+
+            _selectedQuestBlock.AddChild(questRewardsBlock);
+            #endregion
         }
     }
 }

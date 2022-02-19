@@ -30,6 +30,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public Dictionary<Texture, TextureUnit> Textures = new Dictionary<Texture, TextureUnit>();
 
+        public ScissorData ScissorData = new ScissorData();
+
+        public bool IsValid = false;
+
         public InstancedRenderData()
         {
             VertexBuffer = GL.GenBuffer();
@@ -42,6 +46,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.DeleteBuffers(3, new int[]{ VertexBuffer, ElementBuffer, InstancedDataBuffer });
 
             Textures = null;
+            IsValid = false;
         }
 
 
@@ -107,6 +112,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                 instancedRenderData.ItemCount = itemCount;
                 instancedRenderData.VerticesCount = Display.VerticesDrawOrder.Length;
+
+                instancedRenderData.IsValid = true;
             }
 
             for (int i = 0; i < objects.Count; i++)

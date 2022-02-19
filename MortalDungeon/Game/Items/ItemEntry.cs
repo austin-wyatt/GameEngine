@@ -1,20 +1,33 @@
-﻿using System;
+﻿using MortalDungeon.Game.Serializers;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Items
 {
+
+    [XmlType(TypeName = "IEm")]
     [Serializable]
     public class ItemEntry
     {
         public int Id;
-        public int Name;
 
+        public TextInfo Name = new TextInfo();
+
+        [XmlElement("IEd")]
+        public TextInfo Description = new TextInfo();
+
+        [XmlElement("IEss")]
         public int StackSize = 1;
+
+        [XmlElement("IEc")]
         public int Charges;
 
+        [XmlElement("IEm")]
         public int Modifier = 0;
 
+        [XmlElement("IEl")]
         public ItemLocation ItemLocation;
 
         public ItemEntry() { }
@@ -23,6 +36,7 @@ namespace MortalDungeon.Game.Items
         {
             Id = item.Id;
             Name = item.Name;
+            Description = item.Description;
             StackSize = item.StackSize;
             Charges = item.Charges;
             Modifier = item.Modifier;
@@ -41,7 +55,7 @@ namespace MortalDungeon.Game.Items
         {
             item.StackSize = StackSize;
             item.Charges = Charges;
-            item.Modifier = Modifier;
+            item.SetModifier(Modifier);
             item.Location = ItemLocation;
         }
     }

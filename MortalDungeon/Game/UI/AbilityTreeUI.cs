@@ -241,7 +241,7 @@ namespace MortalDungeon.Game.UI
                         }
                     }
 
-                    bool canSelect = parentObject.Unlocked && available;
+                    bool canSelect = parentObject.MaxVariantUnlocked >= 0 && available; //TODO, MaxVariantUnlocked handling
 
                     if (canSelect && _selectedAbilityBlock >= 0 && _selectedUnit != null)
                     {
@@ -290,13 +290,14 @@ namespace MortalDungeon.Game.UI
         {
             foreach(var node in _treeObjects)
             {
-                if (node.TreeNode.Unlocked)
+                if (node.TreeNode.MaxVariantUnlocked >= 0) //TODO, MaxVariantUnlocked
                 {
                     node.Obj.SetColor(_Colors.Green);
                 }
                 else
                 {
                     node.Obj.SetColor(_Colors.Red);
+                    continue;
                 }
 
 
@@ -557,7 +558,7 @@ namespace MortalDungeon.Game.UI
 
                     icon.SetPosition(block.Position);
 
-                    UIHelpers.AddTimedHoverTooltip(block, ability.Name, Scene);
+                    UIHelpers.AddTimedHoverTooltip(block, ability.Name.ToString(), Scene);
                 }
                 else
                 {

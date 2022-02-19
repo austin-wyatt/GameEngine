@@ -39,43 +39,37 @@ namespace MortalDungeon.Game.UI
 
             LogArea.OnScrollAction = () =>
             {
-                float eventTop = LogArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft).Y;
-                float eventBot = LogArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomLeft).Y;
+                float visAreaTop = LogArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft).Y;
+                float visAreaBot = LogArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomLeft).Y;
 
                 for(int i = 0; i < Events.Count; i++)
                 {
                     float top = Events[i].GetAnchorPosition(UIAnchorPosition.TopLeft).Y;
                     float bot = Events[i].GetAnchorPosition(UIAnchorPosition.BottomLeft).Y;
 
-                    if(bot < eventTop || top > eventBot)
-                    {
-                        Events[i].SetRender(false);
-                    }
-                    else 
-                    {
-                        Events[i].SetRender(true);
-                    }
+                    //if(bot < visAreaTop || top > visAreaBot)
+                    //{
+                    //    Events[i].SetRender(false);
+                    //}
+                    //else 
+                    //{
+                    //    Events[i].SetRender(true);
+                    //}
                 }
             };
 
             FeatureManager.FeatureEnter += (feature, unit) =>
             {
-                Scene.SyncToRender(() =>
-                {
-                    string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
+                string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
 
-                    AddEvent("Entering " + text);
-                });
+                AddEvent("Entering " + text);
             };
 
             FeatureManager.FeatureExit += (feature, unit) =>
             {
-                Scene.SyncToRender(() =>
-                {
-                    string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
+                string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
 
-                    AddEvent("Leaving " + text);
-                });
+                AddEvent("Leaving " + text);
             };
         }
 
@@ -85,7 +79,7 @@ namespace MortalDungeon.Game.UI
         {
             if(eventText.Length > maxEventWidth) 
             {
-                eventText = WrapString(eventText, maxEventWidth);
+                eventText = UIHelpers.WrapString(eventText, maxEventWidth);
             }
 
             Brush brush;
@@ -145,92 +139,6 @@ namespace MortalDungeon.Game.UI
                     LogArea.BaseComponent.RemoveChild(Events[i]);
                 }
             }
-        }
-
-        public static string WrapString(string line, int maxWidth) 
-        {
-            if (line.Length < maxWidth)
-                return line;
-
-            string returnString = "";
-
-            char[] testChars = new char[] { ' ', '"', '@' };
-
-            //search for space
-            bool matchFound = false;
-
-            foreach(char c in testChars) 
-            {
-                if (matchFound)
-                    break;
-
-                for (int i = maxWidth; i > 1; i--)
-                {
-                    bool foundChar = false;
-
-                    switch (c) 
-                    {
-                        case ' ':
-                            foundChar = line[i] == ' ';
-                            break;
-                        case '"':
-                            foundChar = line[i] == '"' || line[i] == '\'' || line[i] == '.' || line[i] == ',' || line[i] == '!' ||
-                                        line[i] == ':' || line[i] == ';' || line[i] == '?';
-                            break;
-                        case '@':
-                            foundChar = line[i] == '@' || line[i] == '#' || line[i] == '$' || line[i] == '%' || line[i] == '^' ||
-                                        line[i] == '&' || line[i] == '*' || line[i] == '(' || line[i] == ')' || line[i] == '{' ||
-                                        line[i] == '}' || line[i] == '[' || line[i] == ']' || line[i] == '/' || line[i] == '\\' ||
-                                        line[i] == '|' || line[i] == '<' || line[i] == '>';
-                            break;
-                    }
-
-                    if (foundChar)
-                    {
-                        if(c == ' ')
-                        {
-                            returnString = line.Substring(0, i) + "\n";
-                            line = line.Substring(i + 1);
-                        }
-                        else
-                        {
-                            returnString = line.Substring(0, i + 1) + "\n";
-                            line = line.Substring(i + 1);
-                        }
-                        
-
-                        if (line.Length > maxWidth)
-                        {
-                            returnString += WrapString(line, maxWidth);
-                        }
-                        else
-                        {
-                            returnString += line;
-                        }
-                        matchFound = true;
-                        break;
-                    }
-                }
-            }
-
-            if(matchFound == false) 
-            {
-                returnString = line.Substring(0, maxWidth) + "\n";
-
-                line = line.Substring(maxWidth + 1);
-
-                if (line.Length > maxWidth)
-                {
-                    returnString += WrapString(line, maxWidth);
-                }
-                else
-                {
-                    returnString += line;
-                }
-            }
-            
-
-            return returnString;
         }
     }
 

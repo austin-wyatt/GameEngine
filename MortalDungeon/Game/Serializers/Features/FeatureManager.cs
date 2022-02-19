@@ -137,22 +137,23 @@ namespace MortalDungeon.Game.Serializers
                             bool unitIsInside = FeaturePoint.PointInPolygon(bound.BoundingSquare, unitPos) 
                                 && FeaturePoint.PointInPolygon(bound.OffsetPoints, unitPos);
 
-                            int testValue = 3;
+                            int outsideTestValue = -3;
+                            int insideTestValue = 1;
 
                             short val = FeatureLedger.GetFeatureStateValue(eq.FeatureID, FeatureStateValues.PlayerInsideCounter);
 
-                            if (unitIsInside && val < testValue)
+                            if (unitIsInside && val < insideTestValue)
                             {
                                 FeatureLedger.IncrementStateValue(eq.FeatureID, FeatureStateValues.PlayerInsideCounter);
                             }
-                            else if (!unitIsInside && val > -testValue)
+                            else if (!unitIsInside && val > outsideTestValue)
                             {
                                 FeatureLedger.DecrementStateValue(eq.FeatureID, FeatureStateValues.PlayerInsideCounter);
                             }
 
                             bool alreadyInside = FeatureLedger.GetFeatureStateValue(eq.FeatureID, FeatureStateValues.PlayerInside) == 1;
 
-                            if(val >= testValue && !alreadyInside)
+                            if(val >= insideTestValue && !alreadyInside)
                             {
                                 FeatureEnter?.Invoke(eq, unit);
 
@@ -164,7 +165,7 @@ namespace MortalDungeon.Game.Serializers
                                     LuaManager.ApplyScript(script);
                                 }
                             }
-                            else if(val <= -testValue && alreadyInside)
+                            else if(val <= outsideTestValue && alreadyInside)
                             {
                                 FeatureExit?.Invoke(eq, unit);
 

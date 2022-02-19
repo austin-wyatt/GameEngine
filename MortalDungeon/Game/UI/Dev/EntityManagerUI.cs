@@ -81,7 +81,7 @@ namespace MortalDungeon.Game.UI.Dev
 
 
             Icon addEntityButton = new Icon(new UIScale(0.1f, 0.1f), IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true);
-            addEntityButton.BaseObject.BaseFrame.SetBaseColor(new Vector4(1, 0, 0, 1));
+            addEntityButton.BaseComponent.SetColor(new Vector4(1, 0, 0, 1));
             addEntityButton.Clickable = true;
             addEntityButton.Click += (s, e) =>
             {
@@ -186,7 +186,7 @@ namespace MortalDungeon.Game.UI.Dev
         }
         public void CreateAbilityContextMenu(Ability ability)
         {
-            (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(ability.Name);
+            (Tooltip menu, UIList list) = UIHelpers.GenerateContextMenuWithList(ability.Name.ToString());
 
             
             list.AddItem("Remove Ability", (item) =>
@@ -485,7 +485,7 @@ namespace MortalDungeon.Game.UI.Dev
 
                 foreach (var ability in entity.Handle.Info.Abilities)
                 {
-                    abilityList.AddItem(ability.Name, (_) =>
+                    abilityList.AddItem(ability.Name.ToString(), (_) =>
                     {
                         CreateAbilityContextMenu(ability);
                     });

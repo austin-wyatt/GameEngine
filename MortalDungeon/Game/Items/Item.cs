@@ -1,4 +1,9 @@
-﻿using MortalDungeon.Game.Abilities;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Objects;
+using MortalDungeon.Game.Player;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Units;
 using System;
 using System.Collections.Generic;
@@ -29,7 +34,8 @@ namespace MortalDungeon.Game.Items
     public class Item
     {
         public int Id;
-        public int Name;
+        public TextInfo Name;
+        public TextInfo Description;
 
         /// <summary>
         /// The modifier tag will allow items to have alternate stats/functions depending on the value of the tag
@@ -43,6 +49,8 @@ namespace MortalDungeon.Game.Items
         public bool UsableOutsideCombat = true;
         public bool UsableInCombat = true;
 
+        public bool PlayerItem = true;
+
         public bool Sellable = false;
         public int SellPrice = 0;
 
@@ -55,17 +63,25 @@ namespace MortalDungeon.Game.Items
         public int MaxInventoryStack = 999;
 
         public ItemLocation Location = ItemLocation.Inventory;
-        public EquipmentSlot ValidEquipmentSlots = EquipmentSlot.None;
+        public ItemType ItemType = ItemType.BasicItem;
 
         public Ability ItemAbility;
 
         public Equipment EquipmentHandle;
 
-        public Item() { }
+        public AnimationSet AnimationSet;
+
+
+        public Item() 
+        {
+            BuildAnimationSet();
+        }
+
         public Item(Item item)
         {
             Id = item.Id;
             Name = item.Name;
+            Description = item.Description;
             Stackable = item.Stackable;
             Consumable = item.Consumable;
             UsableOutsideCombat = item.UsableOutsideCombat;
@@ -78,11 +94,35 @@ namespace MortalDungeon.Game.Items
             Sellable = item.Sellable;
             SellPrice = item.SellPrice;
             MaxCharges = item.MaxCharges;
+
+            SetModifier(item.Modifier);
+            BuildAnimationSet();
         }
 
-        public ItemStackError AddToStack()
+        public ItemStackError AddToStack(int amount)
         {
+            int maxStackSize = Location == ItemLocation.Inventory ? MaxInventoryStack : MaxEquipmentStack;
 
+            if(amount + StackSize > maxStackSize)
+            {
+                int overflowAmount = amount + StackSize - maxStackSize;
+
+                StackSize = maxStackSize;
+
+                if (PlayerItem)
+                {
+                    var item = Activator.CreateInstance(GetType(), new object[] {this}) as Item;
+
+                    item.StackSize = overflowAmount;
+
+                    PlayerParty.Inventory.AddItemToInventory(item);
+                    return ItemStackError.MaximumStackSizeReached;
+                }
+            }
+            else
+            {
+                StackSize += amount;
+            }
 
             return ItemStackError.None;
         }
@@ -143,6 +183,31 @@ namespace MortalDungeon.Game.Items
             Modifier = modifier;
         }
 
+        public virtual void BuildAnimationSet()
+        {
+            //Instantiate the item's animation set here.
+            //Items can have different animations for different modifiers, internal states, etc
+        }
+
+        public BaseObject CreateBaseObject()
+        {
+            BaseObject obj = new BaseObject(AnimationSet.BuildAnimationsFromSet(), 0, "", default);
+
+            return obj;
+        }
+
+        public Icon Generate(UIScale size)
+        {
+            if (AnimationSet == null)
+                return null;
+
+            Icon icon = new Icon(size, AnimationSet.BuildAnimationsFromSet());
+
+            icon.LoadTexture();
+
+            return icon;
+        }
+
         public override bool Equals(object obj)
         {
             return obj is Item item &&
@@ -153,9 +218,5 @@ namespace MortalDungeon.Game.Items
         {
             return HashCode.Combine(Id, Modifier);
         }
-        //Icon
-        //Passive effects from having the item
-        //Active ability
-        //etc
     }
 }
