@@ -24,7 +24,7 @@ namespace MortalDungeon.Game.Structures
     /// </summary>
     public class Building : Structure
     {
-
+        public int ID = 0;
         /// <summary>
         /// Stored as cube coordinates that are applied relative to the actual tile position that is holding the structure.
         /// The TileAction function is called for each tile in the TilePattern list to determine what should be done to the tiles.
@@ -32,13 +32,10 @@ namespace MortalDungeon.Game.Structures
         public List<Vector3i> TilePattern = new List<Vector3i>();
         public int Rotations = 0;
 
-        public List<GameObject> SupportingObject = new List<GameObject>();
+        public FeaturePoint IdealCenter;
+        public Vector3i ActualCenter;
 
-        public BuildingSkeleton SkeletonReference = null;
-
-        public int BuildingProfileId = 0;
-
-        public FeaturePoint FeatureOrigin = new FeaturePoint();
+        public List<GameObject> SupportingObjects = new List<GameObject>();
 
         /// <summary>
         /// This will initialize nothing. Any buildings created with this must create a valid GameObject before attempting to be rendered.
@@ -78,13 +75,6 @@ namespace MortalDungeon.Game.Structures
 
         public override void CleanUp()
         {
-            if (SkeletonReference != null)
-            {
-                SkeletonReference.Loaded = false;
-                //SkeletonReference.Handle = null;
-                SkeletonReference = null;
-            }
-
             base.CleanUp();
         }
 
@@ -112,7 +102,7 @@ namespace MortalDungeon.Game.Structures
 
             foreach (BaseTile tile in tiles)
             {
-                tile.Properties.Classification = TileClassification.Terrain;
+                tile.Properties.Classification = TileClassification.ImpassableGround;
             }
         }
 
@@ -123,32 +113,16 @@ namespace MortalDungeon.Game.Structures
             if (Info.TileMapPosition == null)
                 return list;
 
-            Vector2i tilePoint = new Vector2i(Info.TileMapPosition.TilePoint.X, Info.TileMapPosition.TilePoint.Y);
-
-            if (SkeletonReference != null)
+            foreach(var point in TilePattern)
             {
-                var featurePoint = Info.TileMapPosition.ToFeaturePoint();
-                Vector2i tileOffset = new Vector2i(
-                    featurePoint.X - (SkeletonReference.IdealCenter.X + FeatureOrigin.X),
-                    featurePoint.Y - (SkeletonReference.IdealCenter.Y + FeatureOrigin.Y));
+                FeaturePoint featurePoint = new FeaturePoint(CubeMethods.CubeToOffset(point - ActualCenter + CubeMethods.OffsetToCube(Info.TileMapPosition.ToFeaturePoint())));
 
-                tilePoint -= tileOffset;
-            }
+                var tile = TileMapHelpers.GetTile(featurePoint);
 
-
-            for (int i = 0; i < TilePattern.Count; i++)
-            {
-                Vector2i tileCoords = CubeMethods.CubeToOffset(CubeMethods.OffsetToCube(tilePoint) + TilePattern[i]);
-
-                //if ((tileCoords.X + tilePoint.X) % 2 == 0)
-                //    tileCoords.Y++;
-
-                BaseTile tile = GetTileMap()[tileCoords.X, tileCoords.Y];
-
-                if (tile == null)
-                    continue;
-
-                list.Add(tile);
+                if(tile != null)
+                {
+                    list.Add(tile);
+                }
             }
 
             return list;
@@ -164,6 +138,17 @@ namespace MortalDungeon.Game.Structures
             {
                 TilePattern[i] = CubeMethods.RotateCube(TilePattern[i], rotations);
             }
+        }
+
+        public void RotateBuilding(int rotations)
+        {
+            Rotations += rotations;
+            for (int i = 0; i < TilePattern.Count; i++)
+            {
+                TilePattern[i] = CubeMethods.RotateCube(TilePattern[i], rotations);
+            }
+
+            BaseObject.BaseFrame.RotateZ(60 * rotations);
         }
 
         /// <summary>
@@ -183,53 +168,6 @@ namespace MortalDungeon.Game.Structures
             }
 
             return list;
-
-        }
-    }
-
-    /// <summary>
-    /// The minimum possible information needed to recreate a building.
-    /// </summary>
-    public class BuildingSkeleton
-    {
-        public FeaturePoint IdealCenter;
-        public HashSet<Vector3i> TilePattern;
-        public int Rotations;
-
-        public bool Loaded;
-        public Building Handle;
-
-        /// <summary>
-        /// True when the skeleton is acted upon during application of a feature equation until OnAppliedToMaps is called 
-        /// </summary>
-        public bool _skeletonTouchedThisCycle;
-
-        public static BuildingSkeleton Empty;
-
-        public static BuildingSkeleton CreateFromSerialized(SerialiableBuildingSkeleton skele)
-        {
-            if(skele.BuildingID < 0 || skele.BuildingID > Buildings.CreateBuilding.Count - 1)
-                return null;
-
-            BuildingSkeleton newSkele = new BuildingSkeleton();
-
-            newSkele.TilePattern = skele.TilePattern.ToHashSet();
-            newSkele.IdealCenter = skele.IdealCenter;
-            newSkele.Rotations = skele.Rotations;
-
-            //using the BuildingID, create the skeleton's handle.
-
-            newSkele.Handle = Buildings.CreateBuilding[skele.BuildingID](skele);
-
-            newSkele.Handle.InitializeUnitInfo();
-
-            //newSkele.Handle.RotateTilePattern(newSkele.Rotations);
-
-            newSkele.Handle.Rotations = newSkele.Rotations;
-
-            newSkele.Handle.InitializeVisualComponent();
-
-            return newSkele;
         }
     }
 }

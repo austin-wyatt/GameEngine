@@ -8,9 +8,22 @@ namespace MortalDungeon.Game.Units
     public static class UnitPositionManager
     {
         public static Dictionary<TilePoint, HashSet<Unit>> UnitPositions = new Dictionary<TilePoint, HashSet<Unit>>();
+        public static Dictionary<TileMapPoint, HashSet<Unit>> UnitMapPositions = new Dictionary<TileMapPoint, HashSet<Unit>>();
 
         public static void SetUnitPosition(Unit unit, TilePoint position)
         {
+            if (UnitMapPositions.TryGetValue(position.ParentTileMap.TileMapCoords, out var unitMapSet))
+            {
+                unitMapSet.Add(unit);
+            }
+            else
+            {
+                HashSet<Unit> newUnitSet = new HashSet<Unit>();
+                newUnitSet.Add(unit);
+
+                UnitMapPositions.Add(position.ParentTileMap.TileMapCoords, newUnitSet);
+            }
+
             if (UnitPositions.TryGetValue(position, out var units))
             {
                 units.Add(unit);
@@ -33,6 +46,16 @@ namespace MortalDungeon.Game.Units
                 if(units.Count == 0)
                 {
                     UnitPositions.Remove(position);
+                }
+            }
+
+            if (UnitMapPositions.TryGetValue(position.ParentTileMap.TileMapCoords, out var unitsOnMap))
+            {
+                unitsOnMap.Remove(unit);
+
+                if (unitsOnMap.Count == 0)
+                {
+                    UnitMapPositions.Remove(position.ParentTileMap.TileMapCoords);
                 }
             }
         }

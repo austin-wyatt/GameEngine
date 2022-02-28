@@ -25,6 +25,11 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement(Namespace = "UPa")]
         public DeserializableDictionary<string, string> _parameters = new DeserializableDictionary<string, string>();
 
+        public bool TryGetValue(string key, out string value)
+        {
+            return Parameters.TryGetValue(key, out value);
+        }
+
         public void PrepareForSerialization()
         {
             _parameters = new DeserializableDictionary<string, string>(Parameters);

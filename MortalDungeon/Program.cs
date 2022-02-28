@@ -37,7 +37,6 @@ namespace MortalDungeon
                 //Window.Context.MakeCurrent();
 
                 game.VSync = OpenTK.Windowing.Common.VSyncMode.Off;
-                Window.CursorGrabbed = true;
 
                 game.Run();
             }

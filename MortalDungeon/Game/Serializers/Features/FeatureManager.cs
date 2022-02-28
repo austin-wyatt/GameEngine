@@ -29,10 +29,17 @@ namespace MortalDungeon.Game.Serializers
         public static void Initialize()
         {
             LoadedFeatures = new Dictionary<long, FeatureEquation>();
+
+            RefreshFeatureList();
+        }
+
+        public static void RefreshFeatureList()
+        {
             AllFeatures = FeatureSerializer.LoadFeatureListFile();
         }
+
         //when loading a feature, apply any passed state values as well.
-        public static void EvaluateLoadedFeatures(FeaturePoint currPosition, int layer, int minLoadRadius = 150)
+        public static void EvaluateLoadedFeatures(FeaturePoint currPosition, int layer, int minLoadRadius = 150, bool forceRefresh = false)
         {
             List<long> featuresToRemove = new List<long>();
             lock (_featureLock)
@@ -44,7 +51,7 @@ namespace MortalDungeon.Game.Serializers
                     loadRadius += (int)(minLoadRadius * 1.5f); //we don't want to unload the feature as soon as we leave the load radius since that could
                                        //cause some issues if the user walks back and forth between 2 maps repeatedly.
 
-                    if (layer != eq.Value.Layer || !CheckDistance(eq.Value.Origin, currPosition, loadRadius))
+                    if (forceRefresh || layer != eq.Value.Layer || !CheckDistance(eq.Value.Origin, currPosition, loadRadius))
                     {
                         featuresToRemove.Add(eq.Value.FeatureID);
                     }
@@ -55,6 +62,8 @@ namespace MortalDungeon.Game.Serializers
                     SubscribedBounds.Remove(LoadedFeatures[eq]);
 
                     FeatureLedger.SetFeatureStateValue(LoadedFeatures[eq].FeatureID, FeatureStateValues.FeatureLoaded, 0);
+
+                    LoadedFeatures[eq].UnloadFeature();
 
                     LoadedFeatures.Remove(eq);
                 }
@@ -71,7 +80,7 @@ namespace MortalDungeon.Game.Serializers
 
                     if (layer == AllFeatures.Features[i].Layer && CheckDistance(AllFeatures.Features[i].Origin, currPosition, loadRadius))
                     {
-                        var feature = FeatureSerializer.LoadFeatureFromFile(AllFeatures.Features[i].Id);
+                        var feature = FeatureBlockManager.GetFeature(AllFeatures.Features[i].Id);
 
                         if (feature != null)
                         {

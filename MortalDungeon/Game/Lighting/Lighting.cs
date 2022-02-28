@@ -420,7 +420,7 @@ namespace MortalDungeon.Game.Lighting
 
             GL.Enable(EnableCap.Blend);
 
-            GL.Viewport(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y);
+            GL.Viewport(Renderer.ViewportRectangle.X, Renderer.ViewportRectangle.Y, Renderer.ViewportRectangle.Width, Renderer.ViewportRectangle.Height);
         }
 
         private static void EnableObstructionShaderAttributes()

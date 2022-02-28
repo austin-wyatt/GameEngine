@@ -12,7 +12,9 @@ namespace MortalDungeon.Game.Abilities
     {
         None,
         Skeleton,
-        Dev
+        Dev,
+        Bandit,
+        Spider
     }
     public static class AbilityTrees
     {
@@ -22,6 +24,8 @@ namespace MortalDungeon.Game.Abilities
         {
             SkeletonTree.Initialize();
             DevTree.Initialize();
+            BanditTree.Initialize();
+            SpiderTree.Initialize();
         }
 
         public static bool FindTree(AbilityTreeType type, out AbilityTree tree)
@@ -41,23 +45,6 @@ namespace MortalDungeon.Game.Abilities
 
             while (nodeQueue.Count > 0)
             {
-                //foreach (AbilityTreeNode child in nodeQueue[0].Children)
-                //{
-                //    if (!visited.Contains(child.ID))
-                //    {
-                //        nodeQueue.Add(child);
-                //        visited.Add(child.ID);
-                //    }
-                //}
-                //foreach (AbilityTreeNode parent in nodeQueue[0].Parents)
-                //{
-                //    if (!visited.Contains(parent.ID))
-                //    {
-                //        nodeQueue.Add(parent);
-                //        visited.Add(parent.ID);
-                //    }
-                //}
-
                 foreach (AbilityTreeNode parent in nodeQueue[0].ConnectedNodes)
                 {
                     if (!visited.Contains(parent.ID))

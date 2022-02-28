@@ -46,6 +46,7 @@ namespace MortalDungeon.Game.Abilities
         Unknown,
         Skeleton,
         Bandit,
+        Spider,
 
 
         Item_Normal,
@@ -69,6 +70,9 @@ namespace MortalDungeon.Game.Abilities
         Intelligence = 128, //activating a complicated device
         Passive = 256, //an always active ability
         Movement = 512, //walking, flying, jumping, etc
+        Sight = 1024,
+
+        Innate = 4096, //an ability that a unit can do naturally
     }
 
     public enum DamageType //main effect (extra effects provided by abilities)
@@ -194,20 +198,26 @@ namespace MortalDungeon.Game.Abilities
         public bool UsedThisTurn = false;
         public bool OneUsePerTurn = true;
 
-        //public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
-        public Icon Icon;
+        public AnimationSet AnimationSet = new AnimationSet();
 
         public Ability()
         {
             
         }
 
-        public void SetIcon(Enum spriteSheetPosition, Spritesheet spritesheet)
+        public Ability(Unit unit)
         {
-            if (WindowConstants.GameRunning)
+            CastingUnit = unit;
+        }
+
+        public Icon GetIcon()
+        {
+            if(AnimationSet != null)
             {
-                Icon = new Icon(Icon.DefaultIconSize, spriteSheetPosition, spritesheet, true);
+                return new Icon(Icon.DefaultIconSize, AnimationSet.BuildAnimationsFromSet(), true);
             }
+
+            return null;
         }
 
         public virtual void AddAbilityToUnit()
@@ -234,7 +244,7 @@ namespace MortalDungeon.Game.Abilities
             Icon icon;
             if (passedIcon == null)
             {
-                icon = new Icon(Icon, scale, withBackground, backgroundType);
+                icon = new Icon(GetIcon(), scale, withBackground, backgroundType);
             }
             else
             {
@@ -356,7 +366,9 @@ namespace MortalDungeon.Game.Abilities
         {
             if (CastingUnit != null)
             {
-                return CastingUnit.Info.EnergyCostMultiplier * EnergyCost + CastingUnit.Info.EnergyAddition;
+                return CastingUnit.Info.BuffManager.GetValue(BuffEffect.EnergyCostMultiplier) * 
+                       (EnergyCost + 
+                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.EnergyCostAdditive));
             }
 
             return EnergyCost;
@@ -366,7 +378,9 @@ namespace MortalDungeon.Game.Abilities
         {
             if (CastingUnit != null)
             {
-                return ActionCost + CastingUnit.Info.ActionEnergyAddition;
+                return CastingUnit.Info.BuffManager.GetValue(BuffEffect.ActionEnergyCostMultiplier) * 
+                       (ActionCost + 
+                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.ActionEnergyCostAdditive));
             }
 
             return ActionCost;
@@ -398,16 +412,6 @@ namespace MortalDungeon.Game.Abilities
 
         public float GetDamage()
         {
-            float damage;
-            if (CastingUnit != null)
-            {
-                damage = CastingUnit.Info.DamageMultiplier * Damage + CastingUnit.Info.DamageAddition;
-            }
-            else 
-            {
-                damage = Damage;
-            }
-
             return Damage;
         }
 
@@ -597,7 +601,7 @@ namespace MortalDungeon.Game.Abilities
                 DamageInstance damage = new DamageInstance();
                 damage.Damage.Add(DamageType.Focus, damageNum);
 
-                CastingUnit.ApplyDamage(new Unit.DamageParams(damage));
+                CastingUnit.ApplyDamage(new DamageParams(damage));
             }
         }
 
@@ -986,6 +990,8 @@ namespace MortalDungeon.Game.Abilities
                 CastingUnit.Info.Abilities.Replace(this, ability);
                 RemovePassives();
 
+                CastingUnit.OnAbilitiesUpdated();
+
                 ability.OnSwappedTo();
             }
         }
@@ -1087,17 +1093,6 @@ namespace MortalDungeon.Game.Abilities
         public virtual DamageInstance GetDamageInstance() 
         {
             return new DamageInstance();
-        }
-
-        public void ApplyBuffDamageInstanceModifications(DamageInstance instance) 
-        {
-            if (CastingUnit != null) 
-            {
-                foreach (var buff in CastingUnit.Info.Buffs) 
-                {
-                    buff.ModifyDamageInstance(instance, this);
-                }
-            }
         }
 
         public virtual UnitAIAction GetAction(List<Unit> unitsInCombat)

@@ -86,7 +86,7 @@ namespace MortalDungeon.Game.Save
 
             foreach (var ability in unit.Info.Abilities)
             {
-                var loadout = AbilityLoadout.Items.Find(a => a.NodeID == ability.NodeID 
+                var loadout = AbilityLoadout.GetLoadout(unit.Info.AbilityVariation).Find(a => a.NodeID == ability.NodeID 
                     && a.AbilityTreeType == ability.AbilityTreeType);
 
                 if(loadout != null)
@@ -104,17 +104,17 @@ namespace MortalDungeon.Game.Save
 
         public void ApplyUnitInfoToUnit(Unit unit)
         {
-            CompleteDeserialization();
-
-            unit.Name = Name;
-            unit.SetTeam(UnitAI.Team);
-            
             UnitInfo.AttachUnitToInfo(UnitInfo, unit);
             UnitAI.AttachUnitToAI(UnitAI, unit);
 
             unit.Info = UnitInfo;
             unit.AI = UnitAI;
 
+            CompleteDeserialization();
+
+            unit.Name = Name;
+            unit.SetTeam(UnitAI.Team);
+            
             unit.pack_name = pack_name;
 
             unit.ObjectHash = FeatureHash;

@@ -54,7 +54,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         DisallowCameraMovement,
 
-        ClearingTeamVision
+        ClearingTeamVision,
+
+        EditingFeature
     }
     public class CombatScene : Scene
     {
@@ -219,16 +221,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void CompleteRound()
         {
             //do stuff that needs to be done when a round is completed
-            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderBy(i => i.Info.Speed));
+            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderByDescending(i => i.Info.Speed));
 
             AdvanceRound();
 
             _units.ForEach(unit =>
             {
-                for (int i = 0; i < unit.Info.Buffs.Count; i++)
-                {
-                    unit.Info.Buffs[i].OnRoundEnd();
-                }
+                unit.OnRoundEnd();
             });
 
             foreach (var item in TileEffectManager.TileEffects)
@@ -247,7 +246,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             UnitTakingTurn = 0;
 
-            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderBy(i => i.Info.Speed)); //sort the list by speed
+            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderByDescending(i => i.Info.Speed)); //sort the list by speed
 
             TurnDisplay.SetUnits(InitiativeOrder, this);
             //TurnDisplay.SetCurrentUnit(UnitTakingTurn);
@@ -256,10 +255,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             _units.ForEach(unit =>
             {
-                for (int i = 0; i < unit.Info.Buffs.Count; i++)
-                {
-                    unit.Info.Buffs[i].OnRoundStart();
-                }
+                unit.OnRoundStart();
             });
 
             foreach(var item in TileEffectManager.TileEffects)
@@ -445,7 +441,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //Footer.EndTurnButton.SetDisabled(false);
             //Footer.EndTurnButton.SetRender(true);
 
-            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderBy(i => i.Info.Speed)); //sort the list by speed
+            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderByDescending(i => i.Info.Speed)); //sort the list by speed
 
             TurnDisplay.SetRender(true);
             TurnDisplay.SetUnits(InitiativeOrder, this);
@@ -740,10 +736,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 {
                     for (int j = 0; j < TileMapManager.ActiveMaps[i].TileChunks.Count; j++)
                     {
-                        for (int k = 0; k < TileMapManager.ActiveMaps[i].TileChunks[j].Structures.Count; k++)
+                        foreach(var structure in TileMapManager.ActiveMaps[i].TileChunks[j].Structures)
                         {
-                            Structure structure = TileMapManager.ActiveMaps[i].TileChunks[j].Structures[k];
-
                             if (structure.Info.Visible(CurrentTeam))
                             {
                                 structure.SetRender(true);
@@ -767,7 +761,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// </summary>
         public void EvaluateCombat() 
         {
-            if (ContextManager.GetFlag(GeneralContextFlags.SaveStateLoadInProgress))
+            if (ContextManager.GetFlag(GeneralContextFlags.SaveStateLoadInProgress) || 
+                ContextManager.GetFlag(GeneralContextFlags.EditingFeature))
                 return;
 
             lock (_units._lock)
@@ -938,8 +933,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //    EvaluateVentureButton();
             //}
 
-            UnitVisionGenerators.ManuallyIncrementChangeToken();
-
             //UpdateVisionMap(() => 
             //{
             //    EvaluateCombat();
@@ -976,7 +969,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void OnStructureMoved() 
         {
-            LightObstructions.ManuallyIncrementChangeToken(); //indicate that something about the light obstructions has changed
+            if (!ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
+            {
+                VisionManager.PrepareLightObstructions(LightObstructions);
+                CreateStructureInstancedRenderData();
+            }
         }
 
         public void CreateStructureInstancedRenderData()
@@ -1010,6 +1007,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
+        public delegate void TileHoverEventHandler(BaseTile tile);
+        public event TileHoverEventHandler TileHover;
+
         public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
             if (!TileMapsFocused)
@@ -1035,6 +1035,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             if (tile.Hoverable)
                             {
                                 tile.TileMap.Controller.HoverTile(tile);
+
+                                TileHover?.Invoke(tile);
+
                                 if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
                                 {
                                     _selectedAbility.OnHover(tile, tile.TileMap);

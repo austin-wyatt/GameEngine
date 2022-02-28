@@ -35,7 +35,12 @@ namespace MortalDungeon.Game.Abilities
             Name = new Serializers.TextInfo(3, 3);
             Description = new Serializers.TextInfo(4, 3);
 
-            SetIcon(Character.B, Spritesheets.CharacterSheet);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.B },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
 
             AbilityClass = AbilityClass.Skeleton;
         }
@@ -97,7 +102,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
+            SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
 
             Casted();
             EffectEnded();
@@ -121,7 +126,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, damageAmount);
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
 

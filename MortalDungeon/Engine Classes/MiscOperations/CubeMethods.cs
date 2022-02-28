@@ -98,7 +98,7 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
 
         public static Vector3i OffsetToCube(TilePoint offset)
         {
-            return OffsetToCube(new Vector2i(offset.X, offset.Y));
+            return OffsetToCube(offset.ToFeaturePoint());
         }
 
         public static Vector3i RotateCube(Vector3i cube, int rotations) 

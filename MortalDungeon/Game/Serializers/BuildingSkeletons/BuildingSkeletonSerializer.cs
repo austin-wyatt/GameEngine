@@ -14,7 +14,7 @@ namespace MortalDungeon.Game.Serializers
         private static string _buildingCharSet = "vfHtiQmnlsNOPSTFGuIghwxcdRAVBCDEopqrebkyzaMJKLU";
         private static int _fileNameLength = 9;
 
-        public static SerialiableBuildingSkeleton LoadBuildingSkeletonFromFile(string filePath)
+        public static SerializableBuildingSkeleton LoadBuildingSkeletonFromFile(string filePath)
         {
             string path = filePath;
 
@@ -23,14 +23,14 @@ namespace MortalDungeon.Game.Serializers
                 return null;
             }
 
-            XmlSerializer serializer = new XmlSerializer(typeof(SerialiableBuildingSkeleton));
+            XmlSerializer serializer = new XmlSerializer(typeof(SerializableBuildingSkeleton));
 
             FileStream fs = new FileStream(path, FileMode.Open);
 
             TextReader reader = new StreamReader(fs);
 
 
-            SerialiableBuildingSkeleton loadedState = (SerialiableBuildingSkeleton)serializer.Deserialize(reader);
+            SerializableBuildingSkeleton loadedState = (SerializableBuildingSkeleton)serializer.Deserialize(reader);
 
             reader.Close();
             fs.Close();
@@ -38,18 +38,18 @@ namespace MortalDungeon.Game.Serializers
             return loadedState;
         }
 
-        public static SerialiableBuildingSkeleton LoadBuildingSkeletonFromFile(int id)
+        public static SerializableBuildingSkeleton LoadBuildingSkeletonFromFile(int id)
         {
             string path = SerializerParams.DATA_BASE_PATH + _buildingCharSet.CreateRandom(id, _fileNameLength) + ".bs";
 
             return LoadBuildingSkeletonFromFile(path);
         }
 
-        public static void WriteBuildingSkeletonToFile(SerialiableBuildingSkeleton state)
+        public static void WriteBuildingSkeletonToFile(SerializableBuildingSkeleton state)
         {
             string path = SerializerParams.DATA_BASE_PATH + _buildingCharSet.CreateRandom(state.BuildingID, _fileNameLength) + ".bs";
 
-            XmlSerializer serializer = new XmlSerializer(typeof(SerialiableBuildingSkeleton));
+            XmlSerializer serializer = new XmlSerializer(typeof(SerializableBuildingSkeleton));
 
             TextWriter writer = new StreamWriter(path);
 
@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.Serializers
             File.Delete(path);
         }
 
-        public static List<SerialiableBuildingSkeleton> LoadAllBuildingSkeletons()
+        public static List<SerializableBuildingSkeleton> LoadAllBuildingSkeletons()
         {
             string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
 
@@ -79,7 +79,7 @@ namespace MortalDungeon.Game.Serializers
                 }
             }
 
-            List<SerialiableBuildingSkeleton> buildingSkeletons = new List<SerialiableBuildingSkeleton>();
+            List<SerializableBuildingSkeleton> buildingSkeletons = new List<SerializableBuildingSkeleton>();
 
             foreach (string file in filesToLoad)
             {

@@ -33,8 +33,8 @@ namespace MortalDungeon.Game.Abilities
 
             BreakStealth = false;
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
-            BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
+            //Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
+            //BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -68,35 +68,35 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            CastingUnit.Info.Stealth.SetHiding(true);
-            StealthBuff stealthBuff = new StealthBuff(CastingUnit, -1);
+            //CastingUnit.Info.Stealth.SetHiding(true);
+            //StealthBuff stealthBuff = new StealthBuff(CastingUnit, -1);
 
-            CastingUnit.Info.AddBuff(stealthBuff);
+            //CastingUnit.Info.AddBuff(stealthBuff);
 
-            _Color stealthColor = new _Color(1, 1, 1, 0.5f);
+            //_Color stealthColor = new _Color(1, 1, 1, 0.5f);
 
-            void hidingBroken() 
-            {
-                CastingUnit.Info.Stealth.HidingBrokenActions.Remove(hidingBroken);
-                CastingUnit.Info.RemoveBuff(stealthBuff);
-                Scene.Footer.RefreshFooterInfo();
+            //void hidingBroken() 
+            //{
+            //    CastingUnit.Info.Stealth.HidingBrokenActions.Remove(hidingBroken);
+            //    CastingUnit.Info.RemoveBuff(stealthBuff);
+            //    Scene.Footer.RefreshFooterInfo();
 
-                CastingUnit.BaseObject.BaseFrame.RemoveAppliedColor(stealthColor);
+            //    CastingUnit.BaseObject.BaseFrame.RemoveAppliedColor(stealthColor);
 
-                CreateIconHoverEffect(BrokenMaskIcon);
-            }
+            //    CreateIconHoverEffect(BrokenMaskIcon);
+            //}
 
-            CastingUnit.Info.Stealth.HidingBrokenActions.Add(hidingBroken);
-            CastingUnit.BaseObject.BaseFrame.AddAppliedColor(stealthColor);
+            //CastingUnit.Info.Stealth.HidingBrokenActions.Add(hidingBroken);
+            //CastingUnit.BaseObject.BaseFrame.AddAppliedColor(stealthColor);
 
-            Scene.Footer.RefreshFooterInfo();
+            //Scene.Footer.RefreshFooterInfo();
 
-            if (CastingUnit.Info.Stealth.EnemyHasVision()) 
-            {
-                hidingBroken();
-                Context.SetFlag(AbilityContext.SkipIconAnimation, true);
-                Context.SetFlag(AbilityContext.SkipEnergyCost, true);
-            }
+            //if (CastingUnit.Info.Stealth.EnemyHasVision()) 
+            //{
+            //    hidingBroken();
+            //    Context.SetFlag(AbilityContext.SkipIconAnimation, true);
+            //    Context.SetFlag(AbilityContext.SkipEnergyCost, true);
+            //}
 
             Casted();
             EffectEnded();

@@ -177,7 +177,7 @@ namespace MortalDungeon.Engine_Classes
         public UIObject RootHandle = null;
 
         protected Vector3 _originOffset = default;
-        protected bool _scaleAspectRatio = true;
+        public bool _scaleAspectRatio = true;
 
         private object _reverseTreeLock = new object();
         public List<UIObject> ReverseTree = null; //must be generated for all top level UIObjects
@@ -684,9 +684,19 @@ namespace MortalDungeon.Engine_Classes
 
                 //parentObject.SetZPosition(zPos);
 
+                bool exclusiveFocus = ManagerHandle.ExclusiveFocusSet.Contains(parentObject);
+
                 for (int i = parentObject.Children.Count - 1; i >= 0; i--) 
                 {
                     queueChildren(parentObject.Children[i], depth + 1, i + 1);
+
+                    if (exclusiveFocus)
+                    {
+                        lock(ManagerHandle._exclusiveFocusLock)
+                        {
+                            ManagerHandle.ExclusiveFocusSet.Add(parentObject.Children[i]);
+                        }
+                    }
                 }
             }
 

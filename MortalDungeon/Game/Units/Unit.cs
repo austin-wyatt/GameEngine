@@ -67,8 +67,6 @@ namespace MortalDungeon.Game.Units
         public string pack_name = "";
         public float _scale = 1;
 
-        public UnitProfileType ProfileType = UnitProfileType.Unknown;
-
         public long FeatureID = -1;
         public long ObjectHash = 0;
 
@@ -94,9 +92,6 @@ namespace MortalDungeon.Game.Units
             Hoverable = true;
             Clickable = true;
             Selectable = true;
-
-            Scene.Tick -= Tick;
-            Scene.Tick += Tick;
         }
 
         public Unit(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(spritesheet, spritesheetPos, position) 
@@ -104,12 +99,6 @@ namespace MortalDungeon.Game.Units
             InitializeUnitInfo();
 
             Scene = scene;
-            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
-
-            SetTeam(UnitTeam.Unknown);
-
-            Scene.Tick -= Tick;
-            Scene.Tick += Tick;
         }
 
         public virtual void InitializeUnitInfo() 
@@ -145,7 +134,6 @@ namespace MortalDungeon.Game.Units
             //calculate innate tile offset
             CalculateInnateTileOffset();
 
-
             BaseObject.BaseFrame.SetBaseColor(Color);
         }
 
@@ -158,7 +146,8 @@ namespace MortalDungeon.Game.Units
 
             float minZ = float.MaxValue;
 
-            for (int i = 0; i < obj.BaseFrame.Vertices.Length; i += obj.BaseFrame.Stride / obj.BaseFrame.Points)
+            int stride = obj.BaseFrame.Vertices.Length / obj.BaseFrame.Points;
+            for (int i = 0; i < obj.BaseFrame.Vertices.Length; i += stride)
             {
                 Vector4 transformedPos = new Vector4(obj.BaseFrame.Vertices[i], obj.BaseFrame.Vertices[i + 1], obj.BaseFrame.Vertices[i + 2], 1);
                 transformedPos *= obj.BaseFrame.Scale * obj.BaseFrame.Rotation;
@@ -179,7 +168,6 @@ namespace MortalDungeon.Game.Units
 
         public virtual void EntityLoad(FeaturePoint position, bool placeOnTileMap = true) 
         {
-            Scene.Tick -= Tick;
             Scene.Tick += Tick;
 
             Position = new Vector3();
@@ -188,10 +176,11 @@ namespace MortalDungeon.Game.Units
             SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, 0));
             SetSelectionTileColor();
 
+            SelectionTile.SetRender(false);
 
             if (VisionGenerator.Team != UnitTeam.Unknown && !Scene.UnitVisionGenerators.Contains(VisionGenerator)) 
             {
-                Scene.UnitVisionGenerators.Add(VisionGenerator);
+                Scene.AddVisionGenerator(VisionGenerator);
             }
 
             Scene._genericObjects.Add(SelectionTile);
@@ -228,7 +217,7 @@ namespace MortalDungeon.Game.Units
 
         private void CalculateSelectionTileOffset()
         {
-            if (SelectionTileOffset == null)
+            if (SelectionTileOffset == null || SelectionTile == null)
                 return;
 
             SelectionTile.UnitOffset.X = 0;
@@ -250,17 +239,9 @@ namespace MortalDungeon.Game.Units
         {
             CleanUp();
 
-            Info.TileMapPosition = null;
+            Scene.RemoveUnit(this);
 
-            //might not wanna clear buffs or abilities depending on how things shake out.
-            //lock (Info.Abilities) 
-            //{
-            //    Info.Abilities.Clear();
-            //}
-            //lock (Info.Buffs)
-            //{
-            //    Info.Buffs.Clear();
-            //}
+            Info.TileMapPosition = null;
 
             BaseObjects.Clear();
         }
@@ -283,25 +264,27 @@ namespace MortalDungeon.Game.Units
 
             if(AbilityLoadout != null)
             {
-                AbilityLoadout.ApplyLoadoutToUnit(this);
+                AbilityLoadout.ApplyLoadoutToUnit(this, Info.AbilityVariation);
             }
+
+            AbilitiesUpdated?.Invoke(this);
         }
 
         public void AddAbility(AbilityLoadoutItem item)
         {
-            AbilityLoadout.Items.Add(item);
+            AbilityLoadout.GetLoadout(Info.AbilityVariation).Add(item);
             ApplyAbilityLoadout();
         }
 
         public void ReplaceAbility(AbilityLoadoutItem item, AbilityLoadoutItem newItem)
         {
-            AbilityLoadout.Items.Replace(item, newItem);
+            AbilityLoadout.GetLoadout(Info.AbilityVariation).Replace(item, newItem);
             ApplyAbilityLoadout();
         }
 
         public void RemoveAbility(AbilityLoadoutItem item)
         {
-            AbilityLoadout.Items.Remove(item);
+            AbilityLoadout.GetLoadout(Info.AbilityVariation).Remove(item);
             ApplyAbilityLoadout();
         }
 
@@ -355,6 +338,7 @@ namespace MortalDungeon.Game.Units
         public override void CleanUp()
         {
             base.CleanUp();
+            Scene.Tick -= Tick;
 
             //remove the objects that are related to the unit but not created by the unit
             Scene._genericObjects.Remove(SelectionTile);
@@ -367,13 +351,10 @@ namespace MortalDungeon.Game.Units
 
             RemoveFromTile();
 
-            Scene.LightObstructions.Remove(LightObstruction);
-            Scene.UnitVisionGenerators.Remove(VisionGenerator);
+            Scene.RemoveLightObstruction(LightObstruction);
+            Scene.RemoveVisionGenerator(VisionGenerator);
 
             Scene.DecollateUnit(this);
-            Scene.RemoveUnit(this);
-
-            Scene.Tick -= Tick;
         }
 
         public void RemoveFromTile() 
@@ -426,7 +407,7 @@ namespace MortalDungeon.Game.Units
 
         public TileMap GetTileMap() 
         {
-            return Info.TileMapPosition.TilePoint.ParentTileMap;
+            return Info?.TileMapPosition?.TilePoint.ParentTileMap;
         }
 
         public override void SetName(string name)
@@ -516,6 +497,8 @@ namespace MortalDungeon.Game.Units
             prevTile?.OnSteppedOff(this);
 
             Scene.OnUnitMoved(this, prevTile);
+
+            UnitMoved?.Invoke(this, prevTile, baseTile);
         }
 
         public void ScaleUnit(float x, float y)
@@ -527,19 +510,6 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-
-        public virtual float GetBuffResistanceModifier(DamageType damageType) 
-        {
-            float modifier = 0;
-
-            for (int i = 0; i < Info.Buffs.Count; i++) 
-            {
-                Info.Buffs[i].DamageResistances.TryGetValue(damageType, out float val);
-                modifier += val;
-            }
-
-            return modifier;
-        }
 
         public bool GetPierceShields(DamageType damageType) 
         {
@@ -564,6 +534,20 @@ namespace MortalDungeon.Game.Units
                     return true;
             }
         }
+
+        public delegate void UnitEventHandler(Unit unit);
+        public event UnitEventHandler TurnStart;
+        public event UnitEventHandler TurnEnd;
+        public event UnitEventHandler RoundStart;
+        public event UnitEventHandler RoundEnd;
+
+        public event UnitEventHandler Killed;
+        public event UnitEventHandler Hurt;
+        public event UnitEventHandler ShieldsHit;
+        public event UnitEventHandler AbilitiesUpdated;
+
+        public delegate void UnitMoveEventHandler(Unit unit, BaseTile prev, BaseTile current);
+        public event UnitMoveEventHandler UnitMoved;
 
         public void OnTurnStart() 
         {
@@ -599,13 +583,7 @@ namespace MortalDungeon.Game.Units
                 effect.OnTurnStart(this, Info.TileMapPosition);
             }
 
-            lock (Info.Buffs)
-            {
-                for (int i = 0; i < Info.Buffs.Count; i++)
-                {
-                    Info.Buffs[i].OnTurnStart();
-                }
-            }
+            TurnStart?.Invoke(this);
 
 
             if (AI.ControlType != ControlType.Controlled && Scene.InCombat)
@@ -627,10 +605,17 @@ namespace MortalDungeon.Game.Units
                 effect.OnTurnEnd(this, Info.TileMapPosition);
             }
 
-            for (int i = 0; i < Info.Buffs.Count; i++)
-            {
-                Info.Buffs[i].OnTurnEnd();
-            }
+            TurnEnd?.Invoke(this);
+        }
+
+        public void OnRoundStart()
+        {
+            RoundStart?.Invoke(this);
+        }
+
+        public void OnRoundEnd()
+        {
+            RoundEnd?.Invoke(this);
         }
 
         public virtual void SetTeam(UnitTeam team) 
@@ -641,18 +626,34 @@ namespace MortalDungeon.Game.Units
 
             UpdateStatusBarInfo();
 
-            //if (VisionGenerator.Team != UnitTeam.Unknown && team == UnitTeam.Unknown)
-            //{
-            //    Scene.UnitVisionGenerators.Remove(VisionGenerator);
-            //}
-            //else if (VisionGenerator.Team == UnitTeam.Unknown && team != UnitTeam.Unknown) 
-            //{
-            //    Scene.UnitVisionGenerators.Add(VisionGenerator);
-            //}
-
             VisionGenerator.Team = team;
+        }
 
-            Scene.UnitVisionGenerators.ManuallyIncrementChangeToken();
+        /// <summary>
+        /// This method is specifically for changing a unit from one team to another as
+        /// opposed to the general functionality of the SetTeam method
+        /// </summary>
+        public void AlterTeam(UnitTeam team)
+        {
+            UnitTeam prevTeam = AI.Team;
+
+            SetTeam(team);
+
+            if (team != UnitTeam.Unknown)
+            {
+                VisionManager.CalculateVision(VisionGenerator);
+                VisionManager.ConsolidateVision(VisionGenerator.Team);
+
+                if (prevTeam != team)
+                {
+                    VisionManager.ConsolidateVision(prevTeam);
+                }
+            }
+        }
+
+        public void OnAbilitiesUpdated()
+        {
+            AbilitiesUpdated?.Invoke(this);
         }
 
         public void SetSelectionTileColor() 
@@ -724,19 +725,15 @@ namespace MortalDungeon.Game.Units
             public bool KilledEnemy;
             public bool AttackBrokeShield;
         }
-        public struct DamageParams 
+        
+
+        public delegate void DamageInstanceEventHandler(Unit unit, DamageInstance instance);
+        public event DamageInstanceEventHandler PreDamageInstanceAppliedSource;
+        public event DamageInstanceEventHandler PreDamageInstanceAppliedDestination;
+
+        public void OnPreDamageInstanceAppliedSource(DamageInstance instance)
         {
-            public DamageInstance Instance;
-            public Ability Ability;
-            public Buff Buff;
-
-            public DamageParams(DamageInstance instance)
-            {
-                Instance = instance;
-
-                Ability = null;
-                Buff = null;
-            }
+            PreDamageInstanceAppliedSource?.Invoke(this, instance);
         }
 
         public virtual AppliedDamageReturnValues ApplyDamage(DamageParams damageParams)
@@ -747,26 +744,23 @@ namespace MortalDungeon.Game.Units
             float finalDamage = 0;
 
             DamageInstance instance = damageParams.Instance;
+            instance.ApplyDamageBonuses(damageParams.Unit);
+
+            damageParams.Unit?.OnPreDamageInstanceAppliedSource(instance);
+            PreDamageInstanceAppliedDestination?.Invoke(this, instance);
 
             foreach (DamageType type in instance.Damage.Keys)
             {
-                Info.BaseDamageResistances.TryGetValue(type, out float baseResistance);
+                Info.BuffManager.GetDamageResistances(type, out float damageAdd, out float damageMult);
 
-                float damageMultiplier = Math.Abs((baseResistance + GetBuffResistanceModifier(type)) - 1);
-
-                float actualDamage = instance.Damage[type] * damageMultiplier;
+                float actualDamage = (instance.Damage[type] + damageAdd) * damageMult;
 
                 if (type == DamageType.Healing)
                 {
                     actualDamage *= -1;
                 }
-                else 
-                {
-                    actualDamage += Info.DamageAddition;
-                }
 
                 preShieldDamage += actualDamage;
-            
 
                 //shield piercing exceptions should go here
                 if (GetPierceShields(type))
@@ -915,6 +909,8 @@ namespace MortalDungeon.Game.Units
             sound.Play();
 
             Ledgers.OnUnitKilled(this);
+
+            Killed?.Invoke(this);
         }
 
         public virtual void OnRevive() 
@@ -936,6 +932,8 @@ namespace MortalDungeon.Game.Units
             };
 
             Scene._particleGenerators.Add(bloodExplosion);
+
+            Hurt?.Invoke(this);
         }
 
         public virtual void OnShieldsHit() 
@@ -958,6 +956,8 @@ namespace MortalDungeon.Game.Units
             };
 
             Scene._particleGenerators.Add(bloodExplosion);
+
+            ShieldsHit?.Invoke(this);
         }
 
         public override void OnHover()
@@ -1060,11 +1060,6 @@ namespace MortalDungeon.Game.Units
         public override void Tick()
         {
             base.Tick();
-
-            if (Info.Stealth.HidingBrokenActions.HasQueuedItems()) 
-            {
-                Info.Stealth.HidingBrokenActions.HandleQueuedItems();
-            }
         }
 
         public bool OnTileMap(TileMap map) 
@@ -1081,7 +1076,20 @@ namespace MortalDungeon.Game.Units
             return obj;
         }
     }
+    public struct DamageParams
+    {
+        public DamageInstance Instance;
+        public Ability Ability;
+        public Buff Buff;
 
+        public Unit Unit => Buff != null ? Buff.Unit : Ability != null ? Ability.CastingUnit : null;
 
-    
+        public DamageParams(DamageInstance instance)
+        {
+            Instance = instance;
+
+            Ability = null;
+            Buff = null;
+        }
+    }
 }

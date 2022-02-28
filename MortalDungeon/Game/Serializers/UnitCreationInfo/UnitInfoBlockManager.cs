@@ -32,7 +32,7 @@ namespace MortalDungeon.Game.Serializers
 
                 if(newBlock != null)
                 {
-                    LoadedInfoBlocks.Add(blockId, newBlock);
+                    LoadedInfoBlocks.TryAdd(blockId, newBlock);
 
                     if (newBlock.Units.TryGetValue(id, out var unit))
                     {

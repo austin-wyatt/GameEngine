@@ -16,11 +16,7 @@ namespace MortalDungeon.Game.Events
         [XmlElement("EVt")]
         public string EventTrigger;
 
-        /// <summary>
-        /// The flags that must be true in order for the action to be triggered
-        /// </summary>
-        [XmlElement("EVsf")]
-        public List<string> StateFlags = new List<string>();
+        public Conditional Conditional = Conditional.TRUE;
 
         /// <summary>
         /// Any parameters that might be necessary when building the action. This can be any serializable class (including another EventActionBuilder).
@@ -42,7 +38,7 @@ namespace MortalDungeon.Game.Events
             {
                 var action = Activator.CreateInstance(actionType) as EventAction;
 
-                action.StateFlags = new List<string>(StateFlags);
+                action.Conditional = new Conditional(Conditional);
                 action.EventTrigger = EventTrigger;
                 action.BuildEvent(ActionParameters);
 
@@ -70,12 +66,12 @@ namespace MortalDungeon.Game.Events
 
         public void CompleteDeserialization()
         {
-
+            Conditional.CompleteDeserialization();
         }
 
         public void PrepareForSerialization()
         {
-
+            Conditional.PrepareForSerialization();
         }
     }
 }

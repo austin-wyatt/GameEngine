@@ -355,6 +355,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             TileMapController.TileOverlaySpritesheet.Use(TextureUnit.Texture1);
 
+            Renderer.RenderInstancedRenderData(_tilePillarRenderData);
+
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
             //GL.Clear(ClearBufferMask.StencilBufferBit);
@@ -374,8 +376,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.Enable(EnableCap.DepthTest);
 
             GL.Disable(EnableCap.StencilTest);
-
-            Renderer.RenderInstancedRenderData(_tilePillarRenderData);
 
             ClearTileInstancedRenderData();
         }
@@ -429,6 +429,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static void RenderFogQuad()
         {
             Renderer.RenderObjectsInstancedGeneric(_fogQuad, ref Renderer._instancedRenderArray);
+            _fogQuad.Clear();
         }
 
         #endregion

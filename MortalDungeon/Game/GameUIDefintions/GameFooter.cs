@@ -142,13 +142,13 @@ namespace MortalDungeon.Game.UI
             #region health and shield bar
             _unitHealthBar = new HealthBar(new Vector3(), new UIScale(0.4f, 0.075f)) { Hoverable = true, HasTimedHoverEffect = true };
 
-            void healthBarHover(GameObject obj) 
-            {
-                UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentUnit.Info.Health + "/" + CurrentUnit.Info.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
-                UIHelpers.CreateToolTip(param);
-            }
+            //void healthBarHover(GameObject obj) 
+            //{
+            //    UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(Scene, CurrentUnit.Info.Health + "/" + CurrentUnit.Info.MaxHealth, _unitHealthBar, Scene._tooltipBlock);
+            //    UIHelpers.CreateToolTip(param);
+            //}
 
-            _unitHealthBar.TimedHover += healthBarHover;
+            //_unitHealthBar.TimedHover += healthBarHover;
 
             _infoBlock.AddChild(_unitHealthBar, 100);
 
@@ -453,11 +453,11 @@ namespace MortalDungeon.Game.UI
             #endregion
 
             #region Buffs
-            if (!Enumerable.SequenceEqual(_currentBuffs, CurrentUnit.Info.Buffs) || forceUpdate)
-            {
-                _currentBuffs.Clear();
-                CreateBuffIcons(isPlayerUnitTakingTurn);
-            }
+            //if (!Enumerable.SequenceEqual(_currentBuffs, CurrentUnit.Info.BuffManager.Buffs) || forceUpdate)
+            //{
+            _currentBuffs.Clear();
+            CreateBuffIcons(isPlayerUnitTakingTurn);
+            //}
             #endregion
         }
 
@@ -728,59 +728,86 @@ namespace MortalDungeon.Game.UI
 
             List<Icon> icons = new List<Icon>();
             int count = 0;
-            int delimiter = -1;
-            foreach (Buff buff in CurrentUnit.Info.Buffs)
+
+            lock (CurrentUnit.Info.BuffManager._buffLock)
             {
-                if (buff.Hidden)
-                    continue;
-
-                Icon icon = buff.GenerateIcon(buffSize, true);
-                icons.Add(icon);
-
-                if (count == 0)
+                foreach (Buff buff in CurrentUnit.Info.BuffManager.Buffs)
                 {
-                    icon.SetPositionFromAnchor(_buffBlock.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(10, -10, 0), UIAnchorPosition.BottomLeft);
+                    if (buff.Invisible)
+                        continue;
+
+                    Icon buffIcon = buff.GetIcon();
+
+                    if (buffIcon == null)
+                        continue;
+
+                    Icon icon = new Icon(buffIcon, buffSize, true);
+                    icons.Add(icon);
+
+                    if (count == 0)
+                    {
+                        icon.SetPositionFromAnchor(_buffBlock.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(10, -10, 0), UIAnchorPosition.BottomLeft);
+                    }
+                    else if (count % 5 == 0)
+                    {
+                        icon.SetPositionFromAnchor(icons[count - 5].GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(0, -10, 0), UIAnchorPosition.BottomLeft);
+                    }
+                    else
+                    {
+                        icon.SetPositionFromAnchor(icons[count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
+                    }
+
+                    if (buff.Stacks != -1)
+                    {
+                        UIScale stackSize = new UIScale(buffSize.X * 0.333f, buffSize.Y * 0.333f);
+
+                        Text text = new Text(buff.Stacks.ToString(), Text.DEFAULT_FONT, 16, Brushes.Black);
+                        text.SetTextScale(0.075f);
+
+                        text.SAP(icon.GAP(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
+
+                        icon.AddChild(text);
+                    }
+
+                    Scene.Tick += icon.Tick;
+
+                    icon.OnCleanUp += (_) =>
+                    {
+                        Scene.Tick -= icon.Tick;
+                    };
+
+                    //if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableAreaBuff.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X)
+                    //{
+                    //    if (delimiter == -1)
+                    //    {
+                    //        delimiter = count;
+                    //    }
+                    //    icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+
+                    //    if (icon.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y > _scrollableAreaBuff.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y)
+                    //    {
+                    //        _scrollableAreaBuff.SetBaseAreaSize(new UIScale(_scrollableAreaBuff._baseAreaSize.X, _scrollableAreaBuff._baseAreaSize.Y + icon.GetDimensions().ToScale().Y * 3));
+
+                    //        icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+                    //    }
+
+                    //    //_scrollableArea.BaseComponent.SetSize(_scrollableArea._baseAreaSize);
+                    //}
+
+                    void buffHover(GameObject obj)
+                    {
+                        //UIHelpers.CreateToolTip(Scene, buff.GenerateTooltip(), icon, Scene._tooltipBlock);
+                    }
+
+                    icon.HasTimedHoverEffect = true;
+                    icon.Hoverable = true;
+                    icon.TimedHover += buffHover;
+
+
+                    //_scrollableAreaBuff.BaseComponent.AddChild(icon, 1000);
+                    _buffBlock.AddChild(icon, 1000);
+                    count++;
                 }
-                else if (count % 5 == 0)
-                {
-                    icon.SetPositionFromAnchor(icons[count - 5].GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(0, -10, 0), UIAnchorPosition.BottomLeft);
-                }
-                else
-                {
-                    icon.SetPositionFromAnchor(icons[count - 1].GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
-                }
-
-                //if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableAreaBuff.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X)
-                //{
-                //    if (delimiter == -1)
-                //    {
-                //        delimiter = count;
-                //    }
-                //    icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
-
-                //    if (icon.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y > _scrollableAreaBuff.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomCenter).Y)
-                //    {
-                //        _scrollableAreaBuff.SetBaseAreaSize(new UIScale(_scrollableAreaBuff._baseAreaSize.X, _scrollableAreaBuff._baseAreaSize.Y + icon.GetDimensions().ToScale().Y * 3));
-
-                //        icon.SetPositionFromAnchor(icons[count - delimiter].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
-                //    }
-
-                //    //_scrollableArea.BaseComponent.SetSize(_scrollableArea._baseAreaSize);
-                //}
-
-                void buffHover(GameObject obj)
-                {
-                    UIHelpers.CreateToolTip(Scene, buff.GenerateTooltip(), icon, Scene._tooltipBlock);
-                }
-
-                icon.HasTimedHoverEffect = true;
-                icon.Hoverable = true;
-                icon.TimedHover += buffHover;
-
-
-                //_scrollableAreaBuff.BaseComponent.AddChild(icon, 1000);
-                _buffBlock.AddChild(icon, 1000);
-                count++;
             }
         }
 

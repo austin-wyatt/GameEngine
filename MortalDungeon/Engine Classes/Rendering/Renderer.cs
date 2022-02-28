@@ -19,6 +19,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static Vector3 LightPosition = new Vector3();
         public static Vector4 LightColor = new Vector4();
     }
+
+    public struct ViewportRectangle
+    {
+        public int X;
+        public int Y;
+        public int Width;
+        public int Height;
+    }
     public static class Renderer
     {
         static readonly Random _rand = new ConsistentRandom();
@@ -54,7 +62,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         public static Stopwatch _internalTimer = new Stopwatch();
 
-        public static readonly Vector4 ClearColor = new Vector4(0.2f, 0.3f, 0.3f, 1);
+        public static readonly Vector4 ClearColor = new Vector4(0.21f, 0.21f, 0.21f, 1);
+
+        public static ViewportRectangle ViewportRectangle;
 
         static Renderer() { }
         public static void Initialize() //initialization of renderer
@@ -274,7 +284,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 for(int i = 0; i < objects.Count; i++)
                 {
-                    if (objects[i].TextureLoaded)
+                    if (objects[i].TextureLoaded && objects[i].BaseObjects.Count > 0)
                     {
                         Display = objects[i].BaseObjects[0]._currentAnimation.CurrentFrame;
                         break;
@@ -286,6 +296,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Display = display;
             }
+
+            if (Display == null)
+                return;
 
             //for (int i = 0; i < 8; i++)
             //{
@@ -346,7 +359,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         objects[i].ScissorData._scissorFlag = false;
 
                         ScissorData scissorData = scissorCallList[^1].ScissorData;
-                        GL.Scissor(scissorData.X, scissorData.Y, scissorData.Width, scissorData.Height);
+                        GL.Scissor(
+                            (int)((float)(scissorData.X) / WindowConstants.ClientSize.X * ViewportRectangle.Width) + ViewportRectangle.X,
+                            (int)((float)(scissorData.Y) / WindowConstants.ClientSize.Y * ViewportRectangle.Height) + ViewportRectangle.Y, 
+                            (int)((float)scissorData.Width / WindowConstants.ClientSize.X * ViewportRectangle.Width),
+                            (int)((float)scissorData.Height / WindowConstants.ClientSize.Y * ViewportRectangle.Height));
                         GL.Enable(EnableCap.ScissorTest);
 
                         textureReferences.Clear();
@@ -1122,10 +1139,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             lock (lockObj)
             {
-                UIObj.Children.ForEach(obj =>
+                for(int i = 0; i < UIObj.Children.Count; i++)
                 {
-                    LoadTextureFromUIObject(obj);
-                });
+                    LoadTextureFromUIObject(UIObj.Children[i]);
+                }
             }
 
             if (UIObj._canLoadTexture)

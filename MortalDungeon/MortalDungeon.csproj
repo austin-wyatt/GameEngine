@@ -222,6 +222,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Game\Abilities\BuffDefinitions\" />
+    <Folder Include="Game\Structures\BuildingDefinitions\" />
     <Folder Include="Resources\Sound\Music\" />
   </ItemGroup>
 

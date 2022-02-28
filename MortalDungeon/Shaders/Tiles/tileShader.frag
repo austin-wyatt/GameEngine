@@ -15,8 +15,6 @@ in float enableLighting;
 in float alpha_threshold;
 
 in vec2[3] overlays;
-in float[3] overlayColors;
-
 
 uniform vec3 viewPosition;
 in vec3 Normal;
@@ -28,8 +26,9 @@ struct Material {
     float shininess;
 }; 
 
-uniform Material[2] material;
-int materialIndex = 0;
+uniform Material[8] material;
+in float materialIndexF;
+int materialIndex;
 
 struct Light {
 	vec3 position;
@@ -108,6 +107,8 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec
 
 void main()
 {
+	materialIndex = int(materialIndexF);
+
 	vec4 texColor = texture(material[materialIndex].diffuse, texCoord);
 
 	outputColor = texColor * appliedColor;

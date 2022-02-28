@@ -18,7 +18,6 @@ namespace MortalDungeon.Game.UI
         public Unit _unit;
 
         public Text _nameBox;
-        public TextBox _turnDisplay;
         public HealthBar HealthBar;
         public ShieldBar ShieldBar;
 
@@ -54,16 +53,6 @@ namespace MortalDungeon.Game.UI
             //_mainTextBox = textBox;
             //BaseComponent.AddChild(textBox);
             BaseComponent.AddChild(nameBox, 100);
-
-
-            _turnDisplay = new TextBox(new Vector3(), new UIScale(scale.X / 4, scale.Y / 2), " ", 0.07f, false, new UIDimensions(0, 0));
-            _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
-            _turnDisplay.BaseComponent.SetColor(_Colors.Transparent);
-            _turnDisplay.BaseComponent.GetBaseObject().OutlineParameters.SetAllInline(0);
-            _turnDisplay.GetBaseObject().RenderData = new RenderData() { AlphaThreshold = 1 };
-            _turnDisplay.BaseComponent.MultiTextureData.MixTexture = false;
-
-            BaseComponent.AddChild(_turnDisplay);
 
 
             HealthBar = new HealthBar(new Vector3(), scale);
@@ -192,7 +181,6 @@ namespace MortalDungeon.Game.UI
                     BaseComponent.SetPosition(screenSpace);
 
                     _nameBox.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
-                    _turnDisplay.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.BottomLeft);
                     HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
                     ShieldBar.SetPositionFromAnchor(HealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
 
@@ -217,16 +205,7 @@ namespace MortalDungeon.Game.UI
 
         public void SetIsTurn(bool isTurn) 
         {
-            if (isTurn)
-            {
-                _turnDisplay.TextField.SetText("*");
-                _turnDisplay.TextField._textField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(1);
-            }
-            else 
-            {
-                _turnDisplay.TextField._textField.SetTextString(" ");
-                _turnDisplay.TextField._textField.Letters[0].BaseObjects[0].OutlineParameters.SetAllInline(0);
-            }
+
         }
 
         public void UpdateInfo() 

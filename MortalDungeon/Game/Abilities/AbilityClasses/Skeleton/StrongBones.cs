@@ -8,6 +8,9 @@ using System.Linq;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
 using MortalDungeon.Engine_Classes;
+using MortalDungeon.Definitions.Buffs;
+using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Serializers;
 
 namespace MortalDungeon.Game.Abilities
 {
@@ -26,7 +29,12 @@ namespace MortalDungeon.Game.Abilities
             Name = new Serializers.TextInfo(7, 3);
             Description = new Serializers.TextInfo(8, 3);
 
-            SetIcon(Character.s, Spritesheets.CharacterSheet);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.s },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
 
             AbilityClass = AbilityClass.Skeleton;
         }
@@ -37,7 +45,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.ApplyPassives();
 
-            _strongBonesBuff = new StrongBonesBuff(CastingUnit);
+            _strongBonesBuff = new StrongBonesBuff();
 
             CastingUnit.Info.AddBuff(_strongBonesBuff);
         }
@@ -49,28 +57,49 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit.Info.RemoveBuff(_strongBonesBuff);
         }
     }
+}
 
+namespace MortalDungeon.Definitions.Buffs
+{
     public class StrongBonesBuff : Buff
     {
         private int PotencyIncrease = 2; //per skeleton ability
         private int DamageBlockIncrease = 2; //per skeleton ability
 
-        public StrongBonesBuff(Unit affected) : base(affected)
+        public StrongBonesBuff()
         {
-            Name = "StrongBonesBuff";
-            BuffType = BuffType.Buff;
+            Invisible = false;
+        }
+        public StrongBonesBuff(Buff buff) : base(buff) { }
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.QuestionMark, Spritesheets.IconSheet);
+        protected override void AssignAnimationSet()
+        {
+            base.AssignAnimationSet();
 
-            IndefiniteDuration = true;
-            Hidden = true;
+            AnimationSet = AnimationSetManager.GetAnimationSet(54);
         }
 
-        public override void ModifyDamageInstance(DamageInstance instance, Ability ability)
+        public override void AddEventListeners()
+        {
+            base.AddEventListeners();
+
+            Unit.PreDamageInstanceAppliedSource += ModifyDamageInstance;
+            Unit.AbilitiesUpdated += OnAbilitiesUpdated;
+        }
+
+        public override void RemoveEventListeners()
+        {
+            base.RemoveEventListeners();
+
+            Unit.PreDamageInstanceAppliedSource -= ModifyDamageInstance;
+            Unit.AbilitiesUpdated -= OnAbilitiesUpdated;
+        }
+
+        private void ModifyDamageInstance(Unit unit, DamageInstance instance)
         {
             int skeletonTypeAbilities = 0;
 
-            AffectedUnit.Info.Abilities.ForEach(ability =>
+            unit.Info.Abilities.ForEach(ability =>
             {
                 if (ability.AbilityClass == AbilityClass.Skeleton)
                 {
@@ -78,13 +107,13 @@ namespace MortalDungeon.Game.Abilities
                 }
             });
 
-            if (ability.AbilityClass == AbilityClass.Skeleton) 
+            if (instance.AbilityClass == AbilityClass.Skeleton)
             {
                 var keys = instance.Damage.Keys.ToArray();
 
-                for (int i = 0; i < keys.Length; i++) 
+                for (int i = 0; i < keys.Length; i++)
                 {
-                    if (instance.Damage[keys[i]] > 0) 
+                    if (instance.Damage[keys[i]] > 0)
                     {
                         instance.Damage[keys[i]] += PotencyIncrease * skeletonTypeAbilities;
                     }
@@ -92,11 +121,11 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public override float ModifyShieldBlockAdditive(Unit unit)
+        private void OnAbilitiesUpdated(Unit unit)
         {
             int skeletonTypeAbilities = 0;
 
-            AffectedUnit.Info.Abilities.ForEach(ability =>
+            unit.Info.Abilities.ForEach(ability =>
             {
                 if (ability.AbilityClass == AbilityClass.Skeleton)
                 {
@@ -104,7 +133,7 @@ namespace MortalDungeon.Game.Abilities
                 }
             });
 
-            return skeletonTypeAbilities * DamageBlockIncrease;
+            SetBuffEffect(BuffEffect.ShieldBlockAdditive, skeletonTypeAbilities * DamageBlockIncrease);
         }
     }
 }

@@ -24,19 +24,33 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
             ActionCost = 0;
             EnergyCost = 0;
 
+            AnimationSet = new Serializers.AnimationSet();
+
             if (PlayerParty.Grouped)
             {
-                SetIcon(UIControls.StatusOnline, Spritesheets.UIControlsSpritesheet);
+                AnimationSet.Animations.Add(new Serializers.Animation()
+                {
+                    FrameIndices = { (int)UIControls.StatusOnline },
+                    Spritesheet = (int)TextureName.UIControlsSpritesheet
+                });
             }
             else
             {
                 if (PlayerParty.CanGroupUnits())
                 {
-                    SetIcon(UIControls.StatusAway, Spritesheets.UIControlsSpritesheet);
+                    AnimationSet.Animations.Add(new Serializers.Animation()
+                    {
+                        FrameIndices = { (int)UIControls.StatusAway },
+                        Spritesheet = (int)TextureName.UIControlsSpritesheet
+                    });
                 }
                 else
                 {
-                    SetIcon(UIControls.StatusOffline, Spritesheets.UIControlsSpritesheet);
+                    AnimationSet.Animations.Add(new Serializers.Animation()
+                    {
+                        FrameIndices = { (int)UIControls.StatusOffline },
+                        Spritesheet = (int)TextureName.UIControlsSpritesheet
+                    });
                 }
             }
         }

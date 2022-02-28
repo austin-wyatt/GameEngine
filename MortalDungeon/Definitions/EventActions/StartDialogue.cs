@@ -30,8 +30,11 @@ namespace MortalDungeon.Definitions.EventActions
 
         public override void Invoke(params dynamic[] parameters)
         {
+            if (!Conditional.Check()) 
+                return;
+
             Unit unit = parameters[0];
-            var dialogue = DialogueSerializer.LoadDialogueFromFile(DialogueId);
+            var dialogue = DialogueManager.GetDialogue(DialogueId);
 
             CombatScene.DialogueWindow.StartDialogue(dialogue, new List<Unit> { unit, PlayerParty.UnitsInParty.First() });
         }

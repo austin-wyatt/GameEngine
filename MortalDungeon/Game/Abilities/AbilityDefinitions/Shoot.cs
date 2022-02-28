@@ -34,7 +34,7 @@ namespace MortalDungeon.Game.Abilities
 
             //Description = "Fire an arrow at a target within range. \nA direct line to the target must be present.";
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
+            //Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -173,7 +173,7 @@ namespace MortalDungeon.Game.Abilities
 
                 DamageInstance damage = GetDamageInstance();
 
-                SelectedUnit.ApplyDamage(new Unit.DamageParams(damage) { Ability = this });
+                SelectedUnit.ApplyDamage(new DamageParams(damage) { Ability = this });
 
                 EffectEnded();
                 Scene.PostTickEvent -= removeArrow;
@@ -191,7 +191,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, Damage);
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
     }

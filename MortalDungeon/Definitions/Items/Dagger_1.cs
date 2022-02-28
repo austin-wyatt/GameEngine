@@ -22,7 +22,7 @@ namespace MortalDungeon.Definitions.Items
             {
                 ItemAbility = new Stab()
                 {
-                    Icon = new Icon(Icon.DefaultIconSize, AnimationSet.BuildAnimationsFromSet(), true)
+                    AnimationSet = AnimationSet
                 };
             }
 

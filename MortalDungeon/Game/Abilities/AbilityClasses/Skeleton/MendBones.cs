@@ -49,7 +49,12 @@ namespace MortalDungeon.Game.Abilities
             Name = new Serializers.TextInfo(5, 3);
             Description = new Serializers.TextInfo(6, 3);
 
-            SetIcon(Character.M, Spritesheets.CharacterSheet);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.M },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -125,7 +130,7 @@ namespace MortalDungeon.Game.Abilities
 
             DamageInstance healing = GetDamageInstance();
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(healing) { Ability = this });
+            SelectedUnit.ApplyDamage(new DamageParams(healing) { Ability = this });
 
             EffectEnded();
         }
@@ -151,7 +156,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, healAmount);
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
     }

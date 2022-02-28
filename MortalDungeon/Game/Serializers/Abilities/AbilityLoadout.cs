@@ -14,8 +14,9 @@ namespace MortalDungeon.Game.Serializers
     [Serializable]
     public class AbilityLoadout
     {
-        [XmlElement("Ait")]
-        public List<AbilityLoadoutItem> Items = new List<AbilityLoadoutItem>();
+        //[XmlElement("Ait")]
+        [XmlArrayItem("Ait", typeof(List<AbilityLoadoutItem>))]
+        public List<List<AbilityLoadoutItem>> Items = new List<List<AbilityLoadoutItem>>();
 
         [XmlElement("An")]
         public string Name = "";
@@ -23,13 +24,18 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("AId")]
         public int Id = -1;
 
+        public List<AbilityLoadoutItem> GetLoadout(int variation = 0)
+        {
+            return Items[variation];
+        }
+
         public static AbilityLoadout GenerateLoadoutFromTree(AbilityTreeType type, int abilityCount = 2)
         {
             AbilityLoadout loadout = new AbilityLoadout();
 
             if (AbilityTrees.FindTree(type, out var tree))
             {
-                loadout.Items.Add(new AbilityLoadoutItem(type));
+                loadout.Items[0].Add(new AbilityLoadoutItem(type));
                 abilityCount--;
 
                 List<int> nodeIds = new List<int>();
@@ -43,7 +49,7 @@ namespace MortalDungeon.Game.Serializers
                 {
                     int id = nodeIds.GetRandom();
 
-                    loadout.Items.Add(new AbilityLoadoutItem(type, nodeID: id));
+                    loadout.Items[0].Add(new AbilityLoadoutItem(type, nodeID: id));
 
                     nodeIds.Remove(id);
                 }
@@ -52,9 +58,9 @@ namespace MortalDungeon.Game.Serializers
 
             return loadout;
         }
-        public void ApplyLoadoutToUnit(Unit unit)
+        public void ApplyLoadoutToUnit(Unit unit, int variation)
         {
-            foreach (var item in Items)
+            foreach (var item in Items[variation])
             {
                 if (AbilityTrees.FindTree(item.AbilityTreeType, out var tree))
                 {               
@@ -77,9 +83,17 @@ namespace MortalDungeon.Game.Serializers
 
         public AbilityLoadout(AbilityLoadout loadout)
         {
-            foreach(var item in loadout.Items)
+            Items = new List<List<AbilityLoadoutItem>>();
+
+            foreach(var loadoutItems in loadout.Items)
             {
-                Items.Add(new AbilityLoadoutItem(item));
+                List<AbilityLoadoutItem> items = new List<AbilityLoadoutItem>();
+
+                foreach(var loadoutItem in loadoutItems)
+                {
+                    items.Add(new AbilityLoadoutItem(loadoutItem));
+                }
+                Items.Add(items);
             }
 
             Name = loadout.Name;

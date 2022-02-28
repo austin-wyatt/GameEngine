@@ -23,31 +23,35 @@ namespace MortalDungeon.Game.Serializers
             return animationSet;
         }
 
+        private static object _loadLock = new object();
         public static bool LoadAnimationSets()
         {
-            string path = SerializerParams.DATA_BASE_PATH + "ANIMATIONS";
-
-            if (!File.Exists(path))
+            lock (_loadLock)
             {
-                return false;
+                string path = SerializerParams.DATA_BASE_PATH + "ANIMATIONS";
+
+                if (!File.Exists(path))
+                {
+                    return false;
+                }
+
+                XmlSerializer serializer = new XmlSerializer(typeof(DataBlock<AnimationSet>));
+
+                FileStream fs = new FileStream(path, FileMode.Open);
+
+                TextReader reader = new StreamReader(fs);
+
+
+                DataBlock<AnimationSet> loadedState = (DataBlock<AnimationSet>)serializer.Deserialize(reader);
+
+                reader.Close();
+                fs.Close();
+
+                loadedState.CompleteDeserialization();
+
+                LoadedAnimationSets = loadedState;
+                return true;
             }
-
-            XmlSerializer serializer = new XmlSerializer(typeof(DataBlock<AnimationSet>));
-
-            FileStream fs = new FileStream(path, FileMode.Open);
-
-            TextReader reader = new StreamReader(fs);
-
-
-            DataBlock<AnimationSet> loadedState = (DataBlock<AnimationSet>)serializer.Deserialize(reader);
-
-            reader.Close();
-            fs.Close();
-
-            loadedState.CompleteDeserialization();
-
-            LoadedAnimationSets = loadedState;
-            return true;
         }
 
         public static void SaveAnimationSet(AnimationSet animationSet)

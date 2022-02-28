@@ -29,11 +29,14 @@ namespace MortalDungeon.Definitions.EventActions
             MenuText = parameters[0];
             EventActionBuilder action = (EventActionBuilder)parameters[1];
 
-            MenuClickAction = EventActionBuilder.BuildAction(action.ActionName, action.ActionParameters);
+            MenuClickAction = action.BuildAction();
         }
 
         public override void Invoke(params dynamic[] parameters)
         {
+            if (!Conditional.Check())
+                return;
+
             IEventTarget target = parameters[0];
 
             UIList list;

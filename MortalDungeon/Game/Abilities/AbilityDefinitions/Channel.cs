@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Abilities
             var iconPos = icon == null ? IconSheetIcons.Channel : icon;
             Spritesheet iconSpritesheet = spritesheet == null ? Spritesheets.IconSheet : spritesheet;
 
-            Icon = new Icon(Icon.DefaultIconSize, iconPos, iconSpritesheet, true);
+            //Icon = new Icon(Icon.DefaultIconSize, iconPos, iconSpritesheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)

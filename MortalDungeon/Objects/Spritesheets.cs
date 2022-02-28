@@ -60,11 +60,18 @@ namespace MortalDungeon.Objects
         {
             Name = "IconSheet"
         };
-        public static Spritesheet TileSheet = new Spritesheet("Resources/TileSpritesheet.png", TextureName.TileSpritesheet)
+        //public static Spritesheet TileSheet = new Spritesheet("Resources/TileSpritesheet.png", TextureName.TileSpritesheet)
+        //{
+        //    Offset = 128,
+        //    Rows = 20,
+        //    Columns = 20,
+        //    Name = "TileSheet"
+        //};
+        public static Spritesheet TileSheet = new Spritesheet("Resources/TileSpritesheet_512_1.png", TextureName.TileSpritesheet)
         {
-            Offset = 128,
-            Rows = 20,
-            Columns = 20,
+            Offset = 512,
+            Rows = 5,
+            Columns = 5,
             Name = "TileSheet"
         };
 

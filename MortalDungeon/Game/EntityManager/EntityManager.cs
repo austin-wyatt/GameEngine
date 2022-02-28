@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Map;
+﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles;
 using System;
 using System.Collections.Generic;
@@ -6,10 +7,24 @@ using System.Text;
 
 namespace MortalDungeon.Game.Entities
 {
+    public struct FeatureEntityEntry
+    {
+        public long Hash;
+        public long FeatureId;
+
+        public FeatureEntityEntry(long hash, long id)
+        {
+            Hash = hash;
+            FeatureId = id;
+        }
+    }
+
     public static class EntityManager
     {
-        public static List<Entity> Entities = new List<Entity>();
+        public static HashSet<Entity> Entities = new HashSet<Entity>();
         public static HashSet<Entity> LoadedEntities = new HashSet<Entity>();
+
+        private static Dictionary<FeatureEntityEntry, Entity> _featureEntitiesReference = new Dictionary<FeatureEntityEntry, Entity>();
 
 
         /// <summary>
@@ -17,10 +32,14 @@ namespace MortalDungeon.Game.Entities
         /// </summary>
         public static void AddEntity(Entity entity) 
         {
-            lock(Entities)
-            if (!Entities.Contains(entity)) 
+            lock (Entities)
             {
-                Entities.Add(entity);
+                if (!Entities.Contains(entity))
+                {
+                    Entities.Add(entity);
+
+                    _featureEntitiesReference.AddOrSet(new FeatureEntityEntry(entity.Handle.ObjectHash, entity.Handle.FeatureID), entity);
+                }
             }
         }
 
@@ -31,6 +50,8 @@ namespace MortalDungeon.Game.Entities
         {
             lock (Entities) 
             {
+                _featureEntitiesReference.Remove(new FeatureEntityEntry(entity.Handle.ObjectHash, entity.Handle.FeatureID));
+
                 entity.Unload();
                 Entities.Remove(entity);
                 LoadedEntities.Remove(entity);
@@ -55,6 +76,16 @@ namespace MortalDungeon.Game.Entities
                 entity.Load(position, placeOnTileMap);
                 LoadedEntities.Add(entity);
             }
+        }
+
+        public static bool FeatureEntityExists(FeatureEntityEntry entityEntry)
+        {
+            return _featureEntitiesReference.ContainsKey(entityEntry);
+        }
+
+        public static Entity GetFeatureEntity(FeatureEntityEntry entityEntry)
+        {
+            return _featureEntitiesReference[entityEntry];
         }
     }
 }

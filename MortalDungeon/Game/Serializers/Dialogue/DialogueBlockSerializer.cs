@@ -20,30 +20,34 @@ namespace MortalDungeon.Game.Serializers
             return LoadDialogueBlockFromFile(path);
         }
 
+        private static object _loadLock = new object();
         public static DataBlock<Dialogue> LoadDialogueBlockFromFile(string filePath)
         {
-            string path = filePath;
-
-            if (!File.Exists(path))
+            lock (_loadLock)
             {
-                return null;
+                string path = filePath;
+
+                if (!File.Exists(path))
+                {
+                    return null;
+                }
+
+                XmlSerializer serializer = new XmlSerializer(typeof(DataBlock<Dialogue>));
+
+                FileStream fs = new FileStream(path, FileMode.Open);
+
+                TextReader reader = new StreamReader(fs);
+
+
+                DataBlock<Dialogue> loadedState = (DataBlock<Dialogue>)serializer.Deserialize(reader);
+
+                loadedState.CompleteDeserialization();
+
+                reader.Close();
+                fs.Close();
+
+                return loadedState;
             }
-
-            XmlSerializer serializer = new XmlSerializer(typeof(DataBlock<Dialogue>));
-
-            FileStream fs = new FileStream(path, FileMode.Open);
-
-            TextReader reader = new StreamReader(fs);
-
-
-            DataBlock<Dialogue> loadedState = (DataBlock<Dialogue>)serializer.Deserialize(reader);
-
-            loadedState.CompleteDeserialization();
-
-            reader.Close();
-            fs.Close();
-
-            return loadedState;
         }
 
         public static void WriteDialogueBlockToFile(DataBlock<Dialogue> state)

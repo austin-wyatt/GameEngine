@@ -78,11 +78,15 @@ namespace MortalDungeon
 
         public static Stopwatch GlobalTimer = new Stopwatch();
 
+        public static ViewportRectangle GameViewport;
+
         public static int MainThreadId = -1;
         /// <summary>
         /// Indicates whether the game is running or if it is being loaded as a dll (user has to set manually)
         /// </summary>
         public static bool GameRunning = true;
+
+        public static bool DrawTools = false;
 
 
         //Global position = position of objects in the world
@@ -158,12 +162,19 @@ namespace MortalDungeon
         }
     }
 
+    public enum ContentContext
+    {
+        Game,
+        Tools
+    }
+
     public class Window : GameWindow
     {
         private Vector2i WindowSize = new Vector2i();
 
         public static Vector2 _cursorCoords;
-        public static MouseCursor Cursor;
+        public static MouseCursor CursorObj;
+        public static ContentContext CurrentContext = ContentContext.Game;
 
         public static List<BaseObject> _renderedItems = new List<BaseObject>();
 
@@ -178,7 +189,7 @@ namespace MortalDungeon
 
         private Stopwatch _timer;
         private Stopwatch _gameTimer;
-
+        
 
         private Camera _camera;
         private MouseRay _mouseRay;
@@ -208,6 +219,9 @@ namespace MortalDungeon
             WindowConstants.ClientSize.X = ClientSize.X;
             WindowConstants.ClientSize.Y = ClientSize.Y;
 
+            WindowConstants.GameViewport.Width = ClientSize.X;
+            WindowConstants.GameViewport.Height = ClientSize.Y;
+
             WindowConstants.MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
             CloseWindow = () => Close();
@@ -230,7 +244,7 @@ namespace MortalDungeon
 
             SetWindowSize();
 
-            Cursor = new MouseCursor();
+            CursorObj = new MouseCursor();
 
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
             _camera.Pitch += 7;
@@ -296,9 +310,8 @@ namespace MortalDungeon
 
             WindowConstants.GlobalTimer.Restart();
 
-
-            //hides mouse cursor
-            CursorGrabbed = true;
+            CursorGrabbed = false;
+            CursorVisible = false;
 
             TickAllObjects();
 
@@ -411,19 +424,15 @@ namespace MortalDungeon
                 UpdateCount = 0;
             }
 
-            //Tick counter
-            //timeValue = _gameTimer.Elapsed.TotalSeconds;
 
-            //if (timeValue > tickRate)
-            //{
-            //    _gameTimer.Restart();
-            //    tick++;
+            if (WindowConstants.DrawTools)
+            {
+                //draw tools here
+            }
 
-            //    if (tick % 100 == 0) 
-            //    {
-            //        Console.WriteLine($"{tickRate}    {timeValue}");
-            //    }
-            //}
+
+            //GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
+            //Renderer.ViewportRectangle = WindowConstants.GameViewport;
 
             Matrix4 viewMatrix = _camera.GetViewMatrix();
             Matrix4 projectionMatrix = _camera.ProjectionMatrix;
@@ -501,6 +510,20 @@ namespace MortalDungeon
 
             _sceneController.Scenes.ForEach(scene =>
             {
+                if(scene.SceneContext == ContentContext.Game)
+                {
+                    GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
+                    Renderer.ViewportRectangle = WindowConstants.GameViewport;
+                }
+                else
+                {
+                    GL.Viewport(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y);
+                    Renderer.ViewportRectangle.X = 0;
+                    Renderer.ViewportRectangle.Y = 0;
+                    Renderer.ViewportRectangle.Width = WindowConstants.ClientSize.X;
+                    Renderer.ViewportRectangle.Height = WindowConstants.ClientSize.Y;
+                }
+
                 scene.OnRender();
 
                 //scene.InvokeQueuedRenderAction();
@@ -516,17 +539,24 @@ namespace MortalDungeon
                 bool updateTileMaps = scene.ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate);
 
 
-                var combatScene = scene as CombatScene;
-                if (combatScene != null)
+                if (scene.SceneContext == ContentContext.Game)
                 {
-                    RenderingQueue.SetFogQuad(combatScene._fogQuad);
+                    var combatScene = scene as CombatScene;
+                    if (combatScene != null)
+                    {
+                        RenderingQueue.SetFogQuad(combatScene._fogQuad);
+                    }
+
+                    lock (scene._tileMapController._selectLock)
+                    {
+                        RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles.ToList());
+                    }
+
+                    RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
+
+                    RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
                 }
 
-                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles);
-
-                RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
-
-                RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
 
                 lock (scene.UIManager._UILock)
                 {
@@ -547,16 +577,16 @@ namespace MortalDungeon
                 }); //Text
 
 
-                scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
-                {
-                    gameObject.ParticleGenerators.ForEach(generator =>
-                    {
-                        if (generator.Playing)
-                        {
-                            RenderingQueue.QueueParticlesForRender(generator);
-                        }
-                    });
-                });
+                //scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
+                //{
+                //    gameObject.ParticleGenerators.ForEach(generator =>
+                //    {
+                //        if (generator.Playing)
+                //        {
+                //            RenderingQueue.QueueParticlesForRender(generator);
+                //        }
+                //    });
+                //});
 
                 scene._particleGenerators.ForEach(g =>
                 {
@@ -565,6 +595,8 @@ namespace MortalDungeon
                         RenderingQueue.QueueParticlesForRender(g);
                     }
                 });
+
+                RenderingQueue.RenderQueue();
             });
 
             Shaders.PARTICLE_SHADER.Use();
@@ -574,6 +606,9 @@ namespace MortalDungeon
             {
                 RenderingQueue.RenderSkybox = () =>
                 {
+                    GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
+                    Renderer.ViewportRectangle = WindowConstants.GameViewport;
+
                     viewMatrix = _camera.GetViewMatrix().ClearTranslation();
                     cameraMatrix = viewMatrix * projectionMatrix;
 
@@ -591,9 +626,20 @@ namespace MortalDungeon
                 };
             }
 
-            RenderingQueue.RenderQueue();
+            //RenderingQueue.RenderQueue();
 
-            Renderer.RenderObjectsInstancedGeneric(new List<UIObject> { Cursor }, ref Renderer._instancedRenderArray);
+
+            if(CurrentContext == ContentContext.Tools)
+            {
+                GL.Viewport(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y);
+                Renderer.ViewportRectangle.X = 0;
+                Renderer.ViewportRectangle.Y = 0;
+                Renderer.ViewportRectangle.Width = WindowConstants.ClientSize.X;
+                Renderer.ViewportRectangle.Height = WindowConstants.ClientSize.Y;
+            }
+
+
+            Renderer.RenderObjectsInstancedGeneric(new List<UIObject> { CursorObj }, ref Renderer._instancedRenderArray);
 
             Shaders.DEFAULT_SHADER.Use();
             Shaders.DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
@@ -661,15 +707,16 @@ namespace MortalDungeon
             var deltaX = MouseState.X - _lastPos.X;
             var deltaY = MouseState.Y - _lastPos.Y;
 
+            //_cursorCoords = new Vector2(Math.Clamp(_cursorCoords.X + deltaX, 0, WindowConstants.ClientSize.X), 
+            //    Math.Clamp(_cursorCoords.Y + deltaY, 0, WindowConstants.ClientSize.Y));
 
-            _cursorCoords = new Vector2(Math.Clamp(_cursorCoords.X + deltaX, 0, WindowConstants.ClientSize.X), 
-                Math.Clamp(_cursorCoords.Y + deltaY, 0, WindowConstants.ClientSize.Y));
+            _cursorCoords = new Vector2(Math.Clamp(MouseState.X, 0, WindowConstants.ClientSize.X),
+                Math.Clamp(MouseState.Y, 0, WindowConstants.ClientSize.Y));
 
             var coords = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(_cursorCoords));
 
-            Cursor.SetZPosition(-0.99f);
-            Cursor.SetPositionFromAnchor(coords, UIAnchorPosition.TopLeft);
-
+            CursorObj.SetZPosition(-0.99f);
+            CursorObj.SetPositionFromAnchor(coords, UIAnchorPosition.TopLeft);
 
             if (_firstMove)
             {
@@ -702,7 +749,7 @@ namespace MortalDungeon
 
         private void LoadTextures()
         {
-            Renderer.LoadTextureFromUIObject(Cursor);
+            Renderer.LoadTextureFromUIObject(CursorObj);
 
             _renderedItems.ForEach(obj =>
             {
@@ -768,7 +815,9 @@ namespace MortalDungeon
             WindowConstants.ClientSize.X = ClientSize.X;
             WindowConstants.ClientSize.Y = ClientSize.Y;
 
-            GL.Viewport(0, 0, Size.X, Size.Y);
+            WindowConstants.GameViewport.Width = ClientSize.X;
+            WindowConstants.GameViewport.Height = ClientSize.Y;
+
             SetWindowSize();
 
             Renderer.ResizeFBOs(WindowConstants.ClientSize);
@@ -858,7 +907,7 @@ namespace MortalDungeon
                     _sceneController.Scenes[i].OnMouseDown(obj);
             }
 
-            Cursor.BaseObject.SetAnimation(AnimationType.Die);
+            CursorObj.BaseObject.SetAnimation(AnimationType.Die);
         }
 
         private void Window_MouseMove(MouseMoveEventArgs obj)
@@ -878,7 +927,7 @@ namespace MortalDungeon
                     _sceneController.Scenes[i].OnMouseUp(obj);
             }
 
-            Cursor.BaseObject.SetAnimation(AnimationType.Idle);
+            CursorObj.BaseObject.SetAnimation(AnimationType.Idle);
         }
 
         private void Window_KeyUp(KeyboardKeyEventArgs obj)
@@ -951,6 +1000,45 @@ namespace MortalDungeon
             {
                 if (_sceneController.Scenes[i].Loaded)
                     _sceneController.Scenes[i].OnKeyDown(obj);
+            }
+
+            switch (obj.Key)
+            {
+                case Keys.Home:
+                    CurrentContext = CurrentContext == ContentContext.Game ? ContentContext.Tools : ContentContext.Game;
+                    break;
+                case Keys.PageUp:
+                    float width = (float)WindowConstants.ClientSize.X / 1.5f;
+                    float height = (float)WindowConstants.ClientSize.Y / 1.5f;
+
+                    CurrentContext = ContentContext.Tools;
+                    WindowConstants.GameViewport.X = WindowConstants.ClientSize.X - (int)width - 10;
+                    WindowConstants.GameViewport.Y = 10;
+                    WindowConstants.GameViewport.Width = (int)width;
+                    WindowConstants.GameViewport.Height = (int)height;
+
+                    //Scene toolScene = new ToolScene();
+
+                    //int toolSceneID = _sceneController.AddScene(toolScene, 1);
+                    //_sceneController.LoadScene(toolSceneID, _camera, _mouseRay);
+
+                    //open tools
+                    break;
+                case Keys.PageDown:
+                    CurrentContext = ContentContext.Game;
+                    WindowConstants.GameViewport.X = 0;
+                    WindowConstants.GameViewport.Y = 0;
+                    WindowConstants.GameViewport.Width = WindowConstants.ClientSize.X;
+                    WindowConstants.GameViewport.Height = WindowConstants.ClientSize.Y;
+                    //close tools
+
+                    //var scene = _sceneController.Scenes.Find(s => s.SceneContext == ContentContext.Tools);
+
+                    //if(scene != null)
+                    //{
+                    //    _sceneController.RemoveScene(scene.SceneID);
+                    //}
+                    break;
             }
         }
         #endregion

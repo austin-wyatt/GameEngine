@@ -150,12 +150,6 @@ namespace MortalDungeon.Game.UI
                 {
                     Scene.EndCombat();
                 }
-                else
-                {
-                    Scene._units[0].Info.Health = 100;
-                    Scene._units[0].SetShields(5);
-                    Scene.StartCombat();
-                }
             };
 
             button.SetPositionFromAnchor(Tabs[0].BaseComponent.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
@@ -200,8 +194,7 @@ namespace MortalDungeon.Game.UI
 
             toggleAI.Click += (s, e) =>
             {
-                Unit unit = Scene._units.Find(u => u.Name == "John");
-                unit.AI.ControlType = unit.AI.ControlType == ControlType.Basic_AI ? ControlType.Controlled : ControlType.Basic_AI;
+
             };
 
             toggleAI.SetPositionFromAnchor(unitButton2.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -261,15 +254,15 @@ namespace MortalDungeon.Game.UI
 
             Button minusColor = CreateButton("Heal All", () =>
             {
-                Scene._units.ForEach(u =>
+                foreach(var u in Scene._units)
                 {
                     u.Revive();
                     u.Info.Health = 100;
 
                     var instance = new Abilities.DamageInstance();
                     instance.Damage.Add(Abilities.DamageType.HealthRemoval, -100);
-                    u.ApplyDamage(new Unit.DamageParams(instance));
-                });
+                    u.ApplyDamage(new DamageParams(instance));
+                }
             }, visionTestButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button minusBlue = CreateButton("Save BMP", () =>
@@ -283,18 +276,11 @@ namespace MortalDungeon.Game.UI
                 //VisionMap.SaveOperationMap();
             }, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
-            Button removeEntity = CreateButton("Entity Parser", () =>
-            {
-                foreach (var prefab in EntityParser.Prefabs) 
-                {
-                    Console.WriteLine($"Prefab: {prefab.Type} {prefab.Name}");
-                }
-            }, minusBlue.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button loadEntity = CreateButton("Load Guy", () =>
             {
 
-            }, removeEntity.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
+            }, minusBlue.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             //ForceTreeRegeneration();
         }

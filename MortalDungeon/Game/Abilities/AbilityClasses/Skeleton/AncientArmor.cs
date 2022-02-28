@@ -44,7 +44,12 @@ namespace MortalDungeon.Game.Abilities
             Name = new Serializers.TextInfo(1, 3);
             Description = new Serializers.TextInfo(2, 3);
 
-            SetIcon(Character.A, Spritesheets.CharacterSheet);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.A },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)

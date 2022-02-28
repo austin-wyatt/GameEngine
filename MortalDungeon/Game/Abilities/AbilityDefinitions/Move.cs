@@ -50,7 +50,12 @@ namespace MortalDungeon.Game.Abilities
 
             OneUsePerTurn = false;
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.WalkingBoot, Spritesheets.IconSheet, true);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)IconSheetIcons.WalkingBoot },
+                Spritesheet = (int)TextureName.IconSpritesheet
+            });
 
             TraversableTypes.Add(TileClassification.Ground);
         }
@@ -635,7 +640,11 @@ namespace MortalDungeon.Game.Abilities
         {
             if (CastingUnit != null)
             {
-                return CastingUnit.Info.EnergyCostMultiplier * CastingUnit.Info.SpeedMultiplier * EnergyCost + CastingUnit.Info.EnergyAddition + CastingUnit.Info.SpeedAddition;
+                return CastingUnit.Info.BuffManager.GetValue(BuffEffect.EnergyCostMultiplier) *
+                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.MovementEnergyMultiplier) * 
+                       (EnergyCost + 
+                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.EnergyCostAdditive) + 
+                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.MovementEnergyAdditive));
             }
 
             return EnergyCost;
@@ -645,7 +654,7 @@ namespace MortalDungeon.Game.Abilities
         private object _moveToTileLock = new object();
         public void MoveToTile(BaseTile tile, bool ignoreRange = true) 
         {
-            Units = tile.GetScene()._units;
+            Units = TileMapManager.Scene._units;
             Range = CastingUnit.Info.Energy / GetEnergyCost();
 
             Task.Run(() =>

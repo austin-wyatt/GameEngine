@@ -613,7 +613,7 @@ namespace MortalDungeon.Engine_Classes
 
         public static string WrapString(string line, int maxWidth)
         {
-            if (line.Length < maxWidth)
+            if (line.Length <= maxWidth)
                 return line;
 
             string returnString = "";

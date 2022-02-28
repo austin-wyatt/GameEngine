@@ -12,105 +12,11 @@ namespace MortalDungeon.Game.Serializers
 {
     public static class FeatureSerializer
     {
-        private static string _featureCharSet = "DklHtBmKAuNoLMngqrsSvwxyTEFGdeCJiUVafOPQRhzpIbc";
-        private static int _fileNameLength = 10;
-
-        /// <summary>
-        /// Features will be handled slightly differently in that their origin point load radius are part of the 
-        /// file name. Their loading and unloading will be handled by a FeatureManager class
-        /// </summary>
-        /// <param name="filePath"></param>
-        /// <returns></returns>
-        public static Feature LoadFeatureFromFile(string filePath)
-        {
-            string path = filePath;
-
-            if (!File.Exists(path))
-            {
-                return null;
-            }
-
-            XmlSerializer serializer = new XmlSerializer(typeof(Feature));
-
-            FileStream fs = new FileStream(path, FileMode.Open);
-
-            TextReader reader = new StreamReader(fs);
-
-
-            Feature loadedState = (Feature)serializer.Deserialize(reader);
-
-            loadedState.CompleteDeserialization();
-
-
-            reader.Close();
-            fs.Close();
-
-            return loadedState;
-        }
-
-        public static Feature LoadFeatureFromFile(int id)
-        {
-            string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(id, _fileNameLength) + ".f";
-
-            return LoadFeatureFromFile(path);
-        }
-
-        public static string HashFeatureId(int id)
-        {
-            return _featureCharSet.CreateRandom(id, _fileNameLength);
-        }
-
-        public static void WriteFeatureToFile(Feature feature)
-        {
-            string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(feature.Id, _fileNameLength) + ".f";
-
-            feature.PrepareForSerialization();
-
-            XmlSerializer serializer = new XmlSerializer(typeof(Feature));
-
-            TextWriter writer = new StreamWriter(path);
-
-            serializer.Serialize(writer, feature);
-
-            writer.Close();
-        }
-
-        public static void DeleteFeature(Feature feature)
-        {
-            string path = SerializerParams.DATA_BASE_PATH + _featureCharSet.CreateRandom(feature.Id, _fileNameLength) + ".f";
-
-            File.Delete(path);
-        }
-
-        public static List<Feature> LoadAllFeatures()
-        {
-            string[] files = Directory.GetFiles(SerializerParams.DATA_BASE_PATH);
-
-            List<string> filesToLoad = new List<string>();
-
-            foreach (string file in files)
-            {
-                if (file.Contains(".f") && !file.Contains("qqqqqqqq"))
-                {
-                    filesToLoad.Add(file);
-                }
-            }
-
-            List<Feature> features = new List<Feature>();
-
-            foreach (string file in filesToLoad)
-            {
-                var feature = LoadFeatureFromFile(file);
-
-                features.Add(feature);
-            }
-
-            return features;
-        }
-
         public static void CreateFeatureListFile()
         {
-            List<Feature> features = LoadAllFeatures();
+            FeatureBlockManager.LoadAllFeatureBlocks();
+
+            List<Feature> features = FeatureBlockManager.GetAllLoadedFeatures();
 
             string featureListPath = SerializerParams.DATA_BASE_PATH +"qqqqqqqqqqqqqqqq.f";
 
@@ -127,6 +33,8 @@ namespace MortalDungeon.Game.Serializers
             }
 
             list.Features.Sort((a, b) => a.Id.CompareTo(b.Id));
+
+            list.PrepareForSerialization();
 
             XmlSerializer serializer = new XmlSerializer(typeof(FeatureList));
 
@@ -158,24 +66,55 @@ namespace MortalDungeon.Game.Serializers
             reader.Close();
             fs.Close();
 
+            featureList.CompleteDeserialization();
+
             return featureList;
         }
 
-        public static List<Feature> GetGroupedFeatures(Feature feature)
+        public static void CreateFeatureGroupFile()
         {
-            List<Feature> group = new List<Feature>();
+            FeatureGroupManager.FeatureGroups.PrepareForSerialization();
 
-            FeatureList list = LoadFeatureListFile();
+            string featureGroupPath = SerializerParams.DATA_BASE_PATH + "gggggggggggggggg.f";
 
-            foreach (FeatureListNode groupFeature in list.Features)
+            if (File.Exists(featureGroupPath))
             {
-                if (groupFeature.Id != feature.Id && groupFeature.GroupName != "" && groupFeature.GroupName == feature.GroupName)
-                {
-                    group.Add(LoadFeatureFromFile(groupFeature.Id));
-                }
+                File.Delete(featureGroupPath);
             }
 
-            return group;
+            XmlSerializer serializer = new XmlSerializer(typeof(FeatureGroupList));
+
+            TextWriter writer = new StreamWriter(featureGroupPath);
+
+            serializer.Serialize(writer, FeatureGroupManager.FeatureGroups);
+
+            writer.Close();
+        }
+
+        public static FeatureGroupList LoadFeatureGroupFile()
+        {
+            string featureGroupPath = SerializerParams.DATA_BASE_PATH + "gggggggggggggggg.f";
+
+            if (!File.Exists(featureGroupPath))
+            {
+                return new FeatureGroupList();
+            }
+
+            XmlSerializer serializer = new XmlSerializer(typeof(FeatureGroupList));
+
+            FileStream fs = new FileStream(featureGroupPath, FileMode.Open);
+
+            TextReader reader = new StreamReader(fs);
+
+
+            FeatureGroupList featureList = (FeatureGroupList)serializer.Deserialize(reader);
+
+            reader.Close();
+            fs.Close();
+
+            featureList.CompleteDeserialization();
+
+            return featureList;
         }
     }
 }

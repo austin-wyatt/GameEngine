@@ -42,7 +42,12 @@ namespace MortalDungeon.Game.Abilities
             Description = new Serializers.TextInfo(12, 3);
 
 
-            SetIcon(IconSheetIcons.Circle, Spritesheets.IconSheet);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)IconSheetIcons.Circle },
+                Spritesheet = (int)TextureName.IconSpritesheet
+            });
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -119,7 +124,7 @@ namespace MortalDungeon.Game.Abilities
             var dam = new Dictionary<DamageType, float>();
             dam.Add(DamageType.HealthRemoval, 1000);
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(new DamageInstance() 
+            SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance() 
             { 
                 Damage = dam
             }));
@@ -134,7 +139,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, Damage);
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
     }

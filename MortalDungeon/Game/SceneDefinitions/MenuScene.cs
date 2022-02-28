@@ -18,7 +18,6 @@ using MortalDungeon.Engine_Classes.UIComponents;
 using System.Linq;
 using MortalDungeon.Game.Tiles.TileMaps;
 using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Map.FeatureEquations;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Lighting;
@@ -73,7 +72,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             inputCapture.Scroll += (s, e) =>
             {
-                if (!ContextManager.GetFlag(GeneralContextFlags.DisallowCameraMovement) && TileMapsFocused)
+                if (!ContextManager.GetFlag(GeneralContextFlags.DisallowCameraMovement) && TileMapsFocused && !KeyboardState.IsKeyDown(Keys.LeftControl))
                 {
                     if (MouseState.ScrollDelta[1] < 0)
                     {
@@ -410,6 +409,17 @@ namespace MortalDungeon.Game.SceneDefinitions
                         EquipmentUI.CreateWindow();
                     }
                     break;
+                case Keys.KeyPad1:
+                   
+                    if (ContextManager.GetFlag(GeneralContextFlags.EditingFeature))
+                    {
+                        ContextManager.SetFlag(GeneralContextFlags.EditingFeature, false);
+                    }
+                    else
+                    {
+                        ContextManager.SetFlag(GeneralContextFlags.EditingFeature, true);
+                    }
+                    break;
             }
 
             return true;
@@ -696,7 +706,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                             TileMap.PathToPointParameters param = new TileMap.PathToPointParameters(_wallTemp, tile.TilePoint, 100)
                             {
-                                TraversableTypes = new List<TileClassification>() { TileClassification.Ground, TileClassification.Terrain, TileClassification.Water }
+                                TraversableTypes = new List<TileClassification>() { TileClassification.Ground, TileClassification.ImpassableGround, TileClassification.Water }
                             };
 
                             List<BaseTile> tiles = map.GetPathToPoint(param);
@@ -782,7 +792,11 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.Comma))
                     {
-                        UIManager.RegenerateRenderData();
+                        Conditional test = new Conditional();
+                        test.Condition = "(Quest 103 completed OR Quest 103 inProgress)";
+                        test.PrepareForSerialization();
+
+                        Console.WriteLine(test.Check());
                     }
                     else if (KeyboardState.IsKeyDown(Keys.N))
                     {

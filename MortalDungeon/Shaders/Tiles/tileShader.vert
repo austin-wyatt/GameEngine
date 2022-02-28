@@ -21,6 +21,7 @@ out float enableLighting;
 out vec3 Normal;
 out vec3 FragPos;
 
+out float materialIndexF;
 
 uniform mat4 camera;
 
@@ -35,8 +36,8 @@ void main(void)
 
 	alpha_threshold = 0.15;
 
-	const float columns = 20;
-	const float rows = 20;
+	const float columns = 5;
+	const float rows = 5;
 
     float row =  floor(compositeType[0] / rows);
 	float column = compositeType[0] - row * rows;
@@ -56,10 +57,7 @@ void main(void)
 	column = overlaysComposite[2] - row * rows;
 	overlays[2] = overlaysComposite[2] >= 0 ? vec2(setTexCoord(vec2(aTexCoord), columns, rows, column, row)) : vec2(-1, -1);
 
-
-	overlayColors[0] = compositeType[3];
-	overlayColors[1] = overlaysComposite[1];
-	overlayColors[2] = overlaysComposite[3];
+	materialIndexF = overlaysComposite[0];
 
 	//Position handling
 

@@ -10,8 +10,10 @@ using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MortalDungeon.Game.Tiles
 {
@@ -50,14 +52,18 @@ namespace MortalDungeon.Game.Tiles
         }
 
         public static object _loadLock = new object();
-        public static void LoadMapsAroundCenter(int loadDiameter = -1, int layer = 0)
+        public static void LoadMapsAroundCenter(int loadDiameter = -1, int layer = 0, bool forceFresh = false)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             lock (_loadLock)
             {
                 HashSet<TileMapPoint> pointsToRemove = new HashSet<TileMapPoint>();
 
                 Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, true);
                 Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                
 
                 ActiveMaps.Clear();
 
@@ -84,6 +90,7 @@ namespace MortalDungeon.Game.Tiles
                 FeatureManager.EvaluateLoadedFeatures(new FeaturePoint(LoadedCenter.X * TILE_MAP_DIMENSIONS.X, LoadedCenter.Y * TILE_MAP_DIMENSIONS.Y),
                     layer, (incrementVal + 2) * TILE_MAP_DIMENSIONS.X);
 
+                Console.WriteLine("Flag 1: " + stopwatch.ElapsedMilliseconds + "ms");
 
                 Vector2i topleft = new Vector2i(LoadedCenter.X - incrementVal, LoadedCenter.Y - incrementVal);
 
@@ -95,7 +102,7 @@ namespace MortalDungeon.Game.Tiles
                     {
                         TileMapPoint newPoint = new TileMapPoint(topleft.X + i, topleft.Y + j);
 
-                        if (!LoadedMaps.ContainsKey(newPoint))
+                        if (!LoadedMaps.ContainsKey(newPoint) || forceFresh)
                         {
                             pointsToLoad.Add(newPoint);
                         }
@@ -107,7 +114,11 @@ namespace MortalDungeon.Game.Tiles
                     }
                 }
 
+                Console.WriteLine("Flag 2: " + stopwatch.ElapsedMilliseconds + "ms");
+
                 UnloadMaps(pointsToRemove);
+
+                Console.WriteLine("Flag 2.5: " + stopwatch.ElapsedMilliseconds + "ms");
 
                 foreach (var point in pointsToLoad)
                 {
@@ -121,11 +132,17 @@ namespace MortalDungeon.Game.Tiles
                     newMap.OnAddedToController();
                 }
 
+                Console.WriteLine("Flag 3: " + stopwatch.ElapsedMilliseconds + "ms");
+
                 TileMapHelpers._topLeftMap = LoadedMaps[new TileMapPoint(LoadedCenter.X - incrementVal, LoadedCenter.Y - incrementVal)];
 
                 PositionTileMaps();
 
+                Console.WriteLine("Flag 4: " + stopwatch.ElapsedMilliseconds + "ms");
+
                 ApplyLoadedFeaturesToMaps(LoadedMaps.Values.ToList(), pointsToLoad);
+
+                Console.WriteLine("Flag 5: " + stopwatch.ElapsedMilliseconds + "ms");
 
                 Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, false);
                 Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
@@ -134,6 +151,9 @@ namespace MortalDungeon.Game.Tiles
                 {
                     foreach (var unit in Scene._units)
                     {
+                        if (unit.Info.TileMapPosition == null)
+                            continue;
+
                         unit.VisionGenerator.SetPosition(unit.Info.TileMapPosition);
                         unit.LightObstruction.SetPosition(unit.Info.TileMapPosition);
                     }
@@ -141,16 +161,12 @@ namespace MortalDungeon.Game.Tiles
 
                 Scene.QueueToRenderCycle(() =>
                 {
-                    Scene.UnitVisionGenerators.ManuallyIncrementChangeToken();
-                    Scene.LightObstructions.ManuallyIncrementChangeToken();
-
-                    Scene.UnitVisionGenerators.HandleQueuedItems();
-                    Scene.LightObstructions.HandleQueuedItems();
-
                     Scene.OnStructureMoved();
                 });
 
                 GC.Collect();
+
+                Console.WriteLine("Flag 6: " + stopwatch.ElapsedMilliseconds + "ms");
             }
         }
 
@@ -213,26 +229,96 @@ namespace MortalDungeon.Game.Tiles
             {
                 addedPoints = new HashSet<TileMapPoint>();
             }
-            
 
-            foreach (var feature in FeatureManager.LoadedFeatures)
+            Console.WriteLine("Starting map update");
+
+            foreach (var feature in featureList)
             {
-                for (int i = 0; i < maps.Count; i++)
+                #region apply map brushes
+                if (feature.MapBrushes.Count > maps.Count)
                 {
-                    bool freshGen = true;
+                    //Case for when a single feature has a ton of map brushes. 
+                    //It should be faster to check each map for a matching brush
 
-                    if (addedMaps != null)
+                    for (int i = 0; i < maps.Count; i++)
                     {
-                        freshGen = addedPoints.Contains(maps[i].TileMapCoords);
-                    }
+                        bool freshGen = true;
 
-                    if (feature.Value.AffectsMap(maps[i]))
-                    {
-                        feature.Value.ApplyToMap(maps[i], freshGen);
+                        if (addedMaps != null)
+                        {
+                            freshGen = addedPoints.Contains(maps[i].TileMapCoords);
+                        }
+
+                        if (feature.MapBrushes.TryGetValue(maps[i].TileMapCoords, out var mapBrush) && freshGen)
+                        {
+                            mapBrush.ApplyToMap(maps[i]);
+                        }
                     }
                 }
+                else
+                {
+                    //Case for when a feature has few map brushes
+                    //Here we can directly check the loaded maps
 
-                feature.Value.OnAppliedToMaps();
+                    foreach (var brush in feature.MapBrushes)
+                    {
+                        if (LoadedMaps.TryGetValue(brush.Key, out var map))
+                        {
+                            bool freshGen = true;
+
+                            if (addedMaps != null)
+                            {
+                                freshGen = addedPoints.Contains(map.TileMapCoords);
+                            }
+
+                            brush.Value.ApplyToMap(map);
+                        }
+                    }
+                }
+                #endregion
+
+                #region apply bounding points
+                for (int i = 0; i < feature.BoundingPoints.Count; i++)
+                {
+                    if (feature.BoundingPoints[i].ApplyToStaleMaps)
+                    {
+
+                    }
+                    else
+                    {
+                        for (int j = 0; j < addedMaps.Count; j++)
+                        {
+                            if (LoadedMaps.TryGetValue(addedMaps[j], out var map) && feature.BoundingPoints[i].AffectedMaps.Contains(addedMaps[j]))
+                            {
+                                feature.BoundingPoints[i].ApplyToMap(map);
+                            }
+                        }
+                    }
+                }
+                #endregion
+
+                #region apply affected points
+                foreach (var point in feature.AffectedPoints)
+                {
+                    var tile = TileMapHelpers.GetTile(point.Key);
+
+                    if(tile != null)
+                    {
+                        bool freshGen = true;
+
+                        if (addedMaps != null)
+                        {
+                            freshGen = addedPoints.Contains(tile.TileMap.TileMapCoords);
+                        }
+
+                        feature.ApplyToAffectedPoint(tile, freshGen);
+                    }
+                }
+                #endregion
+
+                //Console.WriteLine("Feature applied to map in: " + stopwatch.ElapsedMilliseconds + "ms");
+
+                feature.OnAppliedToMaps();
             };
         }
 
@@ -261,8 +347,6 @@ namespace MortalDungeon.Game.Tiles
                         {
                             EntityManager.UnloadEntity(entity);
                         }
-
-                        //map.CleanUp();
                     });
 
                     map.CleanUp();

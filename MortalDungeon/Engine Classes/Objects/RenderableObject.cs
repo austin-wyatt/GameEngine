@@ -27,10 +27,15 @@ namespace MortalDungeon.Engine_Classes
         public static Vector4 Blue = new Vector4(0, 0, 1, 1);
         public static Vector4 Tan = new Vector4(0.68f, 0.66f, 0.48f, 1);
         public static Vector4 Purple = new Vector4(0.66f, 0.03f, 0.71f, 1);
+        public static Vector4 Yellow = new Vector4(1, 1, 0, 1);
+
+        public static Vector4 LightBlue = new Vector4(0, 0.70f, 1, 1);
+
+        public static Vector4 GrassGreen = new Vector4(0.1f, 0.30f, 0, 1);
 
         public static Vector4 TranslucentRed = new Vector4(1, 0, 0, 0.5f);
         public static Vector4 MoreTranslucentRed = new Vector4(1, 0, 0, 0.35f);
-        public static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.4f);
+        public static Vector4 TranslucentBlue = new Vector4(0, 0, 1, 0.25f);
         public static Vector4 MoreTranslucentBlue = new Vector4(0, 0, 1, 0.35f);
 
         public static Vector4 TranslucentTan = new Vector4(0.68f, 0.66f, 0.48f, 0.5f);

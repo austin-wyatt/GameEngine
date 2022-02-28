@@ -48,8 +48,9 @@ namespace MortalDungeon.Game.Units
     /// These are flags inherent to abilities/buffs <para/>
     /// This will be a very large enum.
     /// </summary>
-    public enum UnitConditions
+    public enum UnitCondition
     {
+        None,
         WebImmuneWeak,
         WebImmuneMed,
         WebImmuneStrong,
@@ -69,6 +70,9 @@ namespace MortalDungeon.Game.Units
             Stealth = new Hidden(unit);
             Scouting = new Scouting(unit);
             Equipment = new Equipment(unit);
+
+            BuffManager.Unit = unit;
+            StatusManager.Unit = unit;
         }
 
 
@@ -85,7 +89,7 @@ namespace MortalDungeon.Game.Units
         public TilePoint Point => TileMapPosition.TilePoint;
 
         [XmlIgnore]
-        public CombatScene Scene => TileMapPosition.GetScene();
+        public CombatScene Scene => TileMapManager.Scene;
 
         [XmlIgnore]
         public TileMap Map => TileMapPosition.TileMap;
@@ -98,8 +102,10 @@ namespace MortalDungeon.Game.Units
 
         //public List<AbilityCreationInfo> _abilityCreationInfo = new List<AbilityCreationInfo>();
 
+        public BuffManager BuffManager = new BuffManager();
+
         [XmlIgnore]
-        public List<Buff> Buffs = new List<Buff>();
+        public StatusManager StatusManager = new StatusManager();
 
         //private List<BuffCreationInfo> _buffCreationInfo = new List<BuffCreationInfo>();
 
@@ -107,7 +113,10 @@ namespace MortalDungeon.Game.Units
         public Move _movementAbility = null;
 
         public float MaxEnergy = 10;
-        public float CurrentEnergy => MaxEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyBoost.Additive + seed); //Energy at the start of the turn
+        public float CurrentEnergy => (MaxEnergy + 
+            BuffManager.GetValue(BuffEffect.EnergyAdditive)) * 
+            BuffManager.GetValue(BuffEffect.EnergyMultiplier); //Energy at the start of the turn
+
         public float Energy = 10; //public unit energy tracker
 
         public float MaxActionEnergy = 4;
@@ -115,49 +124,32 @@ namespace MortalDungeon.Game.Units
         public float MaxFocus = 40;
         public float Focus = 40;
 
-        public float CurrentActionEnergy => MaxActionEnergy + Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ActionEnergyBoost.Additive + seed); //Energy at the start of the turn
+        public int AbilityVariation = 0;
+
+        public float CurrentActionEnergy => (MaxActionEnergy +
+            BuffManager.GetValue(BuffEffect.ActionEnergyAdditive)) *
+            BuffManager.GetValue(BuffEffect.ActionEnergyMultiplier); //Action energy at the start of the turn
+
         public float ActionEnergy = 0;
 
-        public float EnergyCostMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.EnergyCost.Multiplier * seed);
-        public float EnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
-        public float ActionEnergyAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.EnergyCost.Additive + seed);
-        public float DamageMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.OutgoingDamage.Multiplier * seed);
-        public float DamageAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.OutgoingDamage.Additive + seed);
-        public float SpeedMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.SpeedModifier.Multiplier * seed);
-        public float SpeedAddition => Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.SpeedModifier.Additive + seed);
+        public float _speed = 10;
 
-
-
-        public float Speed => _movementAbility != null ? _movementAbility.GetEnergyCost() : 10;
+        [XmlIgnore]
+        public float Speed
+        {
+            get => (_speed + BuffManager.GetValue(BuffEffect.SpeedAdditive)) * BuffManager.GetValue(BuffEffect.SpeedMultiplier);
+            set => _speed = value;
+        }
+        
 
         public float Health = 100;
         public float MaxHealth = 100;
 
         public int CurrentShields = 0;
 
-        public float ShieldBlockMultiplier => Buffs.Aggregate<Buff, float>(1, (seed, buff) => buff.ShieldBlock.Multiplier * seed);
-
-        public float ShieldBlock
-        {
-            get
-            {
-                float shieldBlock = Buffs.Aggregate<Buff, float>(0, (seed, buff) => buff.ShieldBlock.Additive + seed);
-
-                shieldBlock += ApplyBuffAdditiveShieldBlockModifications();
-
-                shieldBlock *= ShieldBlockMultiplier;
-                return shieldBlock;
-            }
-        }
-
+        public float ShieldBlock => BuffManager.GetValue(BuffEffect.ShieldBlockAdditive) * BuffManager.GetValue(BuffEffect.ShieldBlockMultiplier);
 
         public float DamageBlockedByShields = 0;
-
-        [XmlIgnore]
-        public Dictionary<DamageType, float> BaseDamageResistances = new Dictionary<DamageType, float>();
-
-        [XmlElement(Namespace = "UIbdr")]
-        private DeserializableDictionary<DamageType, float> _baseDamageResistances = new DeserializableDictionary<DamageType, float>();
 
         public bool NonCombatant = false;
 
@@ -171,17 +163,9 @@ namespace MortalDungeon.Game.Units
         public bool BlocksSpace = true;
         public bool PhasedMovement = false;
 
-        public StatusCondition Status = StatusCondition.None;
-
         public Species Species = Species.Humanoid;
 
         public bool PartyMember = false;
-
-        /// <summary>
-        /// Tracks all of the innate/ability/buff related conditions affecting a unit <para/>
-        /// This will need some special handling regarding saving and loading to ensure conditions don't remain permanently
-        /// </summary>
-        public HashSet<UnitConditions> UnitConditions = new HashSet<UnitConditions>();
 
 
         /// <summary>
@@ -204,104 +188,21 @@ namespace MortalDungeon.Game.Units
         public Hidden Stealth;
         public Scouting Scouting;
 
-        [XmlIgnore]
-        private object _buffLock = new object();
         public void AddBuff(Buff buff)
         {
-            if (buff == null)
-                return;
-
-            lock (_buffLock)
-            {
-                Buffs.Add(buff);
-                buff.AffectedUnit = Unit;
-
-                EvaluateStatusCondition();
-
-                Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
-
-                switch (buff.BuffType)
-                {
-                    case BuffType.Debuff:
-                        backgroundType = Icon.BackgroundType.DebuffBackground;
-                        break;
-                    case BuffType.Buff:
-                        backgroundType = Icon.BackgroundType.BuffBackground;
-                        break;
-                }
-
-                Icon icon = buff.GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType);
-                Vector3 pos = Unit.Position + new Vector3(0, -400, 0.3f);
-                UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
-            }
+            BuffManager.AddBuff(buff);
         }
 
         public void RemoveBuff(Buff buff)
         {
-            if (buff == null)
-                return;
-
-            lock (_buffLock)
-            {
-                Buffs.Remove(buff);
-                buff.AffectedUnit = null;
-
-                EvaluateStatusCondition();
-
-                Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
-
-                switch (buff.BuffType)
-                {
-                    case BuffType.Debuff:
-                        backgroundType = Icon.BackgroundType.DebuffBackground;
-                        break;
-                    case BuffType.Buff:
-                        backgroundType = Icon.BackgroundType.BuffBackground;
-                        break;
-                }
-
-                Icon icon = buff.GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType);
-                Vector3 pos = Unit.Position + new Vector3(0, -400, 0.3f);
-                UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
-            }
-        }
-
-        private float ApplyBuffAdditiveShieldBlockModifications()
-        {
-            float modifications = 0;
-            foreach (var buff in Unit.Info.Buffs)
-            {
-                modifications += buff.ModifyShieldBlockAdditive(Unit);
-            }
-
-            return modifications;
-        }
-
-        public void EvaluateStatusCondition()
-        {
-            StatusCondition condition = StatusCondition.None;
-
-            for (int i = 0; i < Buffs.Count; i++)
-            {
-                condition |= Buffs[i].StatusCondition;
-            }
-
-            Status = condition;
+            BuffManager.RemoveBuff(buff);
         }
 
         public bool CanUseAbility(Ability ability)
         {
             CastingMethod method = ability.CastingMethod;
 
-            int propertyCount = Enum.GetValues(typeof(CastingMethod)).Length;
-
-            for (int i = 0; i < propertyCount; i++)
-            {
-                if (BitOps.GetBit((int)method, i) && BitOps.GetBit((int)Status, i))
-                    return false;
-            }
-
-            return true;
+            return !StatusManager.CheckCondition((StatusCondition)method); 
         }
 
         public void PrepareForSerialization()
@@ -309,13 +210,8 @@ namespace MortalDungeon.Game.Units
             Stealth.PrepareForSerialization();
             Scouting.PrepareForSerialization();
             Equipment.PrepareForSerialization();
-
-            //foreach (var item in _abilityCreationInfo)
-            //{
-            //    item.PrepareForSerialization();
-            //}
-
-            _baseDamageResistances = new DeserializableDictionary<DamageType, float>(BaseDamageResistances);
+            BuffManager.PrepareForSerialization();
+            //StatusManager.PrepareForSerialization();
         }
 
         public void CompleteDeserialization()
@@ -323,14 +219,8 @@ namespace MortalDungeon.Game.Units
             Stealth.CompleteDeserialization();
             Scouting.CompleteDeserialization();
             Equipment.CompleteDeserialization();
-
-            //foreach (var item in _abilityCreationInfo)
-            //{
-            //    item.CompleteDeserialization();
-            //}
-
-            BaseDamageResistances.Clear();
-            _baseDamageResistances.FillDictionary(BaseDamageResistances);
+            BuffManager.CompleteDeserialization();
+            //StatusManager.CompleteDeserialization();
         }
 
         public static void AttachUnitToInfo(UnitInfo info, Unit unit)
@@ -339,6 +229,8 @@ namespace MortalDungeon.Game.Units
             info.Stealth.Unit = unit;
             info.Scouting.Unit = unit;
             info.Equipment.Unit = unit;
+            info.BuffManager.Unit = unit;
+            info.StatusManager.Unit = unit;
         }
     }
 
@@ -363,7 +255,7 @@ namespace MortalDungeon.Game.Units
         public float Skill = 0;
 
         [XmlIgnore]
-        public QueuedList<Action> HidingBrokenActions = new QueuedList<Action>();
+        public List<Action> HidingBrokenActions = new List<Action>();
 
         public Hidden() { }
         public Hidden(Unit unit)

@@ -30,7 +30,7 @@ namespace MortalDungeon.Game.Abilities
 
             CanTargetGround = false;
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
+            //Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.SpiderWeb, Spritesheets.IconSheet, true, Icon.BackgroundType.DebuffBackground);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -89,9 +89,9 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SlowDebuff slowDebuff = new SlowDebuff(SelectedUnit, _slowDuration, _slowMultiplier);
+            //SlowDebuff slowDebuff = new SlowDebuff(SelectedUnit, _slowDuration, _slowMultiplier);
 
-            SelectedUnit.Info.AddBuff(slowDebuff);
+            //SelectedUnit.Info.AddBuff(slowDebuff);
 
             Casted();
             EffectEnded();

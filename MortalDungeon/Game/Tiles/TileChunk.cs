@@ -19,7 +19,7 @@ namespace MortalDungeon.Game.Tiles
         public float LocalRadius = 0; //radius in local coords
 
         public List<BaseTile> Tiles = new List<BaseTile>();
-        public List<Structure> Structures = new List<Structure>();
+        public HashSet<Structure> Structures = new HashSet<Structure>();
         public List<GameObject> GenericObjects = new List<GameObject>();
         public int Width = DefaultChunkWidth;
         public int Height = DefaultChunkHeight;
@@ -42,10 +42,17 @@ namespace MortalDungeon.Game.Tiles
 
         public void ClearChunk() 
         {
-            for(int i = 0; i < Tiles.Count; i++)
+            for (int i = 0; i < Tiles.Count; i++)
             {
                 Tiles[i].CleanUp();
             }
+
+            foreach (var structure in Structures)
+            {
+                structure.CleanUp();
+                TileMapManager.Scene.RemoveStructure(structure);
+            }
+
 
             Tiles.Clear();
             Structures.Clear();
@@ -64,7 +71,6 @@ namespace MortalDungeon.Game.Tiles
         public void Tick() 
         {
             //Tiles.ForEach(tile => tile.Tick());
-            Structures.ForEach(structure => structure.Tick());
         }
 
         public void OnCull()

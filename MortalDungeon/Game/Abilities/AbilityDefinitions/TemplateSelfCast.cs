@@ -24,7 +24,14 @@ namespace MortalDungeon.Game.Abilities
 
             //Name = "Self Cast";
 
-            SetIcon(IconSheetIcons.QuestionMark, Spritesheets.IconSheet);
+            //SetIcon(IconSheetIcons.QuestionMark, Spritesheets.IconSheet);
+
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)IconSheetIcons.QuestionMark },
+                Spritesheet = (int)TextureName.IconSpritesheet
+            });
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)

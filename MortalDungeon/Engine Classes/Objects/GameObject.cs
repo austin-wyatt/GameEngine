@@ -351,9 +351,15 @@ namespace MortalDungeon.Engine_Classes
             Render = render;
         }
 
+        public event GameObjectEventHandler TextureLoad;
         public virtual void SetTextureLoaded(bool textureLoaded)
         {
             TextureLoaded = textureLoaded;
+
+            if (TextureLoaded)
+            {
+                TextureLoad?.Invoke(this);
+            }
         }
 
         private int _animationID = 0;
@@ -478,25 +484,27 @@ namespace MortalDungeon.Engine_Classes
 
         public static void LoadTexture<T>(T obj) where T : GameObject 
         {
-            void loadTex()
-            {
-                Renderer.LoadTextureFromGameObj(obj);
-                Renderer.OnRender -= loadTex;
-            };
+            //void loadTex()
+            //{
+            //    Renderer.LoadTextureFromGameObj(obj);
+            //    Renderer.OnRender -= loadTex;
+            //};
 
-            Renderer.OnRender += loadTex;
+            //Renderer.OnRender += loadTex;
+
+            TextureLoadBatcher.LoadTexture(obj);
         }
 
-        public static void LoadTextures<T>(List<T> obj, bool nearest = true, bool generateMipMaps = true) where T : GameObject
+        public static void LoadTextures<T>(IEnumerable<T> obj, bool nearest = true, bool generateMipMaps = true) where T : GameObject
         {
             void loadTex()
             {
                 lock (obj) 
                 {
-                    obj.ForEach(item =>
+                    foreach(var item in obj)
                     {
                         Renderer.LoadTextureFromGameObj(item, nearest, generateMipMaps);
-                    });
+                    }
 
                     Renderer.OnRender -= loadTex;
                 }

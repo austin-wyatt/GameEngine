@@ -176,11 +176,6 @@ namespace MortalDungeon.Game.UI.Dev
                 Scene.CloseContextMenu();
             });
 
-            list.AddItem("Apply Prefab", (item) =>
-            {
-                CreateUnitPrefabWindow(entity);
-                Scene.CloseContextMenu();
-            });
 
             Scene.OpenContextMenu(menu);
         }
@@ -262,28 +257,6 @@ namespace MortalDungeon.Game.UI.Dev
 
             
             AddUnitsToAddEntityArea(scrollableArea);
-
-            //EntityManager.AddEntity(new Entity(EntityParser.ApplyPrefabToUnit(prefab, Scene)));
-
-            Select prefabSelect = new Select(new UIScale(0.8f, 0.1f), 0.05f);
-
-            foreach (Prefab prefab in EntityParser.Prefabs)
-            {
-                if (prefab.Type != PrefabType.Unit || !prefab.HasProfile)
-                    continue;
-
-                SelectItem item = prefabSelect.AddItem(prefab.Name, () =>
-                {
-                    EntityManager.AddEntity(new Entity(EntityParser.ApplyPrefabToUnit(prefab, Scene)));
-
-                    PopulateEntityList();
-                    Window.RemoveChild(AddEntityWindow);
-                });
-            }
-
-            prefabSelect.SetPositionFromAnchor(scrollableArea.VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
-
-            AddEntityWindow.AddChild(prefabSelect, 100);
 
 
             Window.AddChild(AddEntityWindow, 1000000);
@@ -534,33 +507,6 @@ namespace MortalDungeon.Game.UI.Dev
 
 
             Window.AddChild(EntityAbilitiesWindow, 10000);
-        }
-
-        public void CreateUnitPrefabWindow(Entity entity)
-        {
-            UnitPrefabWindow = UIHelpers.CreateWindow(new UIScale(1f, 1f), "UnitPrefabWindow", Window, Scene, true);
-
-            Select prefabSelect = new Select(new UIScale(0.8f, 0.1f), 0.05f);
-
-            foreach (Prefab prefab in EntityParser.Prefabs)
-            {
-                if (prefab.Type != PrefabType.Unit)
-                    continue;
-
-                SelectItem item = prefabSelect.AddItem($"{prefab.Name}{(prefab.HasProfile ? " *" : "")}", () =>
-                {
-                    EntityParser.ApplyPrefabToUnit(prefab, Scene, entity.Handle);
-                    entity.Handle.UpdateStatusBarInfo();
-
-                    PopulateEntityList();
-                });
-            }
-
-            prefabSelect.SetPositionFromAnchor(UnitPrefabWindow.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
-
-            UnitPrefabWindow.AddChild(prefabSelect, 100);
-
-            Window.AddChild(UnitPrefabWindow, 10000);
         }
     }
 }

@@ -1,6 +1,8 @@
-﻿using MortalDungeon.Engine_Classes;
+﻿using MortalDungeon.Definitions.TileEffects;
+using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -45,14 +47,20 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            SetIcon(Character.A, Spritesheets.CharacterSheet);
+
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.A },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
 
             AbilityClass = AbilityClass.Unknown;
 
             TilePattern = new List<Vector3i> { new Vector3i(0, 0, 0), new Vector3i(-1, 1, 0), new Vector3i(1, 0, -1), new Vector3i(1, -1, 0), new Vector3i(-1, 0, 1) };
         }
 
-        private HashSet<BaseTile> _affectedTilesHashSet = new HashSet<BaseTile>();
+        protected HashSet<BaseTile> _affectedTilesHashSet = new HashSet<BaseTile>();
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
         {
             base.GetValidTileTargets(tileMap);
@@ -78,7 +86,7 @@ namespace MortalDungeon.Game.Abilities
             return validTiles;
         }
 
-        private HashSet<BaseTile> _selectedTiles = new HashSet<BaseTile>();
+        protected HashSet<BaseTile> _selectedTiles = new HashSet<BaseTile>();
         public override void OnSelect(CombatScene scene, TileMap currentMap)
         {
             base.OnSelect(scene, currentMap);
@@ -113,9 +121,9 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        private BaseTile _hoveredTile = null;
-        private HashSet<BaseTile> _hoveredTiles = new HashSet<BaseTile>();
-        private List<BaseTile> _hoveredSelectionTiles = new List<BaseTile>();
+        protected BaseTile _hoveredTile = null;
+        protected HashSet<BaseTile> _hoveredTiles = new HashSet<BaseTile>();
+        protected List<BaseTile> _hoveredSelectionTiles = new List<BaseTile>();
         public override void OnHover(BaseTile tile, TileMap map)
         {
             base.OnHover(tile, map);
@@ -144,9 +152,9 @@ namespace MortalDungeon.Game.Abilities
                 Vector3i newTileCube = tileCubeCoords + cubeCoord;
                 Vector2i offsetCoords = CubeMethods.CubeToOffset(newTileCube);
 
-                BaseTile foundTile = map.GetTile(offsetCoords.X, offsetCoords.Y);
+                BaseTile foundTile = TileMapHelpers.GetTile(new FeaturePoint(offsetCoords.X, offsetCoords.Y));
 
-                if(foundTile != null)
+                if (foundTile != null)
                 {
                     _hoveredTiles.Add(foundTile);
 
@@ -158,7 +166,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        private void ClearHoveredTiles()
+        protected void ClearHoveredTiles()
         {
             _hoveredTiles.Clear();
 
@@ -204,18 +212,18 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            foreach(var tile in _hoveredTiles)
-            {
-                foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(tile))
-                {
-                    //do something
-                }
+            //foreach(var tile in _hoveredTiles)
+            //{
+            //    foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(tile))
+            //    {
+            //        //do something
+            //    }
 
-                TileEffectManager.AddTileEffectToPoint(new TileEffectDefinitions.WeakSpiderWeb(), tile);
-            }
+            //    TileEffectManager.AddTileEffectToPoint(new WeakSpiderWeb(), tile);
+            //}
 
-            Casted();
-            EffectEnded();
+            //Casted();
+            //EffectEnded();
         }
     }
 }

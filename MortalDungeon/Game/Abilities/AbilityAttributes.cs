@@ -16,7 +16,9 @@ namespace MortalDungeon.Game.Abilities
 
         public float PiercingPercent = 0.5f;
 
-        public string GetTooltipStrings(Unit castingUnit) 
+        public AbilityClass AbilityClass = AbilityClass.Unknown;
+
+        public string GetTooltipStrings(Unit sourceUnit) 
         {
             string returnString = "";
 
@@ -39,6 +41,30 @@ namespace MortalDungeon.Game.Abilities
             }
 
             return returnString;
+        }
+
+        public void ApplyDamageBonuses(Unit sourceUnit)
+        {
+            if(sourceUnit != null)
+            {
+                float genDamageAdd = sourceUnit.Info.BuffManager.GetValue(BuffEffect.GeneralDamageAdditive);
+                float genDamageMult = sourceUnit.Info.BuffManager.GetValue(BuffEffect.GeneralDamageMultiplier);
+
+                List<(DamageType type, float damage)> damageBonuses = new List<(DamageType,float)> ();
+
+                foreach (var kvp in Damage)
+                {
+                    sourceUnit.Info.BuffManager.GetDamageBonuses(kvp.Key, out float add, out float mult);
+
+                    float damage = (kvp.Value + add + genDamageAdd) * mult * genDamageMult;
+                    damageBonuses.Add((kvp.Key, damage));
+                }
+
+                foreach(var bonus in damageBonuses)
+                {
+                    Damage[bonus.type] = bonus.damage;
+                }
+            }
         }
     }
 }

@@ -23,7 +23,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public bool MaintainBaseAreaRelativePosition = false;
 
         public ScrollableArea(Vector3 position, UIScale visibleAreaSize, Vector3 baseAreaPosition, UIScale baseAreaSize, 
-            float scrollbarWidth = 0.1f, bool enableScrollbar = true, bool setScrollable = true) 
+            float scrollbarWidth = 0.1f, bool enableScrollbar = true, bool setScrollable = true, bool scaleAspectRatio = true) 
         {
             Size = visibleAreaSize;
             Position = position;
@@ -31,7 +31,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Anchor = UIAnchorPosition.Center;
             EnableScrollbar = enableScrollbar;
 
-            
+            _scaleAspectRatio = scaleAspectRatio;
+
 
             _baseAreaSize = baseAreaSize;
 
@@ -41,7 +42,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             if(!_showScrollbar)
                 _baseAreaSize.Y += 0.00001f;
 
-            VisibleArea = new UIBlock(Position, Size, default, 71, true);
+            VisibleArea = new UIBlock(Position, Size, default, 71, _scaleAspectRatio);
             VisibleArea.Name = "VisibleArea";
 
             VisibleArea.SetColor(new Vector4(0, 1, 0, 0));
@@ -57,7 +58,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 };
             }
 
-            UIBlock scrollableArea = new UIBlock(default, baseAreaSize, default, 71, true);
+            UIBlock scrollableArea = new UIBlock(default, baseAreaSize, default, 71, _scaleAspectRatio);
             scrollableArea.MultiTextureData.MixTexture = false;
             scrollableArea._baseObject.OutlineParameters.SetAllInline(0);
             scrollableArea.Name = "ScrollableAreaMainComp";
@@ -331,6 +332,30 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public override void OnResize() 
         {
             SetVisibleAreaSize(Size);
+        }
+
+        public void FitToChildren()
+        {
+            float newY = 0;
+            foreach(var child in BaseComponent.Children)
+            {
+                float childYPos = child.GetDimensions().Y + child.GAP(UIAnchorPosition.TopLeft).Y;
+
+                if (childYPos > BaseComponent.GAP(UIAnchorPosition.BottomLeft).Y)
+                {
+                    float y = BaseComponent.GAP(UIAnchorPosition.TopLeft).Y + childYPos;
+
+                    if(y > newY)
+                    {
+                        newY = y;
+                    }
+                }
+            }
+
+            if(newY != 0)
+            {
+                SetBaseAreaSize(new UIScale(_baseAreaSize.X, newY / WindowConstants.ScreenUnits.Y));
+            }
         }
 
         public override void OnFocus()

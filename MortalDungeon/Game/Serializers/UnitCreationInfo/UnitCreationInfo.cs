@@ -24,9 +24,6 @@ namespace MortalDungeon.Game.Serializers
         public int Id; //this will seed the file names
 
 
-        [XmlElement("Ual")]
-        public int AbilityLoadoutId;
-
         [XmlElement("Uans")]
         public int AnimationSetId;
 
@@ -76,6 +73,8 @@ namespace MortalDungeon.Game.Serializers
 
         [XmlElement("Ucs")]
         public int CurrentShields = 0;
+
+        public float Speed = 10;
 
         [XmlElement("Usp")]
         public Species Species;
@@ -153,6 +152,7 @@ namespace MortalDungeon.Game.Serializers
             unit.Info.MaxFocus = MaxFocus;
             unit.Info.Focus = MaxFocus;
             unit.Info.CurrentShields = CurrentShields;
+            unit.Info.Speed = Speed;
 
             unit.Info.MaxHealth = MaxHealth;
             unit.Info.Health = MaxHealth;
@@ -162,8 +162,6 @@ namespace MortalDungeon.Game.Serializers
             unit.Info.NonCombatant = NonCombatant > 0;
             unit.Info.BlocksSpace = BlocksSpace > 0;
             unit.Info.PhasedMovement = PhasedMovement > 0;
-
-            unit.Info.Status = Status;
 
             Color = Color.Replace(" ", "").Replace("f", "");
             string[] colorVals = Color.Split(",");
@@ -227,6 +225,11 @@ namespace MortalDungeon.Game.Serializers
             //{
             //    item.CompleteDeserialization();
             //}
+
+            foreach(var item in EventActionBuilders)
+            {
+                item.CompleteDeserialization();
+            }
         }
 
         public void PrepareForSerialization()
@@ -235,6 +238,11 @@ namespace MortalDungeon.Game.Serializers
             //{
             //    item.PrepareForSerialization();
             //}
+
+            foreach (var item in EventActionBuilders)
+            {
+                item.PrepareForSerialization();
+            }
         }
     }
 }

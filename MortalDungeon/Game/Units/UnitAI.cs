@@ -38,7 +38,7 @@ namespace MortalDungeon.Game.Units
     [Serializable]
     public class UnitAI : ISerializable
     {
-        public UnitTeam Team = UnitTeam.Skeletons;
+        public UnitTeam Team = UnitTeam.Unknown;
         public ControlType ControlType = ControlType.Controlled;
 
         //public Dispositions Dispositions;

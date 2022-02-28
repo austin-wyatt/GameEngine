@@ -10,6 +10,7 @@ using MortalDungeon.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
@@ -40,9 +41,11 @@ namespace MortalDungeon.Game.Map
 
         public List<BoundingPoints> BoundingPoints = new List<BoundingPoints>();
 
+        public Dictionary<TileMapPoint, MapBrush> MapBrushes = new Dictionary<TileMapPoint, MapBrush>();
+
         public Dictionary<FeaturePoint, Dictionary<string, string>> Parameters = new Dictionary<FeaturePoint, Dictionary<string, string>>();
 
-        public List<BuildingSkeleton> BuildingSkeletons = new List<BuildingSkeleton>();
+        public List<SerializableBuildingSkeleton> BuildingSkeletons = new List<SerializableBuildingSkeleton>();
 
         public List<ClearParamaters> ClearParamaters = new List<ClearParamaters>();
 
@@ -57,6 +60,8 @@ namespace MortalDungeon.Game.Map
         /// </summary>
         public List<Instructions> Instructions = new List<Instructions>();
 
+
+        public HashSet<Entity> FeatureEntities = new HashSet<Entity>();
 
 
         /// <summary>
@@ -87,127 +92,13 @@ namespace MortalDungeon.Game.Map
         /// The main use for this is resolving features that span multiple tilemaps and must seem contiguous (such as buildings)</param>
         public virtual void ApplyToTile(BaseTile tile, bool freshGeneration = true)
         {
+            ApplyToAffectedPoint(tile, freshGeneration);
+            ApplyBoundingPoints(tile, freshGeneration);
+        }
+
+        public void ApplyBoundingPoints(BaseTile tile, bool freshGeneration = true)
+        {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
-
-            if(Parameters.TryGetValue(affectedPoint, out var param))
-            {
-                if(param.TryGetValue("GEN_SCRIPT", out var script))
-                {
-                    LuaManager.ApplyScript(script);
-                }
-            }
-
-            if(AffectedPoints.TryGetValue(affectedPoint, out int value))
-            {
-                long pointHash = affectedPoint.GetUniqueHash();
-
-                var unitAlive = FeatureLedger.GetHashBoolean(FeatureID, pointHash, "alive");
-
-
-
-                //if(value == 50000)
-                //{
-                //    tile.Properties.Type = new Random().NextDouble() > 0.3 ? TileType.Water : TileType.AltWater;
-                //    tile.Properties.Classification = TileClassification.Water;
-                //    tile.Outline = false;
-                //    tile.NeverOutline = true;
-
-                //    tile.Update();
-
-                //    return;
-                //}
-
-                if (value >= (int)FeatureEquationPointValues.UnitStart && value <= (int)FeatureEquationPointValues.UnitEnd && freshGeneration &&
-                    unitAlive != HashBoolean.False &&
-                    !tile.GetScene()._units.Exists(u => u.FeatureID == FeatureID && u.ObjectHash == pointHash))
-                {
-                    var unitInfo = UnitInfoBlockManager.GetUnit(value - (int)FeatureEquationPointValues.UnitStart);
-
-                    if(unitInfo != null)
-                    {
-                        Unit unit = unitInfo.CreateUnit(tile.GetScene());
-
-                        if(Parameters.TryGetValue(affectedPoint, out var parameters))
-                        {
-                            unit.ApplyUnitParameters(parameters);
-                        }
-                        
-
-                        Entity unitEntity = new Entity(unit);
-                        EntityManager.AddEntity(unitEntity);
-
-                        unitEntity.Handle.FeatureID = FeatureID;
-                        unitEntity.Handle.ObjectHash = pointHash;
-
-                        unitEntity.DestroyOnUnload = true;
-
-                        EntityManager.LoadEntity(unitEntity, affectedPoint);
-
-                        FeatureLedger.SetHashBoolean(FeatureID, pointHash, "alive", true);
-                    }
-                }
-
-                if(value >= (int)FeatureEquationPointValues.BuildingStart && value <= (int)FeatureEquationPointValues.BuildingEnd)
-                {
-                    BuildingSkeleton skeleton = BuildingSkeletons[value - (int)FeatureEquationPointValues.BuildingStart];
-
-                    if (skeleton != null && skeleton.Loaded == false)
-                    {
-                        skeleton.Loaded = true;
-                        skeleton._skeletonTouchedThisCycle = true;
-
-                        var building = skeleton.Handle;
-                        building.Scene = tile.GetScene();
-                        building.InitializeUnitInfo();
-
-                        building.FeatureOrigin = Origin;
-
-                        building.SkeletonReference = skeleton;
-
-                        //building.InitializeVisualComponent();
-
-                        Vector3 tileSize = tile.GetDimensions();
-                        Vector3 posDiff = new Vector3();
-
-                        if (affectedPoint != skeleton.IdealCenter)
-                        {
-                            posDiff.X = tileSize.X * (skeleton.IdealCenter.X + Origin.X - affectedPoint.X);
-                            posDiff.Y = tileSize.Y * (skeleton.IdealCenter.Y + Origin.Y - affectedPoint.Y);
-
-
-
-                            if (Math.Abs((skeleton.IdealCenter.X + Origin.X)) % 2 == 0)
-                            {
-                                posDiff.Y += tileSize.Y / 2;
-                            }
-
-                            if (Math.Abs((skeleton.IdealCenter.X + Origin.X)) % 2 == 1)
-                            {
-                                posDiff.Y -= tileSize.Y / 2;
-                            }
-
-                            if (affectedPoint.X < skeleton.IdealCenter.X)
-                            {
-                                posDiff.X -= tileSize.X / 4;
-                            }
-                            else
-                            {
-                                posDiff.X += tileSize.X / 4;
-                            }
-                        }
-
-                        building.SetPosition(tile.Position + posDiff + new Vector3(0, 0, 0.2f));
-
-                        building.SetTileMapPosition(tile);
-                    }
-                    else if (skeleton != null && skeleton.Handle != null && skeleton.Loaded && !skeleton._skeletonTouchedThisCycle)
-                    {
-                        skeleton._skeletonTouchedThisCycle = true;
-
-                        skeleton.Handle.TileAction();
-                    }
-                }
-            }
 
             foreach (var bound in BoundingPoints)
             {
@@ -225,9 +116,9 @@ namespace MortalDungeon.Game.Map
                     {
                         case 1:
                             density = 0.9;
-                            if(bound.Parameters.TryGetValue("density", out var val))
+                            if (bound.Parameters.TryGetValue("density", out var val))
                             {
-                                if(double.TryParse(val, out var d))
+                                if (double.TryParse(val, out var d))
                                 {
                                     density = d;
                                 }
@@ -236,8 +127,6 @@ namespace MortalDungeon.Game.Map
                             if (NumberGen.NextDouble() > density)
                             {
                                 var tree = new Tree(tile.TileMap, tile, NumberGen.Next() % 2);
-
-                                tile.GetScene().Tick -= tree.Tick;
                             }
                             break;
                         case 2:
@@ -284,8 +173,8 @@ namespace MortalDungeon.Game.Map
 
                                 tile.PropertyAnimations.Add(tileAnimation);
 
-                                tile.GetScene().Tick -= tile.Tick;
-                                tile.GetScene().Tick += tile.Tick;
+                                TileMapManager.Scene.Tick -= tile.Tick;
+                                TileMapManager.Scene.Tick += tile.Tick;
 
                                 tile.Update();
                             }
@@ -311,7 +200,7 @@ namespace MortalDungeon.Game.Map
                             }
                             break;
                         case 6:
-                            if(NumberGen.NextDouble() > 0.5)
+                            if (NumberGen.NextDouble() > 0.5)
                             {
                                 tile.Properties.Type = TileType.Stone_1;
                             }
@@ -321,32 +210,183 @@ namespace MortalDungeon.Game.Map
                             }
                             tile.Update();
                             break;
+                        case 7:
+                            tile.Properties.Type = TileType.Fill;
+                            double rng = NumberGen.NextDouble();
+
+                            if (rng > 0.5)
+                            {
+                                tile.SetColor(_Colors.LightBlue);
+                            }
+                            else if (rng > 0.25)
+                            {
+                                tile.SetColor(_Colors.LightBlue + new Vector4(0, -0.05f, 0, 0));
+                            }
+                            else
+                            {
+                                tile.SetColor(_Colors.LightBlue + new Vector4(0, -0.1f, 0, 0));
+                            }
+
+                            tile.Update();
+                            break;
                     }
 
                 }
             }
         }
 
-        public virtual bool AffectsMap(TileMap map)
+        public void ApplyToAffectedPoint(BaseTile tile, bool freshGeneration = true)
         {
-            return AffectedMaps.TryGetValue(map.TileMapCoords, out var _);
+            FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
+
+            if (Parameters.TryGetValue(affectedPoint, out var param))
+            {
+                if (param.TryGetValue("GEN_SCRIPT", out var script))
+                {
+                    LuaManager.ApplyScript(script);
+                }
+            }
+
+            if (AffectedPoints.TryGetValue(affectedPoint, out int value))
+            {
+                long pointHash = affectedPoint.GetUniqueHash();
+
+                var unitAlive = FeatureLedger.GetHashBoolean(FeatureID, pointHash, "alive");
+
+
+                #region Units
+                if (value >= (int)FeatureEquationPointValues.UnitStart && value <= (int)FeatureEquationPointValues.UnitEnd && freshGeneration &&
+                    unitAlive != HashBoolean.False)
+                {
+                    var unitInfo = UnitInfoBlockManager.GetUnit(value - (int)FeatureEquationPointValues.UnitStart);
+
+                    if (unitInfo != null)
+                    {
+                        FeatureEntityEntry entityEntry = new FeatureEntityEntry(pointHash, FeatureID);
+
+                        if (EntityManager.FeatureEntityExists(new FeatureEntityEntry(pointHash, FeatureID)))
+                        {
+                            FeatureEntities.Add(EntityManager.GetFeatureEntity(entityEntry));
+                            return;
+                        }
+
+
+                        Unit unit = unitInfo.CreateUnit(TileMapManager.Scene);
+
+                        if (Parameters.TryGetValue(affectedPoint, out var parameters))
+                        {
+                            unit.ApplyUnitParameters(parameters);
+                        }
+
+                        unit.FeatureID = FeatureID;
+                        unit.ObjectHash = pointHash;
+
+                        Entity unitEntity = new Entity(unit);
+                        EntityManager.AddEntity(unitEntity);
+
+                        FeatureEntities.Add(unitEntity);
+
+                        unitEntity.DestroyOnUnload = false;
+
+                        EntityManager.LoadEntity(unitEntity, affectedPoint);
+
+                        FeatureLedger.SetHashBoolean(FeatureID, pointHash, "alive", true);
+                    }
+                }
+                #endregion
+
+                #region Buildings
+                if (value >= (int)FeatureEquationPointValues.BuildingStart && value <= (int)FeatureEquationPointValues.BuildingEnd)
+                {
+                    SerializableBuildingSkeleton skeleton = BuildingSkeletons[value - (int)FeatureEquationPointValues.BuildingStart];
+
+                    if (skeleton != null && skeleton.Loaded == false)
+                    {
+                        skeleton.Loaded = true;
+                        skeleton._skeletonTouchedThisCycle = true;
+
+                        var building = skeleton.Handle;
+                        building.Scene = TileMapManager.Scene;
+                        //building.InitializeUnitInfo();
+                        //building.InitializeVisualComponent();
+
+                        void cleanUp(GameObject obj)
+                        {
+                            skeleton.Handle.OnCleanUp -= cleanUp;
+                            skeleton.Loaded = false;
+                        }
+
+                        skeleton.Handle.OnCleanUp += cleanUp;
+
+                        //skeleton.Handle.TextureLoad += onTextureLoad;
+
+                        //void onTextureLoad(GameObject obj)
+                        //{
+                            //skeleton.Handle.TextureLoad -= onTextureLoad;
+
+                        Vector3 tileSize = tile.GetDimensions();
+                        Vector3 posDiff = new Vector3();
+
+                        Vector3i idealCenterCube = skeleton.IdealCenter + CubeMethods.OffsetToCube(Origin);
+                        FeaturePoint skeleIdealCenter = new FeaturePoint(CubeMethods.CubeToOffset(idealCenterCube));
+
+                        building.IdealCenter = skeleIdealCenter;
+                        building.ActualCenter = idealCenterCube - CubeMethods.OffsetToCube(affectedPoint);
+
+                        if (affectedPoint != skeleIdealCenter)
+                        {
+                            posDiff.X = tileSize.X * (skeleIdealCenter.X - affectedPoint.X);
+                            posDiff.Y = tileSize.Y * (skeleIdealCenter.Y - affectedPoint.Y);
+
+                            //if (Math.Abs(skeleIdealCenter.X) % 2 == 0)
+                            //{
+                            //    posDiff.Y -= tileSize.Y / 2;
+                            //}
+
+                            posDiff.Y -= tileSize.Y / 2;
+
+                            //if (Math.Abs(skeleIdealCenter.X) % 2 == 1)
+                            //{
+                            //    posDiff.Y += tileSize.Y / 2;
+                            //}
+
+                            if (affectedPoint.X < skeleIdealCenter.X)
+                            {
+                                posDiff.X -= tileSize.X / 4;
+                            }
+                            else
+                            {
+                                posDiff.X += tileSize.X / 4;
+                            }
+                        }
+
+                        building.SetPositionOffset(tile.Position + posDiff);
+
+                        building.SetTileMapPosition(tile);
+                        //}
+                    }
+                    else if (skeleton != null && skeleton.Handle != null && skeleton.Loaded && !skeleton._skeletonTouchedThisCycle)
+                    {
+                        //skeleton._skeletonTouchedThisCycle = true;
+
+                        //skeleton.Handle.TileAction();
+                    }
+                }
+                #endregion
+            }
         }
 
-        public virtual bool AffectsPoint(TilePoint point)
+        public virtual bool AffectsMap(TileMap map)
         {
-            return AffectedPoints.TryGetValue(new FeaturePoint(PointToMapCoords(point)), out int feature);
-        }
-        public virtual bool AffectsPoint(FeaturePoint point)
-        {
-            return AffectedPoints.TryGetValue(point, out int feature);
+            return AffectedMaps.Contains(map.TileMapCoords);
         }
 
         public virtual void ApplyToMap(TileMap map, bool freshGeneration = true)
         {
-            map.Tiles.ForEach(t =>
-            {
-                ApplyToTile(t, freshGeneration);
-            });
+            //map.Tiles.ForEach(t =>
+            //{
+            //    ApplyToTile(t, freshGeneration);
+            //});
         }
 
         public virtual void OnAppliedToMaps() 
@@ -371,6 +411,16 @@ namespace MortalDungeon.Game.Map
             }
 
             return true;
+        }
+
+        public void UnloadFeature()
+        {
+            foreach(var entity in FeatureEntities)
+            {
+                EntityManager.RemoveEntity(entity);
+            }
+
+            FeatureEntities.Clear();
         }
 
         /// <summary>

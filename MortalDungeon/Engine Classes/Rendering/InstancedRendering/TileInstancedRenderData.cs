@@ -159,9 +159,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _instancedRenderArray[currIndex++] = obj.EnableLighting ? 1 : 0;
             //_instancedRenderArray[currIndex++] = tile.Outline ? 0 : -1;
             _instancedRenderArray[currIndex++] = -1;
-            _instancedRenderArray[currIndex++] = 0;
-
             _instancedRenderArray[currIndex++] = -1;
+
+            _instancedRenderArray[currIndex++] = textureTarget;
             _instancedRenderArray[currIndex++] = -1;
             _instancedRenderArray[currIndex++] = -1;
             _instancedRenderArray[currIndex++] = -1;

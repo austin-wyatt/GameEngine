@@ -41,24 +41,20 @@ namespace MortalDungeon.Game.Tiles.TileMaps
 
                     Tiles.Add(baseTile);
 
-                    if (_randomNumberGen.NextDouble() > 0.9) 
-                    {
-                        baseTile.Properties.Type = TileType.Grass_2;
-                    }
-
-                    baseTile.Properties.Type = (TileType)_grassTiles.GetRandom();
-
-                    //baseTile.SetColor(new Vector4((float)_randomNumberGen.NextDouble(), (float)_randomNumberGen.NextDouble(), (float)_randomNumberGen.NextDouble(), 1));
-
-                    //if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0) //add a bit of randomness to tile gen
+                    //if (_randomNumberGen.NextDouble() > 0.9)
                     //{
-                    //    //baseTile.Properties.Classification = TileClassification.Terrain;
-                    //    //baseTile.DefaultAnimation = BaseTileAnimationType.SolidWhite;
-                    //    //baseTile.DefaultColor = new Vector4(0.25f, 0.25f, 0.25f, 1);
-
-                    //    //baseTile.Properties.Type = TileType.Default;
-                    //    CreateTree(baseTile);
+                    //    baseTile.Properties.Type = TileType.Grass_2;
                     //}
+
+                    //baseTile.Properties.Type = (TileType)_grassTiles.GetRandom();
+
+                    //baseTile.BaseObject.BaseFrame.SpritesheetPosition = (int)TileType.Fill;
+                    //float val = GlobalRandom.NextFloat() / 30f;
+                    //baseTile.SetColor(_Colors.GrassGreen - new Vector4(val, val, 0, 0));
+
+                    baseTile.BaseObject.BaseFrame.SpritesheetPosition = 5;
+                    float val = GlobalRandom.NextFloat() / 15f;
+                    baseTile.SetColor(_Colors.White - new Vector4(val, val, val, 0));
 
                     tilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y * 1f;
                 }

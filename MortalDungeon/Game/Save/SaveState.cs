@@ -16,6 +16,7 @@ using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Player;
 using System.Linq;
 using MortalDungeon.Game.Items;
+using MortalDungeon.Game.Abilities.TileEffects;
 
 namespace MortalDungeon.Game.Save
 {
@@ -50,6 +51,8 @@ namespace MortalDungeon.Game.Save
         public List<UnitSaveInfo> PlayerPartySaveInfo = new List<UnitSaveInfo>();
         public bool PartyGrouped = false;
         public Inventory PartyInventory;
+
+        public TileEffectsSaveInfo TileEffectsSaveInfo;
 
         public static SaveState CreateSaveState(CombatScene scene) 
         {
@@ -151,6 +154,9 @@ namespace MortalDungeon.Game.Save
 
             returnState.StateSubscribers = Ledgers.StateSubscribers;
 
+            returnState.TileEffectsSaveInfo = new TileEffectsSaveInfo();
+            returnState.TileEffectsSaveInfo.PrepareForSerialization();
+
             return returnState;
         }
 
@@ -171,7 +177,7 @@ namespace MortalDungeon.Game.Save
 
             for (int i = EntityManager.Entities.Count - 1; i >= 0; i--)
             {
-                EntityManager.RemoveEntity(EntityManager.Entities[i]);
+                EntityManager.RemoveEntity(EntityManager.Entities.First());
             }
             #region Feature ledger
             FeatureLedger.LedgeredFeatures.Clear();
@@ -347,13 +353,14 @@ namespace MortalDungeon.Game.Save
 
             void finishLoad(SceneEventArgs _)
             {
+                scene.RenderEnd -= finishLoad;
+
                 scene.ContextManager.SetFlag(GeneralContextFlags.SaveStateLoadInProgress, false);
                 scene.ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, false);
 
                 TileMapManager.ApplyLoadedFeaturesToMaps(TileMapManager.ActiveMaps);
 
                 scene.QueueLightObstructionUpdate();
-                scene.UnitVisionGenerators.ManuallyIncrementChangeToken(); //causes a recalculation of vision
 
                 scene.SetTime(state.Time);
 
@@ -370,11 +377,10 @@ namespace MortalDungeon.Game.Save
 
                 scene.EndCombat();
 
-
-                scene.RenderEvent -= finishLoad;
+                state.TileEffectsSaveInfo.CompleteDeserialization();
             }
 
-            scene.RenderEvent += finishLoad;
+            scene.RenderEnd += finishLoad;
         }
 
         public static SaveState LoadSaveStateFromFile(string path) 

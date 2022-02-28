@@ -1,163 +1,284 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Save;
+using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public enum BuffType 
+    public enum BuffEffect
     {
-        Neutral,
-        Debuff,
-        Buff
+        #region Additive effects
+        ADDITIVE_START = 0,
+        //--------------------
+        //Additive effects go here
+
+        SpeedAdditive,
+        ShieldBlockAdditive,
+        PhysicalDamageAdditive,
+        EnergyAdditive,
+        ActionEnergyAdditive,
+        EnergyCostAdditive,
+        ActionEnergyCostAdditive,
+        GeneralDamageAdditive,
+        MovementEnergyAdditive,
+
+        #region damage types additive
+        DAMAGE_TYPE_ADDITIVE = 4500,
+        //[4501-4749] reserved for damage type additive values
+        #endregion
+
+        #region damage resistance additive
+        DAMAGE_RESISTANCE_ADDITIVE = 4750,
+        //[4751-4999] reserved for damage type multipliers
+        #endregion
+
+        //End additive effects
+        //--------------------
+        ADDITIVE_END = 5000,
+        #endregion
+        #region Multiplier effects
+        MULTIPLIER_START = 5000,
+        //--------------------
+        //Multipler effects go here
+
+        SpeedMultiplier,
+        ShieldBlockMultiplier,
+        PhysicalDamageMultiplier,
+        EnergyMultiplier,
+        ActionEnergyMultiplier,
+        EnergyCostMultiplier,
+        ActionEnergyCostMultiplier,
+        GeneralDamageMultiplier,
+        MovementEnergyMultiplier,
+
+        #region damage types multiplicative
+        DAMAGE_TYPE_MULTIPLIER = 9500,
+        //[9501-9749] reserved for damage type multipliers
+        #endregion
+
+        #region damage resistance multiplicative
+        DAMAGE_RESISTANCE_MULTIPLIER = 9750,
+        //[9751-9999] reserved for damage type multipliers
+        #endregion
+
+        //End Multiplier effects
+        //--------------------
+        MULTIPLIER_END = 10000,
+        #endregion
     }
-    public class Buff
+
+    [Serializable]
+    public class Buff : ISerializable
     {
-        public Unit AffectedUnit;
+        [XmlIgnore]
+        public Unit Unit;
 
-        public BuffModifier OutgoingDamage = new BuffModifier();
+        [XmlIgnore]
+        public AnimationSet AnimationSet = null;
 
-        public BuffModifier ShieldBlock = new BuffModifier();
+        [XmlIgnore]
+        public Dictionary<int, float> BuffEffects = new Dictionary<int, float>();
 
-        public BuffModifier EnergyCost = new BuffModifier();
+        public DeserializableDictionary<int, float> _buffEffects = new DeserializableDictionary<int, float>();
 
-        public BuffModifier ActionEnergyCost = new BuffModifier();
+        public string _typeName = "";
 
-        public BuffModifier SpeedModifier = new BuffModifier();
+        public TextInfo Name = new TextInfo();
+        public TextInfo Description = new TextInfo();
 
-        public BuffModifier DamageReduction = new BuffModifier();
-
-        public BuffModifier EnergyBoost = new BuffModifier();
-
-        public BuffModifier ActionEnergyBoost = new BuffModifier();
-
-        public BuffModifier SoundModifier = new BuffModifier();
-
-        public Dictionary<DamageType, float> DamageResistances = new Dictionary<DamageType, float>();
-
-        public int MaxDuration = 0;
-        public int Duration = 0;
-        public bool IndefiniteDuration = false;
-        public bool Hidden = false;
-
-        public bool Dispellable = false;
-        public bool DispellableStrong = false;
-
-        public string Name = "";
-        public BuffType BuffType = BuffType.Neutral;
 
         /// <summary>
-        /// The status condition that having this buff/debuff provides
+        /// An arbitrary string that can be set by the source of the buff. <para />
+        /// With this a buff can be be made unique across multiple instances of a source
+        /// by first checking that the identifier is not already present on a unit.
         /// </summary>
-        public StatusCondition StatusCondition;
+        public string Identifier = "";
 
-        public int Grade = 1;
+        /// <summary>
+        /// The remaining duration of the buff. -1 indicates the duration is indefinite.
+        /// </summary>
+        public int Duration = -1;
+        /// <summary>
+        /// The amount of stacks on the buff. -1 indicates that the buff does not support stacks
+        /// </summary>
+        public int Stacks = -1;
+        /// <summary>
+        /// Determines whether the buff should be displayed in the UI.
+        /// </summary>
+        public bool Invisible = true;
 
-        public int BuffID => _buffID;
-        protected int _buffID = _currentBuffID++;
-        protected static int _currentBuffID = 0;
-
-        public Icon Icon = new Icon(Icon.DefaultIconSize, Icon.DefaultIcon, Spritesheets.IconSheet);
-
-        public Buff(int duration = -1)
+        public Buff() 
         {
-            MaxDuration = duration;
-            Duration = duration;
+            AssignAnimationSet();
         }
-        public Buff(Unit unit, int duration = -1) 
+
+        public Buff(Buff buff)
         {
-            MaxDuration = duration;
-            Duration = duration;
+            BuffEffects = buff.BuffEffects;
+            _buffEffects = buff._buffEffects;
+
+            Invisible = buff.Invisible;
+            Duration = buff.Duration;
+            Stacks = buff.Stacks;
+            _typeName = buff._typeName;
+
+            Identifier = buff.Identifier;
+
+            AssignAnimationSet();
         }
 
-        public virtual void AddBuffToUnit(Unit unit) 
+        #region Buff effects
+        public void SetBuffEffect(BuffEffect effect, float value)
         {
-            if (AffectedUnit != null)
+            if (effect < BuffEffect.ADDITIVE_END && effect > BuffEffect.ADDITIVE_START)
             {
-                RemoveBuffFromUnit();
+                if(value == BuffManager.ADDITIVE_BASE_VALUE)
+                {
+                    BuffEffects.Remove((int)effect);
+                }
+                else
+                {
+                    BuffEffects.AddOrSet((int)effect, value);
+                }
+            }
+            else if(effect < BuffEffect.MULTIPLIER_END && effect > BuffEffect.MULTIPLIER_START)
+            {
+                if (value == BuffManager.MULTIPLIER_BASE_VALUE)
+                {
+                    BuffEffects.Remove((int)effect);
+                }
+                else
+                {
+                    BuffEffects.AddOrSet((int)effect, value);
+                }
+            }
+            else
+            {
+                BuffEffects.AddOrSet((int)effect, value);
             }
 
-            unit.Info.AddBuff(this);
+            Unit?.Info.BuffManager.CollateBuffValues();
         }
 
-        public virtual void RemoveBuffFromUnit() 
+        public void RemoveBuffEffect(BuffEffect effect)
         {
-            if (AffectedUnit != null) 
+            BuffEffects.Remove((int)effect);
+
+            Unit?.Info.BuffManager.CollateBuffValues();
+        }
+
+        public void SetDamageAdditive(DamageType type, float value)
+        {
+            SetBuffEffect((BuffEffect)((int)type + (int)BuffEffect.DAMAGE_TYPE_ADDITIVE), value);
+        }
+        public void SetDamageMultiplier(DamageType type, float value)
+        {
+            SetBuffEffect((BuffEffect)((int)type + (int)BuffEffect.DAMAGE_TYPE_MULTIPLIER), value);
+        }
+
+        public void SetDamageResistanceAdditive(DamageType type, float value)
+        {
+            SetBuffEffect((BuffEffect)((int)type + (int)BuffEffect.DAMAGE_RESISTANCE_ADDITIVE), value);
+        }
+
+        public void SetDamageResistanceMultiplier(DamageType type, float value)
+        {
+            SetBuffEffect((BuffEffect)((int)type + (int)BuffEffect.DAMAGE_RESISTANCE_MULTIPLIER), value);
+        }
+
+        #endregion
+
+        public virtual void OnAddedToUnit(Unit unit) 
+        {
+            Unit = unit;
+
+            AddEventListeners();
+        }
+        public virtual void OnRemovedFromUnit(Unit unit) 
+        {
+            RemoveEventListeners();
+        }
+
+        protected virtual void AssignAnimationSet() { }
+
+        public Icon GetIcon()
+        {
+            if(AnimationSet != null)
             {
-                AffectedUnit.Info.RemoveBuff(this); 
+                return new Icon(Icon.DefaultIconSize, AnimationSet.BuildAnimationsFromSet());
+            }
+
+            return null;
+        }
+
+        public virtual void OnRecreated(Unit unit)
+        {
+            Unit = unit;
+
+            AddEventListeners();
+        }
+
+        public virtual void AddEventListeners() 
+        {
+            Unit.TurnStart += CheckDuration;
+        }
+        public virtual void RemoveEventListeners() 
+        {
+            Unit.TurnStart -= CheckDuration;
+        }
+
+        public virtual void AddStack()
+        {
+            Stacks++;
+
+            if (!Invisible && Unit?.Scene.Footer.CurrentUnit == Unit && Unit != null)
+            {
+                Unit.Scene.Footer.RefreshFooterInfo();
             }
         }
 
-        public virtual Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground)
+        public virtual void RemoveStack()
         {
-            Icon icon = new Icon(Icon, scale, withBackground, backgroundType);
-           
-            return icon;
+            Stacks--;
+
+            if(!Invisible && Unit?.Scene.Footer.CurrentUnit == Unit)
+            {
+                Unit.Scene.Footer.RefreshFooterInfo();
+            }
         }
 
-        public virtual Icon GenerateIcon(UIScale scale)
+        protected virtual void CheckDuration(Unit unit)
         {
-            return GenerateIcon(scale, false);
-        }
-
-        public virtual Tooltip GenerateTooltip() 
-        {
-            Tooltip tooltip = new Tooltip();
-
-            return tooltip;
-        }
-
-        public virtual void OnTurnStart()
-        {
-            if (!IndefiniteDuration)
+            if (Duration > -1)
             {
                 Duration--;
 
-                if (Duration <= 0)
+                if (Duration < 0)
                 {
-                    AffectedUnit.Info.RemoveBuff(this);
+                    Unit.Info.BuffManager.RemoveBuff(this);
                 }
             }
         }
 
-        public virtual void OnRoundStart()
-        {
 
+        public void PrepareForSerialization()
+        {
+            _buffEffects = new DeserializableDictionary<int, float>(BuffEffects);
+
+            _typeName = GetType().Name;
         }
 
-        public virtual void OnTurnEnd()
+        public void CompleteDeserialization()
         {
-            
-        }
-
-        public virtual void OnRoundEnd()
-        {
-
-        }
-
-        public virtual DamageInstance GetDamageInstance()
-        {
-            return new DamageInstance();
-        }
-
-        public virtual void ModifyDamageInstance(DamageInstance instance, Ability ability) 
-        {
-
-        }
-
-        public virtual float ModifyShieldBlockAdditive(Unit unit)
-        {
-            return 0;
-        }
-
-        public class BuffModifier
-        {
-            public float Additive = 0;
-            public float Multiplier = 1;
+            BuffEffects.Clear();
+            _buffEffects.FillDictionary(BuffEffects);
         }
     }
 }

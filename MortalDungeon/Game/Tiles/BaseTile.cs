@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using MortalDungeon.Engine_Classes;
@@ -23,7 +24,7 @@ namespace MortalDungeon.Game.Tiles
     public enum TileClassification //ground, terrain, etc 
     {
         Ground, //doesn't inhibit movement in any way
-        Terrain, //inhibits movement, cannot be attacked
+        ImpassableGround, //inhibits movement, cannot be attacked
         AttackableTerrain, //inhibits movement, can be attacked
         Water //inhibits movement, cannot be attacked
     }
@@ -31,10 +32,11 @@ namespace MortalDungeon.Game.Tiles
     public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
         Selection = 2,
+        Fill = 3,
 
-        Stone_1 = 20,
-        Stone_2 = 21,
-        Stone_3 = 22,
+        Stone_1 = 6,
+        Stone_2 = 7,
+        Stone_3 = 12,
         Gravel = 23,
         WoodPlank = 24,
 
@@ -45,14 +47,9 @@ namespace MortalDungeon.Game.Tiles
         AltWater = 45,
         Outline = 40,
 
-        Dirt = 63,
+        Dirt = 8,
         Grass_2 = 64,
         Dead_Grass = 65,
-
-        Fog_1 = 160,
-        Fog_2 = 161,
-        Fog_3 = 180,
-        Fog_4 = 181,
     }
 
     public enum SimplifiedTileType 
@@ -274,20 +271,6 @@ namespace MortalDungeon.Game.Tiles
         public override void CleanUp()
         {
             base.CleanUp();
-
-            GetScene().Tick -= Tick;
-
-            if (Structure != null) 
-            {
-                Structure.CleanUp();
-                RemoveStructure(Structure);
-            }
-
-            foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(TilePoint))
-            {
-                GetScene().RemoveUnit(unit);
-                unit?.CleanUp();
-            }
         }
 
         public void AddStructure<T>(T structure) where T : Structure 
@@ -298,7 +281,7 @@ namespace MortalDungeon.Game.Tiles
                 //return;
             }
 
-            GetScene().AddStructure(structure);
+            TileMapManager.Scene.AddStructure(structure);
 
             Chunk.Structures.Add(structure);
             Structure = structure;
@@ -306,7 +289,7 @@ namespace MortalDungeon.Game.Tiles
 
         public void RemoveStructure<T>(T structure) where T : Structure
         {
-            GetScene().RemoveStructure(structure);
+            TileMapManager.Scene.RemoveStructure(structure);
 
             Chunk.Structures.Remove(structure);
             Structure = null;
@@ -380,14 +363,9 @@ namespace MortalDungeon.Game.Tiles
             return Structure == null || (Structure != null && Structure.Pathable);
         }
 
-        public CombatScene GetScene() 
-        {
-            return TilePoint.ParentTileMap.Controller.Scene;
-        }
-
         public void OnRightClick(ContextManager<MouseUpFlags> flags)
         {
-            CombatScene scene = GetScene();
+            CombatScene scene = TileMapManager.Scene;
 
             bool isCurrentUnit = false;
             if (scene.CurrentUnit != null)
@@ -506,7 +484,7 @@ namespace MortalDungeon.Game.Tiles
             TextComponent description = new TextComponent();
             description.SetTextScale(0.05f);
             description.SetColor(_Colors.UITextBlack);
-            description.SetText(GetTooltipString(this, GetScene()));
+            description.SetText(GetTooltipString(this, TileMapManager.Scene));
 
             menu.AddChild(header);
             menu.AddChild(description);
@@ -545,6 +523,7 @@ namespace MortalDungeon.Game.Tiles
     {
         public int X;
         public int Y;
+        public int Layer = 0;
 
         public TileMap ParentTileMap;
 
@@ -599,6 +578,7 @@ namespace MortalDungeon.Game.Tiles
             return obj is TilePoint point &&
                    X == point.X &&
                    Y == point.Y &&
+                   Layer == point.Layer &&
                    ParentTileMap.TileMapCoords == point.ParentTileMap.TileMapCoords &&
                    EqualityComparer<TileMap>.Default.Equals(ParentTileMap, point.ParentTileMap);
         }

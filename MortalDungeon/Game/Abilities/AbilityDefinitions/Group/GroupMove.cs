@@ -21,7 +21,11 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
             ActionCost = 0;
             EnergyCost = 0;
 
-            SetIcon(UIControls.ArrowIn, Spritesheets.UIControlsSpritesheet);
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)UIControls.ArrowIn },
+                Spritesheet = (int)TextureName.UIControlsSpritesheet
+            });
         }
 
         protected BaseTile _selectedTile = null;

@@ -234,7 +234,7 @@ namespace MortalDungeon.Game.UI
 
                     foreach(var unit in PlayerParty.UnitsInParty)
                     {
-                        if(unit.AbilityLoadout.Items.Exists(l => l.NodeID == parentObject.ID && l.AbilityTreeType == SelectedTree.TreeType))
+                        if(unit.AbilityLoadout.GetLoadout().Exists(l => l.NodeID == parentObject.ID && l.AbilityTreeType == SelectedTree.TreeType))
                         {
                             available = false;
                             break;
@@ -304,7 +304,7 @@ namespace MortalDungeon.Game.UI
                 bool available = true;
                 foreach (var unit in PlayerParty.UnitsInParty)
                 {
-                    if (unit.AbilityLoadout.Items.Exists(l => l.NodeID == node.TreeNode.ID && l.AbilityTreeType == SelectedTree.TreeType))
+                    if (unit.AbilityLoadout.GetLoadout(unit.Info.AbilityVariation).Exists(l => l.NodeID == node.TreeNode.ID && l.AbilityTreeType == SelectedTree.TreeType))
                     {
                         available = false;
                         break;
@@ -485,7 +485,7 @@ namespace MortalDungeon.Game.UI
 
             if(_selectedUnit != null)
             {
-                foreach(var loadoutItem in _selectedUnit.AbilityLoadout.Items)
+                foreach(var loadoutItem in _selectedUnit.AbilityLoadout.GetLoadout(_selectedUnit.Info.AbilityVariation))
                 {
                     currentAbilities.Add(loadoutItem);
                 }

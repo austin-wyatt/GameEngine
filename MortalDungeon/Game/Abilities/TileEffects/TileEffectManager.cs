@@ -39,6 +39,18 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
+        public static void ClearTileEffects()
+        {
+            foreach(var item in TileEffects)
+            {
+                foreach(var effect in item.Value)
+                {
+                    effect.RemovedFromTile(item.Key);
+                }
+            }
+        }
+
+
         public static HashSet<TileEffect> GetTileEffectsOnTilePoint(TilePoint point)
         {
             if(TileEffects.TryGetValue(point, out var result))

@@ -33,7 +33,7 @@ namespace MortalDungeon.Game.Abilities
 
             //Description = "Spawn a skeleton after channeling three times.";
 
-            Icon = new Icon(Icon.DefaultIconSize, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet, true);
+            //Icon = new Icon(Icon.DefaultIconSize, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet, true);
 
             //Channel first = new Channel(castingUnit, "Spawn Skeleton (1)", Description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
             //Channel second = new Channel(castingUnit, "Spawn Skeleton (2)", Description, Objects.TestSheetItems.Skeleton_Idle_1, Spritesheets.TestSheet);
@@ -105,32 +105,32 @@ namespace MortalDungeon.Game.Abilities
 
             //create skeleton unit
 
-            Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Spawned Skeleton"), Scene));
-            skele.Handle.SetTeam(CastingUnit.AI.Team);
+            //Entity skele = new Entity(EntityParser.ApplyPrefabToUnit(EntityParser.FindPrefab(PrefabType.Unit, "Spawned Skeleton"), Scene));
+            //skele.Handle.SetTeam(CastingUnit.AI.Team);
 
-            EntityManager.AddEntity(skele);
-            skele.DestroyOnUnload = true;
+            //EntityManager.AddEntity(skele);
+            //skele.DestroyOnUnload = true;
 
-            EntityManager.LoadEntity(skele, SelectedTile.ToFeaturePoint());
+            //EntityManager.LoadEntity(skele, SelectedTile.ToFeaturePoint());
 
 
-            Explosion.ExplosionParams parameters = new Explosion.ExplosionParams(Explosion.ExplosionParams.Default)
-            {
-                Acceleration = new Vector3(),
-                MultiplicativeAcceleration = new Vector3(0.95f, 0.95f, 0.5f),
-                ParticleCount = 50,
-                BaseVelocity = new Vector3(30, 30, 0.03f),
-                ColorDelta = new Vector4(0.02f, 0.02f, 0.02f, 0),
-                ParticleSize = 0.1f
-            };
+            //Explosion.ExplosionParams parameters = new Explosion.ExplosionParams(Explosion.ExplosionParams.Default)
+            //{
+            //    Acceleration = new Vector3(),
+            //    MultiplicativeAcceleration = new Vector3(0.95f, 0.95f, 0.5f),
+            //    ParticleCount = 50,
+            //    BaseVelocity = new Vector3(30, 30, 0.03f),
+            //    ColorDelta = new Vector4(0.02f, 0.02f, 0.02f, 0),
+            //    ParticleSize = 0.1f
+            //};
 
-            var castParticles = new Explosion(SelectedTile.Position + new Vector3(0, 0, 0.4f), new Vector4(0.5f, 0.5f, 0.5f, 1), parameters);
-            castParticles.OnFinish = () =>
-            {
-                Scene._particleGenerators.Remove(castParticles);
-            };
+            //var castParticles = new Explosion(SelectedTile.Position + new Vector3(0, 0, 0.4f), new Vector4(0.5f, 0.5f, 0.5f, 1), parameters);
+            //castParticles.OnFinish = () =>
+            //{
+            //    Scene._particleGenerators.Remove(castParticles);
+            //};
 
-            Scene._particleGenerators.Add(castParticles);
+            //Scene._particleGenerators.Add(castParticles);
 
             Casted();
             EffectEnded();

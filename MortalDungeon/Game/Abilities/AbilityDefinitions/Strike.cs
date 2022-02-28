@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Abilities
 
             //Name = "Strike";
 
-            Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
+            //Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.CrossedSwords, Spritesheets.IconSheet, true);
         }
 
         public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
@@ -85,7 +85,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
+            SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
 
             Casted();
             EffectEnded();
@@ -97,7 +97,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, GetDamage());
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
     }

@@ -41,7 +41,7 @@ namespace MortalDungeon.Game.Tiles
         };
 
         public static List<TileClassification> AllTileClassifications = new List<TileClassification>()
-        { TileClassification.Ground, TileClassification.AttackableTerrain, TileClassification.Terrain, TileClassification.Water };
+        { TileClassification.Ground, TileClassification.AttackableTerrain, TileClassification.ImpassableGround, TileClassification.Water };
 
     }
 
@@ -96,7 +96,7 @@ namespace MortalDungeon.Game.Tiles
 
         ~TileMap() 
         {
-            Console.WriteLine($"TileMap {TileMapCoords.X}, {TileMapCoords.Y} disposed");
+            //Console.WriteLine($"TileMap {TileMapCoords.X}, {TileMapCoords.Y} disposed");
         }
         
         public BaseTile this[int x, int y]
@@ -235,9 +235,9 @@ namespace MortalDungeon.Game.Tiles
             FogTileRenderData = TileInstancedRenderData.GenerateInstancedRenderData(_fogTiles)[0];
         }
 
-        public void UpdateTile(BaseTile tile) 
+        public void UpdateTile(BaseTile tile = null) 
         {
-            if (!tile.GetScene().ContextManager.GetFlag(Engine_Classes.Scenes.GeneralContextFlags.TileMapManagerLoading))
+            if (!TileMapManager.Scene.ContextManager.GetFlag(Engine_Classes.Scenes.GeneralContextFlags.TileMapManagerLoading))
             {
                 Window.RenderEnd -= UpdateTileRenderData;
                 Window.RenderEnd += UpdateTileRenderData;
@@ -251,6 +251,15 @@ namespace MortalDungeon.Game.Tiles
             for (int i = 0; i < TileChunks.Count; i++)
             {
                 TileChunks[i].ClearChunk();
+            }
+
+            if (UnitPositionManager.UnitMapPositions.TryGetValue(TileMapCoords, out var units))
+            {
+                foreach (var unit in units.ToList())
+                {
+                    TileMapManager.Scene.RemoveUnit(unit);
+                    unit?.CleanUp();
+                }
             }
 
             TileChunks.Clear();
@@ -900,6 +909,8 @@ namespace MortalDungeon.Game.Tiles
             List<TileWithParent> tileList = new List<TileWithParent>();
             List<BaseTile> returnList = new List<BaseTile>();
 
+            HashSet<Unit> unitSet = param.Units.ToHashSet();
+
             if (param.Depth <= 0)
                 return returnList;
 
@@ -972,22 +983,19 @@ namespace MortalDungeon.Game.Tiles
 
                 for (int j = 0; j < newNeighbors.Count; j++)
                 {
-                    int unitIndex = -1;
+                    Unit foundUnit = null;
                     int count = -1;
 
+                    var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(newNeighbors[j].TilePoint);
 
-                    //find if there's a unit in this space
-                    param.Units?.Exists(u =>
+                    foreach(var unit in unitSet)
                     {
-                        count++;
-                        if (u.Info.TileMapPosition == newNeighbors[j].TilePoint)
+                        if (unitsOnPoint.Contains(unit))
                         {
-                            unitIndex = count;
-                            return true;
+                            foundUnit = unit;
+                            break;
                         }
-                        else
-                            return false;
-                    });
+                    }
 
                     if (!param.TraversableTypes.Exists(c => c == newNeighbors[j].Properties.Classification))
                     {
@@ -996,11 +1004,11 @@ namespace MortalDungeon.Game.Tiles
                         j--;
                         continue;
                     }
-                    else if (unitIndex != -1 && param.CastingUnit != null && param.AbilityType == AbilityTypes.Move) //special cases for ability targeting should go here
+                    else if (foundUnit != null && param.CastingUnit != null && param.AbilityType == AbilityTypes.Move) //special cases for ability targeting should go here
                     {
-                        if (param.Units[unitIndex].Info.BlocksSpace && !param.CastingUnit.Info.PhasedMovement 
-                            && !(param.IgnoreTargetUnit && param.Units[unitIndex].Info.TileMapPosition.TilePoint == param.EndingPoint)
-                            && !param.Units[unitIndex].Info.Dead)
+                        if (foundUnit.Info.BlocksSpace && !param.CastingUnit.Info.PhasedMovement 
+                            && !(param.IgnoreTargetUnit && foundUnit.Info.TileMapPosition.TilePoint == param.EndingPoint)
+                            && !foundUnit.Info.Dead)
                         {
                             //if this is a movement ability and the unit using the ability does not have phased movement, the target unit is alive, and the unit is not 
                             //a unit we are attempting to path to we remove this path as a possibility
@@ -1067,7 +1075,7 @@ namespace MortalDungeon.Game.Tiles
                     return returnList;
                 }
 
-                if (currentTile.F > param.Depth * 1.5f)
+                if (currentTile.F > param.Depth)
                 {
                     return returnList;
                 }

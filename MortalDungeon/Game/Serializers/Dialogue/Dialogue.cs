@@ -50,18 +50,18 @@ namespace MortalDungeon.Game.Serializers
 
         public void CompleteDeserialization()
         {
-            
+            EntryPoint.CompleteDeserialization();
         }
 
         public void PrepareForSerialization()
         {
-            
+            EntryPoint.PrepareForSerialization();
         }
     }
 
     [XmlType(TypeName = "dn")]
     [Serializable]
-    public class DialogueNode
+    public class DialogueNode : ISerializable
     {
         [XmlElement("s")]
         /// <summary>
@@ -104,6 +104,22 @@ namespace MortalDungeon.Game.Serializers
         {
             return TextInfo.ToString();
         }
+
+        public void CompleteDeserialization()
+        {
+            foreach(var response in Responses)
+            {
+                response.CompleteDeserialization();
+            }
+        }
+
+        public void PrepareForSerialization()
+        {
+            foreach (var response in Responses)
+            {
+                response.PrepareForSerialization();
+            }
+        }
     }
 
 
@@ -112,7 +128,7 @@ namespace MortalDungeon.Game.Serializers
 
     [XmlType(TypeName = "r")]
     [Serializable]
-    public class Response
+    public class Response : ISerializable
     {
         [XmlElement("rm")]
         public TextInfo TextInfo = new TextInfo();
@@ -135,11 +151,26 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("rSTv")]
         public List<Instructions> Instructions = new List<Instructions>();
 
+        [XmlElement("rc")]
+        public Conditional Conditional = Conditional.TRUE;
+
         public Response() { }
 
         public override string ToString()
         {
             return TextInfo.ToString();
+        }
+
+        public void CompleteDeserialization()
+        {
+            Conditional.CompleteDeserialization();
+            Next?.CompleteDeserialization();
+        }
+
+        public void PrepareForSerialization()
+        {
+            Conditional.PrepareForSerialization();
+            Next?.PrepareForSerialization();
         }
     }
 }

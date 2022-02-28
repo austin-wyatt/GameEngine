@@ -25,7 +25,9 @@ namespace MortalDungeon.Game.Tiles
     public enum TileSelectionType
     {
         Full,
-        Selection
+        Selection,
+        Stone,
+        Stone_2
     }
 
     public class TileMapController
@@ -33,12 +35,19 @@ namespace MortalDungeon.Game.Tiles
         public static readonly Texture TileSpritesheet = Texture.LoadFromFile("Resources/TileSpritesheet.png");
         public static readonly Texture TileOverlaySpritesheet = Texture.LoadFromFile("Resources/TileOverlaySpritesheet.png");
 
+        public static Dictionary<TileSelectionType, int> SelectionTypeToSpritesheetMap = new Dictionary<TileSelectionType, int>
+        {
+            { TileSelectionType.Full, 0 },
+            { TileSelectionType.Selection, (int)TileType.Selection },
+            { TileSelectionType.Stone, (int)TileType.Stone_1 },
+            { TileSelectionType.Stone_2, (int)TileType.Stone_2 },
+        };
+
         public CombatScene Scene;
 
-        public QueuedList<BaseTile> SelectionTiles = new QueuedList<BaseTile>(); //these tiles will be place above the currently selected tiles
+        public HashSet<BaseTile> SelectionTiles = new HashSet<BaseTile>(); //these tiles will be place above the currently selected tiles
         private const int MAX_SELECTION_TILES = 1000;
-        public int _amountOfSelectionTiles = 0;
-        private readonly List<BaseTile> _selectionTilePool = new List<BaseTile>();
+        private readonly Stack<BaseTile> _selectionTilePool = new Stack<BaseTile>();
 
         public BaseTile HoveredTile;
         private List<BaseTile> _hoveredTileList = new List<BaseTile>();
@@ -63,11 +72,11 @@ namespace MortalDungeon.Game.Tiles
                 baseTile.DefaultColor = _Colors.TranslucentBlue;
                 baseTile.SetColor(_Colors.TranslucentBlue);
 
-                baseTile.Properties.Type = (TileType)1;
+                baseTile.Properties.Type = (TileType)3;
 
                 //baseTile.BaseObject.EnableLighting = false;
 
-                _selectionTilePool.Add(baseTile);
+                _selectionTilePool.Push(baseTile);
             }
 
             GameObject.LoadTextures(_selectionTilePool);
@@ -75,8 +84,8 @@ namespace MortalDungeon.Game.Tiles
             HoveredTile = new BaseTile(new Vector3(0, 0, 0.01f), new TilePoint(-1, -1, null));
             HoveredTile.SetRender(false);
 
-            HoveredTile.Properties.Type = (TileType)1;
-            HoveredTile.SetColor(_Colors.TranslucentRed);
+            HoveredTile.Properties.Type = (TileType)3;
+            HoveredTile.SetColor(new Vector4(1, 0, 0, 0.25f));
 
             //HoveredTile.BaseObject.EnableLighting = false;
 
@@ -85,7 +94,7 @@ namespace MortalDungeon.Game.Tiles
             _hoveredTileList = new List<BaseTile>() { HoveredTile };
         }
 
-        public List<BaseTile> GetSelectionTilePool()
+        public IEnumerable<BaseTile> GetSelectionTilePool()
         {
             return _selectionTilePool;
         }
@@ -101,73 +110,132 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
+
+        public object _selectLock = new object();
         public BaseTile SelectTile(BaseTile tile, TileSelectionType type = TileSelectionType.Full)
         {
-            //Console.WriteLine(_amountOfSelectionTiles + " tiles in use");
-
-            if (_amountOfSelectionTiles == _selectionTilePool.Count)
-                _amountOfSelectionTiles--;
-
-            if (_amountOfSelectionTiles < 0)
+            lock (_selectLock)
             {
-                Console.WriteLine("TileMap.SelectTile: Less than 0 selection tiles ");
-                _amountOfSelectionTiles = 0;
+                if (_selectionTilePool.Count == 0)
+                {
+                    Vector3 tilePosition = new Vector3(0, 0, 0.008f);
+                    for (int i = 0; i < 100; i++)
+                    {
+                        var baseTile = new BaseTile(tilePosition, new TilePoint(i, -1, null));
+                        baseTile.SetRender(false);
+
+                        baseTile.DefaultColor = _Colors.TranslucentBlue;
+                        baseTile.SetColor(_Colors.TranslucentBlue);
+
+                        _selectionTilePool.Push(baseTile);
+
+                        TextureLoadBatcher.LoadTexture(baseTile);
+                    }
+                }
+
+                float zOffset = 0.009f;
+
+                var selectionTile = _selectionTilePool.Pop();
+                selectionTile.BaseObject.BaseFrame.SpritesheetPosition = SelectionTypeToSpritesheetMap[type];
+
+                switch (type)
+                {
+                    case TileSelectionType.Selection:
+                        zOffset = 0.0091f;
+                        break;
+                    case TileSelectionType.Stone:
+                        zOffset = 0.0092f;
+                        break;
+                    case TileSelectionType.Stone_2:
+                        zOffset = 0.0097f;
+                        break;
+                        //add other zOffsets here to prevent z fighting when a tile is selected multiple times
+                }
+
+                Vector3 pos = new Vector3
+                {
+                    X = tile.Position.X,
+                    Y = tile.Position.Y,
+                    Z = tile.Position.Z + zOffset
+                };
+
+                selectionTile.TilePoint.X = tile.TilePoint.X;
+                selectionTile.TilePoint.Y = tile.TilePoint.Y;
+                selectionTile.TilePoint.Layer = tile.TilePoint.Layer;
+                selectionTile.TilePoint.ParentTileMap = tile.TileMap;
+                selectionTile.TileMap = tile.TileMap;
+                selectionTile.SetPosition(pos);
+                selectionTile.SetRender(true);
+
+
+                SelectionTiles.Add(selectionTile);
+
+                return selectionTile;
             }
-
-            float zOffset = 0.009f;
-
-            switch (type)
-            {
-                case TileSelectionType.Full:
-                    _selectionTilePool[_amountOfSelectionTiles].BaseObject.BaseFrame.SpritesheetPosition = 1;
-                    break;
-                case TileSelectionType.Selection:
-                    _selectionTilePool[_amountOfSelectionTiles].BaseObject.BaseFrame.SpritesheetPosition = (int)TileType.Selection;
-                    zOffset = 0.0091f;
-                    break;
-                //add other zOffsets here to prevent z fighting when a tile is selected multiple times
-            }
-
-            Vector3 pos = new Vector3
-            {
-                X = tile.Position.X,
-                Y = tile.Position.Y,
-                Z = tile.Position.Z + zOffset
-            };
-
-            _selectionTilePool[_amountOfSelectionTiles].TilePoint.ParentTileMap = tile.TileMap;
-            _selectionTilePool[_amountOfSelectionTiles].TileMap = tile.TileMap;
-            _selectionTilePool[_amountOfSelectionTiles].SetPosition(pos);
-            _selectionTilePool[_amountOfSelectionTiles].SetRender(true);
-
-
-            SelectionTiles.Add(_selectionTilePool[_amountOfSelectionTiles]);
-
-            _amountOfSelectionTiles++;
-
-            return _selectionTilePool[_amountOfSelectionTiles - 1];
         }
 
         public void DeselectTile(BaseTile selectionTile)
         {
-            selectionTile.BaseObject.BaseFrame.SetBaseColor(_Colors.White);
+            lock (_selectLock)
+            {
+                selectionTile.BaseObject.BaseFrame.SetBaseColor(_Colors.White);
 
-            SelectionTiles.Remove(selectionTile);
+                if (SelectionTiles.Remove(selectionTile) && ((SelectionTiles.Count + _selectionTilePool.Count) < MAX_SELECTION_TILES))
+                {
+                    _selectionTilePool.Push(selectionTile);
+                }
 
-            selectionTile.SetRender(false);
-            _amountOfSelectionTiles--;
+                selectionTile.SetRender(false);
+            }
         }
 
         public void DeselectTiles()
         {
-            for (int i = 0; i < _amountOfSelectionTiles; i++)
+            lock (_selectLock)
             {
-                _selectionTilePool[i].SetRender(false);
+                List<BaseTile> tilesToRemove = new List<BaseTile>();
+
+                foreach(var tile in SelectionTiles)
+                {
+                    tilesToRemove.Add(tile);
+                    tile.SetRender(false);
+                    tile.BaseObject.BaseFrame.SetBaseColor(_Colors.White);
+                }
+
+                for(int i = 0; i < tilesToRemove.Count; i++)
+                {
+                    if (SelectionTiles.Remove(tilesToRemove[i]) && ((SelectionTiles.Count + _selectionTilePool.Count) < MAX_SELECTION_TILES))
+                    {
+                        _selectionTilePool.Push(tilesToRemove[i]);
+                    }
+                }
             }
+        }
 
-            SelectionTiles.Clear();
+        public void DeselectTiles(TileSelectionType type)
+        {
+            lock (_selectLock)
+            {
+                List<BaseTile> tilesToRemove = new List<BaseTile>();
 
-            _amountOfSelectionTiles = 0;
+                foreach (var tile in SelectionTiles)
+                {
+                    if(SelectionTypeToSpritesheetMap[type] == tile.BaseObject.BaseFrame.SpritesheetPosition)
+                    {
+                        tilesToRemove.Add(tile);
+                        tile.SetRender(false);
+                        tile.BaseObject.BaseFrame.SetBaseColor(_Colors.White);
+                    }
+                }
+
+                for (int i = 0; i < tilesToRemove.Count; i++)
+                {
+                    if (SelectionTiles.Remove(tilesToRemove[i]) && ((SelectionTiles.Count + _selectionTilePool.Count) < MAX_SELECTION_TILES))
+                    {
+                        _selectionTilePool.Push(tilesToRemove[i]);
+                    }
+                }
+            }
         }
 
         public List<BaseTile> GetHoveredTile()

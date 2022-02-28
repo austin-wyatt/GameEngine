@@ -8,18 +8,19 @@ using System.Linq;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Objects;
 using MortalDungeon.Engine_Classes;
+using MortalDungeon.Definitions.Buffs;
 
 namespace MortalDungeon.Game.Abilities
 {
     public class SuckerPunch : Ability
     {
-        public SuckerPunch(Unit castingUnit, int range = 1, float damage = 10)
+        public SuckerPunch(Unit castingUnit)
         {
             Type = AbilityTypes.MeleeAttack;
             DamageType = DamageType.Blunt;
-            Range = range;
+            Range = 1;
             CastingUnit = castingUnit;
-            Damage = damage;
+            Damage = 10;
             ActionCost = 3;
 
             CastingMethod |= CastingMethod.BruteForce | CastingMethod.Unarmed;
@@ -34,8 +35,12 @@ namespace MortalDungeon.Game.Abilities
             Name = new Serializers.TextInfo(9, 3);
             Description = new Serializers.TextInfo(10, 3);
 
-
-            Icon = new Icon(Icon.DefaultIconSize, Character.P, Spritesheets.CharacterSheet, true);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.P },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
 
             AbilityClass = AbilityClass.Bandit;
         }
@@ -95,11 +100,11 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            var damageParams = SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
+            var damageParams = SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
 
             if (damageParams.ActualDamageDealt >= GetDamage()) 
             {
-                SelectedUnit.Info.AddBuff(new StunDebuff(SelectedUnit, 3));
+                SelectedUnit.Info.AddBuff(new StunDebuff() { Duration = 3 });
             }
 
             Casted();
@@ -115,7 +120,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, damageAmount);
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
     }

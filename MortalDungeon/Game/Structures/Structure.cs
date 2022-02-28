@@ -59,18 +59,24 @@ namespace MortalDungeon.Game.Structures
             Name = "Structure";
 
             Type = StructureEnum.Unknown;
+
+            _createStatusBar = false;
         }
         public Structure(CombatScene scene) : base(scene)
         {
             Name = "Structure";
 
             Type = StructureEnum.Unknown;
+
+            _createStatusBar = false;
         }
         public Structure(CombatScene scene, Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) : base(scene, spritesheet, spritesheetPos, position)
         {
             Name = "Structure";
 
             Type = (StructureEnum)spritesheetPos;
+
+            _createStatusBar = false;
         }
 
         public override void SetTileMapPosition(BaseTile baseTile)
@@ -92,10 +98,12 @@ namespace MortalDungeon.Game.Structures
 
         public override void CleanUp()
         {
-            base.CleanUp();
+            CleanUpEvent(this);
 
-            Info = null;
-            AI = null;
+            Scene.RemoveLightObstruction(LightObstruction);
+            Scene.RemoveVisionGenerator(VisionGenerator);
+
+            //SetTextureLoaded(false);
         }
     }
 }

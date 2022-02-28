@@ -27,6 +27,9 @@ namespace MortalDungeon.Game.Units
         public static object _consolidatedVisionLock = new object();
         public static void ConsolidateVision(UnitTeam team)
         {
+            if (Scene.ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
+                return;
+
             lock (_consolidatedVisionLock)
             {
                 //clear the consolidated vision dictionary for the team
@@ -112,6 +115,9 @@ namespace MortalDungeon.Game.Units
         private static Dictionary<FeaturePoint, LightObstruction> _sceneLightObstructions = new Dictionary<FeaturePoint, LightObstruction>();
         public static void PrepareLightObstructions(IEnumerable<LightObstruction> obstructions)
         {
+            if (Scene.ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
+                return;
+
             _sceneLightObstructions.Clear();
 
             foreach (var obs in obstructions)

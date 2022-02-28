@@ -21,30 +21,34 @@ namespace MortalDungeon.Game.Serializers
             return LoadUnitBlockInfoFromFile(path);
         }
 
+        private static object _loadLock = new object();
         public static UnitInfoBlock LoadUnitBlockInfoFromFile(string filePath)
         {
-            string path = filePath;
-
-            if (!File.Exists(path))
+            lock (_loadLock)
             {
-                return null;
+                string path = filePath;
+
+                if (!File.Exists(path))
+                {
+                    return null;
+                }
+
+                XmlSerializer serializer = new XmlSerializer(typeof(UnitInfoBlock));
+
+                FileStream fs = new FileStream(path, FileMode.Open);
+
+                TextReader reader = new StreamReader(fs);
+
+
+                UnitInfoBlock loadedState = (UnitInfoBlock)serializer.Deserialize(reader);
+
+                loadedState.CompleteDeserialization();
+
+                reader.Close();
+                fs.Close();
+
+                return loadedState;
             }
-
-            XmlSerializer serializer = new XmlSerializer(typeof(UnitInfoBlock));
-
-            FileStream fs = new FileStream(path, FileMode.Open);
-
-            TextReader reader = new StreamReader(fs);
-
-
-            UnitInfoBlock loadedState = (UnitInfoBlock)serializer.Deserialize(reader);
-
-            loadedState.CompleteDeserialization();
-
-            reader.Close();
-            fs.Close();
-
-            return loadedState;
         }
 
         public static void WriteUnitBlockInfoToFile(UnitInfoBlock state)

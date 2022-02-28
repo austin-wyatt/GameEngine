@@ -61,6 +61,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
     {
         public SceneController Controller;
 
+        public ContentContext SceneContext = ContentContext.Game;
+
+
         public QueuedObjectList<GameObject> _genericObjects = new QueuedObjectList<GameObject>(); //GameObjects that are not Units and are being rendered independently
         public List<_Text> _text = new List<_Text>();
         public TileMapController _tileMapController = null;
@@ -117,8 +120,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
 
         //public Lighting Lighting;
-        public QueuedList<LightObstruction> LightObstructions = new QueuedList<LightObstruction>();
-        public QueuedList<VisionGenerator> UnitVisionGenerators = new QueuedList<VisionGenerator>();
+        public HashSet<LightObstruction> LightObstructions = new HashSet<LightObstruction>();
+        public HashSet<VisionGenerator> UnitVisionGenerators = new HashSet<VisionGenerator>();
 
         public Camera _camera;
         public MouseRay _mouseRay;
@@ -296,28 +299,65 @@ namespace MortalDungeon.Engine_Classes.Scenes
             TickableObjects.HandleQueuedItems();
             HighFreqTickableObjects.HandleQueuedItems();
             TimedTickableObjects.HandleQueuedItems();
+            
 
-            if (LightObstructions.HasQueuedItems())
+            RenderEvent?.Invoke(new SceneEventArgs(this, EventHandlerAction.Render));
+        }
+
+        private object _lightObstructionLock = new object();
+        public void AddLightObstruction(LightObstruction obstruction)
+        {
+            lock (_lightObstructionLock)
             {
-                LightObstructions.HandleQueuedItems();
-                //UpdateVisionMap();
-                VisionManager.PrepareLightObstructions(LightObstructions);
+                LightObstructions.Add(obstruction);
             }
 
-            if (UnitVisionGenerators.HasQueuedItems())
+            VisionManager.PrepareLightObstructions(LightObstructions);
+        }
+
+        public void RemoveLightObstruction(LightObstruction obstruction)
+        {
+            lock (_lightObstructionLock)
             {
-                UnitVisionGenerators.HandleQueuedItems();
-                //UpdateVisionMap();
-                foreach(var team in ActiveTeams)
+                LightObstructions.Remove(obstruction);
+            }
+
+            VisionManager.PrepareLightObstructions(LightObstructions);
+        }
+
+        private object _visionGenLock = new object();
+        public void AddVisionGenerator(VisionGenerator generator)
+        {
+            lock (_visionGenLock)
+            {
+                UnitVisionGenerators.Add(generator);
+            }
+
+            if (!ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
+            {
+                foreach (var team in ActiveTeams)
                 {
                     VisionManager.ConsolidateVision(team);
                 }
             }
-
-            _tileMapController.SelectionTiles.HandleQueuedItems();
-
-            RenderEvent?.Invoke(new SceneEventArgs(this, EventHandlerAction.Render));
         }
+
+        public void RemoveVisionGenerator(VisionGenerator generator)
+        {
+            lock (_visionGenLock)
+            {
+                UnitVisionGenerators.Remove(generator);
+            }
+
+            if (!ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
+            {
+                foreach (var team in ActiveTeams)
+                {
+                    VisionManager.ConsolidateVision(team);
+                }
+            }
+        }
+
 
         //The reason behind this is to have a consistent state for all objects to make decisions based off of. 
         //Ie, it curtails the problem of setting a flag earlier in the call chain and then checking it later expecting the old value
@@ -333,6 +373,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected ContextManager<MouseUpFlags> MouseUpStateFlags = new ContextManager<MouseUpFlags>();
         public virtual void OnMouseUp(MouseButtonEventArgs e)
         {
+            if(SceneContext != Window.CurrentContext)
+            {
+                return;
+            }
+
             SetMouseStateFlags();
             CheckMouseUp(e);
         }
@@ -344,6 +389,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         protected virtual void CheckMouseUp(MouseButtonEventArgs e)
         {
+            if (SceneContext != Window.CurrentContext)
+                return;
+
             if ((e.Button == MouseButton.Left || e.Button == MouseButton.Right) && e.Action == InputAction.Release && !GetBit(_interceptClicks, ObjectType.All))
             {
                 bool leftClick = e.Button == MouseButton.Left;
@@ -516,6 +564,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             if (_mouseTimer.ElapsedMilliseconds > 30) //check every 30 ms
             {
+                if(SceneContext != Window.CurrentContext)
+                {
+                    return false;
+                }
+
                 _mouseTimer.Restart();
                 _hoverTimer.Reset();
 
@@ -674,6 +727,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual bool OnKeyDown(KeyboardKeyEventArgs e)
         {
+            if (SceneContext != Window.CurrentContext)
+            {
+                return false;
+            }
+
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
             if (!interceptKeystrokes)
@@ -737,6 +795,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public virtual bool OnKeyUp(KeyboardKeyEventArgs e)
         {
+            if (SceneContext != Window.CurrentContext)
+            {
+                return false;
+            }
+
             bool interceptKeystrokes = GetBit(_interceptKeystrokes, ObjectType.All);
 
             if (!interceptKeystrokes)
@@ -754,6 +817,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             return !interceptKeystrokes;
         }
+
+
+        public delegate void ScrollEventHandler(Vector2 scrollDelta, bool handled);
+        public event ScrollEventHandler Scroll;
 
         public virtual void OnUpdateFrame(FrameEventArgs args)
         {
@@ -783,6 +850,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         handled = true;
                     }, UIEventType.Scroll);
                 }
+
+                Scroll?.Invoke(MouseState.ScrollDelta, handled);
             }
 
             if (_hoverTimer.ElapsedMilliseconds > 500)
@@ -793,7 +862,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public virtual void OnUnitClicked(Unit unit, MouseButton button) { }
+        public delegate void UnitClickEventHandler(Unit unit, MouseButton button);
+        public event UnitClickEventHandler UnitClicked;
+        public virtual void OnUnitClicked(Unit unit, MouseButton button) 
+        {
+            UnitClicked?.Invoke(unit, button);
+        }
         public virtual void OnUIClicked(UIObject uiObj) { }
 
         public delegate void TileEventHandler(BaseTile tile, MouseButton button);
@@ -1116,13 +1190,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 for (int j = 0; j < TileMapManager.ActiveMaps[i].TileChunks.Count; j++)
                 {
-                    for (int k = 0; k < TileMapManager.ActiveMaps[i].TileChunks[j].Structures.Count; k++)
+                    foreach(var structure in TileMapManager.ActiveMaps[i].TileChunks[j].Structures)
                     {
-                        Structure structure = TileMapManager.ActiveMaps[i].TileChunks[j].Structures[k];
-
                         if (structure.LightObstruction.Valid)
                         {
-                            LightObstructions.Add(structure.LightObstruction);
+                            AddLightObstruction(structure.LightObstruction);
                         }
                     }
                 }

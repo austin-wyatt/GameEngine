@@ -22,7 +22,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public Vector4 _textColor = _Colors.UITextBlack;
         public Vector4 _itemColor = _Colors.UILightGray;
-        public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
+
+        public UIList(Vector3 position, UIScale listItemSize, float textScale = 0.075f, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
         {
             Position = position;
             ListItemSize = listItemSize;
@@ -31,6 +32,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             Outline = outline;
 
             ListSize = listItemSize;
+
+            _scaleAspectRatio = true;
 
             //Clickable = true;
             //Draggable = true;
@@ -95,7 +98,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
                 position = Items[^1].BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
             }
 
-            ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor, Outline);
+            ListItem newItem = new ListItem(position, ListItemSize, Items.Count, text, TextScale, _textColor, _itemColor, Outline, _scaleAspectRatio);
             Items.Add(newItem);
             AddChild(newItem, 100);
 
@@ -167,6 +170,19 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
         }
 
+        //public override UIDimensions GetDimensions()
+        //{
+        //    UIDimensions dimensions = new UIDimensions();
+
+        //    if(Items.Count > 0)
+        //    {
+        //        dimensions.X = Items[0].GAP(UIAnchorPosition.TopRight).X - Items[0].GAP(UIAnchorPosition.TopLeft).X;
+        //        dimensions.Y = Items[^1].GAP(UIAnchorPosition.BottomLeft).Y - Items[0].GAP(UIAnchorPosition.TopLeft).Y;
+        //    }
+
+        //    return dimensions;
+        //}
+
         public void ClearItems() 
         {
             //for (int i = 0; i < Items.Count; i++) 
@@ -200,7 +216,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public Vector4 _textColor = _Colors.White;
         public Vector4 _itemColor = _Colors.UIHoveredGray;
 
-        public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, Vector4 textColor, Vector4 itemColor, bool outline = false) 
+        public ListItem(Vector3 position, UIScale listItemSize, int index, string text, float textScale, 
+            Vector4 textColor, Vector4 itemColor, bool outline = false, bool scaleAspectRatio = true) 
         {
             //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
             Text textBox = new Text(text, Text.DEFAULT_FONT, 48, Brushes.Black);
@@ -223,7 +240,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
 
 
-            UIBlock backdrop = new UIBlock(default, listItemSize);
+            UIBlock backdrop = new UIBlock(default, listItemSize, scaleAspectRatio: scaleAspectRatio);
             backdrop.SetColor(_itemColor);
             //backdrop.MultiTextureData.MixPercent = 0;
             backdrop.MultiTextureData.MixTexture = false;

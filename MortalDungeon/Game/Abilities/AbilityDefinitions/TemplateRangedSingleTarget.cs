@@ -29,7 +29,12 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            SetIcon(Character.T, Spritesheets.CharacterSheet);
+            AnimationSet = new Serializers.AnimationSet();
+            AnimationSet.Animations.Add(new Serializers.Animation()
+            {
+                FrameIndices = { (int)Character.T },
+                Spritesheet = (int)TextureName.CharacterSpritesheet
+            });
 
             AbilityClass = abilityClass;
         }
@@ -91,7 +96,7 @@ namespace MortalDungeon.Game.Abilities
         {
             base.EnactEffect();
 
-            SelectedUnit.ApplyDamage(new Unit.DamageParams(GetDamageInstance()) { Ability = this });
+            SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
 
             Casted();
             EffectEnded();
@@ -103,7 +108,6 @@ namespace MortalDungeon.Game.Abilities
 
             instance.Damage.Add(DamageType, GetDamage());
 
-            ApplyBuffDamageInstanceModifications(instance);
             return instance;
         }
 
