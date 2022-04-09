@@ -15,9 +15,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class MendBones : Ability
+    public class MendBones : TemplateRangedSingleTarget
     {
-        public MendBones(Unit castingUnit)
+        public MendBones(Unit castingUnit) : base(castingUnit)
         {
             Type = AbilityTypes.Heal;
             DamageType = DamageType.Healing;
@@ -32,10 +32,12 @@ namespace MortalDungeon.Game.Abilities
             ActionCost = 1;
             ChargeRechargeCost = 50;
 
+            WeightParams.AllyWeight = 1;
+
             MaxCharges = 3;
             Charges = 3;
 
-            CanTargetSelf = true;
+            UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
             CanTargetGround = false;
 
             UnitTargetParams.Dead = UnitCheckEnum.False;
@@ -57,68 +59,8 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-
-            //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-            List<Unit> unitsInCastRadius = VisionHelpers.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
-
-            TrimUnits(unitsInCastRadius, false, MinRange);
-
-            TargetAffectedUnits();
-
-            return new List<BaseTile>();
-        }
-
-        public override bool UnitInRange(Unit unit, BaseTile position = null)
-        {
-            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-
-            if (CanTargetSelf && unit == CastingUnit)
-                return true;
-
-            bool inRange = false;
-
-            if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange)
-            {
-                return false;
-            }
-
-            var tempVision = new TemporaryVisionParams()
-            {
-                Unit = CastingUnit,
-                TemporaryPosition = point
-            };
-
-            if (VisionHelpers.PointInVision(unit.Info.TileMapPosition, CastingUnit.AI.Team, new List<TemporaryVisionParams> { tempVision }))
-            {
-                return true;
-            }
-
-            return inRange;
-        }
-
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
-
-            if (AffectedUnits.Contains(unit))
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
-
-            return true;
-        }
-
         public override void EnactEffect()
         {
-            base.EnactEffect();
-
             Sound sound = new Sound(Sounds.Select) { Gain = 0.75f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
             sound.Play();
 

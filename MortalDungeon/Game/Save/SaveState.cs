@@ -17,6 +17,7 @@ using MortalDungeon.Game.Player;
 using System.Linq;
 using MortalDungeon.Game.Items;
 using MortalDungeon.Game.Abilities.TileEffects;
+using MortalDungeon.Game.Ledger.Units;
 
 namespace MortalDungeon.Game.Save
 {
@@ -54,11 +55,13 @@ namespace MortalDungeon.Game.Save
 
         public TileEffectsSaveInfo TileEffectsSaveInfo;
 
+        public List<LedgeredUnit> SavedLedgeredUnits;
+
         public static SaveState CreateSaveState(CombatScene scene) 
         {
             SaveState returnState = new SaveState();
 
-            #region Units
+            #region Loaded units
             HashSet<Unit> playerPartySet = PlayerParty.UnitsInParty.ToHashSet();
             foreach(var unit in scene._units)
             {
@@ -67,6 +70,10 @@ namespace MortalDungeon.Game.Save
                     returnState.UnitSaveInfo.Add(new UnitSaveInfo(unit));
                 }
             }
+            #endregion
+
+            #region Ledgered units
+            returnState.SavedLedgeredUnits = UnitLedger.LedgeredUnits.ToList();
             #endregion
 
             returnState.Time = scene.Time;
@@ -166,7 +173,6 @@ namespace MortalDungeon.Game.Save
             scene.ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, true);
 
             scene.UnitVisionGenerators.Clear();
-            scene.LightObstructions.Clear();
 
             //TODO, player party save info
 
@@ -323,7 +329,7 @@ namespace MortalDungeon.Game.Save
 
             //scene._tileMapController.LoadSurroundingTileMaps(new TileMapPoint(state.TileMapCoords), applyFeatures: false, forceMapRegeneration: true);
 
-            #region Units
+            #region Loaded units
             state.UnitRelations.FillDictionary(UnitAI.GetTeamRelationsDictionary());
 
             foreach(var unitInfo in state.UnitSaveInfo)
@@ -351,6 +357,11 @@ namespace MortalDungeon.Game.Save
             }
             #endregion
 
+            #region Ledgered units
+            UnitLedger.LedgeredUnits = state.SavedLedgeredUnits.ToHashSet();
+            UnitLedger.BuildTileMapPositionDictionary();
+            #endregion
+
             void finishLoad(SceneEventArgs _)
             {
                 scene.RenderEnd -= finishLoad;
@@ -359,8 +370,6 @@ namespace MortalDungeon.Game.Save
                 scene.ContextManager.SetFlag(GeneralContextFlags.DisableVisionMapUpdate, false);
 
                 TileMapManager.ApplyLoadedFeaturesToMaps(TileMapManager.ActiveMaps);
-
-                scene.QueueLightObstructionUpdate();
 
                 scene.SetTime(state.Time);
 

@@ -20,11 +20,11 @@ namespace MortalDungeon.Engine_Classes
         Selected
     }
 
-    public class GameObject : ITickable
+    public class GameObject : ITickable, IHoverable, IHasPosition
     {
         public string Name = "";
 
-        public Vector3 Position = new Vector3();
+        public Vector3 Position { get; set; }
 
         public List<BaseObject> BaseObjects = new List<BaseObject>();
 

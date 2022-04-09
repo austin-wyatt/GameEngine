@@ -3,6 +3,7 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Abilities;
 using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
+using MortalDungeon.Game.Units.AIFunctions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -56,7 +57,7 @@ namespace MortalDungeon.Game.Units
         private TilePoint TilePosition => _unit.Info.TileMapPosition.TilePoint;
 
         [XmlIgnore]
-        private BaseTile Tile => _unit.Info.TileMapPosition;
+        private Tile Tile => _unit.Info.TileMapPosition;
 
         public bool Fighting = true; //if a unit surrenders they will no longer be considered fighting
 
@@ -65,12 +66,14 @@ namespace MortalDungeon.Game.Units
         public float Cowardly = 0;
         public float MovementAversion = 0.2f;
 
+        public Feelings Feelings;
+
         public UnitAI() { }
 
         public UnitAI(Unit unit) 
         {
             _unit = unit;
-            //Dispositions = new Dispositions(_unit);
+            Feelings = new Feelings(unit);
         }
 
 
@@ -120,7 +123,7 @@ namespace MortalDungeon.Game.Units
         }
 
 
-        public float GetPathMovementCost(List<BaseTile> tiles)
+        public float GetPathMovementCost(List<Tile> tiles)
         {
             float value = 0;
 
@@ -132,9 +135,9 @@ namespace MortalDungeon.Game.Units
             return value;
         }
 
-        public List<BaseTile> GetAffordablePath(List<BaseTile> tiles) 
+        public List<Tile> GetAffordablePath(List<Tile> tiles) 
         {
-            List<BaseTile> returnList = new List<BaseTile>();
+            List<Tile> returnList = new List<Tile>();
 
             if (tiles.Count > 0)
                 returnList.Add(tiles[0]);
@@ -168,13 +171,13 @@ namespace MortalDungeon.Game.Units
 
             foreach(var ability in _unit.Info.Abilities)
             {
-                var action = ability.GetAction(Scene.InitiativeOrder);
+                //var action = ability.GetAction(Scene.InitiativeOrder);
 
 
-                if(action.Weight >= 1)
-                {
-                    abilityActions.Add(action);
-                }
+                //if(action.Weight >= 1)
+                //{
+                //    abilityActions.Add(action);
+                //}
             }
 
             UnitAIAction selectedAction = new AI.EndTurn(_unit) { Weight = 1 };
@@ -187,48 +190,6 @@ namespace MortalDungeon.Game.Units
                 }
             }
 
-
-            //Dictionary<AIAction, UnitAIAction> actionValues = new Dictionary<AIAction, UnitAIAction>();
-
-
-            //List<UnitAIAction> actions = new List<UnitAIAction> { selectedAction };
-            //List<Disposition> actionDispositions = new List<Disposition>() { new Disposition(_unit) };
-
-            //UnitAIAction tempAction;
-            //foreach (AIAction action in Enum.GetValues(typeof(AIAction)))
-            //{
-            //    Dispositions.DispositionList.ForEach(disp =>
-            //    {
-            //        tempAction = disp.GetAction(action);
-
-            //        if (tempAction != null)
-            //        {
-            //            tempAction.Weight -= disp.Fatigue;
-            //            tempAction.Weight -= disp.TurnFatigue;
-
-            //            actions.Add(tempAction);
-            //            actionDispositions.Add(disp);
-            //        }
-            //    });
-            //}
-
-            //int selectedActionIndex = 0;
-            //for (int i = 0; i < actions.Count; i++)
-            //{
-            //    if (actions[i].Weight > selectedAction.Weight) 
-            //    {
-            //        selectedAction = actions[i];
-            //        selectedActionIndex = i;
-            //    }
-            //    if (actions[i].Weight == selectedAction.Weight) 
-            //    {
-            //        if(GlobalRandom.NextFloat() >= 0.5f) 
-            //        {
-            //            selectedAction = actions[i];
-            //            selectedActionIndex = i;
-            //        }
-            //    }
-            //}
 
             Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Movement remaining. {_unit.Info.ActionEnergy} Actions remaining.");
 
@@ -404,170 +365,7 @@ namespace MortalDungeon.Game.Units
         /// <summary>
         /// All hard params must be satisfied and (if present) at least one soft param must be satisfied
         /// </summary>
-        public class UnitSearchParams 
-        {
-            public UnitCheckEnum Dead = UnitCheckEnum.NotSet;
-            public UnitCheckEnum IsHostile = UnitCheckEnum.NotSet;
-            public UnitCheckEnum IsFriendly = UnitCheckEnum.NotSet;
-            public UnitCheckEnum IsNeutral = UnitCheckEnum.NotSet;
-            public UnitCheckEnum Self = UnitCheckEnum.NotSet;
-            public UnitCheckEnum IsControlled = UnitCheckEnum.NotSet;
-
-            public UnitSearchParams() { }
-
-            public bool CheckUnit(Unit unit, Unit castingUnit) 
-            {
-                bool softCheck = false;
-
-                bool softCheckUsed = false;
-
-                #region Dead Check
-                if (Dead != UnitCheckEnum.NotSet && !Dead.IsSoft()) 
-                {
-                    if (unit.Info.Dead != Dead.BoolValue()) 
-                    {
-                        return false;
-                    }
-                }
-                else if (Dead.IsSoft())
-                {
-                    if (unit.Info.Dead == Dead.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-
-                    softCheckUsed = true;
-                }
-
-                Relation relation = unit.AI.Team.GetRelation(castingUnit.AI.Team);
-                #endregion
-
-                #region Hostile Check
-                if (IsHostile != UnitCheckEnum.NotSet && !IsHostile.IsSoft()) 
-                {
-                    if (relation == Relation.Hostile && !IsHostile.BoolValue())
-                    {
-                        return false;
-                        
-                    }
-                    else if (relation != Relation.Hostile && IsHostile.BoolValue()) 
-                    {
-                        return false;
-                    }
-                }
-                else if (IsHostile.IsSoft()) 
-                {
-                    if (relation == Relation.Hostile && IsHostile.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-                    else if (relation != Relation.Hostile && !IsHostile.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-
-                    softCheckUsed = true;
-                }
-                #endregion
-
-                #region Friendly Check
-                if (IsFriendly != UnitCheckEnum.NotSet && !IsFriendly.IsSoft())
-                {
-                    if (relation == Relation.Friendly && !IsFriendly.BoolValue())
-                    {
-                        return false;
-                    }
-                    else if (relation != Relation.Friendly && IsFriendly.BoolValue())
-                    {
-                        return false;
-                    }
-                }
-                else if (IsFriendly.IsSoft())
-                {
-                    if (relation == Relation.Friendly && IsFriendly.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-                    else if (relation != Relation.Friendly && !IsFriendly.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-
-                    softCheckUsed = true;
-                }
-                #endregion
-
-                #region Neutral Check
-                if (IsNeutral != UnitCheckEnum.NotSet && !IsNeutral.IsSoft())
-                {
-                    if (relation == Relation.Neutral && !IsNeutral.BoolValue())
-                    {
-                        return false;
-                    }
-                    else if (relation != Relation.Neutral && IsNeutral.BoolValue())
-                    {
-                        return false;
-                    }
-                }
-                else if (IsNeutral.IsSoft())
-                {
-                    if (relation == Relation.Neutral && IsNeutral.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-                    else if (relation != Relation.Neutral && !IsNeutral.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-
-                    softCheckUsed = true;
-                }
-                #endregion
-
-                #region Self Check
-                if (Self != UnitCheckEnum.NotSet && !Self.IsSoft())
-                {
-                    if (unit == castingUnit != Self.BoolValue())
-                    {
-                        return false;
-                    }
-                }
-                else if (Self.IsSoft())
-                {
-                    if (unit == castingUnit == Self.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-
-                    softCheckUsed = true;
-                }
-                #endregion
-
-                #region Controlled Check
-                if (IsControlled != UnitCheckEnum.NotSet && !IsControlled.IsSoft())
-                {
-                    if (unit.AI.ControlType == ControlType.Controlled != IsControlled.BoolValue())
-                    {
-                        return false;
-                    }
-                }
-                else if (IsControlled.IsSoft())
-                {
-                    if (unit.AI.ControlType == ControlType.Controlled == IsControlled.BoolValue())
-                    {
-                        softCheck = true;
-                    }
-
-                    softCheckUsed = true;
-                }
-                #endregion
-
-                if (!softCheckUsed) return true;
-                else return softCheck;
-            }
-
-            public static UnitSearchParams _ = new UnitSearchParams();
-        }
+        
 
 
 
@@ -639,7 +437,7 @@ namespace MortalDungeon.Game.Units
 
     public class UnitAIAction 
     {
-        public BaseTile TargetedTile;
+        public Tile TargetedTile;
         public Unit TargetedUnit;
         public Unit CastingUnit;
         public Ability Ability;
@@ -656,9 +454,9 @@ namespace MortalDungeon.Game.Units
         protected CombatScene Scene => CastingUnit.Scene;
         protected TileMap Map => CastingUnit.GetTileMap();
         protected TilePoint TilePosition => CastingUnit.Info.TileMapPosition.TilePoint;
-        protected BaseTile Tile => CastingUnit.Info.TileMapPosition;
+        protected Tile Tile => CastingUnit.Info.TileMapPosition;
 
-        public UnitAIAction(Unit castingUnit, AIAction actionType, Ability ability = null, BaseTile tile = null, Unit unit = null) 
+        public UnitAIAction(Unit castingUnit, AIAction actionType, Ability ability = null, Tile tile = null, Unit unit = null) 
         {
             CastingUnit = castingUnit;
 
@@ -673,5 +471,190 @@ namespace MortalDungeon.Game.Units
         {
             EffectAction?.Invoke();
         }
+    }
+
+    public class UnitSearchParams
+    {
+        public UnitCheckEnum Dead = UnitCheckEnum.NotSet;
+        public UnitCheckEnum IsHostile = UnitCheckEnum.NotSet;
+        public UnitCheckEnum IsFriendly = UnitCheckEnum.NotSet;
+        public UnitCheckEnum IsNeutral = UnitCheckEnum.NotSet;
+        public UnitCheckEnum Self = UnitCheckEnum.NotSet;
+        public UnitCheckEnum IsControlled = UnitCheckEnum.NotSet;
+        public UnitCheckEnum InVision = UnitCheckEnum.NotSet;
+
+        public UnitSearchParams() { }
+
+        public bool CheckUnit(Unit unit, Unit castingUnit)
+        {
+            bool softCheck = false;
+
+            bool softCheckUsed = false;
+
+            #region Dead Check
+            if (Dead != UnitCheckEnum.NotSet && !Dead.IsSoft())
+            {
+                if (unit.Info.Dead != Dead.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (Dead.IsSoft())
+            {
+                if (unit.Info.Dead == Dead.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+
+            Relation relation = unit.AI.Team.GetRelation(castingUnit.AI.Team);
+            #endregion
+
+            #region Hostile Check
+            if (IsHostile != UnitCheckEnum.NotSet && !IsHostile.IsSoft())
+            {
+                if (relation == Relation.Hostile && !IsHostile.BoolValue())
+                {
+                    return false;
+
+                }
+                else if (relation != Relation.Hostile && IsHostile.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (IsHostile.IsSoft())
+            {
+                if (relation == Relation.Hostile && IsHostile.BoolValue())
+                {
+                    softCheck = true;
+                }
+                else if (relation != Relation.Hostile && !IsHostile.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+            #endregion
+
+            #region Friendly Check
+            if (IsFriendly != UnitCheckEnum.NotSet && !IsFriendly.IsSoft())
+            {
+                if (relation == Relation.Friendly && !IsFriendly.BoolValue())
+                {
+                    return false;
+                }
+                else if (relation != Relation.Friendly && IsFriendly.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (IsFriendly.IsSoft())
+            {
+                if (relation == Relation.Friendly && IsFriendly.BoolValue())
+                {
+                    softCheck = true;
+                }
+                else if (relation != Relation.Friendly && !IsFriendly.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+            #endregion
+
+            #region Neutral Check
+            if (IsNeutral != UnitCheckEnum.NotSet && !IsNeutral.IsSoft())
+            {
+                if (relation == Relation.Neutral && !IsNeutral.BoolValue())
+                {
+                    return false;
+                }
+                else if (relation != Relation.Neutral && IsNeutral.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (IsNeutral.IsSoft())
+            {
+                if (relation == Relation.Neutral && IsNeutral.BoolValue())
+                {
+                    softCheck = true;
+                }
+                else if (relation != Relation.Neutral && !IsNeutral.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+            #endregion
+
+            #region Self Check
+            if (Self != UnitCheckEnum.NotSet && !Self.IsSoft())
+            {
+                if (unit == castingUnit != Self.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (Self.IsSoft())
+            {
+                if (unit == castingUnit == Self.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+            #endregion
+
+            #region Controlled Check
+            if (IsControlled != UnitCheckEnum.NotSet && !IsControlled.IsSoft())
+            {
+                if (unit.AI.ControlType == ControlType.Controlled != IsControlled.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (IsControlled.IsSoft())
+            {
+                if (unit.AI.ControlType == ControlType.Controlled == IsControlled.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+            #endregion
+
+            #region Vision Check
+            if (InVision != UnitCheckEnum.NotSet && !InVision.IsSoft())
+            {
+                if (unit.Info.Visible(castingUnit.AI.Team) != InVision.BoolValue())
+                {
+                    return false;
+                }
+            }
+            else if (InVision.IsSoft())
+            {
+                if (unit.Info.Visible(castingUnit.AI.Team) == InVision.BoolValue())
+                {
+                    softCheck = true;
+                }
+
+                softCheckUsed = true;
+            }
+            #endregion
+
+            if (!softCheckUsed) return true;
+            else return softCheck;
+        }
+
+        public static UnitSearchParams _ = new UnitSearchParams();
     }
 }

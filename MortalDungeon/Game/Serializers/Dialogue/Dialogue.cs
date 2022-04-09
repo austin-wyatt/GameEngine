@@ -152,7 +152,7 @@ namespace MortalDungeon.Game.Serializers
         public List<Instructions> Instructions = new List<Instructions>();
 
         [XmlElement("rc")]
-        public Conditional Conditional = Conditional.TRUE;
+        public Conditional Conditional = new Conditional(Conditional.TRUE);
 
         public Response() { }
 

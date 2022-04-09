@@ -25,6 +25,10 @@ namespace MortalDungeon.Game.Abilities
 
         public string Identifier = "";
 
+        public float Danger = 0;
+
+        public List<UnitCondition> Immunities = new List<UnitCondition>();
+
         public TileEffect() { }
 
         public TileEffect(TileEffect effect)
@@ -41,8 +45,8 @@ namespace MortalDungeon.Game.Abilities
         public class TileEffectEventArgs
         {
             public Unit Unit;
-            public BaseTile Tile;
-            public TileEffectEventArgs(Unit unit, BaseTile tile)
+            public Tile Tile;
+            public TileEffectEventArgs(Unit unit, Tile tile)
             {
                 Unit = unit;
                 Tile = tile;
@@ -90,22 +94,22 @@ namespace MortalDungeon.Game.Abilities
         public event TileEffectRoundHandler RoundEnd;
         public event TileEffectRoundHandler RoundStart;
 
-        public virtual void OnSteppedOn(Unit unit, BaseTile tile) 
+        public virtual void OnSteppedOn(Unit unit, Tile tile) 
         {
             SteppedOn?.Invoke(new TileEffectEventArgs(unit, tile));
         }
 
-        public virtual void OnSteppedOff(Unit unit, BaseTile tile)
+        public virtual void OnSteppedOff(Unit unit, Tile tile)
         {
             SteppedOff?.Invoke(new TileEffectEventArgs(unit, tile));
         }
 
-        public virtual void OnTurnStart(Unit unit, BaseTile tile)
+        public virtual void OnTurnStart(Unit unit, Tile tile)
         {
             TurnStart?.Invoke(new TileEffectEventArgs(unit, tile));
         }
 
-        public virtual void OnTurnEnd(Unit unit, BaseTile tile)
+        public virtual void OnTurnEnd(Unit unit, Tile tile)
         {
             TurnEnd?.Invoke(new TileEffectEventArgs(unit, tile));
         }

@@ -54,9 +54,9 @@ namespace MortalDungeon.Game.Structures
         }
 
 
-        public override void SetTileMapPosition(BaseTile baseTile)
+        public override void SetTileMapPosition(Tile baseTile)
         {
-            BaseTile prevTile = Info.TileMapPosition;
+            Tile prevTile = Info.TileMapPosition;
 
             if (prevTile != null)
                 prevTile.RemoveStructure(this);
@@ -67,15 +67,9 @@ namespace MortalDungeon.Game.Structures
 
             TileAction();
 
-            LightObstruction.SetPosition(baseTile);
             VisionGenerator.SetPosition(baseTile.TilePoint);
 
             Scene.OnStructureMoved();
-        }
-
-        public override void CleanUp()
-        {
-            base.CleanUp();
         }
 
         public override void InitializeVisualComponent()
@@ -98,17 +92,17 @@ namespace MortalDungeon.Game.Structures
 
         public virtual void TileAction()
         {
-            List<BaseTile> tiles = GetPatternTiles();
+            List<Tile> tiles = GetPatternTiles();
 
-            foreach (BaseTile tile in tiles)
+            foreach (Tile tile in tiles)
             {
                 tile.Properties.Classification = TileClassification.ImpassableGround;
             }
         }
 
-        public List<BaseTile> GetPatternTiles()
+        public List<Tile> GetPatternTiles()
         {
-            List<BaseTile> list = new List<BaseTile>();
+            List<Tile> list = new List<Tile>();
 
             if (Info.TileMapPosition == null)
                 return list;

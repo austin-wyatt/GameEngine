@@ -15,7 +15,7 @@ namespace MortalDungeon.Game.Abilities
 
     public class TemporaryVision
     {
-        public List<BaseTile> TilesToReveal = new List<BaseTile>();
+        public List<Tile> TilesToReveal = new List<Tile>();
         public HashSet<TileMap> AffectedMaps = new HashSet<TileMap>();
 
         public int Duration = 0;

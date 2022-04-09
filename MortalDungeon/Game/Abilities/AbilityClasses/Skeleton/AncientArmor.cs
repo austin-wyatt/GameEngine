@@ -15,10 +15,10 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class AncientArmor : Ability
+    public class AncientArmor : TemplateRangedSingleTarget
     {
         private int ShieldsGained = 1;
-        public AncientArmor(Unit castingUnit)
+        public AncientArmor(Unit castingUnit) : base(castingUnit)
         {
             Type = AbilityTypes.BuffDefensive;
             CastingUnit = castingUnit;
@@ -31,7 +31,9 @@ namespace MortalDungeon.Game.Abilities
             MaxCharges = 2;
             Charges = 2;
 
-            CanTargetSelf = true;
+            WeightParams.AllyWeight = 1;
+
+            UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
             CanTargetGround = false;
 
             UnitTargetParams.Dead = UnitCheckEnum.False;
@@ -52,37 +54,9 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
-
-            AffectedUnits.Add(CastingUnit);
-
-            TargetAffectedUnits();
-
-            return validTiles;
-        }
-
-
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
-
-            if (AffectedUnits.Contains(unit))
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
-
-            return true;
-        }
-
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             Sound sound = new Sound(Sounds.Select) { Gain = 0.5f, Pitch = GlobalRandom.NextFloat(0.75f, 0.8f) };
             sound.Play();

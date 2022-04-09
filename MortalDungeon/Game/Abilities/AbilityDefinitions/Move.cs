@@ -2,6 +2,7 @@
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Combat;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -17,7 +18,7 @@ namespace MortalDungeon.Game.Abilities
 {
     public class Move : Ability
     {
-        public List<TileClassification> TraversableTypes = new List<TileClassification>();
+        public NavType NavType = NavType.Base;
 
         public Action _moveCancelAction = null;
         public Move(Unit castingUnit, int range = 6)
@@ -56,32 +57,6 @@ namespace MortalDungeon.Game.Abilities
                 FrameIndices = { (int)IconSheetIcons.WalkingBoot },
                 Spritesheet = (int)TextureName.IconSpritesheet
             });
-
-            TraversableTypes.Add(TileClassification.Ground);
-        }
-
-
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            Range = CastingUnit.Info.Energy / GetEnergyCost(); //special case for general move ability
-            
-
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
-            {
-                TraversableTypes = TraversableTypes,
-                Units = units,
-                CastingUnit = CastingUnit,
-                AbilityType = Type,
-                CheckTileLower = true
-            };
-
-            AffectedTiles = tileMap.FindValidTilesInRadius(param);
-            Units = units;
-
-            TrimTiles(AffectedTiles, units);
-            return AffectedTiles;
         }
 
         public override void OnSelect(CombatScene scene, TileMap currentMap)
@@ -93,13 +68,13 @@ namespace MortalDungeon.Game.Abilities
         private object _currentTilesLock = new object();
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
-            List<BaseTile> tiles;
+            List<Tile> tiles;
 
             lock (_currentTilesLock)
             {
-                tiles = new List<BaseTile>(CurrentTiles);
+                tiles = new List<Tile>(CurrentTiles);
             }
 
             if (_path.Count > 0)
@@ -178,7 +153,7 @@ namespace MortalDungeon.Game.Abilities
 
                         Keyframe endOfTileMoveKeyframe = new Keyframe((i - 1) * moveDelay * moveIncrements + moveDelay * moveIncrements);
 
-                        BaseTile currentTile = tiles[i];
+                        Tile currentTile = tiles[i];
                         endOfTileMoveKeyframe.Action = () =>
                         {
                             if (!ApplyTileEnergyCost(currentTile)) 
@@ -300,7 +275,7 @@ namespace MortalDungeon.Game.Abilities
             //}
         }
 
-        protected bool ApplyTileEnergyCost(BaseTile tile) 
+        protected bool ApplyTileEnergyCost(Tile tile) 
         {
             if (!Scene.InCombat)
                 return true;
@@ -334,7 +309,7 @@ namespace MortalDungeon.Game.Abilities
             return true;
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        public override void OnTileClicked(TileMap map, Tile tile)
         {
             if (_path.Count > 0)
             {
@@ -348,11 +323,11 @@ namespace MortalDungeon.Game.Abilities
 
         private Vector4 _pathColor = new Vector4(0.8f, 0.59f, 0.14f, 1);
         private Vector4 _baseSelectionColor = new Vector4();
-        private List<BaseTile> _path = new List<BaseTile>();
+        private List<Tile> _path = new List<Tile>();
         private List<BaseTile> _hoverPath = new List<BaseTile>();
         private List<int> _pathTilesToDelete = new List<int>();
         private bool _evaluatingPath = false;
-        public override void OnHover(BaseTile tile, TileMap map)
+        public override void OnHover(Tile tile, TileMap map)
         {
             if (tile.TilePoint == CastingUnit.Info.TileMapPosition) 
             {
@@ -362,7 +337,7 @@ namespace MortalDungeon.Game.Abilities
                 return;
             }
 
-            if (SelectedTile == null || tile.ObjectID != SelectedTile.ObjectID)
+            if (SelectedTile == null || tile != SelectedTile)
             {
                 if (!_evaluatingPath) 
                 {
@@ -376,7 +351,7 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public void EvaluateHoverPath(BaseTile tile, TileMap map, bool ignoreRange = false)
+        public void EvaluateHoverPath(Tile tile, TileMap map, bool ignoreRange = false)
         {
             if (_evaluatingPath)
                 return;
@@ -392,38 +367,27 @@ namespace MortalDungeon.Game.Abilities
             _evaluatingPath = true;
 
             SelectedTile = tile;
-            List<BaseTile> tiles = new List<BaseTile>();
-            TileMap.PathToPointParameters param;
+            List<Tile> tiles = new List<Tile>();
 
             //attempt to extend the selection from the current path
             if (_path.Count > 0)
             {
-                bool selectedTileInPath = _path.Exists(p => p != null && p.ObjectID == tile.ObjectID);
+                bool selectedTileInPath = _path.Exists(p => p != null && p == tile);
 
                 if (_path[^1] == null)
                 {
                     _evaluatingPath = false;
                     return;
                 }
-                
 
                 //get the path from the last tile to the hovered point
-                param = new TileMap.PathToPointParameters(_path[^1].TilePoint, SelectedTile.TilePoint, range - _path.Count + 1)
-                {
-                    TraversableTypes = TraversableTypes,
-                    Units = Units,
-                    CastingUnit = CastingUnit,
-                    AbilityType = Type,
-                    CheckTileLower = true
-                };
-                tiles = TileMap.GetPathToPoint(param);
+                TileMapManager.NavMesh.GetPathToPoint(_path[^1].ToFeaturePoint(), SelectedTile.ToFeaturePoint(), NavType, out tiles, 
+                    range - _path.Count + 1, pathingUnit: CastingUnit);
 
                 if (tiles.Count == 0 && _path.Count - 1 == range && _path.Count > 1 && !selectedTileInPath)
                 {
-                    param.StartingPoint = _path[^2].TilePoint;
-                    param.Depth = range - _path.Count + 2;
-
-                    tiles = TileMap.GetPathToPoint(param);
+                    TileMapManager.NavMesh.GetPathToPoint(_path[^2].ToFeaturePoint(), SelectedTile.ToFeaturePoint(), NavType, out tiles,
+                        range - _path.Count + 2, pathingUnit: CastingUnit);
                     if (tiles.Count != 0)
                     {
                         for (int i = 0; i < _path.Count - 2; i++)
@@ -434,10 +398,8 @@ namespace MortalDungeon.Game.Abilities
                     else
                     {
                         //the path is too long so we use the default case here
-                        param.StartingPoint = CastingUnit.Info.TileMapPosition;
-                        param.Depth = range;
-
-                        tiles = TileMap.GetPathToPoint(param);
+                        TileMapManager.NavMesh.GetPathToPoint(CastingUnit.Info.TileMapPosition.ToFeaturePoint(), SelectedTile.ToFeaturePoint(), NavType, out tiles,
+                        range, pathingUnit: CastingUnit);
                     }
                 }
                 else if (tiles.Count != 0 || (_path.Count > 1 && _path[^2].TilePoint == tile.TilePoint))
@@ -446,7 +408,7 @@ namespace MortalDungeon.Game.Abilities
                     for (int i = 0; i < _path.Count - 1; i++)
                     {
                         //if the path does exist make sure we aren't backtracking
-                        if (tiles.Exists(t => _path[i] != null && t.ObjectID == _path[i].ObjectID))
+                        if (tiles.Exists(t => _path[i] != null && t == _path[i]))
                         {
                             tiles.Clear();
                             //remove the last tile since we are backtracking
@@ -484,26 +446,17 @@ namespace MortalDungeon.Game.Abilities
                 }
                 else
                 {
-                    //if a path doesn't exist attempt to get one normally
-                    param.StartingPoint = CastingUnit.Info.TileMapPosition;
-                    param.Depth = range;
-
-                    tiles = TileMap.GetPathToPoint(param);
+                    //default case, if a path doesn't exist attempt to get one normally
+                    TileMapManager.NavMesh.GetPathToPoint(CastingUnit.Info.TileMapPosition.ToFeaturePoint(), SelectedTile.ToFeaturePoint(), NavType, out tiles,
+                        range, pathingUnit: CastingUnit);
                 }
 
             }
             else
             {
-                param = new TileMap.PathToPointParameters(CastingUnit.Info.TileMapPosition, SelectedTile.TilePoint, range)
-                {
-                    TraversableTypes = TraversableTypes,
-                    Units = Units,
-                    CastingUnit = CastingUnit,
-                    AbilityType = Type,
-                    CheckTileLower = true
-                };
-
-                tiles = TileMap.GetPathToPoint(param);
+                //default case
+                TileMapManager.NavMesh.GetPathToPoint(CastingUnit.Info.TileMapPosition.ToFeaturePoint(), SelectedTile.ToFeaturePoint(), NavType, out tiles,
+                        range, pathingUnit: CastingUnit);
             }
 
             ClearSelectedTiles();
@@ -559,23 +512,16 @@ namespace MortalDungeon.Game.Abilities
                 range = customRange;
             }
 
-            TileMap.PathToPointParameters param = new TileMap.PathToPointParameters(CastingUnit.Info.TileMapPosition, point, range)
-            {
-                TraversableTypes = TraversableTypes,
-                Units = Units,
-                CastingUnit = CastingUnit,
-                AbilityType = Type,
-                CheckTileLower = true,
-                IgnoreTargetUnit = true
-            };
+            List<Tile> tiles;
 
-            List<BaseTile> tiles = TileMap.GetPathToPoint(param);
+            TileMapManager.NavMesh.GetPathToPoint(CastingUnit.Info.TileMapPosition.ToFeaturePoint(), point.ToFeaturePoint(), NavType, out tiles,
+                        range, pathingUnit: CastingUnit);
 
 
             return (GetPathMovementCost(tiles), tiles.Count);
         }
 
-        private float GetPathMovementCost(List<BaseTile> tiles) 
+        private float GetPathMovementCost(List<Tile> tiles) 
         {
             float value = 0;
 
@@ -652,10 +598,10 @@ namespace MortalDungeon.Game.Abilities
 
 
         private object _moveToTileLock = new object();
-        public void MoveToTile(BaseTile tile, bool ignoreRange = true) 
+        public void MoveToTile(Tile tile, bool ignoreRange = true) 
         {
             Units = TileMapManager.Scene._units;
-            Range = CastingUnit.Info.Energy / GetEnergyCost();
+            Range = GetRange();
 
             Task.Run(() =>
             {
@@ -670,7 +616,7 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public bool CheckPathToTile(BaseTile tile, bool ignoreRange = true)
+        public bool CheckPathToTile(Tile tile, bool ignoreRange = true)
         {
             EvaluateHoverPath(tile, tile.TileMap, ignoreRange: ignoreRange);
             if (_path.Count > 0)
@@ -679,6 +625,11 @@ namespace MortalDungeon.Game.Abilities
             }
 
             return false;
+        }
+
+        public float GetRange()
+        {
+            return CastingUnit.Info.Energy / GetEnergyCost();
         }
     }
 

@@ -121,7 +121,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             Renderer.RenderFrameBuffer(Renderer.StageOneFBO);
             Renderer.StageOneFBO.UnbindFrameBuffer();
 
-
+            
             GL.Clear(ClearBufferMask.DepthBufferBit);
             //RenderingQueue.RenderQueuedLetters();
 
@@ -139,33 +139,34 @@ namespace MortalDungeon.Engine_Classes.Rendering
             RenderingQueue.RenderInstancedTileData();
             //DrawFog();
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-
-
+            
             RenderingQueue.RenderQueuedParticles();
 
             RenderingQueue.RenderQueuedObjects();
             RenderingQueue.RenderQueuedUnits();
-            RenderingQueue.RenderInstancedStructureData();
 
             RenderingQueue.RenderTileQueue();
 
             RenderingQueue.RenderLowPriorityQueue();
 
+            DrawFog();
         }
 
-        //public static void DrawFog()
-        //{
-        //    GL.Enable(EnableCap.StencilTest);
-        //    GL.Disable(EnableCap.DepthTest);
-        //    GL.StencilFunc(StencilFunction.Equal, 1, 0xFF);
-        //    GL.StencilMask(0x00);
-
-        //    RenderingQueue.RenderFogQuad();
 
 
-        //    GL.Enable(EnableCap.DepthTest);
-        //    GL.Disable(EnableCap.StencilTest);
-        //}
+        public static void DrawFog()
+        {
+            GL.Enable(EnableCap.StencilTest);
+            GL.StencilMask(0xFF);
+            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
+
+            GL.Disable(EnableCap.DepthTest);
+
+            RenderingQueue.RenderFogQuad();
+            GL.Disable(EnableCap.StencilTest);
+
+            GL.Enable(EnableCap.DepthTest);
+        }
     }
 
 }

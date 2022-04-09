@@ -52,6 +52,8 @@ namespace MortalDungeon.Game.Serializers
         {
             DataBlock<Feature> block;
 
+            info.CalculateLoadRadius();
+
             int blockId = info.Id / FeatureBlockSerializer.BLOCK_SIZE;
 
             if (LoadedInfoBlocks.TryGetValue(blockId, out DataBlock<Feature> foundBlock))

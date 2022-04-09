@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
             CastingUnit = castingUnit;
 
             CanTargetGround = false;
-            CanTargetSelf = true;
+            UnitTargetParams.Self = UnitCheckEnum.True;
             UnitTargetParams.IsControlled = UnitCheckEnum.True;
 
             MaxCharges = -1;
@@ -57,7 +57,7 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             if (PlayerParty.Grouped)
             {

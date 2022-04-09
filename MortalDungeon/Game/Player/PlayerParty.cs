@@ -79,7 +79,7 @@ namespace MortalDungeon.Game.Player
         /// Takes the current unit group and attemps to ungroup them either automatically or manually <para/>
         /// Returns whether ungrouping the units succeeded or not.
         /// </summary>
-        public static bool UngroupUnits(BaseTile targetTile, bool autoPlace = false)
+        public static bool UngroupUnits(Tile targetTile, bool autoPlace = false)
         {
             if (autoPlace)
             {
@@ -102,7 +102,7 @@ namespace MortalDungeon.Game.Player
 
                 int currUnit = 0;
 
-                void GroundSelectUnitAction(BaseTile tile)
+                void GroundSelectUnitAction(Tile tile)
                 {
                     void deselectAbility()
                     {
@@ -190,16 +190,15 @@ namespace MortalDungeon.Game.Player
             }
         }
 
-        public static bool PlaceUnits(BaseTile center, int aoe = 5)
+        public static bool PlaceUnits(Tile center, int aoe = 5)
         {
             //get flood filled tile aoe around the center point and place all units randomly around there.
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(center, aoe)
             {
-                TraversableTypes = new List<TileClassification>() { TileClassification.Ground },
                 Units = Scene._units,
             };
 
-            List<BaseTile> validTiles = center.TileMap.FindValidTilesInRadius(param);
+            List<Tile> validTiles = center.TileMap.FindValidTilesInRadius(param);
 
             if(validTiles.Count < UnitsInParty.Count)
             {

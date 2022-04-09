@@ -1,6 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
@@ -14,7 +13,10 @@ namespace MortalDungeon.Game.Units
 {
     public static class VisionManager
     {
-        public static Dictionary<UnitTeam, Dictionary<TilePoint, bool>> ConsolidatedVision = new Dictionary<UnitTeam, Dictionary<TilePoint, bool>>();
+        /// <summary>
+        /// The integer portion of the dictionary stores how many sources have vision of the tile.
+        /// </summary>
+        public static Dictionary<UnitTeam, Dictionary<TilePoint, int>> ConsolidatedVision = new Dictionary<UnitTeam, Dictionary<TilePoint, int>>();
         public static CombatScene Scene;
 
         public static bool RevealAll = true;
@@ -33,13 +35,13 @@ namespace MortalDungeon.Game.Units
             lock (_consolidatedVisionLock)
             {
                 //clear the consolidated vision dictionary for the team
-                if (ConsolidatedVision.TryGetValue(team, out Dictionary<TilePoint, bool> result))
+                if (ConsolidatedVision.TryGetValue(team, out Dictionary<TilePoint, int> result))
                 {
                     result.Clear();
                 }
                 else
                 {
-                    ConsolidatedVision.Add(team, new Dictionary<TilePoint, bool>());
+                    ConsolidatedVision.Add(team, new Dictionary<TilePoint, int>());
                 }
             }
 
@@ -63,7 +65,14 @@ namespace MortalDungeon.Game.Units
                     {
                         foreach (var tile in visionGen.VisibleTiles)
                         {
-                            dict.TryAdd(tile, true);
+                            if(dict.ContainsKey(tile))
+                            {
+                                dict[tile]++;
+                            }
+                            else
+                            {
+                                dict.TryAdd(tile, 1);
+                            }
                         }
                     }
                 }
@@ -74,20 +83,42 @@ namespace MortalDungeon.Game.Units
                     {
                         for (int i = 0; i < tempVision.TilesToReveal.Count; i++)
                         {
-                            dict.TryAdd(tempVision.TilesToReveal[i], true);
+                            if (dict.ContainsKey(tempVision.TilesToReveal[i]))
+                            {
+                                dict[tempVision.TilesToReveal[i]]++;
+                            }
+                            else
+                            {
+                                dict.TryAdd(tempVision.TilesToReveal[i], 1);
+                            }
                         }
                     }
                 }
             }
 
+            Scene.CalculateRevealedUnits();
+            Scene.EvaluateCombat(team);
 
             Task.Run(() =>
             {
-                Scene.CalculateRevealedUnits();
                 Scene.HideNonVisibleObjects();
-                Scene.EvaluateCombat();
+                if(team == Scene.VisibleTeam)
+                {
+                    Scene.RenderDispatcher.DispatchAction(Scene._structureDispatchObject, Scene.CreateStructureInstancedRenderData);
+                }
+
+                lock (_consolidatedActionsLock)
+                {
+                    for (int i = 0; i < VisionConsolidatedActions.Count; i++)
+                    {
+                        VisionConsolidatedActions.Pop().Invoke();
+                    }
+                }
             });
         }
+
+        private static Stack<Action> VisionConsolidatedActions = new Stack<Action>();
+        private static object _consolidatedActionsLock = new object();
 
         public static void CalculateVisionForUnits(IEnumerable<Unit> units)
         {
@@ -112,20 +143,6 @@ namespace MortalDungeon.Game.Units
             ConsolidateVision(unit.AI.Team);
         }
 
-        private static Dictionary<FeaturePoint, LightObstruction> _sceneLightObstructions = new Dictionary<FeaturePoint, LightObstruction>();
-        public static void PrepareLightObstructions(IEnumerable<LightObstruction> obstructions)
-        {
-            if (Scene.ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
-                return;
-
-            _sceneLightObstructions.Clear();
-
-            foreach (var obs in obstructions)
-            {
-                _sceneLightObstructions.TryAdd(new FeaturePoint(obs.Position), obs);
-            }
-        }
-
         public static void CalculateVision(VisionGenerator generator, bool updateVisibleMaps = true)
         {
             var affectedMapsOld = generator.AffectedMaps;
@@ -136,9 +153,9 @@ namespace MortalDungeon.Game.Units
             }
             generator.AffectedMaps = new HashSet<TileMap>();
 
-            BaseTile tile = TileMapHelpers.GetTile(new FeaturePoint(generator.Position));
+            Tile tile = TileMapHelpers.GetTile(new FeaturePoint(generator.Position));
 
-            List<BaseTile> tileList = new List<BaseTile>();
+            List<Tile> tileList = new List<Tile>();
 
             tile.TileMap.GetRingOfTiles(tile, tileList, (int)generator.Radius);
 
@@ -147,11 +164,14 @@ namespace MortalDungeon.Game.Units
 
             for (int i = 0; i < tileList.Count / 6; i++)
             {
+                if (tileList[i] == null)
+                    continue;
+
                 var line = tile.TileMap.GetLineOfTiles(tile, tileList[i]);
 
                 List<Direction> digitalLine = new List<Direction>();
 
-                BaseTile prev = null;
+                Tile prev = null;
 
                 foreach (var t in line)
                 {
@@ -178,7 +198,7 @@ namespace MortalDungeon.Game.Units
                 {
                     var line = digitalLines[j];
 
-                    BaseTile currentTile = tile;
+                    Tile currentTile = tile;
 
                     for(int k = 0; k < line.Count; k++)
                     {
@@ -195,13 +215,9 @@ namespace MortalDungeon.Game.Units
                         }
                         generator.AffectedMaps.Add(currentTile.TileMap);
 
-                        //if (generator.Team == Scene.VisibleTeam)
-                        //{
-                        //    currentTile.Update();
-                        //}
-
-                        if (_sceneLightObstructions.TryGetValue(currentTile.ToFeaturePoint(), out var obstruction) || 
-                            ((tile.GetVisionHeight() - currentTile.GetVisionHeight()) <= -2))
+                        bool currTileHigher = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) <= -2;
+                        bool currTileLower = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) >= 1;
+                        if ((currentTile.BlocksType(BlockingType.Vision) && !currTileLower) || currTileHigher)
                         {
                             break;
                         }
@@ -209,19 +225,104 @@ namespace MortalDungeon.Game.Units
                 }
             }
 
+
             if (generator.Team == Scene.VisibleTeam && updateVisibleMaps)
             {
-                foreach (var map in generator.AffectedMaps)
+                void updateVision()
                 {
-                    map.UpdateTile(map.Tiles[0]);
+                    foreach (var map in generator.AffectedMaps)
+                    {
+                        map.UpdateTile();
+                    }
+
+                    foreach (var map in affectedMapsOld)
+                    {
+                        map.UpdateTile();
+                    }
                 }
 
-                foreach (var map in affectedMapsOld)
+                lock (_consolidatedActionsLock)
                 {
-                    map.UpdateTile(map.Tiles[0]);
+                    VisionConsolidatedActions.Push(updateVision);
                 }
             }
         }
+
+        /// <summary>
+        /// Calculates what can see the passed VisionGenerator in a given radius.
+        /// (ie the height calculation is reversed as the edges of the radius -> center is what we care about)
+        /// </summary>
+        public static List<List<Tile>> CalculateVisionLinesToGenerator(VisionGenerator generator)
+        {
+            List<List<Tile>> visionLines = new List<List<Tile>>();
+
+            Tile tile = TileMapHelpers.GetTile(new FeaturePoint(generator.Position));
+
+            List<Tile> tileList = new List<Tile>();
+
+            tile.TileMap.GetRingOfTiles(tile, tileList, (int)generator.Radius);
+
+            #region precalculate this later
+            List<List<Direction>> digitalLines = new List<List<Direction>>();
+
+            for (int i = 0; i < tileList.Count / 6; i++)
+            {
+                if (tileList[i] == null)
+                    continue;
+
+                var line = tile.TileMap.GetLineOfTiles(tile, tileList[i]);
+
+                List<Direction> digitalLine = new List<Direction>();
+
+                Tile prev = null;
+
+                foreach (var t in line)
+                {
+                    if (prev != null)
+                    {
+                        digitalLine.Add(FeatureEquation.DirectionBetweenTiles(prev, t));
+                    }
+
+                    prev = t;
+                }
+                digitalLines.Add(digitalLine);
+            }
+            #endregion
+
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < digitalLines.Count; j++)
+                {
+                    var visionLine = new List<Tile>();
+                    visionLines.Add(visionLine);
+
+                    var line = digitalLines[j];
+
+                    Tile currentTile = tile;
+
+                    for (int k = 0; k < line.Count; k++)
+                    {
+                        var dir = line[k];
+
+                        currentTile = tile.TileMap.GetNeighboringTile(currentTile, (Direction)((int)(dir + i) % 6));
+
+                        if (currentTile == null)
+                            break;
+
+                        visionLine.Add(currentTile);
+
+                        bool currTileHigher = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) <= -2;
+                        bool currTileLower = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) >= 2;
+                        if ((currentTile.BlocksType(BlockingType.Vision) && !currTileHigher) || currTileLower)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return visionLines;
+        } 
 
         public static void SetRevealAll(bool revealAll)
         {
@@ -235,13 +336,14 @@ namespace MortalDungeon.Game.Units
                 {
                     foreach (var map in TileMapManager.VisibleMaps)
                     {
-                        map.UpdateTile(map.Tiles[0]);
+                        map.UpdateTile();
                     }
                 }
 
                 Scene.CalculateRevealedUnits();
                 Scene.HideNonVisibleObjects();
-                Scene.EvaluateCombat();
+                Scene.EvaluateCombat(Scene.VisibleTeam);
+                Scene.RenderDispatcher.DispatchAction(Scene._structureDispatchObject, Scene.CreateStructureInstancedRenderData);
             }
         }
     }

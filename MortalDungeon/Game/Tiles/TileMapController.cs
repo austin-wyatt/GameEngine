@@ -69,7 +69,6 @@ namespace MortalDungeon.Game.Tiles
                 baseTile = new BaseTile(tilePosition, new TilePoint(i, -1, null));
                 baseTile.SetRender(false);
 
-                baseTile.DefaultColor = _Colors.TranslucentBlue;
                 baseTile.SetColor(_Colors.TranslucentBlue);
 
                 baseTile.Properties.Type = (TileType)3;
@@ -99,7 +98,7 @@ namespace MortalDungeon.Game.Tiles
             return _selectionTilePool;
         }
 
-        public void SelectTiles(List<BaseTile> tiles, TileSelectionType type = TileSelectionType.Full)
+        public void SelectTiles(List<Tile> tiles, TileSelectionType type = TileSelectionType.Full)
         {
             //if (tiles.Count > MAX_SELECTION_TILES)
             //    throw new Exception("Attempted to select " + tiles.Count + " tiles while the maximum was " + MAX_SELECTION_TILES + " in tile map " + ObjectID);
@@ -112,7 +111,7 @@ namespace MortalDungeon.Game.Tiles
 
 
         public object _selectLock = new object();
-        public BaseTile SelectTile(BaseTile tile, TileSelectionType type = TileSelectionType.Full)
+        public BaseTile SelectTile(Tile tile, TileSelectionType type = TileSelectionType.Full)
         {
             lock (_selectLock)
             {
@@ -124,7 +123,6 @@ namespace MortalDungeon.Game.Tiles
                         var baseTile = new BaseTile(tilePosition, new TilePoint(i, -1, null));
                         baseTile.SetRender(false);
 
-                        baseTile.DefaultColor = _Colors.TranslucentBlue;
                         baseTile.SetColor(_Colors.TranslucentBlue);
 
                         _selectionTilePool.Push(baseTile);
@@ -152,17 +150,21 @@ namespace MortalDungeon.Game.Tiles
                         //add other zOffsets here to prevent z fighting when a tile is selected multiple times
                 }
 
-                Vector3 pos = new Vector3
-                {
-                    X = tile.Position.X,
-                    Y = tile.Position.Y,
-                    Z = tile.Position.Z + zOffset
-                };
+                //Vector3 pos = new Vector3
+                //{
+                //    X = tile.Position.X,
+                //    Y = tile.Position.Y,
+                //    Z = tile.Position.Z + zOffset
+                //};
+
+                Vector3 pos = new Vector3(tile.Position);
+                pos.Z += zOffset;
 
                 selectionTile.TilePoint.X = tile.TilePoint.X;
                 selectionTile.TilePoint.Y = tile.TilePoint.Y;
                 selectionTile.TilePoint.Layer = tile.TilePoint.Layer;
                 selectionTile.TilePoint.ParentTileMap = tile.TileMap;
+                selectionTile.TilePoint.MapPoint = tile.TileMap.TileMapCoords;
                 selectionTile.TileMap = tile.TileMap;
                 selectionTile.SetPosition(pos);
                 selectionTile.SetRender(true);
@@ -243,7 +245,7 @@ namespace MortalDungeon.Game.Tiles
             return _hoveredTileList;
         }
 
-        public void HoverTile(BaseTile tile)
+        public void HoverTile(Tile tile)
         {
             Vector3 pos = new Vector3
             {
@@ -264,7 +266,7 @@ namespace MortalDungeon.Game.Tiles
             HoveredTile.SetRender(true);
         }
 
-        public BaseTile _hoveredTile = null;
+        public Tile _hoveredTile = null;
         public void EndHover()
         {
             if (_hoveredTile != null)

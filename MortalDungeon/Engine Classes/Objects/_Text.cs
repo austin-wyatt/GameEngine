@@ -582,10 +582,11 @@ namespace MortalDungeon.Engine_Classes
                 {
                     if (i > index) 
                     {
-                        Letters[i].Position.X = Position.X + GetOffsetAtIndex(i - 1);
-                        Letters[i].Position.Y = Position.Y + GetYOffsetAtIndex(i - 1);
+                        Vector3 pos = Letters[i].Position;
+                        pos.X = Position.X + GetOffsetAtIndex(i - 1);
+                        pos.Y = Position.Y + GetYOffsetAtIndex(i - 1);
 
-                        Letters[i].SetPosition(Letters[i].Position);
+                        Letters[i].SetPosition(pos);
                         Letters[i].BaseObjects[0].ID--;
                     }
                 }

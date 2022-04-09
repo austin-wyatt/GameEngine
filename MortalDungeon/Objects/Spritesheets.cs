@@ -75,6 +75,8 @@ namespace MortalDungeon.Objects
             Name = "TileSheet"
         };
 
+        public static readonly Spritesheet[] TileSheets = new Spritesheet[] { TileSheet, null, null };
+
         public static Spritesheet TileOverlaySpritesheet = new Spritesheet("Resources/TileOverlaySpritesheet.png", TextureName.TileOverlaySpritesheet)
         {
             Offset = 128,
@@ -156,7 +158,12 @@ namespace MortalDungeon.Objects
     public static class Textures 
     {
         public static readonly Texture GEN_DIFFUSE_MAP = Texture.LoadFromFile("Resources/GEN_PURPOSE_DIFFUSE.png");
-        public static readonly Texture GEN_AMBIENT_MAP = Texture.LoadFromFile("Resources/GEN_PURPOSE_AMBIENT.png");
+
+        public static Spritesheet GEN_AMBIENT_MAP = new Spritesheet("Resources/GEN_PURPOSE_DIFFUSE.png", TextureName.FogTexture)
+        {
+            Rows = 1,
+            Columns = 1
+        };
 
         public static Spritesheet TentTexture = new Spritesheet("Resources/3D models/Canvas texture.png", TextureName.SphereTexture)
         {

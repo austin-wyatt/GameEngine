@@ -1,16 +1,18 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.UIComponents;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Game.Units.AIFunctions;
 using MortalDungeon.Objects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class TemplateRangedSingleTarget : Ability
+    public partial class TemplateRangedSingleTarget : Ability
     {
         public TemplateRangedSingleTarget(Unit castingUnit, AbilityClass abilityClass = AbilityClass.Unknown, int range = 1, float damage = 0)
         {
@@ -37,45 +39,85 @@ namespace MortalDungeon.Game.Abilities
             });
 
             AbilityClass = abilityClass;
-        }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            if (position == null)
+            UnitTargetParams = new UnitSearchParams()
             {
-                position = CastingUnit.Info.TileMapPosition;
-            }
-
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(position, Range)
-            {
-                TraversableTypes = TileMapConstants.AllTileClassifications,
-                Units = units,
-                CastingUnit = CastingUnit
+                Dead = UnitCheckEnum.False,
+                IsFriendly = UnitCheckEnum.SoftTrue,
+                IsHostile = UnitCheckEnum.SoftTrue,
+                IsNeutral = UnitCheckEnum.SoftTrue,
+                Self = UnitCheckEnum.False,
+                InVision = UnitCheckEnum.True,
             };
-
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-
-            TrimTiles(validTiles, units, validUnits: validUnits);
-
-            TargetAffectedUnits();
-
-            return validTiles;
         }
 
-        public override bool UnitInRange(Unit unit, BaseTile position = null)
+        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+            List<Unit> units = default, Tile position = null)
         {
             if (position == null)
             {
                 position = CastingUnit.Info.TileMapPosition;
             }
 
-            List<Unit> validUnits = new List<Unit>();
+            var unitsInRadius = UnitPositionManager.GetUnitsInRadius((int)Range, position.ToFeaturePoint());
 
-            var tiles = GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit }, position, validUnits: validUnits);
+            affectedTiles = new List<Tile>();
+            affectedUnits = new List<Unit>();
 
-            return validUnits.Exists(u => u.ObjectID == unit.ObjectID);
+            foreach (var unit in unitsInRadius)
+            {
+                bool valid = true;
+
+                if(!UnitTargetParams.CheckUnit(unit, CastingUnit))
+                {
+                    continue;
+                }
+
+                if (RequiresLineToTarget)
+                {
+                    var lineOfTiles = TileMap.GetLineOfTiles(position, unit.Info.TileMapPosition);
+
+                    for(int i = 0; i < lineOfTiles.Count; i++)
+                    {
+                        if (lineOfTiles[i].BlocksType(BlockingType.Abilities))
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (valid)
+                {
+                    affectedUnits.Add(unit);
+                    affectedTiles.Add(unit.Info.TileMapPosition);
+                }
+            }
+        }
+
+        public override bool GetPositionValid(TilePoint sourcePos, TilePoint destinationPos)
+        {
+            int distanceBetweenPoints = TileMap.GetDistanceBetweenPoints(sourcePos, destinationPos);
+
+            if (distanceBetweenPoints > Range || distanceBetweenPoints < MinRange)
+            {
+                return false;
+            }
+
+            if (RequiresLineToTarget)
+            {
+                var lineOfTiles = TileMap.GetLineOfTiles(sourcePos, destinationPos);
+
+                for (int i = 0; i < lineOfTiles.Count; i++)
+                {
+                    if (lineOfTiles[i].BlocksType(BlockingType.Abilities))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         public override bool OnUnitClicked(Unit unit)
@@ -83,7 +125,7 @@ namespace MortalDungeon.Game.Abilities
             if (!base.OnUnitClicked(unit))
                 return false;
 
-            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
+            if (AffectedUnits.FindIndex(u => u == unit) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
             {
                 SelectedUnit = unit;
                 EnactEffect();
@@ -94,7 +136,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
 
@@ -111,98 +153,6 @@ namespace MortalDungeon.Game.Abilities
             return instance;
         }
 
-        public override UnitAIAction GetAction(List<Unit> unitsInCombat)
-        {
-            var action = new UnitAIAction(CastingUnit, AIAction.MoveCloser);
-
-            if (!CanCast())
-                return action;
-
-            //Find all movements that can be moved to and attacked.
-            //Calculate the probably of wanting to do that based on the parameters such as movement aversion, bloodthirsty, etc
-            //Pick the unit with the best weight
-
-
-            var enemies = unitsInCombat.FindAll(u => u.AI.Team.GetRelation(CastingUnit.AI.Team) == Relation.Hostile);
-
-            List<PotentialAIAction> potentialActions = new List<PotentialAIAction>();
-
-            foreach (var enemy in enemies)
-            {
-                if (UnitInRange(enemy))
-                {
-                    PotentialAIAction pot = new PotentialAIAction();
-
-                    pot.TargetUnit = enemy;
-                    pot.Weight += 3; //has action 
-
-                    potentialActions.Add(pot);
-                }
-                else if (AIFunctions.GetPathToPointInRangeOfAbility(CastingUnit, enemy, this, out var path, out float pathCost))
-                {
-                    PotentialAIAction pot = new PotentialAIAction();
-
-                    pot.TargetUnit = enemy;
-                    pot.Weight += 3; //has action 
-                    pot.PathCost = pathCost;
-
-                    pot.Weight += (1 - enemy.Info.Health / enemy.Info.MaxHealth) * CastingUnit.AI.Bloodthirsty;
-
-                    pot.Weight -= pathCost * CastingUnit.AI.MovementAversion;
-
-                    pot.Path = path;
-
-                    potentialActions.Add(pot);
-                }
-            }
-
-            PotentialAIAction chosenAction = null;
-
-            foreach (PotentialAIAction pot in potentialActions)
-            {
-                if (chosenAction == null || chosenAction.Weight < pot.Weight)
-                {
-                    chosenAction = pot;
-                }
-            }
-
-            if (chosenAction != null)
-            {
-                action.Weight = chosenAction.Weight;
-
-                action.Weight += (float)new Random().NextDouble() * 2; //fuzz the weight a bit
-
-                action.EffectAction = () =>
-                {
-                    if (chosenAction.Path != null && chosenAction.Path.Count > 0)
-                    {
-                        CastingUnit.Info._movementAbility.CurrentTiles = chosenAction.Path;
-
-                        void effectEnded()
-                        {
-                            SelectedUnit = chosenAction.TargetUnit;
-                            EnactEffect();
-
-                            CastingUnit.AI.BeginNextAction();
-
-                            CastingUnit.Info._movementAbility.EffectEndedAction -= effectEnded;
-                        }
-
-                        CastingUnit.Info._movementAbility.EffectEndedAction += effectEnded;
-
-                        CastingUnit.Info._movementAbility.EnactEffect();
-                    }
-                    else
-                    {
-                        SelectedUnit = chosenAction.TargetUnit;
-                        EnactEffect();
-
-                        CastingUnit.AI.BeginNextAction();
-                    }
-                };
-            }
-
-            return action;
-        }
+        
     }
 }

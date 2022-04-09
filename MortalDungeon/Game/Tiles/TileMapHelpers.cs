@@ -22,11 +22,7 @@ namespace MortalDungeon.Game.Tiles
         public static TileMap _topLeftMap = null;
         public static bool IsValidTile(FeaturePoint point)
         {
-            Vector2i topLeftCoord = GetTopLeftTilePosition();
-
-            Vector2i botRightCoord = topLeftCoord + new Vector2i(_topLeftMap.Width * TileMapManager.LOAD_DIAMETER, _topLeftMap.Height * TileMapManager.LOAD_DIAMETER);
-
-            return point.X >= topLeftCoord.X && point.X <= botRightCoord.X && point.Y >= topLeftCoord.Y && point.Y <= botRightCoord.Y;
+            return TileMapManager.LoadedMaps.ContainsKey(point.ToTileMapPoint());
         }
 
         public static bool IsValidTile(int xIndex, int yIndex, TileMap map)
@@ -79,7 +75,7 @@ namespace MortalDungeon.Game.Tiles
             return point;
         }
 
-        public static BaseTile GetTile(int xIndex, int yIndex, TileMap map)
+        public static Tile GetTile(int xIndex, int yIndex, TileMap map)
         {
             int currX;
             int currY;
@@ -88,6 +84,11 @@ namespace MortalDungeon.Game.Tiles
             int mapY = (int)Math.Floor((float)(map.TileMapCoords.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y + yIndex) / TileMapManager.TILE_MAP_DIMENSIONS.Y);
 
             TileMapPoint calculatedPoint = new TileMapPoint(mapX, mapY);
+
+            if(calculatedPoint == map.TileMapCoords)
+            {
+                return map.GetLocalTile(xIndex, yIndex);
+            }
 
             if (TileMapManager.LoadedMaps.TryGetValue(calculatedPoint, out var foundMap))
             {
@@ -116,19 +117,46 @@ namespace MortalDungeon.Game.Tiles
             return null;
         }
 
-        public static BaseTile GetTile(int xIndex, int yIndex)
+        public static Tile GetTile(int xIndex, int yIndex)
         {
             return GetTile(xIndex, yIndex, _topLeftMap);
         }
 
-        public static BaseTile GetTile(FeaturePoint point)
+        public static Tile GetTile(FeaturePoint point)
         {
-            Vector2i topLeftCoord = GetTopLeftTilePosition();
+            var mapPoint = point.ToTileMapPoint();
+            if(TileMapManager.LoadedMaps.TryGetValue(mapPoint, out var tileMap))
+            {
+                int currX;
+                int currY;
 
-            return GetTile(point.X - topLeftCoord.X, point.Y - topLeftCoord.Y);
+                if (point.X < 0)
+                {
+                    currX = TileMapManager.TILE_MAP_DIMENSIONS.X - Math.Abs(point.X) % TileMapManager.TILE_MAP_DIMENSIONS.X;
+                    currX = currX == TileMapManager.TILE_MAP_DIMENSIONS.X ? 0 : currX;
+                }
+                else
+                {
+                    currX = point.X % TileMapManager.TILE_MAP_DIMENSIONS.X;
+                }
+
+                if (point.Y < 0)
+                {
+                    currY = TileMapManager.TILE_MAP_DIMENSIONS.Y - Math.Abs(point.Y) % TileMapManager.TILE_MAP_DIMENSIONS.Y;
+                    currY = currY == TileMapManager.TILE_MAP_DIMENSIONS.Y ? 0 : currY;
+                }
+                else
+                {
+                    currY = point.Y % TileMapManager.TILE_MAP_DIMENSIONS.Y;
+                }
+
+                return tileMap.GetLocalTile(currX, currY);
+            }
+
+            return null;
         }
 
-        public static BaseTile GetTile(TilePoint point)
+        public static Tile GetTile(TilePoint point)
         {
             return GetTile(point.X, point.Y, point.ParentTileMap);
         }

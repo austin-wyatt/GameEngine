@@ -15,9 +15,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Shoot : Ability
+    public class Shoot : TemplateRangedSingleTarget
     {
-        public Shoot(Unit castingUnit, int range = 6, int minRange = 2, float damage = 10)
+        public Shoot(Unit castingUnit, int range = 6, int minRange = 2, float damage = 10) : base(castingUnit)
         {
             Type = AbilityTypes.RangedAttack;
             DamageType = DamageType.Piercing;
@@ -37,85 +37,16 @@ namespace MortalDungeon.Game.Abilities
             //Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BowAndArrow, Spritesheets.IconSheet, true);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-
-            //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-            List<Unit> unitsInCastRadius = VisionHelpers.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
-            
-            TrimUnits(unitsInCastRadius, false, MinRange);
-
-            TargetAffectedUnits();
-
-            return new List<BaseTile>();
-        }
-
-        public override bool UnitInRange(Unit unit, BaseTile position = null)
-        {
-            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-
-            if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange)
-            {
-                return false;
-            }
-
-            var tempVision = new TemporaryVisionParams()
-            {
-                Unit = CastingUnit,
-                TemporaryPosition = point
-            };
-
-            if (VisionHelpers.PointInVision(unit.Info.TileMapPosition, CastingUnit.AI.Team, new List<TemporaryVisionParams> { tempVision }))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
-
-            if (unit.AI.Team != CastingUnit.AI.Team && AffectedUnits.FindIndex(u => u.ObjectID == unit.ObjectID) != -1)
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
-
-            return true;
-        }
-
-        public override void OnCast()
-        {
-            TileMap.Controller.DeselectTiles();
-
-            base.OnCast();
-        }
-
-        public override void OnAICast()
-        {
-            base.OnAICast();
-        }
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
-
+            BeginEffect();
             Sound sound = new Sound(Sounds.Shoot) { Gain = 0.75f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
             sound.Play();
 
             Casted();
 
             GameObject arrow = new GameObject(Spritesheets.ObjectSheet, 0);
-
-            //arrow.SetScale(1 / WindowConstants.AspectRatio, 1, 1);
-
-
 
             Vector3 a = CastingUnit.Position;
             Vector3 b = SelectedUnit.Position;
@@ -139,8 +70,6 @@ namespace MortalDungeon.Game.Abilities
             int samples = (int) dist;
 
             Vector3 delta = (SelectedUnit.Position - CastingUnit.Position) / samples;
-
-
 
             TimedAnimation shootAnimation = new TimedAnimation();
 

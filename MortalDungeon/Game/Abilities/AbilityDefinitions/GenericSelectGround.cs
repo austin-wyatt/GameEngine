@@ -12,7 +12,7 @@ namespace MortalDungeon.Game.Abilities
 {
     public class GenericSelectGround : Ability
     {
-        public Action<BaseTile> OnGroundSelected = null;
+        public Action<Tile> OnGroundSelected = null;
 
         public GenericSelectGround(Unit castingUnit, int range = 3)
         {
@@ -36,20 +36,16 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
+        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+            List<Unit> units = default, Tile position = null)
         {
-            base.GetValidTileTargets(tileMap);
-
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
-                TraversableTypes = new List<TileClassification>() { TileClassification.Ground },
                 Units = units,
                 CastingUnit = CastingUnit
             };
 
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-
-            TrimTiles(validTiles, units);
+            List<Tile> validTiles = tileMap.FindValidTilesInRadius(param);
 
             if (CastingUnit.AI.ControlType == ControlType.Controlled && CanTargetGround)
             {
@@ -59,10 +55,11 @@ namespace MortalDungeon.Game.Abilities
                 });
             }
 
-            return validTiles;
+            affectedTiles = validTiles;
+            affectedUnits = new List<Unit>();
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        public override void OnTileClicked(TileMap map, Tile tile)
         {
             if (AffectedTiles.Exists(t => t == tile))
             {
@@ -89,7 +86,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             Casted();
             EffectEnded();

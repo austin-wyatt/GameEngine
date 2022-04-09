@@ -48,6 +48,7 @@ namespace MortalDungeon.Game.Units
     /// These are flags inherent to abilities/buffs <para/>
     /// This will be a very large enum.
     /// </summary>
+    [Flags]
     public enum UnitCondition
     {
         None,
@@ -80,7 +81,7 @@ namespace MortalDungeon.Game.Units
         public Unit Unit;
 
         [XmlIgnore]
-        public BaseTile TileMapPosition;
+        public Tile TileMapPosition;
 
         [XmlIgnore]
         public TilePoint TemporaryPosition = null; //used as a placeholder position for calculating things like vision before a unit moves
@@ -153,7 +154,7 @@ namespace MortalDungeon.Game.Units
 
         public bool NonCombatant = false;
 
-        public int Height = 1;
+        public float Height = 1;
         //public int VisionRadius => _visionRadius + (!Scene.InCombat && Unit.AI.ControlType == ControlType.Controlled ? OUT_OF_COMBAT_VISION : 0);
         //public int _visionRadius = 6;
 
@@ -191,11 +192,13 @@ namespace MortalDungeon.Game.Units
         public void AddBuff(Buff buff)
         {
             BuffManager.AddBuff(buff);
+            Unit?.OnStateChanged();
         }
 
         public void RemoveBuff(Buff buff)
         {
             BuffManager.RemoveBuff(buff);
+            Unit?.OnStateChanged();
         }
 
         public bool CanUseAbility(Ability ability)

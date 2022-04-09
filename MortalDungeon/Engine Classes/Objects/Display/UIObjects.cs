@@ -626,6 +626,19 @@ namespace MortalDungeon.Engine_Classes
             return returnDim;
         }
 
+        public void SetCameraPerspective(bool camPerspective)
+        {
+            foreach(var child in Children)
+            {
+                child.SetCameraPerspective(camPerspective);
+            }
+
+            if(_baseObject != null)
+            {
+                _baseObject.BaseFrame.CameraPerspective = camPerspective;
+            }
+        }
+
         /// <summary>
         /// Actually a preorder search now but I'm leaving the breadth first search code commented out
         /// </summary>

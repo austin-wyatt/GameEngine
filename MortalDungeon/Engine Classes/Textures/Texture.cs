@@ -276,6 +276,11 @@ namespace MortalDungeon.Engine_Classes
             UsedTextures[unit] = TextureId;
         }
 
+        public static void Use(TextureUnit unit, int handle)
+        {
+            GL.ActiveTexture(unit);
+            GL.BindTexture(TextureTarget.Texture2D, handle);
+        }
 
         private void _Dispose()
         {

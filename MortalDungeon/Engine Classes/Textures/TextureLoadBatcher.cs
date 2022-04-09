@@ -8,6 +8,7 @@ namespace MortalDungeon.Engine_Classes
     public static class TextureLoadBatcher
     {
         private static List<GameObject> ObjectsToLoad = new List<GameObject>(100);
+        private static List<SimpleTexture> SimpleTexturesToLoad = new List<SimpleTexture>(100);
 
         private static bool _processQueued = false;
 
@@ -17,6 +18,19 @@ namespace MortalDungeon.Engine_Classes
             lock (_loadLock)
             {
                 ObjectsToLoad.Add(obj);
+
+                if (!_processQueued)
+                {
+                    QueueProcessing();
+                }
+            }
+        }
+
+        public static void LoadTexture(SimpleTexture obj)
+        {
+            lock (_loadLock)
+            {
+                SimpleTexturesToLoad.Add(obj);
 
                 if (!_processQueued)
                 {
@@ -44,7 +58,13 @@ namespace MortalDungeon.Engine_Classes
                     Renderer.LoadTextureFromGameObj(ObjectsToLoad[i]);
                 }
 
+                for(int i = 0; i < SimpleTexturesToLoad.Count; i++)
+                {
+                    Renderer.LoadTextureFromSimple(SimpleTexturesToLoad[i]);
+                }
+
                 ObjectsToLoad.Clear();
+                SimpleTexturesToLoad.Clear();
             }
         }
     }

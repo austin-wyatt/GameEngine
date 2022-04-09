@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Abilities
             //Name = "Hide";
 
             CanTargetGround = false;
-            CanTargetSelf = true;
+            UnitTargetParams.Self = UnitCheckEnum.True;
 
             UnitTargetParams.IsHostile = UnitCheckEnum.False;
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
@@ -37,18 +37,18 @@ namespace MortalDungeon.Game.Abilities
             //BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
+        //public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
+        //{
+        //    base.GetValidTileTargets(tileMap);
 
-            List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
+        //    List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
 
-            AffectedUnits.Add(CastingUnit);
+        //    AffectedUnits.Add(CastingUnit);
 
-            TargetAffectedUnits();
+        //    TargetAffectedUnits();
 
-            return validTiles;
-        }
+        //    return validTiles;
+        //}
 
         public override bool OnUnitClicked(Unit unit)
         {
@@ -66,7 +66,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             //CastingUnit.Info.Stealth.SetHiding(true);
             //StealthBuff stealthBuff = new StealthBuff(CastingUnit, -1);

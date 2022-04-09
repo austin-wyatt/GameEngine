@@ -15,10 +15,9 @@ using MortalDungeon.Engine_Classes;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class Smite_dev : Ability
+    public class Smite_dev : TemplateRangedSingleTarget
     {
-        public Smite_dev() { }
-        public Smite_dev(Unit castingUnit)
+        public Smite_dev(Unit castingUnit) : base(castingUnit)
         {
             Type = AbilityTypes.RangedAttack;
             DamageType = DamageType.Piercing;
@@ -37,6 +36,8 @@ namespace MortalDungeon.Game.Abilities
             UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
             UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
 
+            RequiresLineToTarget = true;
+
 
             Name = new Serializers.TextInfo(11, 3);
             Description = new Serializers.TextInfo(12, 3);
@@ -50,84 +51,17 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-
-            //List <BaseTile> validTiles = tileMap.GetTargetsInRadius(point, (int)Range, new List<TileClassification>(), units);
-            List<Unit> unitsInRadius = VisionHelpers.GetUnitsInRadius(CastingUnit, units, (int)Range, Scene);
-
-            TrimUnits(unitsInRadius, false, MinRange);
-
-            TargetAffectedUnits();
-
-            return new List<BaseTile>();
-        }
-
-        public override bool UnitInRange(Unit unit, BaseTile position = null)
-        {
-            TilePoint point = position == null ? CastingUnit.Info.TileMapPosition.TilePoint : position.TilePoint;
-
-            bool inRange = false;
-
-            if (TileMap.GetDistanceBetweenPoints(point, unit.Info.TileMapPosition) <= MinRange)
-            {
-                return false;
-            }
-
-            var tempVision = new TemporaryVisionParams()
-            {
-                Unit = CastingUnit,
-                TemporaryPosition = point
-            };
-
-            if (VisionHelpers.PointInVision(unit.Info.TileMapPosition, CastingUnit.AI.Team, new List<TemporaryVisionParams>{ tempVision }))
-            {
-                return true;
-            }
-
-            return inRange;
-        }
-
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
-
-            if (AffectedUnits.FindIndex(u => u.ObjectID == unit.ObjectID) != -1)
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
-
-            return true;
-        }
-
-        public override void OnCast()
-        {
-            TileMap.Controller.DeselectTiles();
-
-            base.OnCast();
-        }
-
-        public override void OnAICast()
-        {
-            base.OnAICast();
-        }
-
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             var dam = new Dictionary<DamageType, float>();
             dam.Add(DamageType.HealthRemoval, 1000);
 
-            SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance() 
-            { 
-                Damage = dam
-            }));
+            SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance()
+            {
+                Damage = dam,
+            }, ability: this));
 
             Casted();
             EffectEnded();

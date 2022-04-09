@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.Abilities.AbilityClasses.Spider
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             foreach (var tile in _hoveredTiles)
             {

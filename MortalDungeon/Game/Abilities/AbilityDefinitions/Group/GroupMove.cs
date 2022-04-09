@@ -15,7 +15,7 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
             CastingUnit = castingUnit;
 
             CanTargetGround = true;
-            CanTargetSelf = false;
+            UnitTargetParams.Self = UnitCheckEnum.False;
 
             MaxCharges = -1;
             ActionCost = 0;
@@ -28,8 +28,8 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
             });
         }
 
-        protected BaseTile _selectedTile = null;
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        protected Tile _selectedTile = null;
+        public override void OnTileClicked(TileMap map, Tile tile)
         {
             _selectedTile = tile;
             EnactEffect();
@@ -37,11 +37,10 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(_selectedTile, 4)
             {
-                TraversableTypes = CastingUnit.Info._movementAbility.TraversableTypes,
                 Units = Scene._units,
                 CastingUnit = CastingUnit,
                 AbilityType = Type,

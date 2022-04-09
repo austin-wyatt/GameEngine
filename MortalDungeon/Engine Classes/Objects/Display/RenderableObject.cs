@@ -75,7 +75,7 @@ namespace MortalDungeon.Engine_Classes
         public float Z;
     }
 
-    public class RenderableObject
+    public class RenderableObject : TransformationBase, IHasPosition
     {
         public float[] Vertices;
         public ObjectRenderType RenderType = ObjectRenderType.Color;
@@ -87,7 +87,7 @@ namespace MortalDungeon.Engine_Classes
         public TextureInfo Textures;
 
         //Every renderable object begins at the origin and is placed from there.
-        public Vector4 Position = new Vector4(0, 0, 0, 1.0f);
+        public Vector3 Position { get; set; }
 
         public int Stride;
 
@@ -100,8 +100,6 @@ namespace MortalDungeon.Engine_Classes
         public Matrix4 Translation = Matrix4.Identity;
         public Matrix4 Rotation = Matrix4.Identity;
         public Matrix4 Scale = Matrix4.Identity;
-
-        public Matrix4 Transformations = Matrix4.Identity;
 
         public RotationData RotationInfo = new RotationData() { X = 0, Y = 0, Z = 0 };
 
@@ -187,7 +185,7 @@ namespace MortalDungeon.Engine_Classes
             Rotation = new Matrix4(new Vector4(oldObj.Rotation.Row0), new Vector4(oldObj.Rotation.Row1), new Vector4(oldObj.Rotation.Row2), new Vector4(oldObj.Rotation.Row3));
             Scale = new Matrix4(new Vector4(oldObj.Scale.Row0), new Vector4(oldObj.Scale.Row1), new Vector4(oldObj.Scale.Row2), new Vector4(oldObj.Scale.Row3));
 
-            Position = new Vector4(oldObj.Position);
+            Position = new Vector3(oldObj.Position);
         }
 
         public RenderableObject(ObjectDefinition def, Vector4 color, Shader shaderReference)
@@ -357,7 +355,6 @@ namespace MortalDungeon.Engine_Classes
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.X += f;
-            Position.X = currentTranslation.X;
 
             SetTranslation(currentTranslation);
         }
@@ -365,7 +362,6 @@ namespace MortalDungeon.Engine_Classes
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.Y += f;
-            Position.Y = currentTranslation.Y;
 
             SetTranslation(currentTranslation);
         }
@@ -373,7 +369,6 @@ namespace MortalDungeon.Engine_Classes
         {
             Vector3 currentTranslation = Translation.ExtractTranslation();
             currentTranslation.Z += f;
-            Position.Z = currentTranslation.Z;
 
             SetTranslation(currentTranslation);
         }
@@ -384,9 +379,6 @@ namespace MortalDungeon.Engine_Classes
             currentTranslation.Y += translation.Y;
             currentTranslation.Z += translation.Z;
 
-            Position.X = currentTranslation.X;
-            Position.Y = currentTranslation.Y;
-            Position.Z = currentTranslation.Z;
 
             SetTranslation(currentTranslation);
         }
@@ -476,10 +468,6 @@ namespace MortalDungeon.Engine_Classes
         }
 
         //TRANSFORMATION SETTERS
-        //public void SetRotation(Vector3 translations)
-        //{
-        //    Translation = Matrix4.CreateTranslation(translations);
-        //}
         public Vector3 CurrentScale = new Vector3(1, 1, 1);
         public void SetScale(Vector3 scale)
         {
@@ -491,7 +479,7 @@ namespace MortalDungeon.Engine_Classes
         public void SetTranslation(Vector3 translations) 
         {
             Translation = Matrix4.CreateTranslation(translations);
-            Position = new Vector4(Translation.ExtractTranslation(), Position.W);
+            Position = translations;
 
             CalculateTransformationMatrix();
         }
@@ -513,7 +501,7 @@ namespace MortalDungeon.Engine_Classes
         public void ResetTranslation()
         {
             Translation = Matrix4.Identity;
-            Position = new Vector4(0, 0, 0, Position.W);
+            Position = new Vector3(0, 0, 0);
 
             CalculateTransformationMatrix();
         }
@@ -568,6 +556,11 @@ namespace MortalDungeon.Engine_Classes
             }
 
             return vertices;
+        }
+
+        public void SetPosition(Vector3 position)
+        {
+            Position = position;
         }
     }
 }

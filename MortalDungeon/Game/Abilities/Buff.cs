@@ -29,14 +29,19 @@ namespace MortalDungeon.Game.Abilities
         GeneralDamageAdditive,
         MovementEnergyAdditive,
 
+        #region ai feelings additive
+        AI_FEELINGS_ADDITIVE = 4250,
+        //[4250-4499] reserved for AI feeling additive values
+        #endregion
+
         #region damage types additive
         DAMAGE_TYPE_ADDITIVE = 4500,
-        //[4501-4749] reserved for damage type additive values
+        //[4500-4749] reserved for damage type additive values
         #endregion
 
         #region damage resistance additive
         DAMAGE_RESISTANCE_ADDITIVE = 4750,
-        //[4751-4999] reserved for damage type multipliers
+        //[4750-4999] reserved for damage type multipliers
         #endregion
 
         //End additive effects
@@ -58,14 +63,19 @@ namespace MortalDungeon.Game.Abilities
         GeneralDamageMultiplier,
         MovementEnergyMultiplier,
 
+        #region ai feelings multiplicative
+        AI_FEELINGS_MULTIPLICATIVE = 9250,
+        //[9250-9499] reserved for AI feeling additive values
+        #endregion
+
         #region damage types multiplicative
         DAMAGE_TYPE_MULTIPLIER = 9500,
-        //[9501-9749] reserved for damage type multipliers
+        //[9500-9749] reserved for damage type multipliers
         #endregion
 
         #region damage resistance multiplicative
         DAMAGE_RESISTANCE_MULTIPLIER = 9750,
-        //[9751-9999] reserved for damage type multipliers
+        //[9750-9999] reserved for damage type multipliers
         #endregion
 
         //End Multiplier effects
@@ -242,6 +252,8 @@ namespace MortalDungeon.Game.Abilities
             {
                 Unit.Scene.Footer.RefreshFooterInfo();
             }
+
+            Unit?.OnStateChanged();
         }
 
         public virtual void RemoveStack()
@@ -250,8 +262,10 @@ namespace MortalDungeon.Game.Abilities
 
             if(!Invisible && Unit?.Scene.Footer.CurrentUnit == Unit)
             {
-                Unit.Scene.Footer.RefreshFooterInfo();
+                Unit?.Scene.Footer.RefreshFooterInfo();
             }
+
+            Unit?.OnStateChanged();
         }
 
         protected virtual void CheckDuration(Unit unit)
@@ -262,7 +276,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (Duration < 0)
                 {
-                    Unit.Info.BuffManager.RemoveBuff(this);
+                    Unit?.Info.BuffManager.RemoveBuff(this);
                 }
             }
         }

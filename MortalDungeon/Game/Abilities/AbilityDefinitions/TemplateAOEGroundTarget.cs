@@ -34,33 +34,28 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
+        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+            List<Unit> units = default, Tile position = null)
         {
-            base.GetValidTileTargets(tileMap);
-
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
             {
-                TraversableTypes = TileMapConstants.AllTileClassifications,
                 Units = units,
                 CastingUnit = CastingUnit
             };
 
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-
-            TrimTiles(validTiles, units);
+            affectedTiles = tileMap.FindValidTilesInRadius(param);
+            affectedUnits = new List<Unit>();
 
             if (CastingUnit.AI.ControlType == ControlType.Controlled && CanTargetGround)
             {
-                validTiles.ForEach(tile =>
+                affectedTiles.ForEach(tile =>
                 {
                     tile.TilePoint.ParentTileMap.Controller.SelectTile(tile);
                 });
             }
-
-            return validTiles;
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        public override void OnTileClicked(TileMap map, Tile tile)
         {
             if (AffectedTiles.Exists(t => t == tile))
             {
@@ -87,7 +82,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             //create skeleton unit
             Console.WriteLine("Effect");

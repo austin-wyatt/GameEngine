@@ -1,6 +1,8 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Game.Structures;
+using MortalDungeon.Game.Tiles.Meshes;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -18,13 +20,16 @@ namespace MortalDungeon.Game.Tiles
 
         public float LocalRadius = 0; //radius in local coords
 
-        public List<BaseTile> Tiles = new List<BaseTile>();
+        public List<Tile> Tiles = new List<Tile>();
         public HashSet<Structure> Structures = new HashSet<Structure>();
         public List<GameObject> GenericObjects = new List<GameObject>();
         public int Width = DefaultChunkWidth;
         public int Height = DefaultChunkHeight;
 
         public bool Cull = true;
+
+        public MeshChunk MeshChunk;
+        public MeshChunkInstancedRenderData ChunkInstancedRenderData;
 
         public TileChunk() { }
 
@@ -34,7 +39,7 @@ namespace MortalDungeon.Game.Tiles
             Height = height;
         }
 
-        public void AddTile(BaseTile tile) 
+        public void AddTile(Tile tile) 
         {
             Tiles.Add(tile);
             tile.Chunk = this;
@@ -57,6 +62,7 @@ namespace MortalDungeon.Game.Tiles
             Tiles.Clear();
             Structures.Clear();
             GenericObjects.Clear();
+            ChunkInstancedRenderData.CleanUp();
         }
 
         public void CalculateValues() 
@@ -92,5 +98,31 @@ namespace MortalDungeon.Game.Tiles
             //    }
             //});
         }
+
+        public void OnFilled()
+        {
+            //TODO, move the mesh chunk so that it is in the correct position
+            MeshChunk = new MeshChunk(Tiles, Width, Height);
+        }
+
+        public object _meshUpdateLock = new object();
+        public void UpdateTile()
+        {
+            //Just refill the entire mesh for now. Once the base implementation is working we can look into 
+            //more targeted updates for the mesh
+            lock (_meshUpdateLock)
+            {
+                MeshChunk.FillMesh();
+            }
+            
+            Window.QueueToRenderCycle(() =>
+            {
+                lock (_meshUpdateLock)
+                {
+                    ChunkInstancedRenderData.GenerateInstancedRenderData(this);
+                }
+            });
+        }
+
     }
 }

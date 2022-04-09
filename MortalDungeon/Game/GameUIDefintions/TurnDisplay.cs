@@ -38,6 +38,7 @@ namespace MortalDungeon.Game.UI
                 foreach(var unitObj in UnitObjects)
                 {
                     BaseComponent.RemoveChild(unitObj);
+                    scene.Tick -= unitObj.Tick;
                 }
 
                 UnitObjects.Clear();
@@ -59,6 +60,7 @@ namespace MortalDungeon.Game.UI
                     obj.EnableLighting = false;
 
                     UnitObjects.Add(uiObj);
+                    scene.Tick += uiObj.Tick;
 
                     Vector3 pos;
 
@@ -105,7 +107,7 @@ namespace MortalDungeon.Game.UI
                     {
                         Vector2i clusterPos = TileMapHelpers.PointToClusterPosition(Units[index].Info.TileMapPosition);
 
-                        if (VisionManager.ConsolidatedVision[scene.VisibleTeam].TryGetValue(Units[index].Info.TileMapPosition, out bool inVision) && inVision) 
+                        if (VisionManager.ConsolidatedVision[scene.VisibleTeam].TryGetValue(Units[index].Info.TileMapPosition, out var inVision) && inVision > 0) 
                         {
                             scene.SmoothPanCameraToUnit(Units[index], 1);
                         }

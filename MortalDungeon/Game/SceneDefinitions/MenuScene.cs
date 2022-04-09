@@ -20,7 +20,6 @@ using MortalDungeon.Game.Tiles.TileMaps;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Structures;
 using MortalDungeon.Game.Objects.PropertyAnimations;
-using MortalDungeon.Game.Lighting;
 using MortalDungeon.Engine_Classes.Audio;
 using MortalDungeon.Game.Entities;
 using MortalDungeon.Game.UI.Dev;
@@ -35,6 +34,7 @@ using MortalDungeon.Game.Player;
 using MortalDungeon.Game.Items;
 using MortalDungeon.Game.Events;
 using System.Reflection;
+using MortalDungeon.Game.Combat;
 
 namespace MortalDungeon.Game.SceneDefinitions
 {
@@ -273,7 +273,6 @@ namespace MortalDungeon.Game.SceneDefinitions
 
             ShowEnergyDisplayBars(false);
             Footer.EndTurnButton.SetRender(false);
-            EvaluateCombat();
         }
 
         public override void OnMouseUp(MouseButtonEventArgs e)
@@ -521,7 +520,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
         private int _counter = 0;
         private List<Vector3i> _cubeCoordinates = new List<Vector3i>();
-        public override void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
+        public override void OnTileClicked(TileMap map, Tile tile, MouseButton button, ContextManager<MouseUpFlags> flags)
         {
             base.OnTileClicked(map, tile, button, flags);
 
@@ -557,24 +556,9 @@ namespace MortalDungeon.Game.SceneDefinitions
                     {
                         TileMapManager.ActiveMaps.ForEach(m => m.PopulateFeatures());
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.RightShift))
-                    {
-                        Unit unit = _units[0];
-                        map.GetLineOfTiles(unit.Info.TileMapPosition, tile.TilePoint).ForEach(t =>
-                        {
-                            t.SetAnimation(AnimationType.Idle);
-                            t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
-                        });
-                        //validTiles.Clear();
-                        //map.GetRingOfTiles(tile.TileIndex, validTiles, 6);
-                        //validTiles.ForEach(t =>
-                        //{
-                        //    t.SetColor(new Vector4(0.9f, 0.25f, 0.25f, 1));
-                        //});
-                    }
                     else if (KeyboardState.IsKeyDown(Keys.LeftShift))
                     {
-                        List<BaseTile> neighborList = new List<BaseTile>();
+                        List<Tile> neighborList = new List<Tile>();
 
                         neighborList.Clear();
                         map.GetNeighboringTiles(tile, neighborList, shuffle: false);
@@ -597,77 +581,85 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F))
                     {
-                        List<BaseTile> tileList = new List<BaseTile>();
+                        var tilePosA = CurrentUnit.Info.TileMapPosition.Position;
+                        var tilePosB = tile.Position;
 
-                        tile.TileMap.GetRingOfTiles(tile, tileList, 20);
+                        var hypotenuse = Vector2.Distance(tilePosA.Xy, tilePosB.Xy);
 
-                        List<List<Direction>> digitalLines = new List<List<Direction>>();
+                        var sideA = Vector2.Distance(new Vector2(tilePosA.X, tilePosB.Y), tilePosA.Xy);
 
-                        for (int i = 0; i < tileList.Count / 6; i++)
-                        {
-                            var line = tile.TileMap.GetLineOfTiles(tile, tileList[i]);
+                        //var angle = Vector3.CalculateAngle(nodeA.obj.Position, nodeB.obj.Position);
+                        float angle = (float)MathHelper.Asin(sideA / hypotenuse);
 
-                            List<Direction> digitalLine = new List<Direction>();
+                        UIBlock line = new UIBlock(scaleAspectRatio: false, cameraPerspective: true);
 
-                            BaseTile prev = null;
+                        int sign = ((tilePosA.X > tilePosB.X) ? 1 : -1) * ((tilePosA.Y > tilePosB.Y) ? -1 : 1);
 
-                            foreach (var t in line)
-                            {
-                                if (prev != null)
-                                {
-                                    digitalLine.Add(FeatureEquation.DirectionBetweenTiles(prev, t));
-                                }
+                        line.BaseObject.BaseFrame.RotateZ(MathHelper.RadiansToDegrees(angle) * sign);
 
-                                prev = t;
+                        line.SetPosition((tilePosA + tilePosB) / 2);
 
-                                //t.SetColor(_Colors.Blue + new Vector4(0.1f * i, 0, 0, 0));
-                                //t.Update();
-                            }
-                            digitalLines.Add(digitalLine);
+                        line.SetPosition(line.Position + new Vector3(0, 0, 0.1f));
 
-                            foreach (var dir in digitalLine)
-                            {
-                                //Console.WriteLine(dir.ToString());
-                            }
-                        }
+                        float yVal = 0.05f * (float)Math.Abs((Math.PI - angle) / Math.PI);
+                        float xVal = hypotenuse / WindowConstants.ScreenUnits.X * 2;
 
-                        for (int i = 0; i < 6; i++)
-                        {
-                            foreach (var line in digitalLines)
-                            {
-                                BaseTile currentTile = tile;
+                        line.SetSize(new UIScale(xVal, yVal));
 
-                                foreach (var dir in line)
-                                {
-                                    currentTile = tile.TileMap.GetNeighboringTile(currentTile, (Direction)((int)(dir + i) % 6));
+                        line.SetAllInline(0);
+                        line.SetColor(_Colors.Black);
+                        line.BaseObject.EnableLighting = true;
 
-                                    currentTile.SetColor(_Colors.Red + new Vector4(0, 0, 0.15f * i, 0));
-                                    currentTile.Update();
-                                }
-                            }
-                        }
+                        _genericObjects.Add(line);
+
+                        _tileMapController.DeselectTiles();
+                        var tiles = tile.TileMap.GetLineOfTiles(CurrentUnit.Info.TileMapPosition, tile);
+                        _tileMapController.SelectTiles(tiles);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.G))
                     {
-                        LightObstructions.Add(new LightObstruction(tile));
+                        if (CurrentUnit == null)
+                            return;
 
-                        tile.SetColor(_Colors.Blue);
-                        tile.Update();
+                        _tileMapController.DeselectTiles(TileSelectionType.Stone_2);
+
+                        if (TileMapManager.NavMesh.GetPathToPoint(CurrentUnit.Info.TileMapPosition.ToFeaturePoint(), 
+                            tile.ToFeaturePoint(), NavType.Base, out var list, pathingUnit: CurrentUnit))
+                        {
+                            foreach(var pathTile in list)
+                            {
+                                _tileMapController.SelectTile(pathTile, TileSelectionType.Stone_2);
+                            }
+                        }
                     }
                     else if (KeyboardState.IsKeyDown(Keys.H))
                     {
-                        tile.Properties.Height--;
+                        //_tileMapController.DeselectTiles();
+
+                        //var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(tile);
+                        //if(unitsOnPoint.Count > 0)
+                        //{
+                        //    var lines = CombatState.UnimpededUnitSightlines[unitsOnPoint.First()];
+
+                        //    Vector4 color = new Vector4(0, 0, 0.5f, 1);
+                        //    foreach(var line in lines)
+                        //    {
+                        //        color.X += 0.04f;
+                        //        color.Z += 0.02f;
+                        //        foreach (var lineTile in line.Tiles)
+                        //        {
+                        //            _tileMapController.SelectTile(lineTile, TileSelectionType.Stone_2).SetColor(color);
+                        //        }
+                        //    }
+                        //}
                     }
                     else if (KeyboardState.IsKeyDown(Keys.J))
                     {
-                        tile.Properties.Height++;
+                        TileMapManager.NavMesh.CalculateNavTiles();
                     }
                     else if (KeyboardState.IsKeyDown(Keys.KeyPad2))
                     {
-                        Task.Run(() =>
-                        {
-                            EventLog.AddEvent("Super very very very very long text\nmeant to hopefully cause whatever bug that has been\noccurring to occur");
-                        });
+                        Console.WriteLine(FeatureEquation.GetDistanceBetweenPoints(CurrentUnit.Info.TileMapPosition.ToFeaturePoint(), tile.ToFeaturePoint()));
                     }
                     else if (KeyboardState.IsKeyDown(Keys.KeyPadDivide))
                     {
@@ -709,7 +701,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                                 TraversableTypes = new List<TileClassification>() { TileClassification.Ground, TileClassification.ImpassableGround, TileClassification.Water }
                             };
 
-                            List<BaseTile> tiles = map.GetPathToPoint(param);
+                            List<Tile> tiles = map.GetPathToPoint(param);
 
                             //map.GetRingOfTiles(_wallTemp, tiles, 10);
 
@@ -732,11 +724,7 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.LeftControl))
                     {
-                        //if (tile.Structure != null)
-                        //{
-                        //    Wall wall = tile.Structure as Wall;
-                        //    wall.CreateDoor(tile);
-                        //}
+                        tile.SetHeight(tile.Properties.Height + 1);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.Z))
                     {

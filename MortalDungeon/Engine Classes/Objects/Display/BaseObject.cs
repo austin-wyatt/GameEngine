@@ -190,7 +190,7 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class Bounds
+    public class Bounds : IBounds
     {
         public float[] Vertices;
         public RenderableObject Display;
@@ -301,8 +301,7 @@ namespace MortalDungeon.Engine_Classes
             return returnVec;
         }
 
-
-        private PointF GetTransformedPoint(float x, float y, float z, Camera camera = null) 
+        public PointF GetTransformedPoint(float x, float y, float z, Camera camera = null) 
         {
             Vector4 transform = new Vector4(x, y, z, 1);
 
@@ -312,46 +311,6 @@ namespace MortalDungeon.Engine_Classes
             //Console.WriteLine("transformed coordinates: " + transform.X + ", " + transform.Y + ", " + transform.Z );
 
             return new PointF(transform.X, transform.Y);
-        }
-
-        public void PrintBounds(Camera camera)
-        {
-            const int dimensions = 3;
-
-            for (int side = 0; side < Vertices.Length / dimensions; side++)
-            {
-                int nextVertex = side + 1;
-                if (side == Vertices.Length / dimensions - 1)
-                {
-                    nextVertex = 0;
-                }
-
-                PointF point3 = GetTransformedPoint(Vertices[side * dimensions], Vertices[side * dimensions + 1], Vertices[side * dimensions + 2], camera);
-                Console.WriteLine("Point " + side + ": " + point3.X + ", " + point3.Y);
-            }
-        }
-
-        public static bool Contains(List<Vector2i> points, Vector2i point)
-        {
-            int intersections = 0;
-
-            for (int side = 0; side < points.Count; side++)
-            {
-                int nextSide = (side + 1) % points.Count;
-
-                if (MiscOperations.MiscOperations.GFG.get_line_intersection(point.X, point.Y, point.X, point.Y + 1000,
-                    points[side].X, points[side].Y, points[nextSide].X, points[nextSide].Y))
-                {
-                    intersections++;
-                }
-            }
-
-            if (intersections % 2 == 0)
-            {
-                return false;
-            }
-
-            return true;
         }
     }
 

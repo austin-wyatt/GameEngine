@@ -18,6 +18,13 @@ namespace MortalDungeon.Definitions.TileEffects
             Duration = 3;
 
             Identifier = "spider_web";
+            Danger = 0.1f;
+            Immunities = new List<UnitCondition>
+            {
+                UnitCondition.WebImmuneStrong, 
+                UnitCondition.WebImmuneWeak, 
+                UnitCondition.WebImmuneMed 
+            };
         }
 
         public WeakSpiderWeb(TileEffect effect) : base(effect) { }
@@ -58,18 +65,18 @@ namespace MortalDungeon.Definitions.TileEffects
 
             if(Duration == 0)
             {
-                TileEffectManager.RemoveTileEffect(this, point);
+                TileEffectManager.RemoveTileEffectOnRoundEnd(this, point);
             }
         }
 
-        public override void OnSteppedOn(Unit unit, BaseTile tile)
+        public override void OnSteppedOn(Unit unit, Tile tile)
         {
             base.OnSteppedOn(unit, tile);
 
             HandleSlowDebuff(unit);
         }
 
-        public override void OnTurnStart(Unit unit, BaseTile tile)
+        public override void OnTurnStart(Unit unit, Tile tile)
         {
             base.OnTurnStart(unit, tile);
 

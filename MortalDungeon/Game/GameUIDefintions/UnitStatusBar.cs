@@ -68,7 +68,6 @@ namespace MortalDungeon.Game.UI
 
             BaseComponent.AddChild(ShieldBar);
 
-
             _camera = camera;
             _unit = unit;
 

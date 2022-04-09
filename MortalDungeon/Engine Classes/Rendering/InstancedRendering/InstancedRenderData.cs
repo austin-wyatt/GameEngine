@@ -41,7 +41,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             InstancedDataBuffer = GL.GenBuffer();
         }
 
-        public void CleanUp()
+        public virtual void CleanUp()
         {
             GL.DeleteBuffers(3, new int[]{ VertexBuffer, ElementBuffer, InstancedDataBuffer });
 

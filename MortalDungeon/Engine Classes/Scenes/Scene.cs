@@ -1,6 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.SceneHelpers;
 using MortalDungeon.Game.Structures;
@@ -83,11 +82,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected object _structureLock = new object();
         public HashSet<Structure> _structures = new HashSet<Structure>();
 
-        public static GameObject LightObstructionObject = null;
-        public static GameObject LightObject = null;
-        //public static List<GameObject> LightObjects = new List<GameObject>();
-        public static bool RenderLight = true;
-
         /// <summary>
         /// Determines whether tiles will be considered for UI events
         /// </summary>
@@ -120,7 +114,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
 
         //public Lighting Lighting;
-        public HashSet<LightObstruction> LightObstructions = new HashSet<LightObstruction>();
         public HashSet<VisionGenerator> UnitVisionGenerators = new HashSet<VisionGenerator>();
 
         public Camera _camera;
@@ -134,16 +127,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected Random rand = new ConsistentRandom();
         private Stopwatch _mouseTimer = new Stopwatch();
         protected Stopwatch _hoverTimer = new Stopwatch();
-        protected GameObject _hoveredObject;
+        protected IHoverable _hoveredObject;
 
         public BoxSelectHelper BoxSelectHelper = new BoxSelectHelper();
+
+        /// <summary>
+        /// Allows multiple sources to call one function that aggregates data while only allowing the function to
+        /// trigger once per render cycle. As long as this is getting called for aggregator functions (such as
+        /// CreateStructureInstancedRenderData) there are no tradeoffs to using the RenderDispatcher.
+        /// </summary>
+        public RenderDispatcher RenderDispatcher = new RenderDispatcher();
 
         protected virtual void InitializeFields()
         {
             _genericObjects = new QueuedObjectList<GameObject>();
             _text = new List<_Text>();
             _units = new QueuedObjectList<Unit>(); //The units to render
-            //_UI = new QueuedUIList<UIObject>();
             _tileMapController = new TileMapController();
 
             MessageCenter = new MessageCenter(SceneID)
@@ -152,8 +151,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             };
 
             ScenePosition = new Vector3(0, 0, 0);
-
-            //Lighting = new Lighting(this);
         }
 
 
@@ -302,27 +299,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             
 
             RenderEvent?.Invoke(new SceneEventArgs(this, EventHandlerAction.Render));
-        }
-
-        private object _lightObstructionLock = new object();
-        public void AddLightObstruction(LightObstruction obstruction)
-        {
-            lock (_lightObstructionLock)
-            {
-                LightObstructions.Add(obstruction);
-            }
-
-            VisionManager.PrepareLightObstructions(LightObstructions);
-        }
-
-        public void RemoveLightObstruction(LightObstruction obstruction)
-        {
-            lock (_lightObstructionLock)
-            {
-                LightObstructions.Remove(obstruction);
-            }
-
-            VisionManager.PrepareLightObstructions(LightObstructions);
         }
 
         private object _visionGenLock = new object();
@@ -484,11 +460,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                         if (!chunk.Cull)
                         {
-                            ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar).ForEach(foundObj =>
+                            var tiles = ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar);
+                                
+                            tiles.Sort((a, b) => b.Properties.Height.CompareTo(a.Properties.Height));
+
+                            if(tiles.Count > 0)
                             {
-                                OnTileClicked(chunk.Tiles[0].TileMap, foundObj, e.Button, MouseUpStateFlags);
+                                OnTileClicked(chunk.Tiles[0].TileMap, tiles[0], e.Button, MouseUpStateFlags);
                                 MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
-                            });
+                            }
                         }
                     }
                 }
@@ -722,6 +702,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             lock (_structureLock)
             {
                 _structures.Remove(structure);
+                structure.Removed();
             }
         }
 
@@ -870,9 +851,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
         public virtual void OnUIClicked(UIObject uiObj) { }
 
-        public delegate void TileEventHandler(BaseTile tile, MouseButton button);
+        public delegate void TileEventHandler(Tile tile, MouseButton button);
         public event TileEventHandler TileClicked;
-        public virtual void OnTileClicked(TileMap map, BaseTile tile, MouseButton button, ContextManager<MouseUpFlags> flags) 
+        public virtual void OnTileClicked(TileMap map, Tile tile, MouseButton button, ContextManager<MouseUpFlags> flags) 
         {
             TileClicked?.Invoke(tile, button);
         }
@@ -1000,6 +981,32 @@ namespace MortalDungeon.Engine_Classes.Scenes
             return foundObjects;
         }
 
+        protected List<Tile> ObjectCursorBoundsCheck(List<Tile> listObjects, Vector3 near, Vector3 far, Action<Tile> foundAction = null, Action<Tile> notFoundAction = null)
+        {
+            List<Tile> foundObjects = new List<Tile>();
+
+            listObjects.ForEach(listObj =>
+            {
+                //TODO
+
+                //listObj.BaseObjects.ForEach(obj =>
+                //{
+                //    if (obj.Bounds.Contains3D(near, far, _camera))
+                //    {
+                //        foundObjects.Add(listObj);
+                //        foundAction?.Invoke(listObj);
+                //    }
+                //    else
+                //    {
+                //        notFoundAction?.Invoke(listObj);
+                //    }
+                //});
+
+            });
+
+            return foundObjects;
+        }
+
 
 
 
@@ -1008,7 +1015,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #region Misc helper functions
         public void SmoothPanCameraToUnit(Unit unit, int speed) 
         {
-            Vector4 pos = unit.BaseObject.BaseFrame.Position;
+            Vector3 pos = unit.BaseObject.BaseFrame.Position;
 
             SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
         }
@@ -1163,40 +1170,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 lock (_renderActionQueueLock)
                 {
                     _renderActionQueue.Dequeue().Invoke();
-                }
-            }
-        }
-
-        //public virtual void UpdateLightObstructionMap()
-        //{
-        //    Lighting.UpdateObstructionMap(LightObstructions, ref Rendering.Renderer._instancedRenderArray);
-        //}
-
-        //public virtual void UpdateLightTexture()
-        //{
-        //    Lighting.UpdateLightTexture(LightGenerators, ref Rendering.Renderer._instancedRenderArray);
-        //}
-
-        public void QueueLightObstructionUpdate()
-        {
-            RefillLightObstructions();
-        }
-
-        public void RefillLightObstructions()
-        {
-            LightObstructions.Clear();
-
-            for (int i = 0; i < TileMapManager.ActiveMaps.Count; i++)
-            {
-                for (int j = 0; j < TileMapManager.ActiveMaps[i].TileChunks.Count; j++)
-                {
-                    foreach(var structure in TileMapManager.ActiveMaps[i].TileChunks[j].Structures)
-                    {
-                        if (structure.LightObstruction.Valid)
-                        {
-                            AddLightObstruction(structure.LightObstruction);
-                        }
-                    }
                 }
             }
         }

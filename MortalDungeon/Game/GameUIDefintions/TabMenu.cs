@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MortalDungeon.Engine_Classes.Rendering;
+using OpenTK.Windowing.Common;
 
 namespace MortalDungeon.Game.UI
 {
@@ -188,29 +189,35 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].BaseComponent.AddChild(unitButton2);
 
-            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Skele AI", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
+            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle frame limit", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
             toggleAI.BaseComponent.MultiTextureData.MixTexture = false;
 
 
             toggleAI.Click += (s, e) =>
             {
-
+                Program.Window.RenderFrequency = Program.Window.RenderFrequency > 1 ? 0 : 200;
             };
 
             toggleAI.SetPositionFromAnchor(unitButton2.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
 
             Tabs[0].BaseComponent.AddChild(toggleAI);
 
-            Button updateMaps = CreateButton("Open E.M.", () =>
+            Button updateMaps = CreateButton("Toggle Vysnc", () =>
             {
-                //long preObj = GC.GetTotalMemory(true);
-
-                //long postObj = GC.GetTotalMemory(true);
-
-                //Console.WriteLine("Size of empty Unit is: " + (postObj - preObj) + " bytes");
-                Dev.EntityManagerUI ui = new Dev.EntityManagerUI(Scene);
-
-                Scene.AddUI(ui.Window, 10000);
+                Window.QueueToRenderCycle(() =>
+                {
+                    if (Settings.VsyncEnabled)
+                    {
+                        Settings.VsyncEnabled = false;
+                        Program.Window.VSync = VSyncMode.Off;
+                    }
+                    else
+                    {
+                        Settings.VsyncEnabled = true;
+                        Program.Window.VSync = VSyncMode.On;
+                    }
+                });
+                
             }, toggleAI.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             Button turboButton = null;

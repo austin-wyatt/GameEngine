@@ -143,7 +143,7 @@ namespace MortalDungeon.Game.UI.Dev
             {
                 list.AddItem("Load Entity", (item) =>
                 {
-                    void loadEntityOnTile(BaseTile tile, MouseButton button)
+                    void loadEntityOnTile(Tile tile, MouseButton button)
                     {
                         EntityManager.LoadEntity(entity, new FeaturePoint(tile));
 

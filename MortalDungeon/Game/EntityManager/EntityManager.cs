@@ -1,4 +1,5 @@
 ﻿using MortalDungeon.Engine_Classes;
+using MortalDungeon.Game.Ledger.Units;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Tiles;
 using System;
@@ -7,38 +8,26 @@ using System.Text;
 
 namespace MortalDungeon.Game.Entities
 {
-    public struct FeatureEntityEntry
-    {
-        public long Hash;
-        public long FeatureId;
-
-        public FeatureEntityEntry(long hash, long id)
-        {
-            Hash = hash;
-            FeatureId = id;
-        }
-    }
+    
 
     public static class EntityManager
     {
         public static HashSet<Entity> Entities = new HashSet<Entity>();
         public static HashSet<Entity> LoadedEntities = new HashSet<Entity>();
 
-        private static Dictionary<FeatureEntityEntry, Entity> _featureEntitiesReference = new Dictionary<FeatureEntityEntry, Entity>();
 
+        public static object _entityLock = new object();
 
         /// <summary>
         /// Adds the entity to the list of all entities. This doesn't imply anything about whether it is loaded or unloaded.
         /// </summary>
         public static void AddEntity(Entity entity) 
         {
-            lock (Entities)
+            lock (_entityLock)
             {
                 if (!Entities.Contains(entity))
                 {
                     Entities.Add(entity);
-
-                    _featureEntitiesReference.AddOrSet(new FeatureEntityEntry(entity.Handle.ObjectHash, entity.Handle.FeatureID), entity);
                 }
             }
         }
@@ -48,9 +37,9 @@ namespace MortalDungeon.Game.Entities
         /// </summary>
         public static void RemoveEntity(Entity entity) 
         {
-            lock (Entities) 
+            lock (_entityLock) 
             {
-                _featureEntitiesReference.Remove(new FeatureEntityEntry(entity.Handle.ObjectHash, entity.Handle.FeatureID));
+                UnitLedger.LedgerUnit(entity.Handle);
 
                 entity.Unload();
                 Entities.Remove(entity);
@@ -60,32 +49,26 @@ namespace MortalDungeon.Game.Entities
 
         public static void UnloadEntity(Entity entity)
         {
-            lock (Entities)
-            {
-                //when unloading an entity, save their position so that they can potentially be reloaded into the same place.
+            RemoveEntity(entity);
 
-                entity.Unload();
-                LoadedEntities.Remove(entity);
-            }
+            //lock (_entityLock)
+            //{
+            //    //when unloading an entity, save their position so that they can potentially be reloaded into the same place.
+
+            //    entity.Unload();
+            //    LoadedEntities.Remove(entity);
+            //}
         }
 
         public static void LoadEntity(Entity entity, FeaturePoint position, bool placeOnTileMap = true)
         {
-            lock (Entities)
+            lock (_entityLock)
             {
                 entity.Load(position, placeOnTileMap);
                 LoadedEntities.Add(entity);
             }
         }
 
-        public static bool FeatureEntityExists(FeatureEntityEntry entityEntry)
-        {
-            return _featureEntitiesReference.ContainsKey(entityEntry);
-        }
-
-        public static Entity GetFeatureEntity(FeatureEntityEntry entityEntry)
-        {
-            return _featureEntitiesReference[entityEntry];
-        }
+        
     }
 }

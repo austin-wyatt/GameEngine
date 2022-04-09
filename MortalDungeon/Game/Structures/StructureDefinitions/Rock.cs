@@ -12,7 +12,7 @@ namespace MortalDungeon.Game.Structures
 {
     class Rock : Structure
     {
-        public Rock(TileMap map, BaseTile tile) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetRockType(), tile.Position + new Vector3(0, -200, 0.12f))
+        public Rock(TileMap map, Tile tile) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetRockType(), tile.Position + new Vector3(0, -200, 0.12f))
         {
             if (tile.Structure != null)
                 return;

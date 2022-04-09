@@ -22,7 +22,7 @@ namespace MortalDungeon.Game.Tiles.TileMaps
 
         public override void PopulateTileMap(float zTilePlacement = 0)
         {
-            BaseTile baseTile = new BaseTile();
+            Tile tile = new Tile();
             Vector3 tilePosition = new Vector3(Position);
 
 
@@ -34,12 +34,11 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                 {
                     //Vector3 zFuzz = new Vector3(0, 0, (float)_randomNumberGen.NextDouble() / 50);
                     //baseTile = new BaseTile(tilePosition + zFuzz, new TilePoint(i, o, this)) { Clickable = true };
-                    baseTile = new BaseTile(tilePosition, new TilePoint(i, o, this)) { Clickable = true };
-                    baseTile.Properties.Type = TileType.Grass;
-                    baseTile.TileMap = this;
-                    baseTile.Outline = true;
+                    tile = new Tile(tilePosition, new TilePoint(i, o, this));
+                    tile.Properties.Type = TileType.Grass;
+                    tile.TileMap = this;
 
-                    Tiles.Add(baseTile);
+                    Tiles.Add(tile);
 
                     //if (_randomNumberGen.NextDouble() > 0.9)
                     //{
@@ -52,24 +51,18 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                     //float val = GlobalRandom.NextFloat() / 30f;
                     //baseTile.SetColor(_Colors.GrassGreen - new Vector4(val, val, 0, 0));
 
-                    baseTile.BaseObject.BaseFrame.SpritesheetPosition = 5;
                     float val = GlobalRandom.NextFloat() / 15f;
-                    baseTile.SetColor(_Colors.White - new Vector4(val, val, val, 0));
+                    tile.SetColor(_Colors.White - new Vector4(val, val, val, 0));
 
-                    tilePosition.Y += baseTile.BaseObjects[0].Dimensions.Y * 1f;
+                    tilePosition.Y += tile.TileBounds.TileDimensions.Y * 1f;
+
+                    TextureLoadBatcher.LoadTexture(tile.Properties.DisplayInfo.Texture);
                 }
-                tilePosition.X = (i + 1) * baseTile.BaseObjects[0].Dimensions.X * 0.75f; //1.29 before outlining changes
-                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y * -0.5f); //2 before outlining changes
-                //tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : baseTile.BaseObjects[0].Dimensions.Y * -1f); //2 before outlining changes
+                tilePosition.X = (i + 1) * tile.TileBounds.TileDimensions.X * 0.75f;
+                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : tile.TileBounds.TileDimensions.Y * -0.5f); 
             }
 
-            LoadTextures(Tiles, generateMipMaps: false);
-
             tilePosition.Z += 0.03f;
-
-            //SetDefaultTileValues();
-
-            //InitializeTexturedQuad();
         }
 
 
@@ -82,7 +75,7 @@ namespace MortalDungeon.Game.Tiles.TileMaps
         {
             base.PopulateFeatures();
 
-            foreach (BaseTile baseTile in Tiles)
+            foreach (Tile baseTile in Tiles)
             {
                 if (_randomNumberGen.NextDouble() < 0.2d && baseTile.TilePoint.X != 0 && baseTile.TilePoint.Y != 0 && baseTile.Properties.Classification != TileClassification.Water) //add a bit of randomness to tile gen
                 {

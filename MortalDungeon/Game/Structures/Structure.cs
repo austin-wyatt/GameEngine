@@ -1,5 +1,4 @@
 ﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
 using MortalDungeon.Objects;
@@ -79,9 +78,9 @@ namespace MortalDungeon.Game.Structures
             _createStatusBar = false;
         }
 
-        public override void SetTileMapPosition(BaseTile baseTile)
+        public override void SetTileMapPosition(Tile baseTile)
         {
-            BaseTile prevTile = Info.TileMapPosition;
+            Tile prevTile = Info.TileMapPosition;
 
             if (prevTile != null)
                 prevTile.RemoveStructure(this);
@@ -90,7 +89,6 @@ namespace MortalDungeon.Game.Structures
 
             Info.TileMapPosition = baseTile;
 
-            LightObstruction.SetPosition(baseTile);
             VisionGenerator.SetPosition(baseTile.TilePoint);
 
             Scene.OnStructureMoved();
@@ -100,10 +98,14 @@ namespace MortalDungeon.Game.Structures
         {
             CleanUpEvent(this);
 
-            Scene.RemoveLightObstruction(LightObstruction);
             Scene.RemoveVisionGenerator(VisionGenerator);
 
             //SetTextureLoaded(false);
+        }
+
+        public virtual void Removed()
+        {
+
         }
     }
 }

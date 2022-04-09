@@ -35,50 +35,50 @@ namespace MortalDungeon.Game.Structures
             WallType = type;
         }
 
-        public void CreateDoor(BaseTile tile)
-        {
-            Vector3 tileDim = tile.GetDimensions();
+        //public void CreateDoor(Tile tile)
+        //{
+        //    Vector3 tileDim = tile.GetDimensions();
 
-            float rot = MathHelper.DegreesToRadians(ZRotation);
+        //    float rot = MathHelper.DegreesToRadians(ZRotation);
 
-            Vector3 topPos = tile.Structure.Position - new Vector3(tileDim.Y * (float)Math.Sin(rot) / 2, tileDim.Y * (float)Math.Cos(rot) / 2, 0);
-            Vector3 botPos = tile.Structure.Position + new Vector3(tileDim.Y * (float)Math.Sin(rot) / 2, tileDim.Y * (float)Math.Cos(rot) / 2, 0);
+        //    Vector3 topPos = tile.Structure.Position - new Vector3(tileDim.Y * (float)Math.Sin(rot) / 2, tileDim.Y * (float)Math.Cos(rot) / 2, 0);
+        //    Vector3 botPos = tile.Structure.Position + new Vector3(tileDim.Y * (float)Math.Sin(rot) / 2, tileDim.Y * (float)Math.Cos(rot) / 2, 0);
 
-            Name = "Door";
-            //Type = StructureEnum.Wall_Wood_Door;
-            Type = StructureEnum.Wall_Iron_1;
-            WallType = WallType.Door;
+        //    Name = "Door";
+        //    //Type = StructureEnum.Wall_Wood_Door;
+        //    Type = StructureEnum.Wall_Iron_1;
+        //    WallType = WallType.Door;
 
-            HasContextMenu = true;
+        //    HasContextMenu = true;
 
-            BaseObject.BaseFrame.SpritesheetPosition = (int)Type;
-            SetColor(_Colors.Transparent);
+        //    BaseObject.BaseFrame.SpritesheetPosition = (int)Type;
+        //    SetColor(_Colors.Transparent);
 
-            RemoveBaseObject(BaseObject);
+        //    RemoveBaseObject(BaseObject);
 
-            BaseObject door_1 = tile.CreateBaseObjectFromSpritesheet(Spritesheets.StructureSheet, (int)StructureEnum.Wall_Iron_Door);
-            door_1.SetPosition(topPos);
-            door_1.BaseFrame.RotateX(90);
-            door_1.BaseFrame.RotateZ(ZRotation - 90);
-            door_1.BaseFrame.VerticeType = 0;
+        //    BaseObject door_1 = tile.CreateBaseObjectFromSpritesheet(Spritesheets.StructureSheet, (int)StructureEnum.Wall_Iron_Door);
+        //    door_1.SetPosition(topPos);
+        //    door_1.BaseFrame.RotateX(90);
+        //    door_1.BaseFrame.RotateZ(ZRotation - 90);
+        //    door_1.BaseFrame.VerticeType = 0;
 
-            AddBaseObject(door_1);
+        //    AddBaseObject(door_1);
 
-            BaseObject door_2 = tile.CreateBaseObjectFromSpritesheet(Spritesheets.StructureSheet, (int)StructureEnum.Wall_Iron_Door);
-            door_2.SetPosition(botPos);
-            door_2.BaseFrame.RotateX(90);
-            door_2.BaseFrame.RotateZ(ZRotation + 90);
-            door_2.BaseFrame.VerticeType = 0;
-            AddBaseObject(door_2);
+        //    BaseObject door_2 = tile.CreateBaseObjectFromSpritesheet(Spritesheets.StructureSheet, (int)StructureEnum.Wall_Iron_Door);
+        //    door_2.SetPosition(botPos);
+        //    door_2.BaseFrame.RotateX(90);
+        //    door_2.BaseFrame.RotateZ(ZRotation + 90);
+        //    door_2.BaseFrame.VerticeType = 0;
+        //    AddBaseObject(door_2);
 
-            door_2.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
-            door_1.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
+        //    door_2.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
+        //    door_1.BaseFrame.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
 
-            door_1.BaseFrame.ScaleAll(0.5f);
-            door_2.BaseFrame.ScaleAll(0.5f);
+        //    door_1.BaseFrame.ScaleAll(0.5f);
+        //    door_2.BaseFrame.ScaleAll(0.5f);
 
-            LoadTexture(this);
-        }
+        //    LoadTexture(this);
+        //}
 
         public void OpenDoor()
         {
@@ -121,7 +121,7 @@ namespace MortalDungeon.Game.Structures
             Stone,
             Iron
         }
-        public static void CreateWalls(TileMap map, List<BaseTile> tiles, WallMaterial walls)
+        public static void CreateWalls(TileMap map, List<Tile> tiles, WallMaterial walls)
         {
             Direction direction = Direction.None;
             Direction nextDirection = Direction.None;
@@ -202,7 +202,7 @@ namespace MortalDungeon.Game.Structures
             }
         }
 
-        public static void CreateWall(TileMap map, BaseTile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, WallMaterial wallMaterial = WallMaterial.Wood)
+        public static void CreateWall(TileMap map, Tile tile, StructureEnum wallType, int rotation, WallType type, bool pathable = true, bool transparent = false, WallMaterial wallMaterial = WallMaterial.Wood)
         {
             Wall wall = new Wall(map.Controller.Scene, Spritesheets.StructureSheet, (int)wallType, tile.Position + new Vector3(0, 0, WALL_HEIGHT), type);
 
@@ -252,7 +252,6 @@ namespace MortalDungeon.Game.Structures
 
             if (wallMaterial == WallMaterial.Iron) 
             {
-                wall.LightObstruction.ObstructionType = Lighting.LightObstructionType.None;
             }
         }
 
@@ -287,7 +286,7 @@ namespace MortalDungeon.Game.Structures
             bool visitedSecondaryDirection = false;
             while (true) 
             {
-                List<BaseTile> tiles = new List<BaseTile>();
+                List<Tile> tiles = new List<Tile>();
                 map.GetNeighboringTiles(currWall.Info.TileMapPosition, tiles, false);
 
                 tiles.ForEach(t => t.TilePoint.Visited = false);
@@ -394,7 +393,7 @@ namespace MortalDungeon.Game.Structures
 
                 wallList[i].WallType = wallType;
 
-                BaseTile tile = wallList[i].Info.TileMapPosition;
+                Tile tile = wallList[i].Info.TileMapPosition;
                 Vector4 wallColor = wallList[i].BaseObject.BaseFrame.BaseColor;
 
                 if (wallList[i].WallType == WallType.Corner)

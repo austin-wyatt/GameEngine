@@ -3,9 +3,11 @@ using MortalDungeon.Engine_Classes.Scenes;
 using MortalDungeon.Engine_Classes.TextHandling;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game.GameObjects;
+using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Serializers;
 using MortalDungeon.Game.Tiles;
 using MortalDungeon.Game.Units;
+using MortalDungeon.Game.Units.AIFunctions;
 using MortalDungeon.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -16,7 +18,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using static MortalDungeon.Game.Units.Disposition;
 using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
 
 namespace MortalDungeon.Game.Abilities
@@ -117,15 +118,15 @@ namespace MortalDungeon.Game.Abilities
 
         public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
 
-        public List<BaseTile> AffectedTiles = new List<BaseTile>(); //tiles that need to be accessed frequently for the ability 
+        public List<Tile> AffectedTiles = new List<Tile>(); //tiles that need to be accessed frequently for the ability 
 
         public List<Unit> Units = new List<Unit>(); //relevant units
 
-        public List<BaseTile> CurrentTiles = new List<BaseTile>(); //the current set of tiles that is being worked with
+        public List<Tile> CurrentTiles = new List<Tile>(); //the current set of tiles that is being worked with
 
         public TileMap TileMap => CastingUnit.GetTileMap();
 
-        public BaseTile SelectedTile;
+        public Tile SelectedTile;
 
         public Unit SelectedUnit;
 
@@ -153,6 +154,12 @@ namespace MortalDungeon.Game.Abilities
 
         public bool HasHoverEffect = false;
 
+        /// <summary>
+        /// Indicates that this ability is for movement and shouldn't be considered for general
+        /// use during a turn.
+        /// </summary>
+        public bool HasMovementParams = false;
+
         public CombatScene Scene => CastingUnit.Scene;
 
         public TextInfo Name = new TextInfo();
@@ -161,7 +168,6 @@ namespace MortalDungeon.Game.Abilities
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
         public bool MustCast = false;
 
-        public bool CanTargetSelf = false;
         public bool CanTargetGround = true;
         public bool CanTargetTerrain = false;
 
@@ -174,7 +180,10 @@ namespace MortalDungeon.Game.Abilities
             IsFriendly = UnitCheckEnum.SoftTrue,
             IsHostile = UnitCheckEnum.SoftTrue,
             IsNeutral = UnitCheckEnum.SoftTrue,
+            Self = UnitCheckEnum.False
         };
+
+        public bool RequiresLineToTarget = false;
 
         public bool BreakStealth = true;
 
@@ -230,12 +239,21 @@ namespace MortalDungeon.Game.Abilities
             RemovePassives();
         }
 
-        public virtual List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
+        public virtual void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits, 
+            List<Unit> units = default, Tile position = null)
         {
-            AffectedUnits.Clear();
-            AffectedTiles.Clear();
+            affectedTiles = new List<Tile>();
+            affectedUnits = new List<Unit>();
+        }
 
-            return new List<BaseTile>();
+        /// <summary>
+        /// Returns whether the destination point would be a valid tile regardless of whether it is or isn't <para/>
+        /// This is intended simply to check things like whether the destination is in range and there is an 
+        /// unobstructed line (if applicable).
+        /// </summary>
+        public virtual bool GetPositionValid(TilePoint sourcePos, TilePoint destinationPos)
+        {
+            return true;
         }
 
         public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground,
@@ -415,39 +433,33 @@ namespace MortalDungeon.Game.Abilities
             return Damage;
         }
 
-        public virtual bool UnitInRange(Unit unit, BaseTile position = null)
-        {
-            if (CanTargetSelf && unit == CastingUnit)
-                return true;
-
-            return false;
-        }
-
-        /// <summary>
-        /// Will return false if a unit is closer than the minimum range
-        /// </summary>
-        public virtual bool UnitUnderRange(Unit unit)
-        {
-            return MinRange > TileMap.GetDistanceBetweenPoints(unit.Info.TileMapPosition.TilePoint, CastingUnit.Info.TileMapPosition.TilePoint);
-        }
-
         public virtual void AdvanceDuration()
         {
             Duration--;
             EnactEffect();
         }
-        public virtual void EnactEffect()
+
+        public void BeginEffect()
         {
             Scene.SetAbilityInProgress(true);
+            EffectEndedAsync = new TaskCompletionSource<bool>();
+        }
+
+        public virtual void EnactEffect()
+        {
+
         } //the actual effect of the skill
 
         public virtual void OnSelect(CombatScene scene, TileMap currentMap)
         {
             if (CanCast())
             {
-                AffectedTiles = GetValidTileTargets(currentMap, scene._units);
+                GetValidTileTargets(currentMap, out var affectedTiles, out var affectedUnits, scene._units);
 
-                TrimTiles(AffectedTiles, Units);
+                AffectedTiles = affectedTiles;
+                AffectedUnits = affectedUnits;
+
+                TargetAffectedUnits();
 
                 Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
                 Scene.ActionEnergyBar.HoverAmount(GetActionEnergyCost());
@@ -476,11 +488,11 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public virtual void OnTileClicked(TileMap map, BaseTile tile) { }
+        public virtual void OnTileClicked(TileMap map, Tile tile) { }
 
         public virtual bool OnUnitClicked(Unit unit)
         {
-            if (CastingUnit.ObjectID == unit.ObjectID && !CanTargetSelf)
+            if (!UnitTargetParams.CheckUnit(unit, CastingUnit))
             {
                 Scene.DeselectAbility();
                 return false;
@@ -490,7 +502,7 @@ namespace MortalDungeon.Game.Abilities
         }
 
         public virtual void OnHover() { }
-        public virtual void OnHover(BaseTile tile, TileMap map) { }
+        public virtual void OnHover(Tile tile, TileMap map) { }
         public virtual void OnHover(Unit unit) { }
 
         public virtual void OnRightClick()
@@ -683,6 +695,14 @@ namespace MortalDungeon.Game.Abilities
             }
 
             Scene.TemporaryVision.Add(vision);
+            
+            void updateTemporaryVision()
+            {
+                EffectEndedAction -= updateTemporaryVision;
+                Scene.UpdateTemporaryVision();
+            }
+
+            EffectEndedAction += updateTemporaryVision;
         }
 
         public void CreateIconHoverEffect(Icon passedIcon = null)
@@ -751,144 +771,14 @@ namespace MortalDungeon.Game.Abilities
                 }
 
                 EffectEndedAction?.Invoke();
+
+                EffectEndedAsync.SetResult(true);
             });
         }
+
+        public TaskCompletionSource<bool> EffectEndedAsync;
         public Action EffectEndedAction = null;
         public bool RefreshFooterOnFinish = true;
-
-        //remove invalid tiles from the list
-        protected void TrimTiles(List<BaseTile> validTiles, List<Unit> units, bool trimFog = false, int minRange = 0, List<Unit> validUnits = null)
-        {
-            HashSet<BaseTile> validTilesSet = validTiles.ToHashSet();
-
-
-            for (int i = 0; i < validTiles.Count; i++)
-            {
-                if (i < 0)
-                    i = 0;
-
-                if (validTiles[i].TilePoint == CastingUnit.Info.TileMapPosition && !CanTargetSelf)
-                {
-                    validTilesSet.Remove(validTiles[i]);
-                    validTiles.RemoveAt(i);
-                    i--;
-                    continue;
-                }
-
-                if (minRange > 0 && minRange >= TileMap.GetDistanceBetweenPoints(validTiles[i].TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
-                {
-                    validTilesSet.Remove(validTiles[i]);
-                    validTiles.RemoveAt(i);
-                    i--;
-                    continue;
-                }
-
-                if (CanTargetSelf)
-                {
-                    AffectedUnits.Add(CastingUnit);
-                }
-
-
-                if ((!validTiles[i].InVision(CastingUnit.AI.Team) && !validTiles[i].Explored(CastingUnit.AI.Team) && trimFog) || (!validTiles[i].InVision(CastingUnit.AI.Team) && !CanTargetThroughFog))
-                {
-                    validTilesSet.Remove(validTiles[i]);
-                    validTiles.RemoveAt(i);
-                    i--;
-                    continue;
-                }
-            }
-
-            for (int j = 0; j < units?.Count; j++)
-            {
-                BaseTile tile = units[j].Info.TileMapPosition;
-
-                if (units[j] == CastingUnit)
-                {
-                    if (!CanTargetSelf)
-                    {
-                        validTiles.Remove(tile);
-                        validTilesSet.Remove(tile);
-                        continue;
-                    }
-                    else
-                    {
-                        AffectedUnits.Add(units[j]);
-                        continue;
-                    }
-                }
-
-                if (!validTilesSet.Contains(tile))
-                {
-                    validTiles.Remove(tile);
-                    validTilesSet.Remove(tile);
-                    continue;
-                }
-
-
-                if (!UnitTargetParams.CheckUnit(units[j], CastingUnit)) 
-                {
-                    validTiles.Remove(tile);
-                    validTilesSet.Remove(tile);
-                    continue;
-                }
-                else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team])
-                {
-                    validTiles.Remove(tile);
-                    validTilesSet.Remove(tile);
-                    continue;
-                }
-                else if ((tile.InFog(CastingUnit.AI.Team) && !tile.Explored(CastingUnit.AI.Team) && trimFog) || (tile.InFog(CastingUnit.AI.Team) && !CanTargetThroughFog))
-                {
-                    validTiles.Remove(tile);
-                    validTilesSet.Remove(tile);
-                    continue;
-                }
-                else
-                {
-                    if(validUnits != null)
-                    {
-                        validUnits.Add(units[j]);
-                    }
-                    AffectedUnits.Add(units[j]);
-                }
-            }
-        }
-
-        protected void TrimUnits(List<Unit> units, bool trimFog = false, int minRange = 0)
-        {
-            for (int j = 0; j < units?.Count; j++)
-            {
-                BaseTile tile = units[j].Info.TileMapPosition;
-
-                if (units[j] == CastingUnit && !CanTargetSelf)
-                {
-                    continue;
-                }
-
-                if (minRange > 0 && minRange >= TileMap.GetDistanceBetweenPoints(tile.TilePoint, CastingUnit.Info.TileMapPosition.TilePoint))
-                {
-                    continue;
-                }
-
-                if (!UnitTargetParams.CheckUnit(units[j], CastingUnit))
-                {
-                    continue;
-                }
-                else if (!units[j].Info.Stealth.Revealed[CastingUnit.AI.Team])
-                {
-                    continue;
-                }
-                else if ((tile.InFog(CastingUnit.AI.Team) && !tile.Explored(CastingUnit.AI.Team) && trimFog) || (tile.InFog(CastingUnit.AI.Team) && !CanTargetThroughFog))
-                {
-                    continue;
-                }
-                else
-                {
-                    AffectedUnits.Add(units[j]);
-                }
-            }
-        }
-
 
         public virtual Tooltip GenerateTooltip()
         {
@@ -1095,11 +985,15 @@ namespace MortalDungeon.Game.Abilities
             return new DamageInstance();
         }
 
-        public virtual UnitAIAction GetAction(List<Unit> unitsInCombat)
+        /// <summary>
+        /// Should generally only be redefined by template abilities. 
+        /// Template abilities should then define a set of parameters that can be defined
+        /// by the ability to modify the desired targets. <para/>
+        /// Template abilities should generally define their own class implementation of IAIAction as well.
+        /// </summary>
+        public virtual List<IAIAction> GetDesiredTargets()
         {
-            var action = new UnitAIAction(CastingUnit, AIAction.MoveCloser);
-
-            return action;
+            return new List<IAIAction>();
         }
 
         public override bool Equals(object obj)

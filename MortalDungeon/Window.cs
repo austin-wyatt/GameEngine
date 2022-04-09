@@ -281,12 +281,12 @@ namespace MortalDungeon
 
                 int menuSceneID = _sceneController.AddScene(menuScene, 2);
 
-                Scene escapeMenuScene = new EscapeMenuScene();
+                //Scene escapeMenuScene = new EscapeMenuScene();
 
-                int escapeMenuID = _sceneController.AddScene(escapeMenuScene, 1);
+                //int escapeMenuID = _sceneController.AddScene(escapeMenuScene, 1);
 
                 _sceneController.LoadScene(menuSceneID, _camera, _mouseRay);
-                _sceneController.LoadScene(escapeMenuID, _camera, _mouseRay);
+                //_sceneController.LoadScene(escapeMenuID, _camera, _mouseRay);
 
                 SkyBox.ImagePaths = new string[]
                 {
@@ -450,13 +450,20 @@ namespace MortalDungeon
                 GL.DrawArrays(PrimitiveType.Points, 0, 1);
             } //Points
 
-            Shaders.TILE_SHADER.Use();
-            Shaders.TILE_SHADER.SetMatrix4("camera", cameraMatrix);
+            //Shaders.TILE_SHADER.Use();
+            //Shaders.TILE_SHADER.SetMatrix4("camera", cameraMatrix);
 
-            Shaders.TILE_SHADER.SetVector3("dirLight.ambient", new Vector3(RenderingConstants.LightColor));
-            Shaders.TILE_SHADER.SetVector3("dirLight.diffuse", new Vector3(RenderingConstants.LightColor));
-            Shaders.TILE_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, 0));
-            Shaders.TILE_SHADER.SetFloat("dirLight.enabled", 1);
+            //Shaders.TILE_SHADER.SetVector3("dirLight.ambient", new Vector3(RenderingConstants.LightColor));
+            //Shaders.TILE_SHADER.SetVector3("dirLight.diffuse", new Vector3(RenderingConstants.LightColor));
+            //Shaders.TILE_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, 0));
+            //Shaders.TILE_SHADER.SetFloat("dirLight.enabled", 1);
+            Shaders.CHUNK_SHADER.Use();
+            Shaders.CHUNK_SHADER.SetMatrix4("camera", cameraMatrix);
+
+            Shaders.CHUNK_SHADER.SetVector3("dirLight.ambient", new Vector3(RenderingConstants.LightColor));
+            Shaders.CHUNK_SHADER.SetVector3("dirLight.diffuse", new Vector3(RenderingConstants.LightColor));
+            Shaders.CHUNK_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, 0));
+            Shaders.CHUNK_SHADER.SetFloat("dirLight.enabled", 1);
 
             //all objects using the fast default shader are handled here
             Shaders.FAST_DEFAULT_SHADER.Use();

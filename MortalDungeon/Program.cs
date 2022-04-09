@@ -30,6 +30,7 @@ namespace MortalDungeon
             //gameWindowSettings.IsMultiThreaded = true;
             //gameWindowSettings.RenderFrequency = 30;
             //gameWindowSettings.RenderFrequency = 60;
+            gameWindowSettings.RenderFrequency = 200;
 
             using (var game = new Window(gameWindowSettings, nativeWindowSettings))
             {

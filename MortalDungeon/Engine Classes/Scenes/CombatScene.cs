@@ -4,6 +4,7 @@ using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.UIComponents;
 using MortalDungeon.Game;
 using MortalDungeon.Game.Abilities;
+using MortalDungeon.Game.Combat;
 using MortalDungeon.Game.Events;
 using MortalDungeon.Game.Objects.PropertyAnimations;
 using MortalDungeon.Game.Player;
@@ -36,7 +37,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
         EnableTileMapUpdate,
 
         DisableVisionMapUpdate,
-        TileMapLoadInProgress,
         TileMapManagerLoading,
 
         SaveStateLoadInProgress,
@@ -60,8 +60,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
     }
     public class CombatScene : Scene
     {
+        public CombatStateTracker CombatState = new CombatStateTracker();
+
         public int Round = 0;
-        public QueuedList<Unit> InitiativeOrder = new QueuedList<Unit>();
+
+        public List<Unit> InitiativeOrder = new List<Unit>();
+        public HashSet<Unit> UnitsInCombat = new HashSet<Unit>();
+        public object _unitsInCombatLock = new object();
+
         public int UnitTakingTurn = 0; //the unit in the initiative order that is going
         public EnergyDisplayBar EnergyDisplayBar;
         public EnergyDisplayBar ActionEnergyBar;
@@ -106,20 +112,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public UIBlock _tooltipBlock;
         public Action _closeContextMenu;
 
-        public BaseTile _debugSelectedTile;
+        public Tile _debugSelectedTile;
 
         public UIBlock _unitStatusBlock;
 
         public GameObject _fogQuad = null;
 
+
         public CombatScene() 
         {
-            _fogQuad = new GameObject(Textures.TentTexture, 0);
+            _fogQuad = new GameObject(Textures.GEN_AMBIENT_MAP, 0);
             _fogQuad.BaseObject.BaseFrame.CameraPerspective = false;
+            //_fogQuad.SetColor(new Vector4(0.25f, 0.25f, 0.3f, 0.5f));
             _fogQuad.SetColor(new Vector4(0.25f, 0.25f, 0.3f, 0.5f));
             _fogQuad.SetScale(3);
 
-            _fogQuad.SetPosition(WindowConstants.CenterScreen);
+            _fogQuad.SetPosition(WindowConstants.CenterScreen + new Vector3(0, 0, 1));
         }
 
         protected override void InitializeFields()
@@ -127,6 +135,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             base.InitializeFields();
 
             BoxSelectHelper = new Game.SceneHelpers.BoxSelectHelper(this);
+            CombatStateTracker.Scene = this;
 
             _tileMapController = new TileMapController(this);
 
@@ -221,23 +230,40 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public virtual void CompleteRound()
         {
             //do stuff that needs to be done when a round is completed
-            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderByDescending(i => i.Info.Speed));
 
-            AdvanceRound();
-
-            _units.ForEach(unit =>
+            if (InCombat)
             {
-                unit.OnRoundEnd();
-            });
-
-            foreach (var item in TileEffectManager.TileEffects)
-            {
-                foreach (var effect in item.Value)
+                foreach(var unit in UnitsInCombat)
                 {
-                    effect.OnRoundEnd(item.Key);
+                    unit.OnRoundEnd();
                 }
             }
+            else
+            {
+                _units.ForEach(unit =>
+                {
+                    unit.OnRoundEnd();
+                });
+            }
+
+
+            lock (TileEffectManager._tileEffectLock)
+            {
+                foreach (var item in TileEffectManager.TileEffects)
+                {
+                    foreach (var effect in item.Value)
+                    {
+                        effect.OnRoundEnd(item.Key);
+                    }
+                }
+            }
+
+            RoundEnd?.Invoke(this, null);
+
+            AdvanceRound();
         }
+
+        public event EventHandler RoundEnd;
 
         /// <summary>
         /// Makes any calculations that need to be made at the start of the round
@@ -246,7 +272,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             UnitTakingTurn = 0;
 
-            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderByDescending(i => i.Info.Speed)); //sort the list by speed
+            if(InitiativeOrder.Count <= 1)
+            {
+                EndCombat();
+            }
+
+            //higher speed goes first
+            InitiativeOrder.Sort((a, b) => b.Info.Speed.CompareTo(a.Info.Speed));
 
             TurnDisplay.SetUnits(InitiativeOrder, this);
             //TurnDisplay.SetCurrentUnit(UnitTakingTurn);
@@ -258,11 +290,14 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 unit.OnRoundStart();
             });
 
-            foreach(var item in TileEffectManager.TileEffects)
+            lock (TileEffectManager._tileEffectLock)
             {
-                foreach(var effect in item.Value)
+                foreach (var item in TileEffectManager.TileEffects)
                 {
-                    effect.OnRoundStart(item.Key);
+                    foreach (var effect in item.Value)
+                    {
+                        effect.OnRoundStart(item.Key);
+                    }
                 }
             }
 
@@ -283,6 +318,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// </summary>
         public virtual void StartTurn()
         {
+            if(InitiativeOrder.Count <= 1)
+            {
+                EndCombat();
+            }
+            
             UnitTeam prevTeam;
 
             if (CurrentUnit == null)
@@ -293,10 +333,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 prevTeam = CurrentUnit.AI.Team;
             }
-            
 
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
-
 
             lock (TemporaryVision._lock) 
             {
@@ -324,7 +362,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 //DeselectAllUnits();
 
                 Footer.UpdateFooterInfo(CurrentUnit);
-                CurrentUnit.Select();
+                SelectUnit(CurrentUnit);
 
                 if(!AbilityInProgress)
                     Footer.EndTurnButton.SetRender(true);
@@ -348,6 +386,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 Footer.UpdateFooterInfo(CurrentUnit);
             }
+
+            CombatState.CreateMorsel(CurrentUnit, MorselType.Turn);
 
             Task.Run(CurrentUnit.OnTurnStart);
         }
@@ -424,14 +464,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (InCombat)
                 return;
 
+            InCombat = true;
+
             PlayerParty.EnterCombat();
 
-
-            InitiativeOrder.RemoveAll(u => u.Info.NonCombatant || u.Info.Dead);
+            UnitsInCombat.RemoveWhere(u => u.Info.NonCombatant || u.Info.Dead);
+            FillInitiativeOrder();
             EvaluatePacksInCombat();
-
-            if (InitiativeOrder.Count == 0)
-                return;
 
             TileMapManager.SetCenter(InitiativeOrder[0].Info.TileMapPosition.TileMap.TileMapCoords);
             TileMapManager.LoadMapsAroundCenter();
@@ -440,8 +479,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             //Footer.EndTurnButton.SetDisabled(false);
             //Footer.EndTurnButton.SetRender(true);
-
-            InitiativeOrder = QueuedList<Unit>.FromEnumerable(InitiativeOrder.OrderByDescending(i => i.Info.Speed)); //sort the list by speed
 
             TurnDisplay.SetRender(true);
             TurnDisplay.SetUnits(InitiativeOrder, this);
@@ -457,10 +494,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 EventLog.AddEvent("You appear to be under attack");
             }
             
-            InCombat = true;
-
             Round = 0;
 
+            CombatState.StartCombat();
 
             //EvaluateVentureButton();
 
@@ -473,6 +509,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //{
             //    unit.RefillAbilityCharges();
             //});
+
+            CombatState.EndCombat();
 
             InitiativeOrder.Clear();
             EvaluatePacksInCombat();
@@ -664,6 +702,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
+        public void FillInitiativeOrder()
+        {
+            InitiativeOrder = UnitsInCombat.ToList();
+            InitiativeOrder.Sort((a, b) => b.Info.Speed.CompareTo(a.Info.Speed));
+        }
 
         public void CalculateRevealedUnits() 
         {
@@ -759,35 +802,40 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// <summary>
         /// Determine which units should be present in the initiative order
         /// </summary>
-        public void EvaluateCombat() 
+        public void EvaluateCombat(UnitTeam teamToEvaluate) 
         {
             if (ContextManager.GetFlag(GeneralContextFlags.SaveStateLoadInProgress) || 
                 ContextManager.GetFlag(GeneralContextFlags.EditingFeature))
                 return;
 
+
             lock (_units._lock)
             {
                 foreach (var unit in _units) 
                 {
-                    if (unit.AI.Team != UnitTeam.PlayerUnits)
+                    if (unit.AI.Team != teamToEvaluate)
                         continue;
 
-                    foreach (UnitTeam team in ActiveTeams) 
+                    lock (_activeTeamsLock)
                     {
-                        if (unit.AI.Team.GetRelation(team) == Relation.Hostile) 
+                        foreach (UnitTeam team in ActiveTeams)
                         {
-                            if (unit.Info.Visible(team))
+                            if (unit.AI.Team.GetRelation(team) == Relation.Hostile)
                             {
-                                EvaluateUnitsInCombat(unit, 20);
-
-                                if (!InCombat) 
+                                if (unit.Info.Visible(team) || InCombat)
                                 {
-                                    foreach (var initiativeUnit in InitiativeOrder)
+                                    //Check if an enemy is present 
+                                    var unitCombatInfo = EvaluateUnitsInCombat(unit, 10);
+
+                                    if (!InCombat)
                                     {
-                                        if (InitiativeOrder.Exists(u => u.AI.Team.GetRelation(initiativeUnit.AI.Team) == Relation.Hostile)) 
+                                        if (unitCombatInfo.enemyPresent)
                                         {
+                                            UnitsInCombat = unitCombatInfo.unitsPresent;
+                                            PacksInCombat = unitCombatInfo.packs;
+
                                             //stop unit movement
-                                            if (CurrentUnit != null && CurrentUnit.Info._movementAbility != null && CurrentUnit.Info._movementAbility.Moving) 
+                                            if (CurrentUnit != null && CurrentUnit.Info._movementAbility != null && CurrentUnit.Info._movementAbility.Moving)
                                             {
                                                 CurrentUnit.Info._movementAbility._moveCancelAction = () =>
                                                 {
@@ -796,13 +844,48 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                                 };
 
                                                 CurrentUnit.Info._movementAbility.CancelMovement();
+                                                return;
                                             }
-                                            else 
+                                            else
                                             {
                                                 //if we aren't already in combat and we can verify that at least one enemy is present, start combat
                                                 Task.Run(StartCombat);
+                                                return;
                                             }
-                                            return;
+                                        }
+                                    }
+                                    else if (unitCombatInfo.enemyPresent || unitCombatInfo.combatantPresent)
+                                    {
+                                        bool newUnitPresent = false;
+
+                                        foreach(var newUnit in unitCombatInfo.unitsPresent)
+                                        {
+                                            if (!UnitsInCombat.Contains(newUnit))
+                                            {
+                                                newUnitPresent = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if (newUnitPresent)
+                                        {
+                                            lock (_unitsInCombatLock)
+                                            {
+                                                foreach(var newUnit in unitCombatInfo.unitsPresent)
+                                                {
+                                                    if (UnitsInCombat.Add(newUnit))
+                                                    {
+                                                        UnitAddedToCombat?.Invoke(newUnit);
+                                                    }
+                                                }
+
+                                                FillInitiativeOrder();
+
+                                                TurnDisplay.SetUnits(InitiativeOrder, this);
+                                            }
+
+                                            PacksInCombat.UnionWith(unitCombatInfo.packs);
+                                            CombatState.AddMorselForAll();
                                         }
                                     }
                                 }
@@ -814,7 +897,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
         public HashSet<string> PacksInCombat = new HashSet<string>();
-        public void EvaluateUnitsInCombat(Unit seedUnit, int radius) 
+        public (HashSet<string> packs, HashSet<Unit> unitsPresent, bool enemyPresent, bool combatantPresent) EvaluateUnitsInCombat(Unit seedUnit, int radius) 
         {
             List<Unit> unitsToCheck = new List<Unit>();
             HashSet<Unit> checkedUnits = new HashSet<Unit>();
@@ -822,38 +905,66 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //Stopwatch timer = new Stopwatch();
             //timer.Start();
 
+            HashSet<string> packs = new HashSet<string>(); ;
+            HashSet<Unit> unitsInCombat = new HashSet<Unit>();
+            bool enemyPresent = false;
+            bool combatantPresent = false;
+
+            //if (InCombat)
+            //{
+            //    packs = PacksInCombat;
+            //    unitsInCombat = UnitsInCombat;
+            //}
+            //else
+            //{
+            //    packs = new HashSet<string>();
+            //    unitsInCombat = new HashSet<Unit>();
+            //}
+
             unitsToCheck.Add(seedUnit);
             checkedUnits.Add(seedUnit);
 
-            lock (InitiativeOrder._lock)
+            lock (_unitsInCombatLock)
             {
                 for (int i = 0; i < unitsToCheck.Count; i++)
                 {
-                    lock (_units._lock)
+                    if (unitsToCheck[i].Info.Dead)
+                        continue;
+
+                    HashSet<Unit> unitsInRadius = UnitPositionManager.GetUnitsInRadius(radius, unitsToCheck[i].Info.TileMapPosition.ToFeaturePoint());
+
+                    unitsInRadius.RemoveWhere(u => checkedUnits.Contains(u) || u.Info.Dead);
+
+                    foreach (var u in unitsInRadius)
                     {
-                        foreach (var u in _units)
+                        if (u.Info.TileMapPosition != null &&
+                            (TileMap.GetDistanceBetweenPoints(u.Info.TileMapPosition, unitsToCheck[i].Info.TileMapPosition) <= radius 
+                            || packs.Contains(u.pack_name)))
                         {
-                            if (!u.Info.Dead && u.Info.TileMapPosition != null &&
-                                (TileMap.GetDistanceBetweenPoints(u.Info.TileMapPosition, unitsToCheck[i].Info.TileMapPosition) <= radius 
-                                || PacksInCombat.Contains(u.pack_name)))
+                            Relation unitRelation = u.AI.Team.GetRelation(unitsToCheck[i].AI.Team);
+
+                            if(unitRelation == Relation.Hostile)
                             {
-                                Relation unitRelation = u.AI.Team.GetRelation(unitsToCheck[i].AI.Team);
-                                if (unitRelation == Relation.Friendly || unitRelation == Relation.Hostile)
+                                enemyPresent = true;
+                            }
+
+                            if (unitRelation == Relation.Friendly || unitRelation == Relation.Hostile)
+                            {
+                                if (!checkedUnits.Contains(u))
                                 {
-                                    if (!checkedUnits.Contains(u))
-                                    {
-                                        unitsToCheck.Add(u);
-                                        checkedUnits.Add(u);
-                                    }
+                                    unitsToCheck.Add(u);
+                                    checkedUnits.Add(u);
+                                }
 
-                                    if (!InitiativeOrder.Contains(u))
-                                    {
-                                        if(u.pack_name != "")
-                                            PacksInCombat.Add(u.pack_name);
+                                if(u.pack_name != "")
+                                    packs.Add(u.pack_name);
 
-                                        InitiativeOrder.AddImmediate(u);
-                                        TurnDisplay.SetUnits(InitiativeOrder, this);
-                                    }
+                                unitsInCombat.Add(u);
+                                unitsInCombat.Add(unitsToCheck[i]);
+
+                                if (!combatantPresent)
+                                {
+                                    combatantPresent = UnitsInCombat.Contains(u);
                                 }
                             }
                         }
@@ -861,6 +972,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 }
             }
 
+            return (packs, unitsInCombat, enemyPresent, combatantPresent);
             //Console.WriteLine($"Combat unit evaluation completed in {timer.ElapsedMilliseconds}ms");
         }
 
@@ -868,12 +980,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             PacksInCombat.Clear();
 
-            lock (InitiativeOrder._lock)
+            lock (_unitsInCombatLock)
             {
-                for(int i = 0; i < InitiativeOrder.Count; i++)
+                foreach(var unit in UnitsInCombat)
                 {
-                    if(InitiativeOrder[i].pack_name != "")
-                        PacksInCombat.Add(InitiativeOrder[i].pack_name);
+                    if (unit.pack_name != "")
+                        PacksInCombat.Add(unit.pack_name);
                 }
             }
         }
@@ -908,25 +1020,30 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (immediate) 
             {
                 _units.RemoveImmediate(unit);
-                InitiativeOrder.RemoveImmediate(unit);
-                EvaluatePacksInCombat();
+                
             }
             else 
             {
                 _units.Remove(unit);
-                InitiativeOrder.Remove(unit);
             }
 
-            //FillInTeamFog();
+            lock (_unitsInCombatLock)
+            {
+                UnitsInCombat.Remove(unit);
+            }
+            EvaluatePacksInCombat();
 
-            if(Footer != null)
+
+            if (Footer != null)
                 Footer.RefreshFooterInfo();
         }
 
         #region Event handlers
 
+        public event Unit.UnitEventHandler UnitMoved;
+        public event Unit.UnitEventHandler UnitAddedToCombat;
 
-        public void OnUnitMoved(Unit unit, BaseTile prevTile) 
+        public void OnUnitMoved(Unit unit, Tile prevTile) 
         {
             //if (CurrentUnit == unit && CurrentUnit.AI.Team == UnitTeam.PlayerUnits && CurrentUnit.AI.ControlType == ControlType.Controlled) 
             //{
@@ -942,7 +1059,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             ObjectCulling.CullListOfUnits(new List<Unit>() { unit });
 
-            if(prevTile != null)
+            UnitMoved?.Invoke(unit);
+
+            if (prevTile != null)
             {
                 Task.Run(() =>
                 {
@@ -971,43 +1090,49 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             if (!ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
             {
-                VisionManager.PrepareLightObstructions(LightObstructions);
-                CreateStructureInstancedRenderData();
+                TileMapManager.Scene.RenderDispatcher.DispatchAction(_structureDispatchObject, CreateStructureInstancedRenderData);
             }
         }
 
+        public object _structureDispatchObject = new object();
         public void CreateStructureInstancedRenderData()
         {
             List<Structure> structuresToRender = new List<Structure>();
+            List<Structure> fogStructuresToRender = new List<Structure>();
 
-            foreach(var structure in _structures)
+            lock (_structureLock)
             {
-                if(structure.Info.TileMapPosition != null && TileMapManager.VisibleMaps.Contains(structure.Info.TileMapPosition.TileMap))
+                foreach(var map in TileMapManager.VisibleMaps)
                 {
-                    structuresToRender.Add(structure);
+                    for(int i = 0; i < map.TileChunks.Count; i++)
+                    {
+                        foreach(var structure in map.TileChunks[i].Structures)
+                        {
+                            if (structure.Info.TileMapPosition.InFog(VisibleTeam))
+                            {
+                                fogStructuresToRender.Add(structure);
+                            }
+                            else
+                            {
+                                structuresToRender.Add(structure);
+                            }
+                        }
+                    }
                 }
             }
 
-            SyncToRender(() => 
+            Window.QueueToRenderCycle(() => 
             {
-                RenderingQueue.GenerateStructureInstancedRenderData(structuresToRender);
+                RenderingQueue.GenerateStructureInstancedRenderData(structuresToRender, fogStructuresToRender);
             });
         }
 
         public override void OnRender()
         {
             base.OnRender();
-
-            UpdateTemporaryVision();
-
-            if (InitiativeOrder.HasQueuedItems()) 
-            {
-                InitiativeOrder.HandleQueuedItems();
-                EvaluatePacksInCombat();
-            }
         }
 
-        public delegate void TileHoverEventHandler(BaseTile tile);
+        public delegate void TileHoverEventHandler(Tile tile);
         public event TileHoverEventHandler TileHover;
 
         public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
@@ -1024,49 +1149,63 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 //If a tile is found the loop breaks
 
                 var chunksByDistance = TileMapHelpers.GetChunksByDistance(mouseRayNear, mouseRayFar);
+                List<Tile> foundTiles = new List<Tile>();
 
+                bool tileHoverHandled = false;
                 for (int i = 0; i < chunksByDistance.Count; i++)
                 {
+                    if (tileHoverHandled)
+                        break;
+
                     var chunk = chunksByDistance[i].Chunk;
                     if (!chunk.Cull)
                     {
-                        ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar, (tile) =>
+                        var chunkTiles = ObjectCursorBoundsCheck(chunk.Tiles, mouseRayNear, mouseRayFar);
+
+                        for(int j = 0; j < chunkTiles.Count; j++)
                         {
-                            if (tile.Hoverable)
-                            {
-                                tile.TileMap.Controller.HoverTile(tile);
+                            foundTiles.Add(chunkTiles[j]);
+                        }
+                    }
+                }
 
-                                TileHover?.Invoke(tile);
+                if (foundTiles.Count > 0)
+                {
+                    foundTiles.Sort((a, b) => b.Properties.Height.CompareTo(a.Properties.Height));
 
-                                if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
-                                {
-                                    _selectedAbility.OnHover(tile, tile.TileMap);
-                                }
+                    if (/*foundTiles[0].Hoverable*/true && !tileHoverHandled)
+                    {
+                        TileMapManager.Scene._tileMapController.HoverTile(foundTiles[0]);
 
-                                if (Game.Settings.EnableTileTooltips)
-                                {
-                                    UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, BaseTile.GetTooltipString(tile, this), tile, _tooltipBlock)
-                                    {
-                                        TooltipFlag = GeneralContextFlags.TileTooltipOpen,
-                                        Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
-                                        Anchor = UIAnchorPosition.TopRight,
-                                        BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
-                                        TextScale = 0.07f,
-                                        EnforceScreenBounds = false
-                                    };
+                        tileHoverHandled = true;
 
-                                    UIHelpers.CreateToolTip(param);
-                                }
-                            }
+                        TileHover?.Invoke(foundTiles[0]);
 
-                            if (tile.HasTimedHoverEffect)
-                            {
-                                _hoverTimer.Restart();
-                                _hoveredObject = tile;
-                            }
+                        if (_selectedAbility != null && _selectedAbility.HasHoverEffect)
+                        {
+                            _selectedAbility.OnHover(foundTiles[0], foundTiles[0].TileMap);
+                        }
 
-                            i = chunksByDistance.Count; //break out of the loop
-                        });
+                        if (Game.Settings.EnableTileTooltips)
+                        {
+                            //UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, Tile.GetTooltipString(foundTiles[0], this), foundTiles[0], _tooltipBlock)
+                            //{
+                            //    TooltipFlag = GeneralContextFlags.TileTooltipOpen,
+                            //    Position = new Vector3(WindowConstants.ScreenUnits.X, 0, 0),
+                            //    Anchor = UIAnchorPosition.TopRight,
+                            //    BackgroundColor = new Vector4(0.85f, 0.85f, 0.85f, 0.9f),
+                            //    TextScale = 0.07f,
+                            //    EnforceScreenBounds = false
+                            //};
+
+                            //UIHelpers.CreateToolTip(param);
+                        }
+                    }
+
+                    if (foundTiles[0].HasTimedHoverEffect)
+                    {
+                        _hoverTimer.Restart();
+                        _hoveredObject = foundTiles[0];
                     }
                 }
 
@@ -1244,13 +1383,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 }
             }
 
-            InitiativeOrder.RemoveImmediate(unit);
+            UnitsInCombat.Remove(unit);
+            InitiativeOrder.Remove(unit);
             EvaluatePacksInCombat();
             TurnDisplay.SetUnits(InitiativeOrder, this);
 
-            EvaluateCombat();
-
-            if (InitiativeOrder.All(unit => unit.AI.Team.GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly || !unit.AI.Fighting))
+            if (InitiativeOrder.Count <= 1 || InitiativeOrder.All(unit => unit.AI.Team.GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly || !unit.AI.Fighting))
             {
                 EndCombat();
             }
@@ -1395,7 +1533,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 foreach(var map in affectedMaps)
                 {
-                    map.UpdateTile(map.Tiles[0]);
+                    map.UpdateTile();
                 }
             }
         }

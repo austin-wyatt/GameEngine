@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Events
         [XmlElement("EVt")]
         public string EventTrigger;
 
-        public Conditional Conditional = Conditional.TRUE;
+        public Conditional Conditional = new Conditional(Conditional.TRUE);
 
         /// <summary>
         /// Any parameters that might be necessary when building the action. This can be any serializable class (including another EventActionBuilder).

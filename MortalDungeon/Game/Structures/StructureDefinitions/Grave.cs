@@ -12,7 +12,7 @@ namespace MortalDungeon.Game.Structures
 {
     class Grave : Structure
     {
-        public Grave(TileMap map, BaseTile tile, int graveType) : base(map.Controller.Scene, Spritesheets.StructureSheet, graveType, tile.Position + new Vector3(0, -250, 0.12f))
+        public Grave(TileMap map, Tile tile, int graveType) : base(map.Controller.Scene, Spritesheets.StructureSheet, graveType, tile.Position + new Vector3(0, -250, 0.12f))
         {
             if (tile.Structure != null)
                 return;

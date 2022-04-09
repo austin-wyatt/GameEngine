@@ -84,6 +84,13 @@ namespace MortalDungeon.Engine_Classes.MiscOperations
             return offsetCoord;
         }
 
+        public static FeaturePoint CubeToFeaturePoint(Vector3i cube)
+        {
+            FeaturePoint offsetCoord = new FeaturePoint(cube.X, cube.Z + (cube.X + (cube.X & 1)) / 2);
+
+            return offsetCoord;
+        }
+
         public static Vector3i OffsetToCube(Vector2i offset)
         {
             Vector3i cubeCoord = new Vector3i

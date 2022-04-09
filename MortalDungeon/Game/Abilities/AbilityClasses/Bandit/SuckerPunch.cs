@@ -12,9 +12,9 @@ using MortalDungeon.Definitions.Buffs;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class SuckerPunch : Ability
+    public class SuckerPunch : TemplateRangedSingleTarget
     {
-        public SuckerPunch(Unit castingUnit)
+        public SuckerPunch(Unit castingUnit) : base(castingUnit)
         {
             Type = AbilityTypes.MeleeAttack;
             DamageType = DamageType.Blunt;
@@ -31,6 +31,8 @@ namespace MortalDungeon.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
+            WeightParams.EnemyWeight = 1;
+
 
             Name = new Serializers.TextInfo(9, 3);
             Description = new Serializers.TextInfo(10, 3);
@@ -43,62 +45,25 @@ namespace MortalDungeon.Game.Abilities
             });
 
             AbilityClass = AbilityClass.Bandit;
-        }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            if (position == null)
+            WeightParams.WeightModifications.Add((weight, ability, morsel) =>
             {
-                position = CastingUnit.Info.TileMapPosition;
-            }
+                if(morsel.Shields <= 0 && !morsel.Unit.Info.StatusManager.CheckCondition(StatusCondition.Stunned))
+                {
+                    weight *= 2;
+                }
+                else
+                {
+                    weight *= 0.75f;
+                }
 
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(position, Range)
-            {
-                TraversableTypes = TileMapConstants.AllTileClassifications,
-                Units = units,
-                CastingUnit = CastingUnit
-            };
-
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-
-            TrimTiles(validTiles, units);
-
-            TargetAffectedUnits();
-
-            return validTiles;
-        }
-
-        public override bool UnitInRange(Unit unit, BaseTile position = null)
-        {
-            if (position == null)
-            {
-                position = CastingUnit.Info.TileMapPosition;
-            }
-
-            GetValidTileTargets(unit.GetTileMap(), new List<Unit> { unit }, position);
-
-            return AffectedUnits.Exists(u => u.ObjectID == unit.ObjectID);
-        }
-
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
-
-            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
-
-            return true;
+                return weight;
+            });
         }
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             var damageParams = SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
 

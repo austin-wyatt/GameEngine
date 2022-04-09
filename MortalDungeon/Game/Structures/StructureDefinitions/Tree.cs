@@ -13,10 +13,14 @@ namespace MortalDungeon.Game.Structures
 {
     class Tree : Structure
     {
-        public Tree(TileMap map, BaseTile tile, int treeType = -1) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetTreeType(treeType), tile.Position + new Vector3(0, -200, 0.22f))
+        public Tree(TileMap map, Tile tile, int treeType = -1, float scale = 1) : base(map.Controller.Scene, Spritesheets.StructureSheet, GetTreeType(treeType), tile.Position)
         {
-            BaseObject.BaseFrame.RotateX(25);
-            BaseObject.BaseFrame.SetScaleAll(1 + (float)TileMap._randomNumberGen.NextDouble() / 2);
+            BaseObject.BaseFrame.RotateX(45);
+            //BaseObject.BaseFrame.SetScaleAll(1 + (float)TileMap._randomNumberGen.NextDouble() / 2);
+            BaseObject.BaseFrame.SetScaleAll(scale);
+
+            CalculateInnateTileOffset();
+            SetPositionOffset(tile.Position);
 
             VisibleThroughFog = true;
             SetTileMapPosition(tile);
@@ -27,7 +31,31 @@ namespace MortalDungeon.Game.Structures
 
             Info.Height = 2;
 
-            LightObstruction.ObstructionType = Lighting.LightObstructionType.Tree;
+            tile.Properties.BlockingTypes.Add(BlockingType.Vision);
+        }
+
+        public override void SetTileMapPosition(Tile baseTile)
+        {
+            base.SetTileMapPosition(baseTile);
+
+            baseTile.Properties.BlockingTypes.Add(BlockingType.Vision);
+        }
+
+        public override void Removed()
+        {
+            base.Removed();
+
+            if (Info.TileMapPosition != null)
+            {
+                Info.TileMapPosition.Properties.BlockingTypes.Remove(BlockingType.Vision);
+            }
+        }
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            Info.TileMapPosition.Properties.BlockingTypes.Remove(BlockingType.Vision);
         }
 
         private static int GetTreeType(int treeType) 

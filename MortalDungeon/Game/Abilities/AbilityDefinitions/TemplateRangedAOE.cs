@@ -60,11 +60,10 @@ namespace MortalDungeon.Game.Abilities
             TilePattern = new List<Vector3i> { new Vector3i(0, 0, 0), new Vector3i(-1, 1, 0), new Vector3i(1, 0, -1), new Vector3i(1, -1, 0), new Vector3i(-1, 0, 1) };
         }
 
-        protected HashSet<BaseTile> _affectedTilesHashSet = new HashSet<BaseTile>();
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
+        protected HashSet<Tile> _affectedTilesHashSet = new HashSet<Tile>();
+        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+            List<Unit> units = default, Tile position = null)
         {
-            base.GetValidTileTargets(tileMap);
-
             if (position == null)
             {
                 position = CastingUnit.Info.TileMapPosition;
@@ -72,18 +71,28 @@ namespace MortalDungeon.Game.Abilities
 
             TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(position, Range)
             {
-                TraversableTypes = TileMapConstants.AllTileClassifications,
                 Units = units,
                 CastingUnit = CastingUnit
             };
 
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
+            List<Tile> validTiles = tileMap.FindValidTilesInRadius(param);
 
-            TrimTiles(validTiles, units, validUnits: validUnits);
+            affectedUnits = new List<Unit>();
+            foreach (var tile in validTiles)
+            {
+                foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(tile))
+                {
+                    if (UnitTargetParams.CheckUnit(unit, CastingUnit))
+                    {
+                        affectedUnits.Add(unit);
+                    }
+                }
+            }
 
             _affectedTilesHashSet = validTiles.ToHashSet();
 
-            return validTiles;
+            affectedTiles = validTiles;
+            
         }
 
         protected HashSet<BaseTile> _selectedTiles = new HashSet<BaseTile>();
@@ -121,10 +130,10 @@ namespace MortalDungeon.Game.Abilities
         }
 
 
-        protected BaseTile _hoveredTile = null;
-        protected HashSet<BaseTile> _hoveredTiles = new HashSet<BaseTile>();
+        protected Tile _hoveredTile = null;
+        protected HashSet<Tile> _hoveredTiles = new HashSet<Tile>();
         protected List<BaseTile> _hoveredSelectionTiles = new List<BaseTile>();
-        public override void OnHover(BaseTile tile, TileMap map)
+        public override void OnHover(Tile tile, TileMap map)
         {
             base.OnHover(tile, map);
 
@@ -152,7 +161,7 @@ namespace MortalDungeon.Game.Abilities
                 Vector3i newTileCube = tileCubeCoords + cubeCoord;
                 Vector2i offsetCoords = CubeMethods.CubeToOffset(newTileCube);
 
-                BaseTile foundTile = TileMapHelpers.GetTile(new FeaturePoint(offsetCoords.X, offsetCoords.Y));
+                Tile foundTile = TileMapHelpers.GetTile(new FeaturePoint(offsetCoords.X, offsetCoords.Y));
 
                 if (foundTile != null)
                 {
@@ -181,7 +190,7 @@ namespace MortalDungeon.Game.Abilities
             _hoveredSelectionTiles.Clear();
         }
 
-        public override void OnTileClicked(TileMap map, BaseTile tile)
+        public override void OnTileClicked(TileMap map, Tile tile)
         {
             base.OnTileClicked(map, tile);
 
@@ -210,7 +219,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             //foreach(var tile in _hoveredTiles)
             //{

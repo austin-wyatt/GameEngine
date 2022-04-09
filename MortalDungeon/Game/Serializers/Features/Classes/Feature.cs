@@ -368,10 +368,39 @@ namespace MortalDungeon.Game.Serializers
             #endregion
 
             #region Map Brushes
-            foreach(var brush in MapBrushes)
+            Vector2i minBrush = new Vector2i(int.MaxValue, int.MaxValue);
+            Vector2i maxBrush = new Vector2i(int.MinValue, int.MinValue);
+
+            var originMapPoint = Origin.ToTileMapPoint();
+
+            foreach (var brush in MapBrushes)
             {
                 featureEquation.MapBrushes.TryAdd(new TileMapPoint(brush.X, brush.Y), brush);
                 brush.OnLoaded(Id);
+
+                if(brush.X - originMapPoint.X < minBrush.X)
+                {
+                    minBrush.X = brush.X - originMapPoint.X;
+                }
+                if (brush.Y - originMapPoint.Y < minBrush.Y)
+                {
+                    minBrush.Y = brush.Y - originMapPoint.Y;
+                }
+                if (brush.X - originMapPoint.X > maxBrush.X)
+                {
+                    maxBrush.X = brush.X - originMapPoint.X;
+                }
+                if (brush.Y - originMapPoint.Y > maxBrush.Y)
+                {
+                    maxBrush.Y = brush.Y - originMapPoint.Y;
+                }
+            }
+
+            var brushLoadRadius = Math.Max(maxBrush.X - minBrush.X, maxBrush.Y - minBrush.Y) * TileMapManager.TILE_MAP_DIMENSIONS.X;
+
+            if(brushLoadRadius > LoadRadius)
+            {
+                LoadRadius = brushLoadRadius;
             }
             #endregion
 
@@ -409,6 +438,82 @@ namespace MortalDungeon.Game.Serializers
         //    }
         //}
 
+        public void CalculateLoadRadius()
+        {
+            Vector2i minPoint = new Vector2i(int.MaxValue, int.MaxValue);
+            Vector2i maxPoint = new Vector2i(int.MinValue, int.MinValue);
+
+            #region Bounding points
+            minPoint = new Vector2i(int.MaxValue, int.MaxValue);
+            maxPoint = new Vector2i(int.MinValue, int.MinValue);
+
+            foreach (var boundingPoint in BoundingPoints)
+            {
+                foreach(var point in boundingPoint.CubePoints)
+                {
+                    Vector2i offset = CubeMethods.CubeToOffset(point + CubeMethods.OffsetToCube(Origin));
+
+                    if(offset.X < minPoint.X)
+                    {
+                        minPoint.X = offset.X;
+                    }
+                    if (offset.X > maxPoint.X)
+                    {
+                        maxPoint.X = offset.X;
+                    }
+                    if (offset.Y < minPoint.Y)
+                    {
+                        minPoint.Y = offset.Y;
+                    }
+                    if (offset.Y > maxPoint.Y)
+                    {
+                        maxPoint.Y = offset.Y;
+                    }
+                }
+            }
+
+            var boundingPointLoadRadius = Math.Max(maxPoint.X - minPoint.X, maxPoint.Y - minPoint.Y);
+
+            if (boundingPointLoadRadius > LoadRadius)
+            {
+                LoadRadius = boundingPointLoadRadius;
+            }
+            #endregion
+
+            #region Map brushes
+            Vector2i minBrush = new Vector2i(int.MaxValue, int.MaxValue);
+            Vector2i maxBrush = new Vector2i(int.MinValue, int.MinValue);
+
+            var originMapPoint = Origin.ToTileMapPoint();
+
+            foreach (var brush in MapBrushes)
+            {
+                if (brush.X - originMapPoint.X < minBrush.X)
+                {
+                    minBrush.X = brush.X - originMapPoint.X;
+                }
+                if (brush.Y - originMapPoint.Y < minBrush.Y)
+                {
+                    minBrush.Y = brush.Y - originMapPoint.Y;
+                }
+                if (brush.X - originMapPoint.X > maxBrush.X)
+                {
+                    maxBrush.X = brush.X - originMapPoint.X;
+                }
+                if (brush.Y - originMapPoint.Y > maxBrush.Y)
+                {
+                    maxBrush.Y = brush.Y - originMapPoint.Y;
+                }
+            }
+
+            var brushLoadRadius = Math.Max(maxBrush.X - minBrush.X, maxBrush.Y - minBrush.Y) * TileMapManager.TILE_MAP_DIMENSIONS.X;
+
+            if (brushLoadRadius > LoadRadius)
+            {
+                LoadRadius = brushLoadRadius;
+            }
+            #endregion
+        }
         public static long HashCoordinates(int x, int y)
         {
             long val = ((long)x << 32) + y;

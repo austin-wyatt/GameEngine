@@ -114,14 +114,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 if (!obj.Render)
                     return;
 
-                if (obj.Tiles.Count > 0)
-                {
-                    obj.Tiles.ForEach(tile =>
-                    {
-                        Renderer.LoadTextureFromGameObj(tile);
-                    });
-                }
-
                 foreach (var tile in obj.Controller.GetSelectionTilePool())
                 {
                     Renderer.LoadTextureFromGameObj(tile);
@@ -252,19 +244,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             lock (TileMapManager._loadLock)
             {
-                TileMapManager.ActiveMaps.ForEach(map =>
+                for(int i = 0; i < TileMapManager.ActiveMaps.Count; i++)
                 {
-                    map.TileChunks.ForEach(chunk =>
+                    for(int j = 0; j < TileMapManager.ActiveMaps[i].TileChunks.Count; j++)
                     {
-                        ObjectCulling.CullTileChunk(chunk);
-                    });
-                });
+                        ObjectCulling.CullTileChunk(TileMapManager.ActiveMaps[i].TileChunks[j]);
+                    }
+                }
             }
 
-            Scenes.ForEach(scene =>
-            {
-                ObjectCulling.CullListOfUnits(scene._units);
-            });
+            ObjectCulling.CullListOfUnits(TileMapManager.Scene._units);
+            //Scenes.ForEach(scene =>
+            //{
+            //    ObjectCulling.CullListOfUnits(scene._units);
+            //});
 
             //Console.WriteLine($"Cull completed in {timer.ElapsedTicks} ticks");
         }

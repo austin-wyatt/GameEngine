@@ -82,12 +82,12 @@ namespace MortalDungeon.Engine_Classes
 
         public Matrix4 GetProjectionMatrix()
         {
-            return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 100f);
+            return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 75f);
         }
 
         public void UpdateProjectionMatrix() 
         {
-            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 100f);
+            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.1f, 75f);
         }
 
         private void UpdateVectors()

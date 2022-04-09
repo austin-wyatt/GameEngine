@@ -35,6 +35,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
 
         public static List<InstancedRenderData> StructureRenderData = new List<InstancedRenderData>();
+        public static List<InstancedRenderData> FogStructureRenderData = new List<InstancedRenderData>();
 
         public static Action RenderSkybox = null;
 
@@ -79,7 +80,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderQueuedUI();
 
-            RenderInstancedUIData();
+            //RenderInstancedUIData();
         }
 
 
@@ -256,7 +257,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
         #endregion
 
-        #region Tile queue
+        #region BaseTile queue
         public static void QueueTileObjectsForRender(List<BaseTile> objList)
         {
             if (objList.Count == 0)
@@ -276,7 +277,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         }
         #endregion
 
-        #region Tile quad queue
+        #region BaseTile quad queue
         public static void QueueTileQuadForRender(GameObject obj)
         {
             if (obj == null)
@@ -320,14 +321,20 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
         #region Structure instanced render data
-        public static void GenerateStructureInstancedRenderData(List<Structure> structures)
+        public static void GenerateStructureInstancedRenderData(List<Structure> structures, List<Structure> fogStructures)
         {
             for (int i = 0; i < StructureRenderData.Count; i++)
             {
                 StructureRenderData[i].CleanUp();
             }
 
+            for(int i = 0; i < FogStructureRenderData.Count; i++)
+            {
+                FogStructureRenderData[i].CleanUp();
+            }
+
             StructureRenderData = InstancedRenderData.GenerateInstancedRenderData(structures);
+            FogStructureRenderData = InstancedRenderData.GenerateInstancedRenderData(fogStructures);
         }
 
         public static void RenderInstancedStructureData()
@@ -335,9 +342,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
             Renderer.RenderInstancedRenderData(StructureRenderData);
         }
 
+        public static void RenderFogInstancedStructureData()
+        {
+            Renderer.RenderInstancedRenderData(FogStructureRenderData);
+        }
+
         #endregion
 
-        #region Tile instanced render data
+        #region BaseTile instanced render data
         private static List<InstancedRenderData> _tileRenderData = new List<InstancedRenderData>();
 
         public static void ClearTileInstancedRenderData()
@@ -355,25 +367,25 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             TileMapController.TileOverlaySpritesheet.Use(TextureUnit.Texture1);
 
-            Renderer.RenderInstancedRenderData(_tilePillarRenderData);
-
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
-            //GL.Clear(ClearBufferMask.StencilBufferBit);
             GL.Enable(EnableCap.StencilTest);
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
             GL.StencilMask(0xFF);
-
             Renderer.RenderInstancedRenderData(_tileRenderData);
 
-            GL.StencilMask(0x00);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Zero);
+            GL.StencilMask(0xFF);
+            RenderFogInstancedStructureData();
+
             Renderer.RenderInstancedRenderData(_fogTileRenderData);
 
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
             GL.StencilMask(0xFF);
-            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
-            GL.Disable(EnableCap.DepthTest);
-            RenderFogQuad();
-            GL.Enable(EnableCap.DepthTest);
+
+            Renderer.RenderInstancedRenderData(_tilePillarRenderData);
+
+            RenderInstancedStructureData();
 
             GL.Disable(EnableCap.StencilTest);
 

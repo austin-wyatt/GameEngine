@@ -109,7 +109,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             bool prevCull = obj.Cull;
 
-            if (!obj.Tiles[0].TileMap.Visible)
+            if (!obj.Tiles[0].TileMap._visible)
             {
                 obj.Cull = true;
 
@@ -125,13 +125,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _localPos.Y = obj.Center.Y;
             _localPos.Z = obj.Center.Z;
 
-            float scaleMax;
+            float scaleMax = 1;
 
-            Vector3 scale = obj.Tiles[0].BaseObjects[0].BaseFrame.CurrentScale;
+            //Vector3 scale = obj.Tiles[0].BaseObjects[0].BaseFrame.CurrentScale;
 
-            scaleMax = scale.X;
-            scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
-            scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
+            //scaleMax = scale.X;
+            //scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
+            //scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
 
             //scaleMax *= 0.5f; //another magic number that works pretty well
 

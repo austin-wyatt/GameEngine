@@ -36,6 +36,11 @@ namespace MortalDungeon.Game.Map
             _visited = false;
         }
 
+        public FeaturePoint(Tile tile)
+        {
+            this = new FeaturePoint(tile.TilePoint);
+        }
+
         public FeaturePoint(BaseTile tile)
         {
             this = new FeaturePoint(tile.TilePoint);
@@ -91,6 +96,11 @@ namespace MortalDungeon.Game.Map
         public TileMapPoint ToTileMapPoint()
         {
             return FeatureEquation.FeaturePointToTileMapCoords(this);
+        }
+
+        public TilePoint ToTilePoint()
+        {
+            return new TilePoint(this);
         }
 
         public static bool PointInPolygon(List<FeaturePoint> points, Vector2i point)

@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Structures
     {
         public StructureEnum GrassType = StructureEnum.Grass;
 
-        public Grass(CombatScene scene, BaseTile tile) : base(scene)
+        public Grass(CombatScene scene, Tile tile) : base(scene)
         {
             //BaseObject.BaseFrame.RotateX(25);
 
@@ -42,8 +42,6 @@ namespace MortalDungeon.Game.Structures
 
             SetTeam(UnitTeam.Unknown);
             Info.Height = 0;
-
-            LightObstruction.ObstructionType = Lighting.LightObstructionType.None;
 
             LoadTexture(this);
         }

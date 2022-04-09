@@ -11,41 +11,83 @@ namespace MortalDungeon.Game.Abilities
 
         private static HashSet<TileEffect> _emptySet = new HashSet<TileEffect>();
 
+        public static object _tileEffectLock = new object();
+
         public static void AddTileEffectToPoint(TileEffect effect, TilePoint point)
         {
-            if (TileEffects.TryGetValue(point, out var result))
+            lock (_tileEffectLock)
             {
-                result.Add(effect);
-            }
-            else
-            {
-                var set = new HashSet<TileEffect>();
-                set.Add(effect);
+                if (TileEffects.TryGetValue(point, out var result))
+                {
+                    result.Add(effect);
+                }
+                else
+                {
+                    var set = new HashSet<TileEffect>();
+                    set.Add(effect);
 
-                TileEffects.Add(point, set);
-            }
+                    TileEffects.Add(point, set);
+                }
 
-            effect.AddedToTile(point);
+                effect.AddedToTile(point);
+            }
         }
 
-        public static void RemoveTileEffect(TileEffect effect, TilePoint point)
+        public static void RemoveTileEffectImmediately(TileEffect effect, TilePoint point)
         {
-            if(TileEffects.TryGetValue(point, out var result))
+            lock (_tileEffectLock)
             {
-                if (result.Remove(effect))
+                if (TileEffects.TryGetValue(point, out var result))
                 {
-                    effect.RemovedFromTile(point);
+                    if (result.Remove(effect))
+                    {
+                        effect.RemovedFromTile(point);
+                    }
                 }
             }
         }
 
+        public static void RemoveTileEffectOnRoundEnd(TileEffect effect, TilePoint point)
+        {
+            if(_effectsToRemove.Count == 0)
+            {
+                TileMapManager.Scene.RoundEnd += RemoveTileEffects;
+            }
+
+            _effectsToRemove.Add((point, effect));
+        }
+
+        private static List<(TilePoint point, TileEffect effect)> _effectsToRemove = new List<(TilePoint, TileEffect)>();
+        private static void RemoveTileEffects(object s, EventArgs e)
+        {
+            lock (_tileEffectLock)
+            {
+                foreach(var tuple in _effectsToRemove)
+                {
+                    if (TileEffects.TryGetValue(tuple.point, out var result))
+                    {
+                        if (result.Remove(tuple.effect))
+                        {
+                            tuple.effect.RemovedFromTile(tuple.point);
+                        }
+                    }
+                }
+
+                _effectsToRemove.Clear();
+            }
+        }
+        
+
         public static void ClearTileEffects()
         {
-            foreach(var item in TileEffects)
+            lock (_tileEffectLock)
             {
-                foreach(var effect in item.Value)
+                foreach (var item in TileEffects)
                 {
-                    effect.RemovedFromTile(item.Key);
+                    foreach (var effect in item.Value)
+                    {
+                        effect.RemovedFromTile(item.Key);
+                    }
                 }
             }
         }
@@ -53,13 +95,16 @@ namespace MortalDungeon.Game.Abilities
 
         public static HashSet<TileEffect> GetTileEffectsOnTilePoint(TilePoint point)
         {
-            if(TileEffects.TryGetValue(point, out var result))
+            lock (_tileEffectLock)
             {
-                return result;
-            }
-            else
-            {
-                return _emptySet;
+                if (TileEffects.TryGetValue(point, out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    return _emptySet;
+                }
             }
         }
     }

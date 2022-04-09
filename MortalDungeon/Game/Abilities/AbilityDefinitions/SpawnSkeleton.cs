@@ -13,9 +13,9 @@ using MortalDungeon.Game.Entities;
 
 namespace MortalDungeon.Game.Abilities
 {
-    public class SpawnSkeleton : Ability
+    public class SpawnSkeleton : GenericSelectGround
     {
-        public SpawnSkeleton(Unit castingUnit, int range = 3)
+        public SpawnSkeleton(Unit castingUnit, int range = 3) : base(castingUnit, range)
         {
             Type = AbilityTypes.Summoning;
             DamageType = DamageType.NonDamaging;
@@ -47,58 +47,7 @@ namespace MortalDungeon.Game.Abilities
             //    second.CastingMethod = CastingMethod;
             //    third.CastingMethod = CastingMethod;
         }
-
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        {
-            base.GetValidTileTargets(tileMap);
-
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
-            {
-                TraversableTypes = TileMapConstants.AllTileClassifications,
-                Units = units,
-                CastingUnit = CastingUnit
-            };
-
-            List<BaseTile> validTiles = tileMap.FindValidTilesInRadius(param);
-
-            TrimTiles(validTiles, units);
-
-            if (CastingUnit.AI.ControlType == ControlType.Controlled && CanTargetGround) 
-            {
-                validTiles.ForEach(tile =>
-                {
-                    tile.TilePoint.ParentTileMap.Controller.SelectTile(tile);
-                });
-            }
-
-            return validTiles;
-        }
-
-        public override void OnTileClicked(TileMap map, BaseTile tile)
-        {
-            if (AffectedTiles.Exists(t => t == tile))
-            {
-                SelectedTile = tile;
-                EnactEffect();
-                Scene._selectedAbility = null;
-
-                map.Controller.DeselectTiles();
-            }
-        }
-
-
-        public override void OnCast()
-        {
-            ClearSelectedTiles();
-
-            base.OnCast();
-        }
-
-        public override void OnAICast()
-        {
-            base.OnAICast();
-        }
-
+       
         public override void EnactEffect()
         {
             base.EnactEffect();
@@ -134,24 +83,6 @@ namespace MortalDungeon.Game.Abilities
 
             Casted();
             EffectEnded();
-        }
-
-        public override void OnAbilityDeselect()
-        {
-            ClearSelectedTiles();
-
-            base.OnAbilityDeselect();
-
-            SelectedTile = null;
-        }
-
-        public void ClearSelectedTiles() 
-        {
-            lock(AffectedTiles)
-            AffectedTiles.ForEach(tile =>
-            {
-                tile.TilePoint.ParentTileMap.Controller.DeselectTiles();
-            });
         }
     }
 }

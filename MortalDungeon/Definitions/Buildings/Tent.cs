@@ -57,11 +57,21 @@ namespace MortalDungeon.Definitions.Buildings
             return obj;
         }
 
+        public override void CleanUp()
+        {
+            base.CleanUp();
+
+            foreach (var tile in GetPatternTiles())
+            {
+                tile.Properties.BlockingTypes.Remove(BlockingType.Abilities);
+            }
+        }
+
         public override void TileAction()
         {
-            List<BaseTile> tiles = GetPatternTiles();
+            List<Tile> tiles = GetPatternTiles();
 
-            foreach (BaseTile tile in tiles)
+            foreach (Tile tile in tiles)
             {
                 if (tile.Structure != null && tile.Structure != this)
                 {
@@ -71,7 +81,8 @@ namespace MortalDungeon.Definitions.Buildings
                 }
 
                 tile.Properties.Classification = TileClassification.ImpassableGround;
-                tile.Properties.Type = TileType.Dirt;
+                tile.Properties.Type = TileType.Stone_1;
+                tile.Properties.BlockingTypes.Add(BlockingType.Abilities);
                 //tile.Color = new Vector4(1, 0, 0, 1);
                 tile.Update();
             }

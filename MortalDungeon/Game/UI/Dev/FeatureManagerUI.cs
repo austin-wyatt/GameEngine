@@ -129,7 +129,9 @@ namespace MortalDungeon.Game.UI.Dev
                     {
                         var tile = TileMapHelpers.GetTile(feature.Value.Origin);
 
-                        var featurePos = new Vector3(tile.BaseObject.BaseFrame.Position.X, tile.BaseObject.BaseFrame.Position.Y, Scene._camera.Position.Z);
+                        Vector3 pos = tile.Position;
+
+                        var featurePos = new Vector3(pos.X, pos.Y, Scene._camera.Position.Z);
 
                         Scene.SmoothPanCamera(featurePos, 1);
                     }
@@ -168,7 +170,9 @@ namespace MortalDungeon.Game.UI.Dev
                         {
                             var tile = TileMapHelpers.GetTile(feature.Origin);
 
-                            var featurePos = new Vector3(tile.BaseObject.BaseFrame.Position.X, tile.BaseObject.BaseFrame.Position.Y, Scene._camera.Position.Z);
+                            Vector3 pos = tile.Position;
+
+                            var featurePos = new Vector3(pos.X, pos.Y, Scene._camera.Position.Z);
 
                             Scene.SmoothPanCamera(featurePos, 1);
                         }

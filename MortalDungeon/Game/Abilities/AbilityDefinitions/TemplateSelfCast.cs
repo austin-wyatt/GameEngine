@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Abilities
             CastingUnit = castingUnit;
 
             CanTargetGround = false;
-            CanTargetSelf = true;
+            UnitTargetParams.Self = UnitCheckEnum.True;
             UnitTargetParams.IsHostile = UnitCheckEnum.False;
             UnitTargetParams.IsFriendly = UnitCheckEnum.False;
             UnitTargetParams.IsNeutral = UnitCheckEnum.False;
@@ -34,17 +34,12 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
+        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+            List<Unit> units = default, Tile position = null)
         {
-            base.GetValidTileTargets(tileMap);
+            affectedTiles = new List<Tile> { CastingUnit.Info.TileMapPosition };
 
-            List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
-
-            AffectedUnits.Add(CastingUnit);
-
-            TargetAffectedUnits();
-
-            return validTiles;
+            affectedUnits = new List<Unit> { CastingUnit };
         }
 
         public override bool OnUnitClicked(Unit unit)
@@ -71,7 +66,7 @@ namespace MortalDungeon.Game.Abilities
 
         public override void EnactEffect()
         {
-            base.EnactEffect();
+            BeginEffect();
 
             Console.WriteLine("Effect");
 

@@ -1,4 +1,6 @@
-﻿using MortalDungeon.Game.Tiles;
+﻿using MortalDungeon.Game.Map;
+using MortalDungeon.Game.Tiles;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -71,6 +73,34 @@ namespace MortalDungeon.Game.Units
             {
                 return _emptySet;
             }
+        }
+
+        public static HashSet<Unit> GetUnitsInRadius(int radius, FeaturePoint center)
+        {
+            HashSet<Unit> units = new HashSet<Unit>();
+
+            TileMapPoint min = new FeaturePoint(center.X - radius, center.Y - radius).ToTileMapPoint();
+            TileMapPoint max = new FeaturePoint(center.X + radius, center.Y + radius).ToTileMapPoint();
+
+            for(int i = min.X; i <= max.X; i++)
+            {
+                for(int j = min.Y; j <= max.Y; j++)
+                {
+                    if(UnitMapPositions.TryGetValue(new TileMapPoint(i, j), out var foundUnits))
+                    {
+                        foreach(var unit in foundUnits)
+                        {
+                            if(radius >= TileMap.GetDistanceBetweenPoints(unit.Info.TileMapPosition.ToFeaturePoint(), center))
+                            {
+                                units.Add(unit);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            return units;
         }
     }
 }

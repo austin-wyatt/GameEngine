@@ -78,6 +78,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.DepthFunc(DepthFunction.Less);
 
             GL.ClearStencil(0x00);
+            GL.ClearDepth(1);
 
             _vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -1157,6 +1158,29 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 _textures.Add(texture);
                 _loadedTextures.Add(textureName, texture.Handle);
+            }
+        }
+
+        public static void LoadTextureFromSimple(SimpleTexture simp)
+        {
+            if (!simp.TextureLoaded)
+            {
+                if (!_loadedTextures.TryGetValue(simp.TextureId, out int handle))
+                {
+                    Texture newTexture = Texture.LoadFromFile(simp.FileName, nearest: simp.Nearest, generateMipMaps: simp.GenerateMipMaps);
+                    newTexture.TextureId = simp.TextureId;
+
+                    _textures.Add(newTexture);
+                    _loadedTextures.Add(simp.TextureId, newTexture.Handle);
+
+                    simp.Texture = newTexture;
+                }
+                else
+                {
+                    simp.Texture = new Texture(handle, simp.TextureId);
+                }
+
+                simp.TextureLoaded = true;
             }
         }
         #endregion

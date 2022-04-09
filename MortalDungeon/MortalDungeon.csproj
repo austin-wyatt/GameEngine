@@ -17,8 +17,8 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NLua" Version="1.6.0" />
-    <PackageReference Include="NVorbis" Version="0.10.3" />
-    <PackageReference Include="OpenTK" Version="4.6.3" />
+    <PackageReference Include="NVorbis" Version="0.10.4" />
+    <PackageReference Include="OpenTK" Version="4.7.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
   </ItemGroup>
@@ -187,6 +187,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\OldShaders\oldShader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Tiles\chunkShader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Tiles\chunkShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\Tiles\tileShader.frag">

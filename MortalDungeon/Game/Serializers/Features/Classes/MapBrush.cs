@@ -32,6 +32,11 @@ namespace MortalDungeon.Game.Serializers
         {
             return HashCode.Combine(X, Y);
         }
+
+        public long GetUniqueHash()
+        {
+            return ((long)X << 32) + Y;
+        }
     }
     
     [XmlType(TypeName = "feMB")]
@@ -125,7 +130,9 @@ namespace MortalDungeon.Game.Serializers
                     {
                         var tile = map.GetLocalTile(AffectedPoints[i].X, AffectedPoints[i].Y);
 
-                        var tree = new Tree(map, tile, AffectedPoints[i].Value);
+                        ConsistentRandom rng = new ConsistentRandom(AffectedPoints[i].X + AffectedPoints[i].Y 
+                            + map.TileMapCoords.X + map.TileMapCoords.Y);
+                        var tree = new Tree(tile.TileMap, tile, AffectedPoints[i].Value, 1 + (float)rng.NextDouble() / 2);
                     }
                     break;
                 default:

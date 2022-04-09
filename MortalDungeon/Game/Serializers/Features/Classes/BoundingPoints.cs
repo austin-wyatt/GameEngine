@@ -181,16 +181,13 @@ namespace MortalDungeon.Game.Serializers
                             tile.Properties.Type = TileType.Dirt;
                             break;
                         case BoundingPointTypes.Trees:
-                            var tree = new Tree(tile.TileMap, tile, point.Value);
+                            ConsistentRandom rng = new ConsistentRandom(point.X + point.Y);
+                            var tree = new Tree(tile.TileMap, tile, point.Value, 1 + (float)rng.NextDouble() / 2);
                             break;
                         case BoundingPointTypes.HeightChange:
                             if (point.Value > 0)
                             {
-                                tile.Properties.Height = point.Value;
-
-                                Vector3 pos = new Vector3(tile.Position.X, tile.Position.Y, 0);
-
-                                tile.SetPosition(pos + new Vector3(0, 0, point.Value * 0.2f));
+                                tile.SetHeight(point.Value);
                             }
                             break;
                         case BoundingPointTypes.Stone:

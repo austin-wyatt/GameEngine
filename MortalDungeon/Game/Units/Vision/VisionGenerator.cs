@@ -1,7 +1,6 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.MiscOperations;
 using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Lighting;
 using MortalDungeon.Game.Tiles;
 using OpenTK.Mathematics;
 using System;

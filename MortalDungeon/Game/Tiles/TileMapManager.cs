@@ -1,7 +1,9 @@
 ﻿using MortalDungeon.Engine_Classes;
 using MortalDungeon.Engine_Classes.Rendering;
 using MortalDungeon.Engine_Classes.Scenes;
+using MortalDungeon.Game.Combat;
 using MortalDungeon.Game.Entities;
+using MortalDungeon.Game.Ledger.Units;
 using MortalDungeon.Game.Map;
 using MortalDungeon.Game.Objects;
 using MortalDungeon.Game.Serializers;
@@ -19,17 +21,6 @@ namespace MortalDungeon.Game.Tiles
 {
     public static class TileMapManager
     {
-        //Keeps a list of loaded tilemaps. These tilemaps are loaded in a radius around a center point.
-
-        //When passing a new center point the tilemaps should be evaluated for maps that don't need to change, maps that need to be removed
-        //and maps that need to be added
-
-        //A "visible center" or "camera position" field should be created to track which tilemaps are considered to be visible. When these are changed
-        //the tile instanced render data will be updated.
-
-        //When entities are unloaded, save their tilemap position and feature point in a dictionary<TileMapPoint, (entity and position)> then this can be used
-        //to readd them to the map when it gets reloaded. (doing this we wouldn't really need to guarantee that the maps around the unit remain loaded necessarily)
-
         public static Dictionary<TileMapPoint, TileMap> LoadedMaps = new Dictionary<TileMapPoint, TileMap>();
 
         public static TileMapPoint LoadedCenter = new TileMapPoint(0, 0);
@@ -45,6 +36,8 @@ namespace MortalDungeon.Game.Tiles
         public static Dictionary<TileMapPoint, InstancedRenderData> TilePillarsRenderData = new Dictionary<TileMapPoint, InstancedRenderData>();
 
         public static readonly Vector2i TILE_MAP_DIMENSIONS = new Vector2i(20, 20);
+
+        public static NavMesh NavMesh = new NavMesh();
 
         public static void SetCenter(TileMapPoint center)
         {
@@ -144,27 +137,31 @@ namespace MortalDungeon.Game.Tiles
 
                 Console.WriteLine("Flag 5: " + stopwatch.ElapsedMilliseconds + "ms");
 
+                AddLedgeredUnitsToMaps(pointsToLoad);
+
+                Console.WriteLine("Flag 5.5: " + stopwatch.ElapsedMilliseconds + "ms");
+
+                NavMesh.CalculateNavTiles();
+
+                Console.WriteLine("Flag 5.75: " + stopwatch.ElapsedMilliseconds + "ms");
+
                 Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, false);
                 Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
 
+                GC.Collect();
+
                 Scene.QueueToRenderCycle(() =>
                 {
+                    Scene.OnStructureMoved();
+
                     foreach (var unit in Scene._units)
                     {
                         if (unit.Info.TileMapPosition == null)
                             continue;
 
                         unit.VisionGenerator.SetPosition(unit.Info.TileMapPosition);
-                        unit.LightObstruction.SetPosition(unit.Info.TileMapPosition);
                     }
                 });
-
-                Scene.QueueToRenderCycle(() =>
-                {
-                    Scene.OnStructureMoved();
-                });
-
-                GC.Collect();
 
                 Console.WriteLine("Flag 6: " + stopwatch.ElapsedMilliseconds + "ms");
             }
@@ -322,33 +319,30 @@ namespace MortalDungeon.Game.Tiles
             };
         }
 
+        public static void AddLedgeredUnitsToMaps(List<TileMapPoint> addedMaps)
+        {
+            foreach(var point in addedMaps)
+            {
+                if(LoadedMaps.TryGetValue(point, out var map))
+                {
+                    foreach(var unit in UnitLedger.GetLedgeredUnitsOnTileMap(point).ToHashSet())
+                    {
+                        Entity entity = UnitLedger.CreateEntityFromLedgeredUnit(unit);
+
+                        EntityManager.LoadEntity(entity, unit.UnitInfo.Position);
+
+                        UnitLedger.RemoveUnitFromLedger(unit);
+                    }
+                }
+            }
+        }
+
         public static void UnloadMaps(IEnumerable<TileMapPoint> mapPoints)
         {
             foreach (TileMapPoint point in mapPoints)
             {
                 if(LoadedMaps.TryGetValue(point, out var map))
                 {
-                    List<Entity> entitiesToUnload = new List<Entity>();
-
-                    lock (EntityManager.Entities)
-                    {
-                        foreach (var entity in EntityManager.LoadedEntities)
-                        {
-                            if (entity.Handle.OnTileMap(map))
-                            {
-                                entitiesToUnload.Add(entity);
-                            }
-                        }
-                    }
-                   
-                    Scene.QueueToRenderCycle(() =>
-                    {
-                        foreach (Entity entity in entitiesToUnload)
-                        {
-                            EntityManager.UnloadEntity(entity);
-                        }
-                    });
-
                     map.CleanUp();
                     LoadedMaps.Remove(point);
                 }
@@ -423,8 +417,43 @@ namespace MortalDungeon.Game.Tiles
                     map.Visible = false;
                 }
 
-                Scene.CreateStructureInstancedRenderData();
+                //Window.QueueToRenderCycle(() =>
+                //{
+                //    Scene.CreateStructureInstancedRenderData();
+                //});
+                Scene.RenderDispatcher.DispatchAction(Scene._structureDispatchObject, Scene.CreateStructureInstancedRenderData);
                 //Scene.UpdateVisionMap();
+            }
+        }
+
+
+        private static HashSet<TileMap> _mapsToUpdatePillars = new HashSet<TileMap>();
+        private static object _pillarLock = new object();
+        public static void DispatchTilePillarUpdate(TileMap map)
+        {
+            lock (_pillarLock)
+            {
+                if (TilePillarsRenderData.TryGetValue(map.TileMapCoords, out var renderData))
+                {
+                    renderData.CleanUp();
+                    TilePillarsRenderData.Remove(map.TileMapCoords);
+                }
+
+                _mapsToUpdatePillars.Add(map);
+                Window.QueueToRenderCycle(BatchPillarUpdate);
+            }
+        }
+
+        private static void BatchPillarUpdate()
+        {
+            lock (_pillarLock)
+            {
+                foreach(var map in _mapsToUpdatePillars)
+                {
+                    CreateTilePillarsForMap(map);
+                }
+
+                _mapsToUpdatePillars.Clear();
             }
         }
 
@@ -434,7 +463,7 @@ namespace MortalDungeon.Game.Tiles
 
             List<InstancedRenderData> data;
 
-            List<BaseTile> neighborList = new List<BaseTile>();
+            List<Tile> neighborList = new List<Tile>();
 
             for (int j = 0; j < map.Tiles.Count; j++)
             {

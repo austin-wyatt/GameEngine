@@ -20,36 +20,39 @@ namespace MortalDungeon.Game.Abilities.TileEffects
 
         public void CompleteDeserialization()
         {
-            TileEffectManager.ClearTileEffects();
-
-            TileEffectManager.TileEffects.Clear();
-
-            for(int i = 0; i < Keys.Count; i++)
+            lock (TileEffectManager._tileEffectLock)
             {
-                var tile = TileMapHelpers.GetTile(Keys[i]);
+                TileEffectManager.ClearTileEffects();
 
-                if (tile != null)
+                TileEffectManager.TileEffects.Clear();
+
+                for (int i = 0; i < Keys.Count; i++)
                 {
-                    HashSet<TileEffect> newEffects = new HashSet<TileEffect>();
+                    var tile = TileMapHelpers.GetTile(Keys[i]);
 
-                    foreach(var item in Values[i])
+                    if (tile != null)
                     {
-                        item.CompleteDeserialization();
+                        HashSet<TileEffect> newEffects = new HashSet<TileEffect>();
 
-                        Type type = Type.GetType(TILE_EFFECT_NAMESPACE + item._typeName);
-
-                        if (type != null)
+                        foreach (var item in Values[i])
                         {
-                            var newEffect = Activator.CreateInstance(type, new object[] { item }) as TileEffect;
+                            item.CompleteDeserialization();
 
-                            newEffect.OnRecreated(tile);
+                            Type type = Type.GetType(TILE_EFFECT_NAMESPACE + item._typeName);
 
-                            newEffects.Add(newEffect);
+                            if (type != null)
+                            {
+                                var newEffect = Activator.CreateInstance(type, new object[] { item }) as TileEffect;
+
+                                newEffect.OnRecreated(tile);
+
+                                newEffects.Add(newEffect);
+                            }
                         }
+
+
+                        TileEffectManager.TileEffects.AddOrSet(tile, newEffects);
                     }
-
-
-                    TileEffectManager.TileEffects.AddOrSet(tile, newEffects);
                 }
             }
         }
@@ -59,19 +62,22 @@ namespace MortalDungeon.Game.Abilities.TileEffects
             Keys.Clear();
             Values.Clear();
 
-            foreach(var kvp in TileEffectManager.TileEffects)
+            lock (TileEffectManager._tileEffectLock)
             {
-                HashSet<TileEffect> newEffects = new HashSet<TileEffect>();
-
-                foreach (var item in kvp.Value)
+                foreach (var kvp in TileEffectManager.TileEffects)
                 {
-                    item.PrepareForSerialization();
+                    HashSet<TileEffect> newEffects = new HashSet<TileEffect>();
 
-                    newEffects.Add(new TileEffect(item));
+                    foreach (var item in kvp.Value)
+                    {
+                        item.PrepareForSerialization();
+
+                        newEffects.Add(new TileEffect(item));
+                    }
+
+                    Keys.Add(kvp.Key.ToFeaturePoint());
+                    Values.Add(newEffects);
                 }
-
-                Keys.Add(kvp.Key.ToFeaturePoint());
-                Values.Add(newEffects);
             }
         }
     }
