@@ -1,4 +1,4 @@
-﻿using MortalDungeon.Game.Save;
+﻿using Empyrean.Game.Save;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [Serializable]
     public class AffectedPoint : ParameterDict, ISerializable

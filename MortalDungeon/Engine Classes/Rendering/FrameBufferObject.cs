@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Objects;
+﻿using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Rendering
+namespace Empyrean.Engine_Classes.Rendering
 {
     public class FrameBufferObject
     {

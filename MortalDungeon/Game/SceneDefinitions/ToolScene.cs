@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Tools;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Tools;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.SceneDefinitions
+namespace Empyrean.Game.SceneDefinitions
 {
     class ToolScene : Scene
     {

@@ -1,16 +1,16 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Game.Structures
+namespace Empyrean.Game.Structures
 {
     public enum WallType
     {

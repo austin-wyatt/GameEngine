@@ -1,15 +1,18 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Tiles.TileMaps
+namespace Empyrean.Game.Tiles.TileMaps
 {
     class TestTileMap : TileMap
     {
@@ -25,8 +28,13 @@ namespace MortalDungeon.Game.Tiles.TileMaps
             Tile tile = new Tile();
             Vector3 tilePosition = new Vector3(Position);
 
+            List<AsyncSignal> tileTextureSignals = new List<AsyncSignal>();
+
+            Vector3 tileDim = new Vector3(TileBounds.TileDimensions);
 
             tilePosition.Z += zTilePlacement;
+
+            
 
             for (int i = 0; i < Width; i++)
             {
@@ -35,10 +43,20 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                     //Vector3 zFuzz = new Vector3(0, 0, (float)_randomNumberGen.NextDouble() / 50);
                     //baseTile = new BaseTile(tilePosition + zFuzz, new TilePoint(i, o, this)) { Clickable = true };
                     tile = new Tile(tilePosition, new TilePoint(i, o, this));
-                    tile.Properties.Type = TileType.Grass;
+                    tile.Properties.SetType(TileType.Grass, false, updateChunk: false);
+                    //tile.Properties.SetType(TileType.Stone_1, false, updateChunk: false);
+                    
                     tile.TileMap = this;
 
                     Tiles.Add(tile);
+
+                    //checkerboard pattern
+                    //if((i % 2 == 0) && (o % 2 == 0))
+                    //{
+                    //    tile.Properties.SetType(TileType.Stone_1, false, updateChunk: false);
+                    //}
+
+                    //tile.Properties.SetType(TileType.Stone_1, false, updateChunk: false);
 
                     //if (_randomNumberGen.NextDouble() > 0.9)
                     //{
@@ -54,15 +72,31 @@ namespace MortalDungeon.Game.Tiles.TileMaps
                     float val = GlobalRandom.NextFloat() / 15f;
                     tile.SetColor(_Colors.White - new Vector4(val, val, val, 0));
 
-                    tilePosition.Y += tile.TileBounds.TileDimensions.Y * 1f;
+                    tilePosition.Y += tileDim.Y;
 
-                    TextureLoadBatcher.LoadTexture(tile.Properties.DisplayInfo.Texture);
+                    if (WindowConstants.InMainThread(Thread.CurrentThread))
+                    {
+                        Renderer.LoadTextureFromSimple(tile.Properties.DisplayInfo.Texture);
+                    }
+                    else
+                    {
+                        AsyncSignal textureSignal = new AsyncSignal();
+                        tileTextureSignals.Add(textureSignal);
+
+                        TextureLoadBatcher.LoadTexture(tile.Properties.DisplayInfo.Texture, textureSignal);
+                    }
                 }
-                tilePosition.X = (i + 1) * tile.TileBounds.TileDimensions.X * 0.75f;
-                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : tile.TileBounds.TileDimensions.Y * -0.5f); 
+                tilePosition.X = (i + 1) * tileDim.X * 0.75f;
+                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : tileDim.Y * -0.5f); 
             }
 
             tilePosition.Z += 0.03f;
+
+            for(int i = 0; i < tileTextureSignals.Count; i++)
+            {
+                tileTextureSignals[i].Wait();
+                tileTextureSignals[i].Dispose();
+            }
         }
 
 

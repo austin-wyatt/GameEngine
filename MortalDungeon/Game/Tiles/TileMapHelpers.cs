@@ -1,4 +1,5 @@
-﻿using MortalDungeon.Game.Map;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Map;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Game.Tiles
+namespace Empyrean.Game.Tiles
 {
     public static class TileMapHelpers
     {
@@ -20,6 +21,7 @@ namespace MortalDungeon.Game.Tiles
         }
 
         public static TileMap _topLeftMap = null;
+        public static TileMap _bottomRightMap = null;
         public static bool IsValidTile(FeaturePoint point)
         {
             return TileMapManager.LoadedMaps.ContainsKey(point.ToTileMapPoint());
@@ -45,24 +47,24 @@ namespace MortalDungeon.Game.Tiles
             return new Vector2i(0, 0);
         }
 
-        public static TileMap GetTopLeftMap()
+        public static FeaturePoint GetTopLeftFeaturePoint()
         {
-            if (_topLeftMap != null)
-            {
-                return _topLeftMap;
-            }
+            return _topLeftMap?.Tiles[0].ToFeaturePoint() ?? FeaturePoint.MinPoint;
+        }
 
-            return null;
+        public static FeaturePoint GetBottomRightFeaturePoint()
+        {
+            return _bottomRightMap?.Tiles[^1].ToFeaturePoint() ?? FeaturePoint.MinPoint;
         }
 
         public static TileMapPoint GlobalPositionToMapPoint(Vector3 position)
         {
             if (TileMapManager.LoadedMaps.Count == 0)
-                return null;
+                return TileMapPoint.Empty;
 
             Vector3 camPos = WindowConstants.ConvertLocalToScreenSpaceCoordinates(position.Xy);
 
-            var map = TileMapManager.LoadedMaps.Values.First();
+            var map = TileMapManager.ActiveMaps[0];
 
             Vector3 dim = map.GetTileMapDimensions();
 
@@ -124,7 +126,8 @@ namespace MortalDungeon.Game.Tiles
 
         public static Tile GetTile(FeaturePoint point)
         {
-            var mapPoint = point.ToTileMapPoint();
+            TileMapPoint mapPoint = TileMapPoint.Pool.GetObject();
+            point.ToTileMapPoint(ref mapPoint);
             if(TileMapManager.LoadedMaps.TryGetValue(mapPoint, out var tileMap))
             {
                 int currX;
@@ -150,8 +153,12 @@ namespace MortalDungeon.Game.Tiles
                     currY = point.Y % TileMapManager.TILE_MAP_DIMENSIONS.Y;
                 }
 
+                TileMapPoint.Pool.FreeObject(ref mapPoint);
+
                 return tileMap.GetLocalTile(currX, currY);
             }
+
+            TileMapPoint.Pool.FreeObject(ref mapPoint);
 
             return null;
         }
@@ -193,7 +200,13 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-        public static List<(float Distance, TileChunk Chunk)> GetChunksByDistance(Vector3 mouseRayNear, Vector3 mouseRayFar)
+        private static ObjectPool<List<TileMap>> _tileMapListPool = new ObjectPool<List<TileMap>>();
+        private static ObjectPool<List<DistanceAndChunk>> _distanceChunkPool = new ObjectPool<List<DistanceAndChunk>>();
+        /// <summary>
+        /// Gathers a list of chunks near the mouse ray. <para/>
+        /// Be sure to call FreeDistanceAndChunkList when finished consuming the returned list.
+        /// </summary>
+        public static List<DistanceAndChunk> GetChunksByDistance(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
             lock (TileMapManager._visibleMapLock)
             {
@@ -203,7 +216,7 @@ namespace MortalDungeon.Game.Tiles
 
                 pointAtZ = WindowConstants.ConvertLocalToScreenSpaceCoordinates(pointAtZ.Xy);
 
-                List<TileMap> mapsByDistance = new List<TileMap>();
+                List<TileMap> mapsByDistance = _tileMapListPool.GetObject();
 
                 foreach (var map in TileMapManager.VisibleMaps)
                 {
@@ -220,7 +233,7 @@ namespace MortalDungeon.Game.Tiles
                     }
                 }
 
-                List<(float Distance, TileChunk Chunk)> chunksByDistance = new List<(float, TileChunk)>();
+                List<DistanceAndChunk> chunksByDistance = _distanceChunkPool.GetObject();
 
                 TileChunk chunk;
                 for (int i = 0; i < mapsByDistance.Count; i++)
@@ -233,15 +246,54 @@ namespace MortalDungeon.Game.Tiles
 
                         if (distance < chunk.Radius)
                         {
-                            chunksByDistance.Add((distance, chunk));
+                            chunksByDistance.Add(new DistanceAndChunk(distance, chunk));
                         }
                     }
                 }
+
+                mapsByDistance.Clear();
+                _tileMapListPool.FreeObject(ref mapsByDistance);
 
                 chunksByDistance.Sort((a, b) => a.Distance.CompareTo(b.Distance));
 
                 return chunksByDistance;
             }
+        }
+
+        public static void FreeDistanceAndChunkList(List<DistanceAndChunk> list)
+        {
+            list.Clear();
+            _distanceChunkPool.FreeObject(ref list);
+        }
+
+        public struct DistanceAndChunk
+        {
+            public float Distance;
+            public TileChunk Chunk;
+
+            public DistanceAndChunk(float distance, TileChunk chunk)
+            {
+                Distance = distance; 
+                Chunk = chunk; 
+            }
+        }
+
+        public static bool TestCameraTileMapPosition(TileMapPoint currPos, Vector3 cameraPosition)
+        {
+            if (TileMapManager.LoadedMaps.Count == 0)
+                return false;
+
+            Vector3 camPos = WindowConstants.ConvertLocalToScreenSpaceCoordinates(ref cameraPosition);
+
+            var map = TileMapManager.ActiveMaps[0];
+
+            Vector3 dim = map.GetTileMapDimensions();
+
+            float offsetX = camPos.X - map._position.X;
+            float offsetY = camPos.Y - map._position.Y;
+
+            return currPos.X != (int)Math.Floor(offsetX / dim.X) + map.TileMapCoords.X 
+                || currPos.Y != (int)Math.Floor(offsetY / dim.Y) + map.TileMapCoords.Y;
         }
     }
 }

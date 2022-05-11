@@ -5,21 +5,21 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Objects.UIComponents;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.LuaHandling;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.SceneDefinitions;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.UI;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Objects.UIComponents;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Scripting;
+using Empyrean.Game.Objects;
+using Empyrean.Game.SceneDefinitions;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.UI;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
@@ -27,10 +27,9 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using Empyrean.Engine_Classes.Lighting;
 
-
-
-namespace MortalDungeon
+namespace Empyrean
 {
     public static class GlobalRandom 
     {
@@ -105,6 +104,18 @@ namespace MortalDungeon
             return returnVec;
         }
 
+        public static Vector3 ConvertScreenSpaceToLocalCoordinates(Vector3 position)
+        {
+            Vector3 returnVec = new Vector3(position)
+            {
+                X = (position.X / ScreenUnits.X),
+                Y = (position.Y / ScreenUnits.Y) -1,
+                Z = position.Z
+            };
+
+            return returnVec;
+        }
+
         public static void ConvertGlobalToLocalCoordinatesInPlace(ref Vector3 position)
         {
             position.X = (position.X / ScreenUnits.X) * 2 - 1;
@@ -153,12 +164,37 @@ namespace MortalDungeon
             return returnVec;
         }
 
+        public static Vector3 ConvertLocalToScreenSpaceCoordinates(Vector3 position)
+        {
+            Vector3 returnVec = new Vector3(position)
+            {
+                X = (position.X + 1) / 2 * ScreenUnits.X,
+                Y = ScreenUnits.Y - (position.Y + 1) / 2 * ScreenUnits.Y,
+                Z = position.Z
+            };
+
+            return returnVec;
+        }
+
+        public static Vector3 ConvertLocalToScreenSpaceCoordinates(ref Vector3 position)
+        {
+            position.X = (position.X + 1) / 2 * ScreenUnits.X;
+            position.Y = ScreenUnits.Y - (position.Y + 1) / 2 * ScreenUnits.Y;
+
+            return position;
+        }
+
         public static Vector2 NormalizeGlobalCoordinates(Vector2 vec, Vector2i clientSize)
         {
             float X = (vec.X / clientSize.X) * 2 - 1; //converts it into local opengl coordinates
             float Y = ((vec.Y / clientSize.Y) * 2 - 1) * -1; //converts it into local opengl coordinates
 
             return new Vector2(X, Y);
+        }
+
+        public static bool InMainThread(Thread currThread)
+        {
+            return currThread.ManagedThreadId == MainThreadId;
         }
     }
 
@@ -174,6 +210,8 @@ namespace MortalDungeon
 
         public static Vector2 _cursorCoords;
         public static MouseCursor CursorObj;
+        private static List<UIObject> _cursorList;
+
         public static ContentContext CurrentContext = ContentContext.Game;
 
         public static List<BaseObject> _renderedItems = new List<BaseObject>();
@@ -191,7 +229,7 @@ namespace MortalDungeon
         private Stopwatch _gameTimer;
         
 
-        private Camera _camera;
+        public static Camera _camera;
         private MouseRay _mouseRay;
         private bool _firstMove = true;
         private Vector2 _lastPos;
@@ -206,7 +244,7 @@ namespace MortalDungeon
         private const float tickRate = (float)1 / WindowConstants.TickDenominator;
         private const float highFreqTickRate = (float)1 / 135;
 
-        public CubeMap SkyBox = new CubeMap();
+        public static CubeMap SkyBox = new CubeMap();
 
         public static Action CloseWindow = null;
 
@@ -222,6 +260,7 @@ namespace MortalDungeon
             WindowConstants.GameViewport.Width = ClientSize.X;
             WindowConstants.GameViewport.Height = ClientSize.Y;
 
+            Thread.CurrentThread.Priority = ThreadPriority.Highest;
             WindowConstants.MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
             CloseWindow = () => Close();
@@ -238,13 +277,16 @@ namespace MortalDungeon
 
             FeatureManager.Initialize();
 
-            LuaManager.Initialize();
+            //LuaManager.Initialize();
+
+            JSManager.Initialize();
 
             AnimationSerializer.Initialize();
 
             SetWindowSize();
 
             CursorObj = new MouseCursor();
+            _cursorList = new List<UIObject> { CursorObj };
 
             _camera = new Camera(Vector3.UnitZ * 3, WindowConstants.ClientSize.X / (float)WindowConstants.ClientSize.Y);
             _camera.Pitch += 7;
@@ -322,18 +364,18 @@ namespace MortalDungeon
             {
                 double timeValue;
 
-                while (true) 
+                while (true)
                 {
                     timeValue = _gameTimer.Elapsed.TotalSeconds;
 
-                    if (timeValue > highFreqTickRate) 
+                    if (timeValue > highFreqTickRate)
                     {
                         highFreqTick++;
                         _gameTimer.Restart();
 
                         for (int i = 0; i < _sceneController.Scenes.Count; i++)
                         {
-                            for(int j = 0; j < _sceneController.Scenes[i].TimedTickableObjects.Count; j++) 
+                            for (int j = 0; j < _sceneController.Scenes[i].TimedTickableObjects.Count; j++)
                             {
                                 _sceneController.Scenes[i].TimedTickableObjects[j].Tick();
                             }
@@ -361,18 +403,22 @@ namespace MortalDungeon
             GameLoop.Start();
         }
 
+        public static object _renderLock = new object();
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            System.Threading.Monitor.Enter(_renderLock);
+
+            base.OnRenderFrame(args);
+
             OnRenderBegin();
 
-            //TickAllObjects();
+            InvokeQueuedRenderAction();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-
             double timeValue;
 
-            Renderer.CheckError();
+            //Renderer.CheckError();
 
             //if (frames > 10000)
             //{
@@ -390,46 +436,42 @@ namespace MortalDungeon
 
 
             ////FPS
-            timeValue = _timer.Elapsed.TotalSeconds;
-            Renderer.FPSCount++;
-
-            if (timeValue > 1 && WindowConstants.ShowFPS)
+            if (WindowConstants.ShowFPS)
             {
-                Console.Write("FPS: " + Renderer.FPSCount + "   Draws: " + Renderer.DrawCount / Renderer.FPSCount);
-                if (WindowConstants.ShowCulledChunks)
+                timeValue = _timer.Elapsed.TotalSeconds;
+                Renderer.FPSCount++;
+
+                if (timeValue > 1)
                 {
-                    Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
+                    Console.Write("FPS: " + Renderer.FPSCount + "   Draws: " + Renderer.DrawCount / Renderer.FPSCount);
+                    if (WindowConstants.ShowCulledChunks)
+                    {
+                        Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
+                    }
+
+                    if (WindowConstants.ShowTicksPerSecond)
+                    {
+                        Console.Write("   High freq ticks: " + _highFreqTickCounter);
+                        _highFreqTickCounter = 0;
+
+                        Console.Write("   Ticks: " + _tickCounter);
+                        _tickCounter = 0;
+                    }
+
+
+                    Console.Write("   Objects drawn: " + Renderer.ObjectsDrawn / Renderer.FPSCount);
+
+                    Console.Write("\n");
+
+                    //Console.WriteLine("Updates per second: " + UpdateCount);
+
+                    _timer.Restart();
+                    Renderer.FPSCount = 0;
+                    Renderer.DrawCount = 0;
+                    Renderer.ObjectsDrawn = 0;
+                    UpdateCount = 0;
                 }
-
-                if (WindowConstants.ShowTicksPerSecond)
-                {
-                    Console.Write("   High freq ticks: " + _highFreqTickCounter);
-                    _highFreqTickCounter = 0;
-
-                    Console.Write("   Ticks: " + _tickCounter);
-                    _tickCounter = 0;
-                }
-
-
-                Console.Write("   Objects drawn: " + Renderer.ObjectsDrawn / Renderer.FPSCount);
-
-                Console.Write("\n");
-
-                //Console.WriteLine("Updates per second: " + UpdateCount);
-
-                _timer.Restart();
-                Renderer.FPSCount = 0;
-                Renderer.DrawCount = 0;
-                Renderer.ObjectsDrawn = 0;
-                UpdateCount = 0;
             }
-
-
-            if (WindowConstants.DrawTools)
-            {
-                //draw tools here
-            }
-
 
             //GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
             //Renderer.ViewportRectangle = WindowConstants.GameViewport;
@@ -437,6 +479,11 @@ namespace MortalDungeon
             Matrix4 viewMatrix = _camera.GetViewMatrix();
             Matrix4 projectionMatrix = _camera.ProjectionMatrix;
             Matrix4 cameraMatrix = viewMatrix * projectionMatrix;
+
+            Matrix4 skyboxMatrix = _camera.GetViewMatrix().ClearTranslation() * projectionMatrix;
+
+            Shaders.SKYBOX_SHADER.Use();
+            Shaders.SKYBOX_SHADER.SetMatrix4("camera", ref skyboxMatrix);
 
             for (int i = 0; i < _points.Count; i++)
             {
@@ -450,74 +497,40 @@ namespace MortalDungeon
                 GL.DrawArrays(PrimitiveType.Points, 0, 1);
             } //Points
 
-            //Shaders.TILE_SHADER.Use();
-            //Shaders.TILE_SHADER.SetMatrix4("camera", cameraMatrix);
-
-            //Shaders.TILE_SHADER.SetVector3("dirLight.ambient", new Vector3(RenderingConstants.LightColor));
-            //Shaders.TILE_SHADER.SetVector3("dirLight.diffuse", new Vector3(RenderingConstants.LightColor));
-            //Shaders.TILE_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, 0));
-            //Shaders.TILE_SHADER.SetFloat("dirLight.enabled", 1);
+            #region shader uniforms
             Shaders.CHUNK_SHADER.Use();
-            Shaders.CHUNK_SHADER.SetMatrix4("camera", cameraMatrix);
+            Shaders.CHUNK_SHADER.SetMatrix4("camera", ref cameraMatrix);
+            LightingManager.SetLightingParametersForShader(Shaders.CHUNK_SHADER, use: false);
 
-            Shaders.CHUNK_SHADER.SetVector3("dirLight.ambient", new Vector3(RenderingConstants.LightColor));
-            Shaders.CHUNK_SHADER.SetVector3("dirLight.diffuse", new Vector3(RenderingConstants.LightColor));
-            Shaders.CHUNK_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, 0));
-            Shaders.CHUNK_SHADER.SetFloat("dirLight.enabled", 1);
 
             //all objects using the fast default shader are handled here
             Shaders.FAST_DEFAULT_SHADER.Use();
-            Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
-
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.specular", new Vector3(1, 1, 1));
-            Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.ambient", new Vector3(RenderingConstants.LightColor));
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.diffuse", new Vector3(RenderingConstants.LightColor) / 4);
-
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.ambient", new Vector3(1, 1, 1));
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.diffuse", new Vector3(1, 1, 1));
-
-            Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, 0));
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("dirLight.direction", new Vector3(0, 1, -1));
-            Shaders.FAST_DEFAULT_SHADER.SetFloat("dirLight.enabled", 1);
+            Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", ref cameraMatrix);
+            LightingManager.SetLightingParametersForShader(Shaders.FAST_DEFAULT_SHADER, use: false);
 
 
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("pointLight.position", new Vector3(0, 0, 2f));
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("pointLight.diffuse", new Vector3(1, 1, 1));
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.enabled", 1);
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.constant", 1.0f);
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.linear", 0.022f);
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("pointLight.quadratic", 0.0019f);
-
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("spotlight.position", _camera.Position);
-            //Shaders.FAST_DEFAULT_SHADER.SetVector3("spotlight.direction", _camera.Front);
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("spotlight.cutoff", (float)Math.Cos(MathHelper.DegreesToRadians(12.5f)));
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("spotlight.outerCutoff", (float)Math.Cos(MathHelper.DegreesToRadians(17.5f)));
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("spotlight.enabled", 1);
 
 
-            Shaders.FAST_DEFAULT_SHADER.SetVector3("viewPosition", _camera.Position);
-
+            #endregion
 
             //Tile maps
             RenderingQueue.ClearTileInstancedRenderData();
-            foreach (var renderData in TileMapManager.TilePillarsRenderData)
-            {
-                RenderingQueue.QueueTilePillarInstancedRenderData(renderData.Value);
-            }
 
             foreach (var map in TileMapManager.VisibleMaps)
             {
-                if(map.TileRenderData != null)
+                for (int i = 0; i < map.TileChunks.Count; i++)
                 {
-                    RenderingQueue.QueueTileInstancedRenderData(map.TileRenderData);
-                    RenderingQueue.QueueFogTileInstancedRenderData(map.FogTileRenderData);
+                    if (!map.TileChunks[i].Cull)
+                    {
+                        RenderingQueue.QueueChunkRenderData(map.TileChunks[i]);
+                    }
                 }
             }
 
-
-            _sceneController.Scenes.ForEach(scene =>
+            for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                if(scene.SceneContext == ContentContext.Game)
+                var scene = _sceneController.Scenes[i];
+                if (scene.SceneContext == ContentContext.Game)
                 {
                     GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
                     Renderer.ViewportRectangle = WindowConstants.GameViewport;
@@ -543,7 +556,7 @@ namespace MortalDungeon
                 RenderingQueue.QueueObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.GenericObject));
                 RenderingQueue.QueueLowPriorityObjectsForRender(scene.GetRenderTarget<GameObject>(ObjectType.LowPriorityObject));
 
-                bool updateTileMaps = scene.ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate);
+                //bool updateTileMaps = scene.ContextManager.GetFlag(GeneralContextFlags.EnableTileMapUpdate);
 
 
                 if (scene.SceneContext == ContentContext.Game)
@@ -554,34 +567,19 @@ namespace MortalDungeon
                         RenderingQueue.SetFogQuad(combatScene._fogQuad);
                     }
 
-                    lock (scene._tileMapController._selectLock)
-                    {
-                        RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.SelectionTiles.ToList());
-                    }
-
-                    RenderingQueue.QueueTileObjectsForRender(scene._tileMapController.GetHoveredTile());
-
                     RenderingQueue.QueueUnitsForRender(scene.GetRenderTarget<Unit>(ObjectType.Unit)); //Units
                 }
 
 
                 lock (scene.UIManager._UILock)
                 {
-                    RenderingQueue.QueueNestedUI(new List<UIObject>(scene.GetRenderTarget<UIObject>(ObjectType.UI))); //UI
+                    RenderingQueue.QueueNestedUI(scene.GetRenderTarget<UIObject>(ObjectType.UI)); //UI
                 }
 
                 //lock (scene.UIManager._renderGroupLock)
                 //{
                 //    RenderingQueue.QueueUIInstancedRenderData(scene.UIManager);
                 //}
-
-                scene.GetRenderTarget<_Text>(ObjectType.Text).ForEach(text =>
-                {
-                    if (text.Render && text.Letters.Count > 0)
-                    {
-                        RenderingQueue.QueueLettersForRender(text.Letters);
-                    };
-                }); //Text
 
 
                 //scene.GetRenderTarget<GameObject>(ObjectType.GenericObject).ForEach(gameObject =>
@@ -595,45 +593,33 @@ namespace MortalDungeon
                 //    });
                 //});
 
-                scene._particleGenerators.ForEach(g =>
+                for (int j = 0; j < scene._particleGenerators.Count; j++)
                 {
-                    if (g.Playing)
+                    if (scene._particleGenerators[j].Playing)
                     {
-                        RenderingQueue.QueueParticlesForRender(g);
+                        RenderingQueue.QueueParticlesForRender(scene._particleGenerators[j]);
                     }
-                });
+                }
+
+                if (scene.IndividualMeshes.Count > 0)
+                {
+                    List<IndividualMesh> meshes = scene.IndividualMeshes.GetList();
+
+                    Shaders.INDIVIDUAL_MESH_SHADER.Use();
+                    Shaders.INDIVIDUAL_MESH_SHADER.SetMatrix4("camera", ref cameraMatrix);
+                    LightingManager.SetLightingParametersForShader(Shaders.INDIVIDUAL_MESH_SHADER, use: false);
+
+                    RenderingQueue.QueueIndividualMeshesForRender(meshes);
+                }
+
 
                 RenderingQueue.RenderQueue();
-            });
-
-            Shaders.PARTICLE_SHADER.Use();
-            Shaders.PARTICLE_SHADER.SetMatrix4("camera", cameraMatrix);
-
-            if (SkyBox != null && SkyBox.Loaded)
-            {
-                RenderingQueue.RenderSkybox = () =>
-                {
-                    GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
-                    Renderer.ViewportRectangle = WindowConstants.GameViewport;
-
-                    viewMatrix = _camera.GetViewMatrix().ClearTranslation();
-                    cameraMatrix = viewMatrix * projectionMatrix;
-
-                    GL.DepthFunc(DepthFunction.Lequal);
-
-                    Renderer.CheckError();
-
-                    Shaders.SKYBOX_SHADER.Use();
-                    Shaders.SKYBOX_SHADER.SetMatrix4("camera", cameraMatrix);
-                    Renderer.RenderSkybox(SkyBox);
-
-                    GL.DepthFunc(DepthFunction.Less);
-
-                    RenderingQueue.RenderSkybox = null;
-                };
             }
 
-            //RenderingQueue.RenderQueue();
+
+            Shaders.PARTICLE_SHADER.Use();
+            Shaders.PARTICLE_SHADER.SetMatrix4("camera", ref cameraMatrix);
+
 
 
             if(CurrentContext == ContentContext.Tools)
@@ -646,37 +632,56 @@ namespace MortalDungeon
             }
 
 
-            Renderer.RenderObjectsInstancedGeneric(new List<UIObject> { CursorObj }, ref Renderer._instancedRenderArray);
+            Renderer.RenderObjectsInstancedGeneric(_cursorList, ref Renderer._instancedRenderArray);
 
             Shaders.DEFAULT_SHADER.Use();
-            Shaders.DEFAULT_SHADER.SetMatrix4("camera", cameraMatrix);
+            Shaders.DEFAULT_SHADER.SetMatrix4("camera", ref cameraMatrix);
             Shaders.DEFAULT_SHADER.SetFloat("alpha_threshold", RenderingConstants.DefaultAlphaThreshold);
 
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
-            _renderedItems.ForEach(obj =>
+            for(int i = 0; i < _renderedItems.Count; i++)
             {
-                Renderer.RenderObject(obj);
+                Renderer.RenderObject(_renderedItems[i]);
+            } //Old handling, used for lines
 
-            }); //Old handling, used for lines
-                //Renderer.RenderObject(_cursorCoords);
+            for (int i = 0; i < _sceneController.Scenes.Count; i++)
+            {
+                _sceneController.Scenes[i].OnRenderEnd();
+                _sceneController.Scenes[i].InvokeQueuedRenderAction();
+            }
+
+            OnRenderEnd();
+
+            //_renderDiagnostics.Add(new RenderDiagnosticData()
+            //{
+            //    TimeInRender = RenderTime,
+            //    Timestamp = Program.ProgramTimer.ElapsedMilliseconds,
+            //    RunningSlowly = IsRunningSlowly
+            //});
+
 
             SwapBuffers();
 
-            base.OnRenderFrame(args);
+            //For whatever reason, calling GL.Finish almost completely eliminates 
+            //a set of sporadic frame drops that would commonly occur when clicking/moving
+            //the mouse/pressing a key. Although, when the program has just begun running
+            //a few of these frame drops can still occur. After 30 seconds to a minute
+            //they should stop appearing.
+            //^ Leaving this for posterity. The problem was actually the Nvidia setting "Threaded optimization"
+            //being set to "Auto". After setting it to "Off" the frame drop problem disappeared completely 
+            //GL.Finish();
 
-            _sceneController.Scenes.ForEach(scene =>
-            {
-                scene.OnRenderEnd();
-                scene.InvokeQueuedRenderAction();
-            });
-
-            InvokeQueuedRenderAction();
-
-            Renderer.CheckError();
-
-            OnRenderEnd();
+            System.Threading.Monitor.Exit(_renderLock);
         }
+
+        public struct RenderDiagnosticData
+        {
+            public double TimeInRender;
+            public double Timestamp;
+            public bool RunningSlowly;
+        }
+        public static List<RenderDiagnosticData> _renderDiagnostics = new List<RenderDiagnosticData>(10000);
 
 
         public delegate void WindowRenderEventArgs();
@@ -746,10 +751,10 @@ namespace MortalDungeon
 
             _lastPos = new Vector2(MouseState.X, MouseState.Y);
 
-            _sceneController.Scenes.ForEach(scene =>
+            for(int i = 0; i < _sceneController.Scenes.Count; i++)
             {
-                scene.OnUpdateFrame(args);
-            });
+                _sceneController.Scenes[i].OnUpdateFrame(args);
+            }
 
             base.OnUpdateFrame(args);
         }
@@ -858,8 +863,6 @@ namespace MortalDungeon
                 GL.DeleteProgram(ShaderList.AllShaders[i].Handle);
             }
 
-            
-            
             base.OnUnload();
         }
 
@@ -1054,6 +1057,18 @@ namespace MortalDungeon
         private static Queue<Action> _renderActionQueue = new Queue<Action>();
         public static void QueueToRenderCycle(Action action)
         {
+            //if(Thread.CurrentThread.ManagedThreadId == WindowConstants.MainThreadId)
+            //{
+            //    action.Invoke();
+            //}
+            //else
+            //{
+            //    lock (_renderActionQueueLock)
+            //    {
+            //        _renderActionQueue.Enqueue(action);
+            //    }
+            //}
+
             lock (_renderActionQueueLock)
             {
                 _renderActionQueue.Enqueue(action);

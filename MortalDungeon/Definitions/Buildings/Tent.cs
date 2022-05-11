@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Definitions.Buildings
+namespace Empyrean.Definitions.Buildings
 {
     public class Tent : Building
     {
@@ -81,10 +81,9 @@ namespace MortalDungeon.Definitions.Buildings
                 }
 
                 tile.Properties.Classification = TileClassification.ImpassableGround;
-                tile.Properties.Type = TileType.Stone_1;
+                tile.Properties.SetType(TileType.Stone_1);
                 tile.Properties.BlockingTypes.Add(BlockingType.Abilities);
                 //tile.Color = new Vector4(1, 0, 0, 1);
-                tile.Update();
             }
         }
     }

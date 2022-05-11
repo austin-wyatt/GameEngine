@@ -1,16 +1,16 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
-using MortalDungeon.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.TextHandling;
 using System.Linq;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public enum IconSheetIcons
     {
@@ -28,7 +28,8 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         Channel,
         MonkSmall,
         MonkBig,
-        Circle
+        Circle,
+        StaminaPip
     }
     public class Icon : UIObject
     {
@@ -192,15 +193,6 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             }
         }
 
-        public void SetCameraPerspective(bool camPerspective) 
-        {
-            CameraPerspective = camPerspective;
-            BaseObjects.ForEach(b =>
-            {
-                b.BaseFrame.CameraPerspective = camPerspective;
-            });
-        }
-
         public void AddChargeDisplay(Ability ability) 
         {
             UIScale textBoxSize = new UIScale(Size);
@@ -295,7 +287,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
             Vector3 pos = GetAnchorPosition(UIAnchorPosition.BottomRight) + new Vector3(-5, -10, -0.001f);
 
-            for (int i = 0; i < ability.ActionCost; i++) 
+            for (int i = 0; i < ability.GetCost(ResF.ActionEnergy); i++) 
             {
                 UIBlock actionCost = new UIBlock(default, null, default, (int)IconSheetIcons.Channel, true, false, Spritesheets.IconSheet);
                 actionCost.SetColor(_Colors.White);

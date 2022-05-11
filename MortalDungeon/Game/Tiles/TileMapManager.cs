@@ -1,26 +1,33 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Combat;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.Ledger.Units;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles.TileMaps;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Combat;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Ledger.Units;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles.Meshes;
+using Empyrean.Game.Tiles.TileMaps;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Tiles
+namespace Empyrean.Game.Tiles
 {
     public static class TileMapManager
     {
+        //public static Texture TEST_BLEND_MAP = Texture.LoadFromFile("Resources/Textures/TestBlendMap.png");
+        //public static Texture TEST_GRASS = Texture.LoadFromFile("Resources/Textures/Grass.png");
+        //public static Texture TEST_DIRT = Texture.LoadFromFile("Resources/Textures/Dirt.png");
+        //public static Texture TEST_STONE = Texture.LoadFromFile("Resources/Textures/Stone_1.png");
+
         public static Dictionary<TileMapPoint, TileMap> LoadedMaps = new Dictionary<TileMapPoint, TileMap>();
 
         public static TileMapPoint LoadedCenter = new TileMapPoint(0, 0);
@@ -30,10 +37,9 @@ namespace MortalDungeon.Game.Tiles
         public static CombatScene Scene;
 
         public static HashSet<TileMap> VisibleMaps = new HashSet<TileMap>();
+        public static List<TileMap> VisibleMapsList = new List<TileMap>();
 
         public static List<TileMap> ActiveMaps = new List<TileMap>();
-
-        public static Dictionary<TileMapPoint, InstancedRenderData> TilePillarsRenderData = new Dictionary<TileMapPoint, InstancedRenderData>();
 
         public static readonly Vector2i TILE_MAP_DIMENSIONS = new Vector2i(20, 20);
 
@@ -43,6 +49,15 @@ namespace MortalDungeon.Game.Tiles
         {
             LoadedCenter = center;
         }
+
+
+        private static AsyncSignal _featureWaitHandle = new AsyncSignal();
+
+        /// <summary>
+        /// A list of tiles that had their type changed during the loading process and need to have
+        /// their texture data updated in their chunk's mesh.
+        /// </summary>
+        public static List<Tile> TilesRequiringTextureUpdates = new List<Tile>();
 
         public static object _loadLock = new object();
         public static void LoadMapsAroundCenter(int loadDiameter = -1, int layer = 0, bool forceFresh = false)
@@ -128,13 +143,17 @@ namespace MortalDungeon.Game.Tiles
                 Console.WriteLine("Flag 3: " + stopwatch.ElapsedMilliseconds + "ms");
 
                 TileMapHelpers._topLeftMap = LoadedMaps[new TileMapPoint(LoadedCenter.X - incrementVal, LoadedCenter.Y - incrementVal)];
+                TileMapHelpers._bottomRightMap = LoadedMaps[new TileMapPoint(LoadedCenter.X + incrementVal, LoadedCenter.Y + incrementVal)];
 
                 PositionTileMaps();
 
                 Console.WriteLine("Flag 4: " + stopwatch.ElapsedMilliseconds + "ms");
 
+
+                _featureWaitHandle.Reset();
                 ApplyLoadedFeaturesToMaps(LoadedMaps.Values.ToList(), pointsToLoad);
 
+                
                 Console.WriteLine("Flag 5: " + stopwatch.ElapsedMilliseconds + "ms");
 
                 AddLedgeredUnitsToMaps(pointsToLoad);
@@ -148,7 +167,15 @@ namespace MortalDungeon.Game.Tiles
                 Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, false);
                 Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
 
+
+                MeshTileBlender.FillTileHeightMap();
+                MeshTileBlender.MajorBlendPass();
+                Console.WriteLine("Blend completed: " + stopwatch.ElapsedMilliseconds + "ms");
+
                 GC.Collect();
+
+                if (_blendMapTotalCount > 0)
+                    _featureWaitHandle.Wait();
 
                 Scene.QueueToRenderCycle(() =>
                 {
@@ -161,6 +188,17 @@ namespace MortalDungeon.Game.Tiles
 
                         unit.VisionGenerator.SetPosition(unit.Info.TileMapPosition);
                     }
+
+                    for(int i = 0; i < TilesRequiringTextureUpdates.Count; i++)
+                    {
+                        var tile = TilesRequiringTextureUpdates[i];
+                        tile.MeshTileHandle.UpdateTextureInfo();
+                        tile.Update(TileUpdateType.Textures);
+                    }
+
+                    MeshTileBlender.MajorBlendPass();
+
+                    TilesRequiringTextureUpdates.Clear();
                 });
 
                 Console.WriteLine("Flag 6: " + stopwatch.ElapsedMilliseconds + "ms");
@@ -174,31 +212,31 @@ namespace MortalDungeon.Game.Tiles
 
             Vector3 tileMapDimensions = LoadedMaps.Values.First().GetTileMapDimensions();
 
-            int minX = int.MaxValue;
-            int maxX = int.MinValue;
+            //int minX = int.MaxValue;
+            //int maxX = int.MinValue;
 
-            int minY = int.MaxValue;
-            int maxY = int.MinValue;
+            //int minY = int.MaxValue;
+            //int maxY = int.MinValue;
 
-            foreach(var map in LoadedMaps.Values)
-            {
-                if (map.TileMapCoords.X < minX)
-                {
-                    minX = map.TileMapCoords.X;
-                }
-                if (map.TileMapCoords.X > maxX)
-                {
-                    maxX = map.TileMapCoords.X;
-                }
-                if (map.TileMapCoords.Y < minY)
-                {
-                    minY = map.TileMapCoords.Y;
-                }
-                if (map.TileMapCoords.Y > maxY)
-                {
-                    maxY = map.TileMapCoords.Y;
-                }
-            }
+            //foreach(var map in LoadedMaps.Values)
+            //{
+            //    if (map.TileMapCoords.X < minX)
+            //    {
+            //        minX = map.TileMapCoords.X;
+            //    }
+            //    if (map.TileMapCoords.X > maxX)
+            //    {
+            //        maxX = map.TileMapCoords.X;
+            //    }
+            //    if (map.TileMapCoords.Y < minY)
+            //    {
+            //        minY = map.TileMapCoords.Y;
+            //    }
+            //    if (map.TileMapCoords.Y > maxY)
+            //    {
+            //        maxY = map.TileMapCoords.Y;
+            //    }
+            //}
 
 
             foreach(var map in LoadedMaps.Values)
@@ -209,9 +247,13 @@ namespace MortalDungeon.Game.Tiles
             }
         }
 
-
+        private static int _blendMapTotalCount;
+        private static int _blendMapCurrentCount;
         public static void ApplyLoadedFeaturesToMaps(List<TileMap> maps, List<TileMapPoint> addedMaps = null)
         {
+            _blendMapTotalCount = 0;
+            _blendMapCurrentCount = 0;
+
             var featureList = FeatureManager.LoadedFeatures.Values.ToList();
 
             featureList.Sort((a, b) => b.LoadPriority.CompareTo(a.LoadPriority));
@@ -228,6 +270,8 @@ namespace MortalDungeon.Game.Tiles
             }
 
             Console.WriteLine("Starting map update");
+
+            List<BlendControl> blendControls = new List<BlendControl>();
 
             foreach (var feature in featureList)
             {
@@ -313,10 +357,68 @@ namespace MortalDungeon.Game.Tiles
                 }
                 #endregion
 
+                #region apply units
+                foreach (var point in feature.FeatureUnits)
+                {
+                    var tile = TileMapHelpers.GetTile(point.Key);
+
+                    if (tile != null)
+                    {
+                        bool freshGen = true;
+
+                        if (addedMaps != null)
+                        {
+                            freshGen = addedPoints.Contains(tile.TileMap.TileMapCoords);
+                        }
+
+                        feature.ApplyUnitToPoint(tile, freshGen);
+                    }
+                }
+                #endregion
+
+                #region apply blend controls
+                for(int i = 0; i < feature.BlendControls.Count; i++)
+                {
+                    _blendMapTotalCount++;
+                    blendControls.Add(feature.BlendControls[i]);
+
+                    //Task.Run(() => 
+                    //{
+                    //    feature.BlendControls[capturedIndex].ApplyControl();
+                    //    _blendMapCurrentCount++;
+
+                    //    if (_blendMapCurrentCount == _blendMapTotalCount)
+                    //    {
+                    //        _featureWaitHandle.Set();
+                    //    }
+                    //});
+                }
+                #endregion
+
                 //Console.WriteLine("Feature applied to map in: " + stopwatch.ElapsedMilliseconds + "ms");
 
                 feature.OnAppliedToMaps();
             };
+
+            blendControls.Sort((a, b) => a.LoadOrder.CompareTo(b.LoadOrder));
+
+            Task.Run(() =>
+            {
+                for (int i = 0; i < blendControls.Count; i++)
+                {
+                    int capturedIndex = i;
+
+                
+                    blendControls[capturedIndex].ApplyControl();
+                    _blendMapCurrentCount++;
+
+                    if (_blendMapCurrentCount == _blendMapTotalCount)
+                    {
+                        _featureWaitHandle.Set();
+                    }
+                
+                }
+            });
         }
 
         public static void AddLedgeredUnitsToMaps(List<TileMapPoint> addedMaps)
@@ -325,13 +427,13 @@ namespace MortalDungeon.Game.Tiles
             {
                 if(LoadedMaps.TryGetValue(point, out var map))
                 {
-                    foreach(var unit in UnitLedger.GetLedgeredUnitsOnTileMap(point).ToHashSet())
+                    foreach(var unit in UnitPositionLedger.GetLedgeredUnitsOnTileMap(point).ToHashSet())
                     {
-                        Entity entity = UnitLedger.CreateEntityFromLedgeredUnit(unit);
+                        Entity entity = UnitPositionLedger.CreateEntityFromLedgeredUnit(unit);
 
                         EntityManager.LoadEntity(entity, unit.UnitInfo.Position);
 
-                        UnitLedger.RemoveUnitFromLedger(unit);
+                        UnitPositionLedger.RemoveUnitFromLedger(unit);
                     }
                 }
             }
@@ -351,7 +453,7 @@ namespace MortalDungeon.Game.Tiles
 
         public static List<TileMap> GetTileMapsInDiameter(TileMapPoint center, int diameter)
         {
-            List<TileMap> maps = new List<TileMap>();
+            List<TileMap> maps = TileMap.TileMapListPool.GetObject();
 
             int incrementVal;
             if(diameter % 2 == 0)
@@ -380,24 +482,37 @@ namespace MortalDungeon.Game.Tiles
         }
 
         public static object _visibleMapLock = new object();
+        private static ObjectPool<HashSet<TileMap>> _tileMapSetPool = new ObjectPool<HashSet<TileMap>>();
         public static void SetVisibleMaps(List<TileMap> maps)
         {
             lock (_visibleMapLock)
             {
-                var currVisibleMaps = new HashSet<TileMap>(VisibleMaps);
+                var currVisibleMaps = _tileMapSetPool.GetObject();
+
+                foreach(var item in VisibleMaps)
+                {
+                    currVisibleMaps.Add(item);
+                }
 
                 VisibleMaps.Clear();
+                VisibleMapsList.Clear();
 
                 for (int i = 0; i < maps.Count; i++)
                 {
                     VisibleMaps.Add(maps[i]);
+                    VisibleMapsList.Add(maps[i]);
 
                     if (!currVisibleMaps.Contains(maps[i]))
                     {
                         VisibleMaps.Add(maps[i]);
                         maps[i].Visible = true;
 
-                        CreateTilePillarsForMap(maps[i]);
+                        maps[i].UpdateChunks(TileUpdateType.Initialize);
+
+                        for (int j = 0; j < maps[i].TileChunks.Count; j++)
+                        {
+                            maps[i].TileChunks[j].Cull = false;
+                        }
                     }
                     else
                     {
@@ -408,14 +523,18 @@ namespace MortalDungeon.Game.Tiles
 
                 foreach (var map in currVisibleMaps)
                 {
-                    if (TilePillarsRenderData.TryGetValue(map.TileMapCoords, out var renderData))
-                    {
-                        renderData.CleanUp();
-                        TilePillarsRenderData.Remove(map.TileMapCoords);
-                    }
-
+                    map.ClearMeshRenderData();
                     map.Visible = false;
+                    
+                    for(int i = 0; i < map.TileChunks.Count; i++)
+                    {
+                        map.TileChunks[i].Cull = true;
+                        map.TileChunks[i].OnCull();
+                    }
                 }
+
+                currVisibleMaps.Clear();
+                _tileMapSetPool.FreeObject(ref currVisibleMaps);
 
                 //Window.QueueToRenderCycle(() =>
                 //{
@@ -424,87 +543,6 @@ namespace MortalDungeon.Game.Tiles
                 Scene.RenderDispatcher.DispatchAction(Scene._structureDispatchObject, Scene.CreateStructureInstancedRenderData);
                 //Scene.UpdateVisionMap();
             }
-        }
-
-
-        private static HashSet<TileMap> _mapsToUpdatePillars = new HashSet<TileMap>();
-        private static object _pillarLock = new object();
-        public static void DispatchTilePillarUpdate(TileMap map)
-        {
-            lock (_pillarLock)
-            {
-                if (TilePillarsRenderData.TryGetValue(map.TileMapCoords, out var renderData))
-                {
-                    renderData.CleanUp();
-                    TilePillarsRenderData.Remove(map.TileMapCoords);
-                }
-
-                _mapsToUpdatePillars.Add(map);
-                Window.QueueToRenderCycle(BatchPillarUpdate);
-            }
-        }
-
-        private static void BatchPillarUpdate()
-        {
-            lock (_pillarLock)
-            {
-                foreach(var map in _mapsToUpdatePillars)
-                {
-                    CreateTilePillarsForMap(map);
-                }
-
-                _mapsToUpdatePillars.Clear();
-            }
-        }
-
-        public static void CreateTilePillarsForMap(TileMap map)
-        {
-            List<GameObject> tilePillars = new List<GameObject>();
-
-            List<InstancedRenderData> data;
-
-            List<Tile> neighborList = new List<Tile>();
-
-            for (int j = 0; j < map.Tiles.Count; j++)
-            {
-                var tile = map.Tiles[j];
-
-                neighborList.Clear();
-                map.GetNeighboringTiles(tile, neighborList, shuffle: false, setVisited: false);
-
-                bool createPillar = false;
-
-                for (int i = 0; i < neighborList.Count; i++)
-                {
-                    if (tile.Properties.Height > neighborList[i].Properties.Height)
-                    {
-                        createPillar = true;
-                        break;
-                    }
-                }
-
-                if (createPillar)
-                {
-                    GameObject pillar = new GameObject();
-                    pillar.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.TilePillar, default));
-
-                    pillar.SetPosition(map.Tiles[j].Position + new Vector3(0, 217, -1.0f));
-
-                    pillar.BaseObject.BaseFrame.SetScale(1.64f, 1.64f, 1);
-
-                    Renderer.LoadTextureFromGameObj(pillar);
-
-                    tilePillars.Add(pillar);
-                }
-            }
-
-            data = InstancedRenderData.GenerateInstancedRenderData(tilePillars);
-            foreach (var item in data)
-            {
-                TilePillarsRenderData.TryAdd(map.TileMapCoords, item);
-            }
-
-            tilePillars.Clear();
         }
     }
 }

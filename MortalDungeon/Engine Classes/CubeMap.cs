@@ -6,7 +6,7 @@ using System.Drawing.Imaging;
 using System.Text;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class CubeMap
     {

@@ -1,13 +1,13 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Events;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Events;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Definitions.EventActions
+namespace Empyrean.Definitions.EventActions
 {
     /// <summary>
     /// Creates a context menu or adds an item to an existing context menu associated with an event target <para/>

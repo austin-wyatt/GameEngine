@@ -1,16 +1,19 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Game.Units.AIFunctions;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities.SelectionTypes;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Game.Units.AIFunctions;
+using Empyrean.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public partial class TemplateRangedSingleTarget : Ability
     {
@@ -20,8 +23,7 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.Slashing;
             Range = range;
             CastingUnit = castingUnit;
-            Damage = damage;
-            ActionCost = 1;
+            //CastRequirements.AddResourceCost(ResF.ActionEnergy, 1, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 
             CastingMethod |= CastingMethod.BruteForce | CastingMethod.Weapon;
 
@@ -40,7 +42,9 @@ namespace MortalDungeon.Game.Abilities
 
             AbilityClass = abilityClass;
 
-            UnitTargetParams = new UnitSearchParams()
+            SelectionInfo = new SingleTarget(this);
+
+            SelectionInfo.UnitTargetParams = new UnitSearchParams()
             {
                 Dead = UnitCheckEnum.False,
                 IsFriendly = UnitCheckEnum.SoftTrue,
@@ -51,108 +55,97 @@ namespace MortalDungeon.Game.Abilities
             };
         }
 
-        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
-            List<Unit> units = default, Tile position = null)
-        {
-            if (position == null)
-            {
-                position = CastingUnit.Info.TileMapPosition;
-            }
+        //public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+        //    List<Unit> units = default, Tile position = null)
+        //{
+        //    if (position == null)
+        //    {
+        //        position = CastingUnit.Info.TileMapPosition;
+        //    }
 
-            var unitsInRadius = UnitPositionManager.GetUnitsInRadius((int)Range, position.ToFeaturePoint());
+        //    var unitsInRadius = UnitPositionManager.GetUnitsInRadius((int)Range, position.ToFeaturePoint());
 
-            affectedTiles = new List<Tile>();
-            affectedUnits = new List<Unit>();
+        //    affectedTiles = new List<Tile>();
+        //    affectedUnits = new List<Unit>();
 
-            foreach (var unit in unitsInRadius)
-            {
-                bool valid = true;
+        //    foreach (var unit in unitsInRadius)
+        //    {
+        //        bool valid = true;
 
-                if(!UnitTargetParams.CheckUnit(unit, CastingUnit))
-                {
-                    continue;
-                }
+        //        if(!UnitTargetParams.CheckUnit(unit, CastingUnit))
+        //        {
+        //            continue;
+        //        }
 
-                if (RequiresLineToTarget)
-                {
-                    var lineOfTiles = TileMap.GetLineOfTiles(position, unit.Info.TileMapPosition);
+        //        if (RequiresLineToTarget)
+        //        {
+        //            var lineOfTiles = TileMap.GetLineOfTiles(position, unit.Info.TileMapPosition);
 
-                    for(int i = 0; i < lineOfTiles.Count; i++)
-                    {
-                        if (lineOfTiles[i].BlocksType(BlockingType.Abilities))
-                        {
-                            valid = false;
-                            break;
-                        }
-                    }
-                }
+        //            for(int i = 0; i < lineOfTiles.Count; i++)
+        //            {
+        //                if (lineOfTiles[i].BlocksType(BlockingType.Abilities))
+        //                {
+        //                    valid = false;
+        //                    break;
+        //                }
+        //            }
+        //        }
 
-                if (valid)
-                {
-                    affectedUnits.Add(unit);
-                    affectedTiles.Add(unit.Info.TileMapPosition);
-                }
-            }
-        }
+        //        if (valid)
+        //        {
+        //            affectedUnits.Add(unit);
+        //            affectedTiles.Add(unit.Info.TileMapPosition);
+        //        }
+        //    }
+        //}
 
-        public override bool GetPositionValid(TilePoint sourcePos, TilePoint destinationPos)
-        {
-            int distanceBetweenPoints = TileMap.GetDistanceBetweenPoints(sourcePos, destinationPos);
+        //public override bool GetPositionValid(TilePoint sourcePos, TilePoint destinationPos)
+        //{
+        //    int distanceBetweenPoints = TileMap.GetDistanceBetweenPoints(sourcePos, destinationPos);
 
-            if (distanceBetweenPoints > Range || distanceBetweenPoints < MinRange)
-            {
-                return false;
-            }
+        //    if (distanceBetweenPoints > Range || distanceBetweenPoints < MinRange)
+        //    {
+        //        return false;
+        //    }
 
-            if (RequiresLineToTarget)
-            {
-                var lineOfTiles = TileMap.GetLineOfTiles(sourcePos, destinationPos);
+        //    if (RequiresLineToTarget)
+        //    {
+        //        var lineOfTiles = TileMap.GetLineOfTiles(sourcePos, destinationPos);
 
-                for (int i = 0; i < lineOfTiles.Count; i++)
-                {
-                    if (lineOfTiles[i].BlocksType(BlockingType.Abilities))
-                    {
-                        return false;
-                    }
-                }
-            }
+        //        for (int i = 0; i < lineOfTiles.Count; i++)
+        //        {
+        //            if (lineOfTiles[i].BlocksType(BlockingType.Abilities))
+        //            {
+        //                return false;
+        //            }
+        //        }
+        //    }
 
-            return true;
-        }
+        //    return true;
+        //}
 
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
+        //public override bool OnUnitClicked(Unit unit)
+        //{
+        //    if (!base.OnUnitClicked(unit))
+        //        return false;
 
-            if (AffectedUnits.FindIndex(u => u == unit) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
+        //    if (AffectedUnits.FindIndex(u => u == unit) != -1 && UnitTargetParams.CheckUnit(unit, CastingUnit))
+        //    {
+        //        SelectedUnit = unit;
+        //        EnactEffect();
+        //    }
 
-            return true;
-        }
-
-        public override void EnactEffect()
-        {
-            BeginEffect();
-
-            SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
-
-            Casted();
-            EffectEnded();
-        }
+        //    return true;
+        //}
 
         public override DamageInstance GetDamageInstance()
         {
             DamageInstance instance = new DamageInstance();
 
-            instance.Damage.Add(DamageType, GetDamage());
+            //instance.Damage.Add(DamageType, GetDamage());
+            instance.Damage.Add(DamageType, 0);
 
             return instance;
         }
-
-        
     }
 }

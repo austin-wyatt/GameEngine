@@ -1,21 +1,21 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Map;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using static MortalDungeon.Engine_Classes.UIComponents.Icon;
+using static Empyrean.Engine_Classes.UIComponents.Icon;
 
-namespace MortalDungeon.Game.UI.Dev
+namespace Empyrean.Game.UI.Dev
 {
     public class EntityManagerUI
     {

@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Player;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Items
+namespace Empyrean.Game.Items
 {
     public enum EquipmentSlot
     {
@@ -24,6 +24,9 @@ namespace MortalDungeon.Game.Items
         Consumable_2 = 256,
         Consumable_3 = 512,
         Consumable_4 = 1024,
+        Weapon_2 = 2048,
+        All = None | Weapon_1 | Trinket | Boots | Gloves | Armor | Jewelry_1 | Jewelry_2 | Consumable_1 | Consumable_2 | Consumable_3 | Consumable_4 | Weapon_2
+
     }
 
     public enum ItemType
@@ -54,7 +57,10 @@ namespace MortalDungeon.Game.Items
         public Dictionary<EquipmentSlot, Item> EquippedItems = new Dictionary<EquipmentSlot, Item>();
 
         [XmlIgnore]
-        public EquipmentSlot AvailableSlots = (EquipmentSlot)2047;
+        public EquipmentSlot PrimaryWeaponSlot = EquipmentSlot.Weapon_1;
+
+        [XmlIgnore]
+        public EquipmentSlot AvailableSlots = EquipmentSlot.All;
 
         [XmlElement("AvailableSlots")]
         public int _availableSlot
@@ -62,6 +68,33 @@ namespace MortalDungeon.Game.Items
             get { return (int)AvailableSlots; }
             set { AvailableSlots = (EquipmentSlot)value; }
         }
+
+        /// <summary>
+        /// Does not include offhand weapon
+        /// </summary>
+        [XmlIgnore]
+        public ItemTag EquippedItemTags = ItemTag.None;
+
+        [XmlElement("EquippedItemTags")]
+        public long _equippedItemTags
+        {
+            get { return (long)EquippedItemTags; }
+            set { EquippedItemTags = (ItemTag)value; }
+        }
+        
+        /// <summary>
+        /// Includes offhand weapon
+        /// </summary>
+        [XmlIgnore]
+        public ItemTag AllEquippedItemTags = ItemTag.None;
+
+        [XmlElement("EquippedItemTags")]
+        public long _allEquippedItemTags
+        {
+            get { return (long)AllEquippedItemTags; }
+            set { AllEquippedItemTags = (ItemTag)value; }
+        }
+
 
         [XmlIgnore]
         public Unit Unit;
@@ -117,6 +150,8 @@ namespace MortalDungeon.Game.Items
                 Unit.Info.Inventory.AddItemToInventory(removedItem);
             }
 
+            CollateItemTags();
+
             return EquipItemError.None;
         }
 
@@ -126,9 +161,57 @@ namespace MortalDungeon.Game.Items
 
             if (removedItem != null)
             {
+                removedItem.EquipmentHandle = null;
+                removedItem.OnUnequipped();
+
                 EquippedItems.Remove(slot);
                 PlayerParty.Inventory.AddItemToInventory(removedItem);
+
+                CollateItemTags();
             }
+        }
+
+        private void CollateItemTags()
+        {
+            EquippedItemTags = ItemTag.None;
+            AllEquippedItemTags = ItemTag.None;
+
+            foreach (var itemKVP in EquippedItems)
+            {
+                AllEquippedItemTags |= itemKVP.Value.Tags;
+
+                if (itemKVP.Key == EquipmentSlot.Weapon_2 && ((itemKVP.Value.Tags & ItemTag.Weapon_Concealed) != ItemTag.Weapon_Concealed)) 
+                    continue;
+
+                EquippedItemTags |= itemKVP.Value.Tags;
+            }
+        }
+
+        public void SwapWeapons()
+        {
+            switch (PrimaryWeaponSlot)
+            {
+                case EquipmentSlot.Weapon_1:
+                    PrimaryWeaponSlot = EquipmentSlot.Weapon_2;
+                    break;
+                case EquipmentSlot.Weapon_2:
+                    PrimaryWeaponSlot = EquipmentSlot.Weapon_1;
+                    break;
+            }
+
+            if(Unit != null && Unit.Scene.InCombat)
+            {
+                Unit.Info.Context.SetFlag(UnitContext.WeaponSwappedThisTurn, true);
+
+                int staminaCost = Math.Clamp(Unit.GetResI(ResI.Stamina), 0, Unit.WEAPON_SWAP_MAX_STAMINA_COST);
+
+                Unit.AddResI(ResI.Stamina, -staminaCost);
+
+                if (staminaCost > 0)
+                    Unit.Scene.Footer.UpdateFooterInfo();
+            }
+
+            CollateItemTags();
         }
 
         public List<Item> GetItems()
@@ -174,6 +257,8 @@ namespace MortalDungeon.Game.Items
 
                 EquippedItems.Add(_equippedItems.Keys[i], item);
             }
+
+            CollateItemTags();
         }
 
         public void PrepareForSerialization()

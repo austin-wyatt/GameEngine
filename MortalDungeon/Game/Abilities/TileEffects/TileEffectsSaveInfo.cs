@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Map;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Abilities.TileEffects
+namespace Empyrean.Game.Abilities.TileEffects
 {
     [Serializable]
     public class TileEffectsSaveInfo : ISerializable
@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Abilities.TileEffects
         public List<FeaturePoint> Keys = new List<FeaturePoint>();
         public List<HashSet<TileEffect>> Values = new List<HashSet<TileEffect>>();
 
-        public const string TILE_EFFECT_NAMESPACE = "MortalDungeon.Definitions.TileEffects.";
+        public const string TILE_EFFECT_NAMESPACE = "Empyrean.Definitions.TileEffects.";
 
         public void CompleteDeserialization()
         {

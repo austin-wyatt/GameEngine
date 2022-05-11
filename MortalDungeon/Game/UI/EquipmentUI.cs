@@ -1,21 +1,21 @@
-﻿using MortalDungeon.Definitions;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Items;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Definitions;
+using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Items;
+using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
-using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
+using Icon = Empyrean.Engine_Classes.UIComponents.Icon;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class EquipmentUI
     {
@@ -97,13 +97,14 @@ namespace MortalDungeon.Game.UI
         }
 
 
-        private UIObject[] _equipmentSlots = new UIObject[11];
+        private UIObject[] _equipmentSlots = new UIObject[12];
         private enum SlotMap
         {
             Armor,
             Boots,
             Gloves,
-            Weapon,
+            Weapon_1,
+            Weapon_2,
             Jewelry_1,
             Jewelry_2,
             Trinket,
@@ -160,7 +161,7 @@ namespace MortalDungeon.Game.UI
             var armorBlock = new UIBlock(default, new UIScale(0.15f, 0.15f));
             _equipmentSlots[(int)SlotMap.Armor] = armorBlock;
 
-            armorBlock.SetPositionFromAnchor(_unitBlock.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(-5, 15, 0), UIAnchorPosition.BottomRight);
+            armorBlock.SetPositionFromAnchor(_unitBlock.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(-5, -5, 0), UIAnchorPosition.BottomRight);
             _unitBlock.AddChild(armorBlock);
 
             Icon armorIcon;
@@ -275,9 +276,9 @@ namespace MortalDungeon.Game.UI
 
             #region weapon
             var weaponBlock = new UIBlock(default, new UIScale(0.15f, 0.15f));
-            _equipmentSlots[(int)SlotMap.Weapon] = weaponBlock;
+            _equipmentSlots[(int)SlotMap.Weapon_1] = weaponBlock;
 
-            weaponBlock.SetPositionFromAnchor(_unitBlock.GetAnchorPosition(UIAnchorPosition.TopCenter) + new Vector3(0, -10, 0), UIAnchorPosition.BottomCenter);
+            weaponBlock.SetPositionFromAnchor(armorBlock.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(5, 0, 0), UIAnchorPosition.LeftCenter);
             _unitBlock.AddChild(weaponBlock);
 
             Icon weaponIcon;
@@ -312,11 +313,50 @@ namespace MortalDungeon.Game.UI
             weaponBlock.AddChild(weaponIcon);
             #endregion
 
+            #region weapon 2
+            var weapon_2Block = new UIBlock(default, new UIScale(0.15f, 0.15f));
+            _equipmentSlots[(int)SlotMap.Weapon_2] = weapon_2Block;
+
+            weapon_2Block.SetPositionFromAnchor(weaponBlock.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(5, 0, 0), UIAnchorPosition.LeftCenter);
+            _unitBlock.AddChild(weapon_2Block);
+
+            Icon weapon_2Icon;
+
+            if (unitSelected && _selectedUnit.Info.Equipment.EquippedItems.TryGetValue(EquipmentSlot.Weapon_2, out var weapon_2))
+            {
+                weapon_2Icon = new Icon(new UIScale(0.15f, 0.15f), weapon_2.AnimationSet.BuildAnimationsFromSet());
+
+                weapon_2Icon.RightClick += (s, e) =>
+                {
+                    _selectedUnit.Info.Equipment.UnequipItem(EquipmentSlot.Weapon_2);
+                    FillEquipmentInfo();
+                };
+            }
+            else
+            {
+                weapon_2Icon = new Icon(new UIScale(0.15f, 0.15f), Item_1.WeaponPlaceholder, Spritesheets.ItemSpritesheet_1);
+                weapon_2Icon.SetColor(_Colors.White);
+            }
+
+            weapon_2Icon.Hoverable = true;
+            weapon_2Icon.HoverColor = _Colors.IconHover;
+
+            weapon_2Icon.Clickable = true;
+            weapon_2Icon.Click += (s, e) =>
+            {
+                CreateItemSelectionDisplay(ItemType.Weapon, weapon_2Icon, EquipmentSlot.Weapon_2);
+            };
+
+            weapon_2Icon.SetPosition(weapon_2Block.Position);
+
+            weapon_2Block.AddChild(weapon_2Icon);
+            #endregion
+
             #region jewelry_1
             var jewelry_1Block = new UIBlock(default, new UIScale(0.15f, 0.15f));
             _equipmentSlots[(int)SlotMap.Jewelry_1] = jewelry_1Block;
 
-            jewelry_1Block.SetPositionFromAnchor(_unitBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(5, 15, 0), UIAnchorPosition.BottomLeft);
+            jewelry_1Block.SetPositionFromAnchor(_unitBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(5, -5, 0), UIAnchorPosition.BottomLeft);
             _unitBlock.AddChild(jewelry_1Block);
 
             Icon jewelry_1Icon;

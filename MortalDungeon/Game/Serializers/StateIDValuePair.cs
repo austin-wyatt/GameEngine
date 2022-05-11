@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [XmlType(TypeName = "STI")]
     [Serializable]
@@ -12,9 +13,9 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("STt")]
         public int Type; //use LedgerUpdateTypes
         [XmlElement("STs")]
-        public long StateID;
+        public BigInteger StateID;
         [XmlElement("STo")]
-        public long ObjectHash;
+        public BigInteger ObjectHash;
         [XmlElement("STd")]
         public int Data;
 

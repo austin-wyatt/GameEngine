@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Map
+namespace Empyrean.Game.Map
 {
     public class ClearParamaters
     {

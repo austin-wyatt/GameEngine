@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [XmlType(TypeName = "ANS")]
     [Serializable]

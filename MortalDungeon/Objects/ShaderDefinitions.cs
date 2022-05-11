@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Engine_Classes;
+﻿using Empyrean.Engine_Classes;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Objects
+namespace Empyrean.Objects
 {
 
     public static class ShaderList
@@ -24,16 +24,10 @@ namespace MortalDungeon.Objects
         public static readonly Shader FAST_DEFAULT_SHADER = new Shader("Shaders/fastDefaultShader.vert", "Shaders/shader.frag");
         public static readonly Shader POINT_SHADER = new Shader("Shaders/OldShaders/pointShader.vert", "Shaders/OldShaders/pointShader.frag");
         public static readonly Shader LINE_SHADER = new Shader("Shaders/OldShaders/lineShader.vert", "Shaders/OldShaders/lineShader.frag");
-        public static readonly Shader TILE_MAP_SHADER = new Shader("Shaders/tileMapShader.vert", "Shaders/tileMapShader.frag");
 
 
         public static readonly Shader SIMPLE_SHADER = new Shader("Shaders/simpleShader.vert", "Shaders/simpleShader.frag");
         public static readonly Shader SKYBOX_SHADER = new Shader("Shaders/CubeMap/CubeMapShader.vert", "Shaders/CubeMap/CubeMapShader.frag");
-
-        public static readonly Shader LIGHT_OBSTRUCTION_SHADER = new Shader("Shaders/lightObstructionShader.vert", "Shaders/lightObstructionShader.frag");
-        public static readonly Shader LIGHT_SHADER = new Shader("Shaders/lightShader.vert", "Shaders/lightShader.frag");
-
-        public static readonly Shader COLOR_SHADER = new Shader("Shaders/colorShader.vert", "Shaders/colorShader.frag");
 
         public static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");
 
@@ -42,5 +36,7 @@ namespace MortalDungeon.Objects
         public static readonly Shader UI_SHADER = new Shader("Shaders/UI/uiShader.vert", "Shaders/UI/uiShader.frag");
 
         public static readonly Shader CHUNK_SHADER = new Shader("Shaders/Tiles/chunkShader.vert", "Shaders/Tiles/chunkShader.frag");
+        public static readonly Shader INDIVIDUAL_MESH_SHADER = new Shader("Shaders/IndividualMesh/individualMeshShader.vert", 
+            "Shaders/IndividualMesh/individualMeshShader.frag");
     }
 }

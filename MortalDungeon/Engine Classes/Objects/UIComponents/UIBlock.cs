@@ -1,15 +1,55 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public class UIBlock : UIObject
     {
-        public UIBlock(Vector3 position = default, UIScale size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
+        public UIBlock() 
+        {
+            Position = default;
+            _scaleAspectRatio = true;
+            Name = "UIBlock";
+            CameraPerspective = false;
+
+
+            Vector2i SpritesheetDimensions = new Vector2i(1, 1);
+            float aspectRatio = _scaleAspectRatio ? (float)WindowConstants.ClientSize.Y / WindowConstants.ClientSize.X : 1;
+
+            Animation tempAnimation;
+
+            Spritesheet spritesheet = Spritesheets.UISheet;
+
+            RenderableObject window = new RenderableObject(new SpritesheetObject(71, spritesheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+
+            window.BaseColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
+            window.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
+            tempAnimation = new Animation()
+            {
+                Frames = new List<RenderableObject>() { window },
+                Frequency = 0,
+                Repeats = 0
+            };
+
+            BaseObject windowObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "UIWindow", Position, EnvironmentObjects.UIBlockBounds);
+            windowObj.BaseFrame.CameraPerspective = CameraPerspective;
+
+            AddBaseObject(windowObj);
+            _baseObject = windowObj;
+
+            windowObj.OutlineParameters.SetAllInline(2);
+
+            SetSize(Size);
+
+            SetOrigin(aspectRatio, Size);
+
+            ValidateObject(this);
+        }
+        public UIBlock(Vector3 position = default, UIScale? size = default, Vector2i spritesheetDimensions = default, int spritesheetPosition = 71, bool scaleAspectRatio = true, bool cameraPerspective = false, Spritesheet spritesheet = null)
         {
             //if (position == default)
             //{
@@ -17,7 +57,7 @@ namespace MortalDungeon.Engine_Classes.UIComponents
             //}
 
             Position = position;
-            Size = size == null ? Size : size;
+            Size = (UIScale)(size == null ? Size : size);
             _scaleAspectRatio = scaleAspectRatio;
             Name = "UIBlock";
             CameraPerspective = cameraPerspective;

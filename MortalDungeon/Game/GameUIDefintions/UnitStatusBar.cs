@@ -1,7 +1,7 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class UnitStatusBar : UIObject
     {
@@ -20,6 +20,8 @@ namespace MortalDungeon.Game.UI
         public Text _nameBox;
         public HealthBar HealthBar;
         public ShieldBar ShieldBar;
+
+        public UIBlock GroupDisplay;
 
         public bool WillDisplay = true;
 
@@ -64,9 +66,13 @@ namespace MortalDungeon.Game.UI
 
             ShieldBar = new ShieldBar(new Vector3(), scale);
             ShieldBar.MultiTextureData.MixTexture = false;
-            ShieldBar.SetCurrentShields(unit.Info.CurrentShields);
+            ShieldBar.SetCurrentShields(unit.GetResI(ResI.Shields));
 
             BaseComponent.AddChild(ShieldBar);
+
+            GroupDisplay = new UIBlock(new Vector3(), scale);
+            GroupDisplay.SetRender(false);
+            BaseComponent.AddChild(GroupDisplay);
 
             _camera = camera;
             _unit = unit;
@@ -183,6 +189,18 @@ namespace MortalDungeon.Game.UI
                     HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
                     ShieldBar.SetPositionFromAnchor(HealthBar.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
 
+
+                    if(_unit.Info.Group != null)
+                    {
+                        GroupDisplay.SetRender(true);
+                        GroupDisplay.SetColor(_unit.Info.Group.GroupColor);
+                        GroupDisplay.SAP(BaseComponent.GAP(UIAnchorPosition.TopLeft) + new Vector3(0, -10, 0), UIAnchorPosition.BottomLeft);
+                    }
+                    else
+                    {
+                        GroupDisplay.SetRender(false);
+                    }
+
                     //ForceTreeRegeneration();
                 }
             }
@@ -209,8 +227,8 @@ namespace MortalDungeon.Game.UI
 
         public void UpdateInfo() 
         {
-            HealthBar.SetHealthPercent(_unit.Info.Health / _unit.Info.MaxHealth, _unit.AI.Team);
-            ShieldBar.SetCurrentShields(_unit.Info.CurrentShields);
+            HealthBar.SetHealthPercent(_unit.GetResF(ResF.Health) / _unit.GetResF(ResF.MaxHealth), _unit.AI.Team);
+            ShieldBar.SetCurrentShields(_unit.GetResI(ResI.Shields));
 
             if(_nameBox.TextString != _unit.Name)
             {
@@ -231,6 +249,7 @@ namespace MortalDungeon.Game.UI
 
         private UIScale _healthBarScale = new UIScale();
         private UIScale _shieldBarScale = new UIScale();
+        private UIScale _groupDisplayScale = new UIScale();
         private void UpdateInfoBarScales(UIScale scale) 
         {
             _healthBarScale.X = scale.X;
@@ -238,8 +257,13 @@ namespace MortalDungeon.Game.UI
             _shieldBarScale.X = scale.X;
             _shieldBarScale.Y = scale.Y / 1.5f;
 
+            _groupDisplayScale.X = scale.X * 0.25f;
+            _groupDisplayScale.Y = scale.X * 0.25f;
+
+
             HealthBar.SetSize(_healthBarScale);
             ShieldBar.SetSize(_shieldBarScale);
+            GroupDisplay.SetSize(_groupDisplayScale);
         }
     }
 }

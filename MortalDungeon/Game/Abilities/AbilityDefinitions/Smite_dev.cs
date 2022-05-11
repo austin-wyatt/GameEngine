@@ -1,19 +1,23 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
-using MortalDungeon.Game.Map;
+using Empyrean.Game.Map;
 using System.Diagnostics;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes;
+using System.Threading;
+using System.Threading.Tasks;
+using Empyrean.Game.Items;
+using Empyrean.Game.Abilities.SelectionTypes;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class Smite_dev : TemplateRangedSingleTarget
     {
@@ -24,19 +28,18 @@ namespace MortalDungeon.Game.Abilities
             Range = 15;
             MinRange = 0;
             CastingUnit = castingUnit;
-            Damage = 10;
-
-            ActionCost = 0;
 
             CastingMethod |= CastingMethod.Weapon | CastingMethod.PhysicalDexterity;
 
-            UnitTargetParams.Dead = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.IsHostile = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.Dead = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
 
-            RequiresLineToTarget = true;
+            SelectionInfo.Context.SetFlag(SelectionInfoContext.LineRequiredToTarget, true);
+
+            CastRequirements.EquipmentRequirement.RequiredTag |= ItemTag.Weapon_Melee;
 
 
             Name = new Serializers.TextInfo(11, 3);
@@ -55,25 +58,20 @@ namespace MortalDungeon.Game.Abilities
         {
             BeginEffect();
 
-            var dam = new Dictionary<DamageType, float>();
-            dam.Add(DamageType.HealthRemoval, 1000);
-
-            SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance()
+            Task.Run(() =>
             {
-                Damage = dam,
-            }, ability: this));
+                var dam = new Dictionary<DamageType, float>();
+                dam.Add(DamageType.HealthRemoval, 1000);
 
-            Casted();
-            EffectEnded();
+                SelectionInfo.SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance()
+                {
+                    Damage = dam,
+                }, ability: this));
+
+                Casted();
+                EffectEnded();
+            });
         }
 
-        public override DamageInstance GetDamageInstance()
-        {
-            DamageInstance instance = new DamageInstance();
-
-            instance.Damage.Add(DamageType, Damage);
-
-            return instance;
-        }
     }
 }

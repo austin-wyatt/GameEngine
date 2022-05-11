@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Items
+namespace Empyrean.Game.Items
 {
 
     [XmlType(TypeName = "IEm")]

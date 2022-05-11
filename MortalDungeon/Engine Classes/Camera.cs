@@ -1,7 +1,8 @@
-﻿using OpenTK.Mathematics;
+﻿using Empyrean.Engine_Classes.Audio;
+using OpenTK.Mathematics;
 using System;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class Camera
     {
@@ -155,6 +156,8 @@ namespace MortalDungeon.Engine_Classes
             Position = pos;
 
             Update?.Invoke(this);
+
+            SoundPlayer.SetListenerPosition(pos.X, pos.Y, pos.Z);
         }
 
         public delegate void CameraEventHandler(Camera camera);

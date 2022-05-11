@@ -1,7 +1,7 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     public static class VisionManager
     {
@@ -143,6 +143,9 @@ namespace MortalDungeon.Game.Units
             ConsolidateVision(unit.AI.Team);
         }
 
+
+        private static ObjectPool<List<List<Direction>>> _digitalLineListPool = new ObjectPool<List<List<Direction>>>();
+        private static ObjectPool<List<Direction>> _directionListPool = new ObjectPool<List<Direction>>();
         public static void CalculateVision(VisionGenerator generator, bool updateVisibleMaps = true)
         {
             var affectedMapsOld = generator.AffectedMaps;
@@ -151,16 +154,17 @@ namespace MortalDungeon.Game.Units
             {
                 generator.VisibleTiles.Clear();
             }
-            generator.AffectedMaps = new HashSet<TileMap>();
+            generator.AffectedMaps = TileMap.TileMapSetPool.GetObject();
+
 
             Tile tile = TileMapHelpers.GetTile(new FeaturePoint(generator.Position));
 
-            List<Tile> tileList = new List<Tile>();
+            List<Tile> tileList = Tile.TileListPool.GetObject();
 
             tile.TileMap.GetRingOfTiles(tile, tileList, (int)generator.Radius);
 
             #region precalculate this later
-            List<List<Direction>> digitalLines = new List<List<Direction>>();
+            List<List<Direction>> digitalLines = _digitalLineListPool.GetObject();
 
             for (int i = 0; i < tileList.Count / 6; i++)
             {
@@ -169,7 +173,7 @@ namespace MortalDungeon.Game.Units
 
                 var line = tile.TileMap.GetLineOfTiles(tile, tileList[i]);
 
-                List<Direction> digitalLine = new List<Direction>();
+                List<Direction> digitalLine = _directionListPool.GetObject();
 
                 Tile prev = null;
 
@@ -186,19 +190,25 @@ namespace MortalDungeon.Game.Units
             }
             #endregion
 
+            tileList.Clear();
+            Tile.TileListPool.FreeObject(ref tileList);
+
             lock (generator._visibleTilesLock)
             {
                 generator.VisibleTiles.Add(tile.TilePoint);
             }
             generator.AffectedMaps.Add(tile.TileMap);
 
+            int j;
+            Tile currentTile;
+
             for (int i = 0; i < 6; i++)
             {
-                for (int j = 0; j < digitalLines.Count; j++)
+                for (j = 0; j < digitalLines.Count; j++)
                 {
                     var line = digitalLines[j];
 
-                    Tile currentTile = tile;
+                    currentTile = tile;
 
                     for(int k = 0; k < line.Count; k++)
                     {
@@ -232,13 +242,16 @@ namespace MortalDungeon.Game.Units
                 {
                     foreach (var map in generator.AffectedMaps)
                     {
-                        map.UpdateTile();
+                        map.UpdateChunks(TileUpdateType.Vision);
                     }
 
                     foreach (var map in affectedMapsOld)
                     {
-                        map.UpdateTile();
+                        map.UpdateChunks(TileUpdateType.Vision);
                     }
+
+                    affectedMapsOld.Clear();
+                    TileMap.TileMapSetPool.FreeObject(ref affectedMapsOld);
                 }
 
                 lock (_consolidatedActionsLock)
@@ -246,6 +259,22 @@ namespace MortalDungeon.Game.Units
                     VisionConsolidatedActions.Push(updateVision);
                 }
             }
+            else
+            {
+                affectedMapsOld.Clear();
+                TileMap.TileMapSetPool.FreeObject(ref affectedMapsOld);
+            }
+
+            List<Direction> list;
+            for(int i = 0; i < digitalLines.Count; i++)
+            {
+                list = digitalLines[i];
+                list.Clear();
+                _directionListPool.FreeObject(ref list);
+            }
+
+            digitalLines.Clear();
+            _digitalLineListPool.FreeObject(ref digitalLines);
         }
 
         /// <summary>
@@ -336,7 +365,7 @@ namespace MortalDungeon.Game.Units
                 {
                     foreach (var map in TileMapManager.VisibleMaps)
                     {
-                        map.UpdateTile();
+                        map.UpdateChunks(TileUpdateType.Vision);
                     }
                 }
 

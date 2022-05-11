@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Diagnostics;
 
-namespace MortalDungeon.Game.SceneDefinitions
+namespace Empyrean.Game.SceneDefinitions
 {
     class EscapeMenuScene : Scene
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Objects
+namespace Empyrean.Objects
 {
     public enum UIControls
     {

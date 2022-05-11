@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Lighting;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Lighting;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Concurrent;
@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Tiles
+namespace Empyrean.Game.Tiles
 {
     public enum Direction
     {
@@ -61,28 +61,15 @@ namespace MortalDungeon.Game.Tiles
 
         public List<TileChunk> TileChunks = new List<TileChunk>();
 
-        public InstancedRenderData TileRenderData = null;
-        public InstancedRenderData FogTileRenderData = null;
+        public bool Visible = false;
 
-        public bool _visible = false;
-        public bool Visible 
-        {
-            get => _visible;
+        public static ObjectPool<List<TileMap>> TileMapListPool = new ObjectPool<List<TileMap>>();
+        public static ObjectPool<HashSet<TileMap>> TileMapSetPool = new ObjectPool<HashSet<TileMap>>();
 
-            set 
-            {
-                _visible = value;
-
-                if (value)
-                {
-                    Window.RenderEnd -= UpdateTileRenderData;
-                    Window.RenderEnd += UpdateTileRenderData;
-                }
-                else {
-                    DisposeOfRenderData();
-                }
-            }
-        }
+        /// <summary>
+        /// How many chunks exist in the X and Y directions for tile maps.
+        /// </summary>
+        public static Vector2i ChunksPerTileMap = new Vector2i(2, 2);
 
         public TileMap(Vector3 position, TileMapPoint point, TileMapController controller, string name = "TileMap")
         {
@@ -98,14 +85,10 @@ namespace MortalDungeon.Game.Tiles
             //Console.WriteLine($"TileMap {TileMapCoords.X}, {TileMapCoords.Y} disposed");
         }
         
-        public Tile this[int x, int y]
-        {
-            get { return GetTile(x, y); }
-        }
 
-        public Tile this[TilePoint point]
+        public Tile GetTile(TilePoint point)
         {
-            get { return TileMapHelpers.GetTile(point.X, point.Y, point.ParentTileMap); }
+            return TileMapHelpers.GetTile(point.X, point.Y, point.ParentTileMap);
         }
 
         public Tile GetTile(int x, int y) 
@@ -132,15 +115,15 @@ namespace MortalDungeon.Game.Tiles
                 for (int o = 0; o < Height; o++)
                 {
                     tile = new Tile(tilePosition, new TilePoint(i, o, this));
-                    tile.Properties.Type = TileType.Grass;
+                    tile.Properties.SetType(TileType.Grass, false, updateChunk: false);
                     tile.TileMap = this;
 
                     Tiles.Add(tile);
 
-                    tilePosition.Y += tile.TileBounds.TileDimensions.Y;
+                    tilePosition.Y += TileBounds.TileDimensions.Y;
                 }
-                tilePosition.X = (i + 1) * tile.TileBounds.TileDimensions.X / 1.34f; //1.29 before outlining changes
-                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : tile.TileBounds.TileDimensions.Y / -2f); //2 before outlining changes
+                tilePosition.X = (i + 1) * TileBounds.TileDimensions.X / 1.34f; //1.29 before outlining changes
+                tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : TileBounds.TileDimensions.Y / -2f); //2 before outlining changes
                 //tilePosition.Z += 0.0001f;
             }
 
@@ -170,7 +153,11 @@ namespace MortalDungeon.Game.Tiles
             {
                 for (int j = 0; j < yChunkCount; j++)
                 {
-                    TileChunk chunk = new TileChunk(width, height);
+                    TileChunk chunk = new TileChunk(width, height, this);
+                    chunk.Cull = true;
+                    chunk.ChunkPosition.X = i;
+                    chunk.ChunkPosition.Y = j;
+
                     for (int x = 0; x < width; x++)
                     {
                         for (int y = 0; y < height; y++)
@@ -191,55 +178,36 @@ namespace MortalDungeon.Game.Tiles
                         }
                     }
 
-                    chunk.CalculateValues();
-
                     TileChunks.Add(chunk);
 
-                    chunk.OnFilled();
-                    chunk.UpdateTile();
+                    chunk.InitializeMesh();
+
+                    chunk.CalculateValues();
                 }
             }
         }
 
-        private List<Tile> _fogTiles = new List<Tile>();
-        private List<Tile> _visTiles = new List<Tile>();
-        public void UpdateTileRenderData()
+        public TileChunk GetChunkAtPosition(int x, int y)
         {
-            Window.RenderEnd -= UpdateTileRenderData;
-
-            if (TileRenderData != null)
-            {
-                TileRenderData.CleanUp();
-            }
-
-            if (FogTileRenderData != null)
-            {
-                FogTileRenderData.CleanUp();
-            }
-
-            _fogTiles.Clear();
-            _visTiles.Clear();
-
-            for (int i = 0; i < Tiles.Count; i++)
-            {
-                if(Tiles[i].InFog(TileMapManager.Scene.VisibleTeam))
-                    _fogTiles.Add(Tiles[i]);
-                else
-                    _visTiles.Add(Tiles[i]);
-            }
-
-            //TileRenderData = TileInstancedRenderData.GenerateInstancedRenderData(_visTiles)[0];
-            //FogTileRenderData = TileInstancedRenderData.GenerateInstancedRenderData(_fogTiles)[0];
-
-            //TODO, update tile mesh
+            return TileChunks[x * ChunksPerTileMap.Y + y];
         }
 
-        public void UpdateTile() 
+        public void UpdateChunks(TileUpdateType tileUpdateType) 
         {
             if (!TileMapManager.Scene.ContextManager.GetFlag(Engine_Classes.Scenes.GeneralContextFlags.TileMapManagerLoading))
             {
-                Window.RenderEnd -= UpdateTileRenderData;
-                Window.RenderEnd += UpdateTileRenderData;
+                for (int i = 0; i < TileChunks.Count; i++)
+                {
+                    TileChunks[i].Update(tileUpdateType);
+                }
+            }
+        }
+
+        public void ClearMeshRenderData()
+        {
+            for (int i = 0; i < TileChunks.Count; i++)
+            {
+                TileChunks[i].ClearRenderData();
             }
         }
 
@@ -262,29 +230,6 @@ namespace MortalDungeon.Game.Tiles
 
             TileChunks.Clear();
             Tiles.Clear();
-
-            DisposeOfRenderData();
-        }
-
-        protected void DisposeOfRenderData()
-        {
-            if(TileRenderData != null || FogTileRenderData != null)
-            {
-                Controller.Scene.SyncToRender(() =>
-                {
-                    if (TileRenderData != null)
-                    {
-                        TileRenderData.CleanUp();
-                        TileRenderData = null;
-                    }
-
-                    if (FogTileRenderData != null)
-                    {
-                        FogTileRenderData.CleanUp();
-                        FogTileRenderData = null;
-                    }
-                });
-            }
         }
 
 
@@ -292,13 +237,14 @@ namespace MortalDungeon.Game.Tiles
         {
             if (Tiles.Count > 0) 
             {
-                Vector3 tileDim = this[0, 0].TileBounds.TileDimensions;
-                Vector3 returnDim = this[0, 0].Position - this[Width - 1, Height - 1].Position;
+                Vector3 tileDim = TileBounds.TileDimensions;
+                Vector3 returnDim = GetLocalTile(0, 0).Position - GetLocalTile(Width - 1, Height - 1).Position;
 
-                //returnDim.X = Math.Abs(returnDim.X) + tileDim.X * 0.69f;
-                returnDim.X = Math.Abs(returnDim.X) + tileDim.X * 0.75f;
-                //returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.495f;
-                returnDim.Y = Math.Abs(returnDim.Y) + tileDim.Y * 1.5f;
+                returnDim.X = (Math.Abs(returnDim.X) + tileDim.X * 0.75f);
+                returnDim.Y = (Math.Abs(returnDim.Y) + tileDim.Y * 1.5f);
+
+                //returnDim.X = tileDim.X * Width + tileDim.X * 0.75f;
+                //returnDim.Y = tileDim.Y * Height + tileDim.Y * 0.5f;
 
                 return returnDim;
             }
@@ -328,6 +274,7 @@ namespace MortalDungeon.Game.Tiles
             TileChunks.ForEach(chunk =>
             {
                 chunk.Center -= offset;
+                chunk.PositionMesh();
             });
 
             base.SetPosition(position);
@@ -466,8 +413,8 @@ namespace MortalDungeon.Game.Tiles
 
             ClearVisitedTiles();
 
-            tileList.Add(this[param.StartingPoint]);
-            neighbors.Add(this[param.StartingPoint]);
+            tileList.Add(GetTile(param.StartingPoint));
+            neighbors.Add(GetTile(param.StartingPoint));
 
             List<Tile> newNeighbors = new List<Tile>();
 
@@ -545,11 +492,14 @@ namespace MortalDungeon.Game.Tiles
             Vector3 currentCube;
             Vector2i currentOffset;
 
+            Vector3 startVec3 = new Vector3(startCube);
+            Vector3 endVec3 = new Vector3(endCube);
+
             for (int i = 0; i <= N; i++)
             {
-                currentCube = CubeMethods.CubeLerp(startCube, endCube, n * i);
+                currentCube = CubeMethods.CubeLerp(ref startVec3, ref endVec3, n * i);
 
-                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(ref currentCube));
                 if (IsValidTile(currentOffset.X, currentOffset.Y))
                 {
                     tileList.Add(TileMapHelpers.GetTile(currentOffset.X, currentOffset.Y, this));
@@ -608,12 +558,12 @@ namespace MortalDungeon.Game.Tiles
                     tileOffsetCoord = CubeMethods.CubeToOffset(cubePosition);
                     if (IsValidTile(tileOffsetCoord.X, tileOffsetCoord.Y))
                     {
-                        outputList.Add(this[new TilePoint(tileOffsetCoord.X, tileOffsetCoord.Y, this)]);
+                        outputList.Add(GetTile(new TilePoint(tileOffsetCoord.X, tileOffsetCoord.Y, this)));
                     }
                     else if (includeEdges)
                     {
                         tileOffsetCoord = ClampTileCoordsToMapValues(tileOffsetCoord);
-                        outputList.Add(this[tileOffsetCoord.X, tileOffsetCoord.Y]);
+                        outputList.Add(GetTile(tileOffsetCoord.X, tileOffsetCoord.Y));
                     }
 
                     cubePosition += TileMapConstants.CubeDirections[(Direction)i];
@@ -648,13 +598,16 @@ namespace MortalDungeon.Game.Tiles
                 currentTile = startPoint.GetBaseTile();
             }
 
+            Vector3 startVec3 = new Vector3(startCube);
+            Vector3 endVec3 = new Vector3(endCube);
+
             for (int i = 0; i <= N; i++)
             {
-                currentCube = CubeMethods.CubeLerp(startCube, endCube, n * i);
-                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
+                currentCube = CubeMethods.CubeLerp(ref startVec3, ref endVec3, n * i);
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(ref currentCube));
                 if (IsValidTile(currentOffset.X, currentOffset.Y))
                 {
-                    _BaseTileTemp = this[currentOffset.X, currentOffset.Y];
+                    _BaseTileTemp = GetTile(currentOffset.X, currentOffset.Y);
 
                     if (currentTile != null && _BaseTileTemp.Properties.Height - currentTile.Properties.Height > 1)
                     {
@@ -695,6 +648,9 @@ namespace MortalDungeon.Game.Tiles
             Vector3 currentCube;
             Vector2i currentOffset;
 
+            Vector3 startVec3 = new Vector3(startCube);
+            Vector3 endVec3 = new Vector3(endPointCube);
+
             Tile currentTile = null;
 
             if (IsValidTile(startPoint))
@@ -704,11 +660,11 @@ namespace MortalDungeon.Game.Tiles
 
             for (int i = 0; i <= N; i++)
             {
-                currentCube = CubeMethods.CubeLerp(startCube, endPointCube, n * i);
-                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
+                currentCube = CubeMethods.CubeLerp(ref startVec3, ref endVec3, n * i);
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(ref currentCube));
                 if (IsValidTile(currentOffset.X, currentOffset.Y))
                 {
-                    _BaseTileTemp = this[currentOffset.X, currentOffset.Y];
+                    _BaseTileTemp = GetTile(currentOffset.X, currentOffset.Y);
 
                     if (currentTile != null && _BaseTileTemp.GetPathableHeight() - currentTile.GetPathableHeight() > 1)
                     {
@@ -825,9 +781,9 @@ namespace MortalDungeon.Game.Tiles
 
             ClearVisitedTiles();
 
-            Tile endingTile = this[param.EndingPoint];
+            Tile endingTile = GetTile(param.EndingPoint);
 
-            if (!param.TraversableTypes.Exists(c => c == this[param.StartingPoint].Properties.Classification) || !param.TraversableTypes.Exists(c => c == this[param.EndingPoint].Properties.Classification))
+            if (!param.TraversableTypes.Exists(c => c == GetTile(param.StartingPoint).Properties.Classification) || !param.TraversableTypes.Exists(c => c == GetTile(param.EndingPoint).Properties.Classification))
             {
                 return returnList; //if the starting or ending tile isn't traversable then immediately return
             }
@@ -848,10 +804,10 @@ namespace MortalDungeon.Game.Tiles
                 return returnList;
             }
 
-            TileWithParent currentTile = new TileWithParent(this[param.StartingPoint]) 
+            TileWithParent currentTile = new TileWithParent(GetTile(param.StartingPoint)) 
             {
-                G = GetDistanceBetweenPoints(this[param.StartingPoint].TilePoint, param.StartingPoint),
-                H = GetDistanceBetweenPoints(this[param.StartingPoint].TilePoint, param.EndingPoint),
+                G = GetDistanceBetweenPoints(GetTile(param.StartingPoint).TilePoint, param.StartingPoint),
+                H = GetDistanceBetweenPoints(GetTile(param.StartingPoint).TilePoint, param.EndingPoint),
             };
 
             
@@ -1034,7 +990,7 @@ namespace MortalDungeon.Game.Tiles
 
                 if (IsValidTile(neighborPos))
                 {
-                    Tile neighborTile = tile.TileMap[neighborPos];
+                    Tile neighborTile = tile.TileMap.GetTile(neighborPos);
                     if (neighborTile != null && !neighborTile.TilePoint.Visited)
                     {
                         if (checkTileHigher && (!neighborTile.StructurePathable() || neighborTile.GetPathableHeight() - tile.GetPathableHeight() > 1)) 
@@ -1100,7 +1056,7 @@ namespace MortalDungeon.Game.Tiles
 
             if (IsValidTile(neighborPos))
             {
-                return this[neighborPos];
+                return GetTile(neighborPos);
             }
 
             return null;
@@ -1151,11 +1107,14 @@ namespace MortalDungeon.Game.Tiles
         }
     }
 
-    public class TileMapPoint
+    public struct TileMapPoint
     {
         public int X;
         public int Y;
 
+        public static TileMapPoint Empty = new TileMapPoint(int.MinValue, int.MinValue);
+
+        public static ObjectPool<TileMapPoint> Pool = new ObjectPool<TileMapPoint>();
         public TileMapPoint(int x, int y)
         {
             X = x;
@@ -1170,6 +1129,14 @@ namespace MortalDungeon.Game.Tiles
 
         public static bool operator ==(TileMapPoint a, TileMapPoint b) => Equals(a, b);
         public static bool operator !=(TileMapPoint a, TileMapPoint b) => !(a == b);
+
+        public static Vector2i operator -(TileMapPoint a, TileMapPoint b) => new Vector2i(a.X - b.X, a.Y - b.Y);
+        public static Vector2i operator +(TileMapPoint a, TileMapPoint b) => new Vector2i(a.X + b.X, a.Y + b.Y);
+
+        public FeaturePoint ToFeaturePoint()
+        {
+            return new FeaturePoint(X * TileMapManager.TILE_MAP_DIMENSIONS.X, Y * TileMapManager.TILE_MAP_DIMENSIONS.Y);
+        }
 
         public override string ToString()
         {

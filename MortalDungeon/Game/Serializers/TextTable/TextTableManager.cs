@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     public static class TextTableManager
     {
@@ -54,7 +54,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static string GetTextEntry(TextInfo info)
         {
-            if (info == null)
+            if (info == TextInfo.Empty)
                 return "";
 
             if (TextTables.TryGetValue(info.TableId, out var table))

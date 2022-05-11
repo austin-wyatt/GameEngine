@@ -1,21 +1,24 @@
-﻿using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Entities;
+using Empyrean.Game.Map;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     [Serializable]
     public class TileEffect : ISerializable
     {
         public int Duration = -1;
 
-        public FeaturePoint Location = new FeaturePoint(); 
+        public FeaturePoint Location = new FeaturePoint();
+
+        public PermanentId OwnerId;
 
         [XmlIgnore]
         public Dictionary<int, float> Parameters = new Dictionary<int, float>();

@@ -1,11 +1,12 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Items;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Items;
+using Empyrean.Game.Player;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     public enum Species
     {
@@ -48,13 +49,20 @@ namespace MortalDungeon.Game.Units
     /// These are flags inherent to abilities/buffs <para/>
     /// This will be a very large enum.
     /// </summary>
-    [Flags]
     public enum UnitCondition
     {
         None,
         WebImmuneWeak,
         WebImmuneMed,
         WebImmuneStrong,
+    }
+
+    /// <summary>
+    /// Short term context values for 
+    /// </summary>
+    public enum UnitContext
+    {
+        WeaponSwappedThisTurn
     }
 
     [Serializable]
@@ -72,8 +80,7 @@ namespace MortalDungeon.Game.Units
             Scouting = new Scouting(unit);
             Equipment = new Equipment(unit);
 
-            BuffManager.Unit = unit;
-            StatusManager.Unit = unit;
+            AttachUnitToInfo(this, unit);
         }
 
 
@@ -98,8 +105,16 @@ namespace MortalDungeon.Game.Units
         [XmlIgnore]
         public List<Ability> Abilities = new List<Ability>();
 
+        [XmlIgnore]
+        public UnitGroup Group = null;
+
+        [XmlIgnore]
+        public ContextManager<UnitContext> Context = new ContextManager<UnitContext>();
+
         public Equipment Equipment;
         public Inventory Inventory = new Inventory();
+
+        public ResourceManager ResourceManager = new ResourceManager();
 
         //public List<AbilityCreationInfo> _abilityCreationInfo = new List<AbilityCreationInfo>();
 
@@ -113,44 +128,7 @@ namespace MortalDungeon.Game.Units
         [XmlIgnore]
         public Move _movementAbility = null;
 
-        public float MaxEnergy = 10;
-        public float CurrentEnergy => (MaxEnergy + 
-            BuffManager.GetValue(BuffEffect.EnergyAdditive)) * 
-            BuffManager.GetValue(BuffEffect.EnergyMultiplier); //Energy at the start of the turn
-
-        public float Energy = 10; //public unit energy tracker
-
-        public float MaxActionEnergy = 4;
-
-        public float MaxFocus = 40;
-        public float Focus = 40;
-
         public int AbilityVariation = 0;
-
-        public float CurrentActionEnergy => (MaxActionEnergy +
-            BuffManager.GetValue(BuffEffect.ActionEnergyAdditive)) *
-            BuffManager.GetValue(BuffEffect.ActionEnergyMultiplier); //Action energy at the start of the turn
-
-        public float ActionEnergy = 0;
-
-        public float _speed = 10;
-
-        [XmlIgnore]
-        public float Speed
-        {
-            get => (_speed + BuffManager.GetValue(BuffEffect.SpeedAdditive)) * BuffManager.GetValue(BuffEffect.SpeedMultiplier);
-            set => _speed = value;
-        }
-        
-
-        public float Health = 100;
-        public float MaxHealth = 100;
-
-        public int CurrentShields = 0;
-
-        public float ShieldBlock => BuffManager.GetValue(BuffEffect.ShieldBlockAdditive) * BuffManager.GetValue(BuffEffect.ShieldBlockMultiplier);
-
-        public float DamageBlockedByShields = 0;
 
         public bool NonCombatant = false;
 
@@ -205,7 +183,14 @@ namespace MortalDungeon.Game.Units
         {
             CastingMethod method = ability.CastingMethod;
 
-            return !StatusManager.CheckCondition((StatusCondition)method); 
+            bool canUse = !StatusManager.CheckCondition((StatusCondition)method);
+
+            return canUse;
+        }
+
+        public bool CanSwapWeapons()
+        {
+            return !Context.GetFlag(UnitContext.WeaponSwappedThisTurn);
         }
 
         public void PrepareForSerialization()
@@ -234,6 +219,7 @@ namespace MortalDungeon.Game.Units
             info.Equipment.Unit = unit;
             info.BuffManager.Unit = unit;
             info.StatusManager.Unit = unit;
+            info.ResourceManager.Unit = unit;
         }
     }
 

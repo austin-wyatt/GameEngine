@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Scenes
+namespace Empyrean.Engine_Classes.Scenes
 {
     public static class ObjectCulling
     {
@@ -59,46 +59,85 @@ namespace MortalDungeon.Engine_Classes.Scenes
             });
         }
 
-        public static void CullListOfUnits<T>(List<T> objList) where T : Unit
+        public static void CullListOfUnits(List<Unit> objList)
         {
-            objList.ForEach(obj =>
+            for(int i = 0; i < objList.Count; i++)
             {
-                if(!(obj.Info.TileMapPosition != null && obj.Info.TileMapPosition.TileMap.Visible))
+                if(!(objList[i].Info.TileMapPosition != null && objList[i].Info.TileMapPosition.TileMap.Visible))
                 {
-                    obj.Cull = true;
-                    obj.OnCull();
-                    return;
+                    objList[i].Cull = true;
+                    objList[i].OnCull();
+                    continue;
                 }
 
-                _localPos.X = obj.Position.X;
-                _localPos.Y = obj.Position.Y;
-                _localPos.Z = obj.Position.Z;
+                _localPos.X = objList[i].Position.X;
+                _localPos.Y = objList[i].Position.Y;
+                _localPos.Z = objList[i].Position.Z;
 
                 float scaleMax = 1;
 
-                if (obj.BaseObjects.Count > 0)
+                if (objList[i].BaseObjects.Count > 0)
                 {
-                    Vector3 scale = obj.BaseObjects[0].BaseFrame.Scale.ExtractScale();
+                    Vector3 scale = objList[i].BaseObjects[0].BaseFrame.CurrentScale;
 
                     scaleMax = scale.X;
                     scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
                     scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
                 }
 
-                scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjuntion with the scale 
+                scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjunction with the scale 
 
                 WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
                 if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
                 {
-                    obj.Cull = false;
+                    objList[i].Cull = false;
                 }
                 else
                 {
-                    obj.Cull = true;
+                    objList[i].Cull = true;
                 }
 
+                objList[i].OnCull();
+            }
+        }
+
+        public static void CullUnit(Unit obj)
+        {
+            if (!(obj.Info.TileMapPosition != null && obj.Info.TileMapPosition.TileMap.Visible))
+            {
+                obj.Cull = true;
                 obj.OnCull();
-            });
+                return;
+            }
+
+            _localPos.X = obj.Position.X;
+            _localPos.Y = obj.Position.Y;
+            _localPos.Z = obj.Position.Z;
+
+            float scaleMax = 1;
+
+            if (obj.BaseObjects.Count > 0)
+            {
+                Vector3 scale = obj.BaseObjects[0].BaseFrame.CurrentScale;
+
+                scaleMax = scale.X;
+                scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
+                scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
+            }
+
+            scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjunction with the scale 
+
+            WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+            if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
+            {
+                obj.Cull = false;
+            }
+            else
+            {
+                obj.Cull = true;
+            }
+
+            obj.OnCull();
         }
 
         public static int _culledChunks = 0;
@@ -109,7 +148,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             bool prevCull = obj.Cull;
 
-            if (!obj.Tiles[0].TileMap._visible)
+            if (!obj.Tiles[0].TileMap.Visible)
             {
                 obj.Cull = true;
 
@@ -125,22 +164,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
             _localPos.Y = obj.Center.Y;
             _localPos.Z = obj.Center.Z;
 
-            float scaleMax = 1;
+            //slightly increase the actual radius just to make sure no chunks pop in on the edges of the screen
+            float radius = 1.1f * obj.LocalRadius;
 
-            //Vector3 scale = obj.Tiles[0].BaseObjects[0].BaseFrame.CurrentScale;
-
-            //scaleMax = scale.X;
-            //scaleMax = scaleMax < scale.Y ? scale.Y : scaleMax;
-            //scaleMax = scaleMax < scale.Z ? scale.Z : scaleMax;
-
-            //scaleMax *= 0.5f; //another magic number that works pretty well
-
-            scaleMax *= obj.LocalRadius;
-
-            WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
-
-
-            if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
+            if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, radius))
             {
                 obj.Cull = false;
             }

@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public enum TickDurationTarget 
     {

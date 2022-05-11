@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Definitions.Buffs;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Definitions.Buffs;
+using Empyrean.Engine_Classes;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Definitions.TileEffects
+namespace Empyrean.Definitions.TileEffects
 {
     public class WeakSpiderWeb : TileEffect
     {
@@ -29,7 +29,7 @@ namespace MortalDungeon.Definitions.TileEffects
 
         public WeakSpiderWeb(TileEffect effect) : base(effect) { }
 
-        GameObject _spiderWebVisual = null;
+        IndividualMesh _spiderWebVisual = null;
 
         public override void CreateVisuals()
         {
@@ -39,11 +39,17 @@ namespace MortalDungeon.Definitions.TileEffects
 
             if (tile != null)
             {
-                _spiderWebVisual = new GameObject(SpritesheetManager.GetSpritesheet(50006), 23);
+                _spiderWebVisual = new IndividualMesh();
+                _spiderWebVisual.FillFromMeshTile(tile.MeshTileHandle);
 
-                _spiderWebVisual.SetPosition(tile.Position + new Vector3(0, 0, 0.003f));
+                _spiderWebVisual.Texture = new SimpleTexture(SpritesheetManager.GetSpritesheet(50009));
+                _spiderWebVisual.LoadTexture();
 
-                TileMapManager.Scene._genericObjects.Add(_spiderWebVisual);
+                Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(tile._position);
+                pos.Z += 0.003f;
+                _spiderWebVisual.SetTranslation(pos);
+
+                TileMapManager.Scene.IndividualMeshes.Add(_spiderWebVisual);
             }
         }
 
@@ -53,7 +59,7 @@ namespace MortalDungeon.Definitions.TileEffects
 
             if (_spiderWebVisual != null)
             {
-                TileMapManager.Scene._genericObjects.Remove(_spiderWebVisual);
+                TileMapManager.Scene.IndividualMeshes.Remove(_spiderWebVisual);
             }
         }
 
@@ -97,7 +103,12 @@ namespace MortalDungeon.Definitions.TileEffects
                 }
                 else
                 {
-                    buff = new WebSlowDebuff() { Identifier = "spider_web" };
+                    buff = new WebSlowDebuff() 
+                    { 
+                        Identifier = "spider_web",
+                        OwnerId = OwnerId 
+                    };
+
                     unit.Info.AddBuff(buff);
                 }
             }

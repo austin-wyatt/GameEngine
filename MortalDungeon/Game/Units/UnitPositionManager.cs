@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     public static class UnitPositionManager
     {
@@ -73,6 +73,11 @@ namespace MortalDungeon.Game.Units
             {
                 return _emptySet;
             }
+        }
+
+        public static bool TilePointHasUnits(TilePoint point)
+        {
+            return UnitPositions.ContainsKey(point);
         }
 
         public static HashSet<Unit> GetUnitsInRadius(int radius, FeaturePoint center)

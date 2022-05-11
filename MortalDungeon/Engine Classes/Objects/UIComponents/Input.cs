@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Engine_Classes.TextHandling;
+﻿using Empyrean.Engine_Classes.TextHandling;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Drawing;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public class Input : UIObject
     {

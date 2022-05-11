@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Game.Combat;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Game.Combat;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Units.AIFunctions
+namespace Empyrean.Game.Units.AIFunctions
 {
     public interface IAIAction
     {
@@ -113,7 +113,7 @@ namespace MortalDungeon.Game.Units.AIFunctions
 
             }
 
-            Console.WriteLine($"Unit {unit.Name} ended turn with {unit.Info.Energy} energy");
+            Console.WriteLine($"Unit {unit.Name} ended turn with {unit.GetResF(ResF.MovementEnergy)} energy");
 
             TileMapManager.Scene.CompleteTurn();
         }
@@ -184,6 +184,7 @@ namespace MortalDungeon.Game.Units.AIFunctions
             {
                 unit.Info._movementAbility.CurrentTiles = tileList;
                 unit.Info._movementAbility.EnactEffect();
+
 
                 return await unit.Info._movementAbility.EffectEndedAsync.Task;
             }

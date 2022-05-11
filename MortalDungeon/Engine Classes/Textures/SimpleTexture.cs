@@ -1,9 +1,11 @@
-﻿using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Objects;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class SimpleTexture
     {
@@ -27,9 +29,21 @@ namespace MortalDungeon.Engine_Classes
             }
         }
 
+        public SimpleTexture(string filename, int texId)
+        {
+            FileName = filename;
+            TextureId = texId;
+            TextureName = filename;
+        }
+
         public void LoadTexture()
         {
             TextureLoadBatcher.LoadTexture(this);
+        }
+
+        public void LoadTextureImmediate()
+        {
+            Renderer.LoadTextureFromSimple(this);
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 
-namespace MortalDungeon.Game.Particles
+namespace Empyrean.Game.Particles
 {
     public class ParticleGenTest : ParticleGenerator
     {
@@ -233,7 +233,7 @@ namespace MortalDungeon.Game.Particles
 
             Params = explosionParams;
 
-            SpritesheetObject particleObj = new SpritesheetObject((int)Tiles.TileType.Default, Spritesheets.TileSheet);
+            SpritesheetObject particleObj = new SpritesheetObject(16, Spritesheets.IconSheet);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
             ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.PARTICLE_SHADER);
             ParticleDisplay.CameraPerspective = true;
@@ -254,6 +254,7 @@ namespace MortalDungeon.Game.Particles
                 fillParticle.ScaleAll(Params.ParticleSize);
                 fillParticle.SpritesheetPosition = ParticleDisplay.SpritesheetPosition;
                 fillParticle.SideLengths = ParticleDisplay.SideLengths;
+                fillParticle.Life = Params.Life;
 
                 //fillParticle.Velocity.Z = Math.Abs(fillParticle.Velocity.Y) / fireSpeedY * rotation;
 
@@ -291,6 +292,140 @@ namespace MortalDungeon.Game.Particles
             {
                 Particles[_currentParticle].Life = Params.Life;
                 Particles[_currentParticle].SetPosition(Position);
+            }
+
+            base.GenerateParticle();
+        }
+    }
+
+    public class Spray : ParticleGenerator
+    {
+        public struct SprayParams
+        {
+            public int ParticleCount;
+            public int Life;
+            public float Speed;
+
+            /// <summary>
+            /// Direction in radians
+            /// </summary>
+            public float Direction;
+
+            /// <summary>
+            /// The total left/right angle offset from the direction that a particle can fly
+            /// </summary>
+            public float SweepAngle;
+
+            /// <summary>
+            /// Multiplied by the velocity each tick
+            /// </summary>
+            public Vector3 MultiplicativeAcceleration;
+
+            public float ParticleSize;
+
+            /// <summary>
+            /// How many particles are created per tick
+            /// </summary>
+            public int FeedRate;
+
+            public Vector4 ColorDelta;
+
+            public static SprayParams DEFAULT = new SprayParams()
+            {
+                ParticleCount = 30,
+                Life = 30,
+                Speed = 1,
+                Direction = 0,
+                SweepAngle = MathHelper.PiOver3,
+                MultiplicativeAcceleration = new Vector3(0.95f, 0.95f, 1),
+                ParticleSize = 0.05f,
+                FeedRate = 6,
+                ColorDelta = new Vector4(0, 0, 0, 0.01f)
+            };
+        }
+
+        private Random rand = new ConsistentRandom();
+        public int DefaultLife = 15;
+
+        public SprayParams Params;
+
+        public Spray(Vector3 position, Vector4 color, SprayParams sprayParams)
+        {
+            ParticleCount = sprayParams.ParticleCount;
+            DefaultLife = sprayParams.Life;
+            Position = position;
+
+            Params = sprayParams;
+
+            SpritesheetObject particleObj = new SpritesheetObject(16, Spritesheets.IconSheet);
+            ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
+            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.PARTICLE_SHADER);
+            ParticleDisplay.CameraPerspective = true;
+
+            Repeat = false;
+            Playing = true;
+
+            Renderer.LoadTextureFromRenderableObject(ParticleDisplay);
+
+            for (int i = 0; i < ParticleCount; i++)
+            {
+                Particle fillParticle = new Particle();
+                fillParticle.Position = Position;
+
+                float direction = ((float)rand.NextDouble() - 0.5f) * Params.SweepAngle + Params.Direction;
+
+                float speedVariation = (float)rand.NextDouble() * 0.2f + 0.9f;
+
+                fillParticle.Velocity = new Vector3(
+                    (float)MathHelper.Cos(direction) * (Params.Speed * speedVariation),
+                    (float)MathHelper.Sin(direction) * (Params.Speed * speedVariation),
+                    0);
+                fillParticle.Color = color;
+                fillParticle.ScaleAll(Params.ParticleSize);
+                fillParticle.SpritesheetPosition = ParticleDisplay.SpritesheetPosition;
+                fillParticle.SideLengths = ParticleDisplay.SideLengths;
+                fillParticle.Life = 0;
+
+                Particles.Add(fillParticle);
+            }
+        }
+
+
+        public override void Tick()
+        {
+            base.Tick();
+            if (Playing || Priming)
+            {
+                for (int i = 0; i < Params.FeedRate; i++)
+                    GenerateParticle();
+
+                DecayParticles();
+            }
+        }
+
+        public override void UpdateParticle(Particle particle)
+        {
+            particle.Color.X += Params.ColorDelta.X;
+            particle.Color.Y += Params.ColorDelta.Y;
+            particle.Color.Z += Params.ColorDelta.Z;
+            particle.Color.W += Params.ColorDelta.W;
+
+            particle.Velocity.X *= Params.MultiplicativeAcceleration.X;
+            particle.Velocity.Y *= Params.MultiplicativeAcceleration.Y;
+            particle.Velocity.Z *= Params.MultiplicativeAcceleration.Z;
+        }
+
+        public override void GenerateParticle()
+        {
+            //if (RefreshParticles && Particles[_currentParticle].Life == 0)
+            //{
+            //    Particles[_currentParticle].Life = Params.Life;
+            //    Particles[_currentParticle].SetPosition(Position);
+            //}
+
+            if(_currentParticle < Particles.Count)
+            {
+                Particles[_currentParticle].Life = Params.Life;
             }
 
             base.GenerateParticle();

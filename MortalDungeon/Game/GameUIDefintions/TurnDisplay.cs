@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class TurnDisplay : UIObject
     {
@@ -79,6 +79,7 @@ namespace MortalDungeon.Game.UI
 
                     block.BaseObjects.Insert(0, obj);
                     block._baseObject = obj;
+                    block.BaseObjects.RemoveAt(1);
 
                     block.SetPosition(obj.Position);
 

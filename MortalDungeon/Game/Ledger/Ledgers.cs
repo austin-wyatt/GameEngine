@@ -1,18 +1,18 @@
-﻿using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.LuaHandling;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Scripting;
+using Empyrean.Game.Ledger.Units;
 
-namespace MortalDungeon.Game.Ledger
+namespace Empyrean.Game.Ledger
 {
     public enum LedgerUpdateType
     {
         Dialogue,
-        Feature,
-        Quest,
+        Quest = 2,
         GeneralState,
         Unit
     }
@@ -43,7 +43,7 @@ namespace MortalDungeon.Game.Ledger
                         StateSubscribers.RemoveAt(i);
                     }
 
-                    LuaManager.ApplyScript(script);
+                    JSManager.ApplyScript(script);
                 }
             }
 
@@ -55,41 +55,17 @@ namespace MortalDungeon.Game.Ledger
 
         public static void OnUnitKilled(Unit unit)
         {
-            //update the feature ledger stating that this unit has died
-            if (unit.FeatureID != 0)
-            {
-                StateIDValuePair killUnitState = new StateIDValuePair()
-                {
-                    Type = (int)LedgerUpdateType.Feature,
-                    StateID = unit.FeatureID,
-                    ObjectHash = unit.ObjectHash,
-                    Data = (int)FeatureInteraction.Killed,
-                };
-
-                ApplyStateValue(killUnitState);
-            }
+            PermanentUnitInfoLedger.SetParameterValue(unit.PermanentId.Id, PermanentUnitInfoParameter.Dead, 1);
         }
 
         public static void OnUnitRevived(Unit unit)
         {
-            //update the feature ledger stating that this unit has been revived
-            if (unit.FeatureID != 0)
-            {
-                StateIDValuePair killUnitState = new StateIDValuePair()
-                {
-                    Type = (int)LedgerUpdateType.Feature,
-                    StateID = unit.FeatureID,
-                    ObjectHash = unit.ObjectHash,
-                    Data = (int)FeatureInteraction.Revived,
-                };
-
-                ApplyStateValue(killUnitState);
-            }
+            PermanentUnitInfoLedger.SetParameterValue(unit.PermanentId.Id, PermanentUnitInfoParameter.Dead, 0);
         }
 
         public static void ApplyStateValue(StateIDValuePair val)
         {
-            if(val.Instruction == (int)StateInstructions.Subscribe || val.Instruction == (int)StateInstructions.PermanentSubscriber)
+            if (val.Instruction == (int)StateInstructions.Subscribe || val.Instruction == (int)StateInstructions.PermanentSubscriber)
             {
                 StateSubscriber subscriber = new StateSubscriber();
                 subscriber.TriggerValue = val;
@@ -109,9 +85,6 @@ namespace MortalDungeon.Game.Ledger
                     case (int)LedgerUpdateType.Quest:
                         QuestLedger.ModifyStateValue(val);
                         break;
-                    case (int)LedgerUpdateType.Feature:
-                        FeatureLedger.SetFeatureStateValue(val);
-                        break;
                     case (int)LedgerUpdateType.GeneralState:
                         GeneralLedger.SetStateValue(val);
                         break;
@@ -126,9 +99,6 @@ namespace MortalDungeon.Game.Ledger
                         break;
                     case (int)LedgerUpdateType.Quest:
                         QuestLedger.ModifyStateValue(val);
-                        break;
-                    case (int)LedgerUpdateType.Feature:
-                        FeatureLedger.RemoveFeatureStateValue(val);
                         break;
                     case (int)LedgerUpdateType.GeneralState:
                         GeneralLedger.RemoveStateValue(val);
@@ -145,8 +115,6 @@ namespace MortalDungeon.Game.Ledger
                     return DialogueLedger.GetStateValue((int)val.StateID, val.Data) ? 1 : 0;
                 case (int)LedgerUpdateType.Quest:
                     return QuestLedger.GetStateValue((int)val.StateID, val.Data) ? 1 : 0;
-                case (int)LedgerUpdateType.Feature:
-                    return FeatureLedger.GetFeatureStateValue(val.StateID, (FeatureStateValues)val.ObjectHash);
                 case (int)LedgerUpdateType.GeneralState:
                     return GeneralLedger.GetStateValue(val.StateID, val.ObjectHash);
             }
@@ -190,7 +158,7 @@ namespace MortalDungeon.Game.Ledger
 
         public static void EvaluateInstruction(Instructions instruction)
         {
-            LuaManager.ApplyScript(instruction.Script);
+            JSManager.ApplyScript(instruction.Script);
         }
     }
 

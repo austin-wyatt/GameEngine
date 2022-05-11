@@ -1,42 +1,45 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
-using MortalDungeon.Game.UI;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Engine_Classes.UIComponents;
+using Empyrean.Game.UI;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Engine_Classes.UIComponents;
 using System.Linq;
-using MortalDungeon.Game.Tiles.TileMaps;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Objects.PropertyAnimations;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.UI.Dev;
-using MortalDungeon.Engine_Classes.Rendering;
+using Empyrean.Game.Tiles.TileMaps;
+using Empyrean.Game.Map;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Objects.PropertyAnimations;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Game.Entities;
+using Empyrean.Game.UI.Dev;
+using Empyrean.Engine_Classes.Rendering;
 using System.Xml.Serialization;
 using System.IO;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
 using System.Drawing;
 using System.Threading.Tasks;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Items;
-using MortalDungeon.Game.Events;
+using Empyrean.Game.Player;
+using Empyrean.Game.Items;
+using Empyrean.Game.Events;
 using System.Reflection;
-using MortalDungeon.Game.Combat;
+using Empyrean.Game.Combat;
+using System.Diagnostics;
+using Empyrean.Game.Tiles.Meshes;
+using Empyrean.Definitions.BlendControls;
 
-namespace MortalDungeon.Game.SceneDefinitions
+namespace Empyrean.Game.SceneDefinitions
 {
     class MenuScene : CombatScene
     {
@@ -62,6 +65,7 @@ namespace MortalDungeon.Game.SceneDefinitions
             EventManager.Scene = this;
             VisionManager.Scene = this;
 
+            GlobalInfo.LoadDefaultGlobalInfo();
 
             _camera.RotateByAmount(0);
 
@@ -103,62 +107,23 @@ namespace MortalDungeon.Game.SceneDefinitions
             _entityManager = new EntityManagerUI(this);
 
 
-            //TileMapPoint cameraPos = _tileMapController.GlobalPositionToMapPoint(_camera.Position);
-            TileMapPoint cameraPos = TileMapHelpers.GlobalPositionToMapPoint(_camera.Position);
-            _camera.Update += (cam) =>
-            {
-                Window.RenderBegin -= UpdateUnitStatusBars;
-                Window.RenderBegin += UpdateUnitStatusBars;
-
-                if (BoxSelectHelper.BoxSelecting)
-                {
-                    BoxSelectHelper.DrawSelectionBox();
-                }
-
-                //TileMapPoint newPos = _tileMapController.GlobalPositionToMapPoint(cam.Position);
-                TileMapPoint newPos = TileMapHelpers.GlobalPositionToMapPoint(cam.Position);
-
-                if(newPos != cameraPos && newPos != null)
-                {
-                    //ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
-                    cameraPos = newPos;
-
-                    var maps = TileMapManager.GetTileMapsInDiameter(cameraPos, 5);
-
-                    if(maps.Count < 5 * 5 && !InCombat && 
-                       !ContextManager.GetFlag(GeneralContextFlags.CameraPanning) && 
-                       !ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading) &&
-                       !PlayerParty.CheckPartyMemberWillBeUnloaded())
-                    {
-                        ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
-                        Task.Run(() =>
-                        {
-                            TileMapManager.SetCenter(cameraPos);
-                            TileMapManager.LoadMapsAroundCenter();
-                            maps = TileMapManager.GetTileMapsInDiameter(cameraPos, 5);
-
-                            SyncToRender(() =>
-                            {
-                                TileMapManager.SetVisibleMaps(maps);
-                                ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
-                            });
-                        });
-                    }
-                    else
-                    {
-                        SyncToRender(() =>
-                        {
-                            TileMapManager.SetVisibleMaps(maps);
-                        });
-                    }
-                }
-            };
+            _cameraPos = TileMapHelpers.GlobalPositionToMapPoint(_camera.Position);
 
 
+            //origin campsite is at ID 4
+            FeaturePoint campsiteOrigin = GlobalInfo.GetPOI(4).Origin;
+
+            TileMapManager.SetCenter(campsiteOrigin.ToTileMapPoint());
             //_tileMapController.LoadSurroundingTileMaps(new TileMapPoint(0, 0));
-
             TileMapManager.LoadMapsAroundCenter();
 
+            PlayerParty.InitializeParty();
+            Tile tile = TileMapHelpers.GetTile(campsiteOrigin);
+            if (tile != null)
+            {
+                _camera.SetPosition(WindowConstants.ConvertGlobalToLocalCoordinates(tile._position));
+                PlayerParty.PlaceUnits(tile);
+            }
 
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.Skeletons, Relation.Hostile);
             UnitTeam.PlayerUnits.SetRelation(UnitTeam.PlayerUnits, Relation.Friendly);
@@ -218,18 +183,18 @@ namespace MortalDungeon.Game.SceneDefinitions
             Footer = new GameFooter(footerHeight, this);
             AddUI(Footer, 100);
 
-            OnNumberPressed += (args) =>
-            {
-                if(Footer.CurrentUnit == null) 
-                {
-                    Unit unit = _units.Find(u => u.AI.Team == UnitTeam.PlayerUnits);
+            //OnNumberPressed += (args) =>
+            //{
+            //    if(Footer.CurrentUnit == null) 
+            //    {
+            //        Unit unit = _units.Find(u => u.AI.Team == UnitTeam.PlayerUnits);
 
-                    if(unit != null) 
-                    {
-                        Footer.UpdateFooterInfo(unit);
-                    }
-                }
-            };
+            //        if(unit != null) 
+            //        {
+            //            Footer.UpdateFooterInfo(unit);
+            //        }
+            //    }
+            //};
 
 
             EnergyDisplayBar energyDisplayBar = new EnergyDisplayBar(this, new Vector3(30, WindowConstants.ScreenUnits.Y - Footer.GetDimensions().Y - 30, 0), new UIScale(1, 1), 10);
@@ -419,6 +384,33 @@ namespace MortalDungeon.Game.SceneDefinitions
                         ContextManager.SetFlag(GeneralContextFlags.EditingFeature, true);
                     }
                     break;
+                case Keys.Y:
+                    Console.WriteLine($"Gen 0: {GC.CollectionCount(0)} Gen 1: {GC.CollectionCount(1)} Gen 2: {GC.CollectionCount(2)}");
+
+                    //int color = 15;
+
+                    //Console.WriteLine(BlendControl.GetCombinedColor(PaletteLocation.Red2, 255, color));
+                    break;
+                case Keys.U:
+                    double averageTime = 0;
+
+                    for(int i = 0; i < Window._renderDiagnostics.Count; i++)
+                    {
+                        averageTime += Window._renderDiagnostics[i].TimeInRender;
+                    }
+
+                    averageTime /= Window._renderDiagnostics.Count;
+
+                    for(int i = 0; i < Window._renderDiagnostics.Count; i++)
+                    {
+                        if(Window._renderDiagnostics[i].TimeInRender > averageTime * 1.5f)
+                        {
+                            Console.WriteLine($"Above average render time {Window._renderDiagnostics[i].TimeInRender}s at " +
+                                $"{Window._renderDiagnostics[i].Timestamp}" +
+                                $" Running slowly: {Window._renderDiagnostics[i].RunningSlowly}");
+                        }
+                    }
+                    break;
             }
 
             return true;
@@ -509,14 +501,23 @@ namespace MortalDungeon.Game.SceneDefinitions
                         //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
                     }
 
+
                     if(camDelta.X != 0 || camDelta.Y != 0)
                     {
+                        //even out the amount moved if we're moving diagonally
+                        if(camDelta.X != 0 && camDelta.Y != 0)
+                        {
+                            camDelta.X *= 0.707106f; //cos(45)
+                            camDelta.Y *= 0.707106f; //sin(45)
+                        }
                         _camera.SetPosition(_camera.Position + camDelta);
                     }
                 }
             }
         }
 
+        private HashSet<Cube> _floodFillSet = new HashSet<Cube>();
+        private IndividualMesh TEMP_MESH;
 
         private int _counter = 0;
         private List<Vector3i> _cubeCoordinates = new List<Vector3i>();
@@ -546,15 +547,196 @@ namespace MortalDungeon.Game.SceneDefinitions
                     Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
                     sound.Play();
 
+                    if (KeyboardState.IsKeyDown(Keys.H))
+                    {
+                        if(_selectedUnits.Count > 0)
+                        {
+                            List<Vector3i> line = new List<Vector3i>();
+
+                            CubeMethods.GetLineLerp(CubeMethods.OffsetToCube(_selectedUnits[0].Info.TileMapPosition.ToFeaturePoint()), 
+                                CubeMethods.OffsetToCube(tile.ToFeaturePoint()), line);
+
+                            foreach(var cube in line)
+                            {
+                                FeaturePoint point = CubeMethods.CubeToFeaturePoint(cube);
+
+                                Tile foundTile = TileMapHelpers.GetTile(point);
+
+                                if(foundTile != null)
+                                {
+                                    foundTile.SetColor(_Colors.LessAggressiveRed);
+                                }
+                            }
+                        }
+                    }
+
+                    if (KeyboardState.IsKeyDown(Keys.Slash))
+                    {
+                        Console.WriteLine($"Origin: {tile.Chunk.MeshChunk.Origin}");
+
+
+                        Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+                        Vector2 max = new Vector2(float.MinValue, float.MinValue);
+
+                        float[] vertices = tile.Chunk.MeshChunk.Mesh.Vertices;
+
+                        for (int i = 0; i < vertices.Length; i += MeshTile.VERTEX_OFFSET)
+                        {
+                            if(vertices[i] > max.X) max.X = vertices[i];
+                            if(vertices[i + 1] > max.Y) max.Y = vertices[i + 1];
+                            if (vertices[i] < min.X) min.X = vertices[i];
+                            if (vertices[i + 1] < min.Y) min.Y = vertices[i + 1];
+                        }
+                        Console.WriteLine($"Min: {min}");
+                        Console.WriteLine($"Max: {max}");
+
+
+                        float xOffset = 0 - min.X;
+                        float yOffset = 0 - min.Y;
+
+                        float xScale = BlendMap.WIDTH / (max.X - min.X);
+                        float yScale = BlendMap.HEIGHT / (max.Y - min.Y);
+
+
+                        for (int i = 0; i < BlendMap.WIDTH; i++)
+                        {
+                            for (int j = 0; j < BlendMap.HEIGHT; j++)
+                            {
+                                tile.Chunk.BlendMap.DirectBitmap.SetPixel(i, j, Color.Green);
+                            }
+                        }
+
+                        Graphics g = Graphics.FromImage(tile.Chunk.BlendMap.DirectBitmap.Bitmap);
+                        Pen pen = new Pen(Brushes.Black);
+                        pen.Width = 1;
+
+                        List<PointF> points = new List<PointF>();
+
+                        int count = 0;
+                        for(int i = 0; i < vertices.Length; i += MeshTile.VERTEX_OFFSET)
+                        {
+                            points.Add(new PointF((vertices[i] + xOffset) * xScale, BlendMap.HEIGHT - (vertices[i + 1] + yOffset) * yScale));
+                            count++;
+
+                            if(count == 25)
+                            {
+                                points.Add(new PointF((vertices[i - 24 * MeshTile.VERTEX_OFFSET] + xOffset) * xScale, 
+                                    BlendMap.HEIGHT - (vertices[i - 24 * MeshTile.VERTEX_OFFSET + 1] + yOffset) * yScale));
+                                points.Add(new PointF((vertices[i - 13 * MeshTile.VERTEX_OFFSET] + xOffset) * xScale,
+                                    BlendMap.HEIGHT - (vertices[i - 13 * MeshTile.VERTEX_OFFSET + 1] + yOffset) * yScale));
+
+                                g.DrawLines(pen, points.ToArray());
+                                points.Clear();
+                                count = 0;
+                            }
+                        }
+
+                        using (var m = new MemoryStream())
+                        {
+                            tile.Chunk.BlendMap.DirectBitmap.Bitmap.Save(m, System.Drawing.Imaging.ImageFormat.Png);
+
+                            var img = System.Drawing.Image.FromStream(m);
+
+                            img.Save("Z:\\test.png");
+                        }
+
+                        Window.QueueToRenderCycle(() => tile.Chunk.BlendMap.Texture.UpdateFromBitmap(tile.Chunk.BlendMap.DirectBitmap.Bitmap));
+                        return;
+                    }
+
+                    if (KeyboardState.IsKeyDown(Keys.Period))
+                    {
+                        var globalPoint = BlendHelper.GetBlendPointFromFeaturePoint(tile.ToFeaturePoint());
+                        var localPoint = BlendHelper.ConvertGlobalToLocalBlendPoint(globalPoint, tile.Chunk);
+
+                        TileChunk chunk = tile.Chunk;
+
+                        HashSet<TileChunk> usedChunks = new HashSet<TileChunk>() { chunk };
+
+                        HashSet<BlendPoint> walls = new HashSet<BlendPoint>();
+
+                        BlendPoint curr = new BlendPoint(200, 0);
+
+                        for(int i = 0; i < 100; i++)
+                        {
+                            walls.Add(new BlendPoint(curr.X, curr.Y));
+                            curr.X++;
+                        }
+
+                        for (int i = 0; i < 100; i++)
+                        {
+                            walls.Add(new BlendPoint(curr.X, curr.Y));
+                            curr.Y++;
+                        }
+
+                        for (int i = 0; i < 100; i++)
+                        {
+                            walls.Add(new BlendPoint(curr.X, curr.Y));
+                            curr.X--;
+                        }
+
+                        for (int i = 0; i < 100; i++)
+                        {
+                            walls.Add(new BlendPoint(curr.X, curr.Y));
+                            curr.Y--;
+                        }
+
+                        walls.Add(new BlendPoint(curr.X, curr.Y));
+
+                        HashSet<BlendPoint> foundPoints = new HashSet<BlendPoint>();
+
+                        BlendHelper.FloodFill(walls, ref foundPoints, new BlendPoint(201, 1));
+
+                        HashSet<TileChunk> chunks = new HashSet<TileChunk>();
+
+                        Color color = Color.FromArgb(255, 0, 0, 255);
+
+                        foreach(var point in foundPoints)
+                        {
+                            chunks.Clear();
+
+                            BlendHelper.GetChunksFromBlendPoint(point, chunks);
+
+                            foreach(var foundChunk in chunks)
+                            {
+                                localPoint = BlendHelper.ConvertGlobalToLocalBlendPoint(point, foundChunk);
+
+                                if (localPoint.IsValidBoundsOnly())
+                                {
+                                    foundChunk.BlendMap.DirectBitmap.SetPixel(localPoint.X, localPoint.Y, color);
+                                    usedChunks.Add(foundChunk);
+                                }
+                            }
+                        }
+
+
+                        foreach (var usedChunk in usedChunks)
+                        {
+                            usedChunk.BlendMap.UpdateTexture();
+                        }
+                    }
+
                     DeselectUnits();
 
                     if (KeyboardState.IsKeyDown(Keys.LeftAlt))
                     {
+                        _counter++;
 
+                        ImageBlendControl testControl = new ImageBlendControl()
+                        {
+                            ImagePath = "Z:\\puddle.png",
+                            ScaleFactor = _counter,
+                            Red = TileType.Dirt,
+                            Blue = TileType.Stone_1
+                        };
+
+                        testControl.Origin = tile.ToFeaturePoint();
+
+                        testControl.ApplyControl();
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.RightAlt))
+                    else if (KeyboardState.IsKeyDown(Keys.P))
                     {
-                        TileMapManager.ActiveMaps.ForEach(m => m.PopulateFeatures());
+                        PlayerParty.PlaceUnits(tile);
                     }
                     else if (KeyboardState.IsKeyDown(Keys.LeftShift))
                     {
@@ -632,27 +814,6 @@ namespace MortalDungeon.Game.SceneDefinitions
                             }
                         }
                     }
-                    else if (KeyboardState.IsKeyDown(Keys.H))
-                    {
-                        //_tileMapController.DeselectTiles();
-
-                        //var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(tile);
-                        //if(unitsOnPoint.Count > 0)
-                        //{
-                        //    var lines = CombatState.UnimpededUnitSightlines[unitsOnPoint.First()];
-
-                        //    Vector4 color = new Vector4(0, 0, 0.5f, 1);
-                        //    foreach(var line in lines)
-                        //    {
-                        //        color.X += 0.04f;
-                        //        color.Z += 0.02f;
-                        //        foreach (var lineTile in line.Tiles)
-                        //        {
-                        //            _tileMapController.SelectTile(lineTile, TileSelectionType.Stone_2).SetColor(color);
-                        //        }
-                        //    }
-                        //}
-                    }
                     else if (KeyboardState.IsKeyDown(Keys.J))
                     {
                         TileMapManager.NavMesh.CalculateNavTiles();
@@ -712,7 +873,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                             Wall.CreateWalls(map, tiles, Wall.WallMaterial.Iron);
 
-                            (List<Wall> walls, bool circular) = Wall.FindAdjacentWalls(_wallTemp.ParentTileMap[_wallTemp].Structure as Wall);
+                            (List<Wall> walls, bool circular) = Wall.FindAdjacentWalls(_wallTemp.ParentTileMap.GetTile(_wallTemp).Structure as Wall);
                             Wall.UnifyWalls(walls, circular);
 
                             walls.ForEach(w => w.Name = "fence");
@@ -737,11 +898,28 @@ namespace MortalDungeon.Game.SceneDefinitions
                     }
                     else if (KeyboardState.IsKeyDown(Keys.C))
                     {
-                        PlayerParty.GroupUnits(CurrentUnit);
+                        IndividualMesh mesh = new IndividualMesh();
+                        mesh.FillFromMeshTile(tile.MeshTileHandle);
+
+                        mesh.Texture = new SimpleTexture("Resources/Textures/Spiderweb.png", 50000);
+                        mesh.LoadTexture();
+
+                        Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(tile._position);
+                        pos.Z += 0.001f;
+                        mesh.SetTranslation(pos);
+
+                        IndividualMeshes.Add(mesh);
+
+                        TEMP_MESH = mesh;
                     }
                     else if (KeyboardState.IsKeyDown(Keys.V))
                     {
-                        PlayerParty.UngroupUnits(PlayerParty.PrimaryUnit.Info.TileMapPosition, false);
+                        //TEMP_MESH.TextureTransformations.TranslateBy(new Vector2(0.1f, 0.1f));
+                        //TEMP_MESH.TextureTransformations.SetShear(new Vector2(0f, 0));
+                        //TEMP_MESH.TextureTransformations.SetScale(new Vector2(1f, 1f));
+                        TEMP_MESH.TextureTransformations.RotateBy(0.1f);
+
+                        //Console.WriteLine(TEMP_MESH.TextureTransformations.Transformations * new Vector3(1, 1, 1));
                     }
                     else if (KeyboardState.IsKeyDown(Keys.B))
                     {
@@ -836,7 +1014,7 @@ namespace MortalDungeon.Game.SceneDefinitions
 
                         }
 
-                        Footer.EventLog.AddEvent(text, severity);
+                        EventLog.AddEvent(text, severity);
                     }
                     else if (ContextManager.GetFlag(GeneralContextFlags.PatternToolEnabled) && KeyboardState.IsKeyDown(Keys.F7))
                     {
@@ -863,36 +1041,21 @@ namespace MortalDungeon.Game.SceneDefinitions
                         _cubeCoordinates.Add(cubeCoords);
 
                         tile.SetColor(_Colors.Red);
-                        tile.Update();
                     }
                     else if (KeyboardState.IsKeyDown(Keys.F9))
                     {
-                        //List<Unit> units = new List<Unit>();
+                        //var test = from t in Assembly.GetExecutingAssembly().GetTypes()
+                        //           where t.IsClass && t.Namespace == "Empyrean.Definitions.EventActions" && !t.IsSealed
+                        //           select t;
 
-                        //units.Add(_units.Find(u => u.Name == "Guy"));
-                        //units.Add(_units.Find(u => u.Name == "Frend"));
+                        //var list = test.ToList();
 
-                        //Quest activeQuest = QuestManager.Quests.Find(q => q.ID == 50);
-
-                        //if (activeQuest != null)
+                        //foreach (var t in list)
                         //{
-                        //    DialogueWindow.StartDialogue(DialogueSerializer.LoadDialogueFromFile(2), units);
-                        //}
-                        //else
-                        //{
-                        //    DialogueWindow.StartDialogue(DialogueSerializer.LoadDialogueFromFile(0), units);
+                        //    Console.WriteLine(t.Name);
                         //}
 
-                        var test = from t in Assembly.GetExecutingAssembly().GetTypes()
-                                   where t.IsClass && t.Namespace == "MortalDungeon.Definitions.EventActions" && !t.IsSealed
-                                   select t;
-
-                        var list = test.ToList();
-
-                        foreach (var t in list)
-                        {
-                            Console.WriteLine(t.Name);
-                        }
+                        Console.WriteLine($"Tile: {tile.ToFeaturePoint().ToString()}");
                     }
                 }
             }
@@ -909,14 +1072,95 @@ namespace MortalDungeon.Game.SceneDefinitions
                         Vector3i cubeCoords = CubeMethods.OffsetToCube(new FeaturePoint(tile));
                         _cubeCoordinates.Remove(cubeCoords);
 
-                        tile.Color = _Colors.White;
-                        tile.Update();
+                        tile.SetColor(_Colors.White);
 
                         return;
                     }
 
                     tile.OnRightClick(flags);
                 //}
+            }
+        }
+
+
+        private bool _updateUnitStatusBars = false;
+        public override void OnRenderEnd()
+        {
+            base.OnRenderEnd();
+
+            //Anything that needs to be predictably queued to the render cycle should be done in this method
+            //otherwise we create a large amount of Action objects by calling the RenderDispatcher
+            if (_updateUnitStatusBars)
+            {
+                UpdateUnitStatusBars();
+                _updateUnitStatusBars = false;
+            }
+        }
+
+
+        private TileMapPoint _cameraPos;
+
+        public override void OnCameraMoved()
+        {
+            base.OnCameraMoved();
+
+            _updateUnitStatusBars = true;
+
+            if (BoxSelectHelper.BoxSelecting)
+            {
+                BoxSelectHelper.DrawSelectionBox();
+            }
+
+            //TileMapPoint newPos = TileMapHelpers.GlobalPositionToMapPoint(_camera.Position);
+            bool inNewPos = TileMapHelpers.TestCameraTileMapPosition(_cameraPos, _camera.Position);
+
+            if (inNewPos)
+            {
+                TileMapPoint newPos = TileMapHelpers.GlobalPositionToMapPoint(_camera.Position);
+
+                //ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                _cameraPos = newPos;
+
+                var maps = TileMapManager.GetTileMapsInDiameter(_cameraPos, 5);
+
+                if (maps.Count < 5 * 5 && !InCombat &&
+                   !ContextManager.GetFlag(GeneralContextFlags.CameraPanning) &&
+                   !ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading) &&
+                   !PlayerParty.CheckPartyMemberWillBeUnloaded())
+                {
+                    maps.Clear();
+                    TileMap.TileMapListPool.FreeObject(ref maps);
+
+                    ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                    Task.Run(() =>
+                    {
+                        TileMapManager.SetCenter(_cameraPos);
+                        TileMapManager.LoadMapsAroundCenter();
+                        maps = TileMapManager.GetTileMapsInDiameter(_cameraPos, 5);
+
+                        //do a synchronous merge + normals pass on visible maps here
+                        //other maps should be queued/calculated asynchronously unless they 
+                        //are made visible (in which case they should be prioritized and finished synchronously asap)
+                        Window.QueueToRenderCycle(() =>
+                        {
+                            TileMapManager.SetVisibleMaps(maps);
+                            ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
+
+                            maps.Clear();
+                            TileMap.TileMapListPool.FreeObject(ref maps);
+                        });
+                    });
+                }
+                else
+                {
+                    Window.QueueToRenderCycle(() =>
+                    {
+                        TileMapManager.SetVisibleMaps(maps);
+
+                        maps.Clear();
+                        TileMap.TileMapListPool.FreeObject(ref maps);
+                    });
+                }
             }
         }
 

@@ -1,7 +1,7 @@
-﻿using MortalDungeon.Game.Objects;
+﻿using Empyrean.Game.Objects;
 using OpenTK.Mathematics;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public class TextBox : UIObject
     {

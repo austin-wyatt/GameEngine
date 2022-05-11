@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class Hide : Ability
     {
@@ -24,44 +24,17 @@ namespace MortalDungeon.Game.Abilities
 
             //Name = "Hide";
 
-            CanTargetGround = false;
-            UnitTargetParams.Self = UnitCheckEnum.True;
+            SelectionInfo.CanSelectTiles = false;
+            SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.True;
 
-            UnitTargetParams.IsHostile = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             BreakStealth = false;
 
             //Icon = new Icon(Icon.DefaultIconSize, IconSheetIcons.MasqueradeMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
             //BrokenMaskIcon = new Icon(Icon.DefaultIconSize, IconSheetIcons.BrokenMask, Spritesheets.IconSheet, true, Icon.BackgroundType.NeutralBackground);
-        }
-
-        //public override List<BaseTile> GetValidTileTargets(TileMap tileMap, List<Unit> units = default, BaseTile position = null, List<Unit> validUnits = null)
-        //{
-        //    base.GetValidTileTargets(tileMap);
-
-        //    List<BaseTile> validTiles = new List<BaseTile> { CastingUnit.Info.TileMapPosition };
-
-        //    AffectedUnits.Add(CastingUnit);
-
-        //    TargetAffectedUnits();
-
-        //    return validTiles;
-        //}
-
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
-
-            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
-
-            return true;
         }
 
         public override void EnactEffect()

@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Game.Tiles;
-using MortalDungeon.Objects;
+﻿using Empyrean.Game.Tiles;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Rendering
+namespace Empyrean.Engine_Classes.Rendering
 {
     public class TileInstancedRenderData : InstancedRenderData
     {
@@ -148,8 +148,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             var transform = obj.BaseFrame.Transformations;
 
-            InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
-            currIndex += 16;
+            InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, ref currIndex);
             _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.X;
             _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.Y;
             _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.Z;

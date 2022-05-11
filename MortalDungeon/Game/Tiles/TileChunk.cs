@@ -1,14 +1,38 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles.Meshes;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles.Meshes;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Game.Tiles
+namespace Empyrean.Game.Tiles
 {
+    [Flags]
+    public enum TileUpdateType
+    {
+        Initialize = 0,
+        /// <summary>
+        /// Recalculates the mesh chunk's draw order based on visible tiles 
+        /// and applies that to the render data.
+        /// </summary>
+        Vision = 1,
+        /// <summary>
+        /// Applies any changes made to the tile spritesheet data.
+        /// </summary>
+        Textures = 2,
+        /// <summary>
+        /// Applies any changes made to the transformation matrix of the chunk mesh.
+        /// </summary>
+        Transformation = 4,
+        /// <summary>
+        /// Applies any changes made to vertex position, texture coordinates,
+        /// or normal vectors.
+        /// </summary>
+        Vertex = 8,
+    }
+
     public class TileChunk : ITickable
     {
         public const int DefaultChunkWidth = 10;
@@ -29,14 +53,23 @@ namespace MortalDungeon.Game.Tiles
         public bool Cull = true;
 
         public MeshChunk MeshChunk;
-        public MeshChunkInstancedRenderData ChunkInstancedRenderData;
+        public MeshChunkInstancedRenderData ChunkRenderData;
+        public BlendMap BlendMap;
+
+        public TileMap TileMap;
+        /// <summary>
+        /// The coordinates of the chunk inside of the tile map
+        /// </summary>
+        public Vector2i ChunkPosition = new Vector2i();
 
         public TileChunk() { }
 
-        public TileChunk(int width, int height) 
+        public TileChunk(int width, int height, TileMap map) 
         {
             Width = width;
             Height = height;
+
+            TileMap = map;
         }
 
         public void AddTile(Tile tile) 
@@ -58,20 +91,37 @@ namespace MortalDungeon.Game.Tiles
                 TileMapManager.Scene.RemoveStructure(structure);
             }
 
-
             Tiles.Clear();
             Structures.Clear();
             GenericObjects.Clear();
-            ChunkInstancedRenderData.CleanUp();
+
+            BlendMap.CleanUp(BlendMap);
+            BlendMap = null;
+
+            ClearRenderData();
+        }
+
+        public void ClearRenderData()
+        {
+            Window.QueueToRenderCycle(() =>
+            {
+                lock (_meshUpdateLock)
+                {
+                    ChunkRenderData?.CleanUp();
+                    ChunkRenderData = null;
+                }
+            });
         }
 
         public void CalculateValues() 
         {
-            Center = (Tiles[0].Position + Tiles[^1].Position) / 2;
-            Radius = new Vector3(Tiles[0].Position - Center).Length * 1.5f;
+            Vector3 localTilePos = Tiles[0]._position / new Vector3(WindowConstants.ScreenUnits.X, WindowConstants.ScreenUnits.Y, 1);
 
-            SideLengths = WindowConstants.ConvertGlobalToLocalCoordinates(new Vector3(Tiles[0].Position - Center));
-            LocalRadius = WindowConstants.ConvertGlobalToLocalCoordinates(new Vector3(Tiles[0].Position - Center)).Length;
+            Center = (Tiles[0]._position + Tiles[^1]._position) / 2;
+            //Center = MeshChunk.Mesh.Position + new Vector3(0.5f + 0.75f * (Width / 2 - 1), TileBounds.MeshTileDimensions.Y * Height / 2, 0);
+            Radius = (Tiles[0]._position - Center).Length * 1.5f;
+
+            LocalRadius = (localTilePos - Center).Length;
         }
 
         public void Tick() 
@@ -99,30 +149,97 @@ namespace MortalDungeon.Game.Tiles
             //});
         }
 
-        public void OnFilled()
+        public void InitializeMesh()
         {
-            //TODO, move the mesh chunk so that it is in the correct position
-            MeshChunk = new MeshChunk(Tiles, Width, Height);
-        }
+            BlendMap = BlendMap.GetBlendMap(this);
 
-        public object _meshUpdateLock = new object();
-        public void UpdateTile()
-        {
-            //Just refill the entire mesh for now. Once the base implementation is working we can look into 
-            //more targeted updates for the mesh
+            MeshChunk = new MeshChunk(Tiles, Width, Height);
+
+            PositionMesh();
+
             lock (_meshUpdateLock)
             {
-                MeshChunk.FillMesh();
+                MeshChunk.InitializeMesh();
             }
-            
-            Window.QueueToRenderCycle(() =>
+        }
+
+        /// <summary>
+        /// Sqrt(3) / 2 * CHUNK_HEIGHT + (0.5 * Sqrt(3) / 2) <para/>
+        /// Represents the height of a tile chunk in local opengl coordinates.
+        /// </summary>
+        private const float MESH_HEIGHT = 9.093267f;
+        public void PositionMesh()
+        {
+            Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(Tiles[0].Position);
+            pos.X -= 0.5f;
+            pos.Y -= 0.5f;
+            pos.Z = 0;
+
+            MeshChunk.Mesh.SetTranslation(pos);
+
+            //pos.Y += 0.5f + MeshTile.TILE_HEIGHT - 0.0075f;
+            pos.Y += 0.5f + MeshTile.TILE_HEIGHT;
+
+            MeshChunk.Origin = pos;
+            CalculateValues();
+        }
+
+        private object _meshUpdateObj = new object();
+        public object _meshUpdateLock = new object();
+        public void Update(TileUpdateType tileUpdateType)
+        {
+            if (!TileMap.Visible)
+            {
+                return;
+            }
+
+            if(tileUpdateType == TileUpdateType.Initialize)
             {
                 lock (_meshUpdateLock)
                 {
-                    ChunkInstancedRenderData.GenerateInstancedRenderData(this);
+                    MeshChunk.UpdateDrawOrder();
+                    ChunkRenderData = new MeshChunkInstancedRenderData();
                 }
-            });
-        }
 
+                TileMapManager.Scene.RenderDispatcher.DispatchAction(_meshUpdateObj, () =>
+                {
+                    lock (_meshUpdateLock)
+                    {
+                        ChunkRenderData?.GenerateInstancedRenderData(this);
+                    }
+                });
+                return;
+            }
+
+            if (MeshChunk == null)
+                return;
+
+            if((tileUpdateType & (TileUpdateType.Vision | TileUpdateType.Transformation | TileUpdateType.Textures | TileUpdateType.Vertex)) > 0)
+            {
+                TileMapManager.Scene.RenderDispatcher.DispatchAction(_meshUpdateObj, () =>
+                {
+                    lock (_meshUpdateLock)
+                    {
+                        if (ChunkRenderData == null) return;
+
+                        if((tileUpdateType & TileUpdateType.Vision) > 0)
+                        {
+                            MeshChunk.UpdateDrawOrder();
+                            ChunkRenderData.FillVisionBuffers(this);
+                        }
+
+                        if ((tileUpdateType & TileUpdateType.Transformation) > 0)
+                        {
+                            ChunkRenderData.FillTransformationData(this);
+                        }
+
+                        if (((tileUpdateType & TileUpdateType.Vertex) > 0) || ((tileUpdateType & TileUpdateType.Textures) > 0))
+                        {
+                            ChunkRenderData.FillVertexBuffers(this);
+                        }
+                    }
+                });
+            }
+        }
     }
 }

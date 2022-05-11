@@ -1,21 +1,23 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Abilities.AbilityDefinitions;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles.Meshes;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Abilities.AbilityDefinitions;
+using Empyrean.Game.Map;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles.Meshes;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using System.Threading;
 
-namespace MortalDungeon.Game.Tiles
+namespace Empyrean.Game.Tiles
 {
     public class Tile : IHoverable, IHasPosition
     {
@@ -35,13 +37,14 @@ namespace MortalDungeon.Game.Tiles
 
         public bool HasContextMenu = true;
 
-        public Vector3 Position { get; set; }
+        public Vector3 _position = new Vector3();
+        public Vector3 Position { get => _position; set => _position = value; }
 
         public bool Hovered = false;
 
         public bool HasTimedHoverEffect = false;
 
-        public TileBounds TileBounds = new TileBounds();
+        public TileBounds TileBounds;
 
         /// <summary>
         /// Assigned when the MeshChunk is created by the TileChunk
@@ -50,7 +53,7 @@ namespace MortalDungeon.Game.Tiles
 
         public Tile()
         {
-
+            TileBounds = new TileBounds(this);
         }
         public Tile(Vector3 position, TilePoint point)
         {
@@ -60,9 +63,12 @@ namespace MortalDungeon.Game.Tiles
 
             Properties = new TileProperties(this)
             {
-                Type = TileType.Grass,
                 Classification = TileClassification.Ground
             };
+
+            Properties.SetType(TileType.Grass);
+
+            TileBounds = new TileBounds(this);
 
             SetPosition(position);
         }
@@ -109,15 +115,37 @@ namespace MortalDungeon.Game.Tiles
             return false;
         }
 
+        public Vector4 HoverColor = new Vector4(1, 0, 0, 1f);
+        public float HoverMixPercent = 0.5f;
+        public const float BaseHoverMixPercent = 0.5f;
         public void SetHovered(bool hovered)
         {
             Hovered = hovered;
+
+            if (!Hovered)
+            {
+                HoverMixPercent = BaseHoverMixPercent;
+            }
+
+            CalculateDisplayedColor();
         }
 
+        public Vector4 SelectionColor = new Vector4(0, 0, 1, 1f);
+        public float SelectionMixPercent = 0.5f;
+        public const float BaseSelectionMixPercent = 0.5f;
         public void SetSelected(bool selected)
         {
             Selected = selected;
+
+            if (!Selected)
+            {
+                SelectionMixPercent = BaseSelectionMixPercent;
+            }
+
+            CalculateDisplayedColor();
         }
+
+
 
         public void OnHover()
         {
@@ -206,7 +234,7 @@ namespace MortalDungeon.Game.Tiles
 
         internal void SetHeight(float height)
         {
-            SetPosition(new Vector3(Position.X, Position.Y, height * 0.2f));
+            SetPosition(new Vector3(Position.X, Position.Y, height));
 
             Properties.Height = height;
             if (Structure != null)
@@ -221,13 +249,13 @@ namespace MortalDungeon.Game.Tiles
                 unit.SetPositionOffset(Position);
             }
 
+            MeshTileHandle?.SetHeight(height);
+            Update(TileUpdateType.Vertex);
+
             if (!TileMapManager.Scene.ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading))
             {
-                TileMapManager.DispatchTilePillarUpdate(TileMap);
                 TileMapManager.NavMesh.UpdateNavMeshForTile(this);
             }
-
-            Update();
         }
 
         public void CleanUp()
@@ -257,10 +285,9 @@ namespace MortalDungeon.Game.Tiles
             Structure = null;
         }
 
-        public void Update()
+        public void Update(TileUpdateType updateType)
         {
-            Chunk.UpdateTile();
-            //TileMap.UpdateTile();
+            Chunk?.Update(updateType);
         }
 
         //public static string GetTooltipString(BaseTile tile, CombatScene scene)
@@ -321,6 +348,8 @@ namespace MortalDungeon.Game.Tiles
         {
             CombatScene scene = TileMapManager.Scene;
 
+            bool playSound = true;
+
             bool isCurrentUnit = false;
             if (scene.CurrentUnit != null)
             {
@@ -357,27 +386,29 @@ namespace MortalDungeon.Game.Tiles
             {
                 var mainUnit = scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
 
-                if (mainUnit != null)
-                {
-                    if (scene.ContextManager.GetFlag(GeneralContextFlags.RightClickMovementEnabled))
-                    {
-                        GroupMove groupMove = new GroupMove(mainUnit);
-                        groupMove.OnTileClicked(TileMap, this);
-                    }
-                    else
-                    {
-                        (Tooltip moveMenu, UIList moveList) = UIHelpers.GenerateContextMenuWithList("Move");
+                //if (mainUnit != null)
+                //{
+                //    if (scene.ContextManager.GetFlag(GeneralContextFlags.RightClickMovementEnabled))
+                //    {
+                //        Move move = new Move(mainUnit);
+                //        move.EvaluateHoverPath(this, TileMap, ignoreRange: true, highlightTiles: false);
+                //        move.OnTileClicked(TileMap, this);
+                //    }
+                //    else
+                //    {
+                //        (Tooltip moveMenu, UIList moveList) = UIHelpers.GenerateContextMenuWithList("Move");
 
-                        moveList.AddItem("Move here", (item) =>
-                        {
-                            scene.CloseContextMenu();
-                            GroupMove groupMove = new GroupMove(mainUnit);
-                            groupMove.OnTileClicked(TileMap, this);
-                        });
+                //        moveList.AddItem("Move here", (item) =>
+                //        {
+                //            scene.CloseContextMenu();
+                //            Move move = new Move(mainUnit);
+                //            move.EvaluateHoverPath(this, TileMap, ignoreRange: true, highlightTiles: false);
+                //            move.OnTileClicked(TileMap, this);
+                //        });
 
-                        scene.OpenContextMenu(moveMenu);
-                    }
-                }
+                //        scene.OpenContextMenu(moveMenu);
+                //    }
+                //}
             }
             else if (scene._selectedUnits.Count == 1 && isCurrentUnit)
             {
@@ -390,8 +421,12 @@ namespace MortalDungeon.Game.Tiles
                     }
                     else
                     {
-                        //TODO
-                        //unit.Info._movementAbility.MoveToTile(this);
+                        playSound = false;
+
+                        unit.Info._movementAbility._immediateHoverTile = this;
+                        unit.Scene.SelectAbility(unit.Info._movementAbility, unit);
+                        //unit.Info._movementAbility.EvaluateHoverPath(this, TileMap, ignoreRange: true, highlightTiles: false);
+                        //unit.Info._movementAbility.OnTileClicked(TileMap, this);
                     }
                 }
                 else
@@ -402,8 +437,8 @@ namespace MortalDungeon.Game.Tiles
                     moveList.AddItem("Move here", (item) =>
                     {
                         scene.CloseContextMenu();
-                        //TODO
-                        //unit.Info._movementAbility.MoveToTile(this);
+                        unit.Info._movementAbility.EvaluateHoverPath(this, TileMap, ignoreRange: true, highlightTiles: false);
+                        unit.Info._movementAbility.OnTileClicked(TileMap, this);
                     });
 
                     scene.OpenContextMenu(moveMenu);
@@ -412,14 +447,46 @@ namespace MortalDungeon.Game.Tiles
             #endregion
 
 
-            Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
-            sound.Play();
+            if (playSound)
+            {
+                Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
+                sound.Play();
+            }
         }
 
-        public void SetColor(Vector4 color)
+        public void CalculateDisplayedColor()
         {
-            Color = color;
+            if(Hovered && Selected)
+            {
+                SetColor((HoverColor + SelectionColor) * 0.5f, SetColorFlag.Hover, (HoverMixPercent + SelectionMixPercent) * 0.5f);
+            }
+            else if (Hovered)
+            {
+                SetColor(HoverColor, SetColorFlag.Hover, HoverMixPercent);
+            }
+            else if (Selected)
+            {
+                SetColor(SelectionColor, SetColorFlag.Selected, SelectionMixPercent);
+            }
+            else
+            {
+                SetColor(Color);
+            }
         }
+
+        public float ColorMixPercent = 0;
+        public void SetColor(Vector4 color, SetColorFlag flag = SetColorFlag.Base, float mixPercent = 0)
+        {
+            if(flag == SetColorFlag.Base)
+            {
+                Color = color;
+                ColorMixPercent = mixPercent;
+            }
+            
+            MeshTileHandle?.SetColor(ref color, mixPercent);
+            Update(TileUpdateType.Vertex);
+        }
+
 
         //public override Tooltip CreateContextMenu()
         //{
@@ -461,20 +528,18 @@ namespace MortalDungeon.Game.Tiles
         {
             return new FeaturePoint(this);
         }
+
+        public void ToFeaturePoint(ref FeaturePoint featurePoint)
+        {
+            featurePoint.Initialize(this);
+        }
+
+        public static ObjectPool<List<Tile>> TileListPool = new ObjectPool<List<Tile>>();
     }
 
     public class TileProperties
     {
-        private TileType _type;
-        public TileType Type { 
-            get => _type; 
-            set
-            {
-                _type = value;
-                DisplayInfo = new TileDisplayInfo(_type);
-                Tile.Update();
-            } 
-        }
+        public TileType Type = (TileType)(-1);
 
         public TileDisplayInfo DisplayInfo = new TileDisplayInfo();
 
@@ -496,42 +561,178 @@ namespace MortalDungeon.Game.Tiles
         {
             Tile = tile;
         }
+
+        /// <summary>
+        /// Sets the type of the tile
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="loadTexture">
+        /// Indicates whether the texture should be loaded if the type is on a different spritesheet
+        /// </param>
+        /// <param name="fromFeature">
+        /// Indicates whether the type was set from a feature equation. If both this and loadTexture
+        /// are true, the tile will be added to the TileMapManager.TilesRequiringTextureUpdates list
+        /// which is resolved at the end of the tile map load cycle.
+        /// </param>
+        /// <param name="updateChunk">
+        /// Indicates whether the chunk should be updated with the new texture info
+        /// </param>
+        public void SetType(TileType type, bool loadTexture = true, bool fromFeature = false, bool updateChunk = true)
+        {
+            void UpdateChunk()
+            {
+                if (fromFeature)
+                {
+                    TileMapManager.TilesRequiringTextureUpdates.Add(Tile);
+                }
+                else if (Tile.Chunk != null)
+                {
+                    Tile.MeshTileHandle.UpdateTextureInfo();
+                    Tile.Update(TileUpdateType.Textures);
+                }
+            }
+
+            if (Type == type)
+                return;
+
+            Type = type;
+
+            if (DisplayInfo.TileSpritesheet == null)
+            {
+                DisplayInfo = new TileDisplayInfo(Type);
+            }
+            else
+            {
+                DisplayInfo.SetDisplayInfo(Type, out bool textureLoadRequired);
+
+                if(loadTexture && textureLoadRequired)
+                {
+                    TextureLoadBatcher.LoadTexture(DisplayInfo.Texture);
+
+                    if (updateChunk)
+                    {
+                        UpdateChunk();
+                    }
+                }
+                else if(updateChunk)
+                {
+                    UpdateChunk();
+                }
+            }
+        }
     }
 
     public struct TileDisplayInfo
     {
-        public int SpritesheetPos;
         public Spritesheet TileSpritesheet;
         public SimpleTexture Texture;
 
         public TileDisplayInfo(TileType type)
         {
-            SpritesheetPos = (int)type % 25;
-            TileSpritesheet = Spritesheets.TileSheets[(int)type / 25];
+            TileSpritesheet = TileSheets[type];
             Texture = new SimpleTexture(TileSpritesheet)
             {
-                GenerateMipMaps = false,
+                GenerateMipMaps = true,
                 Nearest = true
             };
         }
+
+        public void SetDisplayInfo(TileType type, out bool textureLoadRequired)
+        {
+            TileSpritesheet = TileSheets[type];
+            Texture = new SimpleTexture(TileSpritesheet)
+            {
+                GenerateMipMaps = true,
+                Nearest = true
+            };
+
+            textureLoadRequired = true;
+        }
+
+        public static Dictionary<TileType, Spritesheet> TileSheets = new Dictionary<TileType, Spritesheet>() 
+        {
+            { TileType.Dirt, Textures.Dirt },
+            { TileType.Grass, Textures.Grass },
+            { TileType.Stone_1, Textures.Stone_1 },
+            { TileType.Stone_2, Textures.Stone_2 },
+
+        };
     }
 
     public class TileBounds : IBounds
     {
+        public static readonly Vector3 TileDimensions = 
+            new Vector3(
+                1 * WindowConstants.ScreenUnits.X * 0.5f, 
+                0.8660254f * WindowConstants.ScreenUnits.Y * 0.5f, 
+                0
+            );
         /// <summary>
-        /// The maximum dimensions of a mesh tile
+        /// The maximum dimensions of a mesh tile.
         /// </summary>
-        public Vector3 TileDimensions;
+        public static readonly Vector3 MeshTileDimensions = new Vector3(1, 0.8660254f, 0);
 
+        public Tile Tile;
 
-        public bool Contains(Vector2 point, Camera camera = null)
+        public TileBounds(Tile tile)
         {
-            throw new NotImplementedException();
+            Tile = tile;
+        }
+
+
+        public bool Contains(float x, float y, Camera camera = null)
+        {
+            int intersections = 0;
+
+            if (Tile.MeshTileHandle == null)
+                return false;
+
+            int offset = Tile.MeshTileHandle.GetVertexOffset();
+
+            PointF point3 = new PointF();
+            PointF point4 = new PointF();
+
+            for(int i = 0; i < MeshTile.BOUNDING_VERTICES.Length - 1; i++)
+            {
+                GetTransformedPointInPlace(ref point3, Tile.MeshTileHandle.VerticesHandle[offset + MeshTile.BOUNDING_VERTICES[i]],
+                    Tile.MeshTileHandle.VerticesHandle[offset + MeshTile.BOUNDING_VERTICES[i] + 1], 
+                    Tile.MeshTileHandle.VerticesHandle[offset + MeshTile.BOUNDING_VERTICES[i] + 2], camera);
+                GetTransformedPointInPlace(ref point4, Tile.MeshTileHandle.VerticesHandle[offset + MeshTile.BOUNDING_VERTICES[i + 1]],
+                    Tile.MeshTileHandle.VerticesHandle[offset + MeshTile.BOUNDING_VERTICES[i + 1] + 1], 
+                    Tile.MeshTileHandle.VerticesHandle[offset + MeshTile.BOUNDING_VERTICES[i] + 2], camera);
+
+                if (MiscOperations.GFG.get_line_intersection(x, y, x, y + 1000, point3.X, point3.Y, point4.X, point4.Y))
+                {
+                    intersections++;
+                }
+            }
+
+            if (intersections % 2 == 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public bool Contains3D(Vector3 pointNear, Vector3 pointFar, Camera camera)
         {
-            throw new NotImplementedException();
+            if (Tile.MeshTileHandle == null)
+            {
+                return false;
+            }
+
+            //first get the point at the Z position of the object
+            float xUnit = pointFar.X - pointNear.X;
+            float yUnit = pointFar.Y - pointNear.Y;
+
+            float percentageAlongLine = (Tile.MeshTileHandle.Weights[^1] - pointNear.Z) / (pointFar.Z - pointNear.Z);
+
+            float x = pointNear.X + xUnit * percentageAlongLine;
+            float y = pointNear.Y + yUnit * percentageAlongLine;
+
+            //check bounds of object
+            return Contains(x, y, camera);
         }
 
         public Vector3 GetDimensionData()
@@ -541,7 +742,13 @@ namespace MortalDungeon.Game.Tiles
 
         public PointF GetTransformedPoint(float x, float y, float z, Camera camera = null)
         {
-            throw new NotImplementedException();
+            return new PointF(x + Tile.Chunk.MeshChunk.Mesh.Position.X, y + Tile.Chunk.MeshChunk.Mesh.Position.Y);
+        }
+
+        public void GetTransformedPointInPlace(ref PointF point, float x, float y, float z, Camera camera = null)
+        {
+            point.X = x + Tile.Chunk.MeshChunk.Mesh.Position.X;
+            point.Y = y + Tile.Chunk.MeshChunk.Mesh.Position.Y;
         }
     }
 }

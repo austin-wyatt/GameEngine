@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Abilities;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Abilities;
 using OpenTK.Mathematics;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public class Footer : UIObject
     {

@@ -4,8 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
+    public enum ScrollbarSide
+    {
+        Right,
+        Left
+    }
+
     public class ScrollableArea : UIObject
     {
         public UIBlock VisibleArea;
@@ -21,15 +27,18 @@ namespace MortalDungeon.Engine_Classes.UIComponents
         public Action OnScrollAction = null;
 
         public bool MaintainBaseAreaRelativePosition = false;
+        ScrollbarSide ScrollbarSide = ScrollbarSide.Right;
 
         public ScrollableArea(Vector3 position, UIScale visibleAreaSize, Vector3 baseAreaPosition, UIScale baseAreaSize, 
-            float scrollbarWidth = 0.1f, bool enableScrollbar = true, bool setScrollable = true, bool scaleAspectRatio = true) 
+            float scrollbarWidth = 0.1f, bool enableScrollbar = true, bool setScrollable = true, bool scaleAspectRatio = true,
+            ScrollbarSide scrollSide = ScrollbarSide.Right) 
         {
             Size = visibleAreaSize;
             Position = position;
             Name = "ScrollableArea";
             Anchor = UIAnchorPosition.Center;
             EnableScrollbar = enableScrollbar;
+            ScrollbarSide = scrollSide;
 
             _scaleAspectRatio = scaleAspectRatio;
 
@@ -213,7 +222,16 @@ namespace MortalDungeon.Engine_Classes.UIComponents
 
         public void SetScrollbarPosition() 
         {
-            Scrollbar.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
+            switch (ScrollbarSide)
+            {
+                case ScrollbarSide.Right:
+                    Scrollbar.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight), UIAnchorPosition.TopLeft);
+                    break;
+                case ScrollbarSide.Left:
+                    Scrollbar.SetPositionFromAnchor(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopRight);
+                    break;
+            }
+            
         }
 
         private void InitializeScrollbar(float scrollPercent = 0) 

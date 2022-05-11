@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     /// <summary>
     /// Functionally similar to the UIBlock class but only contains the backdrop as opposed to the backdrop + primary window

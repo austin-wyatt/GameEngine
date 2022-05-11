@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Abilities.AbilityDefinitions;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Abilities.AbilityDefinitions;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 
-namespace MortalDungeon.Game.Tiles
+namespace Empyrean.Game.Tiles
 {
     public enum TileClassification //ground, terrain, etc 
     {
@@ -30,6 +30,7 @@ namespace MortalDungeon.Game.Tiles
 
     public enum TileType //tree, grass, water, etc. Special interactions would be created for each of these (interactions would depend on ability/unit/etc)
     {
+        None,
         Selection = 2,
         Fill = 3,
 
@@ -86,6 +87,8 @@ namespace MortalDungeon.Game.Tiles
         public TileChunk Chunk;
 
         public new bool HasContextMenu = true;
+
+        public static ObjectPool<List<BaseTile>> ListPool = new ObjectPool<List<BaseTile>>();
 
         public BaseTile()
         {
@@ -283,43 +286,44 @@ namespace MortalDungeon.Game.Tiles
 
         public void Update()
         {
-            TileMap.UpdateTile();
+            //TileMap.UpdateTile();
         }
 
         public static string GetTooltipString(BaseTile tile, CombatScene scene) 
         {
-            string tooltip;
+            string tooltip = "";
 
             if (scene.CurrentUnit == null)
                 return "";
 
-            if (tile.InFog(scene.CurrentUnit.AI.Team) && !tile.Explored(scene.CurrentUnit.AI.Team))
-            {
-                tooltip = "Unexplored tile";
-            }
-            else 
-            {
-                int coordX = tile.TilePoint.X + tile.TilePoint.ParentTileMap.TileMapCoords.X * tile.TilePoint.ParentTileMap.Width;
-                int coordY = tile.TilePoint.Y + tile.TilePoint.ParentTileMap.TileMapCoords.Y * tile.TilePoint.ParentTileMap.Height;
+            //if (tile.InFog(scene.CurrentUnit.AI.Team) && !tile.Explored(scene.CurrentUnit.AI.Team))
+            //{
+            //    tooltip = "Unexplored tile";
+            //}
+            //else 
+            //{
+            //    int coordX = tile.TilePoint.X + tile.TilePoint.ParentTileMap.TileMapCoords.X * tile.TilePoint.ParentTileMap.Width;
+            //    int coordY = tile.TilePoint.Y + tile.TilePoint.ParentTileMap.TileMapCoords.Y * tile.TilePoint.ParentTileMap.Height;
 
-                Vector3 cubeCoord = tile.TileMap.OffsetToCube(tile.TilePoint);
+            //    Vector3 cubeCoord = tile.TileMap.OffsetToCube(tile.TilePoint);
 
-                var tileMapPos = FeatureEquation.FeaturePointToTileMapCoords(new FeaturePoint(tile));
 
-                tooltip = $"Type: {tile.Properties.Type.Name()} \n";
-                tooltip += $"Coordinates: {coordX}, {coordY} \n";
-                tooltip += $"Offset: {cubeCoord.X}, {cubeCoord.Y}, {cubeCoord.Z} \n";
-                tooltip += $"Tile Map: {tileMapPos.X}, {tileMapPos.Y} \n";
-                tooltip += $"Position: {tile.BaseObject.BaseFrame.Position.X}, {tile.BaseObject.BaseFrame.Position.Y}, {tile.BaseObject.BaseFrame.Position.Z} \n";
-                //tooltip += $"Elevation: {tile.Properties.Height}\n";
-                //tooltip += $"Movement Cost: {tile.Properties.MovementCost}\n";
+            //    var tileMapPos = FeatureEquation.FeaturePointToTileMapCoords(new FeaturePoint(tile));
 
-                if (tile.Structure != null) 
-                {
-                    tooltip += $"Structure\n* Name: {tile.Structure.Type.Name()}\n";
-                    tooltip += $"* Height: {tile.Structure.Info.Height}\n";
-                }
-            }
+            //    tooltip = $"Type: {tile.Properties.Type.Name()} \n";
+            //    tooltip += $"Coordinates: {coordX}, {coordY} \n";
+            //    tooltip += $"Offset: {cubeCoord.X}, {cubeCoord.Y}, {cubeCoord.Z} \n";
+            //    tooltip += $"Tile Map: {tileMapPos.X}, {tileMapPos.Y} \n";
+            //    tooltip += $"Position: {tile.BaseObject.BaseFrame.Position.X}, {tile.BaseObject.BaseFrame.Position.Y}, {tile.BaseObject.BaseFrame.Position.Z} \n";
+            //    //tooltip += $"Elevation: {tile.Properties.Height}\n";
+            //    //tooltip += $"Movement Cost: {tile.Properties.MovementCost}\n";
+
+            //    if (tile.Structure != null) 
+            //    {
+            //        tooltip += $"Structure\n* Name: {tile.Structure.Type.Name()}\n";
+            //        tooltip += $"* Height: {tile.Structure.Info.Height}\n";
+            //    }
+            //}
 
             return tooltip;
         }
@@ -338,115 +342,6 @@ namespace MortalDungeon.Game.Tiles
         public bool StructurePathable()
         {
             return Structure == null || (Structure != null && Structure.Pathable);
-        }
-
-        public void OnRightClick(ContextManager<Scene.MouseUpFlags> flags)
-        {
-            CombatScene scene = TileMapManager.Scene;
-
-            bool isCurrentUnit = false;
-            if (scene.CurrentUnit != null)
-            {
-                int distance = TileMap.GetDistanceBetweenPoints(scene.CurrentUnit.Info.Point, TilePoint);
-                isCurrentUnit = scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
-
-                int interactDistance = 5;
-                int inspectDistance = 10;
-
-                List<GameObject> objects = new List<GameObject>();
-
-                if (Structure != null && Structure.HasContextMenu && distance <= interactDistance && isCurrentUnit)
-                {
-                    objects.Add(Structure);
-                }
-
-                foreach (var unit in UnitPositionManager.GetUnitsOnTilePoint(TilePoint))
-                {
-                    if (unit.HasContextMenu && distance <= inspectDistance && isCurrentUnit)
-                    {
-                        objects.Add(unit);
-                    }
-                }
-                    
-
-                if (HasContextMenu && isCurrentUnit)
-                {
-                    Name = Properties.Type.Name();
-                    //objects.Add(this);
-                }
-            }
-
-            #region right click movement
-            if (scene._selectedUnits.Count > 1)
-            {
-                var mainUnit = scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
-
-                if (mainUnit != null)
-                {
-                    if (scene.ContextManager.GetFlag(GeneralContextFlags.RightClickMovementEnabled))
-                    {
-                        //GroupMove groupMove = new GroupMove(mainUnit);
-                        //groupMove.OnTileClicked(TileMap, this);
-
-                        //if (unit.Info._movementAbility.Moving)
-                        //{
-                        //    unit.Info._movementAbility.CancelMovement();
-                        //}
-                        //else
-                        //{
-                        //    unit.Info._movementAbility.MoveToTile(this);
-                        //}
-                    }
-                    else
-                    {
-                        (Tooltip moveMenu, UIList moveList) = UIHelpers.GenerateContextMenuWithList("Move");
-
-                        moveList.AddItem("Move here", (item) =>
-                        {
-                            scene.CloseContextMenu();
-                            GroupMove groupMove = new GroupMove(mainUnit);
-                            //groupMove.OnTileClicked(TileMap, this);
-                        });
-
-                        scene.OpenContextMenu(moveMenu);
-                    }
-                }
-            }
-            else if (scene._selectedUnits.Count == 1 && isCurrentUnit) 
-            {
-                if (scene.ContextManager.GetFlag(GeneralContextFlags.RightClickMovementEnabled))
-                {
-                    Unit unit = scene._selectedUnits[0];
-                    if (unit.Info._movementAbility.Moving)
-                    {
-                        unit.Info._movementAbility.CancelMovement();
-                    }
-                    else
-                    {
-                        //unit.Info._movementAbility.MoveToTile(this);
-                    }
-                }
-                else 
-                {
-                    (Tooltip moveMenu, UIList moveList) = UIHelpers.GenerateContextMenuWithList("Move");
-
-                    Unit unit = scene._selectedUnits[0]; ;
-                    moveList.AddItem("Move here", (item) =>
-                    {
-                        scene.CloseContextMenu();
-                        //unit.Info._movementAbility.MoveToTile(this);
-                    });
-
-                    scene.OpenContextMenu(moveMenu);
-                }
-            }
-            #endregion
-
-
-            Sound sound = new Sound(Sounds.Select) { Gain = 0.15f, Pitch = GlobalRandom.NextFloat(0.6f, 0.6f) };
-            sound.Play();
-
-            //scene._debugSelectedTile = this;
         }
 
         public override Tooltip CreateContextMenu()
@@ -525,7 +420,7 @@ namespace MortalDungeon.Game.Tiles
             X = x;
             Y = y;
             ParentTileMap = map;
-            MapPoint = map?.TileMapCoords;
+            MapPoint = map?.TileMapCoords ?? TileMapPoint.Empty;
         }
 
         public TilePoint(Vector2i coords, TileMap map)
@@ -563,7 +458,7 @@ namespace MortalDungeon.Game.Tiles
 
         public Tile GetBaseTile() 
         {
-            return ParentTileMap[this];
+            return ParentTileMap.GetTile(this);
         }
 
         public BaseTile GetTile()

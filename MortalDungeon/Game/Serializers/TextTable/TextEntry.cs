@@ -1,4 +1,4 @@
-﻿using MortalDungeon.Game.Save;
+﻿using Empyrean.Game.Save;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [XmlType(TypeName = "TT")]
     [Serializable]
@@ -105,6 +105,9 @@ namespace MortalDungeon.Game.Serializers
     }
 
 
+    /// <summary>
+    /// Used internally for TextTables
+    /// </summary>
     [XmlType(TypeName = "TE")]
     [Serializable]
     public class TextEntry
@@ -117,39 +120,67 @@ namespace MortalDungeon.Game.Serializers
         public TextEntry() { }
     }
 
+    /// <summary>
+    /// Used externally
+    /// </summary>
     [XmlType(TypeName = "TIn")]
     [Serializable]
-    public class TextInfo
+    public struct TextInfo
     {
         [XmlElement("i")]
-        public int Id = 0;
+        public int Id;
         [XmlElement("T")]
-        public int TableId = 0;
+        public int TableId;
 
         [XmlIgnore]
-        public List<TextReplacementParameter> TextReplacementParameters = new List<TextReplacementParameter>();
+        public TextReplacementParameter[] TextReplacementParameters;
 
-        public TextInfo() { }
+        public static TextInfo Empty = new TextInfo(-1, -1);
 
         public TextInfo(int id, int tableId = 0) 
         {
             Id = id;
             TableId = tableId;
+            TextReplacementParameters = new TextReplacementParameter[0];
         }
+
+        public TextInfo(ref TextInfo info)
+        {
+            Id = info.Id;
+            TableId = info.TableId;
+            TextReplacementParameters = new TextReplacementParameter[info.TextReplacementParameters.Length];
+
+            info.TextReplacementParameters.CopyTo(TextReplacementParameters, 0);
+        }
+
+        public static bool operator ==(TextInfo a, TextInfo b) => a.Equals(b);
+        public static bool operator !=(TextInfo a, TextInfo b) => !a.Equals(b);
 
         public override string ToString()
         {
             string val = TextTableManager.GetTextEntry(this);
 
-            if(TextReplacementParameters.Count > 0)
+            if(TextReplacementParameters?.Length > 0)
             {
-                for(int i = 0; i < TextReplacementParameters.Count; i++)
+                for(int i = 0; i < TextReplacementParameters.Length; i++)
                 {
                     val = val.Replace($"{{{TextReplacementParameters[i].Key}}}", TextReplacementParameters[i].Value());
                 }
             }
 
             return val;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is TextInfo info &&
+                   Id == info.Id &&
+                   TableId == info.TableId;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id, TableId);
         }
     }
 

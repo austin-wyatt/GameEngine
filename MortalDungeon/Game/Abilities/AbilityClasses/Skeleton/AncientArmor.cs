@@ -1,19 +1,19 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
-using MortalDungeon.Game.Map;
+using Empyrean.Game.Map;
 using System.Diagnostics;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class AncientArmor : TemplateRangedSingleTarget
     {
@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Abilities
 
             Grade = 2;
 
-            ActionCost = 1;
+            CastRequirements.AddResourceCost(ResF.ActionEnergy, 1, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
             ChargeRechargeCost = 30;
 
             MaxCharges = 2;
@@ -33,13 +33,13 @@ namespace MortalDungeon.Game.Abilities
 
             WeightParams.AllyWeight = 1;
 
-            UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
-            CanTargetGround = false;
+            SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
+            SelectionInfo.CanSelectTiles = false;
 
-            UnitTargetParams.Dead = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
-            UnitTargetParams.IsHostile = UnitCheckEnum.False;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.Dead = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             AbilityClass = AbilityClass.Skeleton;
 
@@ -63,9 +63,9 @@ namespace MortalDungeon.Game.Abilities
 
             Casted();
 
-            if (CastingUnit.Info.CurrentShields > 0)
+            if (CastingUnit.GetResI(ResI.Shields) > 0)
             {
-                CastingUnit.SetShields(CastingUnit.Info.CurrentShields + ShieldsGained);
+                CastingUnit.SetShields(CastingUnit.GetResI(ResI.Shields) + ShieldsGained);
             }
             else 
             {

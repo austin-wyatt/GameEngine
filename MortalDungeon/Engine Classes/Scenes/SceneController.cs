@@ -1,8 +1,8 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Scenes
+namespace Empyrean.Engine_Classes.Scenes
 {
     public class SceneController
     {
@@ -25,12 +25,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             ObjectCulling.Initialize();
             ObjectCulling.UpdateValues(Camera);
-
-            Camera.onUpdate = () =>
-            {
-                ObjectCulling.UpdateValues(Camera);
-                CullObjectsInScene();
-            };
 
             Camera.Update -= _onCameraUpdate;
             Camera.Update += _onCameraUpdate;
@@ -109,16 +103,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 }
             }
 
-            TileMapManager.ActiveMaps.ForEach(obj =>
-            {
-                if (!obj.Render)
-                    return;
-
-                foreach (var tile in obj.Controller.GetSelectionTilePool())
-                {
-                    Renderer.LoadTextureFromGameObj(tile);
-                }
-            });
+            //TileMapManager.ActiveMaps.ForEach(obj =>
+            //{
+            //    if (!obj.Render)
+            //        return;
+            //});
         }
 
         public void RemoveScene(int id)
@@ -239,27 +228,18 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             ObjectCulling._culledChunks = 0;
 
-            Stopwatch timer = new Stopwatch();
-            timer.Restart();
-
-            lock (TileMapManager._loadLock)
-            {
-                for(int i = 0; i < TileMapManager.ActiveMaps.Count; i++)
-                {
-                    for(int j = 0; j < TileMapManager.ActiveMaps[i].TileChunks.Count; j++)
-                    {
-                        ObjectCulling.CullTileChunk(TileMapManager.ActiveMaps[i].TileChunks[j]);
-                    }
-                }
-            }
+            //lock (TileMapManager._loadLock)
+            //{
+            //    for(int i = 0; i < TileMapManager.VisibleMapsList.Count; i++)
+            //    {
+            //        for (int j = 0; j < TileMapManager.VisibleMapsList[i].TileChunks.Count; j++)
+            //        {
+            //            ObjectCulling.CullTileChunk(TileMapManager.VisibleMapsList[i].TileChunks[j]);
+            //        }
+            //    }
+            //}
 
             ObjectCulling.CullListOfUnits(TileMapManager.Scene._units);
-            //Scenes.ForEach(scene =>
-            //{
-            //    ObjectCulling.CullListOfUnits(scene._units);
-            //});
-
-            //Console.WriteLine($"Cull completed in {timer.ElapsedTicks} ticks");
         }
 
         private void _onCameraUpdate(Camera cam)

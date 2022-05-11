@@ -1,8 +1,8 @@
-﻿using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public enum SetColorFlag 
     {
@@ -24,7 +24,8 @@ namespace MortalDungeon.Engine_Classes
     {
         public string Name = "";
 
-        public Vector3 Position { get; set; }
+        public Vector3 _position;
+        public Vector3 Position { get => _position; set => _position = value; }
 
         public List<BaseObject> BaseObjects = new List<BaseObject>();
 
@@ -112,23 +113,47 @@ namespace MortalDungeon.Engine_Classes
             Name = name;
         }
 
+        public virtual void SetPosition(float x, float y, float z)
+        {
+            for (int i = 0; i < BaseObjects.Count; i++)
+            {
+                BaseObjects[i].SetPosition(x - (_position.X - BaseObjects[i].Position.X), 
+                    y - (_position.Y - BaseObjects[i].Position.Y),
+                    z - (_position.Z - BaseObjects[i].Position.Z));
+            }
+
+            for (int i = 0; i < ParticleGenerators.Count; i++)
+            {
+                Vector3 deltaPos = Position - ParticleGenerators[i].Position;
+
+                ParticleGenerators[i].SetPosition(x - (_position.X - ParticleGenerators[i].Position.X),
+                    y - (_position.Y - ParticleGenerators[i].Position.Y),
+                    z - (_position.Z - ParticleGenerators[i].Position.Z));
+            }
+
+            _position.X = x;
+            _position.Y = y;
+            _position.Z = z;
+
+        }
+
         public virtual void SetPosition(Vector3 position) 
         {
-            BaseObjects.ForEach(obj =>
+            for(int i = 0; i < BaseObjects.Count; i++)
             {
-                Vector3 deltaPos = Position - obj.Position;
+                Vector3 deltaPos = Position - BaseObjects[i].Position;
 
-                obj.SetPosition(position - deltaPos);
-            });
+                BaseObjects[i].SetPosition(position - deltaPos);
+            }
 
-            ParticleGenerators.ForEach(particleGen =>
+            for(int i = 0; i < ParticleGenerators.Count; i++)
             {
-                Vector3 deltaPos = Position - particleGen.Position;
+                Vector3 deltaPos = Position - ParticleGenerators[i].Position;
 
-                particleGen.SetPosition(position - deltaPos);
-            });
+                ParticleGenerators[i].SetPosition(position - deltaPos);
+            }
 
-            Position = position;
+            _position = position;
         }
 
 
@@ -160,10 +185,11 @@ namespace MortalDungeon.Engine_Classes
 
         public virtual void Tick() 
         {
-            BaseObjects.ForEach(obj =>
+            int i;
+            for(i = 0; i < BaseObjects.Count; i++)
             {
-                obj._currentAnimation.Tick();
-            });
+                BaseObjects[i]._currentAnimation.Tick();
+            }
 
             if (_properyAnimationsToDestroy.Count > 0)
             {
@@ -175,16 +201,15 @@ namespace MortalDungeon.Engine_Classes
                 AddQueuedPropertyAnimations();
             }
 
-            PropertyAnimations.ForEach(anim =>
+            for(i = 0; i < PropertyAnimations.Count; i++)
             {
-                anim.Tick();
-            });
+                PropertyAnimations[i].Tick();
+            }
 
-
-            ParticleGenerators.ForEach(gen =>
+            for (i = 0; i < ParticleGenerators.Count; i++)
             {
-                gen.Tick();
-            });
+                ParticleGenerators[i].Tick();
+            }
         }
 
         public virtual void ScaleAll(float f) 
@@ -413,6 +438,11 @@ namespace MortalDungeon.Engine_Classes
             TimedHoverEvent(this);
         }
 
+        public virtual void OnTimedHover(GameObject obj)
+        {
+            TimedHoverEvent(obj);
+        }
+
         public virtual void OnMouseDown() 
         {
             MouseDown?.Invoke(this, null);
@@ -505,12 +535,10 @@ namespace MortalDungeon.Engine_Classes
                     {
                         Renderer.LoadTextureFromGameObj(item, nearest, generateMipMaps);
                     }
-
-                    Renderer.OnRender -= loadTex;
                 }
             };
 
-            Renderer.OnRender += loadTex;
+            Window.QueueToRenderCycle(loadTex);
         }
 
         public override bool Equals(object obj)

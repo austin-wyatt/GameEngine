@@ -1,16 +1,16 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MortalDungeon.Game.Objects.PropertyAnimations;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
+using Empyrean.Game.Objects.PropertyAnimations;
+using Empyrean.Game.Units;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public enum EnergyStates
     {

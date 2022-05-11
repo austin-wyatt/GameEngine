@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class TemplateSelfCast : Ability
     {
@@ -16,11 +16,11 @@ namespace MortalDungeon.Game.Abilities
         {
             CastingUnit = castingUnit;
 
-            CanTargetGround = false;
-            UnitTargetParams.Self = UnitCheckEnum.True;
-            UnitTargetParams.IsHostile = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
+            SelectionInfo.CanSelectTiles = false;
+            SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.True;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             //Name = "Self Cast";
 
@@ -34,27 +34,27 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
-            List<Unit> units = default, Tile position = null)
-        {
-            affectedTiles = new List<Tile> { CastingUnit.Info.TileMapPosition };
+        //public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+        //    List<Unit> units = default, Tile position = null)
+        //{
+        //    affectedTiles = new List<Tile> { CastingUnit.Info.TileMapPosition };
 
-            affectedUnits = new List<Unit> { CastingUnit };
-        }
+        //    affectedUnits = new List<Unit> { CastingUnit };
+        //}
 
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (!base.OnUnitClicked(unit))
-                return false;
+        //public override bool OnUnitClicked(Unit unit)
+        //{
+        //    if (!base.OnUnitClicked(unit))
+        //        return false;
 
-            if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
-            {
-                SelectedUnit = unit;
-                EnactEffect();
-            }
+        //    if (AffectedTiles.FindIndex(t => t.TilePoint == unit.Info.TileMapPosition) != -1)
+        //    {
+        //        SelectedUnit = unit;
+        //        EnactEffect();
+        //    }
 
-            return true;
-        }
+        //    return true;
+        //}
 
 
         public override void OnCast()

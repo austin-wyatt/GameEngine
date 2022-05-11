@@ -1,4 +1,4 @@
-﻿using MortalDungeon.Objects;
+﻿using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Drawing.Drawing2D;
 using System.Text;
 using System.Threading;
 
-namespace MortalDungeon.Engine_Classes.TextHandling
+namespace Empyrean.Engine_Classes.TextHandling
 {
     public static class TextBuilder
     {
@@ -114,8 +114,6 @@ namespace MortalDungeon.Engine_Classes.TextHandling
 
             void loadTex()
             {
-                Window.RenderEnd -= loadTex;
-
                 //int type = _textureType--;
 
                 try
@@ -126,9 +124,7 @@ namespace MortalDungeon.Engine_Classes.TextHandling
                 catch { }
             }
 
-            //Window.QueueToRenderCycle(loadTex);
-
-            Window.RenderEnd += loadTex;
+            Window.QueueToRenderCycle(loadTex);
 
             return dimensions;
         }

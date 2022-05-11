@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Units.AI
+namespace Empyrean.Game.Units.AI
 {
     class EndTurn : UnitAIAction
     {

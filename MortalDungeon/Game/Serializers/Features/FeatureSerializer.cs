@@ -1,6 +1,6 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Save;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Map;
+using Empyrean.Game.Save;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.IO;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     public static class FeatureSerializer
     {

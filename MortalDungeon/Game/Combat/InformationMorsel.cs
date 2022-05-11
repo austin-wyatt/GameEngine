@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Map;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Combat
+namespace Empyrean.Game.Combat
 {
     public class UnitMorsels
     {
@@ -96,8 +96,8 @@ namespace MortalDungeon.Game.Combat
                 BuffMorsels.Add(new BuffMorsel(buff));
             }
 
-            Health = unit.Info.Health;
-            Shields = unit.Info.CurrentShields;
+            Health = unit.GetResF(ResF.Health);
+            Shields = unit.GetResI(ResI.Shields);
             Alive = !unit.Info.Dead;
             Team = unit.AI.Team;
         }

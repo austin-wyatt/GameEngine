@@ -1,8 +1,9 @@
-﻿using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.UI;
-using MortalDungeon.Objects;
+﻿using Empyrean.Game.GameObjects;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.UI;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
@@ -10,7 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Rendering
+namespace Empyrean.Engine_Classes.Rendering
 {
     public static class RenderingConstants 
     {
@@ -41,10 +42,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
         private const int ObjectBufferCount = 7500;
         private const int instanceDataOffset = 40;
         public static float[] _instancedRenderArray = new float[ObjectBufferCount * instanceDataOffset];
-        private const int instanceDataLength = instanceDataOffset * sizeof(float);
+        private const int instanceDataLength = instanceDataOffset * FLOAT_SIZE;
 
         private const int particleDataOffset = 28;
-        private const int particleDataLength = particleDataOffset * sizeof(float);
+        private const int particleDataLength = particleDataOffset * FLOAT_SIZE;
 
         public static readonly List<Texture> _textures = new List<Texture>();
         public static readonly Dictionary<int, int> _loadedTextures = new Dictionary<int, int>();
@@ -65,6 +66,39 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static readonly Vector4 ClearColor = new Vector4(0.21f, 0.21f, 0.21f, 1);
 
         public static ViewportRectangle ViewportRectangle;
+
+        public static readonly string[] MATERIAL_SHADER_STRINGS = new string[]
+        {
+            "material[0].diffuse",
+            "material[0].specular",
+            "material[0].shininess",
+            "material[1].diffuse",
+            "material[1].specular",
+            "material[1].shininess",
+            "material[2].diffuse",
+            "material[2].specular",
+            "material[2].shininess",
+            "material[3].diffuse",
+            "material[3].specular",
+            "material[3].shininess",
+            "material[4].diffuse",
+            "material[4].specular",
+            "material[4].shininess",
+            "material[5].diffuse",
+            "material[5].specular",
+            "material[5].shininess",
+            "material[6].diffuse",
+            "material[6].specular",
+            "material[6].shininess",
+            "material[7].diffuse",
+            "material[7].specular",
+            "material[7].shininess",
+            "material[8].diffuse",
+            "material[8].specular",
+            "material[8].shininess",
+        };
+
+        const int FLOAT_SIZE = 4;
 
         static Renderer() { }
         public static void Initialize() //initialization of renderer
@@ -136,7 +170,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             if (setVertexData)
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-                GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * FLOAT_SIZE, Display.Vertices, BufferUsageHint.DynamicDraw);
                 GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0);
 
                 GL.BufferData(BufferTarget.ElementArrayBuffer, Display.VerticesDrawOrder.Length * sizeof(uint), Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
@@ -144,8 +178,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             if (setTextureData)
             {
-                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float));
-                GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * sizeof(float)); //Normal coordinate data
+                GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * FLOAT_SIZE);
+                GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * FLOAT_SIZE); //Normal coordinate data
                 Display.Material.Diffuse.Use(TextureUnit.Texture0);
             }
 
@@ -158,11 +192,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
             }
             if (setColor)
             {
-                Display.ShaderReference.SetVector4("aColor", obj.BaseFrame.InterpolatedColor);
+                Display.ShaderReference.SetVector4("aColor", ref obj.BaseFrame.InterpolatedColor);
             }
 
 
-            Display.ShaderReference.SetMatrix4("transform", transform);
+            Display.ShaderReference.SetMatrix4("transform", ref transform);
 
             //Display.ShaderReference.SetFloat("fMixPercent", obj._baseFrame.ColorProportion);
 
@@ -177,7 +211,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * FLOAT_SIZE, Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
 
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
@@ -185,23 +219,23 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             //Whenever this data is changed the instanceDataOffset parameter needs to be updated
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data
-            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * sizeof(float)); //Normal coordinate data
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * FLOAT_SIZE); //Texture coordinate data
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * FLOAT_SIZE); //Normal coordinate data
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedArrayBuffer);
 
             GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, instanceDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, instanceDataLength, 4 * sizeof(float));  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, instanceDataLength, 8 * sizeof(float));  //|
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, instanceDataLength, 12 * sizeof(float)); //|
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, instanceDataLength, 4 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, instanceDataLength, 8 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, instanceDataLength, 12 * FLOAT_SIZE); //|
 
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 16 * sizeof(float)); //Color data
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * sizeof(float)); //Camera enabled + spritesheet position + side lengths X and Y
-            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y + use second texture + mix percent
+            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 16 * FLOAT_SIZE); //Color data
+            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * FLOAT_SIZE); //Camera enabled + spritesheet position + side lengths X and Y
+            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * FLOAT_SIZE); //Spritesheet X + Spritesheet Y + use second texture + mix percent
 
-            GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + alpha threshold + primary texture target
-            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
-            GL.VertexAttribPointer(12, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Lighting parameters
+            GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * FLOAT_SIZE); //Inline thickness + outline thickness + alpha threshold + primary texture target
+            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * FLOAT_SIZE); //Inline color
+            GL.VertexAttribPointer(12, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * FLOAT_SIZE); //Lighting parameters
         }
 
         public static void PrepareParticleRenderFunc(RenderableObject Display)
@@ -211,23 +245,23 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
 
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * FLOAT_SIZE, Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
             GL.BufferData(BufferTarget.ElementArrayBuffer, Display.VerticesDrawOrder.Length * sizeof(uint), Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
 
 
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * FLOAT_SIZE); //Texture coordinate data
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedArrayBuffer);
 
             GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, particleDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, particleDataLength, 4 * sizeof(float));  //|
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, particleDataLength, 8 * sizeof(float));  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, particleDataLength, 12 * sizeof(float)); //|
+            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, particleDataLength, 4 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, particleDataLength, 8 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, particleDataLength, 12 * FLOAT_SIZE); //|
 
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, particleDataLength, 16 * sizeof(float)); //Color data
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, particleDataLength, 20 * sizeof(float)); //empty + spritesheet position + side lengths X and Y
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, particleDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, particleDataLength, 16 * FLOAT_SIZE); //Color data
+            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, particleDataLength, 20 * FLOAT_SIZE); //empty + spritesheet position + side lengths X and Y
+            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, particleDataLength, 24 * FLOAT_SIZE); //Spritesheet X + Spritesheet Y
         }
 
         public static void InsertDataIntoInstancedRenderArray(BaseObject obj, MultiTextureData renderingData, ref float[] _instancedRenderArray, ref int currIndex, int textureTarget)
@@ -267,6 +301,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _instancedRenderArray[currIndex++] = 0;
         }
 
+        private static ObjectPool<Dictionary<int, TextureUnit>> _usedTexturesPool = new ObjectPool<Dictionary<int, TextureUnit>>();
+        private static ObjectPool<Dictionary<Texture, TextureUnit>> _textureReferencesPool = new ObjectPool<Dictionary<Texture, TextureUnit>>();
         public static void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true) where T : GameObject
         {
             if (objects.Count == 0)
@@ -276,8 +312,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 return;
 
             Shaders.FAST_DEFAULT_SHADER.Use();
-
-            //Shaders.FAST_DEFAULT_SHADER.SetFloat("enableLighting", enableLighting ? 1 : 0);
 
             RenderableObject Display = null;
 
@@ -291,7 +325,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
                         break;
                     }
                 }
-                //Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
             }
             else
             {
@@ -301,18 +334,11 @@ namespace MortalDungeon.Engine_Classes.Rendering
             if (Display == null)
                 return;
 
-            //for (int i = 0; i < 8; i++)
-            //{
-            //    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{i}].specular", 2);
-            //    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{i}].diffuse", 2);
-            //    Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{i}].shininess", 16);
-            //}
-
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].specular", 0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt("material[0].diffuse", 0);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat("material[0].shininess", 16);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
 
             //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
@@ -323,8 +349,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             int count = 0;
             List<T> recursiveCallList = new List<T>();
 
-            Dictionary<int, TextureUnit> usedTextures = new Dictionary<int, TextureUnit>();
-            Dictionary<Texture, TextureUnit> textureReferences = new Dictionary<Texture, TextureUnit>();
+            Dictionary<int, TextureUnit> usedTextures = _usedTexturesPool.GetObject();
+            Dictionary<Texture, TextureUnit> textureReferences = _textureReferencesPool.GetObject();
 
             List<T> scissorCallList = new List<T>();
 
@@ -338,7 +364,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             void draw(int itemCount, ref float[] renderDataArray) 
             {
-                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
 
                 GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
 
@@ -388,10 +414,12 @@ namespace MortalDungeon.Engine_Classes.Rendering
                     }
                     else
                     {
-                        int objCount = 0;
-                        BaseObject[] baseObjects = new BaseObject[objects[i].BaseObjects.Count];
-                        int[] texIds = new int[objects[i].BaseObjects.Count];
                         bool multipleBaseObjects = objects[i].BaseObjects.Count > 1;
+
+                        if (multipleBaseObjects)
+                        {
+                            throw new Exception("Multiple base objects");
+                        }
 
                         for (int j = 0; j < objects[i].BaseObjects.Count; j++)
                         {
@@ -406,8 +434,6 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                                 obj = objects[i].BaseObjects[j];
                                 texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
-
-                                texIds[j] = texId;
 
                                 if (texId != currTexture)
                                 {
@@ -427,55 +453,25 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                                             int texIndex = (int)currentTextureUnit - 33984;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{texIndex}].diffuse", texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{texIndex}].specular", texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{texIndex}].shininess", 16);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                             currentTextureUnit++;
                                         }
                                     }
                                 }
-                                baseObjects[j] = objects[i].BaseObjects[j];
-
-                                objCount++;
-
-                                if(!multipleBaseObjects)
-                                {
-                                    if (count == ObjectBufferCount)
-                                    {
-                                        recursiveCallList.Add(objects[i]);
-                                    }
-                                    else
-                                    {
-                                        InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
-
-                                        count++;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (multipleBaseObjects)
-                        {
-                            if (objCount == objects[i].BaseObjects.Count)
-                            {
-                                if (count + baseObjects.Length >= ObjectBufferCount)
+                                
+                                if (count == ObjectBufferCount)
                                 {
                                     recursiveCallList.Add(objects[i]);
                                 }
                                 else
                                 {
-                                    for (int k = 0; k < baseObjects.Length; k++)
-                                    {
-                                        InsertDataIntoInstancedRenderArray(baseObjects[k], objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texIds[k]] - TextureUnit.Texture0));
+                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
 
-                                        count++;
-                                    }
+                                    count++;
                                 }
-                            }
-                            else
-                            {
-                                recursiveCallList.Add(objects[i]);
                             }
                         }
                     }
@@ -491,7 +487,819 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
             }
+
+            usedTextures.Clear();
+            _usedTexturesPool.FreeObject(ref usedTextures);
+
+            textureReferences.Clear();
+            _textureReferencesPool.FreeObject(ref textureReferences);
         }
+
+        #region render objects instanced generic copies
+        #region game object
+        private static ObjectPool<List<GameObject>> _gameObjectListPool = new ObjectPool<List<GameObject>>();
+        public static void RenderObjectsInstancedGeneric(List<GameObject> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        {
+            if (objects.Count == 0)
+                return;
+
+            if (objects[0] == null)
+                return;
+
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+            RenderableObject Display = null;
+
+            if (display == null)
+            {
+                for (int i = 0; i < objects.Count; i++)
+                {
+                    if (objects[i].TextureLoaded && objects[i].BaseObjects.Count > 0)
+                    {
+                        Display = objects[i].BaseObjects[0]._currentAnimation.CurrentFrame;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Display = display;
+            }
+
+            if (Display == null)
+                return;
+
+            int currTexture = Display.Textures.TextureIds[0];
+            Display.Material.Diffuse.Use(TextureUnit.Texture0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+
+            //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
+
+            PrepareInstancedRenderFunc(Display);
+
+            int currIndex = 0;
+
+            int count = 0;
+            List<GameObject> recursiveCallList = _gameObjectListPool.GetObject();
+
+            Dictionary<int, TextureUnit> usedTextures = _usedTexturesPool.GetObject();
+            Dictionary<Texture, TextureUnit> textureReferences = _textureReferencesPool.GetObject();
+
+            List<GameObject> scissorCallList = _gameObjectListPool.GetObject();
+
+            usedTextures.Add(currTexture, TextureUnit.Texture0);
+            textureReferences.Add(Display.Material.Diffuse, TextureUnit.Texture0);
+
+            BaseObject obj;
+            int texId;
+
+            TextureUnit currentTextureUnit = TextureUnit.Texture1;
+
+            void draw(int itemCount, ref float[] renderDataArray)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
+
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
+
+                DrawCount++;
+                ObjectsDrawn += itemCount;
+            }
+
+            for (int i = 0; i < objects.Count; i++)
+            {
+                if (objects[i] != null && objects[i].TextureLoaded && objects[i].Render && !objects[i].Cull)
+                {
+                    if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag)
+                    {
+                        draw(count, ref _instancedRenderDataArray);
+                        count = 0;
+                        currIndex = 0;
+
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+
+                        ScissorData scissorData = scissorCallList[^1].ScissorData;
+                        GL.Scissor(
+                            (int)((float)(scissorData.X) / WindowConstants.ClientSize.X * ViewportRectangle.Width) + ViewportRectangle.X,
+                            (int)((float)(scissorData.Y) / WindowConstants.ClientSize.Y * ViewportRectangle.Height) + ViewportRectangle.Y,
+                            (int)((float)scissorData.Width / WindowConstants.ClientSize.X * ViewportRectangle.Width),
+                            (int)((float)scissorData.Height / WindowConstants.ClientSize.Y * ViewportRectangle.Height));
+                        GL.Enable(EnableCap.ScissorTest);
+
+                        textureReferences.Clear();
+                        usedTextures.Clear();
+
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+
+                        currentTextureUnit = TextureUnit.Texture0;
+                        currTexture = int.MaxValue;
+
+                        GL.Disable(EnableCap.ScissorTest);
+
+                        scissorCallList.Clear();
+
+                        EnableInstancedShaderAttributes();
+                    }
+                    else if (objects[i].ScissorData._scissorFlag)
+                    {
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+                    }
+                    else
+                    {
+                        bool multipleBaseObjects = objects[i].BaseObjects.Count > 1;
+
+                        if (multipleBaseObjects)
+                        {
+                            throw new Exception("Multiple base objects");
+                        }
+
+                        for (int j = 0; j < objects[i].BaseObjects.Count; j++)
+                        {
+                            if (objects[i].BaseObjects[j].Render)
+                            {
+                                if (objects[i].BaseObjects[j].BaseFrame.VerticeType != Display.VerticeType)
+                                {
+                                    if (!multipleBaseObjects)
+                                        recursiveCallList.Add(objects[i]);
+                                    continue;
+                                }
+
+                                obj = objects[i].BaseObjects[j];
+                                texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
+
+                                if (texId != currTexture)
+                                {
+                                    if (!usedTextures.ContainsKey(texId))
+                                    {
+                                        if (currentTextureUnit > TextureUnit.Texture7)
+                                        {
+                                            recursiveCallList.Add(objects[i]);
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            usedTextures.Add(texId, currentTextureUnit);
+                                            textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
+
+                                            obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
+
+                                            int texIndex = (int)currentTextureUnit - 33984;
+
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+
+                                            currentTextureUnit++;
+                                        }
+                                    }
+                                }
+
+                                if (count == ObjectBufferCount)
+                                {
+                                    recursiveCallList.Add(objects[i]);
+                                }
+                                else
+                                {
+                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
+
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            draw(count, ref _instancedRenderDataArray);
+
+            DisableInstancedShaderAttributes();
+
+
+            if (recursiveCallList.Count > 0)
+            {
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+            }
+
+            usedTextures.Clear();
+            _usedTexturesPool.FreeObject(ref usedTextures);
+
+            textureReferences.Clear();
+            _textureReferencesPool.FreeObject(ref textureReferences);
+
+            recursiveCallList.Clear();
+            _gameObjectListPool.FreeObject(ref recursiveCallList);
+
+            scissorCallList.Clear();
+            _gameObjectListPool.FreeObject(ref scissorCallList);
+        }
+        #endregion
+
+        #region UI object
+        private static ObjectPool<List<UIObject>> _uiObjectListPool = new ObjectPool<List<UIObject>>();
+        public static void RenderObjectsInstancedGeneric(List<UIObject> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        {
+            if (objects.Count == 0)
+                return;
+
+            if (objects[0] == null)
+                return;
+
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+            RenderableObject Display = null;
+
+            if (display == null)
+            {
+                for (int i = 0; i < objects.Count; i++)
+                {
+                    if (objects[i].TextureLoaded && objects[i].BaseObjects.Count > 0)
+                    {
+                        Display = objects[i].BaseObjects[0]._currentAnimation.CurrentFrame;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Display = display;
+            }
+
+            if (Display == null)
+                return;
+
+            int currTexture = Display.Textures.TextureIds[0];
+            Display.Material.Diffuse.Use(TextureUnit.Texture0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+
+            //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
+
+            PrepareInstancedRenderFunc(Display);
+
+            int currIndex = 0;
+
+            int count = 0;
+            List<UIObject> recursiveCallList = _uiObjectListPool.GetObject();
+
+            Dictionary<int, TextureUnit> usedTextures = _usedTexturesPool.GetObject();
+            Dictionary<Texture, TextureUnit> textureReferences = _textureReferencesPool.GetObject();
+
+            List<UIObject> scissorCallList = _uiObjectListPool.GetObject();
+
+            usedTextures.Add(currTexture, TextureUnit.Texture0);
+            textureReferences.Add(Display.Material.Diffuse, TextureUnit.Texture0);
+
+            BaseObject obj;
+            int texId;
+
+            TextureUnit currentTextureUnit = TextureUnit.Texture1;
+
+            void draw(int itemCount, ref float[] renderDataArray)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
+
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
+
+                DrawCount++;
+                ObjectsDrawn += itemCount;
+            }
+
+            for (int i = 0; i < objects.Count; i++)
+            {
+                if (objects[i] != null && objects[i].TextureLoaded && objects[i].Render && !objects[i].Cull)
+                {
+                    if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag)
+                    {
+                        draw(count, ref _instancedRenderDataArray);
+                        count = 0;
+                        currIndex = 0;
+
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+
+                        ScissorData scissorData = scissorCallList[^1].ScissorData;
+                        GL.Scissor(
+                            (int)((float)(scissorData.X) / WindowConstants.ClientSize.X * ViewportRectangle.Width) + ViewportRectangle.X,
+                            (int)((float)(scissorData.Y) / WindowConstants.ClientSize.Y * ViewportRectangle.Height) + ViewportRectangle.Y,
+                            (int)((float)scissorData.Width / WindowConstants.ClientSize.X * ViewportRectangle.Width),
+                            (int)((float)scissorData.Height / WindowConstants.ClientSize.Y * ViewportRectangle.Height));
+                        GL.Enable(EnableCap.ScissorTest);
+
+                        textureReferences.Clear();
+                        usedTextures.Clear();
+
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+
+                        currentTextureUnit = TextureUnit.Texture0;
+                        currTexture = int.MaxValue;
+
+                        GL.Disable(EnableCap.ScissorTest);
+
+                        scissorCallList.Clear();
+
+                        EnableInstancedShaderAttributes();
+                    }
+                    else if (objects[i].ScissorData._scissorFlag)
+                    {
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+                    }
+                    else
+                    {
+                        bool multipleBaseObjects = objects[i].BaseObjects.Count > 1;
+
+                        if (multipleBaseObjects)
+                        {
+                            throw new Exception("Multiple base objects");
+                        }
+
+                        for (int j = 0; j < objects[i].BaseObjects.Count; j++)
+                        {
+                            if (objects[i].BaseObjects[j].Render)
+                            {
+                                if (objects[i].BaseObjects[j].BaseFrame.VerticeType != Display.VerticeType)
+                                {
+                                    if (!multipleBaseObjects)
+                                        recursiveCallList.Add(objects[i]);
+                                    continue;
+                                }
+
+                                obj = objects[i].BaseObjects[j];
+                                texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
+
+                                if (texId != currTexture)
+                                {
+                                    if (!usedTextures.ContainsKey(texId))
+                                    {
+                                        if (currentTextureUnit > TextureUnit.Texture7)
+                                        {
+                                            recursiveCallList.Add(objects[i]);
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            usedTextures.Add(texId, currentTextureUnit);
+                                            textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
+
+                                            obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
+
+                                            int texIndex = (int)currentTextureUnit - 33984;
+
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+
+                                            currentTextureUnit++;
+                                        }
+                                    }
+                                }
+
+                                if (count == ObjectBufferCount)
+                                {
+                                    recursiveCallList.Add(objects[i]);
+                                }
+                                else
+                                {
+                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
+
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            draw(count, ref _instancedRenderDataArray);
+
+            DisableInstancedShaderAttributes();
+
+
+            if (recursiveCallList.Count > 0)
+            {
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+            }
+
+            usedTextures.Clear();
+            _usedTexturesPool.FreeObject(ref usedTextures);
+
+            textureReferences.Clear();
+            _textureReferencesPool.FreeObject(ref textureReferences);
+
+            recursiveCallList.Clear();
+            _uiObjectListPool.FreeObject(ref recursiveCallList);
+
+            scissorCallList.Clear();
+            _uiObjectListPool.FreeObject(ref scissorCallList);
+        }
+        #endregion
+
+        #region base tile
+        private static ObjectPool<List<BaseTile>> _baseTileListPool = new ObjectPool<List<BaseTile>>();
+        public static void RenderObjectsInstancedGeneric(List<BaseTile> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        {
+            if (objects.Count == 0)
+                return;
+
+            if (objects[0] == null)
+                return;
+
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+            RenderableObject Display = null;
+
+            if (display == null)
+            {
+                for (int i = 0; i < objects.Count; i++)
+                {
+                    if (objects[i].TextureLoaded && objects[i].BaseObjects.Count > 0)
+                    {
+                        Display = objects[i].BaseObjects[0]._currentAnimation.CurrentFrame;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Display = display;
+            }
+
+            if (Display == null)
+                return;
+
+            int currTexture = Display.Textures.TextureIds[0];
+            Display.Material.Diffuse.Use(TextureUnit.Texture0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+
+            //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
+
+            PrepareInstancedRenderFunc(Display);
+
+            int currIndex = 0;
+
+            int count = 0;
+            List<BaseTile> recursiveCallList = _baseTileListPool.GetObject();
+
+            Dictionary<int, TextureUnit> usedTextures = _usedTexturesPool.GetObject();
+            Dictionary<Texture, TextureUnit> textureReferences = _textureReferencesPool.GetObject();
+
+            List<BaseTile> scissorCallList = _baseTileListPool.GetObject();
+
+            usedTextures.Add(currTexture, TextureUnit.Texture0);
+            textureReferences.Add(Display.Material.Diffuse, TextureUnit.Texture0);
+
+            BaseObject obj;
+            int texId;
+
+            TextureUnit currentTextureUnit = TextureUnit.Texture1;
+
+            void draw(int itemCount, ref float[] renderDataArray)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
+
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
+
+                DrawCount++;
+                ObjectsDrawn += itemCount;
+            }
+
+            for (int i = 0; i < objects.Count; i++)
+            {
+                if (objects[i] != null && objects[i].TextureLoaded && objects[i].Render && !objects[i].Cull)
+                {
+                    if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag)
+                    {
+                        draw(count, ref _instancedRenderDataArray);
+                        count = 0;
+                        currIndex = 0;
+
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+
+                        ScissorData scissorData = scissorCallList[^1].ScissorData;
+                        GL.Scissor(
+                            (int)((float)(scissorData.X) / WindowConstants.ClientSize.X * ViewportRectangle.Width) + ViewportRectangle.X,
+                            (int)((float)(scissorData.Y) / WindowConstants.ClientSize.Y * ViewportRectangle.Height) + ViewportRectangle.Y,
+                            (int)((float)scissorData.Width / WindowConstants.ClientSize.X * ViewportRectangle.Width),
+                            (int)((float)scissorData.Height / WindowConstants.ClientSize.Y * ViewportRectangle.Height));
+                        GL.Enable(EnableCap.ScissorTest);
+
+                        textureReferences.Clear();
+                        usedTextures.Clear();
+
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+
+                        currentTextureUnit = TextureUnit.Texture0;
+                        currTexture = int.MaxValue;
+
+                        GL.Disable(EnableCap.ScissorTest);
+
+                        scissorCallList.Clear();
+
+                        EnableInstancedShaderAttributes();
+                    }
+                    else if (objects[i].ScissorData._scissorFlag)
+                    {
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+                    }
+                    else
+                    {
+                        bool multipleBaseObjects = objects[i].BaseObjects.Count > 1;
+
+                        if (multipleBaseObjects)
+                        {
+                            throw new Exception("Multiple base objects");
+                        }
+
+                        for (int j = 0; j < objects[i].BaseObjects.Count; j++)
+                        {
+                            if (objects[i].BaseObjects[j].Render)
+                            {
+                                if (objects[i].BaseObjects[j].BaseFrame.VerticeType != Display.VerticeType)
+                                {
+                                    if (!multipleBaseObjects)
+                                        recursiveCallList.Add(objects[i]);
+                                    continue;
+                                }
+
+                                obj = objects[i].BaseObjects[j];
+                                texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
+
+                                if (texId != currTexture)
+                                {
+                                    if (!usedTextures.ContainsKey(texId))
+                                    {
+                                        if (currentTextureUnit > TextureUnit.Texture7)
+                                        {
+                                            recursiveCallList.Add(objects[i]);
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            usedTextures.Add(texId, currentTextureUnit);
+                                            textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
+
+                                            obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
+
+                                            int texIndex = (int)currentTextureUnit - 33984;
+
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+
+                                            currentTextureUnit++;
+                                        }
+                                    }
+                                }
+
+                                if (count == ObjectBufferCount)
+                                {
+                                    recursiveCallList.Add(objects[i]);
+                                }
+                                else
+                                {
+                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
+
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            draw(count, ref _instancedRenderDataArray);
+
+            DisableInstancedShaderAttributes();
+
+
+            if (recursiveCallList.Count > 0)
+            {
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+            }
+
+            usedTextures.Clear();
+            _usedTexturesPool.FreeObject(ref usedTextures);
+
+            textureReferences.Clear();
+            _textureReferencesPool.FreeObject(ref textureReferences);
+
+            recursiveCallList.Clear();
+            _baseTileListPool.FreeObject(ref recursiveCallList);
+
+            scissorCallList.Clear();
+            _baseTileListPool.FreeObject(ref scissorCallList);
+        }
+        #endregion
+
+        #region unit
+        private static ObjectPool<List<Unit>> _unitListPool = new ObjectPool<List<Unit>>();
+        public static void RenderObjectsInstancedGeneric(List<Unit> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        {
+            if (objects.Count == 0)
+                return;
+
+            if (objects[0] == null)
+                return;
+
+            Shaders.FAST_DEFAULT_SHADER.Use();
+
+            RenderableObject Display = null;
+
+            if (display == null)
+            {
+                for (int i = 0; i < objects.Count; i++)
+                {
+                    if (objects[i].TextureLoaded && objects[i].BaseObjects.Count > 0)
+                    {
+                        Display = objects[i].BaseObjects[0]._currentAnimation.CurrentFrame;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Display = display;
+            }
+
+            if (Display == null)
+                return;
+
+            int currTexture = Display.Textures.TextureIds[0];
+            Display.Material.Diffuse.Use(TextureUnit.Texture0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+
+            //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
+
+            PrepareInstancedRenderFunc(Display);
+
+            int currIndex = 0;
+
+            int count = 0;
+            List<Unit> recursiveCallList = _unitListPool.GetObject();
+
+            Dictionary<int, TextureUnit> usedTextures = _usedTexturesPool.GetObject();
+            Dictionary<Texture, TextureUnit> textureReferences = _textureReferencesPool.GetObject();
+
+            List<Unit> scissorCallList = _unitListPool.GetObject();
+
+            usedTextures.Add(currTexture, TextureUnit.Texture0);
+            textureReferences.Add(Display.Material.Diffuse, TextureUnit.Texture0);
+
+            BaseObject obj;
+            int texId;
+
+            TextureUnit currentTextureUnit = TextureUnit.Texture1;
+
+            void draw(int itemCount, ref float[] renderDataArray)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
+
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
+
+                DrawCount++;
+                ObjectsDrawn += itemCount;
+            }
+
+            for (int i = 0; i < objects.Count; i++)
+            {
+                if (objects[i] != null && objects[i].TextureLoaded && objects[i].Render && !objects[i].Cull)
+                {
+                    if (objects[i].ScissorData.Scissor && objects[i].ScissorData._scissorFlag)
+                    {
+                        draw(count, ref _instancedRenderDataArray);
+                        count = 0;
+                        currIndex = 0;
+
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+
+                        ScissorData scissorData = scissorCallList[^1].ScissorData;
+                        GL.Scissor(
+                            (int)((float)(scissorData.X) / WindowConstants.ClientSize.X * ViewportRectangle.Width) + ViewportRectangle.X,
+                            (int)((float)(scissorData.Y) / WindowConstants.ClientSize.Y * ViewportRectangle.Height) + ViewportRectangle.Y,
+                            (int)((float)scissorData.Width / WindowConstants.ClientSize.X * ViewportRectangle.Width),
+                            (int)((float)scissorData.Height / WindowConstants.ClientSize.Y * ViewportRectangle.Height));
+                        GL.Enable(EnableCap.ScissorTest);
+
+                        textureReferences.Clear();
+                        usedTextures.Clear();
+
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+
+                        currentTextureUnit = TextureUnit.Texture0;
+                        currTexture = int.MaxValue;
+
+                        GL.Disable(EnableCap.ScissorTest);
+
+                        scissorCallList.Clear();
+
+                        EnableInstancedShaderAttributes();
+                    }
+                    else if (objects[i].ScissorData._scissorFlag)
+                    {
+                        scissorCallList.Add(objects[i]);
+                        objects[i].ScissorData._scissorFlag = false;
+                    }
+                    else
+                    {
+                        bool multipleBaseObjects = objects[i].BaseObjects.Count > 1;
+
+                        if (multipleBaseObjects)
+                        {
+                            throw new Exception("Multiple base objects");
+                        }
+
+                        for (int j = 0; j < objects[i].BaseObjects.Count; j++)
+                        {
+                            if (objects[i].BaseObjects[j].Render)
+                            {
+                                if (objects[i].BaseObjects[j].BaseFrame.VerticeType != Display.VerticeType)
+                                {
+                                    if (!multipleBaseObjects)
+                                        recursiveCallList.Add(objects[i]);
+                                    continue;
+                                }
+
+                                obj = objects[i].BaseObjects[j];
+                                texId = obj._currentAnimation.CurrentFrame.Textures.TextureIds[0];
+
+                                if (texId != currTexture)
+                                {
+                                    if (!usedTextures.ContainsKey(texId))
+                                    {
+                                        if (currentTextureUnit > TextureUnit.Texture7)
+                                        {
+                                            recursiveCallList.Add(objects[i]);
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            usedTextures.Add(texId, currentTextureUnit);
+                                            textureReferences.Add(obj._currentAnimation.CurrentFrame.Material.Diffuse, currentTextureUnit);
+
+                                            obj._currentAnimation.CurrentFrame.Material.Diffuse.Use(currentTextureUnit);
+
+                                            int texIndex = (int)currentTextureUnit - 33984;
+
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+
+                                            currentTextureUnit++;
+                                        }
+                                    }
+                                }
+
+                                if (count == ObjectBufferCount)
+                                {
+                                    recursiveCallList.Add(objects[i]);
+                                }
+                                else
+                                {
+                                    InsertDataIntoInstancedRenderArray(obj, objects[i].MultiTextureData, ref _instancedRenderDataArray, ref currIndex, (usedTextures[texId] - TextureUnit.Texture0));
+
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            draw(count, ref _instancedRenderDataArray);
+
+            DisableInstancedShaderAttributes();
+
+
+            if (recursiveCallList.Count > 0)
+            {
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+            }
+
+            usedTextures.Clear();
+            _usedTexturesPool.FreeObject(ref usedTextures);
+
+            textureReferences.Clear();
+            _textureReferencesPool.FreeObject(ref textureReferences);
+
+            recursiveCallList.Clear();
+            _unitListPool.FreeObject(ref recursiveCallList);
+
+            scissorCallList.Clear();
+            _unitListPool.FreeObject(ref scissorCallList);
+        }
+        #endregion
+        #endregion
 
         public static void RenderInstancedRenderData<T>(List<T> data) where T : InstancedRenderData
         {
@@ -515,9 +1323,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                     int texIndex = (int)Tex.Value - 33984;
                     //int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
-                    data[i].Shader.SetInt($"material[{texIndex}].diffuse", texIndex);
-                    data[i].Shader.SetInt($"material[{texIndex}].specular", 16);
-                    data[i].Shader.SetFloat($"material[{texIndex}].shininess", 16);
+                    data[i].Shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                    data[i].Shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], 16);
+                    data[i].Shader.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
                 }
 
                 data[i].EnableInstancedShaderAttributes();
@@ -603,7 +1411,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             });
 
 
-            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.StreamDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, count * instanceDataOffset * FLOAT_SIZE, _instancedRenderArray, BufferUsageHint.StreamDraw);
 
 
             GL.DrawArraysInstanced(PrimitiveType.TriangleFan, 0, 4, count);
@@ -681,8 +1489,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.EnableVertexAttribArray(0);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * g_quad_vertex_buffer_data.Length, g_quad_vertex_buffer_data, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.BufferData(BufferTarget.ArrayBuffer, FLOAT_SIZE * g_quad_vertex_buffer_data.Length, g_quad_vertex_buffer_data, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * FLOAT_SIZE, 0);
             GL.EnableVertexAttribArray(0);
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
@@ -769,7 +1577,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 }
             }
 
-            GL.BufferData(BufferTarget.ArrayBuffer, count * particleDataOffset * sizeof(float), _instancedRenderArray, BufferUsageHint.DynamicDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, count * particleDataOffset * FLOAT_SIZE, _instancedRenderArray, BufferUsageHint.DynamicDraw);
             GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), count);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
@@ -833,8 +1641,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, skyboxVertices.Length * sizeof(float), skyboxVertices, BufferUsageHint.DynamicDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.BufferData(BufferTarget.ArrayBuffer, skyboxVertices.Length * FLOAT_SIZE, skyboxVertices, BufferUsageHint.DynamicDraw);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * FLOAT_SIZE, 0);
 
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture3D, map.Handle);
@@ -852,7 +1660,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             Shaders.TEXT_SHADER.Use();
 
             const int textInstanceDataOffset = 28;
-            const int textInstanceDataLength = textInstanceDataOffset * sizeof(float);
+            const int textInstanceDataLength = textInstanceDataOffset * FLOAT_SIZE;
 
 
             RenderableObject Display = objects[0].BaseObjects[0]._currentAnimation.CurrentFrame;
@@ -880,26 +1688,26 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             #region prepare for render
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedVertexBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * FLOAT_SIZE, Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, Display.VerticesDrawOrder.Length * sizeof(uint), Display.VerticesDrawOrder, BufferUsageHint.DynamicDraw);
 
             //Whenever this data is changed the instanceDataOffset parameter needs to be updated
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * sizeof(float)); //Texture coordinate data
-            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * sizeof(float)); //Normal coordinate data
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * FLOAT_SIZE); //Texture coordinate data
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * FLOAT_SIZE); //Normal coordinate data
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedArrayBuffer);
 
             GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 4 * sizeof(float));  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 8 * sizeof(float));  //|
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 12 * sizeof(float)); //|
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 4 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 8 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 12 * FLOAT_SIZE); //|
 
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 16 * sizeof(float)); //Color data
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 20 * sizeof(float)); //spritesheet position, alpha threshold
-            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 24 * sizeof(float)); //scissor X, scissor Y, scissow Width, scissor Height
+            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 16 * FLOAT_SIZE); //Color data
+            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 20 * FLOAT_SIZE); //spritesheet position, alpha threshold
+            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, textInstanceDataLength, 24 * FLOAT_SIZE); //scissor X, scissor Y, scissow Width, scissor Height
             #endregion
 
             void InsertDataIntoArray(BaseObject obj, Letter letter, ref float[] _instancedRenderArray, ref int currIndex) 
@@ -934,7 +1742,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             void draw(int itemCount, float[] renderDataArray)
             {
-                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * textInstanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * textInstanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
 
                 GL.DrawElementsInstanced(PrimitiveType.Triangles, Display.VerticesDrawOrder.Length, DrawElementsType.UnsignedInt, new IntPtr(), itemCount);
 
@@ -1113,38 +1921,30 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 }
             }
         }
-        public static void LoadTextureFromUIObject<T>(T UIObj) where T : UIObject 
+        public static void LoadTextureFromUIObject<T>(T UIObj, bool shouldLock = true) where T : UIObject 
         {
-            UIObj.BaseObjects.ForEach(obj => 
-            {
-                if (UIObj._canLoadTexture)
-                {
-                    LoadTextureFromBaseObject(obj, true);
-                }
-            });
-            UIObj.TextObjects.ForEach(obj =>
-            {
-                for (int i = 0; i < obj.Letters.Count; i++)
-                {
-                    LoadTextureFromBaseObject(obj.Letters[i].BaseObjects[0], false, false);
-                    obj.Letters[i].SetTextureLoaded(true);
-                }
-            });
-
             object lockObj = new object();
 
-            if(UIObj.ManagerHandle != null)
+            if(shouldLock && UIObj.ManagerHandle != null)
             {
                 lockObj = UIObj.ManagerHandle._UILock;
             }
 
-            lock (lockObj)
-            {
-                for(int i = 0; i < UIObj.Children.Count; i++)
+            //lock (lockObj)
+            //{
+                for (int i = 0; i < UIObj.BaseObjects.Count; i++)
+                {
+                    if (UIObj._canLoadTexture)
+                    {
+                        LoadTextureFromBaseObject(UIObj.BaseObjects[i], true);
+                    }
+                }
+
+                for (int i = 0; i < UIObj.Children.Count; i++)
                 {
                     LoadTextureFromUIObject(UIObj.Children[i]);
                 }
-            }
+            //}
 
             if (UIObj._canLoadTexture)
             {

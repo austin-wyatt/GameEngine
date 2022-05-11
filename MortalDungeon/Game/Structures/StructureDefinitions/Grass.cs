@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Structures
+namespace Empyrean.Game.Structures
 {
     class Grass : Structure
     {

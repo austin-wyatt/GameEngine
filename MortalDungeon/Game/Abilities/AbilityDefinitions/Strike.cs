@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class Strike : TemplateRangedSingleTarget
     {
@@ -18,8 +18,8 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.Slashing;
             Range = range;
             CastingUnit = castingUnit;
-            Damage = damage;
-            ActionCost = 2;
+
+            CastRequirements.AddResourceCost(ResF.ActionEnergy, 2, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 
             CastingMethod |= CastingMethod.Weapon | CastingMethod.PhysicalDexterity | CastingMethod.BruteForce;
 
@@ -32,7 +32,6 @@ namespace MortalDungeon.Game.Abilities
         {
             DamageInstance instance = new DamageInstance();
 
-            instance.Damage.Add(DamageType, GetDamage());
 
             return instance;
         }

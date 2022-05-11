@@ -1,11 +1,12 @@
-﻿using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Map
+namespace Empyrean.Game.Map
 {
     [XmlType(TypeName = "FP")]
     [Serializable]
@@ -14,9 +15,11 @@ namespace MortalDungeon.Game.Map
         public int X;
         public int Y;
 
-
-        [XmlElement("FPv")]
+        [XmlIgnore]
         public bool _visited;
+
+        public static ObjectPool<List<FeaturePoint>> FeaturePointListPool = new ObjectPool<List<FeaturePoint>>();
+        public static ObjectPool<FeaturePoint> FeaturePointPool = new ObjectPool<FeaturePoint>(500);
 
         public FeaturePoint(int x, int y)
         {
@@ -28,22 +31,32 @@ namespace MortalDungeon.Game.Map
 
         public FeaturePoint(TilePoint tilePoint)
         {
-            Vector2i coords = FeatureEquation.PointToMapCoords(tilePoint);
+            X = 0;
+            Y = 0;
 
-            X = coords.X;
-            Y = coords.Y;
+            FeatureEquation.PointToMapCoords(tilePoint, ref X, ref Y);
 
             _visited = false;
         }
 
         public FeaturePoint(Tile tile)
         {
-            this = new FeaturePoint(tile.TilePoint);
+            X = 0;
+            Y = 0;
+
+            FeatureEquation.PointToMapCoords(tile.TilePoint, ref X, ref Y);
+
+            _visited = false;
         }
 
         public FeaturePoint(BaseTile tile)
         {
-            this = new FeaturePoint(tile.TilePoint);
+            X = 0;
+            Y = 0;
+
+            FeatureEquation.PointToMapCoords(tile.TilePoint, ref X, ref Y);
+
+            _visited = false;
         }
 
         public FeaturePoint(Vector2i coords)
@@ -67,6 +80,13 @@ namespace MortalDungeon.Game.Map
 
         public static FeaturePoint operator -(FeaturePoint a, FeaturePoint b) => new FeaturePoint(a.X - b.X, a.Y - b.Y);
         public static FeaturePoint operator +(FeaturePoint a, FeaturePoint b) => new FeaturePoint(a.X + b.X, a.Y + b.Y);
+
+        public void Initialize(Tile tile)
+        {
+            FeatureEquation.PointToMapCoords(tile.TilePoint, ref X, ref Y);
+
+            _visited = false;
+        }
 
         public override bool Equals(object obj)
         {
@@ -95,7 +115,37 @@ namespace MortalDungeon.Game.Map
 
         public TileMapPoint ToTileMapPoint()
         {
-            return FeatureEquation.FeaturePointToTileMapCoords(this);
+            return FeatureEquation.FeaturePointToTileMapCoords(ref this);
+        }
+
+        public Vector2i ToChunkPosition()
+        {
+            Vector2i chunkPosition = new Vector2i(X, Y);
+
+            int tileMapChunkWidth = TileChunk.DefaultChunkWidth * TileMap.ChunksPerTileMap.X;
+            int tileMapChunkHeight = TileChunk.DefaultChunkHeight * TileMap.ChunksPerTileMap.Y;
+
+            if (X < 0)
+            {
+                chunkPosition.X = GMath.NegMod(X, tileMapChunkHeight);
+            }
+            if (Y < 0)
+            {
+                chunkPosition.Y = GMath.NegMod(Y, tileMapChunkHeight);
+            }
+
+            chunkPosition.X %= tileMapChunkWidth;
+            chunkPosition.Y %= tileMapChunkHeight;
+
+            chunkPosition.X /= TileChunk.DefaultChunkWidth;
+            chunkPosition.Y /= TileChunk.DefaultChunkHeight;
+
+            return chunkPosition;
+        }
+
+        public void ToTileMapPoint(ref TileMapPoint point)
+        {
+            FeatureEquation.FeaturePointToTileMapCoords(ref this, ref point);
         }
 
         public TilePoint ToTilePoint()
@@ -138,6 +188,29 @@ namespace MortalDungeon.Game.Map
                 || (float)points[j].Y < point.Y && (float)points[i].Y >= point.Y)
                 {
                     if (points[i].X + (float)((float)point.Y - points[i].Y) / ((float)points[j].Y - points[i].Y) * ((float)points[j].X - points[i].X) < point.X)
+                    {
+                        oddNodes = !oddNodes;
+                    }
+                }
+
+                j = i;
+            }
+
+            return oddNodes;
+        }
+
+        public static bool PointInPolygon(float[] points, int vertexOffset, float x, float y)
+        {
+            bool oddNodes = false;
+
+            int j = points.Length - 1 - vertexOffset;
+
+            for (int i = 0; i < points.Length; i+= vertexOffset)
+            {
+                if ((points[i + 1] < y) && (points[j + 1] >= y)
+                || ((points[j + 1] < y) && (points[i + 1] >= y)))
+                {
+                    if (points[i] + (float)((float)y - points[i + 1]) / (points[j + 1] - points[i + 1]) * (points[j] - points[i]) < x)
                     {
                         oddNodes = !oddNodes;
                     }

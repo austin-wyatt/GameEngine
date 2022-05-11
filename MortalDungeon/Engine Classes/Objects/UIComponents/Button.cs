@@ -2,7 +2,7 @@
 using System;
 using System.Drawing;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public class Button : UIObject
     {

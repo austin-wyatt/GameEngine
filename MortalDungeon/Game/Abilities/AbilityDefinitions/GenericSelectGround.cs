@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class GenericSelectGround : Ability
     {
@@ -21,10 +21,10 @@ namespace MortalDungeon.Game.Abilities
             Range = range;
             CastingUnit = castingUnit;
 
-            CanTargetGround = true;
-            UnitTargetParams.IsHostile = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
+            SelectionInfo.CanSelectTiles = true;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             //Name = "Generic Select Ground";
 
@@ -36,85 +36,85 @@ namespace MortalDungeon.Game.Abilities
             });
         }
 
-        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
-            List<Unit> units = default, Tile position = null)
-        {
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
-            {
-                Units = units,
-                CastingUnit = CastingUnit
-            };
+        //public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+        //    List<Unit> units = default, Tile position = null)
+        //{
+        //    TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(CastingUnit.Info.TileMapPosition, Range)
+        //    {
+        //        Units = units,
+        //        CastingUnit = CastingUnit
+        //    };
 
-            List<Tile> validTiles = tileMap.FindValidTilesInRadius(param);
+        //    List<Tile> validTiles = tileMap.FindValidTilesInRadius(param);
 
-            if (CastingUnit.AI.ControlType == ControlType.Controlled && CanTargetGround)
-            {
-                validTiles.ForEach(tile =>
-                {
-                    tile.TilePoint.ParentTileMap.Controller.SelectTile(tile);
-                });
-            }
+        //    if (CastingUnit.AI.ControlType == ControlType.Controlled && CanTargetGround)
+        //    {
+        //        validTiles.ForEach(tile =>
+        //        {
+        //            tile.TilePoint.ParentTileMap.Controller.SelectTile(tile);
+        //        });
+        //    }
 
-            affectedTiles = validTiles;
-            affectedUnits = new List<Unit>();
-        }
+        //    affectedTiles = validTiles;
+        //    affectedUnits = new List<Unit>();
+        //}
 
-        public override void OnTileClicked(TileMap map, Tile tile)
-        {
-            if (AffectedTiles.Exists(t => t == tile))
-            {
-                SelectedTile = tile;
-                EnactEffect();
-                Scene._selectedAbility = null;
+        //public override void OnTileClicked(TileMap map, Tile tile)
+        //{
+        //    if (AffectedTiles.Exists(t => t == tile))
+        //    {
+        //        SelectedTile = tile;
+        //        EnactEffect();
+        //        Scene._selectedAbility = null;
 
-                map.Controller.DeselectTiles();
-            }
-        }
+        //        map.Controller.DeselectTiles();
+        //    }
+        //}
 
 
-        public override void OnCast()
-        {
-            ClearSelectedTiles();
+        //public override void OnCast()
+        //{
+        //    ClearSelectedTiles();
 
-            base.OnCast();
-        }
+        //    base.OnCast();
+        //}
 
         public override void OnAICast()
         {
             base.OnAICast();
         }
 
-        public override void EnactEffect()
-        {
-            BeginEffect();
+        //public override void EnactEffect()
+        //{
+        //    BeginEffect();
 
-            Casted();
-            EffectEnded();
+        //    Casted();
+        //    EffectEnded();
 
-            OnGroundSelected?.Invoke(SelectedTile);
-        }
+        //    OnGroundSelected?.Invoke(SelectedTile);
+        //}
 
         public override void OnRightClick()
         {
             base.OnRightClick();
         }
 
-        public override void OnAbilityDeselect()
-        {
-            ClearSelectedTiles();
+        //public override void OnAbilityDeselect()
+        //{
+        //    ClearSelectedTiles();
 
-            base.OnAbilityDeselect();
+        //    base.OnAbilityDeselect();
 
-            SelectedTile = null;
-        }
+        //    SelectedTile = null;
+        //}
 
-        public void ClearSelectedTiles()
-        {
-            lock (AffectedTiles)
-                AffectedTiles.ForEach(tile =>
-                {
-                    tile.TilePoint.ParentTileMap.Controller.DeselectTiles();
-                });
-        }
+        //public void ClearSelectedTiles()
+        //{
+        //    lock (AffectedTiles)
+        //        AffectedTiles.ForEach(tile =>
+        //        {
+        //            tile.TilePoint.ParentTileMap.Controller.DeselectTiles();
+        //        });
+        //}
     }
 }

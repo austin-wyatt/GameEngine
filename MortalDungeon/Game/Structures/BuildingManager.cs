@@ -1,5 +1,5 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Serializers;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace MortalDungeon.Game.Structures
+namespace Empyrean.Game.Structures
 {
     public static class BuildingManager
     {
@@ -16,7 +16,7 @@ namespace MortalDungeon.Game.Structures
         static BuildingManager()
         {
             var itemTypes = from t in Assembly.GetExecutingAssembly().GetTypes()
-                            where t.IsClass && t.Namespace == "MortalDungeon.Definitions.Buildings" && !t.IsSealed &&
+                            where t.IsClass && t.Namespace == "Empyrean.Definitions.Buildings" && !t.IsSealed &&
                             t.IsSubclassOf(typeof(Building))
                             select t;
 

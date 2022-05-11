@@ -1,4 +1,4 @@
-﻿using MortalDungeon.Game.Objects;
+﻿using Empyrean.Game.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public enum AnimationType
     {

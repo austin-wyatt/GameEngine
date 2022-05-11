@@ -1,8 +1,8 @@
-﻿using MortalDungeon.Game.Objects;
+﻿using Empyrean.Game.Objects;
 using OpenTK.Mathematics;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Objects
+namespace Empyrean.Objects
 {
     public enum TextureName 
     {
@@ -34,7 +34,13 @@ namespace MortalDungeon.Objects
         UISpritesheet_1,
         UIControlsSpritesheet,
 
-        Cursor
+        Cursor,
+
+        Dirt,
+        Grass,
+        Stone_1,
+        Stone_2,
+        X
     }
     public class TextureInfo
     {

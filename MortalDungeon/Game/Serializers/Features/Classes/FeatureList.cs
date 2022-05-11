@@ -1,5 +1,5 @@
-﻿using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Save;
+﻿using Empyrean.Game.Map;
+using Empyrean.Game.Save;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [Serializable]
     public class FeatureList : ISerializable

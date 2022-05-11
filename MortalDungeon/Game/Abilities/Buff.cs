@@ -1,16 +1,19 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Definitions.Buffs;
+using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public enum BuffEffect
     {
@@ -28,6 +31,14 @@ namespace MortalDungeon.Game.Abilities
         ActionEnergyCostAdditive,
         GeneralDamageAdditive,
         MovementEnergyAdditive,
+        MaxStaminaAdditive,
+        MaxShieldsAdditive,
+        MaxHealthAdditive,
+        HealthCostAdditive,
+        StaminaCostAdditive,
+        FireAffinityCostAdditive,
+        MaxMovementEnergyAdditive,
+        MaxActionEnergyAdditive,
 
         #region ai feelings additive
         AI_FEELINGS_ADDITIVE = 4250,
@@ -61,7 +72,14 @@ namespace MortalDungeon.Game.Abilities
         EnergyCostMultiplier,
         ActionEnergyCostMultiplier,
         GeneralDamageMultiplier,
-        MovementEnergyMultiplier,
+        MovementEnergyCostMultiplier,
+        MaxStaminaMultiplier,
+        MaxHealthMultiplier,
+        HealthCostMultiplier,
+        StaminaCostMultiplier,
+        FireAffinityCostMultiplier,
+        MaxMovementEnergyMultiplier,
+        MaxActionEnergyMultiplier,
 
         #region ai feelings multiplicative
         AI_FEELINGS_MULTIPLICATIVE = 9250,
@@ -81,14 +99,43 @@ namespace MortalDungeon.Game.Abilities
         //End Multiplier effects
         //--------------------
         MULTIPLIER_END = 10000,
+
+        #region Boolean values
+        //General boolean values (0 or 1)
+        //--------------------
+        BOOL_START = 20000,
+        Equipment_DisableArmor,
+        Equipment_DisableWeapon1,
+        Equipment_DisableWeapon2,
+        Equipment_DisableConsumable1,
+        Equipment_DisableConsumable2,
+        Equipment_DisableConsumable3,
+        Equipment_DisableConsumable4,
+        Equipment_DisableGloves,
+        Equipment_DisableBoots,
+        Equipment_DisableJewlery1,
+        Equipment_DisableJewlery2,
+        Equipment_DisableTrinket,
+
+        #endregion
         #endregion
     }
+
+    [XmlInclude(typeof(Dagger_CoupDeGraceDebuff))]
+    [XmlInclude(typeof(GenericEffectBuff))]
+    [XmlInclude(typeof(GroupedDebuff))]
+    [XmlInclude(typeof(StackingDebuff))]
+    [XmlInclude(typeof(StunDebuff))]
+    [XmlInclude(typeof(WebSlowDebuff))]
+    [XmlInclude(typeof(StrongBonesBuff))]
 
     [Serializable]
     public class Buff : ISerializable
     {
         [XmlIgnore]
         public Unit Unit;
+
+        public PermanentId OwnerId;
 
         [XmlIgnore]
         public AnimationSet AnimationSet = null;
@@ -103,6 +150,8 @@ namespace MortalDungeon.Game.Abilities
         public TextInfo Name = new TextInfo();
         public TextInfo Description = new TextInfo();
 
+        public bool Initialized = false;
+
 
         /// <summary>
         /// An arbitrary string that can be set by the source of the buff. <para />
@@ -115,14 +164,22 @@ namespace MortalDungeon.Game.Abilities
         /// The remaining duration of the buff. -1 indicates the duration is indefinite.
         /// </summary>
         public int Duration = -1;
+
         /// <summary>
-        /// The amount of stacks on the buff. -1 indicates that the buff does not support stacks
+        /// The initial duration of the buff. Used for cases where the duration of a buff can be refreshed
         /// </summary>
-        public int Stacks = -1;
+        public int BaseDuration = -1;
+
+        /// <summary>
+        /// The amount of stacks on the buff. MinValue indicates that the buff has not been initialized
+        /// </summary>
+        public int Stacks = int.MinValue;
         /// <summary>
         /// Determines whether the buff should be displayed in the UI.
         /// </summary>
         public bool Invisible = true;
+
+        public bool RemoveOnZeroStacks = false;
 
         public Buff() 
         {
@@ -136,10 +193,15 @@ namespace MortalDungeon.Game.Abilities
 
             Invisible = buff.Invisible;
             Duration = buff.Duration;
+            BaseDuration = buff.BaseDuration;
+
             Stacks = buff.Stacks;
             _typeName = buff._typeName;
 
             Identifier = buff.Identifier;
+            RemoveOnZeroStacks = buff.RemoveOnZeroStacks;
+
+            Initialized = buff.Initialized;
 
             AssignAnimationSet();
         }
@@ -205,15 +267,21 @@ namespace MortalDungeon.Game.Abilities
 
         #endregion
 
-        public virtual void OnAddedToUnit(Unit unit) 
+        public virtual async Task OnAddedToUnit(Unit unit) 
         {
             Unit = unit;
 
             AddEventListeners();
+            Initialize();
         }
-        public virtual void OnRemovedFromUnit(Unit unit) 
+        public virtual async Task OnRemovedFromUnit(Unit unit) 
         {
             RemoveEventListeners();
+        }
+
+        protected void Initialize()
+        {
+            Initialized = true;
         }
 
         protected virtual void AssignAnimationSet() { }
@@ -244,7 +312,7 @@ namespace MortalDungeon.Game.Abilities
             Unit.TurnStart -= CheckDuration;
         }
 
-        public virtual void AddStack()
+        public virtual async Task AddStack()
         {
             Stacks++;
 
@@ -256,7 +324,7 @@ namespace MortalDungeon.Game.Abilities
             Unit?.OnStateChanged();
         }
 
-        public virtual void RemoveStack()
+        public virtual async Task RemoveStack()
         {
             Stacks--;
 
@@ -265,10 +333,15 @@ namespace MortalDungeon.Game.Abilities
                 Unit?.Scene.Footer.RefreshFooterInfo();
             }
 
+            if (RemoveOnZeroStacks && Stacks == 0)
+            {
+                Unit?.Info.BuffManager.RemoveBuff(this);
+            }
+
             Unit?.OnStateChanged();
         }
 
-        protected virtual void CheckDuration(Unit unit)
+        protected virtual async Task CheckDuration(Unit unit)
         {
             if (Duration > -1)
             {
@@ -279,6 +352,11 @@ namespace MortalDungeon.Game.Abilities
                     Unit?.Info.BuffManager.RemoveBuff(this);
                 }
             }
+        }
+
+        public bool CompareIdentifier(Buff buffToCheck)
+        {
+            return Identifier != "" && (Identifier == buffToCheck.Identifier);
         }
 
 

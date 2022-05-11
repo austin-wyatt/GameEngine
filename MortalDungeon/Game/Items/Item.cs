@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Items
+namespace Empyrean.Game.Items
 {
     public enum ItemLocation
     {
@@ -29,6 +29,59 @@ namespace MortalDungeon.Game.Items
         OutsideCombat,
         InsideCombat,
         InUI
+    }
+
+    /// <summary>
+    /// Denotes an item's usages
+    /// </summary>
+    [Flags]
+    public enum ItemTag : long
+    {
+        None = 0,
+        Weapon_Melee = 1 << 0,
+        Weapon_Slashing = (1 << 1) | Weapon_Melee,
+        Weapon_Blunt = (1 << 2) | Weapon_Melee,
+        Weapon_Thrusting = (1 << 3) | Weapon_Melee,
+        Weapon_OneHanded = 1 << 4,
+        Weapon_TwoHanded = 1 << 5,
+        Weapon_Concealed = 1 << 6, //Concealed weapons can't be seen by other teams when equipped in the secondary weapon slot
+        Weapon_Shafted = (1 << 7) | Weapon_Melee,
+
+        Weapon_Ranged = 1 << 8,
+        Weapon_Throwing = (1 << 9) | Weapon_Ranged,
+        Weapon_Shooting = (1 << 10) | Weapon_Ranged,
+
+        //Different classifications of magic weapons.
+        //Weak magic would be a simple enchantment while strong magic would be akin to a legendary item
+        Weapon_WeakMagic = 1 << 11,
+        Weapon_Magic = (1 << 12) | Weapon_WeakMagic,
+        Weapon_StrongMagic = (1 << 13) | Weapon_Magic,
+
+        //Denotes an item that can be used as a focus for magic energy. Think wand, staff, talisman, etc.
+        Weapon_MagicFocus = 1 << 14,
+
+        //Denotes an item that will be consumed on use but has charges that can be replenished
+        Consumable_Charged = 1 << 15,
+        //Denotes an infinite use consumable
+        Consumable_Infinite = 1 << 16,
+        //Denotes a consumable that will be deleted from the unit's inventory upon use
+        Consumable_DestroyOnUse = 1 << 17,
+
+        Consumable_Food = 1L << 18,
+        Consumable_Potion = 1L << 19,
+        Consumable_Magic = 1L << 20,
+        Consumable_Explosive = 1L << 21,
+
+        Armor_Heavy = 1L << 22,
+        Armor_Medium = 1L << 23,
+        Armor_Light = 1L << 24,
+        Armor_Clothing = 1L << 25
+
+    }
+
+    public enum Affinity
+    {
+
     }
 
     public class Item
@@ -64,6 +117,8 @@ namespace MortalDungeon.Game.Items
 
         public ItemLocation Location = ItemLocation.Inventory;
         public ItemType ItemType = ItemType.BasicItem;
+
+        public ItemTag Tags = ItemTag.None;
 
         public Ability ItemAbility;
 
@@ -164,9 +219,27 @@ namespace MortalDungeon.Game.Items
 
         public virtual void OnEquipped()
         {
-            if(ItemAbility != null)
+            if(EquipmentHandle.Unit.PermanentId.Id != 0)
+            {
+                InitializeAbility();
+            }
+            else
+            {
+                EquipmentHandle.Unit.PermanentIdInitialized += InitializeAbility;
+            }
+        }
+
+        public virtual void InitializeAbility()
+        {
+            if (ItemAbility != null)
             {
                 ItemAbility.CastingUnit = EquipmentHandle.Unit;
+                ItemAbility.AddAbilityToUnit();
+            }
+
+            if (EquipmentHandle != null && EquipmentHandle.Unit != null)
+            {
+                EquipmentHandle.Unit.PermanentIdInitialized -= InitializeAbility;
             }
         }
 
@@ -174,6 +247,7 @@ namespace MortalDungeon.Game.Items
         {
             if (ItemAbility != null)
             {
+                ItemAbility.RemoveAbilityFromUnit();
                 ItemAbility.CastingUnit = null;
             }
         }

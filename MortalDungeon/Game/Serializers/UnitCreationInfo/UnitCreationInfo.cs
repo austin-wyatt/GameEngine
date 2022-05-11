@@ -1,8 +1,8 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Events;
-using MortalDungeon.Game.Items;
-using MortalDungeon.Game.Serializers.Abilities;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Events;
+using Empyrean.Game.Items;
+using Empyrean.Game.Serializers.Abilities;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [Serializable]
     public class UnitCreationInfo : ISerializable
@@ -46,6 +46,9 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("UAl")]
         public AbilityLoadout AbilityLoadout = new AbilityLoadout();
 
+        [XmlElement("URM")]
+        public ResourceManager ResourceManager = new ResourceManager();
+
         #endregion
 
         #region pretty important to set
@@ -59,23 +62,6 @@ namespace MortalDungeon.Game.Serializers
         #endregion 
 
         #region decently important to set
-        [XmlElement("Ume")]
-        public float MaxEnergy = 10;
-
-        [XmlElement("Uma")]
-        public float MaxAction = 3;
-
-        [XmlElement("Umf")]
-        public float MaxFocus = 0;
-
-        [XmlElement("Umh")]
-        public float MaxHealth = 100;
-
-        [XmlElement("Ucs")]
-        public int CurrentShields = 0;
-
-        public float Speed = 10;
-
         [XmlElement("Usp")]
         public Species Species;
         #endregion
@@ -145,17 +131,8 @@ namespace MortalDungeon.Game.Serializers
             unit.SetTeam(Team);
             unit.AI.ControlType = ControlType;
 
-            unit.Info.MaxEnergy = MaxEnergy;
-            unit.Info.Energy = MaxEnergy;
-            unit.Info.MaxActionEnergy = MaxAction;
-            unit.Info.ActionEnergy = MaxAction;
-            unit.Info.MaxFocus = MaxFocus;
-            unit.Info.Focus = MaxFocus;
-            unit.Info.CurrentShields = CurrentShields;
-            unit.Info.Speed = Speed;
-
-            unit.Info.MaxHealth = MaxHealth;
-            unit.Info.Health = MaxHealth;
+            unit.Info.ResourceManager = new ResourceManager(ResourceManager);
+            unit.Info.ResourceManager.Unit = unit;
 
             unit.Info.Species = Species;
 
@@ -225,6 +202,7 @@ namespace MortalDungeon.Game.Serializers
             //{
             //    item.CompleteDeserialization();
             //}
+            ResourceManager.CompleteDeserialization();
 
             foreach(var item in EventActionBuilders)
             {
@@ -238,6 +216,7 @@ namespace MortalDungeon.Game.Serializers
             //{
             //    item.PrepareForSerialization();
             //}
+            ResourceManager.PrepareForSerialization();
 
             foreach (var item in EventActionBuilders)
             {

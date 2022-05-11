@@ -1,15 +1,16 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Map;
+using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Save
+namespace Empyrean.Game.Save
 {
     [Serializable]
     public class UnitSaveInfo : ISerializable
@@ -29,10 +30,8 @@ namespace MortalDungeon.Game.Save
         [XmlElement("Upn")]
         public string pack_name;
 
-        [XmlElement("Ufi")]
-        public long FeatureID;
-        [XmlElement("Ufh")]
-        public long FeatureHash;
+        [XmlElement("Upi")]
+        public int PermanentId;
 
         [XmlElement("Ual")]
         public AbilityLoadout AbilityLoadout;
@@ -78,8 +77,7 @@ namespace MortalDungeon.Game.Save
 
             pack_name = unit.pack_name;
 
-            FeatureHash = unit.ObjectHash;
-            FeatureID = unit.FeatureID;
+            PermanentId = unit.PermanentId.Id;
 
             AbilityLoadout = unit.AbilityLoadout;
             UnitCreationInfoId = unit.UnitCreationInfoId;
@@ -117,8 +115,7 @@ namespace MortalDungeon.Game.Save
             
             unit.pack_name = pack_name;
 
-            unit.ObjectHash = FeatureHash;
-            unit.FeatureID = FeatureID;
+            unit.SetPermanentId(PermanentId);
 
             unit.AbilityLoadout = AbilityLoadout;
             unit.UnitCreationInfoId = UnitCreationInfoId;

@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Events;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Events;
+using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Definitions.EventActions
+namespace Empyrean.Definitions.EventActions
 {
     /// <summary>
     /// Starts the dialogue of the passed Id with Speaker 0 as the target

@@ -1,15 +1,16 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Map;
+using Empyrean.Game.Save;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     public enum BoundingPointTypes
     {
@@ -20,10 +21,25 @@ namespace MortalDungeon.Game.Serializers
         Fill = 7,
     }
 
+    public enum BoundingAnchorType
+    {
+        Fill
+    }
+
+    [XmlType(Namespace="_ba")]
+    [Serializable]
+    public class BoundingAnchor
+    {
+        public BoundingAnchorType Type = BoundingAnchorType.Fill;
+        public Vector3i Point;
+    }
+
     [Serializable]
     public class BoundingPoints : ISerializable
     {
         public List<Vector3i> CubePoints = new List<Vector3i>();
+
+        public FeaturePoint Origin;
 
         [XmlIgnore]
         public List<FeaturePoint> OffsetPoints = new List<FeaturePoint>();
@@ -45,11 +61,19 @@ namespace MortalDungeon.Game.Serializers
         [XmlIgnore]
         public HashSet<TileMapPoint> AffectedMaps = new HashSet<TileMapPoint>();
 
+        [XmlIgnore]
+        public FeatureEquation FeatureEquation;
+
         /// <summary>
         /// Whether these bounding points should be applied to already loaded tile maps.
         /// Defaults to false.
         /// </summary>
         public bool ApplyToStaleMaps = false;
+
+        /// <summary>
+        /// Anchors get applied after lines between the bounding points are drawn when creating the feature equation
+        /// </summary>
+        public List<BoundingAnchor> Anchors = new List<BoundingAnchor>();
 
 
         [XmlIgnore]
@@ -66,98 +90,135 @@ namespace MortalDungeon.Game.Serializers
             double density;
             int height;
 
-            Vector2i affectedPoint = new Vector2i();
+            HashSet<Cube> wallList = new HashSet<Cube>();
+            CubeMethods.GetLineLerp(CubePoints[0], CubePoints[^1], wallList);
 
-            foreach (var map in AffectedMaps)
+            for (int i = 1; i < CubePoints.Count; i++)
             {
-                for(int i = 0; i < TileMapManager.TILE_MAP_DIMENSIONS.X; i++)
+                CubeMethods.GetLineLerp(CubePoints[i - 1], CubePoints[i], wallList);
+            }
+
+            HashSet<Cube> filledPoints = new HashSet<Cube>();
+            bool fillSuccessful = true;
+
+            for (int i = 0; i < Anchors.Count; i++)
+            {
+                switch (Anchors[i].Type)
                 {
-                    for (int j = 0; j < TileMapManager.TILE_MAP_DIMENSIONS.Y; j++)
+                    case BoundingAnchorType.Fill:
+                        fillSuccessful = fillSuccessful && CubeMethods.FloodFill(wallList, new Cube(Anchors[i].Point), filledPoints, 200000);
+                        break;
+                }
+            }
+
+            Vector3i origin = CubeMethods.OffsetToCube(Origin);
+
+            foreach (var cube in wallList)
+            {
+                AddCubeToAffectedPoints(cube, ref rng, ref origin);
+            }
+
+            if (fillSuccessful)
+            {
+                foreach (var cube in filledPoints)
+                {
+                    AddCubeToAffectedPoints(cube, ref rng, ref origin);
+                }
+            }
+        }
+
+        public void AddCubeToAffectedPoints(Cube cube, ref ConsistentRandom rng, ref Vector3i origin)
+        {
+            double density;
+            float height;
+
+
+            FeaturePoint point = CubeMethods.CubeToFeaturePoint(cube.Point + origin);
+
+            TileMapPoint map = point.ToTileMapPoint();
+            FeaturePoint mapTopLeft = map.ToFeaturePoint();
+
+            point.X -= mapTopLeft.X;
+            point.Y -= mapTopLeft.Y;
+
+            FeatureEquation.AffectedMaps.Add(map);
+            AffectedMaps.Add(map);
+
+            switch ((BoundingPointTypes)BoundingPointsId)
+            {
+                case BoundingPointTypes.Dirt:
+                    AddAffectedPoint(map, new MapBrushPoint()
                     {
-                        affectedPoint.X = map.X * TileMapManager.TILE_MAP_DIMENSIONS.X + i;
-                        affectedPoint.Y = map.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y + j;
-
-                        if (OffsetPoints.Count > 2 && FeaturePoint.PointInPolygon(OffsetPoints, affectedPoint))
+                        X = point.X,
+                        Y = point.Y,
+                    });
+                    break;
+                case BoundingPointTypes.Trees:
+                    density = 0.1;
+                    if (Parameters.TryGetValue("density", out var val))
+                    {
+                        if (double.TryParse(val, out var d))
                         {
-                            switch ((BoundingPointTypes)BoundingPointsId)
-                            {
-                                case BoundingPointTypes.Dirt:
-                                    AddAffectedPoint(map, new MapBrushPoint()
-                                    {
-                                        X = i,
-                                        Y = j,
-                                    });
-                                    break;
-                                case BoundingPointTypes.Trees:
-                                    density = 0.1;
-                                    if (Parameters.TryGetValue("density", out var val))
-                                    {
-                                        if (double.TryParse(val, out var d))
-                                        {
-                                            density = d;
-                                        }
-                                    }
-
-                                    if (rng.NextDouble() < density)
-                                    {
-                                        AddAffectedPoint(map, new MapBrushPoint()
-                                        {
-                                            X = i,
-                                            Y = j,
-                                            Value = rng.Next() % 2
-                                        });
-                                    }
-                                    break;
-                                case BoundingPointTypes.HeightChange:
-                                    height = 0;
-                                    if (Parameters.TryGetValue("height", out var tileHeight))
-                                    {
-                                        if (int.TryParse(tileHeight, out var d))
-                                        {
-                                            height = d;
-                                        }
-                                    }
-
-                                    AddAffectedPoint(map, new MapBrushPoint()
-                                    {
-                                        X = i,
-                                        Y = j,
-                                        Value = height
-                                    });
-                                    break;
-                                case BoundingPointTypes.Stone:
-                                    if (rng.NextDouble() > 0.5)
-                                    {
-                                        AddAffectedPoint(map, new MapBrushPoint()
-                                        {
-                                            X = i,
-                                            Y = j,
-                                            Value = 0
-                                        });
-                                    }
-                                    else
-                                    {
-                                        AddAffectedPoint(map, new MapBrushPoint()
-                                        {
-                                            X = i,
-                                            Y = j,
-                                            Value = 1
-                                        });
-                                    }
-                                    break;
-                                case BoundingPointTypes.Fill:
-                                    AddAffectedPoint(map, new MapBrushPoint()
-                                    {
-                                        X = i,
-                                        Y = j,
-                                    });
-                                    break;
-                                default:
-                                    continue;
-                            }
+                            density = d;
                         }
                     }
-                }
+
+                    if (rng.NextDouble() < density)
+                    {
+                        AddAffectedPoint(map, new MapBrushPoint()
+                        {
+                            X = point.X,
+                            Y = point.Y,
+                            Value = rng.Next() % 2
+                        });
+                    }
+                    break;
+                case BoundingPointTypes.HeightChange:
+                    height = 0;
+                    if (Parameters.TryGetValue("height", out var tileHeight))
+                    {
+                        if (float.TryParse(tileHeight, out var d))
+                        {
+                            height = d;
+                        }
+                    }
+
+                    AddAffectedPoint(map, new MapBrushPoint()
+                    {
+                        X = point.X,
+                        Y = point.Y,
+                        fValue = height
+                    });
+                    break;
+                case BoundingPointTypes.Stone:
+                    if (rng.NextDouble() > 0.5)
+                    {
+                        AddAffectedPoint(map, new MapBrushPoint()
+                        {
+                            X = point.X,
+                            Y = point.Y,
+                            Value = 0
+                        });
+                    }
+                    else
+                    {
+                        AddAffectedPoint(map, new MapBrushPoint()
+                        {
+                            X = point.X,
+                            Y = point.Y,
+                            Value = 1
+                        });
+                    }
+                    break;
+                case BoundingPointTypes.Fill:
+                    AddAffectedPoint(map, new MapBrushPoint()
+                    {
+                        X = point.X,
+                        Y = point.Y,
+                    });
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -175,34 +236,39 @@ namespace MortalDungeon.Game.Serializers
                     if (tile == null)
                         continue;
 
+                    ConsistentRandom rng = new ConsistentRandom(point.X + point.Y);
+
                     switch ((BoundingPointTypes)BoundingPointsId)
                     {
                         case BoundingPointTypes.Dirt:
-                            tile.Properties.Type = TileType.Dirt;
+                            tile.Properties.SetType(TileType.Dirt, fromFeature: true);
                             break;
                         case BoundingPointTypes.Trees:
-                            ConsistentRandom rng = new ConsistentRandom(point.X + point.Y);
                             var tree = new Tree(tile.TileMap, tile, point.Value, 1 + (float)rng.NextDouble() / 2);
                             break;
                         case BoundingPointTypes.HeightChange:
-                            if (point.Value > 0)
+                            if (point.fValue > 0)
                             {
-                                tile.SetHeight(point.Value);
+                                tile.SetHeight(point.fValue);
                             }
                             break;
                         case BoundingPointTypes.Stone:
-                            if (point.Value == 0)
-                            {
-                                tile.Properties.Type = TileType.Stone_1;
-                            }
-                            else if(point.Value == 1)
-                            {
-                                tile.Properties.Type = TileType.Stone_2;
-                            }
+                            tile.Properties.SetType(TileType.Stone_1, fromFeature: true);
+
+                            //if (point.Value == 0)
+                            //{
+                            //    tile.Properties.SetType(TileType.Stone_1, fromFeature: true);
+                            //}
+                            //else if(point.Value == 1)
+                            //{
+                            //    tile.Properties.SetType(TileType.Stone_2, fromFeature: true);
+                            //}
+
+                            tile.SetHeight(tile.Properties.Height + (float)rng.NextDouble() * 0.05f + 0.5f);
                             break;
 
                         case BoundingPointTypes.Fill:
-                            tile.Properties.Type = TileType.Fill;
+                            tile.Properties.SetType(TileType.Fill, fromFeature: true);
 
                             if (point.Value == 0)
                             {
@@ -223,8 +289,6 @@ namespace MortalDungeon.Game.Serializers
                     }
                 }
             }
-
-            map.UpdateTile();
         }
 
         private void AddAffectedPoint(TileMapPoint mapPoint, MapBrushPoint affectedPoint)

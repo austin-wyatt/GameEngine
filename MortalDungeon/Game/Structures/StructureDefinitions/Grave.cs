@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Structures
+namespace Empyrean.Game.Structures
 {
     class Grave : Structure
     {
@@ -24,9 +24,7 @@ namespace MortalDungeon.Game.Structures
             VisibleThroughFog = true;
             SetTileMapPosition(tile);
 
-            tile.Properties.Type = TileType.Dirt;
-
-            tile.Update();
+            tile.Properties.SetType(TileType.Dirt);
 
             Name = "Grave";
 
@@ -46,9 +44,7 @@ namespace MortalDungeon.Game.Structures
             {
                 Scene.CloseContextMenu();
 
-                Info.TileMapPosition.Properties.Type = TileType.Gravel;
-
-                Info.TileMapPosition.Update();
+                Info.TileMapPosition.Properties.SetType(TileType.Gravel, true);
 
                 HasContextMenu = false;
             });

@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes.Rendering;
+﻿using Empyrean.Engine_Classes.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class UIManager
     {

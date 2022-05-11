@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Game.Combat;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Game.Combat;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Units.AIFunctions
+namespace Empyrean.Game.Units.AIFunctions
 {
     public enum FeelingType
     {
@@ -77,12 +77,12 @@ namespace MortalDungeon.Game.Units.AIFunctions
             switch (feeling)
             {
                 case FeelingType.Fear:
-                    baseVal *= 1 + Unit.Info.Health / Unit.Info.MaxHealth;
+                    baseVal *= 1 + Unit.GetResF(ResF.Health) / Unit.GetResF(ResF.MaxHealth);
                     break;
                 case FeelingType.Bloodthirst:
                     if(target != null)
                     {
-                        baseVal *= (1 + (1 - target.Health / target.Unit.Info.MaxHealth)) * 
+                        baseVal *= (1 + (1 - target.Health / target.Unit.GetResF(ResF.MaxHealth))) * 
                             (1 - target.Unit.AI.Feelings.GetFeelingValue(FeelingType.Passivity));
                     }
                     break;

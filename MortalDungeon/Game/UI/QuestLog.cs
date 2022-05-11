@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Serializers;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
-using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
+using Icon = Empyrean.Engine_Classes.UIComponents.Icon;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class QuestLog
     {

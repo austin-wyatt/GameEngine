@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
-namespace MortalDungeon.Engine_Classes.MiscOperations
+namespace Empyrean.Engine_Classes.MiscOperations
 {
     public class StaticBitmap : IDisposable
     {

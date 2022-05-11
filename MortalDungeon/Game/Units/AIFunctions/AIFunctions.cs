@@ -1,13 +1,13 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Units.AIFunctions
+namespace Empyrean.Game.Units.AIFunctions
 {
     public class PotentialAIAction
     {

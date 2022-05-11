@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     /// <summary>
     /// Works similarly to the Animation class but changes properties such as transformations and color instead of the sprite.
@@ -38,8 +38,6 @@ namespace MortalDungeon.Engine_Classes
             BaseFrame = baseFrame;
 
             SetDefaultValues();
-
-            timer.Start();
         }
 
         public PropertyAnimation() { }
@@ -57,13 +55,12 @@ namespace MortalDungeon.Engine_Classes
             return temp;
         }
 
-        private int count = 0;
-        private Stopwatch timer = new Stopwatch();
+        private int _frameCount = 0;
         public void Tick()
         {
-            if (Playing && Keyframes.Count >= 0)
+            if (Playing && _frameCount >= 0)
             {
-                if (CurrentKeyframe >= Keyframes.Count)
+                if (CurrentKeyframe >= _frameCount)
                 {
                     Playing = Repeat;
                     Finished = !Repeat;
@@ -80,11 +77,6 @@ namespace MortalDungeon.Engine_Classes
                     CurrentKeyframe++;
                 }
 
-                if (DEBUG_ID == 1) 
-                {
-                    
-                }
-
                 tick++;
             }
         }
@@ -96,12 +88,14 @@ namespace MortalDungeon.Engine_Classes
         {
             CurrentKeyframe = 0;
             tick = 0;
+            _frameCount = Keyframes.Count;
 
             Tick();
         }
 
         public void Play()
         {
+            _frameCount = Keyframes.Count;
             Playing = true;
             SetDefaultValues();
         }

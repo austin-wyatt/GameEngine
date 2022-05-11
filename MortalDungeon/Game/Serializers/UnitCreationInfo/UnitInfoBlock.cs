@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Save;
+﻿using Empyrean.Game.Save;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
 
     [Serializable]

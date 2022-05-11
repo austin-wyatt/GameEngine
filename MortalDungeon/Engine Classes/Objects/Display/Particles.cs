@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class ParticleGenerator : ITickable
     {
@@ -83,6 +83,13 @@ namespace MortalDungeon.Engine_Classes
             Position = position + PositionalOffset;
         }
 
+        public void SetPosition(float x, float y, float z)
+        {
+            Position.X = x + PositionalOffset.X;
+            Position.Y = y + PositionalOffset.X;
+            Position.Z = z + PositionalOffset.X;
+        }
+
         public virtual void PrimeParticles()
         {
             Priming = true;
@@ -146,7 +153,9 @@ namespace MortalDungeon.Engine_Classes
         }
         public void Translate()
         {
-            Position += Velocity;
+            Position.X += Velocity.X;
+            Position.Y += Velocity.Y;
+            Position.Z += Velocity.Z;
 
             SetPosition(Position);
         }

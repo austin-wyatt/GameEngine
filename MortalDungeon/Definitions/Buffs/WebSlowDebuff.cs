@@ -1,12 +1,13 @@
-﻿using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace MortalDungeon.Definitions.Buffs
+namespace Empyrean.Definitions.Buffs
 {
     public class WebSlowDebuff : Buff
     {
@@ -16,8 +17,9 @@ namespace MortalDungeon.Definitions.Buffs
 
             Duration = -1;
             Stacks = 0;
-            AddStack();
+            AddStack().Wait();
         }
+
         public WebSlowDebuff(Buff buff) : base(buff) { }
 
         protected override void AssignAnimationSet()
@@ -27,19 +29,19 @@ namespace MortalDungeon.Definitions.Buffs
             AnimationSet = AnimationSetManager.GetAnimationSet(70);
         }
 
-        public override void AddStack()
+        public override async Task AddStack()
         {
-            base.AddStack();
+            await base.AddStack();
 
-            SetBuffEffect(BuffEffect.MovementEnergyMultiplier, 1.2f + 0.1f * Stacks);
+            SetBuffEffect(BuffEffect.MovementEnergyCostMultiplier, 1.2f + 0.1f * Stacks);
             SetBuffEffect(BuffEffect.SpeedMultiplier, 0.8f - 0.1f * Stacks);
         }
 
-        public override void RemoveStack()
+        public override async Task RemoveStack()
         {
-            base.RemoveStack();
+            await base.RemoveStack();
 
-            SetBuffEffect(BuffEffect.MovementEnergyMultiplier, 1.2f + 0.1f * Stacks);
+            SetBuffEffect(BuffEffect.MovementEnergyCostMultiplier, 1.2f + 0.1f * Stacks);
             SetBuffEffect(BuffEffect.SpeedMultiplier, 0.8f - 0.1f * Stacks);
 
             if (Stacks == 0)
@@ -62,7 +64,7 @@ namespace MortalDungeon.Definitions.Buffs
             Unit.TurnEnd -= CheckTile;
         }
 
-        private void CheckTile(Unit unit)
+        private async Task CheckTile(Unit unit)
         {
             var effects = TileEffectManager.GetTileEffectsOnTilePoint(unit.Info.TileMapPosition);
 
@@ -79,7 +81,7 @@ namespace MortalDungeon.Definitions.Buffs
 
             if (!onSpiderWeb)
             {
-                RemoveStack();
+                await RemoveStack();
             }
         }
     }

@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
-using MortalDungeon.Game.Particles;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
+using Empyrean.Game.Particles;
 using OpenTK.Mathematics;
-using MortalDungeon.Game.Entities;
+using Empyrean.Game.Entities;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class SpawnSkeleton : GenericSelectGround
     {
@@ -24,10 +24,10 @@ namespace MortalDungeon.Game.Abilities
 
             CastingMethod |= CastingMethod.Magic | CastingMethod.Intelligence | CastingMethod.Vocal;
 
-            CanTargetGround = true;
-            UnitTargetParams.IsHostile = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.False;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.False;
+            SelectionInfo.CanSelectTiles = true;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.False;
 
             //Name = "Spawn Skeleton";
 

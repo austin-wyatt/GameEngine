@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     public enum MapBrushType
     {
@@ -20,6 +20,7 @@ namespace MortalDungeon.Game.Serializers
         public int X;
         public int Y;
         public int Value;
+        public float fValue;
 
         public override bool Equals(object obj)
         {
@@ -122,7 +123,7 @@ namespace MortalDungeon.Game.Serializers
                 case MapBrushType.Dirt:
                     for(int i = 0; i < map.Tiles.Count; i++)
                     {
-                        map.Tiles[i].Properties.Type = TileType.Dirt;
+                        map.Tiles[i].Properties.SetType(TileType.Dirt, fromFeature: true);
                     }
                     break;
                 case MapBrushType.Trees:

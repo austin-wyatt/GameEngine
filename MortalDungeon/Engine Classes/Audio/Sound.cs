@@ -1,6 +1,7 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using System;
 
-namespace MortalDungeon.Engine_Classes.Audio
+namespace Empyrean.Engine_Classes.Audio
 {
     public class Sound
     {
@@ -12,6 +13,7 @@ namespace MortalDungeon.Engine_Classes.Audio
 
         public string Name { get; private set; }
 
+        private Vector3 Position = Vector3.PositiveInfinity;
 
         public float Gain = 1;
         public float Pitch = 1;
@@ -63,6 +65,7 @@ namespace MortalDungeon.Engine_Classes.Audio
                     }
 
                     ProcureSource();
+
                     onFinish?.Invoke();
                 });
             }
@@ -110,6 +113,11 @@ namespace MortalDungeon.Engine_Classes.Audio
             {
                 Source.Loop = Loop;
             }
+
+            if(Position != Vector3.PositiveInfinity)
+            {
+                Source.SetPosition(Position.X, Position.Y, Position.Z);
+            }
         }
 
         public void Play()
@@ -140,6 +148,13 @@ namespace MortalDungeon.Engine_Classes.Audio
             {
                 Prepare(Stop);
             }
+        }
+
+        public void SetPosition(float x, float y, float z)
+        {
+            Position.X = x;
+            Position.Y = y;
+            Position.Z = z;
         }
     }
 }

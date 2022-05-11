@@ -1,20 +1,25 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Game.Units.AIFunctions;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Game.Units.AIFunctions;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace MortalDungeon.Game.Combat
+namespace Empyrean.Game.Combat
 {
     public class NavMesh
     {
-        public Dictionary<FeaturePoint, NavTile> NavTiles = new Dictionary<FeaturePoint, NavTile>();
+        public NavTile[] NavTilesArr = new NavTile[TileMapManager.LOAD_DIAMETER * TileMapManager.LOAD_DIAMETER 
+            * TileMapManager.TILE_MAP_DIMENSIONS.X * TileMapManager.TILE_MAP_DIMENSIONS.Y];
+
+        public int COLUMN_SIZE = TileMapManager.LOAD_DIAMETER * TileMapManager.TILE_MAP_DIMENSIONS.X;
 
         private object _navTileLock = new object();
         public void CalculateNavTiles()
@@ -24,15 +29,34 @@ namespace MortalDungeon.Game.Combat
 
             lock (_navTileLock)
             {
-                NavTiles.Clear();
+                for(int i = 0; i < NavTilesArr.Length; i++)
+                {
+                    NavTilesArr[i] = null;
+                }
+
+                FeaturePoint point = new FeaturePoint();
+
+                Vector2i firstTileOffset = new Vector2i();
+
+                int offset;
 
                 for (int i = 0; i < TileMapManager.ActiveMaps.Count; i++)
                 {
+                    firstTileOffset.X = (TileMapManager.ActiveMaps[i].TileMapCoords.X - TileMapHelpers._topLeftMap.TileMapCoords.X) * TileMapManager.TILE_MAP_DIMENSIONS.X;
+                    firstTileOffset.Y = (TileMapManager.ActiveMaps[i].TileMapCoords.Y - TileMapHelpers._topLeftMap.TileMapCoords.Y) * TileMapManager.TILE_MAP_DIMENSIONS.Y;
+
                     for (int j = 0; j < TileMapManager.ActiveMaps[i].Tiles.Count; j++)
                     {
-                        FeaturePoint point = TileMapManager.ActiveMaps[i].Tiles[j].ToFeaturePoint();
+                        //base offset
+                        //tileOffset = firstTileOffset.X * COLUMN_SIZE + firstTileOffset.Y;
+
+                        TileMapManager.ActiveMaps[i].Tiles[j].ToFeaturePoint(ref point);
+
                         NavTile navTile = new NavTile(TileMapManager.ActiveMaps[i].Tiles[j]);
-                        NavTiles.Add(point, navTile);
+
+                        offset = GetOffsetFromFeaturePoint(ref point);
+
+                        NavTilesArr[offset] = navTile;
                     }
                 }
             }
@@ -40,15 +64,42 @@ namespace MortalDungeon.Game.Combat
             Console.WriteLine($"NavMesh calculated in {stopwatch.ElapsedMilliseconds}ms");
         }
 
+
+        private Vector2i _offsetInfo = new Vector2i();
+        public int GetOffsetFromFeaturePoint(ref FeaturePoint point)
+        {
+            _offsetInfo.X = point.X - TileMapHelpers._topLeftMap.TileMapCoords.X * TileMapManager.TILE_MAP_DIMENSIONS.X;
+            _offsetInfo.Y = point.Y - TileMapHelpers._topLeftMap.TileMapCoords.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y;
+
+            return _offsetInfo.X * COLUMN_SIZE + _offsetInfo.Y;
+        }
+
+        public NavTile GetNavTileAtFeaturePoint(ref FeaturePoint point)
+        {
+            return NavTilesArr[GetOffsetFromFeaturePoint(ref point)];
+        }
+
+        public bool CheckFeaturePointInBounds(ref FeaturePoint point)
+        {
+            return !((point.X < TileMapHelpers._topLeftMap.TileMapCoords.X * TileMapManager.TILE_MAP_DIMENSIONS.X) ||
+                (point.X > TileMapHelpers._topLeftMap.TileMapCoords.X * TileMapManager.TILE_MAP_DIMENSIONS.X + TileMapManager.LOAD_DIAMETER * TileMapManager.TILE_MAP_DIMENSIONS.X) ||
+                (point.Y < TileMapHelpers._topLeftMap.TileMapCoords.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y) ||
+                (point.Y > TileMapHelpers._topLeftMap.TileMapCoords.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y + TileMapManager.LOAD_DIAMETER * TileMapManager.TILE_MAP_DIMENSIONS.Y));
+        }
+
         public void UpdateNavMeshForTileMap(TileMap map)
         {
             lock (_navTileLock)
             {
+                FeaturePoint point = new FeaturePoint();
+
                 for (int j = 0; j < map.Tiles.Count; j++)
                 {
-                    FeaturePoint point = map.Tiles[j].ToFeaturePoint();
+                    map.Tiles[j].ToFeaturePoint(ref point);
 
-                    if (NavTiles.TryGetValue(point, out NavTile navTile))
+                    NavTile navTile = GetNavTileAtFeaturePoint(ref point);
+
+                    if (navTile != null)
                     {
                         navTile.CalculateNavDirectionMask();
                     }
@@ -58,22 +109,36 @@ namespace MortalDungeon.Game.Combat
 
         public void UpdateNavMeshForTile(Tile tile)
         {
-            var point = tile.ToFeaturePoint();
+            FeaturePoint point = new FeaturePoint();
+            tile.ToFeaturePoint(ref point);
 
-            if (NavTiles.TryGetValue(point, out NavTile navTile))
+            FeaturePoint featurePoint = FeaturePoint.FeaturePointPool.GetObject();
+
+            Direction dir;
+
+            NavTile navTile = GetNavTileAtFeaturePoint(ref point);
+
+            if (navTile != null)
             {
                 navTile.CalculateNavDirectionMask();
 
                 for(int i = 0; i < 6; i++)
                 {
-                    if(GetNeighboringNavTile(point, (Direction)i, out var neighborPoint, out var neighborNavTile))
+                    dir = (Direction)i;
+
+                    if (GetNeighboringNavTile(ref point, ref dir, ref featurePoint, out var neighborNavTile))
                     {
                         neighborNavTile.CalculateNavDirectionMask();
                     }
                 }
             }
+
+            FeaturePoint.FeaturePointPool.FreeObject(ref featurePoint);
         }
 
+
+        private static ObjectPool<HashSet<NavTileWithParent>> _navTileWParentSetPool = new ObjectPool<HashSet<NavTileWithParent>>();
+        private static ObjectPool<HashSet<NavTile>> _navTileSetPool = new ObjectPool<HashSet<NavTile>>();
 
         /// <summary>
         /// Attempts to find a path from the start point to the destination point. This is intended specifically for movement. <para/>
@@ -85,243 +150,312 @@ namespace MortalDungeon.Game.Combat
         /// <param name="maximumAversion">
         /// The maximum combined weight of negative obstacles on a path before a unit does not want to use the path
         /// </param>
-        public bool GetPathToPoint(FeaturePoint start, FeaturePoint destination, NavType navType, out List<Tile> returnList, 
-            float maximumDepth = 10, Unit pathingUnit = null, bool considerCaution = false, GroupedMovementParams movementParams = null,
+        public bool GetPathToPoint(FeaturePoint start, FeaturePoint destination, NavType navType, out List<Tile> returnList,
+            float maximumDepth = 10, Unit pathingUnit = null, bool considerCaution = false,
             bool allowEndInUnit = false)
         {
-            HashSet<NavTileWithParent> tileList = new HashSet<NavTileWithParent>();
-            returnList = new List<Tile>();
+            HashSet<NavTileWithParent> tileList = _navTileWParentSetPool.GetObject();
+            returnList = Tile.TileListPool.GetObject();
 
-            if (maximumDepth <= 0)
-                return false;
+            HashSet<NavTile> visitedTiles = _navTileSetPool.GetObject();
+            HashSet<NavTile> newNeighbors = _navTileSetPool.GetObject();
 
-            if(!NavTiles.ContainsKey(start) || !NavTiles.ContainsKey(destination))
-            {
-                return false;
-            }
+            FeaturePoint placeholderPoint = FeaturePoint.FeaturePointPool.GetObject();
+            FeaturePoint currentFeaturePoint = FeaturePoint.FeaturePointPool.GetObject();
 
-            NavTile destinationTile = NavTiles[destination];
-            NavTile startTile = NavTiles[start];
-            
+            NavTileWithParent currentTile;
 
-            if (UnitPositionManager.GetUnitsOnTilePoint(destinationTile.Tile).Count > 0 && !allowEndInUnit)
-            {
-                return false; //if the ending tile is inside of a unit then immediately return
-            }
-
-            if (destinationTile.Tile.Structure != null && !(destinationTile.Tile.Structure.Passable || destinationTile.Tile.Structure.Pathable))
-            {
-                return false;
-            }
-
-            if (FeatureEquation.GetDistanceBetweenPoints(start, destination) > maximumDepth * 1.5f)
-            {
-                return false;
-            }
-
-            NavTileWithParent currentTile = new NavTileWithParent(startTile)
-            {
-                PathCost = FeatureEquation.GetDistanceBetweenPoints(start, start),
-                DistanceToEnd = FeatureEquation.GetDistanceBetweenPoints(start, destination),
+            List<Direction> directions = new List<Direction>()
+            { 
+                Direction.South, Direction.SouthEast, Direction.SouthWest, 
+                Direction.NorthEast, Direction.NorthWest, Direction.North
             };
 
-            HashSet<NavTile> visitedTiles = new HashSet<NavTile>();
-
-            visitedTiles.Add(NavTiles[start]);
-
-            tileList.Add(currentTile);
-
-            HashSet<NavTile> newNeighbors = new HashSet<NavTile>();
-
-            float unitCaution = considerCaution ? pathingUnit?.AI.Feelings.GetFeelingValue(FeelingType.Caution) ?? 0f : 0f;
-
-            bool hasMovementAbilities = movementParams != null && movementParams.Params.Count > 0;
-
-            while (true)
+            try
             {
-                currentTile.Visited = true;
+                if (maximumDepth <= 0)
+                    return false;
 
-                if (currentTile.NavTile == destinationTile)
+                if (!CheckFeaturePointInBounds(ref start) || !CheckFeaturePointInBounds(ref destination))
                 {
-                    #region pathing successful
-                    while (currentTile.Parent != null)
-                    {
-                        returnList.Add(currentTile.NavTile.Tile);
-                        currentTile = currentTile.Parent;
-                    }
-
-                    returnList.Add(TileMapHelpers.GetTile(currentTile.NavTile.Tile));
-                    returnList.Reverse();
-                    return true;
-                    #endregion
+                    return false;
                 }
 
-                newNeighbors.Clear();
+                NavTile destinationTile = GetNavTileAtFeaturePoint(ref destination);
+                NavTile startTile = GetNavTileAtFeaturePoint(ref start);
 
-                for(int i = 0; i < 6; i++)
+
+                if (UnitPositionManager.TilePointHasUnits(destinationTile.Tile) && !allowEndInUnit)
                 {
-                    if (currentTile.NavTile.NavDirectionMask.HasFlag(NavTile.GetNavDirection(navType, (Direction)i)))
+                    return false; //if the ending tile is inside of a unit then immediately return
+                }
+
+                if (destinationTile.Tile.Structure != null && !(destinationTile.Tile.Structure.Passable || destinationTile.Tile.Structure.Pathable))
+                {
+                    return false;
+                }
+
+                if (FeatureEquation.GetDistanceBetweenPoints(start, destination) > maximumDepth * 1.5f)
+                {
+                    return false;
+                }
+
+                currentTile = NavTileWithParent.Pool.GetObject();
+                currentTile.Initialize(startTile);
+                currentTile.PathCost = FeatureEquation.GetDistanceBetweenPoints(start, start);
+                currentTile.DistanceToEnd = FeatureEquation.GetDistanceBetweenPoints(start, destination);
+
+                visitedTiles.Add(startTile);
+
+                tileList.Add(currentTile);
+
+
+                float unitCaution = considerCaution ? pathingUnit?.AI.Feelings.GetFeelingValue(FeelingType.Caution) ?? 0f : 0f;
+
+                //bool hasMovementAbilities = movementParams != null && movementParams.Params.Count > 0;
+                bool hasMovementAbilities = false;
+
+                float tempMinDepth;
+                float currMinDepth;
+
+                bool skipNeighbor;
+                bool unitOnSpace;
+                bool immunityExists;
+                float pathCost;
+                float distanceToEnd;
+                bool tileChanged;
+                Direction dir;
+
+                while (true)
+                {
+                    currentTile.Visited = true;
+
+                    if (currentTile.NavTile == destinationTile)
                     {
-                        //TODO? change this function call to be a field access "currentTile.NavTile.Tile.ToFeaturePoint()"
-                        if (GetNeighboringNavTile(currentTile.NavTile.Tile.ToFeaturePoint(), (Direction)i, out var neighborPoint, out NavTile neighborTile))
+                        #region pathing successful
+                        while (currentTile.Parent != null)
                         {
-                            newNeighbors.Add(neighborTile);
+                            returnList.Add(currentTile.NavTile.Tile);
+                            currentTile = currentTile.Parent;
                         }
+
+                        returnList.Add(TileMapHelpers.GetTile(currentTile.NavTile.Tile));
+                        returnList.Reverse();
+                        return true;
+                        #endregion
                     }
-                }
 
-                if (hasMovementAbilities)
-                {
-                    //TODO
-                    //We need to change the output from a list of basetiles to a list of movement actions
-                    //These tile actions will contain the ability that was used (or if it's a basic move then just a list of tiles)
-                    //If an ability was used then the destination tile will be included.
-                    //This list of movement actions then needs to be unrolled and applied where necessary
-                }
+                    newNeighbors.Clear();
 
-                foreach (var neighbor in newNeighbors)
-                {
-                    var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(neighbor.Tile.TilePoint);
+                    currentTile.NavTile.Tile.ToFeaturePoint(ref currentFeaturePoint);
 
-                    if (unitsOnPoint.Count > 0 && !(pathingUnit?.Info.PhasedMovement == true)) //special cases for ability targeting should go here
+                    directions.Randomize();
+
+                    for (int i = 0; i < 6; i++)
                     {
-                        bool unitOnSpace = false;
+                        dir = directions[i];
 
-                        foreach (var unit in unitsOnPoint)
+                        if ((currentTile.NavTile.NavDirectionMask & NavTile.GetNavDirection(navType, dir)) > 0)
                         {
-                            if (unit.Info.BlocksSpace)
+                            if (GetNeighboringNavTile(ref currentFeaturePoint, ref dir, ref placeholderPoint, out NavTile neighborTile))
                             {
-                                unitOnSpace = true;
-                                break;
+                                newNeighbors.Add(neighborTile);
                             }
                         }
-
-                        if (unitOnSpace && !(allowEndInUnit && neighbor == destinationTile))
-                            continue;
                     }
 
-                    var tileEffectsOnPoint = TileEffectManager.GetTileEffectsOnTilePoint(neighbor.Tile.TilePoint);
-
-                    bool skipNeighbor = false;
-                    foreach (var tileEffect in tileEffectsOnPoint)
+                    if (hasMovementAbilities)
                     {
-                        if (pathingUnit != null)
+                        //TODO
+                        //We need to change the output from a list of basetiles to a list of movement actions
+                        //These tile actions will contain the ability that was used (or if it's a basic move then just a list of tiles)
+                        //If an ability was used then the destination tile will be included.
+                        //This list of movement actions then needs to be unrolled and applied where necessary
+                    }
+
+                    foreach (var neighbor in newNeighbors)
+                    {
+                        var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(neighbor.Tile.TilePoint);
+
+                        if (unitsOnPoint.Count > 0 && !(pathingUnit?.Info.PhasedMovement == true)) //special cases for ability targeting should go here
                         {
-                            //if the unit isn't immune then we check their caution
-                            if (!tileEffect.Immunities.Exists(immunity => pathingUnit.Info.StatusManager.CheckCondition(immunity)))
+                            unitOnSpace = false;
+
+                            foreach (var unit in unitsOnPoint)
                             {
-                                if (unitCaution > (1 - tileEffect.Danger))
+                                if (unit.Info.BlocksSpace)
                                 {
-                                    skipNeighbor = true;
+                                    unitOnSpace = true;
                                     break;
                                 }
                             }
+
+                            if (unitOnSpace && !(allowEndInUnit && neighbor == destinationTile))
+                                continue;
                         }
-                    }
 
-                    if (skipNeighbor)
-                    {
-                        continue;
-                    }
+                        var tileEffectsOnPoint = TileEffectManager.GetTileEffectsOnTilePoint(neighbor.Tile.TilePoint);
 
-                    if (visitedTiles.Contains(neighbor))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        float pathCost = currentTile.PathCost + neighbor.Tile.Properties.MovementCost;
-                        float distanceToEnd = FeatureEquation.GetDistanceBetweenPoints(neighbor.Tile.ToFeaturePoint(), destination);
+                        skipNeighbor = false;
 
-                        if (pathCost + distanceToEnd <= maximumDepth)
+                        foreach (var tileEffect in tileEffectsOnPoint)
                         {
-                            NavTileWithParent tile = new NavTileWithParent(neighbor, currentTile)
+                            if (pathingUnit != null)
                             {
-                                PathCost = pathCost,
-                                DistanceToEnd = distanceToEnd,
-                            };
+                                //if the unit isn't immune then we check their caution
+                                immunityExists = false;
+                                for(int i = 0; i < tileEffect.Immunities.Count; i++)
+                                {
+                                    if (pathingUnit.Info.StatusManager.CheckCondition(tileEffect.Immunities[i]))
+                                    {
+                                        immunityExists = true;
+                                        break;
+                                    }
+                                }
 
-                            tileList.Add(tile);
-
-                            if (neighbor == destinationTile)
-                            {
-                                currentTile = tile;
-                                break;
+                                if (!immunityExists)
+                                {
+                                    if (unitCaution > (1 - tileEffect.Danger))
+                                    {
+                                        skipNeighbor = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
 
-                        visitedTiles.Add(neighbor);
-                    }
-                }
+                        if (skipNeighbor)
+                        {
+                            continue;
+                        }
 
-                if (currentTile.NavTile == destinationTile)
-                {
-                    #region pathing successful
-                    while (currentTile.Parent != null)
+                        if (visitedTiles.Contains(neighbor))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            neighbor.Tile.ToFeaturePoint(ref placeholderPoint);
+
+                            pathCost = currentTile.PathCost + neighbor.Tile.Properties.MovementCost;
+                            distanceToEnd = FeatureEquation.GetDistanceBetweenPoints(placeholderPoint, destination);
+
+                            if (pathCost + distanceToEnd <= maximumDepth)
+                            {
+                                NavTileWithParent tile = NavTileWithParent.Pool.GetObject();
+                                tile.Initialize(neighbor, currentTile);
+                                tile.PathCost = pathCost;
+                                tile.DistanceToEnd = distanceToEnd;
+
+                                tileList.Add(tile);
+
+                                if (neighbor == destinationTile)
+                                {
+                                    currentTile = tile;
+                                    break;
+                                }
+                            }
+
+                            visitedTiles.Add(neighbor);
+                        }
+                    }
+
+                    if (currentTile.NavTile == destinationTile)
                     {
-                        returnList.Add(currentTile.NavTile.Tile);
-                        currentTile = currentTile.Parent;
+                        #region pathing successful
+                        while (currentTile.Parent != null)
+                        {
+                            returnList.Add(currentTile.NavTile.Tile);
+                            currentTile = currentTile.Parent;
+                        }
+
+                        returnList.Add(TileMapHelpers.GetTile(currentTile.NavTile.Tile.TilePoint));
+                        returnList.Reverse();
+                        return true;
+                        #endregion
                     }
 
-                    returnList.Add(TileMapHelpers.GetTile(currentTile.NavTile.Tile));
-                    returnList.Reverse();
-                    return true;
-                    #endregion
+                    currMinDepth = currentTile.GetCurrentMinimumDepth();
+
+                    tileChanged = false;
+                    foreach (var tile in tileList)
+                    {
+                        if (!tile.Visited)
+                        {
+                            if (!tileChanged)
+                            {
+                                currentTile = tile;
+                                tileChanged = true;
+                            }
+
+                            tempMinDepth = tile.GetCurrentMinimumDepth();
+
+                            if ((tempMinDepth < currMinDepth) || (tempMinDepth == currMinDepth && tile.DistanceToEnd < currentTile.DistanceToEnd))
+                            {
+                                currentTile = tile;
+                            }
+                        }
+                    }
+
+                    if (currentTile.Visited)
+                    {
+                        return false;
+                    }
+
+                    if (currMinDepth > maximumDepth)
+                    {
+                        return false;
+                    }
                 }
 
-                bool tileChanged = false;
+            }
+            finally
+            {
                 foreach(var tile in tileList)
                 {
-                    if (!tile.Visited)
-                    {
-                        if (!tileChanged)
-                        {
-                            currentTile = tile;
-                            tileChanged = true;
-                        }
-
-                        if ((tile.CurrentMinimumDepth < currentTile.CurrentMinimumDepth) || (tile.CurrentMinimumDepth == currentTile.CurrentMinimumDepth && tile.DistanceToEnd < currentTile.DistanceToEnd))
-                        {
-                            currentTile = tile;
-                        }
-                    }
+                    currentTile = tile;
+                    NavTileWithParent.Pool.FreeObject(ref currentTile);
                 }
 
-                if (currentTile.Visited)
-                {
-                    return false;
-                }
+                tileList.Clear();
+                _navTileWParentSetPool.FreeObject(ref tileList);
 
-                if (currentTile.CurrentMinimumDepth > maximumDepth)
-                {
-                    return false;
-                }
+                visitedTiles.Clear();
+                _navTileSetPool.FreeObject(ref visitedTiles);
+
+                newNeighbors.Clear();
+                _navTileSetPool.FreeObject(ref newNeighbors);
+
+                FeaturePoint.FeaturePointPool.FreeObject(ref placeholderPoint);
+                FeaturePoint.FeaturePointPool.FreeObject(ref currentFeaturePoint);
             }
         }
 
-        public bool GetNeighboringNavTile(FeaturePoint point, Direction direction, out FeaturePoint neighborPoint, out NavTile neighborTile)
+        private static ObjectPool<Vector3i> _vector3iPool = new ObjectPool<Vector3i>();
+        public bool GetNeighboringNavTile(ref FeaturePoint point, ref Direction direction, ref FeaturePoint neighborPoint, out NavTile neighborTile)
         {
-            var cube = CubeMethods.OffsetToCube(point);
-            cube = CubeMethods.CubeNeighbor(cube, direction);
+            var cube = _vector3iPool.GetObject();
+            CubeMethods.OffsetToCube(point, ref cube);
 
-            var featurePoint = CubeMethods.CubeToFeaturePoint(cube);
+            CubeMethods.CubeNeighborInPlace(ref cube, direction);
 
-            if(NavTiles.TryGetValue(featurePoint, out var navTile))
+            CubeMethods.CubeToFeaturePoint(cube, ref neighborPoint);
+
+            _vector3iPool.FreeObject(ref cube);
+
+            if (!CheckFeaturePointInBounds(ref neighborPoint))
             {
-                neighborPoint = featurePoint;
-                neighborTile = navTile;
-                return true;
-            }
-            else
-            {
-                neighborPoint = new FeaturePoint();
                 neighborTile = null;
                 return false;
             }
+
+            NavTile navTile = GetNavTileAtFeaturePoint(ref neighborPoint);
+
+            neighborTile = navTile;
+            return navTile != null;
         }
     }
 
-    [Flags]
     public enum NavDirections
     {
         None = 0,
@@ -371,13 +505,16 @@ namespace MortalDungeon.Game.Combat
     {
         public Tile Tile;
         public NavDirections NavDirectionMask = NavDirections.None;
-        public HashSet<TileEffect> TileEffects => TileEffectManager.GetTileEffectsOnTilePoint(Tile.TilePoint);
-
         public NavTile(Tile tile)
         {
             Tile = tile;
 
             CalculateNavDirectionMask();
+        }
+
+        public HashSet<TileEffect> GetTileEffects()
+        {
+            return TileEffectManager.GetTileEffectsOnTilePoint(Tile.TilePoint);
         }
 
         public static NavDirections GetNavDirection(NavType type, Direction direction)
@@ -473,11 +610,11 @@ namespace MortalDungeon.Game.Combat
 
             var tilePosCube = CubeMethods.OffsetToCube(Tile.ToFeaturePoint());
 
-            List<FeaturePoint> neighbors = new List<FeaturePoint>();
+            List<FeaturePoint> neighbors = FeaturePoint.FeaturePointListPool.GetObject();
 
             for(int i = 0; i < 6; i++)
             {
-                neighbors.Add(CubeMethods.CubeToFeaturePoint(CubeMethods.CubeNeighbor(tilePosCube, (Direction)i)));
+                neighbors.Add(CubeMethods.CubeToFeaturePoint(CubeMethods.CubeNeighbor(ref tilePosCube, (Direction)i)));
             }
 
             for(int i = 0; i < neighbors.Count; i++)
@@ -638,6 +775,9 @@ namespace MortalDungeon.Game.Combat
                     }
                 }
             }
+
+            neighbors.Clear();
+            FeaturePoint.FeaturePointListPool.FreeObject(ref neighbors);
         }
 
         private bool CheckTileGround(Tile source, Tile destination)
@@ -734,15 +874,28 @@ namespace MortalDungeon.Game.Combat
         public NavTile NavTile;
         public float PathCost = 0; //Path cost
         public float DistanceToEnd = 0; //Distance to end
-        public float CurrentMinimumDepth => PathCost + DistanceToEnd;
         public bool Visited = false;
 
+        public static ObjectPool<NavTileWithParent> Pool = new ObjectPool<NavTileWithParent>();
         //Add an aversion field here and include it in the algorithm
 
+        public NavTileWithParent() { }
         public NavTileWithParent(NavTile navTile, NavTileWithParent parent = null)
         {
             Parent = parent;
             NavTile = navTile;
+        }
+
+        public void Initialize(NavTile navTile, NavTileWithParent parent = null)
+        {
+            Parent = parent;
+            NavTile = navTile;
+            Visited = false;
+        }
+
+        public float GetCurrentMinimumDepth()
+        {
+            return PathCost + DistanceToEnd;
         }
     }
 }

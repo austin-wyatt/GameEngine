@@ -1,13 +1,14 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.Ledger.Units;
-using MortalDungeon.Game.LuaHandling;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Ledger;
+using Empyrean.Game.Ledger.Units;
+using Empyrean.Game.Save;
+using Empyrean.Game.Scripting;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Map
+namespace Empyrean.Game.Map
 {
     public enum FeatureEquationPointValues
     {
@@ -35,6 +36,7 @@ namespace MortalDungeon.Game.Map
         public int MAP_HEIGHT = TileMapManager.TILE_MAP_DIMENSIONS.Y;
 
         public Dictionary<FeaturePoint, int> AffectedPoints = new Dictionary<FeaturePoint, int>();
+        public Dictionary<FeaturePoint, FeatureUnit> FeatureUnits = new Dictionary<FeaturePoint, FeatureUnit>();
 
         public HashSet<FeaturePoint> VisitedTiles = new HashSet<FeaturePoint>();
 
@@ -48,13 +50,17 @@ namespace MortalDungeon.Game.Map
 
         public List<SerializableBuildingSkeleton> BuildingSkeletons = new List<SerializableBuildingSkeleton>();
 
-        public List<ClearParamaters> ClearParamaters = new List<ClearParamaters>();
+        public List<BlendControl> BlendControls = new List<BlendControl>();
+
+        public List<ClearParamaters> ClearParameters = new List<ClearParamaters>();
 
         public FeaturePoint Origin = new FeaturePoint();
 
         public Random NumberGen;
 
         public int NameTextEntry = 0;
+
+        public int AssociatedPOI;
 
         /// <summary>
         /// These get applied to the state when the player enters the load radius.
@@ -83,155 +89,6 @@ namespace MortalDungeon.Game.Map
 
         public string DescriptiveName = "";
 
-        /// <summary>
-        /// Applies any feature effects to a relevant tile.
-        /// </summary>
-        /// <param name="freshGeneration">Whether this is a newly added map or one that has already been loaded. 
-        /// The main use for this is resolving features that span multiple tilemaps and must seem contiguous (such as buildings)</param>
-        public virtual void ApplyToTile(Tile tile, bool freshGeneration = true)
-        {
-            ApplyToAffectedPoint(tile, freshGeneration);
-            ApplyBoundingPoints(tile, freshGeneration);
-        }
-
-        public void ApplyBoundingPoints(Tile tile, bool freshGeneration = true)
-        {
-            //FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
-
-            //foreach (var bound in BoundingPoints)
-            //{
-            //    if (bound.BoundingPointsId == 0)
-            //        continue;
-
-            //    bool inBoundingSquare = FeaturePoint.PointInPolygon(bound.BoundingSquare, new Vector2i(affectedPoint.X, affectedPoint.Y));
-
-            //    if (inBoundingSquare && bound.OffsetPoints.Count > 2 && FeaturePoint.PointInPolygon(bound.OffsetPoints, new Vector2i(affectedPoint.X, affectedPoint.Y)) && freshGeneration)
-            //    {
-            //        double density;
-            //        int height;
-
-            //        switch (bound.BoundingPointsId)
-            //        {
-            //            case 1:
-            //                density = 0.9;
-            //                if (bound.Parameters.TryGetValue("density", out var val))
-            //                {
-            //                    if (double.TryParse(val, out var d))
-            //                    {
-            //                        density = d;
-            //                    }
-            //                }
-
-            //                if (NumberGen.NextDouble() > density)
-            //                {
-            //                    var tree = new Tree(tile.TileMap, tile, NumberGen.Next() % 2);
-            //                }
-            //                break;
-            //            case 2:
-            //                if (NumberGen.NextDouble() > 0.3)
-            //                {
-            //                    tile.Properties.Type = TileType.Water;
-            //                }
-            //                else
-            //                {
-            //                    tile.Properties.Type = TileType.AltWater;
-            //                }
-            //                break;
-            //            case 3:
-            //                tile.Properties.Type = TileType.Dirt;
-            //                break;
-            //            case 4:
-            //                density = 0.5;
-            //                if (bound.Parameters.TryGetValue("density", out var grass_density))
-            //                {
-            //                    if (double.TryParse(grass_density, out var d))
-            //                    {
-            //                        density = d;
-            //                    }
-            //                }
-
-            //                if ((NumberGen.NextDouble() > density))
-            //                {
-            //                    TileOverlay grassOverlay = new TileOverlay(TileOverlayType.Grass_1, 1);
-            //                    tile.Properties.TileOverlays.Add(grassOverlay);
-
-            //                    PropertyAnimation tileAnimation = new PropertyAnimation();
-
-            //                    Keyframe frame = new Keyframe(10, () =>
-            //                    {
-            //                        grassOverlay.TileOverlayType = (TileOverlayType)(((int)grassOverlay.TileOverlayType + 1) % 3 + 1);
-            //                        tile.Update();
-            //                    });
-
-            //                    tileAnimation.Keyframes.Add(frame);
-
-            //                    tileAnimation.SetStartDelay(new Random().Next() % 25);
-            //                    tileAnimation.Repeat = true;
-            //                    tileAnimation.Play();
-
-            //                    tile.PropertyAnimations.Add(tileAnimation);
-
-            //                    TileMapManager.Scene.Tick -= tile.Tick;
-            //                    TileMapManager.Scene.Tick += tile.Tick;
-
-            //                    tile.Update();
-            //                }
-            //                break;
-            //            case 5:
-            //                height = 0;
-            //                if (bound.Parameters.TryGetValue("height", out var tileHeight))
-            //                {
-            //                    if (int.TryParse(tileHeight, out var d))
-            //                    {
-            //                        height = d;
-            //                    }
-            //                }
-
-            //                if (height > 0)
-            //                {
-            //                    Vector3 pos = new Vector3(tile.Position.X, tile.Position.Y, 0);
-
-            //                    tile.SetPosition(pos + new Vector3(0, 0, height * 0.2f));
-            //                    tile.Update();
-            //                    tile.SetHeight(height);
-            //                }
-            //                break;
-            //            case 6:
-            //                if (NumberGen.NextDouble() > 0.5)
-            //                {
-            //                    tile.Properties.Type = TileType.Stone_1;
-            //                }
-            //                else
-            //                {
-            //                    tile.Properties.Type = TileType.Stone_2;
-            //                }
-            //                tile.Update();
-            //                break;
-            //            case 7:
-            //                tile.Properties.Type = TileType.Fill;
-            //                double rng = NumberGen.NextDouble();
-
-            //                if (rng > 0.5)
-            //                {
-            //                    tile.SetColor(_Colors.LightBlue);
-            //                }
-            //                else if (rng > 0.25)
-            //                {
-            //                    tile.SetColor(_Colors.LightBlue + new Vector4(0, -0.05f, 0, 0));
-            //                }
-            //                else
-            //                {
-            //                    tile.SetColor(_Colors.LightBlue + new Vector4(0, -0.1f, 0, 0));
-            //                }
-
-            //                tile.Update();
-            //                break;
-            //        }
-
-            //    }
-            //}
-        }
-
         public void ApplyToAffectedPoint(Tile tile, bool freshGeneration = true)
         {
             FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
@@ -240,7 +97,7 @@ namespace MortalDungeon.Game.Map
             {
                 if (param.TryGetValue("GEN_SCRIPT", out var script))
                 {
-                    LuaManager.ApplyScript(script);
+                    JSManager.ApplyScript(script);
                 }
             }
 
@@ -248,46 +105,6 @@ namespace MortalDungeon.Game.Map
             {
                 long pointHash = affectedPoint.GetUniqueHash();
 
-                var unitAlive = FeatureLedger.GetHashBoolean(FeatureID, pointHash, "alive");
-
-
-                #region Units
-                if (value >= (int)FeatureEquationPointValues.UnitStart && value <= (int)FeatureEquationPointValues.UnitEnd && freshGeneration &&
-                    unitAlive != HashBoolean.False)
-                {
-                    if (FeatureLedger.GetHashBoolean(FeatureID, pointHash, "i") == HashBoolean.True)
-                    {
-                        return;
-                    }
-
-
-                    var unitInfo = UnitInfoBlockManager.GetUnit(value - (int)FeatureEquationPointValues.UnitStart);
-
-                    if (unitInfo != null)
-                    {
-                        Unit unit = unitInfo.CreateUnit(TileMapManager.Scene);
-
-                        if (Parameters.TryGetValue(affectedPoint, out var parameters))
-                        {
-                            unit.ApplyUnitParameters(parameters);
-                        }
-
-                        unit.FeatureID = FeatureID;
-                        unit.ObjectHash = pointHash;
-
-                        Entity unitEntity = new Entity(unit);
-                        EntityManager.AddEntity(unitEntity);
-
-                        unitEntity.DestroyOnUnload = false;
-
-                        EntityManager.LoadEntity(unitEntity, affectedPoint);
-
-                        FeatureLedger.SetHashBoolean(FeatureID, pointHash, "alive", true);
-                        //"i" for "initialized"
-                        FeatureLedger.SetHashBoolean(FeatureID, pointHash, "i", true);
-                    }
-                }
-                #endregion
 
                 #region Buildings
                 if (value >= (int)FeatureEquationPointValues.BuildingStart && value <= (int)FeatureEquationPointValues.BuildingEnd)
@@ -318,7 +135,7 @@ namespace MortalDungeon.Game.Map
                         //{
                             //skeleton.Handle.TextureLoad -= onTextureLoad;
 
-                        Vector3 tileSize = tile.TileBounds.TileDimensions;
+                        Vector3 tileSize = TileBounds.TileDimensions;
                         Vector3 posDiff = new Vector3();
 
                         Vector3i idealCenterCube = skeleton.IdealCenter + CubeMethods.OffsetToCube(Origin);
@@ -370,6 +187,54 @@ namespace MortalDungeon.Game.Map
             }
         }
 
+        public void ApplyUnitToPoint(Tile tile, bool freshGeneration = true)
+        {
+            FeaturePoint affectedPoint = new FeaturePoint(PointToMapCoords(tile.TilePoint));
+
+            if (Parameters.TryGetValue(affectedPoint, out var param))
+            {
+                if (param.TryGetValue("GEN_SCRIPT", out var script))
+                {
+                    JSManager.ApplyScript(script);
+                }
+            }
+
+            if (FeatureUnits.TryGetValue(affectedPoint, out FeatureUnit featureUnit))
+            {
+                bool unitAlive = PermanentUnitInfoLedger.GetParameterValue(featureUnit.PermanentId, PermanentUnitInfoParameter.Dead) != 1;
+
+                bool unitLoaded = PermanentUnitInfoLedger.GetParameterValue(featureUnit.PermanentId, PermanentUnitInfoParameter.Loaded) == 1;
+
+                #region Units
+                if (freshGeneration && unitAlive && !unitLoaded)
+                {
+                    var unitInfo = UnitInfoBlockManager.GetUnit(featureUnit.UnitId);
+
+                    if (unitInfo != null)
+                    {
+                        Unit unit = unitInfo.CreateUnit(TileMapManager.Scene);
+
+                        if (Parameters.TryGetValue(affectedPoint, out var parameters))
+                        {
+                            unit.ApplyUnitParameters(parameters);
+                        }
+
+                        unit.SetPermanentId(featureUnit.PermanentId);
+
+                        Entity unitEntity = new Entity(unit);
+                        EntityManager.AddEntity(unitEntity);
+
+                        unitEntity.DestroyOnUnload = false;
+
+                        EntityManager.LoadEntity(unitEntity, affectedPoint);
+
+                        
+                    }
+                }
+                #endregion
+            }
+        }
+
         public virtual bool AffectsMap(TileMap map)
         {
             return AffectedMaps.Contains(map.TileMapCoords);
@@ -390,18 +255,20 @@ namespace MortalDungeon.Game.Map
 
         public bool CheckCleared()
         {
-            if(FeatureLedger.GetFeatureStateValue(FeatureID, FeatureStateValues.Cleared) != 1)
+            if (GlobalInfoManager.GetPOIParameter(AssociatedPOI, POIParameterType.Cleared) != 1)
             {
-                foreach(var parameters in ClearParamaters)
+                foreach (var parameters in ClearParameters)
                 {
-                    foreach(var param in parameters.ExpectedValues)
-                    {
-                        if(FeatureLedger.GetHashData(FeatureID, parameters.ObjectHash, param.Key) != param.Value)
-                        {
-                            return false;
-                        }
-                    }
+                    //foreach (var param in parameters.ExpectedValues)
+                    //{
+                    //    if (FeatureLedger.GetHashData(FeatureID, parameters.ObjectHash, param.Key) != param.Value)
+                    //    {
+                    //        return false;
+                    //    }
+                    //}
                 }
+
+                return false;
             }
 
             return true;
@@ -428,7 +295,13 @@ namespace MortalDungeon.Game.Map
             return coords;
         }
 
-        public static TileMapPoint FeaturePointToTileMapCoords(FeaturePoint point, int mapWidth = -1, int mapHeight = -1)
+        public static void PointToMapCoords(TilePoint point, ref int X, ref int Y)
+        {
+            X = point.X + point.MapPoint.X * TileMapManager.TILE_MAP_DIMENSIONS.X;
+            Y = point.Y + point.MapPoint.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y;
+        }
+
+        public static TileMapPoint FeaturePointToTileMapCoords(ref FeaturePoint point, int mapWidth = -1, int mapHeight = -1)
         {
             if(mapWidth == -1)
             {
@@ -439,9 +312,24 @@ namespace MortalDungeon.Game.Map
                 mapHeight = TileMapManager.TILE_MAP_DIMENSIONS.Y;
             }
 
-            TileMapPoint coords = new TileMapPoint((int)Math.Floor((float)point.X / mapWidth), (int)Math.Floor((float)point.Y / mapHeight));
+            TileMapPoint coords = new TileMapPoint((int)Math.Floor((double)point.X / mapWidth), (int)Math.Floor((double)point.Y / mapHeight));
 
             return coords;
+        }
+
+        public static void FeaturePointToTileMapCoords(ref FeaturePoint point, ref TileMapPoint coords, int mapWidth = -1, int mapHeight = -1)
+        {
+            if (mapWidth == -1)
+            {
+                mapWidth = TileMapManager.TILE_MAP_DIMENSIONS.X;
+            }
+            if (mapHeight == -1)
+            {
+                mapHeight = TileMapManager.TILE_MAP_DIMENSIONS.Y;
+            }
+
+            coords.X = (int)Math.Floor((double)point.X / mapWidth);
+            coords.Y = (int)Math.Floor((double)point.Y / mapHeight);
         }
 
 
@@ -646,19 +534,21 @@ namespace MortalDungeon.Game.Map
             Vector3i startCube = CubeMethods.OffsetToCube(startPoint);
             Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
 
-            int N = CubeMethods.GetDistanceBetweenPoints(startCube, endCube);
+            int N = CubeMethods.GetDistanceBetweenPoints(ref startCube, ref endCube);
             float n = 1f / N;
 
             Vector3 currentCube;
             Vector2i currentOffset;
 
-            FeaturePoint currentPoint = startPoint;
             FeaturePoint temp;
+
+            Vector3 startVec3 = new Vector3(startCube);
+            Vector3 endVec3 = new Vector3(endCube);
 
             for (int i = 0; i <= N; i++)
             {
-                currentCube = CubeMethods.CubeLerp(startCube, endCube, n * i);
-                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(currentCube));
+                currentCube = CubeMethods.CubeLerp(ref startVec3, ref endVec3, n * i);
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(ref currentCube));
 
                 temp = new FeaturePoint(currentOffset);
 
@@ -753,12 +643,23 @@ namespace MortalDungeon.Game.Map
             return angle;
         }
 
+        private static ObjectPool<Vector3i> _vector3iPool = new ObjectPool<Vector3i>();
         public static int GetDistanceBetweenPoints(FeaturePoint pointA, FeaturePoint pointB)
         {
-            Vector3i a = CubeMethods.OffsetToCube(pointA);
-            Vector3i b = CubeMethods.OffsetToCube(pointB);
+            Vector3i a = _vector3iPool.GetObject();
+            CubeMethods.OffsetToCube(pointA, ref a);
+            Vector3i b = _vector3iPool.GetObject();
+            CubeMethods.OffsetToCube(pointB, ref b);
 
-            return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
+            try
+            {
+                return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
+            }
+            finally
+            {
+                _vector3iPool.FreeObject(ref a);
+                _vector3iPool.FreeObject(ref b);
+            }
         }
 
         public static int AngleOfDirection(Direction dir)
@@ -810,7 +711,7 @@ namespace MortalDungeon.Game.Map
         public void AddAffectedPoint(FeaturePoint point, int feature)
         {
             AffectedPoints.TryAdd(point, feature);
-            AffectedMaps.Add(FeaturePointToTileMapCoords(point));
+            AffectedMaps.Add(FeaturePointToTileMapCoords(ref point));
         }
 
         public void ClearAffectedPoints() 

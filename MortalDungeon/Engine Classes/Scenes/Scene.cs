@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Game.Objects.PropertyAnimations;
-using MortalDungeon.Game.SceneHelpers;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.Objects.PropertyAnimations;
+using Empyrean.Game.SceneHelpers;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -17,9 +17,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static MortalDungeon.Engine_Classes.Scenes.CombatScene;
+using static Empyrean.Engine_Classes.Scenes.CombatScene;
 
-namespace MortalDungeon.Engine_Classes.Scenes
+namespace Empyrean.Engine_Classes.Scenes
 {
     public enum ObjectType //corresponds to their bit position in the MessageTarget enum
     {
@@ -82,6 +82,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         protected object _structureLock = new object();
         public HashSet<Structure> _structures = new HashSet<Structure>();
 
+        public LockedList<IndividualMesh> IndividualMeshes = new LockedList<IndividualMesh>(Window._renderLock);
+
         /// <summary>
         /// Determines whether tiles will be considered for UI events
         /// </summary>
@@ -134,7 +136,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// <summary>
         /// Allows multiple sources to call one function that aggregates data while only allowing the function to
         /// trigger once per render cycle. As long as this is getting called for aggregator functions (such as
-        /// CreateStructureInstancedRenderData) there are no tradeoffs to using the RenderDispatcher.
+        /// CreateStructureInstancedRenderData) the tradeoffs for using the dispatcher are minimal. <para/>
+        /// A case where the RenderDispatcher should not be used is when an action needs to be dispatched every frame.
+        /// Dispatching an action every frame will cause a large amount of Action object allocations and force 
+        /// constant gen 0 garbage collections. If a function needs to be called every frame then, if possible, it 
+        /// should be moved into the scenes OnRenderEnd function
         /// </summary>
         public RenderDispatcher RenderDispatcher = new RenderDispatcher();
 
@@ -469,8 +475,13 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                 OnTileClicked(chunk.Tiles[0].TileMap, tiles[0], e.Button, MouseUpStateFlags);
                                 MouseUpStateFlags.SetFlag(MouseUpFlags.ClickProcessed, true);
                             }
+
+                            tiles.Clear();
+                            Tile.TileListPool.FreeObject(ref tiles);
                         }
                     }
+
+                    TileMapHelpers.FreeDistanceAndChunkList(chunksByDistance);
                 }
 
                 if (MouseUpStateFlags.GetFlag(MouseUpFlags.ClickProcessed))
@@ -643,23 +654,23 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             if (hovered)
                             {
-                                UIManager.HoverableObjects[i].BoundsCheck(MouseCoordinates, _camera, null, UIEventType.HoverEnd);
+                                UIManager.HoverableObjects[i].HoverBoundsCheck(MouseCoordinates, _camera, UIEventType.HoverEnd);
                             }
                             else
                             {
-                                UIManager.HoverableObjects[i].BoundsCheck(MouseCoordinates, _camera, (obj) =>
+                                if(UIManager.HoverableObjects[i].HoverBoundsCheck(MouseCoordinates, _camera, UIEventType.Hover))
                                 {
                                     hovered = true;
                                     hoverHandled = true;
 
-                                    if (obj.HasTimedHoverEffect && !timedHover)
+                                    if (UIManager.HoverableObjects[i].HasTimedHoverEffect && !timedHover)
                                     {
                                         _hoverTimer.Restart();
-                                        _hoveredObject = obj;
+                                        _hoveredObject = UIManager.HoverableObjects[i];
 
                                         timedHover = true;
                                     }
-                                }, UIEventType.Hover);
+                                }
                             }
                         }
                     }
@@ -957,57 +968,44 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #endregion
 
         //accesses the method used to determine whether the cursor is overlapping an object that is defined in the main file.
-        protected List<T> ObjectCursorBoundsCheck<T>(List<T> listObjects, Vector3 near, Vector3 far, Action<T> foundAction = null, Action<T> notFoundAction = null) where T : GameObject
+        protected List<Unit> ObjectCursorBoundsCheck(List<Unit> listObjects, Vector3 near, Vector3 far, out List<Unit> notFound)
         {
-            List<T> foundObjects = new List<T>();
+            List<Unit> foundObjects = Unit.UnitListObjectPool.GetObject();
+            notFound = Unit.UnitListObjectPool.GetObject();
 
-            listObjects.ForEach(listObj =>
+            for (int i = 0; i < listObjects.Count; i++)
             {
-                listObj.BaseObjects.ForEach(obj =>
+                for(int j = 0; j < listObjects[i].BaseObjects.Count; j++)
                 {
-                    if (obj.Bounds.Contains3D(near, far, _camera))
+                    if (listObjects[i].BaseObjects[j].Bounds.Contains3D(near, far, _camera))
                     {
-                        foundObjects.Add(listObj);
-                        foundAction?.Invoke(listObj);
+                        foundObjects.Add(listObjects[i]);
                     }
                     else
                     {
-                        notFoundAction?.Invoke(listObj);
+                        notFound.Add(listObjects[i]);
                     }
-                });
-
-            });
+                }
+            }
 
             return foundObjects;
         }
 
-        protected List<Tile> ObjectCursorBoundsCheck(List<Tile> listObjects, Vector3 near, Vector3 far, Action<Tile> foundAction = null, Action<Tile> notFoundAction = null)
+
+        protected List<Tile> ObjectCursorBoundsCheck(List<Tile> listObjects, Vector3 near, Vector3 far)
         {
-            List<Tile> foundObjects = new List<Tile>();
+            List<Tile> foundObjects = Tile.TileListPool.GetObject();
 
-            listObjects.ForEach(listObj =>
+            for(int i = 0; i < listObjects.Count; i++)
             {
-                //TODO
-
-                //listObj.BaseObjects.ForEach(obj =>
-                //{
-                //    if (obj.Bounds.Contains3D(near, far, _camera))
-                //    {
-                //        foundObjects.Add(listObj);
-                //        foundAction?.Invoke(listObj);
-                //    }
-                //    else
-                //    {
-                //        notFoundAction?.Invoke(listObj);
-                //    }
-                //});
-
-            });
+                if (listObjects[i].TileBounds.Contains3D(near, far, _camera))
+                {
+                    foundObjects.Add(listObjects[i]);
+                }
+            }
 
             return foundObjects;
         }
-
-
 
 
         public Scene() { }
@@ -1015,21 +1013,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
         #region Misc helper functions
         public void SmoothPanCameraToUnit(Unit unit, int speed) 
         {
-            Vector3 pos = unit.BaseObject.BaseFrame.Position;
+            Vector3 pos = unit.BaseObject.BaseFrame._position;
 
-            SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), 1);
+            SmoothPanCamera(new Vector3(pos.X, pos.Y - _camera.Position.Z / 5, _camera.Position.Z), speed);
         }
         public void SmoothPanCamera(Vector3 pos, int speed)
         {
             if (ContextManager.GetFlag(GeneralContextFlags.CameraPanning))
                 return;
 
-            const int frames = 30;
-
-            Vector3 deltaPos = (_camera.Position - pos) / frames;
+            const int frames = 60;
+            const float framesReciprocal = 1f / frames;
 
             TimedAnimation animation = new TimedAnimation();
-
 
             //void updateCameraPos(SceneEventArgs _) 
             //{
@@ -1039,13 +1035,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //}
 
 
-            for (int i = 0; i < frames; i++) 
+            for (int i = 0; i <= frames; i++) 
             {
                 TimedKeyframe frame = new TimedKeyframe(speed * i);
+                float x = GMath.SmoothLerp(_camera.Position.X, pos.X, framesReciprocal * i);
+                float y = GMath.SmoothLerp(_camera.Position.Y, pos.Y, framesReciprocal * i);
+                float z = GMath.SmoothLerp(_camera.Position.Z, pos.Z, framesReciprocal * i);
+
+                //float x = MathHelper.Lerp(_camera.Position.X, pos.X, framesReciprocal * i);
+                //float y = MathHelper.Lerp(_camera.Position.Y, pos.Y, framesReciprocal * i);
+                //float z = MathHelper.Lerp(_camera.Position.Z, pos.Z, framesReciprocal * i);
+
                 frame.Action = () =>
                 {
-                    _camera.SetPosition(_camera.Position - deltaPos);
-                    //RenderEvent += updateCameraPos;
+                    _camera.SetPosition(new Vector3(x, y, z));
                 };
 
                 animation.Keyframes.Add(frame);
@@ -1126,10 +1129,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public void DecollateUnit(Unit unit)
         {
             lock (_renderedUnits)
-            if (_renderedUnits.TryGetValue(unit, out Unit found))
             {
-                _renderedUnits.Remove(unit);
-                ContextManager.SetFlag(GeneralContextFlags.UnitCollationRequired, true);
+                if (_renderedUnits.Remove(unit))
+                {
+                    ContextManager.SetFlag(GeneralContextFlags.UnitCollationRequired, true);
+                }
             }
         }
 
@@ -1142,16 +1146,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             ContextManager.SetFlag(GeneralContextFlags.UnitCollationRequired, false);
         }
 
-        public void SyncToRender(Action action)
-        {
-            void renderFunc(SceneEventArgs args)
-            {
-                action?.Invoke();
-                RenderEnd -= renderFunc;
-            }
-
-            RenderEnd += renderFunc;
-        }
 
         private object _renderActionQueueLock = new object();
         private  Queue<Action> _renderActionQueue = new Queue<Action>();

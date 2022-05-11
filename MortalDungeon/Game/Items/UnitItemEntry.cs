@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Items
+namespace Empyrean.Game.Items
 {
     [XmlType(TypeName = "UIEm")]
     [Serializable]

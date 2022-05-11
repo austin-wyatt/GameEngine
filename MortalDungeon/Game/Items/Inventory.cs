@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Items
+namespace Empyrean.Game.Items
 {
     public enum ItemAddError
     {
@@ -28,6 +28,23 @@ namespace MortalDungeon.Game.Items
         public List<Item> Items = new List<Item>();
 
         public List<ItemEntry> _itemEntries = new List<ItemEntry>();
+
+
+        public Inventory() { }
+
+        public Inventory(Inventory inventory)
+        {
+            Gold = inventory.Gold;
+
+            Item item;
+            for(int i = 0; i < inventory._itemEntries.Count; i++)
+            {
+                item = inventory._itemEntries[i].GetItemFromEntry();
+                Items.Add(item);
+
+                _itemEntries.Add(new ItemEntry(item));
+            }
+        }
 
         public ItemAddError AddItemToInventory(Item item)
         {
@@ -71,7 +88,7 @@ namespace MortalDungeon.Game.Items
             Items.Remove(item);
         }
 
-        public void AddGold(long amount)
+        public void AddGold(int amount)
         {
             Gold += amount;
         }

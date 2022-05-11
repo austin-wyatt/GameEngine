@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Game.Ledger;
+using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Events
+namespace Empyrean.Game.Events
 {
     public abstract class EventAction
     {

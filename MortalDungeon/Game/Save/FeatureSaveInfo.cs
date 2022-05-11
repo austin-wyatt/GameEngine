@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Save
+namespace Empyrean.Game.Save
 {
 
     [XmlType(TypeName = "FSI")]
     [Serializable]
     public class FeatureSaveInfo
     {
-        public long ID;
+        public BigInteger ID;
 
         [XmlElement("Fi", Namespace = "Fsi")]
-        public DeserializableDictionary<long, short> SignificantInteractions;
+        public DeserializableDictionary<BigInteger, short> SignificantInteractions;
 
         [XmlElement("Fhd", Namespace = "Fshd")]
-        public DeserializableDictionary<long, DeserializableDictionary_<string, string>> HashData;
+        public DeserializableDictionary<BigInteger, DeserializableDictionary_<string, string>> HashData;
     }
 }

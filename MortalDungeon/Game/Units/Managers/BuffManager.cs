@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
 
     [Serializable]
@@ -25,7 +25,7 @@ namespace MortalDungeon.Game.Units
 
         public const float ADDITIVE_BASE_VALUE = 0;
         public const float MULTIPLIER_BASE_VALUE = 1;
-        public const string BUFF_NAMESPACE = "MortalDungeon.Definitions.Buffs.";
+        public const string BUFF_NAMESPACE = "Empyrean.Definitions.Buffs.";
 
         public BuffManager() { }
 
@@ -66,7 +66,7 @@ namespace MortalDungeon.Game.Units
 
         public void CollateBuffValues()
         {
-            _collatedBuffValues = new Dictionary<int, float>();
+            _collatedBuffValues.Clear();
 
             foreach(var buff in Buffs)
             {
@@ -114,11 +114,11 @@ namespace MortalDungeon.Game.Units
                 Buffs.Add(buff);
             }
 
-            buff.OnAddedToUnit(Unit);
+            buff.OnAddedToUnit(Unit).Wait();
 
             CollateBuffValues();
 
-            if(Unit.Scene.Footer.CurrentUnit == Unit)
+            if(Unit.Scene?.Footer?.CurrentUnit == Unit)
             {
                 Unit.Scene.Footer.RefreshFooterInfo();
             }
@@ -131,7 +131,7 @@ namespace MortalDungeon.Game.Units
                 Buffs.Remove(buff);
             }
 
-            buff.OnRemovedFromUnit(Unit);
+            buff.OnRemovedFromUnit(Unit).Wait();
 
             CollateBuffValues();
 
@@ -176,7 +176,7 @@ namespace MortalDungeon.Game.Units
 
             for(int i = 0; i < Buffs.Count; i++)
             {
-                _buffs.Add(new Buff(Buffs[i]));
+                _buffs.Add(Buffs[i]);
             }
         }
     }

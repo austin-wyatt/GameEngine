@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.LuaHandling;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Scripting;
+using Empyrean.Game.Map;
+using Empyrean.Game.Save;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     /// <summary>
     /// Feature interactions are shorthand ways to set multiple FeatureStateValues.
@@ -44,8 +44,12 @@ namespace MortalDungeon.Game.Serializers
         [XmlElement("FmBs")]
         public HashSet<MapBrush> MapBrushes = new HashSet<MapBrush>();
 
+        [XmlElement("FBCs")]
+        public List<BlendControl> BlendControls = new List<BlendControl>();
+
         public int Id = 0;
 
+        public int AssociatedPOI = 0;
         //List<MapFillData>
 
 
@@ -122,7 +126,7 @@ namespace MortalDungeon.Game.Serializers
                 FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
 
                 featureEquation.AffectedPoints.TryAdd(newPoint, val.Value);
-                featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
+                featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(ref newPoint));
 
                 featureEquation.Parameters.Add(newPoint, val.Parameters);
 
@@ -145,12 +149,12 @@ namespace MortalDungeon.Game.Serializers
                         }
                     }
 
-                    featureEquation.ClearParamaters.Add(clearParameters);
+                    featureEquation.ClearParameters.Add(clearParameters);
                 }
 
                 if (val.Parameters.TryGetValue("LOAD_SCRIPT", out var script))
                 {
-                    LuaManager.ApplyScript(script);
+                    JSManager.ApplyScript(script);
                 }
             }
             #endregion
@@ -162,36 +166,36 @@ namespace MortalDungeon.Game.Serializers
 
                 FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
 
-                featureEquation.AffectedPoints.TryAdd(newPoint, val.UnitId + (int)FeatureEquationPointValues.UnitStart);
-                featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
+                featureEquation.FeatureUnits.TryAdd(newPoint, val);
+                featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(ref newPoint));
 
                 featureEquation.Parameters.Add(newPoint, val.AffectedPoint.Parameters);
 
-                if (val.AffectedPoint.Parameters.TryGetValue("rfc", out var featureParamString))
-                {
-                    featureParamString = featureParamString.Replace(" ", "");
+                //if (val.AffectedPoint.Parameters.TryGetValue("rfc", out var featureParamString))
+                //{
+                //    featureParamString = featureParamString.Replace(" ", "");
 
-                    string[] featureParams = featureParamString.Split(",");
+                //    string[] featureParams = featureParamString.Split(",");
 
-                    var clearParameters = new ClearParamaters();
-                    clearParameters.ObjectHash = newPoint.GetUniqueHash();
+                //    var clearParameters = new ClearParamaters();
+                //    clearParameters.ObjectHash = newPoint.GetUniqueHash();
 
-                    foreach (var param in featureParams)
-                    {
-                        string[] finalParam = param.Split("=");
+                //    foreach (var param in featureParams)
+                //    {
+                //        string[] finalParam = param.Split("=");
 
-                        if (finalParam.Length == 2)
-                        {
-                            clearParameters.ExpectedValues.Add(finalParam[0], finalParam[1]);
-                        }
-                    }
+                //        if (finalParam.Length == 2)
+                //        {
+                //            clearParameters.ExpectedValues.Add(finalParam[0], finalParam[1]);
+                //        }
+                //    }
 
-                    featureEquation.ClearParamaters.Add(clearParameters);
-                }
+                //    featureEquation.ClearParamaters.Add(clearParameters);
+                //}
 
                 if (val.AffectedPoint.Parameters.TryGetValue("LOAD_SCRIPT", out var script))
                 {
-                    LuaManager.ApplyScript(script);
+                    JSManager.ApplyScript(script);
                 }
             }
             #endregion
@@ -199,10 +203,12 @@ namespace MortalDungeon.Game.Serializers
             #region Bounding Points
             foreach (var bound in BoundingPoints)
             {
-                TileMapPoint top = null;
-                TileMapPoint bot = null;
-                TileMapPoint left = null;
-                TileMapPoint right = null;
+                bound.Origin = Origin;
+
+                TileMapPoint top = TileMapPoint.Empty;
+                TileMapPoint bot = TileMapPoint.Empty;
+                TileMapPoint left = TileMapPoint.Empty;
+                TileMapPoint right = TileMapPoint.Empty;
 
                 int minX = int.MinValue;
                 int minY = int.MinValue;
@@ -217,10 +223,10 @@ namespace MortalDungeon.Game.Serializers
 
                     FeaturePoint newPoint = new FeaturePoint(point.X + Origin.X, point.Y + Origin.Y);
 
-                    var tileMapPoint = FeatureEquation.FeaturePointToTileMapCoords(newPoint);
+                    var tileMapPoint = FeatureEquation.FeaturePointToTileMapCoords(ref newPoint);
 
                     #region get extreme tile maps
-                    if (top == null)
+                    if (top == TileMapPoint.Empty)
                     {
                         top = tileMapPoint;
                         bot = tileMapPoint;
@@ -288,51 +294,11 @@ namespace MortalDungeon.Game.Serializers
                 bound.BoundingSquare.Add(new FeaturePoint(minX, minY));
 
                 featureEquation.BoundingPoints.Add(bound);
+                bound.FeatureEquation = featureEquation;
 
                 //get the farthest north, south, east, and west affected maps and use those to form a bounding box
                 //then walk every map inside that box and text its top left, top right, bottom left, and bottom right points
                 //to see if they are within the bounding points. If they are then add to the affected maps
-
-                if (top != null)
-                {
-                    int horizontalMapCount = right.X - left.X + 1;
-                    int verticalMapCount = bot.Y - top.Y + 1;
-
-                    int tileMapWidth = TileMapManager.TILE_MAP_DIMENSIONS.X;
-                    int tileMapHeight = TileMapManager.TILE_MAP_DIMENSIONS.Y;
-
-                    int stepWidth = 3;
-                    int stepHeight = 3;
-                    int steps = tileMapWidth / stepWidth + 1;
-
-                    Vector2i topLeftPoint = new Vector2i(left.X * tileMapWidth, top.Y * tileMapHeight);
-
-                    for (int x = 0; x < horizontalMapCount; x++)
-                    {
-                        for (int y = 0; y < verticalMapCount; y++)
-                        {
-                            for (int i = 0; i < steps; i++) //width of the current map
-                            {
-                                for (int j = 0; j < steps; j++) //height of the current map
-                                {
-                                    Vector2i currPoint = new Vector2i(topLeftPoint.X + x * tileMapWidth + i * stepWidth,
-                                        topLeftPoint.Y + y * tileMapHeight + j * stepHeight);
-
-                                    //check every 5 tiles to see if one is found to be inside the bounds
-                                    if (FeaturePoint.PointInPolygon(bound.OffsetPoints, currPoint))
-                                    {
-                                        var tileMapPoint = FeatureEquation.FeaturePointToTileMapCoords(new FeaturePoint(currPoint));
-                                        featureEquation.AffectedMaps.Add(tileMapPoint);
-                                        bound.AffectedMaps.Add(tileMapPoint);
-
-                                        i = steps + 1; //we've found a point on the current map inside of the bounds so break
-                                        j = steps + 1; //out of the current map
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
 
                 bound.OnLoad(Id);
             }
@@ -360,7 +326,7 @@ namespace MortalDungeon.Game.Serializers
                     FeaturePoint newPoint = new FeaturePoint(point);
 
                     featureEquation.AffectedPoints.TryAdd(newPoint, (int)FeatureEquationPointValues.BuildingStart + skeleCount);
-                    featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(newPoint));
+                    featureEquation.AffectedMaps.Add(FeatureEquation.FeaturePointToTileMapCoords(ref newPoint));
                 }
 
                 skeleCount++;
@@ -404,6 +370,13 @@ namespace MortalDungeon.Game.Serializers
             }
             #endregion
 
+            #region Blend Controls
+            for(int i = 0; i < BlendControls.Count; i++)
+            {
+                featureEquation.BlendControls.Add(BlendControls[i]);
+            }
+            #endregion
+
             featureEquation.FeatureTemplate = FeatureType;
 
             featureEquation.Instructions = Instructions;
@@ -424,8 +397,10 @@ namespace MortalDungeon.Game.Serializers
 
             if (featureEquation.CheckCleared())
             {
-                FeatureLedger.SetFeatureStateValue(Id, FeatureStateValues.Cleared, 1);
+                GlobalInfoManager.SetPOIParameter(AssociatedPOI, POIParameterType.Cleared, 1);
             }
+
+            featureEquation.AssociatedPOI = AssociatedPOI;
 
             return featureEquation;
         }

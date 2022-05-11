@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     public static class VisionHelpers
     {

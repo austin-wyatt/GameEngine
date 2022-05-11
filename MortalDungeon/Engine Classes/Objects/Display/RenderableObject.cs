@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
-using MortalDungeon.Engine_Classes.Lighting;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.Lighting;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public enum ObjectRenderType 
     {
@@ -26,6 +26,7 @@ namespace MortalDungeon.Engine_Classes
         public static Vector4 Green = new Vector4(0, 1, 0, 1);
         public static Vector4 Blue = new Vector4(0, 0, 1, 1);
         public static Vector4 Tan = new Vector4(0.68f, 0.66f, 0.48f, 1);
+        public static Vector4 DarkTan = new Vector4(0.258f, 0.251f, 0.184f, 1);
         public static Vector4 Purple = new Vector4(0.66f, 0.03f, 0.71f, 1);
         public static Vector4 Yellow = new Vector4(1, 1, 0, 1);
 
@@ -87,7 +88,8 @@ namespace MortalDungeon.Engine_Classes
         public TextureInfo Textures;
 
         //Every renderable object begins at the origin and is placed from there.
-        public Vector3 Position { get; set; }
+        public Vector3 Position { get => _position; set => _position = value; }
+        public Vector3 _position = new Vector3();
 
         public int Stride;
 
@@ -479,11 +481,11 @@ namespace MortalDungeon.Engine_Classes
         public void SetTranslation(Vector3 translations) 
         {
             Translation = Matrix4.CreateTranslation(translations);
-            Position = translations;
+            _position = translations;
 
             CalculateTransformationMatrix();
         }
-        
+
 
         //TRANSFORMATION RESETTERS
         public void ResetRotation()
@@ -560,7 +562,14 @@ namespace MortalDungeon.Engine_Classes
 
         public void SetPosition(Vector3 position)
         {
-            Position = position;
+            _position = position;
+        }
+
+        public void SetPosition(float x, float y, float z)
+        {
+            _position.X = x;
+            _position.Y = y;
+            _position.Z = z;
         }
     }
 }

@@ -193,14 +193,6 @@ void main()
 	
 }
 
-void DoWork(in sampler2D primaryTexture)
-{
-	
-
-//	if(gl_FrontFacing)  //discard if we are looking at the back of an object
-//		discard;
-}
-
 //void CreateOutline(vec4 textureColor, vec4 outlineColor, float thickness, in sampler2D primaryTexture)
 //{
 //	if(textureColor.w < 1)

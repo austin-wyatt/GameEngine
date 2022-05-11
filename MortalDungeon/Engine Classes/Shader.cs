@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class Shader
     {
@@ -125,10 +125,27 @@ namespace MortalDungeon.Engine_Classes
         ///   The matrix is transposed before being sent to the shader.
         ///   </para>
         /// </remarks>
-        public void SetMatrix4(string name, Matrix4 data)
+        public void SetMatrix4(string name, ref Matrix4 data)
         {
             if (_uniformLocations.ContainsKey(name))
                 GL.UniformMatrix4(_uniformLocations[name], true, ref data);
+        }
+
+        public void SetMatrix3(string name, ref Matrix3 data)
+        {
+            if (_uniformLocations.ContainsKey(name))
+                GL.UniformMatrix3(_uniformLocations[name], true, ref data);
+        }
+
+        /// <summary>
+        /// Set a uniform Vector3 on this shader.
+        /// </summary>
+        /// <param name="name">The name of the uniform</param>
+        /// <param name="data">The data to set</param>
+        public void SetVector3(string name, ref Vector3 data)
+        {
+            if (_uniformLocations.ContainsKey(name))
+                GL.Uniform3(_uniformLocations[name], ref data);
         }
 
         /// <summary>
@@ -139,7 +156,7 @@ namespace MortalDungeon.Engine_Classes
         public void SetVector3(string name, Vector3 data)
         {
             if (_uniformLocations.ContainsKey(name))
-                GL.Uniform3(_uniformLocations[name], data);
+                GL.Uniform3(_uniformLocations[name], ref data);
         }
 
         /// <summary>
@@ -147,10 +164,10 @@ namespace MortalDungeon.Engine_Classes
         /// </summary>
         /// <param name="name">The name of the uniform</param>
         /// <param name="data">The data to set</param>
-        public void SetVector4(string name, Vector4 data)
+        public void SetVector4(string name, ref Vector4 data)
         {
             if (_uniformLocations.ContainsKey(name))
-                GL.Uniform4(_uniformLocations[name], data);
+                GL.Uniform4(_uniformLocations[name], ref data);
         }
 
         /// <summary>

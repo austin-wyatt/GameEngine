@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Game.Abilities;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
-using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
-using MortalDungeon.Definitions;
+using Icon = Empyrean.Engine_Classes.UIComponents.Icon;
+using Empyrean.Definitions;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public enum UIEventType
     {
@@ -502,9 +502,11 @@ namespace MortalDungeon.Engine_Classes
                 item.EnableLighting = true;
             }
 
+            scene.UIManager.AddUIObject(icon, 1000);
+
             icon.SetPosition(position);
 
-            scene._genericObjects.Add(icon);
+            //scene._genericObjects.Add(icon);
 
             PropertyAnimation anim = new PropertyAnimation(icon.BaseObject.BaseFrame);
 
@@ -516,7 +518,7 @@ namespace MortalDungeon.Engine_Classes
                 {
                     Action = () =>
                     {
-                        icon.SetPosition(icon.Position + new Vector3(xMovement, -10, 0.015f));
+                        icon.SetPosition(icon._position + new Vector3(xMovement, -10, 0.015f));
                         icon.SetColor(icon.BaseObject.BaseFrame.BaseColor - new Vector4(0, 0, 0, 0.02f));
                     }
                 };
@@ -524,18 +526,18 @@ namespace MortalDungeon.Engine_Classes
                 anim.Keyframes.Add(frame);
             }
 
-            icon.AddPropertyAnimation(anim);
+            //icon.AddPropertyAnimation(anim);
             anim.Play();
 
             anim.OnFinish = () =>
             {
-                icon.RemovePropertyAnimation(anim.AnimationID);
-                scene._genericObjects.Remove(icon);
-                scene.Tick -= icon.Tick;
+                //icon.RemovePropertyAnimation(anim.AnimationID);
+                //scene._genericObjects.Remove(icon);
+                scene.UIManager.RemoveUIObject(icon);
+                scene.Tick -= anim.Tick;
             };
 
-            scene.Tick -= icon.Tick;
-            scene.Tick += icon.Tick;
+            scene.Tick += anim.Tick;
         }
 
         public enum FocusedPopupOptions
@@ -698,7 +700,7 @@ namespace MortalDungeon.Engine_Classes
         }
     }
 
-    public class UIDimensions
+    public struct UIDimensions
     {
         public Vector2 _dimensions;
         public float X { get { return _dimensions.X; } set { _dimensions.X = value; } }
@@ -710,6 +712,8 @@ namespace MortalDungeon.Engine_Classes
         public static Vector3 operator -(Vector3 a, UIDimensions b) => new Vector3(a.X - b.X, a.Y - b.Y, a.Z);
         public static UIDimensions operator *(UIDimensions a, float f) => new UIDimensions(a.X * f, a.Y * f);
         public static UIDimensions operator /(UIDimensions a, float f) => new UIDimensions(a.X / f, a.Y / f);
+        public static bool operator ==(UIDimensions a, UIDimensions b) => a._dimensions == b._dimensions;
+        public static bool operator !=(UIDimensions a, UIDimensions b) => a._dimensions != b._dimensions;
 
         public static implicit operator UIScale(UIDimensions self)
         {
@@ -724,11 +728,6 @@ namespace MortalDungeon.Engine_Classes
         public static implicit operator UIDimensions(Vector3 vec) 
         {
             return new UIDimensions(vec.X, vec.Y);
-        }
-
-        public UIDimensions()
-        {
-            _dimensions = new Vector2();
         }
 
         public UIDimensions(Vector2 dimensions)
@@ -751,13 +750,25 @@ namespace MortalDungeon.Engine_Classes
             return new UIScale(_dimensions.X / WindowConstants.ScreenUnits.X, _dimensions.Y / WindowConstants.ScreenUnits.Y);
         }
 
+        public static readonly UIDimensions EMPTY = new UIDimensions() { _dimensions = Vector2.NegativeInfinity };
+
         public override string ToString()
         {
             return "{" + X + ", " + Y + "}";
         }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 
-    public class UIScale
+    public struct UIScale
     {
         public Vector2 _scale;
         public float X { get { return _scale.X; } set { _scale.X = value; } }
@@ -768,15 +779,12 @@ namespace MortalDungeon.Engine_Classes
         public static UIScale operator -(UIScale a, UIScale b) => new UIScale(a.X - b.X, a.Y - b.Y);
         public static UIScale operator *(UIScale a, float f) => new UIScale(a.X * f, a.Y * f);
         public static UIScale operator /(UIScale a, float f) => new UIScale(a.X / f, a.Y / f);
+        public static bool operator ==(UIScale a, UIScale b) => a._scale == b._scale;
+        public static bool operator !=(UIScale a, UIScale b) => a._scale != b._scale;
 
         public static implicit operator UIDimensions(UIScale self)
         {
             return self.ToDimensions();
-        }
-
-        public UIScale()
-        {
-            _scale = new Vector2();
         }
 
         public UIScale(Vector2 scale)

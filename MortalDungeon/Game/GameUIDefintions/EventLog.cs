@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Serializers;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public enum EventSeverity 
     {
@@ -24,7 +24,7 @@ namespace MortalDungeon.Game.UI
         public ScrollableArea LogArea;
         public List<UIObject> Events = new List<UIObject>();
 
-        public float TextScale = 0.075f;
+        public float TextScale = 0.05f;
 
         public CombatScene Scene;
 
@@ -32,8 +32,9 @@ namespace MortalDungeon.Game.UI
         {
             Scene = scene;
 
-            LogArea = new ScrollableArea(default, new UIScale(1.5f, 0.26f), default, new UIScale(1.5f, 2f));
-            LogArea.BaseComponent.SetColor(new Vector4(0.33f, 0.33f, 0.25f, 1));
+            LogArea = new ScrollableArea(default, new UIScale(0.75f, 0.5f), default, new UIScale(0.75f, 2f), 
+                scrollbarWidth: 0.05f, scrollSide: ScrollbarSide.Left);
+            LogArea.BaseComponent.SetColor(new Vector4(0.33f, 0.33f, 0.25f, 0.5f));
 
             LogArea.Scrollbar.ScrollByPercentage(1f);
 
@@ -73,7 +74,7 @@ namespace MortalDungeon.Game.UI
             };
         }
 
-        private const int maxEventWidth = 49;
+        private const int maxEventWidth = 40;
         private const int maxEvents = 30;
         public void AddEvent(string eventText, EventSeverity severity = EventSeverity.Info)
         {
@@ -101,7 +102,7 @@ namespace MortalDungeon.Game.UI
                     break;
             }
 
-            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 20, brush);
+            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 16, brush);
             textComponent.SetTextScale(TextScale);
 
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Lighting
+namespace Empyrean.Engine_Classes.Lighting
 {
 
     /// <summary>

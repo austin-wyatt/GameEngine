@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public static class TileEffectManager
     {

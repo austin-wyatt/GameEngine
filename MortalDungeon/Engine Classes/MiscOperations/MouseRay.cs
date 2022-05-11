@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.MiscOperations
+namespace Empyrean.Engine_Classes.MiscOperations
 {
     public class MouseRay
     {

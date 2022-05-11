@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes.TextHandling;
+﻿using Empyrean.Engine_Classes.TextHandling;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace MortalDungeon.Engine_Classes.UIComponents
+namespace Empyrean.Engine_Classes.UIComponents
 {
     public class UIList : UIObject
     {

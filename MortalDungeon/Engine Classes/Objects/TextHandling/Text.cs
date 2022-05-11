@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.TextHandling
+namespace Empyrean.Engine_Classes.TextHandling
 {
     public class Text : UIObject
     {
@@ -121,8 +121,6 @@ namespace MortalDungeon.Engine_Classes.TextHandling
             //TextureLoaded = false;
             //SetRender(false);
 
-            var oldTexture = _texture;
-
             if(_texture == null)
             {
                 TextureLoaded = false;
@@ -132,20 +130,27 @@ namespace MortalDungeon.Engine_Classes.TextHandling
 
             var dimensions = TextBuilder.DrawString(TextString, _font, _fontSize, _fontColor, (texture) =>
             {
-                _texture = texture;
-                baseObj.BaseFrame.Material.Diffuse = texture;
-                baseObj.BaseFrame.Textures.TextureIds[0] = texture.TextureId;
-                SetRender(true);
-                TextureLoaded = true;
-
-                if (_cleanedUp)
+                lock (_textLoadLock)
                 {
-                    _texture.Dispose();
-                }
+                    var oldTexture = _texture;
 
-                if(oldTexture != null)
-                {
-                    oldTexture.Dispose();
+                    _texture = texture;
+                    baseObj.BaseFrame.Material.Diffuse = texture;
+                    baseObj.BaseFrame.Textures.TextureIds[0] = texture.TextureId;
+                    SetRender(true);
+                    TextureLoaded = true;
+
+                    if (_cleanedUp)
+                    {
+                        _texture.Dispose();
+                    }
+
+                    if (oldTexture != null)
+                    {
+                        oldTexture.Dispose();
+                    }
+
+                    _texture = null;
                 }
             });
 
@@ -158,12 +163,17 @@ namespace MortalDungeon.Engine_Classes.TextHandling
         private bool _cleanedUp = false;
         public override void CleanUp()
         {
-            base.CleanUp();
-            _cleanedUp = true;
-
-            if (_texture != null)
+            lock (_textLoadLock)
             {
-                _texture.Dispose();
+                base.CleanUp();
+                _cleanedUp = true;
+
+                if (_texture != null)
+                {
+                    _texture.Dispose();
+                }
+
+                _texture = null;
             }
         }
 

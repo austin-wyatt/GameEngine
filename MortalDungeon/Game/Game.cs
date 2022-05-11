@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
     //Main entrypoint for the game. All position logic, shader info (just the names of the shaders to be used), 
     //texture info, etc are handled here and passed to the renderer

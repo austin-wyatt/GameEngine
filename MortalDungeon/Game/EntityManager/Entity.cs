@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Entities
+namespace Empyrean.Game.Entities
 {
     public interface ILoadableEntity 
     {

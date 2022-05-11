@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Objects.PropertyAnimations;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Objects.PropertyAnimations;
+using Empyrean.Game.Player;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class SideBar
     {
@@ -30,12 +30,14 @@ namespace MortalDungeon.Game.UI
         {
             Scene = scene;
 
-            ControlBar = UIHelpers.CreateWindow(new UIScale(0.15f, 1), "Control bar", null, scene, false, false);
-            ControlBar.SetPositionFromAnchor(new Vector3(0, WindowConstants.ScreenUnits.Y / 2.5f, 0), UIAnchorPosition.LeftCenter);
+            const float BAR_HEIGHT = 0.5f;
+
+            ControlBar = UIHelpers.CreateWindow(new UIScale(0.15f, BAR_HEIGHT), "Control bar", null, scene, false, false);
+            ControlBar.SetPositionFromAnchor(new Vector3(0, WindowConstants.ScreenUnits.Y * 0.15f, 0), UIAnchorPosition.TopLeft);
             ControlBar.Draggable = false;
 
-            MinimizedBar = UIHelpers.CreateWindow(new UIScale(0.02f, 1f), "Minimized bar", null, scene, false, false);
-            MinimizedBar.SetPositionFromAnchor(new Vector3(0, WindowConstants.ScreenUnits.Y / 2.5f, 0), UIAnchorPosition.LeftCenter);
+            MinimizedBar = UIHelpers.CreateWindow(new UIScale(0.02f, BAR_HEIGHT), "Minimized bar", null, scene, false, false);
+            MinimizedBar.SetPositionFromAnchor(new Vector3(0, WindowConstants.ScreenUnits.Y * 0.15f, 0), UIAnchorPosition.TopLeft);
             //MinimizedBar.SetPositionFromAnchor(ControlBar.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
             MinimizedBar.Draggable = false;
 
@@ -100,11 +102,16 @@ namespace MortalDungeon.Game.UI
             moveIcon.SetPositionFromAnchor(campIcon.GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 15, -0.0001f), UIAnchorPosition.TopCenter);
 
 
+            EventLog log = new EventLog(Scene);
+            Scene.EventLog = log;
+            log.LogArea.SetVisibleAreaPosition(ControlBar.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(15, 10, 0), UIAnchorPosition.TopLeft);
+
 
             ControlBar.AddChild(minimizeIcon);
             ControlBar.AddChild(partyIcon);
             ControlBar.AddChild(campIcon);
             ControlBar.AddChild(moveIcon);
+            ControlBar.AddChild(log.LogArea, 10);
 
             ParentObject.AddChild(ControlBar);
             ParentObject.AddChild(MinimizedBar);

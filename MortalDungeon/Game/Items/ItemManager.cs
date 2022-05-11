@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Definitions.Items;
+﻿using Empyrean.Definitions.Items;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace MortalDungeon.Game.Items
+namespace Empyrean.Game.Items
 {
     public static class ItemManager
     {
@@ -17,7 +17,7 @@ namespace MortalDungeon.Game.Items
 
 
             var itemTypes = from t in Assembly.GetExecutingAssembly().GetTypes()
-                       where t.IsClass && t.Namespace == "MortalDungeon.Definitions.Items" && !t.IsSealed &&
+                       where t.IsClass && t.Namespace == "Empyrean.Definitions.Items" && !t.IsSealed &&
                        t.IsSubclassOf(typeof(Item))
                        select t;
 

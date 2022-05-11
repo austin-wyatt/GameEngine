@@ -7,7 +7,7 @@ using System.IO;
 using NVorbis;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Engine_Classes.Audio
+namespace Empyrean.Engine_Classes.Audio
 {
     public static class SoundPlayer
     {
@@ -65,6 +65,13 @@ namespace MortalDungeon.Engine_Classes.Audio
                 {
                     lock (_activeSourcesLock)
                     {
+                        for (int i = 0; i < sourcesToRemove.Count; i++)
+                        {
+                            ActiveSources.Remove(sourcesToRemove[i]);
+                        }
+
+                        sourcesToRemove.Clear();
+
                         foreach (var source in ActiveSources)
                         {
                             if (source.State == ALSourceState.Stopped && !source.KeepAlive)
@@ -87,14 +94,7 @@ namespace MortalDungeon.Engine_Classes.Audio
                                 source.PlaybackPosition = source.Duration;
                             }
                         }
-
-                        for (int i = 0; i < sourcesToRemove.Count; i++)
-                        {
-                            ActiveSources.Remove(sourcesToRemove[i]);
-                        }
                     }
-
-                    sourcesToRemove.Clear();
 
                     Thread.Sleep(100);
                 }
@@ -175,7 +175,14 @@ namespace MortalDungeon.Engine_Classes.Audio
                         data[i] = (short)item;
                     }
 
-                    AL.BufferData(buffer.Handle, ALFormat.Stereo16, ref data[0], data.Length * sizeof(short), sampleRate);
+                    if(channels == 2)
+                    {
+                        AL.BufferData(buffer.Handle, ALFormat.Stereo16, ref data[0], data.Length * sizeof(short), sampleRate);
+                    }
+                    else if(channels == 1)
+                    {
+                        AL.BufferData(buffer.Handle, ALFormat.Mono16, ref data[0], data.Length * sizeof(short), sampleRate);
+                    }
 
                     data = null;
                     readBuffer = null;
@@ -248,61 +255,10 @@ namespace MortalDungeon.Engine_Classes.Audio
 
             return true;
         }
+
+        public static void SetListenerPosition(float x, float y, float z)
+        {
+            AL.Listener(ALListener3f.Position, x / 1000, y / 1000, z / 100);
+        }
     }
-
-   
-    //public void PlayWave() 
-    //{
-    //    int[] empty = new int[1];
-
-    //    ALDevice device = ALC.OpenDevice("");
-    //    ALContext context = ALC.CreateContext(device, ref empty[0]);
-
-    //    ALC.MakeContextCurrent(context);
-
-    //    Stream fileStream = File.OpenRead("Resources/Sound/test.wav");
-
-    //    int buffer = AL.GenBuffer();
-    //    int source = AL.GenSource();
-
-    //    //just try to get a WAV working using the OpenTK example
-
-    //    BinaryReader reader = new BinaryReader(fileStream);
-
-    //    string signature = new string(reader.ReadChars(4));
-    //    if (signature != "RIFF")
-    //        throw new Exception("Not a wave file");
-
-    //    int riff_chunk_size = reader.ReadInt32();
-
-    //    string format = new string(reader.ReadChars(4));
-    //    if (format != "WAVE")
-    //        throw new Exception("Not a wave file");
-
-    //    string format_signature = new string(reader.ReadChars(4));
-    //    if (format_signature != "fmt ")
-    //        throw new Exception("Not supported");
-
-    //    int format_chunk_size = reader.ReadInt32();
-    //    int audio_format = reader.ReadInt16();
-    //    int channels = reader.ReadInt16();
-    //    int sample_rate = reader.ReadInt32();
-    //    int byte_rate = reader.ReadInt32();
-    //    int block_align = reader.ReadInt16();
-    //    int bits = reader.ReadInt16();
-
-    //    string data_signature = new string(reader.ReadChars(4));
-    //    if (data_signature != "data")
-    //        throw new Exception("Not supported");
-
-    //    int data_chunk_size = reader.ReadInt32();
-
-    //    byte[] data = reader.ReadBytes((int)reader.BaseStream.Length);
-
-    //    AL.BufferData(buffer, ALFormat.Stereo16, ref data[0], data.Length, sample_rate);
-    //    AL.Source(source, ALSourcei.Buffer, buffer);
-    //    AL.Source(source, ALSourcef.Gain, 0.1f);
-
-    //    AL.SourcePlay(source);
-    //}
 }

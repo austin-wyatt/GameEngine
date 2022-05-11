@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MortalDungeon.Engine_Classes.Audio
+namespace Empyrean.Engine_Classes.Audio
 {
     public class AudioBuffer
     {

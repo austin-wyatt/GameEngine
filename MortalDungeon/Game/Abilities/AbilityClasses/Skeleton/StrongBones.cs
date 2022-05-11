@@ -1,18 +1,19 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Definitions.Buffs;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
+using Empyrean.Engine_Classes;
+using Empyrean.Definitions.Buffs;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
+using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class StrongBones : Ability
     {
@@ -59,7 +60,7 @@ namespace MortalDungeon.Game.Abilities
     }
 }
 
-namespace MortalDungeon.Definitions.Buffs
+namespace Empyrean.Definitions.Buffs
 {
     public class StrongBonesBuff : Buff
     {
@@ -70,7 +71,6 @@ namespace MortalDungeon.Definitions.Buffs
         {
             Invisible = false;
         }
-        public StrongBonesBuff(Buff buff) : base(buff) { }
 
         protected override void AssignAnimationSet()
         {
@@ -121,7 +121,7 @@ namespace MortalDungeon.Definitions.Buffs
             }
         }
 
-        private void OnAbilitiesUpdated(Unit unit)
+        private async Task OnAbilitiesUpdated(Unit unit)
         {
             int skeletonTypeAbilities = 0;
 

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     /// <summary>
     /// Works similarly to the Animation class but changes properties such as transformations and color instead of the sprite.

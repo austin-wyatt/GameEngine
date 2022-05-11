@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public static class AdornmentManager
     {

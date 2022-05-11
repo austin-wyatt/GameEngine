@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class QueuedObjectList<T> : QueuedList<T> where T : GameObject
     {
@@ -19,10 +19,9 @@ namespace MortalDungeon.Engine_Classes
             void loadTex()
             {
                 Rendering.Renderer.LoadTextureFromGameObj(item);
-                Rendering.Renderer.OnRender -= loadTex;
             };
 
-            Rendering.Renderer.OnRender += loadTex;
+            Window.QueueToRenderCycle(loadTex);
         }
     }
 

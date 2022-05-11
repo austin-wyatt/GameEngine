@@ -1,9 +1,10 @@
-﻿using OpenTK.Mathematics;
+﻿using Empyrean.Game.Abilities.AbilityClasses.Bandit;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public static class BanditTree
     {
@@ -33,6 +34,16 @@ namespace MortalDungeon.Game.Abilities
 
             banditTree.EntryPoint = suckerPunch;
 
+            var throwDirt = new AbilityTreeNode()
+            {
+                ID = 1,
+                Name = "Throw Dirt",
+                AbilityType = typeof(ThrowDirt),
+                RelativePosition = new Vector2(0.41635115f, 0.88735596f),
+                TreeType = type
+            };
+
+            suckerPunch.AddConnection(throwDirt);
 
             AbilityTrees.AddTree(banditTree);
         }

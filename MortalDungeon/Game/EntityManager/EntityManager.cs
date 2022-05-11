@@ -1,20 +1,44 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Ledger.Units;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Ledger.Units;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Entities
+namespace Empyrean.Game.Entities
 {
-    
 
+    [Serializable]
+    public struct PermanentId
+    {
+        public int Id;
+
+        public PermanentId(int id)
+        {
+            Id = id;
+        }
+
+        public static PermanentId DEFAULT = new PermanentId(0);
+
+        public override bool Equals(object obj)
+        {
+            return obj is PermanentId id &&
+                   Id == id.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id);
+        }
+    }
     public static class EntityManager
     {
         public static HashSet<Entity> Entities = new HashSet<Entity>();
         public static HashSet<Entity> LoadedEntities = new HashSet<Entity>();
 
+        public static Dictionary<PermanentId, Entity> EntitiesById = new Dictionary<PermanentId, Entity>();
 
         public static object _entityLock = new object();
 
@@ -28,6 +52,7 @@ namespace MortalDungeon.Game.Entities
                 if (!Entities.Contains(entity))
                 {
                     Entities.Add(entity);
+                    EntitiesById.AddOrSet(entity.Handle.PermanentId, entity);
                 }
             }
         }
@@ -39,11 +64,12 @@ namespace MortalDungeon.Game.Entities
         {
             lock (_entityLock) 
             {
-                UnitLedger.LedgerUnit(entity.Handle);
+                UnitPositionLedger.LedgerUnit(entity.Handle);
 
                 entity.Unload();
                 Entities.Remove(entity);
                 LoadedEntities.Remove(entity);
+                EntitiesById.Remove(entity.Handle.PermanentId);
             }
         }
 
@@ -69,6 +95,9 @@ namespace MortalDungeon.Game.Entities
             }
         }
 
-        
+        public static bool GetEntityByPermanentId(PermanentId id, out Entity entity)
+        {
+            return EntitiesById.TryGetValue(id, out entity);
+        }
     }
 }

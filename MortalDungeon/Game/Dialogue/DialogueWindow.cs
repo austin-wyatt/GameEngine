@@ -1,21 +1,21 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.UI;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Ledger;
+using Empyrean.Game.UI;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Engine_Classes.TextHandling;
+using Empyrean.Game.Serializers;
+using Empyrean.Engine_Classes.TextHandling;
 using System.Drawing;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
     public class DialogueWindow
     {
@@ -227,12 +227,12 @@ namespace MortalDungeon.Game
 
         public void CreateResponses(Dialogue dialogue)
         {
-            if(_currentNode.Responses.Count == 0)
-            {
-                EndDialogue();
-            }
+            //if(_currentNode.Responses.Count == 0)
+            //{
+            //    EndDialogue();
+            //}
 
-            if (_currentNode.Responses[0].ResponseType == ResponseType.None)
+            if (_currentNode.Responses.Count > 0 && _currentNode.Responses[0].ResponseType == ResponseType.None)
             {
                 if (_currentNode.Responses[0].Outcome > 0)
                 {

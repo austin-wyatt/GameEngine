@@ -1,13 +1,13 @@
-﻿using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Rendering
+namespace Empyrean.Engine_Classes.Rendering
 {
     public enum RenderingStates 
     {
@@ -32,19 +32,24 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         private static readonly List<GameObject> _LightQueue = new List<GameObject>();
 
+        private static List<IndividualMesh> _IndividualMeshsToRender = new List<IndividualMesh>();
+
         public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
 
         public static List<InstancedRenderData> StructureRenderData = new List<InstancedRenderData>();
         public static List<InstancedRenderData> FogStructureRenderData = new List<InstancedRenderData>();
 
-        public static Action RenderSkybox = null;
+
 
         /// <summary>
         /// Render all queued objects
         /// </summary>
         public static void RenderQueue()
         {
-            RenderSkybox?.Invoke();
+            if(Window.SkyBox != null)
+            {
+                RenderFunctions.DrawSkybox();
+            }
 
             if (RenderStateManager.GetFlag(RenderingStates.Fade))
             {
@@ -80,7 +85,9 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             RenderQueuedUI();
 
-            //RenderInstancedUIData();
+            GL.Enable(EnableCap.FramebufferSrgb);
+            RenderLowPriorityQueue();
+            GL.Disable(EnableCap.FramebufferSrgb);
         }
 
 
@@ -135,10 +142,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _LettersToRender.Clear();
         }
 
-        public static void QueueNestedUI<T>(List<T> uiObjects, int depth = 0, ScissorData scissorData = null, Action<List<UIObject>> renderAfterParent = null, bool overrideRender = false) where T : UIObject
+        public static void QueueNestedUI(List<UIObject> uiObjects, int depth = 0, ScissorData scissorData = null, bool overrideRender = false)
         {
-            List<UIObject> renderAfterParentList = new List<UIObject>();
-
             try //This is a lazy solution for a random crash. If I can figure out why it's happening then I'll come back to this
             {
                 if (uiObjects.Count > 0)
@@ -171,29 +176,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                             QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
 
-                            List<UIObject> objsToRenderAfterParent = new List<UIObject>();
-
                             if (uiObjects[i].Children.Count > 0)
                             {
-                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, (list) =>
-                                {
-                                    objsToRenderAfterParent = list;
-                                });
+                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
                             }
 
                             QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
-
-                            if (objsToRenderAfterParent.Count > 0)
-                            {
-                                QueueNestedUI(objsToRenderAfterParent, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData, null, true);
-                            }
                         }
                     }
-                }
-
-                if (renderAfterParentList.Count > 0 && renderAfterParent != null)
-                {
-                    renderAfterParent(renderAfterParentList);
                 }
             }
             catch (Exception e)
@@ -211,7 +201,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 _UIToRender.Add(objList[i]);
             }
         }
-        public static void QueueUIForRender<T>(T obj, bool scissorFlag = false) where T : GameObject
+        public static void QueueUIForRender(UIObject obj, bool scissorFlag = false)
         {
             obj.ScissorData._scissorFlag = scissorFlag;
 
@@ -252,7 +242,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
             {
                 Renderer.RenderObjectsInstancedGeneric(_UnitsToRender[i], ref Renderer._instancedRenderArray);
             }
+        }
 
+        public static void ClearUnitQueue()
+        {
             _UnitsToRender.Clear();
         }
         #endregion
@@ -349,18 +342,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
         #endregion
 
-        #region BaseTile instanced render data
-        private static List<InstancedRenderData> _tileRenderData = new List<InstancedRenderData>();
-
+        #region Tile map instanced render data
         public static void ClearTileInstancedRenderData()
         {
-            _tileRenderData.Clear();
-            _fogTileRenderData.Clear();
-            _tilePillarRenderData.Clear();
-        }
-        public static void QueueTileInstancedRenderData(InstancedRenderData tileData)
-        {
-            _tileRenderData.Add(tileData);
+            _chunkRenderData.Clear();
         }
 
         public static void RenderInstancedTileData()
@@ -370,20 +355,46 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
             GL.Enable(EnableCap.StencilTest);
-            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+            //The reference value is the value that is written into the stencil buffer
+            //The mask value gets anded with the ref value and the stencil value and the comparison takes place between those values
+            //Ex. StencilFunction.Greater means (3 & 0xFF > [stencil_value] & 0xFF)
+            GL.StencilFunc(StencilFunction.Always, 3, 0xFF);
+            //The stencil mask limits which values can be drawn into the stencil buffer
             GL.StencilMask(0xFF);
-            Renderer.RenderInstancedRenderData(_tileRenderData);
+
+            //GL.DepthMask(false);
+            if (_chunkRenderData.Count > 0)
+            {
+                _chunkRenderData[0].EnableInstancedShaderAttributes();
+                _chunkRenderData[0].Shader.Use();
+                for (int i = 0; i < _chunkRenderData.Count; i++)
+                {
+                    _chunkRenderData[i].Draw(MeshChunkDrawType.Visible);
+                }
+                _chunkRenderData[0].DisableInstancedShaderAttributes();
+            }
 
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Zero);
-            GL.StencilMask(0xFF);
+            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+            //GL.StencilMask(1);
             RenderFogInstancedStructureData();
 
-            Renderer.RenderInstancedRenderData(_fogTileRenderData);
+            //GL.StencilMask(3);
+            GL.StencilFunc(StencilFunction.Always, 3, 0xFF);
+            if (_chunkRenderData.Count > 0)
+            {
+                _chunkRenderData[0].EnableInstancedShaderAttributes();
+                _chunkRenderData[0].Shader.Use();
+                for (int i = 0; i < _chunkRenderData.Count; i++)
+                {
+                    _chunkRenderData[i].Draw(MeshChunkDrawType.Fog);
+                }
+                _chunkRenderData[0].DisableInstancedShaderAttributes();
+            }
 
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-            GL.StencilMask(0xFF);
-
-            Renderer.RenderInstancedRenderData(_tilePillarRenderData);
+            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+            //GL.StencilMask(1);
 
             RenderInstancedStructureData();
 
@@ -392,17 +403,14 @@ namespace MortalDungeon.Engine_Classes.Rendering
             ClearTileInstancedRenderData();
         }
 
-        private static List<InstancedRenderData> _fogTileRenderData = new List<InstancedRenderData>();
 
-        public static void QueueFogTileInstancedRenderData(InstancedRenderData tileData)
+        private static List<MeshChunkInstancedRenderData> _chunkRenderData = new List<MeshChunkInstancedRenderData>();
+        public static void QueueChunkRenderData(TileChunk chunk)
         {
-            _fogTileRenderData.Add(tileData);
-        }
-
-        private static List<InstancedRenderData> _tilePillarRenderData = new List<InstancedRenderData>();
-        public static void QueueTilePillarInstancedRenderData(InstancedRenderData pillarData)
-        {
-            _tilePillarRenderData.Add(pillarData);
+            if (chunk?.ChunkRenderData?.IsValid == true)
+            {
+                _chunkRenderData.Add(chunk.ChunkRenderData);
+            }
         }
 
         #endregion
@@ -441,10 +449,35 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static void RenderFogQuad()
         {
             Renderer.RenderObjectsInstancedGeneric(_fogQuad, ref Renderer._instancedRenderArray);
+        }
+
+        public static void ClearFogQuad()
+        {
             _fogQuad.Clear();
         }
 
         #endregion
 
+
+        #region Individual Meshes
+        private static bool _renderMeshes = false;
+        public static void QueueIndividualMeshesForRender(List<IndividualMesh> meshes)
+        {
+            _IndividualMeshsToRender = meshes;
+            _renderMeshes = true;
+        }
+
+        public static void RenderIndividualMeshes()
+        {
+            if (_renderMeshes)
+            {
+                _renderMeshes = false;
+                for(int i = 0; i < _IndividualMeshsToRender.Count; i++)
+                {
+                    _IndividualMeshsToRender[i].Draw();
+                }
+            }
+        }
+        #endregion
     }
 }

@@ -1,25 +1,26 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.Save;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Ledger;
+using Empyrean.Game.Save;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
-using MortalDungeon.Game.Serializers;
+using Empyrean.Game.Serializers;
+using System.Numerics;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
 
     [XmlType(TypeName = "GenLedg")]
     public static class GeneralLedger
     {
         [XmlIgnore]
-        public static Dictionary<long, GeneralLedgerNode> LedgeredGeneralState = new Dictionary<long, GeneralLedgerNode>();
+        public static Dictionary<BigInteger, GeneralLedgerNode> LedgeredGeneralState = new Dictionary<BigInteger, GeneralLedgerNode>();
 
         /// <summary>
         /// 
         /// </summary>
-        public static int GetInteraction(long featureID, long objectHash)
+        public static int GetInteraction(BigInteger featureID, BigInteger objectHash)
         {
             if (LedgeredGeneralState.TryGetValue(featureID, out var n))
             {
@@ -52,7 +53,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        public static void SetStateValue(long id, long hash, int data)
+        public static void SetStateValue(BigInteger id, BigInteger hash, int data)
         {
             if (data < 0)
             {
@@ -81,7 +82,7 @@ namespace MortalDungeon.Game
         }
 
 
-        public static int GetStateValue(long featureID, long objectHash)
+        public static int GetStateValue(BigInteger featureID, BigInteger objectHash)
         {
             if (LedgeredGeneralState.TryGetValue(featureID, out var n))
             {
@@ -96,18 +97,18 @@ namespace MortalDungeon.Game
     [Serializable]
     public class GeneralLedgerNode
     {
-        public long ID;
+        public BigInteger ID;
 
         /// <summary>
-        /// The object hash is the long component and the data is the int component (from the StateIdValuePairs)
+        /// The object hash is the BigInteger component and the data is the int component (from the StateIdValuePairs)
         /// </summary>
         [XmlIgnore]
-        public Dictionary<long, int> StateValues = new Dictionary<long, int>();
+        public Dictionary<BigInteger, int> StateValues = new Dictionary<BigInteger, int>();
 
         [XmlElement("Glns", Namespace = "GenLN")]
-        public DeserializableDictionary<long, int> _stateValues = new DeserializableDictionary<long, int>();
+        public DeserializableDictionary<BigInteger, int> _stateValues = new DeserializableDictionary<BigInteger, int>();
 
-        public void IncrementStateValue(long objHash)
+        public void IncrementStateValue(BigInteger objHash)
         {
             int val = 0;
 
@@ -124,7 +125,7 @@ namespace MortalDungeon.Game
 
             StateIDValuePair updatedState = new StateIDValuePair()
             {
-                Type = (int)LedgerUpdateType.Feature,
+                Type = (int)LedgerUpdateType.GeneralState,
                 StateID = ID,
                 ObjectHash = (long)objHash,
                 Data = val,
@@ -133,7 +134,7 @@ namespace MortalDungeon.Game
             Ledgers.LedgerUpdated(updatedState);
         }
 
-        public void SetStateValue(long objHash, int value)
+        public void SetStateValue(BigInteger objHash, int value)
         {
             if (StateValues.TryGetValue(objHash, out var a))
             {
@@ -155,7 +156,7 @@ namespace MortalDungeon.Game
             Ledgers.LedgerUpdated(updatedState);
         }
 
-        public void RemoveStateValue(long objHash, int value)
+        public void RemoveStateValue(BigInteger objHash, int value)
         {
             if (StateValues.TryGetValue(objHash, out var a))
             {
@@ -163,7 +164,7 @@ namespace MortalDungeon.Game
             }
         }
 
-        public int GetStateValue(long objHash)
+        public int GetStateValue(BigInteger objHash)
         {
             if (StateValues.TryGetValue(objHash, out var a))
             {

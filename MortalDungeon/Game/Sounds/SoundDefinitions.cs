@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Engine_Classes.Audio;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
     public static class Sounds 
     {
@@ -13,8 +13,12 @@ namespace MortalDungeon.Game
         public static AudioBuffer Walk = new AudioBuffer("Walk", "Resources/Sound/walk.ogg");
         public static AudioBuffer UnitHurt = new AudioBuffer("Unit_Hurt", "Resources/Sound/hurt.ogg");
         public static AudioBuffer ArmorHit = new AudioBuffer("Armor_Hit", "Resources/Sound/armor_hit.ogg");
+        public static AudioBuffer ShieldHit = new AudioBuffer("Shield_Hit", "Resources/Sound/shield_hit_mono.ogg");
         public static AudioBuffer Shoot = new AudioBuffer("Shoot", "Resources/Sound/shoot.ogg");
-        public static AudioBuffer Die = new AudioBuffer("Shoot", "Resources/Sound/die.ogg");
+        public static AudioBuffer Die = new AudioBuffer("Die", "Resources/Sound/die.ogg");
+        public static AudioBuffer Pop1 = new AudioBuffer("Pop_1", "Resources/Sound/Pop1.ogg");
+        public static AudioBuffer Pop2 = new AudioBuffer("Pop_2", "Resources/Sound/Pop2.ogg");
+        public static AudioBuffer ThrowDirt = new AudioBuffer("ThrowDirt", "Resources/Sound/throw_dirt.ogg");
 
         public static AudioBuffer[] Walk_Grass = new AudioBuffer[]
         {

@@ -7,7 +7,7 @@ using System.Drawing;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class BaseObject
     {
@@ -130,6 +130,25 @@ namespace MortalDungeon.Engine_Classes
             BaseFrame.SetTranslation(position);
         }
 
+        public void SetPosition(float x, float y, float z)
+        {
+            //Position = new Vector3(Math.Clamp(position.X, 0, _windowSize.X), Math.Clamp(position.Y, 0, _windowSize.Y), 0);
+            Position.X = x + PositionalOffset.X;
+            Position.Y = y + PositionalOffset.X;
+            Position.Z = z + PositionalOffset.X;
+
+            Vector3 position = new Vector3(x, y, z);
+            WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref position);
+
+            if (LockToWindow)
+            {
+                position.X = Math.Clamp(position.X, -1.0f, 1.0f);
+                position.Y = Math.Clamp(position.Y, -1.0f, 1.0f);
+            }
+
+            BaseFrame.SetTranslation(position);
+        }
+
         public void SetPosition(Vector2 position)
         {
             Position = new Vector3(Math.Clamp(position.X, 0, WindowConstants.ClientSize.X), Math.Clamp(position.Y, 0, WindowConstants.ClientSize.Y), 0);
@@ -206,7 +225,7 @@ namespace MortalDungeon.Engine_Classes
             BoundingSphere = boundingSphere;
         }
 
-        public bool Contains(Vector2 point, Camera camera = null)
+        public bool Contains(float x, float y, Camera camera = null)
         {
             const int dimensions = 3;
 
@@ -227,13 +246,10 @@ namespace MortalDungeon.Engine_Classes
                     nextVertex = 0;
                 }
 
-                PointF point1 = new PointF(point.X, point.Y);
-                PointF point2 = new PointF(point.X, point.Y + 1000);
-
                 PointF point3 = GetTransformedPoint(Vertices[side * dimensions], Vertices[side * dimensions + 1], 0, camera);
                 PointF point4 = GetTransformedPoint(Vertices[nextVertex * dimensions], Vertices[nextVertex * dimensions + 1], 0, camera);
 
-                if (MiscOperations.MiscOperations.GFG.get_line_intersection(point1.X, point1.Y, point2.X, point2.Y, point3.X, point3.Y, point4.X, point4.Y))
+                if (MiscOperations.MiscOperations.GFG.get_line_intersection(x, y, x, y + 1000, point3.X, point3.Y, point4.X, point4.Y))
                 {
                     intersections++;
                 }
@@ -260,17 +276,17 @@ namespace MortalDungeon.Engine_Classes
 
             float percentageAlongLine = (Display.Position.Z - pointNear.Z) / (pointFar.Z - pointNear.Z);
 
-            Vector3 pointAtZ = new Vector3(pointNear.X + xUnit * percentageAlongLine, pointNear.Y + yUnit * percentageAlongLine, Display.Position.Z);
+            float x = pointNear.X + xUnit * percentageAlongLine;
+            float y = pointNear.Y + yUnit * percentageAlongLine;
 
-          
             // check if the point is in the bounding sphere, if it isn't we know it won't be inside of the bounds
-            if (Math.Abs(pointAtZ.X - Display.Position.X) > BoundingSphere || Math.Abs(pointAtZ.Y - Display.Position.Y) > BoundingSphere)
+            if (Math.Abs(x - Display.Position.X) > BoundingSphere || Math.Abs(y - Display.Position.Y) > BoundingSphere)
             {
                 return false;
             }
             
             //check bounds of object
-            return Contains(pointAtZ.Xy, camera);
+            return Contains(x, y, camera);
         }
 
         public Vector3 GetDimensionData() 

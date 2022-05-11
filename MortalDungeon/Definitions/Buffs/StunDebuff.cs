@@ -1,20 +1,21 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Definitions.Buffs
+namespace Empyrean.Definitions.Buffs
 {
     public class StunDebuff : Buff
     {
-        public StunDebuff() : base()
+        public StunDebuff(int duration) : base()
         {
             Invisible = false;
 
-            Duration = 3;
+            Duration = duration;
         }
+
         public StunDebuff(Buff buff) : base(buff) { }
 
         protected override void AssignAnimationSet()

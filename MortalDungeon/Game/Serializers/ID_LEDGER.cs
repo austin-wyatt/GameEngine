@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
+﻿using Empyrean.Engine_Classes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     public static class ID_LEDGER
     {

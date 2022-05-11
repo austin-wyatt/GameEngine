@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Events
+namespace Empyrean.Game.Events
 {
     [XmlType(TypeName = "EVB")]
     [Serializable]
@@ -32,7 +32,7 @@ namespace MortalDungeon.Game.Events
 
         public EventAction BuildAction()
         {
-            var actionType = Type.GetType($"MortalDungeon.Definitions.EventActions.{ActionName}");
+            var actionType = Type.GetType($"Empyrean.Definitions.EventActions.{ActionName}");
 
             if(actionType != null)
             {
@@ -50,7 +50,7 @@ namespace MortalDungeon.Game.Events
 
         public static EventAction BuildAction(string actionName, List<object> actionParameters)
         {
-            var actionType = Type.GetType($"MortalDungeon.Definitions.EventActions.{actionName}");
+            var actionType = Type.GetType($"Empyrean.Definitions.EventActions.{actionName}");
 
             if (actionType != null)
             {

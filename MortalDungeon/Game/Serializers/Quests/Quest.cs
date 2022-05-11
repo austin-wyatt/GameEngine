@@ -1,4 +1,4 @@
-﻿using MortalDungeon.Game.Ledger;
+﻿using Empyrean.Game.Ledger;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [Serializable]
     public class Quest : ISerializable

@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Definitions.TileEffects;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Definitions.TileEffects;
+using Empyrean.Engine_Classes;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities.AbilityClasses.Spider
+namespace Empyrean.Game.Abilities.AbilityClasses.Spider
 {
     public class WebImmunity : Ability
     {

@@ -1,17 +1,17 @@
-﻿using MortalDungeon.Objects;
+﻿using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Rendering
+namespace Empyrean.Engine_Classes.Rendering
 {
     public class InstancedRenderData
     {
         private const int ObjectBufferCount = 7500;
         private const int instanceDataOffset = 40;
-        private const int instanceDataLength = instanceDataOffset * sizeof(float);
+        private const int instanceDataLength = instanceDataOffset * FLOAT_SIZE;
 
         protected static float[] _instancedDataArray = new float[ObjectBufferCount * instanceDataOffset];
 
@@ -33,6 +33,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public ScissorData ScissorData = new ScissorData();
 
         public bool IsValid = false;
+
+        const int FLOAT_SIZE = 4;
 
         public InstancedRenderData()
         {
@@ -108,7 +110,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
                 instancedRenderData.Textures = textureReferences;
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, instancedRenderData.InstancedDataBuffer);
-                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * sizeof(float), renderDataArray, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, itemCount * instanceDataOffset * FLOAT_SIZE, renderDataArray, BufferUsageHint.DynamicDraw);
 
                 instancedRenderData.ItemCount = itemCount;
                 instancedRenderData.VerticesCount = Display.VerticesDrawOrder.Length;
@@ -144,10 +146,10 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
                                     int texIndex = (int)currentTextureUnit - 33984;
                                     int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
-                                    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].diffuse", texIndex);
-                                    Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", texIndex);
+                                    Shaders.FAST_DEFAULT_SHADER.SetInt(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                    Shaders.FAST_DEFAULT_SHADER.SetInt(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
                                     //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
-                                    Shaders.FAST_DEFAULT_SHADER.SetFloat($"material[{materialIndex}].shininess", 16);
+                                    Shaders.FAST_DEFAULT_SHADER.SetFloat(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                     currentTextureUnit++;
                                 }
@@ -180,7 +182,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         public static void FillVertexAndElementBuffers<T>(RenderableObject Display, ref T renderData) where T : InstancedRenderData
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, renderData.VertexBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * sizeof(float), Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
+            GL.BufferData(BufferTarget.ArrayBuffer, Display.Vertices.Length * FLOAT_SIZE, Display.Vertices, BufferUsageHint.DynamicDraw); //take the raw vertices
 
             renderData.Stride = Display.Stride;
 
@@ -192,8 +194,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
         {
             var transform = obj.BaseFrame.Transformations;
 
-            InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, currIndex);
-            currIndex += 16;
+            InsertMatrixDataIntoArray(ref _instancedRenderArray, ref transform, ref currIndex);
             _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.X;
             _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.Y;
             _instancedRenderArray[currIndex++] = obj.BaseFrame.InterpolatedColor.Z;
@@ -225,7 +226,7 @@ namespace MortalDungeon.Engine_Classes.Rendering
             _instancedRenderArray[currIndex++] = 0;
         }
 
-        public static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)
+        public static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, ref int currIndex)
         {
             arr[currIndex++] = mat.Row0.X;
             arr[currIndex++] = mat.Row1.X;
@@ -251,8 +252,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             //Whenever this data is changed the instanceDataOffset parameter needs to be updated
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Stride, 0); //vertex data
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Stride, 3 * sizeof(float)); //Texture coordinate data
-            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Stride, 5 * sizeof(float)); //Normal coordinate data
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Stride, 3 * FLOAT_SIZE); //Texture coordinate data
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Stride, 5 * FLOAT_SIZE); //Normal coordinate data
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBuffer);
             
@@ -260,17 +261,17 @@ namespace MortalDungeon.Engine_Classes.Rendering
             GL.BindBuffer(BufferTarget.ArrayBuffer, InstancedDataBuffer);
 
             GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, instanceDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, instanceDataLength, 4 * sizeof(float));  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, instanceDataLength, 8 * sizeof(float));  //|
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, instanceDataLength, 12 * sizeof(float)); //|
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, instanceDataLength, 4 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, instanceDataLength, 8 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, instanceDataLength, 12 * FLOAT_SIZE); //|
 
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 16 * sizeof(float)); //Color data
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * sizeof(float)); //Camera enabled + spritesheet position + side lengths X and Y
-            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * sizeof(float)); //Spritesheet X + Spritesheet Y + use second texture + mix percent
+            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, instanceDataLength, 16 * FLOAT_SIZE); //Color data
+            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, instanceDataLength, 20 * FLOAT_SIZE); //Camera enabled + spritesheet position + side lengths X and Y
+            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, instanceDataLength, 24 * FLOAT_SIZE); //Spritesheet X + Spritesheet Y + use second texture + mix percent
 
-            GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * sizeof(float)); //Inline thickness + outline thickness + alpha threshold + primary texture target
-            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * sizeof(float)); //Inline color
-            GL.VertexAttribPointer(12, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * sizeof(float)); //Lighting parameters
+            GL.VertexAttribPointer(10, 4, VertexAttribPointerType.Float, false, instanceDataLength, 28 * FLOAT_SIZE); //Inline thickness + outline thickness + alpha threshold + primary texture target
+            GL.VertexAttribPointer(11, 4, VertexAttribPointerType.Float, false, instanceDataLength, 32 * FLOAT_SIZE); //Inline color
+            GL.VertexAttribPointer(12, 4, VertexAttribPointerType.Float, false, instanceDataLength, 36 * FLOAT_SIZE); //Lighting parameters
 
             //set uniforms here
         }

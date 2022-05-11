@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Game.Ledger;
+﻿using Empyrean.Game.Ledger;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     public static class QuestManager
     {

@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Ledger;
+﻿using Empyrean.Game.Ledger;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MortalDungeon.Game.Serializers;
+using Empyrean.Game.Serializers;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
     public enum StateModificationOptions
     {

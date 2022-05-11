@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using System;
 
-namespace MortalDungeon.Engine_Classes.Scenes
+namespace Empyrean.Engine_Classes.Scenes
 {
     public class Frustum
     {
@@ -41,9 +41,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public bool TestSphere(float x, float y, float z, float radius)
         {
-            for (int p = 0; p < 6; p++)
+            float d;
+            int p;
+            for (p = 0; p < 6; p++)
             {
-                float d = frustum[p, 0] * x + frustum[p, 1] * y + frustum[p, 2] * z + frustum[p, 3];
+                d = frustum[p, 0] * x + frustum[p, 1] * y + frustum[p, 2] * z + frustum[p, 3];
                 if (d <= -radius)
                 {
                     return false;

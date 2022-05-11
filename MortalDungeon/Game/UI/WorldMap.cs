@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Serializers;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class WorldMap
     {
@@ -65,7 +65,7 @@ namespace MortalDungeon.Game.UI
 
             MapArea.VisibleArea.Scroll += (s, mouseState) =>
             {
-                Vector3 localCoord = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(MortalDungeon.Window._cursorCoords));
+                Vector3 localCoord = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Empyrean.Window._cursorCoords));
 
                 UIDimensions prevDimension = MapArea.BaseComponent.GetDimensions();
 

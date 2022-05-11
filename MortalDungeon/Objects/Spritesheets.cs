@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Objects
+namespace Empyrean.Objects
 {
     [Serializable]
     public class Spritesheet : ISerializable
@@ -21,6 +21,13 @@ namespace MortalDungeon.Objects
         {
             File = file;
             TextureId = (int)textureName;
+        }
+        public Spritesheet(string file, TextureName textureName, int rows, int columns)
+        {
+            File = file;
+            TextureId = (int)textureName;
+            Rows = rows;
+            Columns = columns;
         }
 
         public void CompleteDeserialization()
@@ -75,13 +82,12 @@ namespace MortalDungeon.Objects
             Name = "TileSheet"
         };
 
-        public static readonly Spritesheet[] TileSheets = new Spritesheet[] { TileSheet, null, null };
 
         public static Spritesheet TileOverlaySpritesheet = new Spritesheet("Resources/TileOverlaySpritesheet.png", TextureName.TileOverlaySpritesheet)
         {
             Offset = 128,
-            Rows = 20,
-            Columns = 20,
+            Rows = 10,
+            Columns = 10,
             Name = "TileOverlaySheet"
         };
 
@@ -170,5 +176,11 @@ namespace MortalDungeon.Objects
             Rows = 1,
             Columns = 1
         };
+
+        public static Spritesheet Dirt = new Spritesheet("Resources/Textures/Dirt.png", TextureName.Dirt);
+        public static Spritesheet Grass = new Spritesheet("Resources/Textures/Grass.png", TextureName.Grass);
+        public static Spritesheet Stone_1 = new Spritesheet("Resources/Textures/Stone_1.png", TextureName.Stone_1);
+        public static Spritesheet Stone_2 = new Spritesheet("Resources/Textures/Stone_2.png", TextureName.Stone_2);
+        public static Spritesheet X_Marking = new Spritesheet("Resources/Textures/X.png", TextureName.X);
     }
 }

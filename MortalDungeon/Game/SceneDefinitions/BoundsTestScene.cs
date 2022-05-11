@@ -1,12 +1,16 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Events;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Player;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Tiles.TileMaps;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -15,9 +19,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.SceneDefinitions
+namespace Empyrean.Game.SceneDefinitions
 {
-    class BoundsTestScene : Scene
+    class BoundsTestScene : CombatScene
     {
         public BoundsTestScene()
         {
@@ -31,85 +35,37 @@ namespace MortalDungeon.Game.SceneDefinitions
         {
             base.Load(camera, mouseRay);
 
-            //load object here without camera perspective and use Q, R, and P to outline the object and get the bounds
+            TileMapManager.Scene = this;
+            PlayerParty.Scene = this;
+            EventManager.Scene = this;
+            VisionManager.Scene = this;
 
+            TestTileMap newMap = new TestTileMap(default, new TileMapPoint(0, 0), _tileMapController) 
+            { 
+                Width = TileMapManager.TILE_MAP_DIMENSIONS.X, 
+                Height = TileMapManager.TILE_MAP_DIMENSIONS.Y 
+            };
 
-            //RenderableObject obj = new RenderableObject(new SpritesheetObject(0, Spritesheets.TestSheet, 10, 10).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+            newMap.PopulateTileMap();
 
-            //int imageSize = 512 * 512 * 4;
+            newMap.TileMapCoords = new TileMapPoint(0, 0);
 
-            ////float[] imageData = new float[imageSize];
+            newMap.OnAddedToController();
 
-            //for (int i = 0; i < imageSize; i++) 
-            //{
-            //    imageData[i] = 1f;
-            //}
+            TileMapManager.LoadedMaps.Add(newMap.TileMapCoords, newMap);
+            TileMapManager.ActiveMaps.Add(newMap);
+            TileMapManager.SetVisibleMaps(new List<TileMap> { newMap });
 
-            //tex = Texture.LoadFromArray(imageData, new Vector2i(512, 512), true);
-            //obj.TextureReference = tex;
-            //obj.TextureReference.TextureName = TextureName.DynamicTexture;
+            newMap.Visible = true;
+            VisionManager.SetRevealAll(true);
 
-            //obj.Textures.Textures[0] = TextureName.DynamicTexture;
+            foreach(var chunk in newMap.TileChunks)
+            {
+                chunk.MeshChunk.tempRaiseTile();
+                chunk.Update(TileUpdateType.Vertex);
+            }
 
-            //Renderer.LoadTextureFromTextureObj(obj.TextureReference, TextureName.DynamicTexture);
-
-            //Animation Idle = new Animation()
-            //{
-            //    Frames = new List<RenderableObject>() { obj },
-            //    Frequency = -1,
-            //    Repeats = -1
-            //};
-
-            //BaseObject baseObj = new BaseObject(new List<Animation>() { Idle }, 0, "", new Vector3());
-
-
-            //GameObject temp = new GameObject();
-            //temp.AddBaseObject(baseObj);
-
-            //temp.BaseObjects[0].BaseFrame.CameraPerspective = false;
-
-            //temp.SetPosition(WindowConstants.CenterScreen);
-
-            //_genericObjects.Add(temp);
-
-            //
-            //TileMap tileMap = new TileMap(default, new TileMapPoint(0, 0), _tileMapController) { Width = 50, Height = 50 };
-            //tileMap.PopulateTileMap();
-
-            ////_tileMapController.AddTileMap(new TileMapPoint(0, 0), tileMap);
-
-            //TileTexturer.InitializeTexture(tileMap);
-
-            //RenderableObject obj = new RenderableObject(new SpritesheetObject(0, Spritesheets.TestSheet, 10, 10).CreateObjectDefinition(true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER)
-            //{
-            //    TextureReference = tileMap.DynamicTexture
-            //};
-            //obj.TextureReference.TextureName = TextureName.DynamicTexture;
-
-            //obj.Textures.Textures[0] = TextureName.DynamicTexture;
-
-            //Renderer.LoadTextureFromTextureObj(obj.TextureReference, TextureName.DynamicTexture);
-
-            //Animation Idle = new Animation()
-            //{
-            //    Frames = new List<RenderableObject>() { obj },
-            //    Frequency = -1,
-            //    Repeats = -1
-            //};
-
-            //BaseObject baseObj = new BaseObject(new List<Animation>() { Idle }, 0, "", new Vector3());
-
-
-            //GameObject temp = new GameObject();
-            //temp.AddBaseObject(baseObj);
-
-            //temp.BaseObjects[0].BaseFrame.CameraPerspective = true;
-            //temp.BaseObjects[0].BaseFrame.ScaleAll(50);
-
-            //temp.SetPosition(WindowConstants.CenterScreen);
-
-            //_genericObjects.Add(temp);
-
+            #region random objects
             //GameObject temp = new GameObject();
             //temp.AddBaseObject(_3DObjects.CreateBaseObject(new SpritesheetObject(0, Textures.TentTexture), _3DObjects.Tent, default));
 
@@ -162,39 +118,9 @@ namespace MortalDungeon.Game.SceneDefinitions
             //GameObject.LoadTexture(temp2);
             //GameObject.LoadTexture(temp1);
             //GameObject.LoadTexture(temp);
+            #endregion
 
-            //TickableObjects.Add(anim2);
-
-            UIBlock block1 = new UIBlock(default, new UIScale(1, 1));
-            block1.SetPosition(WindowConstants.CenterScreen);
-            block1.Draggable = true;
-            block1.Clickable = true;
-            block1.Hoverable = true;
-
-            UIBlock block2 = new UIBlock(default, new UIScale(1, 1));
-            block2.SetPosition(WindowConstants.CenterScreen);
-            block2.Draggable = true;
-            block2.Clickable = true;
-            block2.Hoverable = true;
-            block2.SetColor(_Colors.Red);
-
-            block1.LoadTexture();
-            block2.LoadTexture();
-
-            block1.GenerateReverseTree(UIManager);
-            block2.GenerateReverseTree(UIManager);
-
-
-            UIBlock blockt = new UIBlock(default, new UIScale(0.5f, 0.5f));
-            blockt.SetPositionFromAnchor(block2.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
-            blockt.SetColor(_Colors.Blue);
-            blockt.LoadTexture();
-
-            block2.AddChild(blockt);
-
-
-            AddUI(block1, 10);
-            AddUI(block2, 50);
+            RenderingConstants.LightColor = new Vector4(1, 1, 1, 1);
         }
 
         public static Texture SPECULAR_TEST = null;
@@ -269,6 +195,16 @@ namespace MortalDungeon.Game.SceneDefinitions
                     //_camera.Position += _camera.Up * cameraSpeed * (float)args.Time; // Up
                 }
             }
+        }
+
+        public override bool OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                
+            }
+
+            return true;
         }
     }
 }

@@ -1,19 +1,19 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
-using MortalDungeon.Game.Map;
+using Empyrean.Game.Map;
 using System.Diagnostics;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class MendBones : TemplateRangedSingleTarget
     {
@@ -23,13 +23,12 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.Healing;
             Range = 3;
             CastingUnit = castingUnit;
-            Damage = 10;
 
             CastingMethod |= CastingMethod.Intelligence | CastingMethod.PhysicalDexterity;
 
             Grade = 1;
 
-            ActionCost = 1;
+            CastRequirements.AddResourceCost(ResF.ActionEnergy, 1, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
             ChargeRechargeCost = 50;
 
             WeightParams.AllyWeight = 1;
@@ -37,14 +36,13 @@ namespace MortalDungeon.Game.Abilities
             MaxCharges = 3;
             Charges = 3;
 
-            UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
-            CanTargetGround = false;
+            SelectionInfo.CanSelectTiles = false;
 
-            UnitTargetParams.Dead = UnitCheckEnum.False;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.IsHostile = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.Dead = UnitCheckEnum.False;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.SoftTrue;
 
             AbilityClass = AbilityClass.Skeleton;
 
@@ -72,7 +70,10 @@ namespace MortalDungeon.Game.Abilities
 
             DamageInstance healing = GetDamageInstance();
 
-            SelectedUnit.ApplyDamage(new DamageParams(healing) { Ability = this });
+            for(int i = 0; i < SelectionInfo.SelectedUnits.Count; i++)
+            {
+                SelectionInfo.SelectedUnits[i].ApplyDamage(new DamageParams(healing) { Ability = this });
+            }
 
             EffectEnded();
         }
@@ -83,9 +84,9 @@ namespace MortalDungeon.Game.Abilities
 
             int skeletonTypeAbilities = 0;
 
-            if(SelectedUnit != null) 
+            if(SelectionInfo.SelectedUnits.Count > 0) 
             {
-                SelectedUnit.Info.Abilities.ForEach(ability =>
+                SelectionInfo.SelectedUnits[0].Info.Abilities.ForEach(ability =>
                 {
                     if (ability.AbilityClass == AbilityClass.Skeleton)
                     {
@@ -94,7 +95,7 @@ namespace MortalDungeon.Game.Abilities
                 });
             }
 
-            float healAmount = skeletonTypeAbilities * Damage;
+            float healAmount = skeletonTypeAbilities * 10;
 
             instance.Damage.Add(DamageType, healAmount);
 

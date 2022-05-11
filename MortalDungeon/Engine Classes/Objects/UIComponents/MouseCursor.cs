@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Game.Objects;
+﻿using Empyrean.Game.Objects;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Objects.UIComponents
+namespace Empyrean.Engine_Classes.Objects.UIComponents
 {
     public class MouseCursor : UIObject
     {

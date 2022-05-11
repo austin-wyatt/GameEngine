@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     [Serializable]
     public class StatusManager : ISerializable

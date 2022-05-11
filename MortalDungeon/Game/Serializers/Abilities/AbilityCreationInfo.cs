@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers.Abilities
+namespace Empyrean.Game.Serializers.Abilities
 {
     [Serializable]
     public class AbilityCreationInfo : ISerializable

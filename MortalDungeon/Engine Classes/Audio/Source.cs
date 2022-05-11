@@ -1,7 +1,7 @@
 ﻿using OpenTK.Audio.OpenAL;
 using System;
 
-namespace MortalDungeon.Engine_Classes.Audio
+namespace Empyrean.Engine_Classes.Audio
 {
     public class Source
     {
@@ -72,6 +72,8 @@ namespace MortalDungeon.Engine_Classes.Audio
             }
         }
 
+        
+
         public ALSourceState State
         {
             get
@@ -117,8 +119,6 @@ namespace MortalDungeon.Engine_Classes.Audio
             AL.SourceStop(Handle);
         }
 
-
-
         public void ApplyDefaultValues()
         {
             Gain = 1;
@@ -126,6 +126,21 @@ namespace MortalDungeon.Engine_Classes.Audio
 
             KeepAlive = false;
             EndTime = float.MaxValue;
+        }
+
+        public void SetPosition(float x, float y, float z)
+        {
+            AL.Source(Handle, ALSource3f.Position, x / 1000, y / 1000, z / 100);
+        }
+
+        public void SetVelocity(float x, float y, float z)
+        {
+            AL.Source(Handle, ALSource3f.Velocity, x, y, z);
+        }
+
+        public void SetDirection(float x, float y, float z)
+        {
+            AL.Source(Handle, ALSource3f.Direction, x, y, z);
         }
 
         public override bool Equals(object obj)

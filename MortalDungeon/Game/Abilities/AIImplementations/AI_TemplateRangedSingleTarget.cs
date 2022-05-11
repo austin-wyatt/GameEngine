@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Game.Combat;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Game.Units.AIFunctions;
+﻿using Empyrean.Game.Combat;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Game.Units.AIFunctions;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public partial class TemplateRangedSingleTarget
     {
@@ -89,7 +89,7 @@ namespace MortalDungeon.Game.Abilities
 
                 if (Ability.GetPositionValid(Ability.CastingUnit.Info.TileMapPosition.TilePoint, morselPos))
                 {
-                    Ability.SelectedUnit = Morsel.Unit;
+                    Ability.SelectionInfo.SelectedUnits.Add(Morsel.Unit);
                     Ability.EnactEffect();
                     return true;
                 }
@@ -109,7 +109,7 @@ namespace MortalDungeon.Game.Abilities
                             {
                                 if(Ability.GetPositionValid(Ability.CastingUnit.Info.TileMapPosition, morselPos))
                                 {
-                                    Ability.SelectedUnit = Morsel.Unit;
+                                    Ability.SelectionInfo.SelectedUnits.Add(Morsel.Unit);
                                     Ability.EnactEffect();
                                     return true;
                                 }
@@ -143,7 +143,7 @@ namespace MortalDungeon.Game.Abilities
 
             public void CalculateWeight()
             {
-                if(!Ability.UnitTargetParams.CheckUnit(Morsel.Unit, Ability.CastingUnit))
+                if(!Ability.SelectionInfo.UnitTargetParams.CheckUnit(Morsel.Unit, Ability.CastingUnit))
                 {
                     Weight = 0;
                     return;

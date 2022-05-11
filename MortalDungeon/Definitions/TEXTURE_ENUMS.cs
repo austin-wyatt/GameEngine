@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Definitions
+namespace Empyrean.Definitions
 {
     public enum Item_1
     {

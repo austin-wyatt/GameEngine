@@ -1,12 +1,12 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.Serializers;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Ledger;
+using Empyrean.Game.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
     public static class DialogueLedger
     {

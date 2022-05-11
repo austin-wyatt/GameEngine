@@ -1,32 +1,35 @@
-﻿using MortalDungeon.Definitions.EventActions;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.Events;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Items;
-using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Particles;
-using MortalDungeon.Game.Save;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Serializers.Abilities;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.UI;
-using MortalDungeon.Game.Units.AIFunctions;
-using MortalDungeon.Objects;
+﻿using Empyrean.Definitions.EventActions;
+using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Events;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Items;
+using Empyrean.Game.Ledger;
+using Empyrean.Game.Ledger.Units;
+using Empyrean.Game.Map;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Objects.PropertyAnimations;
+using Empyrean.Game.Particles;
+using Empyrean.Game.Save;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Serializers.Abilities;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.UI;
+using Empyrean.Game.Units.AIFunctions;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     public enum UnitStateInstructions
     {
@@ -66,8 +69,7 @@ namespace MortalDungeon.Game.Units
         public string pack_name = "";
         public float _scale = 1;
 
-        public long FeatureID = -1;
-        public long ObjectHash = 0;
+        public PermanentId PermanentId;
 
         public Vector4 Color = new Vector4(1, 1, 1, 1);
 
@@ -79,6 +81,12 @@ namespace MortalDungeon.Game.Units
 
         public Dictionary<string, List<EventAction>> EventActions { get; set; }
         public Dictionary<string, dynamic> EventObjects { get; set; }
+
+        public static ObjectPool<List<Unit>> UnitListObjectPool = new ObjectPool<List<Unit>>();
+
+        public const int STAMINA_REGAINED_PER_ACTION = 1;
+        public const int MOVEMENT_PER_STAMINA = 4;
+        public const int WEAPON_SWAP_MAX_STAMINA_COST = 2;
 
         public Unit() { }
 
@@ -126,7 +134,7 @@ namespace MortalDungeon.Game.Units
             obj.BaseFrame.CameraPerspective = true;
             obj.BaseFrame.ScaleAll(_scale);
             obj.BaseFrame.RotateX(_xRotation);
-            obj.BaseFrame.RotateZ(MathHelper.RadiansToDegrees(Scene._camera.CameraAngle));
+            //obj.BaseFrame.RotateZ(MathHelper.RadiansToDegrees(Scene._camera.CameraAngle));
 
             AddBaseObject(obj);
 
@@ -160,6 +168,8 @@ namespace MortalDungeon.Game.Units
             _innateTileOffset = WindowConstants.ConvertLocalToGlobalCoordinates(new Vector3(0, 0, -minZ));
             _innateTileOffset.Y -= obj.Dimensions.Y / 3;
 
+            //TEMP
+            //_innateTileOffset.Z += 0.01f;
 
             CalculateSelectionTileOffset();
             SetPositionOffset(_actualPosition);
@@ -199,8 +209,8 @@ namespace MortalDungeon.Game.Units
                 Scene._unitStatusBlock.AddChild(StatusBarComp, BaseStatusBarZIndex);
             }
 
-            Info.Energy = Info.CurrentEnergy;
-            Info.ActionEnergy = Info.CurrentActionEnergy;
+            SetResF(ResF.MovementEnergy, GetResF(ResF.MaxMovementEnergy));
+            SetResF(ResF.ActionEnergy, GetResF(ResF.MaxActionEnergy));
 
             if (placeOnTileMap)
             {
@@ -219,6 +229,20 @@ namespace MortalDungeon.Game.Units
             }
 
             LoadTexture(this);
+
+            if (PermanentId.Id != 0)
+            {
+                PermanentUnitInfoLedger.SetParameterValue(PermanentId.Id, PermanentUnitInfoParameter.Loaded, 0);
+
+                if (Info.Dead)
+                {
+                    PermanentUnitInfoLedger.SetParameterValue(PermanentId.Id, PermanentUnitInfoParameter.Dead, 1);
+                }
+                else
+                {
+                    PermanentUnitInfoLedger.SetParameterValue(PermanentId.Id, PermanentUnitInfoParameter.Dead, 0);
+                }
+            }
         }
 
         private void CalculateSelectionTileOffset()
@@ -252,6 +276,11 @@ namespace MortalDungeon.Game.Units
             Info.TileMapPosition = null;
 
             BaseObjects.Clear();
+
+            if(PermanentId.Id != 0)
+            {
+                PermanentUnitInfoLedger.SetParameterValue(PermanentId.Id, PermanentUnitInfoParameter.Loaded, 0);
+            }
         }
 
         public virtual void ApplyAbilityLoadout()
@@ -265,7 +294,7 @@ namespace MortalDungeon.Game.Units
 
             Move movement = new Move(this);
             movement.EnergyCost = 0.3f;
-            Info.Abilities.Add(movement);
+            //Info.Abilities.Add(movement);
             movement.AddAbilityToUnit();
 
             Info._movementAbility = movement;
@@ -277,6 +306,37 @@ namespace MortalDungeon.Game.Units
 
             AbilitiesUpdated?.Invoke(this);
         }
+
+        public int GetResI(ResI resource)
+        {
+            return Info.ResourceManager.GetResource(resource);
+        }
+
+        public float GetResF(ResF resource)
+        {
+            return Info.ResourceManager.GetResource(resource);
+        }
+
+        public void SetResI(ResI resource, int value)
+        {
+            Info.ResourceManager.SetResource(resource, value);
+        }
+
+        public void SetResF(ResF resource, float value)
+        {
+            Info.ResourceManager.SetResource(resource, value);
+        }
+
+        public void AddResI(ResI resource, int value)
+        {
+            Info.ResourceManager.AddResource(resource, value);
+        }
+
+        public void AddResF(ResF resource, float value)
+        {
+            Info.ResourceManager.AddResource(resource, value);
+        }
+
 
         public void AddAbility(AbilityLoadoutItem item)
         {
@@ -445,21 +505,47 @@ namespace MortalDungeon.Game.Units
             _actualPosition = position;
         }
 
+        public void SetPositionOffset(float x, float y, float z)
+        {
+            SetPosition(x + TileOffset.X + _innateTileOffset.X, y + TileOffset.Y + _innateTileOffset.Y, z + TileOffset.Z + _innateTileOffset.Z);
+
+            _actualPosition.X = x;
+            _actualPosition.Y = y;
+            _actualPosition.Z = z;
+        }
+
 
         public Vector3 _actualPosition = new Vector3();
+        private object _statusBarBatchObj = new object();
         public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position);
 
             if (StatusBarComp != null) 
             {
-                Scene.SyncToRender(() => StatusBarComp.UpdateUnitStatusPosition());
+                Scene.RenderDispatcher.DispatchAction(_statusBarBatchObj, () => StatusBarComp.UpdateUnitStatusPosition());
                 //StatusBarComp.UpdateUnitStatusPosition();
             }
 
             if (SelectionTile != null) 
             {
                 SelectionTile.SetPosition(position);
+            }
+        }
+
+        public override void SetPosition(float x, float y, float z)
+        {
+            base.SetPosition(x, y, z);
+
+            if (StatusBarComp != null)
+            {
+                Scene.RenderDispatcher.DispatchAction(_statusBarBatchObj, () => StatusBarComp.UpdateUnitStatusPosition());
+                //StatusBarComp.UpdateUnitStatusPosition();
+            }
+
+            if (SelectionTile != null)
+            {
+                SelectionTile.SetPosition(x, y, z);
             }
         }
 
@@ -489,7 +575,7 @@ namespace MortalDungeon.Game.Units
             }
         }
 
-        public virtual void SetTileMapPosition(Tile baseTile) 
+        public virtual void SetTileMapPosition(Tile tile) 
         {
             Tile prevTile = null;
 
@@ -499,18 +585,18 @@ namespace MortalDungeon.Game.Units
                 UnitPositionManager.RemoveUnitPosition(this, Info.TileMapPosition);
             }
                 
-            UnitPositionManager.SetUnitPosition(this, baseTile);
+            UnitPositionManager.SetUnitPosition(this, tile);
 
-            Info.TileMapPosition = baseTile;
+            Info.TileMapPosition = tile;
 
-            VisionGenerator.SetPosition(baseTile.TilePoint);
+            VisionGenerator.SetPosition(tile.TilePoint);
 
             Info.TileMapPosition.OnSteppedOn(this);
             prevTile?.OnSteppedOff(this);
 
             Scene.OnUnitMoved(this, prevTile);
 
-            UnitMoved?.Invoke(this, prevTile, baseTile);
+            UnitMoved?.Invoke(this, prevTile, tile);
             StateChanged?.Invoke(this);
         }
 
@@ -542,13 +628,13 @@ namespace MortalDungeon.Game.Units
             {
                 case DamageType.Bleed:
                 case DamageType.Poison:
-                    return false;
                 default:
                     return true;
             }
         }
 
-        public delegate void UnitEventHandler(Unit unit);
+        public delegate Task UnitEventHandler(Unit unit);
+        public delegate void EmptyEventHandler();
         public event UnitEventHandler TurnStart;
         public event UnitEventHandler TurnEnd;
         public event UnitEventHandler RoundStart;
@@ -562,6 +648,8 @@ namespace MortalDungeon.Game.Units
 
         public event UnitEventHandler StateChanged;
 
+        public event EmptyEventHandler PermanentIdInitialized;
+
         public delegate void UnitMoveEventHandler(Unit unit, Tile prev, Tile current);
         public event UnitMoveEventHandler UnitMoved;
 
@@ -570,12 +658,14 @@ namespace MortalDungeon.Game.Units
             StateChanged?.Invoke(this);
         }
 
-        protected void CreateMorsel(Unit unit)
+        protected async Task<bool> CreateMorsel(Unit unit)
         {
             if (Scene.InCombat)
             {
                 Scene.CombatState.CreateMorsel(this, Combat.MorselType.Action);
             }
+
+            return true;
         }
 
         public void OnTurnStart() 
@@ -586,6 +676,8 @@ namespace MortalDungeon.Game.Units
             }
 
             List<Ability> abilitiesToDecay = new List<Ability>();
+
+            Info.Context.SetFlag(UnitContext.WeaponSwappedThisTurn, false);
 
             lock (Info.Abilities)
             {
@@ -633,6 +725,16 @@ namespace MortalDungeon.Game.Units
             {
                 effect.OnTurnEnd(this, Info.TileMapPosition);
             }
+
+            int actionEnergy = (int)Math.Floor(GetResF(ResF.ActionEnergy));
+            int movementEnergy = (int)Math.Floor(GetResF(ResF.MovementEnergy));
+
+            int stamina = GetResI(ResI.Stamina);
+            int maxStamina = GetResI(ResI.MaxStamina);
+
+            int regainedStamina = actionEnergy * STAMINA_REGAINED_PER_ACTION + movementEnergy / MOVEMENT_PER_STAMINA;
+
+            SetResI(ResI.Stamina, Math.Clamp(stamina + regainedStamina, 0, maxStamina));
 
             TurnEnd?.Invoke(this);
         }
@@ -709,11 +811,11 @@ namespace MortalDungeon.Game.Units
 
         public virtual void SetShields(int shields) 
         {
-            Info.CurrentShields = shields;
+            SetResI(ResI.Shields, shields);
 
             if (StatusBarComp != null) 
             {
-                StatusBarComp.ShieldBar.SetCurrentShields(Info.CurrentShields);
+                StatusBarComp.ShieldBar.SetCurrentShields(GetResI(ResI.Shields));
             }
 
             if(Scene.Footer.CurrentUnit == this) 
@@ -729,9 +831,9 @@ namespace MortalDungeon.Game.Units
 
         public void SetHealth(float health) 
         {
-            Info.Health = health;
+            SetResF(ResF.Health, health);
 
-            StatusBarComp.HealthBar.SetHealthPercent(Info.Health / Info.MaxHealth, AI.Team);
+            StatusBarComp.HealthBar.SetHealthPercent(GetResF(ResF.Health) / GetResF(ResF.MaxHealth), AI.Team);
 
             Scene.Footer.RefreshFooterInfo();
 
@@ -741,10 +843,16 @@ namespace MortalDungeon.Game.Units
             }
         }
 
+        public void SetPermanentId(int id)
+        {
+            PermanentId = new PermanentId(id);
+            PermanentIdInitialized?.Invoke();
+        }
+
         public void Rest() 
         {
-            SetHealth(Info.MaxHealth);
-            Info.Focus = Info.MaxFocus;
+            SetHealth(GetResF(ResF.MaxHealth));
+            SetResI(ResI.Stamina, GetResI(ResI.MaxStamina));
         }
 
         public struct AppliedDamageReturnValues
@@ -753,6 +861,8 @@ namespace MortalDungeon.Game.Units
             public float ActualDamageDealt;
             public bool KilledEnemy;
             public bool AttackBrokeShield;
+            public float DamageResisted;
+            public float PotentialDamageBeforeModifications;
         }
         
 
@@ -786,14 +896,20 @@ namespace MortalDungeon.Game.Units
                 Scene.InCombat = true;
                 Scene.EvaluateCombat(AI.Team);
                 Scene.InCombat = false;
-                Scene.StartCombat();
+                Scene.StartCombat().Wait();
             }
 
             foreach (DamageType type in instance.Damage.Keys)
             {
                 Info.BuffManager.GetDamageResistances(type, out float damageAdd, out float damageMult);
 
+                returnVals.PotentialDamageBeforeModifications += instance.Damage[type];
+
                 float actualDamage = (instance.Damage[type] + damageAdd) * damageMult;
+
+                actualDamage = actualDamage < 0 ? 0 : actualDamage;
+
+                returnVals.DamageResisted += instance.Damage[type] - actualDamage;
 
                 if (type == DamageType.Healing)
                 {
@@ -809,26 +925,36 @@ namespace MortalDungeon.Game.Units
                 }
                 else
                 {
+                    int currentShields = GetResI(ResI.Shields);
+                    float shieldBlock = GetResF(ResF.ShieldBlock);
+
+                    float piercingDamage = 0;
+
                     if (type == DamageType.Piercing)
                     {
-                        float piercingDamage = damageParams.Instance.PiercingPercent * actualDamage;
-
+                        piercingDamage = damageParams.Instance.PiercingPercent * actualDamage;
                         actualDamage -= piercingDamage;
-                        finalDamage += piercingDamage;
                     }
 
 
                     float shieldDamageBlocked;
 
-                    Info.DamageBlockedByShields += actualDamage;
+                    SetResF(ResF.DamageBlockedByShields, GetResF(ResF.DamageBlockedByShields) + actualDamage);
 
-                    if (Info.CurrentShields < 0 && GetAmplifiedByNegativeShields(type))
+                    //If shields are empty or negative then piercing damage should also contribute to further reducing shields
+                    if(currentShields <= 0)
                     {
-                        actualDamage *= 1 + (0.25f * Math.Abs(Info.CurrentShields));
+                        SetResF(ResF.DamageBlockedByShields, GetResF(ResF.DamageBlockedByShields) + piercingDamage);
                     }
-                    else if (Info.CurrentShields > 0)
+
+                    if (currentShields < 0 && GetAmplifiedByNegativeShields(type))
                     {
-                        shieldDamageBlocked = Info.CurrentShields * Info.ShieldBlock;
+                        actualDamage *= 1 + (0.25f * Math.Abs(currentShields));
+                        piercingDamage *= 1 + (0.25f * Math.Abs(currentShields));
+                    }
+                    else if (currentShields > 0)
+                    {
+                        shieldDamageBlocked = currentShields * shieldBlock;
 
                         if (actualDamage - shieldDamageBlocked <= 0)
                         {
@@ -849,10 +975,12 @@ namespace MortalDungeon.Game.Units
                         }
                     }
 
-                    if (Info.DamageBlockedByShields > Info.ShieldBlock)
+                    finalDamage += piercingDamage;
+
+                    if (GetResF(ResF.DamageBlockedByShields) > shieldBlock)
                     {
-                        Info.CurrentShields--;
-                        Info.DamageBlockedByShields = 0;
+                        SetResI(ResI.Shields, currentShields - 1);
+                        SetResF(ResF.DamageBlockedByShields, 0);
 
                         returnVals.AttackBrokeShield = true;
                     }
@@ -882,13 +1010,15 @@ namespace MortalDungeon.Game.Units
                 Info.Stealth.SetHiding(false);
             }
 
-            Info.Health -= finalDamage;
+            float health = GetResF(ResF.Health) - finalDamage;
+            SetResF(ResF.Health, health);
+
 
             returnVals.ActualDamageDealt = finalDamage;
 
             if (finalDamage > 0) 
             {
-                OnHurt();
+                OnHurt(finalDamage);
 
                 Scene.EventLog.AddEvent(Name + " has taken " + finalDamage + " damage.", EventSeverity.Info);
             }
@@ -899,18 +1029,20 @@ namespace MortalDungeon.Game.Units
                 Scene.EventLog.AddEvent(Name + " has healed for " + -finalDamage + " health.", EventSeverity.Info);
             }
 
-            if (Info.Health > Info.MaxHealth) 
+            float maxHealth = GetResF(ResF.MaxHealth);
+
+            if (GetResF(ResF.Health) > maxHealth) 
             {
-                Info.Health = Info.MaxHealth;
+                SetResF(ResF.Health, GetResF(ResF.MaxHealth));
             }
 
 
             
-            SetHealth(Info.Health);
-            SetShields(Info.CurrentShields);
+            SetHealth(GetResF(ResF.Health));
+            SetShields(GetResI(ResI.Shields));
             
 
-            if (Info.Health <= 0) 
+            if (GetResF(ResF.Health) <= 0) 
             {
                 Kill();
                 returnVals.KilledEnemy = true;
@@ -921,8 +1053,11 @@ namespace MortalDungeon.Game.Units
 
         public virtual void Kill() 
         {
-            Info.Dead = true;
-            OnKill();
+            if (!Info.Dead)
+            {
+                Info.Dead = true;
+                OnKill();
+            }
         }
 
         public virtual void Revive()
@@ -930,7 +1065,7 @@ namespace MortalDungeon.Game.Units
             Info.Dead = false;
             SetHealth(1);
 
-            SetShields(Info.CurrentShields);
+            SetShields(GetResI(ResI.Shields));
 
             OnRevive();
         }
@@ -945,6 +1080,7 @@ namespace MortalDungeon.Game.Units
             Scene.OnUnitKilled(this);
 
             Sound sound = new Sound(Sounds.Die) { Gain = 0.2f, Pitch = 1 };
+            sound.SetPosition(BaseObject.BaseFrame._position.X, BaseObject.BaseFrame._position.Y, BaseObject.BaseFrame._position.Z);
             sound.Play();
 
             Ledgers.OnUnitKilled(this);
@@ -961,18 +1097,31 @@ namespace MortalDungeon.Game.Units
             StateChanged?.Invoke(this);
         }
 
-        public virtual void OnHurt() 
+        public virtual void OnHurt(float damageTaken) 
         {
             Sound sound = new Sound(Sounds.UnitHurt) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+            sound.SetPosition(BaseObject.BaseFrame._position.X, BaseObject.BaseFrame._position.Y, BaseObject.BaseFrame._position.Z);
             sound.Play();
 
-            var bloodExplosion = new Explosion(Position, new Vector4(1, 0, 0, 1), Explosion.ExplosionParams.Default);
+            var bloodExplosion = new Explosion(Position, new Vector4(1, 0, 0, 0.25f), Explosion.ExplosionParams.Default);
             bloodExplosion.OnFinish = () =>
             {
                 Scene._particleGenerators.Remove(bloodExplosion);
+                Scene.Tick -= bloodExplosion.Tick;
+            };
+
+            var hurtAnimation = new HurtAnimation(BaseObject.BaseFrame, damageTaken);
+            hurtAnimation.Play();
+
+            PropertyAnimations.Add(hurtAnimation);
+
+            hurtAnimation.OnFinish += () =>
+            {
+                PropertyAnimations.Remove(hurtAnimation);
             };
 
             Scene._particleGenerators.Add(bloodExplosion);
+            Scene.Tick += bloodExplosion.Tick;
 
             Hurt?.Invoke(this);
             StateChanged?.Invoke(this);
@@ -986,24 +1135,44 @@ namespace MortalDungeon.Game.Units
 
         public virtual void OnShieldsHit() 
         {
-            if (Info.DamageBlockedByShields > Info.ShieldBlock)
+            if (GetResF(ResF.DamageBlockedByShields) > GetResF(ResF.ShieldBlock))
             {
-                Sound sound = new Sound(Sounds.ArmorHit) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.6f, 0.7f) };
+                //Sound sound = new Sound(Sounds.ShieldHit) { Gain = 2f, Pitch = GlobalRandom.NextFloat(0.6f, 0.7f) };
+                Sound sound = new Sound(Sounds.ShieldHit) { Gain = 0.1f, Pitch = GlobalRandom.NextFloat(1.1f, 1.2f) };
+                sound.SetPosition(BaseObject.BaseFrame._position.X, BaseObject.BaseFrame._position.Y, BaseObject.BaseFrame._position.Z);
+
                 sound.Play();
             }
             else 
             {
-                Sound sound = new Sound(Sounds.ArmorHit) { Gain = 1f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+                //Sound sound = new Sound(Sounds.ShieldHit) { Gain = 2f, Pitch = GlobalRandom.NextFloat(0.95f, 1.05f) };
+                Sound sound = new Sound(Sounds.ShieldHit) { Gain = 0.1f, Pitch = GlobalRandom.NextFloat(1.2f, 1.3f) };
+                sound.SetPosition(BaseObject.BaseFrame._position.X, BaseObject.BaseFrame._position.Y, BaseObject.BaseFrame._position.Z);
+
                 sound.Play();
             }
 
-            var bloodExplosion = new Explosion(Position, new Vector4(0.592f, 0.631f, 0.627f, 1), Explosion.ExplosionParams.Default);
+            var bloodExplosion = new Explosion(Position, new Vector4(0.592f, 0.631f, 0.627f, 0.25f), Explosion.ExplosionParams.Default);
             bloodExplosion.OnFinish = () =>
             {
                 Scene._particleGenerators.Remove(bloodExplosion);
+                Scene.Tick -= bloodExplosion.Tick;
             };
 
             Scene._particleGenerators.Add(bloodExplosion);
+            Scene.Tick += bloodExplosion.Tick;
+
+
+            var hurtAnimation = new HurtAnimation(BaseObject.BaseFrame, 5);
+            hurtAnimation.Play();
+
+            PropertyAnimations.Add(hurtAnimation);
+
+            hurtAnimation.OnFinish += () =>
+            {
+                PropertyAnimations.Remove(hurtAnimation);
+            };
+
 
             ShieldsHit?.Invoke(this);
             StateChanged?.Invoke(this);
@@ -1014,6 +1183,8 @@ namespace MortalDungeon.Game.Units
             if (Hoverable && !Hovered)
             {
                 Hovered = true;
+
+                HoverEvent(this);
 
                 if (StatusBarComp != null && StatusBarComp.Render) 
                 {
@@ -1086,6 +1257,11 @@ namespace MortalDungeon.Game.Units
 
             SelectionTile.Deselect();
             Selected = false;
+
+            if (Targeted)
+            {
+                Target();
+            }
         }
 
         public void Target() 
@@ -1104,6 +1280,11 @@ namespace MortalDungeon.Game.Units
 
             SelectionTile.Untarget();
             Targeted = false;
+
+            if (Selected)
+            {
+                Select();
+            }
         }
 
         public override void Tick()

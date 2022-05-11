@@ -1,18 +1,18 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class AbilityTreeUI
     {
@@ -118,7 +118,7 @@ namespace MortalDungeon.Game.UI
 
             treeDisplayArea.VisibleArea.Scroll += (s, e) =>
             {
-                Vector3 localCoord = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(MortalDungeon.Window._cursorCoords));
+                Vector3 localCoord = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(Empyrean.Window._cursorCoords));
 
                 UIDimensions prevDimension = _treeDisplayArea.BaseComponent.GetDimensions();
 

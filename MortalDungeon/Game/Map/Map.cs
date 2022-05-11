@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
+﻿using Empyrean.Engine_Classes;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Map
+namespace Empyrean.Game.Map
 {
     public class Cell
     {

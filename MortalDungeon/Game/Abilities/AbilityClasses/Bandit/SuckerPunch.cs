@@ -1,16 +1,17 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Definitions.Buffs;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
+using Empyrean.Engine_Classes;
+using Empyrean.Definitions.Buffs;
+using Empyrean.Game.Abilities.AbilityEffects;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class SuckerPunch : TemplateRangedSingleTarget
     {
@@ -20,8 +21,8 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.Blunt;
             Range = 1;
             CastingUnit = castingUnit;
-            Damage = 10;
-            ActionCost = 3;
+
+            CastRequirements.AddResourceCost(ResF.ActionEnergy, 2, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 
             CastingMethod |= CastingMethod.BruteForce | CastingMethod.Unarmed;
 
@@ -59,33 +60,16 @@ namespace MortalDungeon.Game.Abilities
 
                 return weight;
             });
-        }
 
-        public override void EnactEffect()
-        {
-            BeginEffect();
+            EffectManager = new EffectManager(this);
 
-            var damageParams = SelectedUnit.ApplyDamage(new DamageParams(GetDamageInstance()) { Ability = this });
+            ChainCondition shieldsCheck = new ChainCondition("{TargetUnit[0] ResI Shields} <= 0");
 
-            if (damageParams.ActualDamageDealt >= GetDamage()) 
-            {
-                SelectedUnit.Info.AddBuff(new StunDebuff() { Duration = 3 });
-            }
+            StunDebuff stunDebuff = new StunDebuff(2);
 
-            Casted();
-            EffectEnded();
-        }
+            shieldsCheck.ChainedEffect = new ApplyBuff(stunDebuff, new TargetInformation(AbilityUnitTarget.SelectedUnit));
 
-        public override DamageInstance GetDamageInstance()
-        {
-            DamageInstance instance = new DamageInstance();
-
-
-            float damageAmount = GetDamage();
-
-            instance.Damage.Add(DamageType, damageAmount);
-
-            return instance;
+            EffectManager.ChainConditions.Add(shieldsCheck);
         }
     }
 }

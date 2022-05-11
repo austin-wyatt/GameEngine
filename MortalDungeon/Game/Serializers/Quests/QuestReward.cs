@@ -1,19 +1,19 @@
-﻿using MortalDungeon.Game.Items;
-using MortalDungeon.Game.LuaHandling;
-using MortalDungeon.Game.Player;
+﻿using Empyrean.Game.Items;
+using Empyrean.Game.Player;
+using Empyrean.Game.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
 
     [Serializable] 
     public class QuestReward : ISerializable
     {
         public List<ItemEntry> ItemRewards = new List<ItemEntry>();
-        public long GoldReward = 0;
+        public int GoldReward = 0;
 
         public List<string> Scripts = new List<string>();
 
@@ -34,7 +34,7 @@ namespace MortalDungeon.Game.Serializers
 
             foreach(var script in Scripts)
             {
-                LuaManager.ApplyScript(script);
+                JSManager.ApplyScript(script);
             }
         }
 

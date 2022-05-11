@@ -1,13 +1,13 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Objects;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.GameObjects
+namespace Empyrean.Game.GameObjects
 {
     public class UnitSelectionTile : GameObject
     {
@@ -81,6 +81,11 @@ namespace MortalDungeon.Game.GameObjects
         public override void SetPosition(Vector3 position)
         {
             base.SetPosition(position + UnitOffset);
+        }
+
+        public override void SetPosition(float x, float y, float z)
+        {
+            base.SetPosition(x + UnitOffset.X, y + UnitOffset.Y, z + UnitOffset.Z);
         }
 
         public override void SetColor(Vector4 color, SetColorFlag setColorFlag = SetColorFlag.Base)

@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Entities;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Entities;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -13,10 +13,11 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MortalDungeon.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Rendering;
 using OpenTK.Windowing.Common;
+using OpenTK.Graphics.OpenGL4;
 
-namespace MortalDungeon.Game.UI
+namespace Empyrean.Game.UI
 {
     public class TabMenu : UIObject
     {
@@ -157,12 +158,23 @@ namespace MortalDungeon.Game.UI
 
             Tabs[0].BaseComponent.AddChild(button);
 
-            Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Tile Tooltips", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
+            Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Wireframe", 0.3f, _Colors.UILightGray, _Colors.UITextBlack);
             unitButton.BaseComponent.MultiTextureData.MixTexture = false;
+
+            bool wireframe = false;
 
             unitButton.Click += (s, e) =>
             {
-                Settings.EnableTileTooltips = !Settings.EnableTileTooltips;
+                wireframe = !wireframe;
+
+                if (wireframe)
+                {
+                    Window.QueueToRenderCycle(() => GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line));
+                }
+                else
+                {
+                    Window.QueueToRenderCycle(() => GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill));
+                }
             };
 
             unitButton.SetPositionFromAnchor(button.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -264,7 +276,7 @@ namespace MortalDungeon.Game.UI
                 foreach(var u in Scene._units)
                 {
                     u.Revive();
-                    u.Info.Health = 100;
+                    u.SetResF(ResF.Health, 100);
 
                     var instance = new Abilities.DamageInstance();
                     instance.Damage.Add(Abilities.DamageType.HealthRemoval, -100);
@@ -272,21 +284,17 @@ namespace MortalDungeon.Game.UI
                 }
             }, visionTestButton.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
-            Button minusBlue = CreateButton("Save BMP", () =>
+            bool display = false;
+            Button minusBlue = CreateButton("Toggle move bar", () =>
             {
-                //VisionMap.SaveObstructionMap();
-
-                //VisionMap._saveToBitmap = true;
-                //Scene.UpdateVisionMap();
-                //Scene.VisionMapTask.Wait();
-
-                //VisionMap.SaveOperationMap();
+                display = !display;
+                Scene.ShowEnergyDisplayBars(display);
             }, minusColor.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
 
-            Button loadEntity = CreateButton("Load Guy", () =>
+            Button loadEntity = CreateButton("Collect Garbage", () =>
             {
-
+                GC.Collect();
             }, minusBlue.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
             //ForceTreeRegeneration();

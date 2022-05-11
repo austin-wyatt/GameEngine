@@ -1,14 +1,14 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.TextHandling;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.GameObjects;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Game.Units.AIFunctions;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.TextHandling;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.GameObjects;
+using Empyrean.Game.Map;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Game.Units.AIFunctions;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -18,9 +18,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Icon = MortalDungeon.Engine_Classes.UIComponents.Icon;
+using Icon = Empyrean.Engine_Classes.UIComponents.Icon;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public enum AbilityTypes //basic denominations for skills that can be used for categorizing and sorting
     {
@@ -74,12 +74,13 @@ namespace MortalDungeon.Game.Abilities
         Sight = 1024,
 
         Innate = 4096, //an ability that a unit can do naturally
+        Equipped = 8192, //an equipped item's ability
     }
 
     public enum DamageType //main effect (extra effects provided by abilities)
     {
         NonDamaging, //does no damage
-        Slashing, 
+        Slashing,
         Piercing, //pierces lighter armor, has a higher spread of damage (bleeds, crits)
         Blunt, //lower spread of damage (stuns, incapacitates)
         Mental, //lowers sanity (conversion, insanity, flee)
@@ -92,13 +93,13 @@ namespace MortalDungeon.Game.Abilities
         Poison, //unaffected by shields
         Focus, //damage caused by using the meditation intrinsic ability
         HealthRemoval, //dota health removal
-        Healing
+        Healing,
     }
 
     public enum AbilityContext 
     {
         SkipEnergyCost,
-        SkipIconAnimation
+        SkipIconAnimation,
     }
     public class Ability
     {
@@ -108,7 +109,6 @@ namespace MortalDungeon.Game.Abilities
         public CastingMethod CastingMethod = CastingMethod.Base;
 
 
-
         public int Grade = 1;
 
         public AbilityTreeType AbilityTreeType = AbilityTreeType.None;
@@ -116,21 +116,13 @@ namespace MortalDungeon.Game.Abilities
 
         public Unit CastingUnit;
 
-        public List<Unit> AffectedUnits = new List<Unit>(); //units that need to be accessed frequently for the ability
-
-        public List<Tile> AffectedTiles = new List<Tile>(); //tiles that need to be accessed frequently for the ability 
-
-        public List<Unit> Units = new List<Unit>(); //relevant units
-
-        public List<Tile> CurrentTiles = new List<Tile>(); //the current set of tiles that is being worked with
-
         public TileMap TileMap => CastingUnit.GetTileMap();
 
-        public Tile SelectedTile;
-
-        public Unit SelectedUnit;
 
         public ContextManager<AbilityContext> Context = new ContextManager<AbilityContext>();
+
+        public EffectManager EffectManager;
+        public SelectionInfo SelectionInfo;
 
         #region Combo ability variables
         public bool IsComboAbility = false;
@@ -168,35 +160,20 @@ namespace MortalDungeon.Game.Abilities
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
         public bool MustCast = false;
 
-        public bool CanTargetGround = true;
-        public bool CanTargetTerrain = false;
-
         public int ChargesLostOnUse = 1;
         public const int ChargeRechargeActionCost = 1;
 
-        public UnitSearchParams UnitTargetParams = new UnitSearchParams()
-        {
-            Dead = UnitCheckEnum.False,
-            IsFriendly = UnitCheckEnum.SoftTrue,
-            IsHostile = UnitCheckEnum.SoftTrue,
-            IsNeutral = UnitCheckEnum.SoftTrue,
-            Self = UnitCheckEnum.False
-        };
-
-        public bool RequiresLineToTarget = false;
-
+        
         public bool BreakStealth = true;
 
-        public bool CanTargetThroughFog = false;
+        //public float EnergyCost = 0;
+        //public int ActionCost = 1;
 
-        public float EnergyCost = 0;
-        public int ActionCost = 1;
+        public CastRequirements CastRequirements = new CastRequirements();
 
         public float Range = 0;
         public int MinRange;
         public int CurrentRange = 0;
-        public float Damage = 0;
-        public int Duration = 0;
         public float Sound = 0;
 
         public int MaxCharges = 3;
@@ -205,18 +182,20 @@ namespace MortalDungeon.Game.Abilities
         public float ChargeRechargeCost = 10;
 
         public bool UsedThisTurn = false;
-        public bool OneUsePerTurn = true;
+        public bool OneUsePerTurn = false;
 
         public AnimationSet AnimationSet = new AnimationSet();
 
         public Ability()
         {
-            
+            EffectManager = new EffectManager(this);
         }
 
         public Ability(Unit unit)
         {
             CastingUnit = unit;
+            EffectManager = new EffectManager(this);
+            SelectionInfo = new SelectionInfo(this);
         }
 
         public Icon GetIcon()
@@ -257,7 +236,7 @@ namespace MortalDungeon.Game.Abilities
         }
 
         public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground,
-            bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null, bool showCharges = false)
+            bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null, bool showCharges = false, float hotkeyTextScale = 0.07f)
         {
             Icon icon;
             if (passedIcon == null)
@@ -269,13 +248,13 @@ namespace MortalDungeon.Game.Abilities
                 icon = new Icon(passedIcon, scale, withBackground, backgroundType);
             }
 
-            if (showEnergyCost && ActionCost > 0 && Type != AbilityTypes.Passive)
+            if (showEnergyCost && GetCost(ResF.ActionEnergy) > 0 && Type != AbilityTypes.Passive)
             {
                 UIScale textBoxSize = icon.Size;
                 textBoxSize *= 0.3333f;
 
-                float energyCost = GetEnergyCost();
-                float actionCost = GetActionEnergyCost();
+                float energyCost = GetCost(ResF.MovementEnergy);
+                float actionCost = GetCost(ResF.ActionEnergy);
 
                 string energyString = (actionCost >= energyCost ? actionCost : energyCost).ToString("n1").Replace(".0", "");
 
@@ -295,7 +274,7 @@ namespace MortalDungeon.Game.Abilities
 
                 UIBlock energyCostBackground;
 
-                if (ActionCost > 0)
+                if (actionCost > 0)
                 {
                     energyCostBackground = new UIBlock(default, null, default, (int)IconSheetIcons.Channel, true, false, Spritesheets.IconSheet);
                     energyCostBackground.SetColor(_Colors.White);
@@ -333,7 +312,7 @@ namespace MortalDungeon.Game.Abilities
                     icon.AddChargeDisplay(this);
                 }
                 
-                if(ActionCost > 0)
+                if(GetCost(ResF.ActionEnergy) > 0)
                 {
                     icon.AddActionCost(this);
                 }
@@ -346,10 +325,9 @@ namespace MortalDungeon.Game.Abilities
 
             if (hotkey != null && Type != AbilityTypes.Passive)
             {
-                UIScale textBoxSize = icon.Size;
-                textBoxSize *= 0.2f;
+                UIScale textBoxSize = new UIScale(hotkeyTextScale * 0.7f, hotkeyTextScale * 0.7f);
 
-                float textScale = 0.07f;
+                float textScale = hotkeyTextScale;
 
 
                 Text hotkeyBox = new Text(hotkey, Text.DEFAULT_FONT, 16, Brushes.White);
@@ -380,28 +358,13 @@ namespace MortalDungeon.Game.Abilities
             return icon;
         }
 
-        public virtual float GetEnergyCost()
+        public float GetCost(ResF resource)
         {
-            if (CastingUnit != null)
-            {
-                return CastingUnit.Info.BuffManager.GetValue(BuffEffect.EnergyCostMultiplier) * 
-                       (EnergyCost + 
-                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.EnergyCostAdditive));
-            }
-
-            return EnergyCost;
+            return CastRequirements.GetResourceCost(CastingUnit, resource);
         }
-
-        public virtual float GetActionEnergyCost()
+        public float GetCost(ResI resource)
         {
-            if (CastingUnit != null)
-            {
-                return CastingUnit.Info.BuffManager.GetValue(BuffEffect.ActionEnergyCostMultiplier) * 
-                       (ActionCost + 
-                       CastingUnit.Info.BuffManager.GetValue(BuffEffect.ActionEnergyCostAdditive));
-            }
-
-            return ActionCost;
+            return CastRequirements.GetResourceCost(CastingUnit, resource);
         }
 
         public int GetMaxCharges() 
@@ -428,17 +391,6 @@ namespace MortalDungeon.Game.Abilities
             }
         }
 
-        public float GetDamage()
-        {
-            return Damage;
-        }
-
-        public virtual void AdvanceDuration()
-        {
-            Duration--;
-            EnactEffect();
-        }
-
         public void BeginEffect()
         {
             Scene.SetAbilityInProgress(true);
@@ -447,22 +399,26 @@ namespace MortalDungeon.Game.Abilities
 
         public virtual void EnactEffect()
         {
-
-        } //the actual effect of the skill
+            Task.Run(EffectManager.EnactEffect);
+        } 
 
         public virtual void OnSelect(CombatScene scene, TileMap currentMap)
         {
+            SelectionInfo.SelectAbility();
+
             if (CanCast())
             {
-                GetValidTileTargets(currentMap, out var affectedTiles, out var affectedUnits, scene._units);
+                SelectionInfo.SelectAbility();
 
-                AffectedTiles = affectedTiles;
-                AffectedUnits = affectedUnits;
+                //GetValidTileTargets(currentMap, out var affectedTiles, out var affectedUnits, scene._units);
 
-                TargetAffectedUnits();
+                //AffectedTiles = affectedTiles;
+                //AffectedUnits = affectedUnits;
 
-                Scene.EnergyDisplayBar.HoverAmount(GetEnergyCost());
-                Scene.ActionEnergyBar.HoverAmount(GetActionEnergyCost());
+                //TargetAffectedUnits();
+
+                //Scene.EnergyDisplayBar.HoverAmount(GetCost(ResF.MovementEnergy));
+                //Scene.ActionEnergyBar.HoverAmount(GetCost(ResF.ActionEnergy));
             }
             else
             {
@@ -472,57 +428,55 @@ namespace MortalDungeon.Game.Abilities
 
         public bool CanCast() 
         {
-            return CastingUnit.Info.Energy >= GetEnergyCost() && CastingUnit.Info.ActionEnergy >= GetActionEnergyCost() && HasSufficientCharges()
-                && CastingUnit.Info.CanUseAbility(this) && !(Scene.InCombat && UsedThisTurn);
+            return CastRequirements.CheckUnit(CastingUnit) && HasSufficientCharges() && 
+                CastingUnit.Info.CanUseAbility(this) && !(Scene.InCombat && UsedThisTurn);
         }
 
 
-        public void TargetAffectedUnits()
+        //public void TargetAffectedUnits()
+        //{
+        //    if (CastingUnit.AI.ControlType == ControlType.Controlled)
+        //    {
+        //        AffectedUnits.ForEach(u =>
+        //        {
+        //            u.Target();
+        //        });
+        //    }
+        //}
+
+        public virtual void OnTileClicked(TileMap map, Tile tile) 
         {
-            if (CastingUnit.AI.ControlType == ControlType.Controlled)
-            {
-                AffectedUnits.ForEach(u =>
-                {
-                    u.Target();
-                });
-            }
+            SelectionInfo.TileClicked(tile);
         }
-
-        public virtual void OnTileClicked(TileMap map, Tile tile) { }
 
         public virtual bool OnUnitClicked(Unit unit)
         {
-            if (!UnitTargetParams.CheckUnit(unit, CastingUnit))
-            {
-                Scene.DeselectAbility();
-                return false;
-            }
-
-            return true;
+            return SelectionInfo.UnitClicked(unit);
         }
 
         public virtual void OnHover() { }
-        public virtual void OnHover(Tile tile, TileMap map) { }
+        public virtual void OnHover(Tile tile, TileMap map) 
+        {
+            SelectionInfo.TileHovered(tile);
+        }
         public virtual void OnHover(Unit unit) { }
 
         public virtual void OnRightClick()
         {
-            Scene.DeselectAbility();
+            SelectionInfo.OnRightClick();
+            
         }
 
         public virtual void OnAbilityDeselect()
         {
-            Scene.EnergyDisplayBar.HoverAmount(0);
-            Scene.ActionEnergyBar.HoverAmount(0);
-            AffectedUnits.ForEach(u => u.Untarget());
+            SelectionInfo.DeselectAbility();
 
-            AffectedUnits.Clear();
-            AffectedTiles.Clear();
-        }
+            //Scene.EnergyDisplayBar.HoverAmount(0);
+            //Scene.ActionEnergyBar.HoverAmount(0);
+            //AffectedUnits.ForEach(u => u.Untarget());
 
-        public bool GetEnergyIsSufficient() 
-        {
-            return GetEnergyCost() <= CastingUnit.Info.Energy && GetActionEnergyCost() <= CastingUnit.Info.ActionEnergy;
+            //AffectedUnits.Clear();
+            //AffectedTiles.Clear();
         }
 
         public virtual void UpdateEnergyCost() { }
@@ -540,22 +494,17 @@ namespace MortalDungeon.Game.Abilities
                 Scene.EnergyDisplayBar.HoverAmount(0);
                 Scene.ActionEnergyBar.HoverAmount(0);
 
-                float energyCost = GetEnergyCost();
-                float actionEnergyCost = GetActionEnergyCost();
+                float energyCost = GetCost(ResF.MovementEnergy);
+                float actionEnergyCost = GetCost(ResF.ActionEnergy);
 
                 Scene.EnergyDisplayBar.AddEnergy(-energyCost);
                 Scene.ActionEnergyBar.AddEnergy(-actionEnergyCost);
 
-                CastingUnit.Info.Energy -= energyCost;
-                CastingUnit.Info.ActionEnergy -= actionEnergyCost;
+                CastRequirements.ExpendResources(CastingUnit);
             }
             else
             {
-                float energyCost = GetEnergyCost();
-                float actionEnergyCost = GetActionEnergyCost();
-
-                CastingUnit.Info.Energy -= energyCost;
-                CastingUnit.Info.ActionEnergy -= actionEnergyCost;
+                CastRequirements.ExpendResources(CastingUnit);
             }
         }
 
@@ -598,28 +547,28 @@ namespace MortalDungeon.Game.Abilities
         {
             if (Scene.InCombat)
             {
-                CastingUnit.Info.ActionEnergy -= ChargeRechargeActionCost;
+                CastingUnit.AddResF(ResF.ActionEnergy, -ChargeRechargeActionCost);
             }
 
-            if (CastingUnit.Info.Focus >= ChargeRechargeCost)
-            {
-                CastingUnit.Info.Focus -= ChargeRechargeCost;
-            }
-            else
-            {
-                float damageNum = ChargeRechargeCost - CastingUnit.Info.Focus;
-                CastingUnit.Info.Focus = 0;
+            //if (CastingUnit.Info.Focus >= ChargeRechargeCost)
+            //{
+            //    CastingUnit.Info.Focus -= ChargeRechargeCost;
+            //}
+            //else
+            //{
+            //    float damageNum = ChargeRechargeCost - CastingUnit.Info.Focus;
+            //    CastingUnit.Info.Focus = 0;
 
-                DamageInstance damage = new DamageInstance();
-                damage.Damage.Add(DamageType.Focus, damageNum);
+            //    DamageInstance damage = new DamageInstance();
+            //    damage.Damage.Add(DamageType.Focus, damageNum);
 
-                CastingUnit.ApplyDamage(new DamageParams(damage));
-            }
+            //    CastingUnit.ApplyDamage(new DamageParams(damage));
+            //}
         }
 
         public bool CanRecharge()
         {
-            return CastingUnit.Info.Health + CastingUnit.Info.Focus >= ChargeRechargeCost && CastingUnit.Info.ActionEnergy >= ChargeRechargeActionCost;
+            return CastingUnit.GetResF(ResF.Health) + CastingUnit.GetResF(ResF.ActionEnergy) >= ChargeRechargeActionCost;
         }
 
         /// <summary>
@@ -659,7 +608,7 @@ namespace MortalDungeon.Game.Abilities
                 OnAICast();
             }
 
-            CreateIconHoverEffect();
+            //CreateIconHoverEffect();
             CreateTemporaryVision();
 
             if (Scene.InCombat)
@@ -669,40 +618,40 @@ namespace MortalDungeon.Game.Abilities
             {
                 CastingUnit.Info.Stealth.SetHiding(false);
             }
-
-            AffectedUnits.Clear();
-            AffectedTiles.Clear();
-
-            TileMap.Controller.DeselectTiles();
         }
 
         public void CreateTemporaryVision()
         {
-            if (SelectedUnit == null)
+            if (SelectionInfo.SelectedUnits.Count > 0)
                 return;
 
-            TemporaryVision vision = new TemporaryVision();
-
-            vision.TargetUnit = CastingUnit;
-            vision.TickTarget = TickDurationTarget.OnUnitTurnStart;
-            vision.Team = SelectedUnit.AI.Team;
-            vision.TilesToReveal = SelectedUnit.Info.TileMapPosition.TileMap.GetVisionInRadius(CastingUnit.Info.Point, 1);
-            vision.Duration = 1;
-
-            for (int i = 0; i < vision.TilesToReveal.Count; i++)
-            {
-                vision.AffectedMaps.Add(vision.TilesToReveal[i].TileMap);
-            }
-
-            Scene.TemporaryVision.Add(vision);
             
-            void updateTemporaryVision()
-            {
-                EffectEndedAction -= updateTemporaryVision;
-                Scene.UpdateTemporaryVision();
-            }
 
-            EffectEndedAction += updateTemporaryVision;
+            for(int j = 0; j < SelectionInfo.SelectedUnits.Count; j++)
+            {
+                TemporaryVision vision = new TemporaryVision();
+
+                vision.TargetUnit = CastingUnit;
+                vision.TickTarget = TickDurationTarget.OnUnitTurnStart;
+                vision.Team = SelectionInfo.SelectedUnits[j].AI.Team;
+                vision.TilesToReveal = SelectionInfo.SelectedUnits[j].Info.TileMapPosition.TileMap.GetVisionInRadius(CastingUnit.Info.Point, 1);
+                vision.Duration = 1;
+
+                for (int i = 0; i < vision.TilesToReveal.Count; i++)
+                {
+                    vision.AffectedMaps.Add(vision.TilesToReveal[i].TileMap);
+                }
+
+                Scene.TemporaryVision.Add(vision);
+
+                void updateTemporaryVision()
+                {
+                    EffectEndedAction -= updateTemporaryVision;
+                    Scene.UpdateTemporaryVision();
+                }
+
+                EffectEndedAction += updateTemporaryVision;
+            }
         }
 
         public void CreateIconHoverEffect(Icon passedIcon = null)
@@ -729,17 +678,17 @@ namespace MortalDungeon.Game.Abilities
             Icon icon = GenerateIcon(new UIScale(0.5f * WindowConstants.AspectRatio, 0.5f), true, backgroundType, false, passedIcon);
 
             Vector3 pos;
-            if (SelectedUnit != null)
+            if (SelectionInfo.SelectedUnits.Count > 0)
             {
-                pos = SelectedUnit.Position + new Vector3(0, -400, 0.3f);
+                pos = SelectionInfo.SelectedUnits[0]._position + new Vector3(0, -400, 0.3f);
             }
-            else if (SelectedTile != null)
+            else if (SelectionInfo.SelectedTiles.Count > 0)
             {
-                pos = SelectedTile.Position + new Vector3(0, -400, 0.3f);
+                pos = SelectionInfo.SelectedTiles[0]._position + new Vector3(0, -400, 0.3f);
             }
             else
             {
-                pos = CastingUnit.Position + new Vector3(0, -400, 0.3f);
+                pos = CastingUnit._position + new Vector3(0, -400, 0.3f);
             }
 
             UIHelpers.CreateIconHoverEffect(icon, Scene, pos);
@@ -772,7 +721,7 @@ namespace MortalDungeon.Game.Abilities
 
                 EffectEndedAction?.Invoke();
 
-                EffectEndedAsync.SetResult(true);
+                EffectEndedAsync.TrySetResult(true);
             });
         }
 
@@ -788,7 +737,7 @@ namespace MortalDungeon.Game.Abilities
 
             body += GetDamageInstance().GetTooltipStrings(CastingUnit);
 
-            body += $"{GetEnergyCost()} Energy\n";
+            body += $"{GetCost(ResF.MovementEnergy)} Energy\n";
             body += $"{MinRange}-{Range} Range";
 
             if (IsComboAbility)

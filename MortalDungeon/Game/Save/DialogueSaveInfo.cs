@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Save
+namespace Empyrean.Game.Save
 {
     [XmlType(TypeName = "DSI")]
     [Serializable]

@@ -1,10 +1,11 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using Empyrean.Objects;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes.Rendering
+namespace Empyrean.Engine_Classes.Rendering
 {
     public enum FadeDirection
     {
@@ -129,6 +130,8 @@ namespace MortalDungeon.Engine_Classes.Rendering
 
             //RenderingQueue.RenderQueuedUI();
             RenderingQueue.RenderInstancedUIData();
+
+            RenderingQueue.RenderLowPriorityQueue();
         }
 
         public static void DrawGame()
@@ -140,32 +143,77 @@ namespace MortalDungeon.Engine_Classes.Rendering
             //DrawFog();
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             
-            RenderingQueue.RenderQueuedParticles();
-
             RenderingQueue.RenderQueuedObjects();
-            RenderingQueue.RenderQueuedUnits();
+            
+            DrawUnits();
 
             RenderingQueue.RenderTileQueue();
 
-            RenderingQueue.RenderLowPriorityQueue();
+            RenderingQueue.RenderIndividualMeshes();
+
+            RenderingQueue.RenderQueuedParticles();
 
             DrawFog();
         }
 
 
+        public static void DrawUnits() 
+        {
+            GL.StencilOp(StencilOp.Keep, StencilOp.Incr, StencilOp.Keep);
+
+            GL.Enable(EnableCap.StencilTest);
+            GL.StencilFunc(StencilFunction.Equal, 3, 0xFF);
+
+
+            RenderingQueue.RenderQueuedUnits();
+
+
+            GL.Disable(EnableCap.StencilTest);
+            RenderingQueue.RenderQueuedUnits();
+            GL.Enable(EnableCap.StencilTest);
+
+            GL.Disable(EnableCap.DepthTest);
+
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            GL.StencilFunc(StencilFunction.Equal, 4, 0xFF);
+
+            RenderingQueue.RenderFogQuad();
+
+            GL.Enable(EnableCap.DepthTest);
+            RenderingQueue.ClearUnitQueue();
+
+            GL.Disable(EnableCap.StencilTest);
+        }
 
         public static void DrawFog()
         {
             GL.Enable(EnableCap.StencilTest);
-            GL.StencilMask(0xFF);
-            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
+            GL.StencilMask(3);
+            GL.StencilFunc(StencilFunction.Notequal, 1, 1);
 
             GL.Disable(EnableCap.DepthTest);
 
             RenderingQueue.RenderFogQuad();
+            RenderingQueue.ClearFogQuad();
             GL.Disable(EnableCap.StencilTest);
 
+
             GL.Enable(EnableCap.DepthTest);
+        }
+
+        public static void DrawSkybox()
+        {
+            GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
+            Renderer.ViewportRectangle = WindowConstants.GameViewport;
+
+            GL.DepthFunc(DepthFunction.Lequal);
+
+            //Renderer.CheckError();
+
+            Shaders.SKYBOX_SHADER.Use();
+            Renderer.RenderSkybox(Window.SkyBox);
+
+            GL.DepthFunc(DepthFunction.Less);
         }
     }
 

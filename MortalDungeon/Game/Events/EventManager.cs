@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
+﻿using Empyrean.Engine_Classes.Scenes;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Events
+namespace Empyrean.Game.Events
 {
     public interface IEventTarget
     {

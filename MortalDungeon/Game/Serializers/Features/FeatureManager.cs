@@ -1,14 +1,16 @@
-﻿using MortalDungeon.Game.Ledger;
-using MortalDungeon.Game.LuaHandling;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Game.Ledger;
+using Empyrean.Game.Scripting;
+using Empyrean.Game.Map;
+using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text;
+using Empyrean.Game.Save;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     /// <summary>
     /// Stores all of the possible feature origin points and load radii in memory. <para/>
@@ -20,7 +22,7 @@ namespace MortalDungeon.Game.Serializers
     {
         public static FeatureList AllFeatures = new FeatureList();
 
-        public static Dictionary<long, FeatureEquation> LoadedFeatures = new Dictionary<long, FeatureEquation>();
+        public static Dictionary<BigInteger, FeatureEquation> LoadedFeatures = new Dictionary<BigInteger, FeatureEquation>();
 
         public static HashSet<FeatureEquation> SubscribedBounds = new HashSet<FeatureEquation>();
 
@@ -28,7 +30,7 @@ namespace MortalDungeon.Game.Serializers
 
         public static void Initialize()
         {
-            LoadedFeatures = new Dictionary<long, FeatureEquation>();
+            LoadedFeatures = new Dictionary<BigInteger, FeatureEquation>();
 
             RefreshFeatureList();
         }
@@ -36,6 +38,11 @@ namespace MortalDungeon.Game.Serializers
         public static void RefreshFeatureList()
         {
             AllFeatures = FeatureSerializer.LoadFeatureListFile();
+
+            if(AllFeatures == null)
+            {
+                AllFeatures = new FeatureList();
+            }
         }
 
         //when loading a feature, apply any passed state values as well.
@@ -60,8 +67,6 @@ namespace MortalDungeon.Game.Serializers
                 foreach (var eq in featuresToRemove)
                 {
                     SubscribedBounds.Remove(LoadedFeatures[eq]);
-
-                    FeatureLedger.SetFeatureStateValue(LoadedFeatures[eq].FeatureID, FeatureStateValues.FeatureLoaded, 0);
 
                     LoadedFeatures[eq].UnloadFeature();
 
@@ -92,8 +97,6 @@ namespace MortalDungeon.Game.Serializers
                             }
 
                             LoadedFeatures.Add(AllFeatures.Features[i].Id, equation);
-
-                            FeatureLedger.SetFeatureStateValue(equation.FeatureID, FeatureStateValues.FeatureLoaded, 1);
 
                             foreach (var bound in equation.BoundingPoints)
                             {
@@ -146,54 +149,50 @@ namespace MortalDungeon.Game.Serializers
                             bool unitIsInside = FeaturePoint.PointInPolygon(bound.BoundingSquare, unitPos) 
                                 && FeaturePoint.PointInPolygon(bound.OffsetPoints, unitPos);
 
-                            int outsideTestValue = -3;
-                            int insideTestValue = 1;
+                            int outsideTestValue = 0;
+                            int insideTestValue = 3;
 
-                            short val = FeatureLedger.GetFeatureStateValue(eq.FeatureID, FeatureStateValues.PlayerInsideCounter);
+                            int val = GlobalInfoManager.GetPOIParameter(eq.AssociatedPOI, POIParameterType.PlayerInsideCounter);
 
                             if (unitIsInside && val < insideTestValue)
                             {
-                                FeatureLedger.IncrementStateValue(eq.FeatureID, FeatureStateValues.PlayerInsideCounter);
+                                GlobalInfoManager.IncrementPOIParameter(eq.AssociatedPOI, POIParameterType.PlayerInsideCounter);
                             }
                             else if (!unitIsInside && val > outsideTestValue)
                             {
-                                FeatureLedger.DecrementStateValue(eq.FeatureID, FeatureStateValues.PlayerInsideCounter);
+                                GlobalInfoManager.DecrementPOIParameter(eq.AssociatedPOI, POIParameterType.PlayerInsideCounter);
                             }
 
-                            bool alreadyInside = FeatureLedger.GetFeatureStateValue(eq.FeatureID, FeatureStateValues.PlayerInside) == 1;
+                            bool alreadyInside = GlobalInfoManager.GetPOIParameter(eq.AssociatedPOI, POIParameterType.PlayerInside) == 1;
 
-                            if(val >= insideTestValue && !alreadyInside)
+                            if (unitIsInside && !alreadyInside)
                             {
                                 FeatureEnter?.Invoke(eq, unit);
 
-                                FeatureLedger.SetFeatureStateValue(eq.FeatureID, FeatureStateValues.PlayerInside, 1);
-                                FeatureLedger.SetFeatureStateValue(eq.FeatureID, FeatureStateValues.Explored, 1);
+                                GlobalInfoManager.SetPOIParameter(eq.AssociatedPOI, POIParameterType.Discovered, 1);
+                                GlobalInfoManager.SetPOIParameter(eq.AssociatedPOI, POIParameterType.Explored, 1);
+                                GlobalInfoManager.SetPOIParameter(eq.AssociatedPOI, POIParameterType.PlayerInside, 1);
 
                                 if(bound.Parameters.TryGetValue("enter_script", out var script))
                                 {
-                                    LuaManager.ApplyScript(script);
+                                    JSManager.ApplyScript(script);
                                 }
                             }
                             else if(val <= outsideTestValue && alreadyInside)
                             {
                                 FeatureExit?.Invoke(eq, unit);
 
-                                FeatureLedger.SetFeatureStateValue(eq.FeatureID, FeatureStateValues.PlayerInside, 0);
+                                GlobalInfoManager.RemovePOIParameter(eq.AssociatedPOI, POIParameterType.PlayerInside);
 
                                 if (bound.Parameters.TryGetValue("exit_script", out var script))
                                 {
-                                    LuaManager.ApplyScript(script);
+                                    JSManager.ApplyScript(script);
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-
-        public static void OnUnitKilled(Unit unit)
-        {
-            FeatureLedger.SetHashBoolean(unit.FeatureID, unit.ObjectHash, "alive", false);
         }
     }
 }

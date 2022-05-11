@@ -1,11 +1,12 @@
-﻿using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Tiles;
+﻿using Empyrean.Game.Player;
+using Empyrean.Game.Scripting;
+using Empyrean.Game.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [XmlType(TypeName = "con")]
     [Serializable]
@@ -58,6 +59,8 @@ namespace MortalDungeon.Game.Serializers
         {
             Condition = conditional.Condition;
             _condition = conditional._condition;
+
+            Script = conditional.Script;
         }
 
         [XmlElement("_c")]
@@ -65,6 +68,9 @@ namespace MortalDungeon.Game.Serializers
 
         [XmlIgnore]
         public string Condition = "";
+
+        [XmlElement("_s")]
+        public string Script = "";
 
         public string GetPlainTextCondition()
         {
@@ -170,7 +176,14 @@ namespace MortalDungeon.Game.Serializers
                 }
             }
 
-            return str == "T";
+            bool scriptEvaluation = true;
+
+            if(Script != "")
+            {
+                scriptEvaluation = Equals(JSManager.ApplyScript(Script), true);
+            }
+
+            return (str == "T") && scriptEvaluation;
         }
 
         /// <summary>

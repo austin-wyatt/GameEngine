@@ -1,11 +1,12 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace MortalDungeon.Game.Combat
+namespace Empyrean.Game.Combat
 {
     public enum MorselType
     {
@@ -23,7 +24,7 @@ namespace MortalDungeon.Game.Combat
         public Dictionary<Unit, List<LineOfTiles>> UnimpededUnitSightlines = new Dictionary<Unit, List<LineOfTiles>>();
 
 
-        public void StartCombat()
+        public async Task StartCombat()
         {
             UnimpededUnitSightlines.Clear();
 
@@ -31,7 +32,7 @@ namespace MortalDungeon.Game.Combat
 
             foreach(var unit in Scene.UnitsInCombat)
             {
-                CalculateUnimpededSightlinesForUnit(unit);
+                await CalculateUnimpededSightlinesForUnit(unit);
             }
 
             Scene.UnitMoved += CalculateUnimpededSightlinesForUnit;
@@ -108,7 +109,7 @@ namespace MortalDungeon.Game.Combat
             }
         }
 
-        public void CalculateUnimpededSightlinesForUnit(Unit unit)
+        public async Task CalculateUnimpededSightlinesForUnit(Unit unit)
         {
             UnimpededUnitSightlines.Remove(unit);
 

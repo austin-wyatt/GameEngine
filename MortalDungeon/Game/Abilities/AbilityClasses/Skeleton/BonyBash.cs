@@ -1,16 +1,16 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Objects;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Units.AIFunctions;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Objects;
+using Empyrean.Engine_Classes;
+using Empyrean.Game.Units.AIFunctions;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class BonyBash : TemplateRangedSingleTarget
     {
@@ -20,8 +20,8 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.Blunt;
             Range = 1;
             CastingUnit = castingUnit;
-            Damage = 3;
-            ActionCost = 3;
+            //Damage = 3;
+            CastRequirements.AddResourceCost(ResF.ActionEnergy, 3, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 
             CastingMethod |= CastingMethod.BruteForce | CastingMethod.Weapon;
 
@@ -60,7 +60,8 @@ namespace MortalDungeon.Game.Abilities
                 }
             });
 
-            float damageAmount = GetDamage() * skeletonTypeAbilities;
+            //float damageAmount = GetDamage() * skeletonTypeAbilities;
+            float damageAmount = skeletonTypeAbilities;
 
             instance.Damage.Add(DamageType, damageAmount);
 

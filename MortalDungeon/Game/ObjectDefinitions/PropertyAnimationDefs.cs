@@ -1,11 +1,12 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.ObjectDefinitions;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Objects
+namespace Empyrean.Game.Objects
 {
     namespace PropertyAnimations
     {
@@ -58,6 +59,51 @@ namespace MortalDungeon.Game.Objects
             }
         }
 
+        public class HurtAnimation : PropertyAnimation
+        {
+            public HurtAnimation(RenderableObject baseFrame, float damageTaken)
+            {
+                Repeat = false;
+                Playing = true;
+
+                damageTaken = Math.Clamp(damageTaken, 1, 100);
+
+                damageTaken = damageTaken / 100;
+
+                float rotateAmount = damageTaken * 10;
+
+                for (int i = 0; i < 5; i++)
+                {
+                    int capturedIndex = i;
+
+                    Keyframe frame = new Keyframe(i * 2, () =>
+                    {
+                        if(capturedIndex == 0)
+                        {
+                            baseFrame.RotateZ(-rotateAmount);
+                        }
+                        else if(capturedIndex % 2 == 0)
+                        {
+                            baseFrame.RotateZ(-rotateAmount * 2);
+                        }
+                        else
+                        {
+                            baseFrame.RotateZ(rotateAmount * 2);
+                        }
+                        
+                    });
+
+                    Keyframes.Add(frame);
+                }
+
+                OnFinish += () =>
+                {
+                    baseFrame.RotateZ(rotateAmount);
+                    baseFrame.CalculateTransformationMatrix();
+                };
+            }
+        }
+
         public class DayNightCycle : TimedAnimation 
         {
             private static _Color NightColor = new _Color(0.1f, 0.1f, 0.2f, 1f);
@@ -66,8 +112,8 @@ namespace MortalDungeon.Game.Objects
             private static _Color EveningColor = new _Color(0.5f, 0.47f, 0.42f, 1f);
 
 
-            private const int STATIC_PERIOD = 24;
-            private const int TRANSITION_PERIOD = 64;
+            private const int STATIC_PERIOD = 24 * 2;
+            private const int TRANSITION_PERIOD = 64 * 2;
 
             private const int NightEnd = 0;
             public const int MorningStart = NightEnd + TRANSITION_PERIOD;
@@ -78,7 +124,7 @@ namespace MortalDungeon.Game.Objects
             private const int EveningEnd = EveningStart + STATIC_PERIOD;
             public const int NightStart = EveningEnd + TRANSITION_PERIOD;
 
-            private const int DAY_PERIOD = NightStart + STATIC_PERIOD * 3; //496
+            public const int DAY_PERIOD = NightStart + STATIC_PERIOD * 3; //496
 
             public const int HOUR = STATIC_PERIOD;
 
@@ -107,19 +153,19 @@ namespace MortalDungeon.Game.Objects
 
                     if (i >= NightEnd && i < MorningStart) 
                     {
-                        colorDif = (MorningColor - NightColor) / 64;
+                        colorDif = (MorningColor - NightColor) / TRANSITION_PERIOD;
                     }
                     if (i >= MorningEnd && i < MiddayStart)
                     {
-                        colorDif = (MiddayColor - MorningColor) / 64;
+                        colorDif = (MiddayColor - MorningColor) / TRANSITION_PERIOD;
                     }
                     if (i >= MiddayEnd && i < EveningStart)
                     {
-                        colorDif = (EveningColor - MiddayColor) / 64;
+                        colorDif = (EveningColor - MiddayColor) / TRANSITION_PERIOD;
                     }
                     if (i >= EveningEnd && i <= NightStart)
                     {
-                        colorDif = (NightColor - EveningColor) / 64;
+                        colorDif = (NightColor - EveningColor) / TRANSITION_PERIOD;
                     }
 
                     if (i < startTime) 
@@ -132,6 +178,11 @@ namespace MortalDungeon.Game.Objects
                     {
                         CombatScene.EnvironmentColor.Add(colorDif);
                         Scene.UpdateTime(time);
+
+                        if(time == 0)
+                        {
+                            Scene.SetDay(CombatScene.Days + 1);
+                        }
                     };
 
                     Keyframes.Add(frame);
@@ -186,6 +237,52 @@ namespace MortalDungeon.Game.Objects
             public bool IsNight() 
             {
                 return Scene.Time < MorningStart || Scene.Time > EveningEnd;
+            }
+        }
+
+
+        public class TrackingParticleAnimation : PropertyAnimation
+        {
+            public TrackingParticleAnimation(GameObject gameObject, Vector3 initialPosition, Vector3 destination, TrackingSimulation sim = null)
+            {
+                gameObject.SetPosition(initialPosition);
+
+                Repeat = false;
+                Playing = true;
+
+                Random rng = new Random();
+
+                TrackingSimulation simulation;
+
+                if (sim == null)
+                {
+                    simulation = new TrackingSimulation(initialPosition, destination)
+                    {
+                        InitialDirection = (float)-rng.NextDouble() * (MathHelper.PiOver2 + 0.2f),
+                        Acceleration = (float)rng.NextDouble() + 9f,
+                        RotationPerTick = 0.05f,
+                        MaximumVelocity = 35f
+                    };
+                }
+                else
+                {
+                    simulation = sim;
+                }
+                
+                simulation.Simulate();
+
+
+                for (int i = 0; i < simulation.Points.Count; i++)
+                {
+                    int capturedIndex = i;
+
+                    Keyframe frame = new Keyframe(capturedIndex, () =>
+                    {
+                        gameObject.SetPosition(simulation.Points[capturedIndex].X, simulation.Points[capturedIndex].Y, simulation.Points[capturedIndex].Z);
+                    });
+
+                    Keyframes.Add(frame);
+                }
             }
         }
     }

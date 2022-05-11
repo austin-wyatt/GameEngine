@@ -1,10 +1,10 @@
-﻿using MortalDungeon.Game.Abilities.AbilityClasses.Spider;
+﻿using Empyrean.Game.Abilities.AbilityClasses.Spider;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public static class SpiderTree
     {

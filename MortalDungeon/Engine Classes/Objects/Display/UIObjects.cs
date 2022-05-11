@@ -1,8 +1,8 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Objects;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Objects;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public enum UISheetIcons 
     {
@@ -24,6 +24,7 @@ namespace MortalDungeon.Engine_Classes
         Minimize,
         PartyIcon,
 
+        RefreshIcon = 57,
         Fire = 59
     }
 
@@ -325,12 +326,7 @@ namespace MortalDungeon.Engine_Classes
         {
             if (IsValidForBoundsType(this, type))
             {
-                if (type == UIEventType.HoverEnd)
-                {
-                    //Task.Run(OnHoverEnd);
-                    OnHoverEnd();
-                }
-                else if (ManagerHandle.ExclusiveFocusCheckObject(this) && InsideBounds(MouseCoordinates, camera))
+                if (ManagerHandle.ExclusiveFocusCheckObject(this) && InsideBounds(MouseCoordinates, camera))
                 {
                     optionalAction?.Invoke(this);
 
@@ -342,13 +338,6 @@ namespace MortalDungeon.Engine_Classes
                         case UIEventType.RightClick:
                             Task.Run(OnRightClick);
                             return;
-                        case UIEventType.Hover:
-                            //Task.Run(OnHover);
-                            OnHover();
-                            break;
-                        case UIEventType.TimedHover:
-                            Task.Run(() => optionalAction?.Invoke(this));
-                            break;
                         case UIEventType.MouseDown:
                             Task.Run(OnMouseDown);
                             return;
@@ -378,17 +367,42 @@ namespace MortalDungeon.Engine_Classes
                         //    return;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Handles bounds checking for hovers since repeatedly passing an action as a parameter was causing
+        /// ballooning memory issues.
+        /// </summary>
+        public bool HoverBoundsCheck(Vector2 MouseCoordinates, Camera camera, UIEventType type = UIEventType.Click)
+        {
+            if (IsValidForBoundsType(this, type))
+            {
+                if (type == UIEventType.HoverEnd)
+                {
+                    OnHoverEnd();
+                }
+                else if (ManagerHandle.ExclusiveFocusCheckObject(this) && InsideBounds(MouseCoordinates, camera))
+                {
+                    switch (type)
+                    {
+                        case UIEventType.Hover:
+                            OnHover();
+                            return true;
+                    }
+                }
                 else if (type == UIEventType.Hover)
                 {
-                    //Task.Run(OnHoverEnd);
                     OnHoverEnd();
                 }
             }
+
+            return false;
         }
 
         private bool InsideBounds(Vector2 point, Camera camera = null)
         {
-            return GetBaseObject().Bounds.Contains(point, camera);
+            return GetBaseObject().Bounds.Contains(point.X, point.Y, camera);
         }
 
 
@@ -490,7 +504,7 @@ namespace MortalDungeon.Engine_Classes
                 }
             }
 
-            foreach(var text in TextObjects)
+            foreach (var text in TextObjects)
             {
                 Vector3 pos = text.Position;
                 pos.Z = zPos;
@@ -1273,24 +1287,20 @@ namespace MortalDungeon.Engine_Classes
         {
             void loadTexture()
             {
-                Window.RenderEnd -= loadTexture;
-
                 Renderer.LoadTextureFromUIObject(obj);
             }
 
-            Window.RenderEnd += loadTexture;
+            Window.QueueToRenderCycle(loadTexture);
         }
 
         public void LoadTexture()
         {
             void loadTexture()
             {
-                Window.RenderEnd -= loadTexture;
-
                 Renderer.LoadTextureFromUIObject(this);
             }
 
-            Window.RenderEnd += loadTexture;
+            Window.QueueToRenderCycle(loadTexture);
         }
         protected static void ValidateObject(UIObject obj) 
         {

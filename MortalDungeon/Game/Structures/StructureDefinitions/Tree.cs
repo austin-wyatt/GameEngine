@@ -1,15 +1,15 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Structures
+namespace Empyrean.Game.Structures
 {
     class Tree : Structure
     {
@@ -31,14 +31,14 @@ namespace MortalDungeon.Game.Structures
 
             Info.Height = 2;
 
-            tile.Properties.BlockingTypes.Add(BlockingType.Vision);
+            tile.Properties.BlockingTypes.Add(BlockingType.Vision | BlockingType.Abilities);
         }
 
         public override void SetTileMapPosition(Tile baseTile)
         {
             base.SetTileMapPosition(baseTile);
 
-            baseTile.Properties.BlockingTypes.Add(BlockingType.Vision);
+            baseTile.Properties.BlockingTypes.Add(BlockingType.Vision | BlockingType.Abilities);
         }
 
         public override void Removed()
@@ -47,7 +47,7 @@ namespace MortalDungeon.Game.Structures
 
             if (Info.TileMapPosition != null)
             {
-                Info.TileMapPosition.Properties.BlockingTypes.Remove(BlockingType.Vision);
+                Info.TileMapPosition.Properties.BlockingTypes.Remove(BlockingType.Vision | BlockingType.Abilities);
             }
         }
 

@@ -1,6 +1,6 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Serializers
+namespace Empyrean.Game.Serializers
 {
     [XmlType(TypeName = "AL")]
     [Serializable]

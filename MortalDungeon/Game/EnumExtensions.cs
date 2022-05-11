@@ -1,13 +1,13 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Game.Items;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Game.Items;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game
+namespace Empyrean.Game
 {
     public static class EnumExtensions
     {
@@ -181,11 +181,13 @@ namespace MortalDungeon.Game
             switch (itemType)
             {
                 case ItemType.Weapon:
-                    return Items.EquipmentSlot.Weapon_1;
+                    return Items.EquipmentSlot.Weapon_1 | Items.EquipmentSlot.Weapon_2;
                 case ItemType.Armor:
                     return Items.EquipmentSlot.Armor;
                 case ItemType.Gloves:
                     return Items.EquipmentSlot.Gloves;
+                case ItemType.Boots:
+                    return Items.EquipmentSlot.Boots;
                 case ItemType.Jewelry:
                     return Items.EquipmentSlot.Jewelry_1 | Items.EquipmentSlot.Jewelry_2;
                 case ItemType.Trinket:

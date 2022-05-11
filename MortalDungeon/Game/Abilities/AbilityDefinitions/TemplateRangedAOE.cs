@@ -1,26 +1,25 @@
-﻿using MortalDungeon.Definitions.TileEffects;
-using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Map;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Definitions.TileEffects;
+using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Abilities.SelectionTypes;
+using Empyrean.Game.Map;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities
+namespace Empyrean.Game.Abilities
 {
     public class TemplateRangedAOE : Ability
     {
         /// <summary>
         /// The tile pattern will determine which tiles are a part of the aoe
         /// </summary>
-        public List<Vector3i> TilePattern = new List<Vector3i> { new Vector3i() };
-
         public TemplateRangedAOE() { }
         public TemplateRangedAOE(Unit castingUnit)
         {
@@ -28,18 +27,18 @@ namespace MortalDungeon.Game.Abilities
             DamageType = DamageType.Magic;
             Range = 4;
             CastingUnit = castingUnit;
-            Damage = 0;
-            ActionCost = 1;
+            CastRequirements.AddResourceCost(ResF.ActionEnergy, 1, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 
             CastingMethod |= CastingMethod.Magic;
 
             HasHoverEffect = true;
 
-            CanTargetGround = true;
-            UnitTargetParams.IsHostile = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.IsFriendly = UnitCheckEnum.SoftTrue;
-            UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
-            CanTargetThroughFog = true;
+            SelectionInfo = new AOETarget(this, new List<Vector3i>());
+
+            SelectionInfo.CanSelectTiles = true;
+            SelectionInfo.UnitTargetParams.IsHostile = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.IsFriendly = UnitCheckEnum.SoftTrue;
+            SelectionInfo.UnitTargetParams.IsNeutral = UnitCheckEnum.SoftTrue;
 
             Grade = 1;
 
@@ -57,165 +56,165 @@ namespace MortalDungeon.Game.Abilities
 
             AbilityClass = AbilityClass.Unknown;
 
-            TilePattern = new List<Vector3i> { new Vector3i(0, 0, 0), new Vector3i(-1, 1, 0), new Vector3i(1, 0, -1), new Vector3i(1, -1, 0), new Vector3i(-1, 0, 1) };
+            //TilePattern = new List<Vector3i> { new Vector3i(0, 0, 0), new Vector3i(-1, 1, 0), new Vector3i(1, 0, -1), new Vector3i(1, -1, 0), new Vector3i(-1, 0, 1) };
         }
 
-        protected HashSet<Tile> _affectedTilesHashSet = new HashSet<Tile>();
-        public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
-            List<Unit> units = default, Tile position = null)
-        {
-            if (position == null)
-            {
-                position = CastingUnit.Info.TileMapPosition;
-            }
+        //protected HashSet<Tile> _affectedTilesHashSet = new HashSet<Tile>();
+        //public override void GetValidTileTargets(TileMap tileMap, out List<Tile> affectedTiles, out List<Unit> affectedUnits,
+        //    List<Unit> units = default, Tile position = null)
+        //{
+        //    if (position == null)
+        //    {
+        //        position = CastingUnit.Info.TileMapPosition;
+        //    }
 
-            TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(position, Range)
-            {
-                Units = units,
-                CastingUnit = CastingUnit
-            };
+        //    TileMap.TilesInRadiusParameters param = new TileMap.TilesInRadiusParameters(position, Range)
+        //    {
+        //        Units = units,
+        //        CastingUnit = CastingUnit
+        //    };
 
-            List<Tile> validTiles = tileMap.FindValidTilesInRadius(param);
+        //    List<Tile> validTiles = tileMap.FindValidTilesInRadius(param);
 
-            affectedUnits = new List<Unit>();
-            foreach (var tile in validTiles)
-            {
-                foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(tile))
-                {
-                    if (UnitTargetParams.CheckUnit(unit, CastingUnit))
-                    {
-                        affectedUnits.Add(unit);
-                    }
-                }
-            }
+        //    affectedUnits = new List<Unit>();
+        //    foreach (var tile in validTiles)
+        //    {
+        //        foreach(var unit in UnitPositionManager.GetUnitsOnTilePoint(tile))
+        //        {
+        //            if (UnitTargetParams.CheckUnit(unit, CastingUnit))
+        //            {
+        //                affectedUnits.Add(unit);
+        //            }
+        //        }
+        //    }
 
-            _affectedTilesHashSet = validTiles.ToHashSet();
+        //    _affectedTilesHashSet = validTiles.ToHashSet();
 
-            affectedTiles = validTiles;
+        //    affectedTiles = validTiles;
             
-        }
+        //}
 
-        protected HashSet<BaseTile> _selectedTiles = new HashSet<BaseTile>();
-        public override void OnSelect(CombatScene scene, TileMap currentMap)
-        {
-            base.OnSelect(scene, currentMap);
+        //protected HashSet<Tile> _selectedTiles = new HashSet<Tile>();
+        //public override void OnSelect(CombatScene scene, TileMap currentMap)
+        //{
+        //    base.OnSelect(scene, currentMap);
 
-            if (CanCast())
-            {
-                foreach(var tile in AffectedTiles)
-                {
-                    var selectedTile = scene._tileMapController.SelectTile(tile, TileSelectionType.Full);
+        //    if (CanCast())
+        //    {
+        //        foreach(var tile in AffectedTiles)
+        //        {
+        //            tile.SelectionColor = _Colors.Blue;
+        //            tile.SelectionMixPercent = 0.25f;
+        //            scene._tileMapController.SelectTile(tile, TileSelectionType.Full);
 
-                    selectedTile.SetColor(_Colors.TranslucentBlue);
+        //            _selectedTiles.Add(tile);
+        //        }
+        //    }
+        //}
 
-                    _selectedTiles.Add(selectedTile); ;
-                }
-            }
-        }
+        //public override void OnAbilityDeselect()
+        //{
+        //    base.OnAbilityDeselect();
 
-        public override void OnAbilityDeselect()
-        {
-            base.OnAbilityDeselect();
+        //    var scene = Scene;
+        //    foreach(var tile in _selectedTiles)
+        //    {
+        //        scene._tileMapController.DeselectTile(tile);
+        //    }
+        //    _selectedTiles.Clear();
 
-            var scene = Scene;
-            foreach(var tile in _selectedTiles)
-            {
-                scene._tileMapController.DeselectTile(tile);
-            }
-            _selectedTiles.Clear();
+        //    ClearHoveredTiles();
 
-            ClearHoveredTiles();
-
-            _affectedTilesHashSet.Clear();
-        }
+        //    _affectedTilesHashSet.Clear();
+        //}
 
 
-        protected Tile _hoveredTile = null;
-        protected HashSet<Tile> _hoveredTiles = new HashSet<Tile>();
-        protected List<BaseTile> _hoveredSelectionTiles = new List<BaseTile>();
-        public override void OnHover(Tile tile, TileMap map)
-        {
-            base.OnHover(tile, map);
+        //public override void OnHover(Tile tile, TileMap map)
+        //{
+        //    base.OnHover(tile, map);
 
-            if (!_affectedTilesHashSet.Contains(tile))
-            {
-                ClearHoveredTiles();
-                return;
-            }
+        //    if (!_affectedTilesHashSet.Contains(tile))
+        //    {
+        //        ClearHoveredTiles();
+        //        return;
+        //    }
 
-            if(_hoveredTiles.Count > 0 && _hoveredTile == tile)
-            {
-                return;
-            }
+        //    if(_hoveredTiles.Count > 0 && _hoveredTile == tile)
+        //    {
+        //        return;
+        //    }
 
-            ClearHoveredTiles();
+        //    ClearHoveredTiles();
 
-            _hoveredTile = tile;
+        //    _hoveredTile = tile;
 
-            var scene = Scene;
+        //    var scene = Scene;
 
-            Vector3i tileCubeCoords = CubeMethods.OffsetToCube(tile);
+        //    Vector3i tileCubeCoords = CubeMethods.OffsetToCube(tile);
 
-            foreach(var cubeCoord in TilePattern)
-            {
-                Vector3i newTileCube = tileCubeCoords + cubeCoord;
-                Vector2i offsetCoords = CubeMethods.CubeToOffset(newTileCube);
+        //    foreach(var cubeCoord in TilePattern)
+        //    {
+        //        Vector3i newTileCube = tileCubeCoords + cubeCoord;
+        //        Vector2i offsetCoords = CubeMethods.CubeToOffset(newTileCube);
 
-                Tile foundTile = TileMapHelpers.GetTile(new FeaturePoint(offsetCoords.X, offsetCoords.Y));
+        //        Tile foundTile = TileMapHelpers.GetTile(new FeaturePoint(offsetCoords.X, offsetCoords.Y));
 
-                if (foundTile != null)
-                {
-                    _hoveredTiles.Add(foundTile);
+        //        if (foundTile != null)
+        //        {
+        //            _hoveredTiles.Add(foundTile);
 
-                    var selectedTile = scene._tileMapController.SelectTile(foundTile, TileSelectionType.Selection);
-                    selectedTile.SetColor(_Colors.Green);
+        //            foundTile.SelectionColor = _Colors.Green;
+        //            tile.SelectionMixPercent = 0.5f;
+        //            foundTile.CalculateDisplayedColor();
+        //            //scene._tileMapController.SelectTile(foundTile, TileSelectionType.Selection);
 
-                    _hoveredSelectionTiles.Add(selectedTile);
-                }
-            }
-        }
+        //            _hoveredSelectionTiles.Add(foundTile);
+        //        }
+        //    }
+        //}
 
-        protected void ClearHoveredTiles()
-        {
-            _hoveredTiles.Clear();
+        //protected void ClearHoveredTiles()
+        //{
+        //    _hoveredTiles.Clear();
 
-            _hoveredTile = null;
+        //    _hoveredTile = null;
 
-            var scene = Scene;
+        //    foreach (var selectionTile in _hoveredSelectionTiles)
+        //    {
+        //        selectionTile.SelectionColor = _Colors.Blue;
+        //        selectionTile.SelectionMixPercent = 0.25f;
+        //        selectionTile.CalculateDisplayedColor();
+                
+        //    }
+        //    _hoveredSelectionTiles.Clear();
+        //}
 
-            foreach (var selectionTile in _hoveredSelectionTiles)
-            {
-                scene._tileMapController.DeselectTile(selectionTile);
-            }
-            _hoveredSelectionTiles.Clear();
-        }
+        //public override void OnTileClicked(TileMap map, Tile tile)
+        //{
+        //    base.OnTileClicked(map, tile);
 
-        public override void OnTileClicked(TileMap map, Tile tile)
-        {
-            base.OnTileClicked(map, tile);
+        //    if (CanTargetGround && _affectedTilesHashSet.Contains(tile))
+        //    {
+        //        EnactEffect();
+        //    }
+        //}
 
-            if (CanTargetGround && _affectedTilesHashSet.Contains(tile))
-            {
-                EnactEffect();
-            }
-        }
+        //public override bool OnUnitClicked(Unit unit)
+        //{
+        //    if (base.OnUnitClicked(unit))
+        //    {
+        //        if (_affectedTilesHashSet.Contains(unit.Info.TileMapPosition))
+        //        {
+        //            EnactEffect();
+        //        }
+        //    }
+        //    else
+        //    {
+        //        return false;
+        //    }
 
-        public override bool OnUnitClicked(Unit unit)
-        {
-            if (base.OnUnitClicked(unit))
-            {
-                if (_affectedTilesHashSet.Contains(unit.Info.TileMapPosition))
-                {
-                    EnactEffect();
-                }
-            }
-            else
-            {
-                return false;
-            }
-
-            return true;
-        }
+        //    return true;
+        //}
 
         public override void EnactEffect()
         {

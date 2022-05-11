@@ -1,6 +1,6 @@
-﻿using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.Tiles;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public class BitmapImageData 
     {
@@ -35,12 +35,18 @@ namespace MortalDungeon.Engine_Classes
 
         public static Dictionary<TextureUnit, int> UsedTextures = new Dictionary<TextureUnit, int>();
 
+        private bool GenerateMipmaps;
+        private bool Nearest;
+
         public Texture() { }
         public static Texture LoadFromFile(string path, bool nearest = true, int name = 0, bool generateMipMaps = true)
         {
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
             // Generate handle
             int handle = GL.GenTexture();
 
+            GL.BindTexture(TextureTarget.Texture2D, 0);
             // Bind the handle
             //GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
@@ -66,7 +72,6 @@ namespace MortalDungeon.Engine_Classes
 
             if (generateMipMaps)
             {
-
                 if (nearest)
                 {
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
@@ -95,13 +100,18 @@ namespace MortalDungeon.Engine_Classes
 
             Texture tex = new Texture(handle, name);
 
-            LoadedTextures.Add(tex);
+            lock (_loadedTexturesLock)
+            {
+                LoadedTextures.Add(tex);
+            }
 
             return tex;
         }
 
         public static Texture LoadFromBitmap(Bitmap bitmap, bool nearest = true, int name = (int)TextureName.Unknown, bool generateMipMaps = true)
         {
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
             // Generate handle
             int handle = GL.GenTexture();
 
@@ -162,7 +172,92 @@ namespace MortalDungeon.Engine_Classes
 
             Texture tex = new Texture(handle, name);
 
-            LoadedTextures.Add(tex);
+            tex.GenerateMipmaps = generateMipMaps;
+            tex.Nearest = nearest;
+
+            lock (_loadedTexturesLock)
+            {
+                LoadedTextures.Add(tex);
+            }
+
+            return tex;
+        }
+
+        public static Texture LoadFromDirectBitmap(DirectBitmap bitmap, bool nearest = true, int name = (int)TextureName.Unknown, bool generateMipMaps = true)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            // Generate handle
+            int handle = GL.GenTexture();
+
+            // Bind the handle
+            //GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, handle);
+
+            //var data = bitmap.LockBits(
+            //    new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+            //    ImageLockMode.ReadOnly,
+            //    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                bitmap.Width,
+                bitmap.Height,
+                0,
+                PixelFormat.Bgra,
+                PixelType.UnsignedByte,
+                bitmap.Bits);
+
+            //bitmap.UnlockBits(data);
+
+            if (generateMipMaps)
+            {
+                if (nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
+            else
+            {
+                if (nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+
+            }
+
+            float[] color = new float[] { 0, 0, 0, 0 };
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, color);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToBorder);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToBorder);
+            //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+            Texture tex = new Texture(handle, name);
+
+            tex.GenerateMipmaps = generateMipMaps;
+            tex.Nearest = nearest;
+
+            lock (_loadedTexturesLock)
+            {
+                LoadedTextures.Add(tex);
+            }
 
             return tex;
         }
@@ -209,55 +304,73 @@ namespace MortalDungeon.Engine_Classes
                 ImageData = new BitmapImageData(data, imageDimensions)
             };
 
-
-            LoadedTextures.Add(tex);
+            lock (_loadedTexturesLock)
+            {
+                LoadedTextures.Add(tex);
+            }
 
             return tex;
         }
 
-        //public void UpdateTextureArray(Vector2i minBounds, Vector2i maxBounds, TileMap tileMap) 
-        //{
-        //    Stopwatch stopwatch = new Stopwatch();
-        //    stopwatch.Restart();
+        public void UpdateFromBitmap(Bitmap bitmap)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
 
-        //    Console.WriteLine("Beginning texture array update.");
-
-        //    GL.ActiveTexture(TextureUnit.Texture0);
-        //    GL.BindTexture(TextureTarget.Texture2D, Handle);
-
-
-        //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, tileMap.DynamicTextureInfo.PixelBufferObject);
-
-        //    unsafe
-        //    {
-        //        float* temp = (float*)GL.MapBuffer(BufferTarget.PixelUnpackBuffer, BufferAccess.ReadWrite);
-
-        //        if (temp != null)
-        //        {
-        //            TileTexturer.UpdateTexture(tileMap, temp);
-        //        }
-        //        GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
-        //    }
+            var data = bitmap.LockBits(
+                new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
 
-        //    GL.TexSubImage2D(TextureTarget.Texture2D,
-        //        0,
-        //        0,
-        //        0,
-        //        ImageData.ImageDimensions.X,
-        //        ImageData.ImageDimensions.Y,
-        //        PixelFormat.Rgba,
-        //        PixelType.Float, new IntPtr());
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                bitmap.Width,
+                bitmap.Height,
+                0,
+                PixelFormat.Bgra,
+                PixelType.UnsignedByte,
+                data.Scan0);
 
+            bitmap.UnlockBits(data);
 
-        //    GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            if (GenerateMipmaps)
+            {
+                if (Nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
 
-        //    Console.WriteLine(stopwatch.ElapsedMilliseconds);
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
+            else
+            {
+                if (Nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
 
-        //    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
-        //}
+            }
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        }
+
 
         public static HashSet<Texture> LoadedTextures = new HashSet<Texture>();
+        public static object _loadedTexturesLock = new object();
 
         private static int[] HandlesToDispose = new int[500];
         private static int _handlesToDisposeLength = 0;
@@ -284,24 +397,44 @@ namespace MortalDungeon.Engine_Classes
 
         private void _Dispose()
         {
-            Window.RenderEnd -= _Dispose;
-            LoadedTextures.Remove(this);
-
-            //GL.DeleteTexture(Handle);
-
-            HandlesToDispose[_handlesToDisposeLength] = Handle;
-
-            _handlesToDisposeLength++;
-            if (_handlesToDisposeLength >= 500)
+            lock (_loadedTexturesLock)
             {
-                GL.DeleteTextures(_handlesToDisposeLength, HandlesToDispose);
-                _handlesToDisposeLength = 0;
+                LoadedTextures.Remove(this);
+
+                //GL.DeleteTexture(Handle);
+
+                HandlesToDispose[_handlesToDisposeLength] = Handle;
+
+                _handlesToDisposeLength++;
+                if (_handlesToDisposeLength >= 500)
+                {
+                    GL.DeleteTextures(_handlesToDisposeLength, HandlesToDispose);
+                    _handlesToDisposeLength = 0;
+                }
             }
         }
         public void Dispose()
         {
-            Window.RenderEnd -= _Dispose;
-            Window.RenderEnd += _Dispose;
+            //Window.QueueToRenderCycle(_Dispose);
+            
+            if(Thread.CurrentThread.ManagedThreadId == WindowConstants.MainThreadId)
+            {
+                DisposeImmediate();
+            }
+            else
+            {
+                Window.QueueToRenderCycle(DisposeImmediate);
+            }
+        }
+
+        public void DisposeImmediate()
+        {
+            lock (_loadedTexturesLock)
+            {
+                LoadedTextures.Remove(this);
+
+                GL.DeleteTexture(Handle);
+            }
         }
 
         public override bool Equals(object obj)

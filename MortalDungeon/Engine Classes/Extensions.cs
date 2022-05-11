@@ -1,9 +1,10 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     public static class Extensions
     {
@@ -86,5 +87,66 @@ namespace MortalDungeon.Engine_Classes
         {
             return Activator.CreateInstance(t);
         }
+
+        #region Vectors
+        #region Vector3
+        public static void Add(this ref Vector3 output, ref Vector3 a, ref Vector3 b)
+        {
+            output.X = a.X + b.X;
+            output.Y = a.Y + b.Y;
+            output.Z = a.Z + b.Z;
+        }
+
+        public static void Sub(this ref Vector3 output, ref Vector3 a, ref Vector3 b)
+        {
+            output.X = a.X - b.X;
+            output.Y = a.Y - b.Y;
+            output.Z = a.Z - b.Z;
+        }
+
+        public static void Mult(this ref Vector3 output, ref Vector3 a, ref Vector3 b)
+        {
+            output.X = a.X * b.X;
+            output.Y = a.Y * b.Y;
+            output.Z = a.Z * b.Z;
+        }
+
+        public static void Divide(this ref Vector3 output, ref Vector3 a, ref Vector3 b)
+        {
+            output.X = a.X / b.X;
+            output.Y = a.Y / b.Y;
+            output.Z = a.Z / b.Z;
+        }
+        #endregion
+        #region Vector3i
+        public static void Add(this ref Vector3i output, ref Vector3i a, ref Vector3i b)
+        {
+            output.X = a.X + b.X;
+            output.Y = a.Y + b.Y;
+            output.Z = a.Z + b.Z;
+        }
+
+        public static void Sub(this ref Vector3i output, ref Vector3i a, ref Vector3i b)
+        {
+            output.X = a.X - b.X;
+            output.Y = a.Y - b.Y;
+            output.Z = a.Z - b.Z;
+        }
+
+        public static void Mult(this ref Vector3i output, ref Vector3i a, ref Vector3i b)
+        {
+            output.X = a.X * b.X;
+            output.Y = a.Y * b.Y;
+            output.Z = a.Z * b.Z;
+        }
+
+        public static void Divide(this ref Vector3i output, ref Vector3i a, ref Vector3i b)
+        {
+            output.X = a.X / b.X;
+            output.Y = a.Y / b.Y;
+            output.Z = a.Z / b.Z;
+        }
+        #endregion
+        #endregion
     }
 }

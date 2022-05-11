@@ -1,11 +1,11 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Objects
+namespace Empyrean.Game.Objects
 {
     public enum ObjectIDs
     {

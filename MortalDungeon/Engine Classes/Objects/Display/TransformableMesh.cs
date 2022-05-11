@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Engine_Classes
+namespace Empyrean.Engine_Classes
 {
     /// <summary>
     /// Contains all vertex (any combination of position, texture, and normal that is necessary) 
@@ -34,6 +34,7 @@ namespace MortalDungeon.Engine_Classes
         protected Matrix4 Scale = Matrix4.Identity;
 
         public Vector3 CurrentScale = new Vector3(1, 1, 1);
+        public Vector3 Position = new Vector3();
 
         public TransformableMesh()
         {
@@ -49,6 +50,17 @@ namespace MortalDungeon.Engine_Classes
             currentTranslation.Z += translation.Z;
 
             Translation = Matrix4.CreateTranslation(currentTranslation);
+
+            Position = currentTranslation;
+
+            CalculateTransformations();
+        }
+
+        public void SetTranslation(Vector3 translation)
+        {
+            Translation = Matrix4.CreateTranslation(translation);
+
+            Position = translation;
 
             CalculateTransformations();
         }
@@ -143,6 +155,7 @@ namespace MortalDungeon.Engine_Classes
         protected void CalculateTransformations()
         {
             Transformations = Scale * Rotation * Translation;
+            //Transformations = Translation * Scale * Rotation;
         }
     }
 }

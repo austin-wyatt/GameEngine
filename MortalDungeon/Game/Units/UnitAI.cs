@@ -1,9 +1,9 @@
-﻿using MortalDungeon.Engine_Classes;
-using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units.AIFunctions;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units.AIFunctions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace MortalDungeon.Game.Units
+namespace Empyrean.Game.Units
 {
     public enum UnitTeam
     {
@@ -145,7 +145,7 @@ namespace MortalDungeon.Game.Units
             float cost = 0;
             for(int i = 1; i < tiles.Count; i++)
             {
-                if (cost + tiles[i].Properties.MovementCost > _unit.Info.Energy)
+                if (cost + tiles[i].Properties.MovementCost > _unit.GetResF(ResF.MovementEnergy))
                 {
                     return returnList;
                 }
@@ -191,7 +191,8 @@ namespace MortalDungeon.Game.Units
             }
 
 
-            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. {_unit.Info.Energy} Movement remaining. {_unit.Info.ActionEnergy} Actions remaining.");
+            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. " +
+                $"{_unit.GetResF(ResF.MovementEnergy)} Movement remaining. {_unit.GetResF(ResF.ActionEnergy)} Actions remaining.");
 
 
             return selectedAction;

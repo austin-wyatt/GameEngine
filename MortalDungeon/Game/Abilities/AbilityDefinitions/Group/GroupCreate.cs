@@ -1,88 +1,100 @@
-﻿using MortalDungeon.Engine_Classes.Scenes;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Player;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MortalDungeon.Game.Abilities.AbilityDefinitions
+namespace Empyrean.Game.Abilities.AbilityDefinitions
 {
     public class GroupCreate : Ability
     {
-        public GroupCreate(Unit castingUnit)
-        {
-            CastingUnit = castingUnit;
+        public List<Unit> UnitsToGroup = new List<Unit>();
 
-            CanTargetGround = false;
-            UnitTargetParams.Self = UnitCheckEnum.True;
-            UnitTargetParams.IsControlled = UnitCheckEnum.True;
+        public GroupCreate(List<Unit> units)
+        {
+            CastingUnit = units[0];
+
+            UnitsToGroup = units;
+
+            RefreshFooterOnFinish = false;
+
+            SelectionInfo.CanSelectTiles = false;
+            SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.True;
+            SelectionInfo.UnitTargetParams.IsControlled = UnitCheckEnum.True;
 
             MaxCharges = -1;
-            ActionCost = 0;
-            EnergyCost = 0;
 
             AnimationSet = new Serializers.AnimationSet();
 
-            if (PlayerParty.Grouped)
+            AnimationSet.Animations.Add(new Serializers.Animation()
             {
-                AnimationSet.Animations.Add(new Serializers.Animation()
-                {
-                    FrameIndices = { (int)UIControls.StatusOnline },
-                    Spritesheet = (int)TextureName.UIControlsSpritesheet
-                });
-            }
-            else
-            {
-                if (PlayerParty.CanGroupUnits())
-                {
-                    AnimationSet.Animations.Add(new Serializers.Animation()
-                    {
-                        FrameIndices = { (int)UIControls.StatusAway },
-                        Spritesheet = (int)TextureName.UIControlsSpritesheet
-                    });
-                }
-                else
-                {
-                    AnimationSet.Animations.Add(new Serializers.Animation()
-                    {
-                        FrameIndices = { (int)UIControls.StatusOffline },
-                        Spritesheet = (int)TextureName.UIControlsSpritesheet
-                    });
-                }
-            }
+                FrameIndices = { (int)UIControls.StatusOnline },
+                Spritesheet = (int)TextureName.UIControlsSpritesheet
+            });
+
+            Name = new Serializers.TextInfo(18, 3);
+            Description = new Serializers.TextInfo(17, 3);
+
+            //if (PlayerParty.Grouped)
+            //{
+            //    AnimationSet.Animations.Add(new Serializers.Animation()
+            //    {
+            //        FrameIndices = { (int)UIControls.StatusOnline },
+            //        Spritesheet = (int)TextureName.UIControlsSpritesheet
+            //    });
+            //}
+            //else
+            //{
+            //    if (PlayerParty.CanGroupUnits())
+            //    {
+            //        AnimationSet.Animations.Add(new Serializers.Animation()
+            //        {
+            //            FrameIndices = { (int)UIControls.StatusAway },
+            //            Spritesheet = (int)TextureName.UIControlsSpritesheet
+            //        });
+            //    }
+            //    else
+            //    {
+            //        AnimationSet.Animations.Add(new Serializers.Animation()
+            //        {
+            //            FrameIndices = { (int)UIControls.StatusOffline },
+            //            Spritesheet = (int)TextureName.UIControlsSpritesheet
+            //        });
+            //    }
+            //}
         }
 
         public override void EnactEffect()
         {
             BeginEffect();
 
-            if (PlayerParty.Grouped)
+            foreach(Unit unit in UnitsToGroup)
             {
-                PlayerParty.UngroupUnits(PlayerParty.PrimaryUnit.Info.TileMapPosition);
-            }
-            else
-            {
-                PlayerParty.GroupUnits(SelectedUnit);
+                if(unit.Info.Group != null)
+                {
+                    unit.Info.Group.DissolveGroup();
+                }
             }
 
-            _selectingUnit = false;
+            UnitGroup unitGroup = new UnitGroup(UnitsToGroup);
+            unitGroup.GroupAbilities.Add(new GroupMove(unitGroup));
+
             Casted();
             EffectEnded();
+
+            Scene.Footer.UpdateFooterInfo(unitGroup.Leader, footerMode: UI.FooterMode.Group);
         }
 
-        private bool _selectingUnit = false;
         public override void OnSelect(CombatScene scene, TileMap currentMap)
         {
-            base.OnSelect(scene, currentMap);
+            //base.OnSelect(scene, currentMap);
 
-            if (PlayerParty.CanGroupUnits())
-            {
-                _selectingUnit = true;
-            }
-            else if (PlayerParty.Grouped)
+            if (UnitsToGroup.Count > 0)
             {
                 EnactEffect();
             }
@@ -92,17 +104,14 @@ namespace MortalDungeon.Game.Abilities.AbilityDefinitions
             }
         }
 
-        public override bool OnUnitClicked(Unit unit)
+
+        public override Tooltip GenerateTooltip()
         {
-            if (_selectingUnit && PlayerParty.UnitsInParty.Contains(unit))
-            {
-                CastingUnit = unit;
-                SelectedUnit = unit;
-                EnactEffect();
-            }
+            string body = Description.ToString();
 
-            return false;
+            Tooltip tooltip = UIHelpers.GenerateTooltipWithHeader(Name.ToString(), body);
+
+            return tooltip;
         }
-
     }
 }

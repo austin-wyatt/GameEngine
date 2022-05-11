@@ -1,19 +1,19 @@
-﻿using MortalDungeon.Engine_Classes.Audio;
-using MortalDungeon.Engine_Classes.MiscOperations;
-using MortalDungeon.Engine_Classes.Rendering;
-using MortalDungeon.Engine_Classes.UIComponents;
-using MortalDungeon.Game;
-using MortalDungeon.Game.Abilities;
-using MortalDungeon.Game.Combat;
-using MortalDungeon.Game.Events;
-using MortalDungeon.Game.Objects.PropertyAnimations;
-using MortalDungeon.Game.Player;
-using MortalDungeon.Game.Serializers;
-using MortalDungeon.Game.Structures;
-using MortalDungeon.Game.Tiles;
-using MortalDungeon.Game.UI;
-using MortalDungeon.Game.Units;
-using MortalDungeon.Objects;
+﻿using Empyrean.Engine_Classes.Audio;
+using Empyrean.Engine_Classes.MiscOperations;
+using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game;
+using Empyrean.Game.Abilities;
+using Empyrean.Game.Combat;
+using Empyrean.Game.Events;
+using Empyrean.Game.Objects.PropertyAnimations;
+using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
+using Empyrean.Game.Structures;
+using Empyrean.Game.Tiles;
+using Empyrean.Game.UI;
+using Empyrean.Game.Units;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -25,7 +25,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MortalDungeon.Engine_Classes.Scenes
+namespace Empyrean.Engine_Classes.Scenes
 {
     public enum GeneralContextFlags
     {
@@ -107,7 +107,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public EventLog EventLog = null;
 
 
-        public int TimePassageRate = 1200;
+        public int TimePassageRate = 1200 / 2;
 
         public UIBlock _tooltipBlock;
         public Action _closeContextMenu;
@@ -126,6 +126,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             //_fogQuad.SetColor(new Vector4(0.25f, 0.25f, 0.3f, 0.5f));
             _fogQuad.SetColor(new Vector4(0.25f, 0.25f, 0.3f, 0.5f));
             _fogQuad.SetScale(3);
+
+            _fogQuad.BaseObject.RenderData.AlphaThreshold = 0;
 
             _fogQuad.SetPosition(WindowConstants.CenterScreen + new Vector3(0, 0, 1));
         }
@@ -181,7 +183,19 @@ namespace MortalDungeon.Engine_Classes.Scenes
             DayNightCycle = new DayNightCycle(TimePassageRate, time, this);
             TimedTickableObjects.Add(DayNightCycle);
 
+            if(time > DayNightCycle.DAY_PERIOD)
+            {
+                SetDay(Days + (time / DayNightCycle.DAY_PERIOD));
+            }
+
             Time = time;
+        }
+
+        public void SetDay(int day)
+        {
+            Days = day;
+
+            EventLog.AddEvent($"Day {day}", EventSeverity.Info);
         }
 
         private int _outOfCombatTimeCounter = 0;
@@ -278,7 +292,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
 
             //higher speed goes first
-            InitiativeOrder.Sort((a, b) => b.Info.Speed.CompareTo(a.Info.Speed));
+            InitiativeOrder.Sort((a, b) => b.GetResF(ResF.Speed).CompareTo(a.GetResF(ResF.Speed)));
 
             TurnDisplay.SetUnits(InitiativeOrder, this);
             //TurnDisplay.SetCurrentUnit(UnitTakingTurn);
@@ -349,8 +363,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             UpdateTemporaryVision();
 
-            CurrentUnit.Info.Energy = CurrentUnit.Info.CurrentEnergy;
-            CurrentUnit.Info.ActionEnergy = CurrentUnit.Info.CurrentActionEnergy;
+            CurrentUnit.SetResF(ResF.MovementEnergy, CurrentUnit.GetResF(ResF.MaxMovementEnergy));
+            CurrentUnit.SetResF(ResF.ActionEnergy, CurrentUnit.GetResF(ResF.MaxActionEnergy));
 
             //max energy displayed is the larger between current energy with buffs and default max energy.
             //If buffs are reducing energy the max will still be the default max for the unit.
@@ -397,21 +411,23 @@ namespace MortalDungeon.Engine_Classes.Scenes
             if (CurrentUnit == null)
                 return;
 
-            float maxEnergy = CurrentUnit.Info.MaxEnergy > CurrentUnit.Info.CurrentEnergy ? CurrentUnit.Info.MaxEnergy : CurrentUnit.Info.CurrentEnergy;
-            EnergyDisplayBar.SetMaxEnergy(maxEnergy);
-            EnergyDisplayBar.SetActiveEnergy(CurrentUnit.Info.CurrentEnergy);
+            float maxEnergy = CurrentUnit.GetResF(ResF.MaxMovementEnergy) > 
+                CurrentUnit.GetResF(ResF.MovementEnergy) ? CurrentUnit.GetResF(ResF.MaxMovementEnergy) : CurrentUnit.GetResF(ResF.MovementEnergy);
+            EnergyDisplayBar.SetMaxEnergy((float)Math.Floor(maxEnergy));
+            EnergyDisplayBar.SetActiveEnergy(CurrentUnit.GetResF(ResF.MovementEnergy));
 
-            float maxActionEnergy = CurrentUnit.Info.MaxActionEnergy > CurrentUnit.Info.CurrentActionEnergy ? CurrentUnit.Info.MaxActionEnergy : CurrentUnit.Info.CurrentActionEnergy;
+            float maxActionEnergy = CurrentUnit.GetResF(ResF.MaxActionEnergy) > CurrentUnit.GetResF(ResF.ActionEnergy) ?
+                CurrentUnit.GetResF(ResF.MaxActionEnergy) : CurrentUnit.GetResF(ResF.ActionEnergy);
             ActionEnergyBar.SetMaxEnergy(maxActionEnergy);
-            ActionEnergyBar.SetActiveEnergy(CurrentUnit.Info.CurrentActionEnergy);
+            ActionEnergyBar.SetActiveEnergy(CurrentUnit.GetResF(ResF.ActionEnergy));
         }
 
         public void RefillAllUnitEnergy() 
         {
             foreach(var unit in _units) 
             {
-                unit.Info.Energy = unit.Info.MaxEnergy;
-                unit.Info.ActionEnergy = unit.Info.MaxActionEnergy;
+                unit.SetResF(ResF.MovementEnergy, unit.GetResF(ResF.MaxMovementEnergy));
+                unit.SetResF(ResF.ActionEnergy, unit.GetResF(ResF.MaxActionEnergy));
             }
         }
 
@@ -424,10 +440,16 @@ namespace MortalDungeon.Engine_Classes.Scenes
         /// <summary>
         /// Complete the current unit's turn and start the next unit's turn
         /// </summary>
-        public virtual void CompleteTurn()
+        public virtual async void CompleteTurn()
         {
             if (CurrentUnit != null) 
             {
+                if (CurrentUnit.AI.ControlType == ControlType.Controlled && InCombat)
+                {
+                    Footer.EndTurnButton.SetRender(false);
+                    await UnitAnimations.CreateStaminaRefillAnimation(CurrentUnit);
+                }
+
                 CurrentUnit.OnTurnEnd();
             }
 
@@ -459,7 +481,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             }
         }
 
-        public virtual void StartCombat() 
+        public virtual async Task StartCombat() 
         {
             if (InCombat)
                 return;
@@ -496,7 +518,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
             
             Round = 0;
 
-            CombatState.StartCombat();
+            await CombatState.StartCombat();
 
             //EvaluateVentureButton();
 
@@ -556,6 +578,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
             Message msg = new Message(MessageType.Request, MessageBody.InterceptKeyStrokes, MessageTarget.All);
             MessageCenter.SendMessage(msg);
 
+            BoxSelectHelper.AllowSelection = false;
+
             _selectedAbility = ability;
             ability.OnSelect(this, ability.CastingUnit.GetTileMap());
 
@@ -565,8 +589,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 CurrentUnit = unit;
             }
-
-            BoxSelectHelper.AllowSelection = false;
         }
 
         public virtual void DeselectAbility()
@@ -598,6 +620,20 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void SelectUnit(Unit unit) 
         {
+            if(unit.Info.Group != null)
+            {
+                DeselectUnits();
+
+                foreach(var groupedUnit in unit.Info.Group.Units)
+                {
+                    groupedUnit.Select();
+                    _selectedUnits.Add(groupedUnit);
+                }
+
+                Footer.UpdateFooterInfo(unit, footerMode: FooterMode.Group);
+                return;
+            }
+
             if(_selectedUnits.Count == 1 && _selectedUnits[0] == unit)
             {
                 Footer.UpdateFooterInfo(unit);
@@ -655,7 +691,22 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 _selectedUnits.Add(unit);
             }
 
-            if (_selectedUnits.Count == 1)
+            //If all of the units are part of the same group then we should just select the group
+            bool allSameGroup = _selectedUnits.Count > 0;
+            for(int i = 0; i < _selectedUnits.Count; i++)
+            {
+                if(!(_selectedUnits[i].Info.Group != null && _selectedUnits[i].Info.Group == _selectedUnits[0].Info.Group))
+                {
+                    allSameGroup = false;
+                    break;
+                }
+            }
+
+            if (allSameGroup)
+            {
+                SelectUnit(_selectedUnits[0]);
+            }
+            else if (_selectedUnits.Count == 1)
             {
                 Footer.UpdateFooterInfo(_selectedUnits[0]);
             }
@@ -691,6 +742,10 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     Footer.UpdateFooterInfo(setNull: true);
                 }
             });
+
+            if(_selectedUnits.Count == 0)
+                Footer.UpdateFooterInfo(setNull: true);
+
             _selectedUnits.Clear();
         }
 
@@ -705,7 +760,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
         public void FillInitiativeOrder()
         {
             InitiativeOrder = UnitsInCombat.ToList();
-            InitiativeOrder.Sort((a, b) => b.Info.Speed.CompareTo(a.Info.Speed));
+            InitiativeOrder.Sort((a, b) => b.GetResF(ResF.Speed).CompareTo(a.GetResF(ResF.Speed)));
         }
 
         public void CalculateRevealedUnits() 
@@ -840,7 +895,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                                 CurrentUnit.Info._movementAbility._moveCancelAction = () =>
                                                 {
                                                     CurrentUnit.Info._movementAbility._moveCancelAction = null;
-                                                    Task.Run(StartCombat);
+                                                    StartCombat();
                                                 };
 
                                                 CurrentUnit.Info._movementAbility.CancelMovement();
@@ -849,7 +904,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                                             else
                                             {
                                                 //if we aren't already in combat and we can verify that at least one enemy is present, start combat
-                                                Task.Run(StartCombat);
+                                                StartCombat();
                                                 return;
                                             }
                                         }
@@ -995,6 +1050,8 @@ namespace MortalDungeon.Engine_Classes.Scenes
         {
             AbilityInProgress = abilityInProgress;
 
+            BoxSelectHelper.AllowSelection = !abilityInProgress;
+
             if (AbilityInProgress && Footer.EndTurnButton.Render)
             {
                 Footer.EndTurnButton.SetRender(false);
@@ -1057,7 +1114,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
             VisionManager.CalculateVisionForUnit(unit);
 
-            ObjectCulling.CullListOfUnits(new List<Unit>() { unit });
+            ObjectCulling.CullUnit(unit);
 
             UnitMoved?.Invoke(unit);
 
@@ -1072,8 +1129,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
         public void UpdateUnitStatusBars()
         {
-            Window.RenderBegin -= UpdateUnitStatusBars;
-
             var cameraMatrices = _camera.GetViewMatrix() * _camera.ProjectionMatrix;
 
             for (int i = 0; i < _unitStatusBlock.Children.Count; i++)
@@ -1095,10 +1150,11 @@ namespace MortalDungeon.Engine_Classes.Scenes
         }
 
         public object _structureDispatchObject = new object();
+        private static ObjectPool<List<Structure>> _structureListPool = new ObjectPool<List<Structure>>();
         public void CreateStructureInstancedRenderData()
         {
-            List<Structure> structuresToRender = new List<Structure>();
-            List<Structure> fogStructuresToRender = new List<Structure>();
+            List<Structure> structuresToRender = _structureListPool.GetObject();
+            List<Structure> fogStructuresToRender = _structureListPool.GetObject();
 
             lock (_structureLock)
             {
@@ -1124,6 +1180,12 @@ namespace MortalDungeon.Engine_Classes.Scenes
             Window.QueueToRenderCycle(() => 
             {
                 RenderingQueue.GenerateStructureInstancedRenderData(structuresToRender, fogStructuresToRender);
+
+                structuresToRender.Clear();
+                _structureListPool.FreeObject(ref structuresToRender);
+                
+                fogStructuresToRender.Clear();
+                _structureListPool.FreeObject(ref fogStructuresToRender);
             });
         }
 
@@ -1132,9 +1194,15 @@ namespace MortalDungeon.Engine_Classes.Scenes
             base.OnRender();
         }
 
+        public override void OnRenderEnd()
+        {
+            base.OnRenderEnd();
+        }
+
         public delegate void TileHoverEventHandler(Tile tile);
         public event TileHoverEventHandler TileHover;
 
+        private ObjectPool<List<Tile>> _tileListPool = new ObjectPool<List<Tile>>();
         public override void EvaluateObjectHover(Vector3 mouseRayNear, Vector3 mouseRayFar)
         {
             if (!TileMapsFocused)
@@ -1149,7 +1217,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
                 //If a tile is found the loop breaks
 
                 var chunksByDistance = TileMapHelpers.GetChunksByDistance(mouseRayNear, mouseRayFar);
-                List<Tile> foundTiles = new List<Tile>();
+                List<Tile> foundTiles = _tileListPool.GetObject();
 
                 bool tileHoverHandled = false;
                 for (int i = 0; i < chunksByDistance.Count; i++)
@@ -1166,6 +1234,9 @@ namespace MortalDungeon.Engine_Classes.Scenes
                         {
                             foundTiles.Add(chunkTiles[j]);
                         }
+
+                        chunkTiles.Clear();
+                        Tile.TileListPool.FreeObject(ref chunkTiles);
                     }
                 }
 
@@ -1209,22 +1280,39 @@ namespace MortalDungeon.Engine_Classes.Scenes
                     }
                 }
 
+                foundTiles.Clear();
+                _tileListPool.FreeObject(ref foundTiles);
+
+                TileMapHelpers.FreeDistanceAndChunkList(chunksByDistance);
+
                 //Console.WriteLine(chunksByDistance.Count);
             }
 
 
-            ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar, (unit) =>
-            {
-                if (unit.Hoverable)
-                    unit.OnHover();
+            var foundUnits = ObjectCursorBoundsCheck(_units, mouseRayNear, mouseRayFar, out List<Unit> notFound);
 
-                if (unit.HasTimedHoverEffect) 
+            for(int i = 0; i < foundUnits.Count; i++)
+            {
+                if (foundUnits[i].Hoverable)
+                    foundUnits[i].OnHover();
+
+                if (foundUnits[i].HasTimedHoverEffect)
                 {
                     _hoverTimer.Restart();
-                    _hoveredObject = unit;
+                    _hoveredObject = foundUnits[i];
                 }
+            }
 
-            }, notFound => notFound.OnHoverEnd());
+            for(int i = 0; i < notFound.Count; i++)
+            {
+                notFound[i].OnHoverEnd();
+            }
+
+            foundUnits.Clear();
+            Unit.UnitListObjectPool.FreeObject(ref foundUnits);
+
+            notFound.Clear();
+            Unit.UnitListObjectPool.FreeObject(ref notFound);
         }
 
         public override void OnMouseUp(MouseButtonEventArgs e)
@@ -1396,8 +1484,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
             {
                 EndCombat();
             }
-
-            FeatureManager.OnUnitKilled(unit);
         }
 
         public override void OnUnitClicked(Unit unit, MouseButton button)
@@ -1419,7 +1505,6 @@ namespace MortalDungeon.Engine_Classes.Scenes
                             SelectUnit(unit);
                         }
                     }
-                        
                 }
                 else
                 {
@@ -1533,7 +1618,7 @@ namespace MortalDungeon.Engine_Classes.Scenes
 
                 foreach(var map in affectedMaps)
                 {
-                    map.UpdateTile();
+                    map.UpdateChunks(TileUpdateType.Vision);
                 }
             }
         }
