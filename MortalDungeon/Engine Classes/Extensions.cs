@@ -148,5 +148,36 @@ namespace Empyrean.Engine_Classes
         }
         #endregion
         #endregion
+
+        public static void MultInPlace(this ref Matrix3 left, ref Matrix3 right)
+        {
+            float x = left.Row0.X;
+            float y = left.Row0.Y;
+            float z = left.Row0.Z;
+            float x2 = left.Row1.X;
+            float y2 = left.Row1.Y;
+            float z2 = left.Row1.Z;
+            float x3 = left.Row2.X;
+            float y3 = left.Row2.Y;
+            float z3 = left.Row2.Z;
+            float x4 = right.Row0.X;
+            float y4 = right.Row0.Y;
+            float z4 = right.Row0.Z;
+            float x5 = right.Row1.X;
+            float y5 = right.Row1.Y;
+            float z5 = right.Row1.Z;
+            float x6 = right.Row2.X;
+            float y6 = right.Row2.Y;
+            float z6 = right.Row2.Z;
+            left.Row0.X = x * x4 + y * x5 + z * x6;
+            left.Row0.Y = x * y4 + y * y5 + z * y6;
+            left.Row0.Z = x * z4 + y * z5 + z * z6;
+            left.Row1.X = x2 * x4 + y2 * x5 + z2 * x6;
+            left.Row1.Y = x2 * y4 + y2 * y5 + z2 * y6;
+            left.Row1.Z = x2 * z4 + y2 * z5 + z2 * z6;
+            left.Row2.X = x3 * x4 + y3 * x5 + z3 * x6;
+            left.Row2.Y = x3 * y4 + y3 * y5 + z3 * y6;
+            left.Row2.Z = x3 * z4 + y3 * z5 + z3 * z6;
+        }
     }
 }

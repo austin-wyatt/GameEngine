@@ -33,6 +33,7 @@ namespace Empyrean.Game.Units
             int animationsCompleted = 0;
 
             Vector4 projectileColor = _Colors.Tan - new Vector4(0, 0, 0, 0.75f);
+            //Vector4 projectileColor = _Colors.Tan;
             float projectileScale = 0.05f;
 
             int currAnimStamina = stamina;
@@ -51,10 +52,12 @@ namespace Empyrean.Game.Units
                     destination.Z = -0.5f;
 
                     GameObject arrow = new GameObject(Spritesheets.IconSheet, (int)IconSheetIcons.StaminaPip);
+                    //GameObject arrow = new GameObject(Textures.Stone_1, 0);
                     arrow.BaseObject.BaseFrame.CameraPerspective = false;
                     arrow.ScaleXY(projectileScale, projectileScale * WindowConstants.AspectRatio);
 
                     arrow.BaseObject.EnableLighting = false;
+                    arrow.BaseObject.RenderData.AlphaThreshold = 0.01f; 
 
                     arrow.SetColor(projectileColor);
 
@@ -142,6 +145,7 @@ namespace Empyrean.Game.Units
                     arrow.BaseObject.EnableLighting = false;
 
                     arrow.SetColor(projectileColor);
+                    arrow.BaseObject.RenderData.AlphaThreshold = 0.01f;
 
 
                     GameObject.LoadTexture(arrow);

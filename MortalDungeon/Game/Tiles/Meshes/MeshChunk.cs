@@ -139,13 +139,17 @@ namespace Empyrean.Game.Tiles.Meshes
                 tilePos.X += xIncrement;
             }
 
-            if (!_staticDataInitialized)
+            lock (_staticDataLock)
             {
-                FillFaceList();
-                _staticDataInitialized = true;
+                if (!_staticDataInitialized)
+                {
+                    FillFaceList();
+                    _staticDataInitialized = true;
+                }
             }
         }
-        
+
+        private static object _staticDataLock = new object();
 
         public void FillFaceList()
         {

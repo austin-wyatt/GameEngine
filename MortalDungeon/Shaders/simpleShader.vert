@@ -12,7 +12,7 @@ void main(void)
 {
 	gl_Position = vec4(aPosition.x, aPosition.y, aPosition.z, 1);
 
-	texCoord = aPosition.xy;
+	texCoord = vec2((aPosition.x + 1) / 2, (aPosition.y + 1) / 2);
 //	texCoord = vec2(0,0);
 }
 

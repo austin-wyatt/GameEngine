@@ -6,6 +6,57 @@ using System.Text;
 
 namespace Empyrean.Engine_Classes
 {
+    public struct IntRange
+    {
+        public int Start;
+        public int End;
+
+        public IntRange(int start)
+        {
+            Start = start;
+            End = start;
+        }
+
+        public IntRange(int start, int end)
+        {
+            Start = start;
+            End = end;
+        }
+
+        public int GetValueInRange(ConsistentRandom random)
+        {
+            return random.Next(Start, End);
+        }
+    }
+
+    public struct FloatRange
+    {
+        public float Start;
+        public float End;
+
+        public FloatRange(float start)
+        {
+            Start = start;
+            End = start;
+        }
+
+        public FloatRange(float start, float end)
+        {
+            Start = start;
+            End = end;
+        }
+
+        public float GetValueInRange(ConsistentRandom random)
+        {
+            float val = (float)random.NextDouble();
+
+            val *= Start - End;
+            val += Start;
+
+            return val;
+        }
+    }
+
     /// <summary>
     /// Game misc math library
     /// </summary>

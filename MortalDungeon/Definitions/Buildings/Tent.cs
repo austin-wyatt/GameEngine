@@ -1,7 +1,6 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Engine_Classes.Scenes;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Structures;
 using Empyrean.Game.Tiles;
@@ -34,8 +33,6 @@ namespace Empyrean.Definitions.Buildings
             BaseObjects.Clear();
 
             VisibleThroughFog = true;
-
-            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, -0.19f));
 
             AddBaseObject(CreateBaseObject());
             BaseObject.BaseFrame.SetScale(0.5f, 0.5f, 0.25f);

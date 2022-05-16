@@ -6,11 +6,11 @@ namespace Empyrean.Engine_Classes
 {
     public class Camera
     {
-        private Vector3 _front = -Vector3.UnitZ;
+        public Vector3 _front = -Vector3.UnitZ;
 
-        private Vector3 _up = Vector3.UnitY;
+        public Vector3 _up = Vector3.UnitY;
 
-        private Vector3 _right = Vector3.UnitX;
+        public Vector3 _right = Vector3.UnitX;
 
         private float _pitch;
 
@@ -97,7 +97,7 @@ namespace Empyrean.Engine_Classes
             _front.Y = MathF.Sin(_pitch);
             _front.Z = MathF.Cos(_pitch) * MathF.Sin(_yaw);
 
-            _front = Vector3.Normalize(_front);
+            _front.Normalize();
 
             _right = Vector3.Normalize(Vector3.Cross(_front, Vector3.UnitY));
             _up = Vector3.Normalize(Vector3.Cross(_right, _front));
@@ -107,7 +107,7 @@ namespace Empyrean.Engine_Classes
 
 
         private int _lateralRotations = 4; //start in the positive Y direction
-        private int _verticalSteps = 1;
+        private int _verticalSteps = 3;
         public float CameraAngle = 0;
         public void RotateByAmount(int lateralStep = 0, int verticalStep = 0)
         {
@@ -123,7 +123,7 @@ namespace Empyrean.Engine_Classes
             }
 
             _verticalSteps += verticalStep;
-
+            
             if(_verticalSteps < 1)
             {
                 _verticalSteps = 1;

@@ -13,7 +13,7 @@ namespace Empyrean.Objects
             Shaders.DEFAULT_SHADER, 
             Shaders.LINE_SHADER, 
             Shaders.POINT_SHADER,
-            Shaders.FAST_DEFAULT_SHADER,
+            Shaders.FAST_DEFAULT_SHADER_DEFERRED,
             Shaders.SIMPLE_SHADER,
             //Shaders.TILE_MAP_SHADER
         };
@@ -21,12 +21,14 @@ namespace Empyrean.Objects
     public static class Shaders 
     {
         public static readonly Shader DEFAULT_SHADER = new Shader("Shaders/OldShaders/oldShader.vert", "Shaders/OldShaders/oldShader.frag");
-        public static readonly Shader FAST_DEFAULT_SHADER = new Shader("Shaders/fastDefaultShader.vert", "Shaders/shader.frag");
+        public static readonly Shader FAST_DEFAULT_SHADER_DEFERRED = new Shader("Shaders/fastDefaultShader.vert", "Shaders/shader.frag");
+        public static readonly Shader FAST_DEFAULT_SHADER_IMMEDIATE = new Shader("Shaders/fastDefaultShader.vert", "Shaders/immediateShader.frag");
         public static readonly Shader POINT_SHADER = new Shader("Shaders/OldShaders/pointShader.vert", "Shaders/OldShaders/pointShader.frag");
         public static readonly Shader LINE_SHADER = new Shader("Shaders/OldShaders/lineShader.vert", "Shaders/OldShaders/lineShader.frag");
 
 
         public static readonly Shader SIMPLE_SHADER = new Shader("Shaders/simpleShader.vert", "Shaders/simpleShader.frag");
+        public static readonly Shader DEFERRED_LIGHTING_SHADER = new Shader("Shaders/simpleShader.vert", "Shaders/DeferredShading/deferredLighting.frag");
         public static readonly Shader SKYBOX_SHADER = new Shader("Shaders/CubeMap/CubeMapShader.vert", "Shaders/CubeMap/CubeMapShader.frag");
 
         public static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");

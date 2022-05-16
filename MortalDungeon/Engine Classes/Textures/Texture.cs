@@ -27,6 +27,12 @@ namespace Empyrean.Engine_Classes
         public BitmapImageData() { }
     }
 
+    public enum TextureWrapType
+    {
+        Repeat,
+        ClampToEdge,
+    }
+
     public class Texture
     {
         public readonly int Handle;
@@ -39,7 +45,8 @@ namespace Empyrean.Engine_Classes
         private bool Nearest;
 
         public Texture() { }
-        public static Texture LoadFromFile(string path, bool nearest = true, int name = 0, bool generateMipMaps = true)
+        public static Texture LoadFromFile(string path, bool nearest = true, int name = 0, bool generateMipMaps = true, 
+            TextureWrapType wrapType = TextureWrapType.Repeat)
         {
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
@@ -95,8 +102,18 @@ namespace Empyrean.Engine_Classes
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             }
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            switch (wrapType)
+            {
+                case TextureWrapType.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                    break;
+                case TextureWrapType.ClampToEdge:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                    break;
+            }
+            
 
             Texture tex = new Texture(handle, name);
 
@@ -108,7 +125,8 @@ namespace Empyrean.Engine_Classes
             return tex;
         }
 
-        public static Texture LoadFromBitmap(Bitmap bitmap, bool nearest = true, int name = (int)TextureName.Unknown, bool generateMipMaps = true)
+        public static Texture LoadFromBitmap(Bitmap bitmap, bool nearest = true, int name = (int)TextureName.Unknown, bool generateMipMaps = true,
+            TextureWrapType wrapType = TextureWrapType.Repeat)
         {
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
@@ -167,8 +185,17 @@ namespace Empyrean.Engine_Classes
                 
             }
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            switch (wrapType)
+            {
+                case TextureWrapType.Repeat:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                    break;
+                case TextureWrapType.ClampToEdge:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                    break;
+            }
 
             Texture tex = new Texture(handle, name);
 
@@ -368,6 +395,54 @@ namespace Empyrean.Engine_Classes
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
         }
 
+        public void UpdateFromDirectBitmap(DirectBitmap bitmap)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
+
+
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                bitmap.Width,
+                bitmap.Height,
+                0,
+                PixelFormat.Bgra,
+                PixelType.UnsignedByte,
+                bitmap.Bits);
+
+            if (GenerateMipmaps)
+            {
+                if (Nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
+            else
+            {
+                if (Nearest)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                }
+
+            }
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        }
 
         public static HashSet<Texture> LoadedTextures = new HashSet<Texture>();
         public static object _loadedTexturesLock = new object();

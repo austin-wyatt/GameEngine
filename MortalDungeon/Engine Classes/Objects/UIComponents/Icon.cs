@@ -59,7 +59,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             Animation tempAnimation;
 
-            RenderableObject window = new RenderableObject(new SpritesheetObject(Convert.ToInt32(spritesheetPosition), _spritesheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject window = new RenderableObject(new SpritesheetObject(Convert.ToInt32(spritesheetPosition), _spritesheet).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
             //window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
             tempAnimation = new Animation()
@@ -84,7 +84,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             if (withBackground) 
             {
-                RenderableObject background = new RenderableObject(new SpritesheetObject(Convert.ToInt32(backgroundType), Spritesheets.IconSheet, 2, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+                RenderableObject background = new RenderableObject(new SpritesheetObject(Convert.ToInt32(backgroundType), Spritesheets.IconSheet, 2, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
                 //window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
                 tempAnimation = new Animation()
@@ -133,7 +133,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             if (withBackground)
             {
-                RenderableObject background = new RenderableObject(new SpritesheetObject(Convert.ToInt32(backgroundType), Spritesheets.IconSheet, 2, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+                RenderableObject background = new RenderableObject(new SpritesheetObject(Convert.ToInt32(backgroundType), Spritesheets.IconSheet, 2, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
                 //window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
                 tempAnimation = new Animation()

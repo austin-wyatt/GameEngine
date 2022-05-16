@@ -1,4 +1,5 @@
-﻿using Empyrean.Game.Tiles.Meshes;
+﻿using Empyrean.Game.Tiles;
+using Empyrean.Game.Tiles.Meshes;
 using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -169,6 +170,101 @@ namespace Empyrean.Engine_Classes
 
                 offset += MeshTile.VERTEX_OFFSET;
                 vertIndex++;
+            }
+
+            Window.QueueToRenderCycle(FillVertexBuffer);
+            Window.QueueToRenderCycle(FillElementArrayBuffer);
+        }
+
+        public void FillFromTiles(List<Tile> tiles, bool quadTexCoords = true)
+        {
+            if (tiles.Count == 0) 
+                return;
+
+            Vector2i firstChunkPos = tiles[0].Chunk.GetGlobalChunkPoint();
+
+            if (Vertices == null || Vertices.Length != (_vertexDataLength * MeshTile.VERTEX_COUNT * tiles.Count)) 
+            {
+                Vertices = new float[_vertexDataLength * MeshTile.VERTEX_COUNT * tiles.Count];
+            }
+
+            if(VertexDrawOrder == null || VertexDrawOrder.Length != (MeshTile.FACES.Length * tiles.Count))
+            {
+                VertexDrawOrder = new uint[MeshTile.FACES.Length * tiles.Count];
+            }
+
+            Vector2i currChunkOffset;
+
+
+            Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+            Vector2 max = new Vector2(float.MinValue, float.MinValue);
+
+            int offset = 0;
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                offset = tiles[i].MeshTileHandle.GetVertexOffset();
+
+                for (int f = 0; f < MeshTile.FACES.Length; f++)
+                {
+                    VertexDrawOrder[i * MeshTile.FACES.Length + f] = MeshTile.FACES[f] + (uint)(i * MeshTile.VERTEX_COUNT);
+                }
+
+                currChunkOffset = tiles[i].Chunk.GetGlobalChunkPoint();
+                currChunkOffset.X = firstChunkPos.X - currChunkOffset.X;
+                currChunkOffset.Y -= firstChunkPos.Y;
+
+                int tileOffset = i * _vertexDataLength * MeshTile.VERTEX_COUNT;
+
+                for (int j = 0; j < _vertexDataLength * MeshTile.VERTEX_COUNT; j += _vertexDataLength)
+                {
+                    Vertices[j + tileOffset] = tiles[i].MeshTileHandle.VerticesHandle[offset] - currChunkOffset.X * (MeshTile.CHUNK_WIDTH - 0.25f);
+                    Vertices[j + tileOffset + 1] = tiles[i].MeshTileHandle.VerticesHandle[offset + 1] - currChunkOffset.Y * (MeshTile.CHUNK_HEIGHT - MeshTile.TILE_HEIGHT * 0.5f);
+                    //Vertices[j + tileOffset] = tiles[i].VerticesHandle[offset];
+                    //Vertices[j + tileOffset + 1] = tiles[i].VerticesHandle[offset + 1];
+                    Vertices[j + tileOffset + 2] = tiles[i].MeshTileHandle.VerticesHandle[offset + 2];
+
+
+                    min.X = Vertices[j + tileOffset] < min.X ? Vertices[j + tileOffset] : min.X;
+                    max.X = Vertices[j + tileOffset] > max.X ? Vertices[j + tileOffset] : max.X;
+                    min.Y = Vertices[j + tileOffset + 1] < min.Y ? Vertices[j + tileOffset + 1] : min.Y;
+                    max.Y = Vertices[j + tileOffset + 1] > max.Y ? Vertices[j + tileOffset + 1] : max.Y;
+
+                    Vertices[j + tileOffset + 3] = tiles[i].MeshTileHandle.VerticesHandle[offset + 3];
+                    Vertices[j + tileOffset + 4] = tiles[i].MeshTileHandle.VerticesHandle[offset + 4];
+                    
+                    Vertices[j + tileOffset + 5] = tiles[i].MeshTileHandle.VerticesHandle[offset + 5];
+                    Vertices[j + tileOffset + 6] = tiles[i].MeshTileHandle.VerticesHandle[offset + 6];
+                    Vertices[j + tileOffset + 7] = tiles[i].MeshTileHandle.VerticesHandle[offset + 7];
+
+                    offset += MeshTile.VERTEX_OFFSET;
+                }
+            }
+
+            Vector3 center = new Vector3();
+
+            offset = tiles[0].MeshTileHandle.GetVertexOffset() + (MeshTile.VERTEX_COUNT - 1) * MeshTile.VERTEX_OFFSET;
+            center.X = tiles[0].MeshTileHandle.VerticesHandle[offset];
+            center.Y = tiles[0].MeshTileHandle.VerticesHandle[offset + 1];
+            center.Z = tiles[0].MeshTileHandle.VerticesHandle[offset + 2];
+
+
+            //this should be the center tile's 25th vertex position and not the average of the min and max vertices
+            Vector2 minMaxDiffReciprocal = new Vector2(1 / (max.X - min.X), 1 / (max.Y - min.Y));
+
+            for (int i = 0; i < Vertices.Length; i += _vertexDataLength)
+            {
+                if (quadTexCoords)
+                {
+                    //Convert each vertex's texture coordinate to a point between 0 and 1 
+                    //according to its relation to the minimum and maximum vertices
+                    Vertices[i + 3] = (Vertices[i] - min.X) * minMaxDiffReciprocal.X;
+                    Vertices[i + 4] = (Vertices[i + 1] - min.Y) * minMaxDiffReciprocal.Y;
+                }
+
+                //pull the center point to 0, 0 so that our object is centered
+                Vertices[i] -= center.X;
+                Vertices[i + 1] -= center.Y;
+                Vertices[i + 2] -= center.Z;
             }
 
             Window.QueueToRenderCycle(FillVertexBuffer);

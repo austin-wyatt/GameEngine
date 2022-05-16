@@ -15,7 +15,10 @@ namespace Empyrean.Game.Ledger.Units
         [XmlElement("Lui")]
         public UnitSaveInfo UnitInfo;
 
-        public LedgeredUnit() { }
+        public LedgeredUnit() 
+        {
+            UnitInfo = new UnitSaveInfo();
+        }
 
         public LedgeredUnit(Unit unit)
         {

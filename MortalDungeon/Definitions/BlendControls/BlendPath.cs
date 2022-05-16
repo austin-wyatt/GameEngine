@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Empyrean.Definitions.BlendControls
 {
@@ -35,6 +36,8 @@ namespace Empyrean.Definitions.BlendControls
         {
             if (Points.Count == 0) return;
 
+            Stack<Task> taskStack = new Stack<Task>();
+
             Curve = new BezierCurve(Points);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -55,15 +58,10 @@ namespace Empyrean.Definitions.BlendControls
             HashSet<TileChunk> chunksList = new HashSet<TileChunk>();
             HashSet<TileChunk> usedChunks = new HashSet<TileChunk>();
 
-            int r = 0;
-            int g = 0;
-            int b = 0;
-
             float offset;
-            PaletteLocation loc;
+            //PaletteLocation loc;
 
-            HashSet<BlendPoint> currentPoints = new HashSet<BlendPoint>();
-            HashSet<BlendPoint> wallSet = new HashSet<BlendPoint>();
+            
 
             BlendPoint startingMin = new BlendPoint();
             BlendPoint endingMin = new BlendPoint();
@@ -81,7 +79,7 @@ namespace Empyrean.Definitions.BlendControls
             BlendPoint maxLoadedPoint = BlendHelper.GetBlendPointFromFeaturePoint(featurePoint);
 
 
-            void fillMaxThicknessWalls(float startVal, float endVal)
+            void fillMaxThicknessWalls(float startVal, float endVal, ref HashSet<BlendPoint> wallSet)
             {
                 Curve.Parallel = ThicknessMax;
                 bool first = true;
@@ -116,12 +114,15 @@ namespace Empyrean.Definitions.BlendControls
 
 
 
-            float beginningResolution = 0;
+            float beginningResolution;
 
             float i = StepResolution;
 
             while (i <= 1)
             {
+                HashSet<BlendPoint> currentPoints = new HashSet<BlendPoint>();
+                HashSet<BlendPoint> wallSet = new HashSet<BlendPoint>();
+
                 beginningResolution = i;
 
                 Curve.Parallel = ThicknessMin;
@@ -161,7 +162,7 @@ namespace Empyrean.Definitions.BlendControls
                 endingMin.X = globalPoint.X - originPoint.X;
                 endingMin.Y = globalPoint.Y - originPoint.Y;
 
-                fillMaxThicknessWalls(beginningResolution, i);
+                fillMaxThicknessWalls(beginningResolution, i, ref wallSet);
 
                 if (!((GMath.InsideBounds(endingMax.X + originPoint.X, minLoadedPoint.X, maxLoadedPoint.X) ||
                     GMath.InsideBounds(endingMin.X + originPoint.X, minLoadedPoint.X, maxLoadedPoint.X) ||
@@ -173,7 +174,7 @@ namespace Empyrean.Definitions.BlendControls
                     GMath.InsideBounds(startingMax.Y + originPoint.Y, minLoadedPoint.Y, maxLoadedPoint.Y)
                     )))
                 {
-                    wallSet.Clear();
+                    //wallSet.Clear();
                     continue;
                 }
 
@@ -226,13 +227,13 @@ namespace Empyrean.Definitions.BlendControls
                         if (newPoint.IsValidBoundsOnly())
                         {
                             #region Color mapping from chunk
-                            r = 0;
-                            g = 0;
-                            b = 0;
+                            int r = 0;
+                            int g = 0;
+                            int b = 0;
 
                             if (Red != TileType.None)
                             {
-                                loc = foundChunk.BlendMap.AddOrGetTypePaletteLocation(Red);
+                                PaletteLocation loc = foundChunk.BlendMap.AddOrGetTypePaletteLocation(Red);
 
                                 SetColorByLocation(ref r, ref g, ref b, 255, loc);
                             }
@@ -250,50 +251,59 @@ namespace Empyrean.Definitions.BlendControls
                 }
 
 
-                currentPoints.Clear();
-                if(BlendHelper.FloodFill(wallSet, ref currentPoints, seedPoint))
+                //currentPoints.Clear();
+
+                var task = Task.Run(() =>
                 {
-                    //Color dirt = Color.FromArgb(255, 0, 0, 255);
+                    HashSet<TileChunk> taskChunkList = new HashSet<TileChunk>();
 
-                    foreach (var point in currentPoints)
+                    if (BlendHelper.FloodFill(wallSet, currentPoints, seedPoint))
                     {
-                        BlendHelper.GetChunksFromBlendPoint(point, in chunksList);
+                        Color dirt = Color.FromArgb(255, 0, 0, 255);
 
-                        foreach (var foundChunk in chunksList)
+                        foreach (var point in currentPoints)
                         {
-                            usedChunks.Add(foundChunk);
+                            BlendHelper.GetChunksFromBlendPoint(point, in taskChunkList);
 
-                            BlendPoint newPoint = BlendHelper.ConvertGlobalToLocalBlendPoint(point, foundChunk);
-
-                            if (newPoint.IsValidBoundsOnly())
+                            foreach (var foundChunk in taskChunkList)
                             {
-                                #region Color mapping from chunk
-                                r = 0;
-                                g = 0;
-                                b = 0;
-
-                                if (Red != TileType.None)
+                                lock (usedChunks)
                                 {
-                                    loc = foundChunk.BlendMap.AddOrGetTypePaletteLocation(Red);
-
-                                    SetColorByLocation(ref r, ref g, ref b, 255, loc);
+                                    usedChunks.Add(foundChunk);
                                 }
 
-                                #endregion
+                                BlendPoint newPoint = BlendHelper.ConvertGlobalToLocalBlendPoint(point, foundChunk);
 
-                                Color col = Color.FromArgb(0, r, g, b);
+                                if (newPoint.IsValidBoundsOnly())
+                                {
+                                    #region Color mapping from chunk
+                                    int r = 0;
+                                    int g = 0;
+                                    int b = 0;
 
-                                foundChunk.BlendMap.DirectBitmap.SetPixel(newPoint.X, newPoint.Y, col);
+                                    if (Red != TileType.None)
+                                    {
+                                        PaletteLocation loc = foundChunk.BlendMap.AddOrGetTypePaletteLocation(Red);
+
+                                        SetColorByLocation(ref r, ref g, ref b, 255, loc);
+                                    }
+
+                                    #endregion
+
+                                    Color col = Color.FromArgb(0, r, g, b);
+
+                                    foundChunk.BlendMap.DirectBitmap.SetPixel(newPoint.X, newPoint.Y, col);
+                                }
                             }
                         }
-
-                        chunksList.Clear();
                     }
-                }
+                });
 
-                wallSet.Clear();
+                taskStack.Push(task);
             }
 
+            while (taskStack.Count > 0)
+                taskStack.Pop().Wait();
 
             foreach (var chunk in usedChunks)
             {

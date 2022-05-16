@@ -5,14 +5,15 @@ layout(location = 0) out vec4 outputColor;
 
 in vec2 texCoord;
 
-uniform sampler2D texture0;
+uniform sampler2D Texture;
 
 uniform float Alpha;
 
 void main(void)
 {
-	vec4 color = texture(texture0, vec2((texCoord.x + 1) / 2, (texCoord.y + 1) / 2));
+	vec4 color = texture(Texture, texCoord);
 
+	color.w = 1;
 	color.w = color.w * Alpha;
 
 	outputColor = color;

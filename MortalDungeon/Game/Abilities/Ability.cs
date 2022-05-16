@@ -2,7 +2,6 @@
 using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Engine_Classes.TextHandling;
 using Empyrean.Engine_Classes.UIComponents;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Map;
 using Empyrean.Game.Serializers;
 using Empyrean.Game.Tiles;

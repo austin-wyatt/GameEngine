@@ -27,7 +27,6 @@ namespace Empyrean.Game.Structures
 
             HasContextMenu = true;
 
-            SelectionTile.UnitOffset = new Vector3(0, 200, -0.19f);
 
             SetTeam(UnitTeam.Unknown);
             if (Type == StructureEnum.Rock_2)

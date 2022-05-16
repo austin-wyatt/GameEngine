@@ -97,16 +97,16 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Bandit
 
                 Spray.SprayParams sprayParams = Spray.SprayParams.DEFAULT;
                 sprayParams.Direction = -MathHelper.DegreesToRadians(GMath.AngleOfDirection(selectionInfo._hoveredDirection)) - MathHelper.PiOver6;
-                sprayParams.Speed = 25;
+                sprayParams.Speed = new FloatRange(22, 27);
                 sprayParams.ParticleCount = 400;
-                sprayParams.SweepAngle = MathHelper.PiOver2;
-                sprayParams.Life = 25;
+                sprayParams.SweepAngle = MathHelper.PiOver2 + MathHelper.PiOver6;
+                sprayParams.Life = new IntRange(24, 27);
                 sprayParams.FeedRate = 20;
                 sprayParams.MultiplicativeAcceleration = new Vector3(1f, 1f, 1);
                 sprayParams.ParticleSize = 0.06f;
                 sprayParams.ColorDelta = new Vector4(0, 0, 0, -0.01f);
 
-                var spray = new Spray(CastingUnit._position + new Vector3(0, 0, 0.2f), new Vector4(0.62f, 0.53f, 0.15f, 0.8f), sprayParams);
+                var spray = new Spray(CastingUnit._position + new Vector3(0, 0, 0.2f), new Vector4(0.62f, 0.53f, 0.15f, 1f), sprayParams);
                 spray.OnFinish = () =>
                 {
                     Scene._particleGenerators.Remove(spray);

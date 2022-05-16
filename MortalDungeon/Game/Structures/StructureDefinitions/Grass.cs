@@ -1,6 +1,5 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.Scenes;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Serializers;
 using Empyrean.Game.Tiles;

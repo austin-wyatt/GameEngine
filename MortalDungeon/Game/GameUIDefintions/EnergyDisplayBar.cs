@@ -282,7 +282,7 @@ namespace Empyrean.Game.UI
                 spriteSheet = Spritesheets.TestSheet;
             }
 
-            RenderableObject pip = new RenderableObject(new SpritesheetObject(spriteSheetPos, spriteSheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject pip = new RenderableObject(new SpritesheetObject(spriteSheetPos, spriteSheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
             EnergizedColor = new Vector4(1, 1, 1, 1);
 
 

@@ -128,17 +128,32 @@ namespace Empyrean.Game.Tiles
 
                 Console.WriteLine("Flag 2.5: " + stopwatch.ElapsedMilliseconds + "ms");
 
-                foreach (var point in pointsToLoad)
+                Stack<Task> pointLoadTasks = new Stack<Task>();
+
+                for (int i = 0; i < pointsToLoad.Count; i++)
                 {
-                    TestTileMap newMap = new TestTileMap(default, point, Scene._tileMapController) { Width = TILE_MAP_DIMENSIONS.X, Height = TILE_MAP_DIMENSIONS.Y };
-                    newMap.PopulateTileMap();
+                    int capturedIndex = i;
+                    pointLoadTasks.Push(Task.Run(() =>
+                    {
+                        TestTileMap newMap = new TestTileMap(default, pointsToLoad[capturedIndex], Scene._tileMapController) 
+                        { 
+                            Width = TILE_MAP_DIMENSIONS.X, Height = TILE_MAP_DIMENSIONS.Y 
+                        };
+                        newMap.PopulateTileMap();
 
-                    newMap.TileMapCoords = new TileMapPoint(point.X, point.Y);
-                    LoadedMaps.TryAdd(newMap.TileMapCoords, newMap);
-                    ActiveMaps.Add(newMap);
+                        newMap.TileMapCoords = new TileMapPoint(pointsToLoad[capturedIndex].X, pointsToLoad[capturedIndex].Y);
+                        lock (LoadedMaps)
+                        {
+                            LoadedMaps.TryAdd(newMap.TileMapCoords, newMap);
+                            ActiveMaps.Add(newMap);
+                        }
 
-                    newMap.OnAddedToController();
+                        newMap.OnAddedToController();
+                    }));
                 }
+
+                while(pointLoadTasks.Count > 0)
+                    pointLoadTasks.Pop().Wait();
 
                 Console.WriteLine("Flag 3: " + stopwatch.ElapsedMilliseconds + "ms");
 
@@ -160,22 +175,22 @@ namespace Empyrean.Game.Tiles
 
                 Console.WriteLine("Flag 5.5: " + stopwatch.ElapsedMilliseconds + "ms");
 
-                NavMesh.CalculateNavTiles();
+
+                Task navTask = Task.Run(NavMesh.CalculateNavTiles);
 
                 Console.WriteLine("Flag 5.75: " + stopwatch.ElapsedMilliseconds + "ms");
-
-                Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, false);
-                Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
 
 
                 MeshTileBlender.FillTileHeightMap();
                 MeshTileBlender.MajorBlendPass();
                 Console.WriteLine("Blend completed: " + stopwatch.ElapsedMilliseconds + "ms");
 
-                GC.Collect();
-
                 if (_blendMapTotalCount > 0)
                     _featureWaitHandle.Wait();
+
+                navTask.Wait();
+
+                GC.Collect();
 
                 Scene.QueueToRenderCycle(() =>
                 {
@@ -196,9 +211,12 @@ namespace Empyrean.Game.Tiles
                         tile.Update(TileUpdateType.Textures);
                     }
 
-                    MeshTileBlender.MajorBlendPass();
+                    //MeshTileBlender.MajorBlendPass();
 
                     TilesRequiringTextureUpdates.Clear();
+
+                    Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, false);
+                    Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
                 });
 
                 Console.WriteLine("Flag 6: " + stopwatch.ElapsedMilliseconds + "ms");
@@ -273,8 +291,13 @@ namespace Empyrean.Game.Tiles
 
             List<BlendControl> blendControls = new List<BlendControl>();
 
+            Stack<Task> mapBrushTaskList = new Stack<Task>();
+            const int MAP_BRUSHES_PER_TASK = 20;
+
             foreach (var feature in featureList)
             {
+                List<Action> brushActions = new List<Action>();
+
                 #region apply map brushes
                 if (feature.MapBrushes.Count > maps.Count)
                 {
@@ -283,6 +306,8 @@ namespace Empyrean.Game.Tiles
 
                     for (int i = 0; i < maps.Count; i++)
                     {
+                        int capturedIndex = i;
+
                         bool freshGen = true;
 
                         if (addedMaps != null)
@@ -292,7 +317,32 @@ namespace Empyrean.Game.Tiles
 
                         if (feature.MapBrushes.TryGetValue(maps[i].TileMapCoords, out var mapBrush) && freshGen)
                         {
-                            mapBrush.ApplyToMap(maps[i]);
+                            brushActions.Add(() =>
+                            {
+                                mapBrush.ApplyToMap(maps[capturedIndex]);
+                            });
+                        }
+
+                        if(brushActions.Count >= MAP_BRUSHES_PER_TASK)
+                        {
+                            List<Action> brushActionRef = brushActions;
+                            mapBrushTaskList.Push(Task.Run(() =>
+                            {
+                                foreach(var ac in brushActionRef)
+                                {
+                                    ac.Invoke();
+                                }
+                            }));
+
+                            brushActions = new List<Action>();
+                        }
+                    }
+
+                    if(brushActions.Count > 0)
+                    {
+                        foreach (var ac in brushActions)
+                        {
+                            ac.Invoke();
                         }
                     }
                 }
@@ -416,7 +466,6 @@ namespace Empyrean.Game.Tiles
                     {
                         _featureWaitHandle.Set();
                     }
-                
                 }
             });
         }
@@ -507,7 +556,7 @@ namespace Empyrean.Game.Tiles
                         VisibleMaps.Add(maps[i]);
                         maps[i].Visible = true;
 
-                        maps[i].UpdateChunks(TileUpdateType.Initialize);
+                        maps[i].UpdateChunks(TileUpdateType.Initialize, overrideTileMapLoadBlock: true);
 
                         for (int j = 0; j < maps[i].TileChunks.Count; j++)
                         {

@@ -86,6 +86,9 @@ void main(void)
 
 	outputColor *= Color;	
 
+	if(outputColor.a < 0.01)
+		discard;
+
 	vec3 norm = normalize(Normal);
 	vec3 viewDir = normalize(viewPosition - FragPos);
 

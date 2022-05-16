@@ -35,8 +35,8 @@ namespace Empyrean.Game.Objects
 
     public static class CURSOR_1_ANIMATION
     {
-        private static RenderableObject cursor_Idle_1 = new RenderableObject(new SpritesheetObject(0, Spritesheets.Cursor_1).CreateObjectDefinition(), _Colors.White, Shaders.FAST_DEFAULT_SHADER);
-        private static RenderableObject cursor_Die_1 = new RenderableObject(new SpritesheetObject(1, Spritesheets.Cursor_1).CreateObjectDefinition(), _Colors.White, Shaders.FAST_DEFAULT_SHADER);
+        private static RenderableObject cursor_Idle_1 = new RenderableObject(new SpritesheetObject(0, Spritesheets.Cursor_1).CreateObjectDefinition(), _Colors.White, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
+        private static RenderableObject cursor_Die_1 = new RenderableObject(new SpritesheetObject(1, Spritesheets.Cursor_1).CreateObjectDefinition(), _Colors.White, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
 
         public static Animation Idle = new Animation()
@@ -228,7 +228,7 @@ namespace Empyrean.Game.Objects
 
     public static class MOUNTAIN_TWO_ANIMATION
     {
-        private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(75, Spritesheets.TestSheet, 4, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+        private static RenderableObject mountain_Idle_1 = new RenderableObject(new SpritesheetObject(75, Spritesheets.TestSheet, 4, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
         private static Animation Idle = new Animation()
         {

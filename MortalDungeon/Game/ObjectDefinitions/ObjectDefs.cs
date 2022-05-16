@@ -118,7 +118,7 @@ namespace Empyrean.Game.Objects
 
         public static RenderableObject CreateObject(SpritesheetObject spritesheet, Object3D obj) 
         {
-            RenderableObject testObj = new RenderableObject(spritesheet.Create3DObjectDefinition(obj), new Vector4(1, 1, 1, 1), Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject testObj = new RenderableObject(spritesheet.Create3DObjectDefinition(obj), new Vector4(1, 1, 1, 1), Shaders.FAST_DEFAULT_SHADER_DEFERRED);
             testObj.CameraPerspective = true;
 
             return testObj;

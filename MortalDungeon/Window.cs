@@ -11,7 +11,6 @@ using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Engine_Classes.Objects.UIComponents;
 using Empyrean.Engine_Classes.Rendering;
 using Empyrean.Engine_Classes.Scenes;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Scripting;
 using Empyrean.Game.Objects;
 using Empyrean.Game.SceneDefinitions;
@@ -35,29 +34,42 @@ namespace Empyrean
     {
         private static Random _random = new ConsistentRandom();
 
+        private static object _lock = new object();
         public static int Next() 
         {
-            return _random.Next();
+            lock (_lock)
+            {
+                return _random.Next();
+            }
         }
 
         public static int Next(int val)
         {
-            return _random.Next(val);
+            lock (_lock)
+            {
+                return _random.Next(val);
+            }
         }
 
         public static float NextFloat() 
         {
-            return (float)_random.NextDouble();
+            lock (_lock)
+            {
+                return (float)_random.NextDouble();
+            }
         }
 
         public static float NextFloat(float minValue, float maxValue)
         {
-            float val = (float)_random.NextDouble();
+            lock (_lock)
+            {
+                float val = (float)_random.NextDouble();
 
-            val *= maxValue - minValue;
-            val += minValue;
+                val *= maxValue - minValue;
+                val += minValue;
 
-            return val;
+                return val;
+            }
         }
 
     }
@@ -248,6 +260,8 @@ namespace Empyrean
 
         public static Action CloseWindow = null;
 
+        public static CombatScene Scene;
+
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
         {  }
 
@@ -414,6 +428,7 @@ namespace Empyrean
 
             InvokeQueuedRenderAction();
 
+            GL.ClearColor(Renderer.ClearColor.X, Renderer.ClearColor.Y, Renderer.ClearColor.Z, Renderer.ClearColor.W);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
             double timeValue;
@@ -478,9 +493,9 @@ namespace Empyrean
 
             Matrix4 viewMatrix = _camera.GetViewMatrix();
             Matrix4 projectionMatrix = _camera.ProjectionMatrix;
-            Matrix4 cameraMatrix = viewMatrix * projectionMatrix;
+            Matrix4.Mult(viewMatrix, projectionMatrix, out Matrix4 cameraMatrix);
 
-            Matrix4 skyboxMatrix = _camera.GetViewMatrix().ClearTranslation() * projectionMatrix;
+            Matrix4.Mult(viewMatrix.ClearTranslation(), projectionMatrix, out Matrix4 skyboxMatrix);
 
             Shaders.SKYBOX_SHADER.Use();
             Shaders.SKYBOX_SHADER.SetMatrix4("camera", ref skyboxMatrix);
@@ -498,18 +513,28 @@ namespace Empyrean
             } //Points
 
             #region shader uniforms
+            Shaders.DEFERRED_LIGHTING_SHADER.Use();
+            Shaders.DEFERRED_LIGHTING_SHADER.SetMatrix4("camera", ref cameraMatrix);
+            LightingManager.SetLightingParametersForShader(Shaders.DEFERRED_LIGHTING_SHADER, use: false);
+
             Shaders.CHUNK_SHADER.Use();
             Shaders.CHUNK_SHADER.SetMatrix4("camera", ref cameraMatrix);
-            LightingManager.SetLightingParametersForShader(Shaders.CHUNK_SHADER, use: false);
+            //LightingManager.SetLightingParametersForShader(Shaders.CHUNK_SHADER, use: false);
 
 
             //all objects using the fast default shader are handled here
-            Shaders.FAST_DEFAULT_SHADER.Use();
-            Shaders.FAST_DEFAULT_SHADER.SetMatrix4("camera", ref cameraMatrix);
-            LightingManager.SetLightingParametersForShader(Shaders.FAST_DEFAULT_SHADER, use: false);
+            Shaders.FAST_DEFAULT_SHADER_DEFERRED.Use();
+            Shaders.FAST_DEFAULT_SHADER_DEFERRED.SetMatrix4("camera", ref cameraMatrix);
+            //LightingManager.SetLightingParametersForShader(Shaders.FAST_DEFAULT_SHADER_DEFERRED, use: false);
 
 
+            Shaders.PARTICLE_SHADER.Use();
+            Shaders.PARTICLE_SHADER.SetMatrix4("camera", ref cameraMatrix);
+            LightingManager.SetBasicLightingParametersForShader(Shaders.PARTICLE_SHADER, use: false);
 
+            Shaders.FAST_DEFAULT_SHADER_IMMEDIATE.Use();
+            Shaders.FAST_DEFAULT_SHADER_IMMEDIATE.SetMatrix4("camera", ref cameraMatrix);
+            LightingManager.SetBasicLightingParametersForShader(Shaders.FAST_DEFAULT_SHADER_IMMEDIATE, use: false);
 
             #endregion
 
@@ -615,10 +640,6 @@ namespace Empyrean
 
                 RenderingQueue.RenderQueue();
             }
-
-
-            Shaders.PARTICLE_SHADER.Use();
-            Shaders.PARTICLE_SHADER.SetMatrix4("camera", ref cameraMatrix);
 
 
 

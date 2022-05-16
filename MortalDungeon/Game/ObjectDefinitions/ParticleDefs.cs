@@ -18,7 +18,7 @@ namespace Empyrean.Game.Particles
 
             SpritesheetObject particleObj = new SpritesheetObject(0, Spritesheets.TestSheet, 3);
             ObjectDefinition particleObjDef = particleObj.CreateObjectDefinition();
-            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            ParticleDisplay = new RenderableObject(particleObjDef, default, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
             ParticleDisplay.CameraPerspective = true;
 
             for (int i = 0; i < ParticleCount; i++) 
@@ -303,8 +303,8 @@ namespace Empyrean.Game.Particles
         public struct SprayParams
         {
             public int ParticleCount;
-            public int Life;
-            public float Speed;
+            public IntRange Life;
+            public FloatRange Speed;
 
             /// <summary>
             /// Direction in radians
@@ -333,8 +333,8 @@ namespace Empyrean.Game.Particles
             public static SprayParams DEFAULT = new SprayParams()
             {
                 ParticleCount = 30,
-                Life = 30,
-                Speed = 1,
+                Life = new IntRange(30, 35),
+                Speed = new FloatRange(1),
                 Direction = 0,
                 SweepAngle = MathHelper.PiOver3,
                 MultiplicativeAcceleration = new Vector3(0.95f, 0.95f, 1),
@@ -344,7 +344,7 @@ namespace Empyrean.Game.Particles
             };
         }
 
-        private Random rand = new ConsistentRandom();
+        private ConsistentRandom rand = new ConsistentRandom();
         public int DefaultLife = 15;
 
         public SprayParams Params;
@@ -352,7 +352,7 @@ namespace Empyrean.Game.Particles
         public Spray(Vector3 position, Vector4 color, SprayParams sprayParams)
         {
             ParticleCount = sprayParams.ParticleCount;
-            DefaultLife = sprayParams.Life;
+            DefaultLife = sprayParams.Life.GetValueInRange(rand);
             Position = position;
 
             Params = sprayParams;
@@ -374,11 +374,11 @@ namespace Empyrean.Game.Particles
 
                 float direction = ((float)rand.NextDouble() - 0.5f) * Params.SweepAngle + Params.Direction;
 
-                float speedVariation = (float)rand.NextDouble() * 0.2f + 0.9f;
+                float speed = Params.Speed.GetValueInRange(rand);
 
                 fillParticle.Velocity = new Vector3(
-                    (float)MathHelper.Cos(direction) * (Params.Speed * speedVariation),
-                    (float)MathHelper.Sin(direction) * (Params.Speed * speedVariation),
+                    (float)MathHelper.Cos(direction) * (speed),
+                    (float)MathHelper.Sin(direction) * (speed),
                     0);
                 fillParticle.Color = color;
                 fillParticle.ScaleAll(Params.ParticleSize);
@@ -425,7 +425,7 @@ namespace Empyrean.Game.Particles
 
             if(_currentParticle < Particles.Count)
             {
-                Particles[_currentParticle].Life = Params.Life;
+                Particles[_currentParticle].Life = Params.Life.GetValueInRange(rand);
             }
 
             base.GenerateParticle();

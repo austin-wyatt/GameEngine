@@ -2,7 +2,6 @@
 using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Engine_Classes.Rendering;
 using Empyrean.Engine_Classes.Scenes;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Tiles;
 using Empyrean.Game.Tools;

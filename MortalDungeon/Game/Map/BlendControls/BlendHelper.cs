@@ -5,6 +5,7 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace Empyrean.Game.Map
 {
@@ -439,66 +440,77 @@ namespace Empyrean.Game.Map
         /// and then filling the wall array that spans from top left -> bottom right in size with the wall values. <para/>
         /// Output values could then simply be added to the wall array.
         /// </summary>
-        public static bool FloodFill(in HashSet<BlendPoint> walls, ref HashSet<BlendPoint> foundPoints, BlendPoint seedPoint)
+        public static bool FloodFill(HashSet<BlendPoint> walls, HashSet<BlendPoint> foundPoints, BlendPoint seedPoint)
         {
-            Stack<BlendPoint> pointStack = new Stack<BlendPoint>();
+            Monitor.Enter(walls);
+            Monitor.Enter(foundPoints);
 
-            pointStack.Push(seedPoint);
-            foundPoints.Add(seedPoint);
-
-            BlendPoint currPoint;
-
-            BlendPoint tempPoint = new BlendPoint();
-            BlendPoint newPoint;
-
-            while (pointStack.Count > 0)
+            try
             {
-                currPoint = pointStack.Pop();
+                Stack<BlendPoint> pointStack = new Stack<BlendPoint>();
 
-                //TEMP
-                if (pointStack.Count > 50000) return false;
+                pointStack.Push(seedPoint);
+                foundPoints.Add(seedPoint);
 
-                //check east
-                tempPoint.X = currPoint.X + 1;
-                tempPoint.Y = currPoint.Y;
+                BlendPoint currPoint;
 
-                if(!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
+                BlendPoint tempPoint = new BlendPoint();
+                BlendPoint newPoint;
+
+                while (pointStack.Count > 0)
                 {
-                    newPoint = new BlendPoint(tempPoint);
-                    pointStack.Push(newPoint);
-                    foundPoints.Add(newPoint);
+                    currPoint = pointStack.Pop();
+
+                    //TEMP
+                    if (pointStack.Count > 50000) return false;
+
+                    //check east
+                    tempPoint.X = currPoint.X + 1;
+                    tempPoint.Y = currPoint.Y;
+
+                    if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
+                    {
+                        newPoint = new BlendPoint(tempPoint);
+                        pointStack.Push(newPoint);
+                        foundPoints.Add(newPoint);
+                    }
+
+                    //check west
+                    tempPoint.X -= 2;
+                    if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
+                    {
+                        newPoint = new BlendPoint(tempPoint);
+                        pointStack.Push(newPoint);
+                        foundPoints.Add(newPoint);
+                    }
+
+                    //check north
+                    tempPoint.X += 1;
+                    tempPoint.Y += 1;
+                    if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
+                    {
+                        newPoint = new BlendPoint(tempPoint);
+                        pointStack.Push(newPoint);
+                        foundPoints.Add(newPoint);
+                    }
+
+                    //check south
+                    tempPoint.Y -= 2;
+                    if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
+                    {
+                        newPoint = new BlendPoint(tempPoint);
+                        pointStack.Push(newPoint);
+                        foundPoints.Add(newPoint);
+                    }
                 }
 
-                //check west
-                tempPoint.X -= 2;
-                if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
-                {
-                    newPoint = new BlendPoint(tempPoint);
-                    pointStack.Push(newPoint);
-                    foundPoints.Add(newPoint);
-                }
-
-                //check north
-                tempPoint.X += 1;
-                tempPoint.Y += 1;
-                if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
-                {
-                    newPoint = new BlendPoint(tempPoint);
-                    pointStack.Push(newPoint);
-                    foundPoints.Add(newPoint);
-                }
-
-                //check south
-                tempPoint.Y -= 2;
-                if (!(walls.Contains(tempPoint) || foundPoints.Contains(tempPoint)))
-                {
-                    newPoint = new BlendPoint(tempPoint);
-                    pointStack.Push(newPoint);
-                    foundPoints.Add(newPoint);
-                }
+                return true;
             }
-
-            return true;
+            finally
+            {
+                Monitor.Exit(walls);
+                Monitor.Exit(foundPoints);
+            }
         }
     }
 }

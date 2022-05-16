@@ -125,7 +125,7 @@ namespace Empyrean.Game.UI
         {
             Animation tempAnimation;
 
-            RenderableObject brokenShield = new RenderableObject(new SpritesheetObject(28, Spritesheets.UISheet, 1, 1).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject brokenShield = new RenderableObject(new SpritesheetObject(28, Spritesheets.UISheet, 1, 1).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
             tempAnimation = new Animation()
             {

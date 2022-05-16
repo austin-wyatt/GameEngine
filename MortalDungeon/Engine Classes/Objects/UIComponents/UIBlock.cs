@@ -24,7 +24,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             Spritesheet spritesheet = Spritesheets.UISheet;
 
-            RenderableObject window = new RenderableObject(new SpritesheetObject(71, spritesheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject window = new RenderableObject(new SpritesheetObject(71, spritesheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
             window.BaseColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
             window.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));
@@ -73,7 +73,7 @@ namespace Empyrean.Engine_Classes.UIComponents
                 spritesheet = Spritesheets.UISheet;
             }
 
-            RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, spritesheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject window = new RenderableObject(new SpritesheetObject(spritesheetPosition, spritesheet, SpritesheetDimensions.X, SpritesheetDimensions.Y).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
             window.BaseColor = new Vector4(0.5f, 0.5f, 0.5f, 1);
             window.SetBaseColor(new Vector4(0.5f, 0.5f, 0.5f, 1));

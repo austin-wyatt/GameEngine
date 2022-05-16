@@ -23,6 +23,8 @@ namespace Empyrean.Game.Abilities.AbilityDefinitions
 
             RefreshFooterOnFinish = false;
 
+            SelectionInfo = new SelectionInfo(this);
+
             SelectionInfo.CanSelectTiles = false;
             SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.True;
             SelectionInfo.UnitTargetParams.IsControlled = UnitCheckEnum.True;

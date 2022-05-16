@@ -13,7 +13,6 @@ layout(location = 11) in vec4 aInlineColor;
 layout(location = 12) in vec4 lightingCompositeType; //composite vector of whether the object should recieve lighting
 
 out vec2 texCoord;
-out vec2 texCoord2;
 out vec4 appliedColor;
 out float mixPercent;
 out float twoTextures;
@@ -63,15 +62,6 @@ void main(void)
 //	}
 
 	texCoord = vec2(setTexCoord(texCoord, columns, rows, column, row));
-
-	//Multi texture handling
-//	//going to hardcode values here for the time being (using fog spritesheet)
-//	columns = 2;
-//	rows = 2;
-//	row = floor(abs(goldNoise(vec2(transform[0][3], transform[1][3]), fract(transform[2][2]) + 1)) * 2);
-//	column = floor(abs(goldNoise(vec2(transform[0][3], transform[1][3]), fract(transform[1][2]) + 2)) * 2);
-//
-//	texCoord2 = vec2(aTexCoord.x * compositeType_2[1] / columns + (column / columns), aTexCoord.y * compositeType_2[0] * -1 / rows + (row / rows));
 
 	//Outline handling
 	inlineColor = aInlineColor;

@@ -209,7 +209,7 @@ namespace Empyrean.Engine_Classes.Rendering
         }
         public static void RenderQueuedUI()
         {
-            Renderer.RenderObjectsInstancedGeneric(_UIToRender, ref Renderer._instancedRenderArray, null, true, false);
+            Renderer.RenderObjectsInstancedGeneric(_UIToRender, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
             _UIToRender.Clear();
         }
 
@@ -224,7 +224,7 @@ namespace Empyrean.Engine_Classes.Rendering
         {
             for(int i = 0; i < _ObjectsToRender.Count; i++)
             {
-                Renderer.RenderObjectsInstancedGeneric(_ObjectsToRender[i], ref Renderer._instancedRenderArray);
+                Renderer.RenderObjectsInstancedGeneric(_ObjectsToRender[i], ref Renderer._instancedRenderArray, deferredShading: false);
             }
             _ObjectsToRender.Clear();
         }
@@ -263,7 +263,7 @@ namespace Empyrean.Engine_Classes.Rendering
         {
             for(int i = 0; i < _TilesToRender.Count; i++)
             {
-                Renderer.RenderObjectsInstancedGeneric(_TilesToRender[i], ref Renderer._instancedRenderArray);
+                Renderer.RenderObjectsInstancedGeneric(_TilesToRender[i], ref Renderer._instancedRenderArray, deferredShading: false);
             }
 
             _TilesToRender.Clear();
@@ -305,7 +305,7 @@ namespace Empyrean.Engine_Classes.Rendering
         {
             for (int i = 0; i < _LowPriorityQueue.Count; i++)
             {
-                Renderer.RenderObjectsInstancedGeneric(_LowPriorityQueue[i], ref Renderer._instancedRenderArray);
+                Renderer.RenderObjectsInstancedGeneric(_LowPriorityQueue[i], ref Renderer._instancedRenderArray, deferredShading: false);
             }
 
             _LowPriorityQueue.Clear();
@@ -448,7 +448,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
         public static void RenderFogQuad()
         {
-            Renderer.RenderObjectsInstancedGeneric(_fogQuad, ref Renderer._instancedRenderArray);
+            Renderer.RenderObjectsInstancedGeneric(_fogQuad, ref Renderer._instancedRenderArray, deferredShading: false);
         }
 
         public static void ClearFogQuad()

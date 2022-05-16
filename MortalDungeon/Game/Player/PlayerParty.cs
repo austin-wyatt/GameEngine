@@ -97,8 +97,8 @@ namespace Empyrean.Game.Player
                 }
                 else
                 {
+                    PrimaryUnit.SetPositionOffset(validTiles[tileIndex++].Position);
                     PrimaryUnit.SetTileMapPosition(validTiles[tileIndex++]);
-                    PrimaryUnit.SetPositionOffset(PrimaryUnit.Info.TileMapPosition.Position);
                 }
             }
 
@@ -112,8 +112,8 @@ namespace Empyrean.Game.Player
                     }
                     else
                     {
+                        unit.SetPositionOffset(validTiles[tileIndex++].Position);
                         unit.SetTileMapPosition(validTiles[tileIndex++]);
-                        unit.SetPositionOffset(unit.Info.TileMapPosition.Position);
                     }
                 }
             }

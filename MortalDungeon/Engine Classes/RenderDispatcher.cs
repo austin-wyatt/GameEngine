@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace Empyrean.Engine_Classes
 {
@@ -12,9 +13,20 @@ namespace Empyrean.Engine_Classes
 
         public void DispatchAction(object source, Action action)
         {
-            lock (_dispatchLock)
+            if(Thread.CurrentThread.ManagedThreadId != WindowConstants.MainThreadId)
             {
-                if(_actionsToDispatch.TryAdd(source, action) && !_batched)
+                lock (_dispatchLock)
+                {
+                    if (_actionsToDispatch.TryAdd(source, action) && !_batched)
+                    {
+                        Window.QueueToRenderCycle(BatchActions);
+                        _batched = true;
+                    }
+                }
+            }
+            else
+            {
+                if (_actionsToDispatch.TryAdd(source, action) && !_batched)
                 {
                     Window.QueueToRenderCycle(BatchActions);
                     _batched = true;

@@ -295,7 +295,7 @@ namespace Empyrean.Game.UI
 
             campButton.Click += (s, e) =>
             {
-                if (!Scene.InCombat) 
+                if (!Scene.InCombat || true) 
                 {
                     foreach(var unit in PlayerParty.UnitsInParty) 
                     {

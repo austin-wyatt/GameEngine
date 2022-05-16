@@ -64,11 +64,11 @@ namespace Empyrean.Game.Abilities
             
             if(_immediateHoverTile != null)
             {
-                EvaluateHoverPath(_immediateHoverTile, _immediateHoverTile.TileMap, true);
+                EvaluateHoverPath(_immediateHoverTile, _immediateHoverTile.TileMap);
             }
             else if(Scene._tileMapController._hoveredTile != null)
             {
-                EvaluateHoverPath(Scene._tileMapController._hoveredTile, Scene._tileMapController._hoveredTile.TileMap, true);
+                EvaluateHoverPath(Scene._tileMapController._hoveredTile, Scene._tileMapController._hoveredTile.TileMap);
             }
         }
 
@@ -140,6 +140,7 @@ namespace Empyrean.Game.Abilities
                     PropertyAnimation moveAnimation = new PropertyAnimation(CastingUnit.BaseObjects[0].BaseFrame);
 
                     //float speed = CastingUnit.Info.Speed;
+                    //speed = 1f;
                     speed = 0.2f;
 
                     Vector3 tileAPosition = tiles[0].Position;
@@ -204,6 +205,7 @@ namespace Empyrean.Game.Abilities
                                 return;
                             }
 
+                            CastingUnit.SetPositionOffset(currentTile._position);
                             CastingUnit.SetTileMapPosition(currentTile);
 
                             Sound sound = currentTile.Properties.Type.SimplifiedType().FootstepSound();
@@ -407,7 +409,7 @@ namespace Empyrean.Game.Abilities
 
             if (ignoreRange)
             {
-                range = 1000;
+                range = 100;
             }
 
             int j;

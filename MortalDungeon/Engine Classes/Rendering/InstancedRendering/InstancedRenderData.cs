@@ -19,7 +19,7 @@ namespace Empyrean.Engine_Classes.Rendering
         public int ElementBuffer;
         public int InstancedDataBuffer;
 
-        public Shader Shader = Shaders.FAST_DEFAULT_SHADER;
+        public Shader Shader = Shaders.FAST_DEFAULT_SHADER_DEFERRED;
 
         public bool EnableLighting = false;
 
@@ -146,10 +146,10 @@ namespace Empyrean.Engine_Classes.Rendering
 
                                     int texIndex = (int)currentTextureUnit - 33984;
                                     int materialIndex = texIndex > 0 ? texIndex - 1 : 0;
-                                    Shaders.FAST_DEFAULT_SHADER.SetInt(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
-                                    Shaders.FAST_DEFAULT_SHADER.SetInt(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                    Shaders.FAST_DEFAULT_SHADER_DEFERRED.SetInt(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                    Shaders.FAST_DEFAULT_SHADER_DEFERRED.SetInt(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
                                     //Shaders.FAST_DEFAULT_SHADER.SetInt($"material[{materialIndex}].specular", 15);
-                                    Shaders.FAST_DEFAULT_SHADER.SetFloat(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+                                    Shaders.FAST_DEFAULT_SHADER_DEFERRED.SetFloat(Renderer.MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                     currentTextureUnit++;
                                 }

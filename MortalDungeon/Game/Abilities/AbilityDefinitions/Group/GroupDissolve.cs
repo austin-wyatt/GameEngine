@@ -22,6 +22,8 @@ namespace Empyrean.Game.Abilities.AbilityDefinitions
 
             RefreshFooterOnFinish = false;
 
+            SelectionInfo = new SelectionInfo(this);
+
             SelectionInfo.CanSelectTiles = false;
 
             MaxCharges = -1;

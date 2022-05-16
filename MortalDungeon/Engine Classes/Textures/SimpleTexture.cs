@@ -19,6 +19,8 @@ namespace Empyrean.Engine_Classes
         public bool GenerateMipMaps = true;
         public bool Nearest = true;
 
+        public TextureWrapType WrapType = TextureWrapType.Repeat;
+
         public SimpleTexture(Spritesheet spritesheet)
         {
             if(spritesheet != null)

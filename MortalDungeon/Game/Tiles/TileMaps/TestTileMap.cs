@@ -74,17 +74,17 @@ namespace Empyrean.Game.Tiles.TileMaps
 
                     tilePosition.Y += tileDim.Y;
 
-                    if (WindowConstants.InMainThread(Thread.CurrentThread))
-                    {
-                        Renderer.LoadTextureFromSimple(tile.Properties.DisplayInfo.Texture);
-                    }
-                    else
-                    {
-                        AsyncSignal textureSignal = new AsyncSignal();
-                        tileTextureSignals.Add(textureSignal);
+                    //if (WindowConstants.InMainThread(Thread.CurrentThread))
+                    //{
+                    //    Renderer.LoadTextureFromSimple(tile.Properties.DisplayInfo.Texture);
+                    //}
+                    //else
+                    //{
+                    //    AsyncSignal textureSignal = new AsyncSignal();
+                    //    tileTextureSignals.Add(textureSignal);
 
-                        TextureLoadBatcher.LoadTexture(tile.Properties.DisplayInfo.Texture, textureSignal);
-                    }
+                    //    TextureLoadBatcher.LoadTexture(tile.Properties.DisplayInfo.Texture, textureSignal);
+                    //}
                 }
                 tilePosition.X = (i + 1) * tileDim.X * 0.75f;
                 tilePosition.Y = ((i + 1) % 2 == 0 ? 0 : tileDim.Y * -0.5f); 
@@ -92,18 +92,13 @@ namespace Empyrean.Game.Tiles.TileMaps
 
             tilePosition.Z += 0.03f;
 
-            for(int i = 0; i < tileTextureSignals.Count; i++)
-            {
-                tileTextureSignals[i].Wait();
-                tileTextureSignals[i].Dispose();
-            }
+            //for(int i = 0; i < tileTextureSignals.Count; i++)
+            //{
+            //    tileTextureSignals[i].Wait();
+            //    tileTextureSignals[i].Dispose();
+            //}
         }
 
-
-        public override void OnAddedToController()
-        {
-            base.OnAddedToController();
-        }
 
         public override void PopulateFeatures()
         {

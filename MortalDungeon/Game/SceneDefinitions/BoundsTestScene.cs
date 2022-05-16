@@ -4,7 +4,6 @@ using Empyrean.Engine_Classes.Rendering;
 using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Events;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Player;
 using Empyrean.Game.Tiles;

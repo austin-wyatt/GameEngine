@@ -188,8 +188,8 @@ namespace Empyrean.Game.Abilities
 
         public Buff(Buff buff)
         {
-            BuffEffects = buff.BuffEffects;
-            _buffEffects = buff._buffEffects;
+            BuffEffects = new Dictionary<int, float>(buff.BuffEffects);
+            _buffEffects = new DeserializableDictionary<int, float>(buff._buffEffects);
 
             Invisible = buff.Invisible;
             Duration = buff.Duration;

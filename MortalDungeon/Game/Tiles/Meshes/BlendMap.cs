@@ -127,13 +127,13 @@ namespace Empyrean.Game.Tiles.Meshes
         {
             if (Thread.CurrentThread.ManagedThreadId == WindowConstants.MainThreadId)
             {
-                Texture.UpdateFromBitmap(DirectBitmap.Bitmap);
+                Texture.UpdateFromDirectBitmap(DirectBitmap);
             }
             else
             {
                 Window.QueueToRenderCycle(() =>
                 {
-                    Texture.UpdateFromBitmap(DirectBitmap.Bitmap);
+                    Texture.UpdateFromDirectBitmap(DirectBitmap);
                 });
             }
         }

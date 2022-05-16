@@ -44,7 +44,7 @@ namespace Empyrean.Engine_Classes
         {
             Character = character;
 
-            RenderableObject letterDisplay = new RenderableObject(new SpritesheetObject((int)Character, Spritesheets.CharacterSheetSDF).CreateObjectDefinition(ObjectIDs.CHARACTER), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER);
+            RenderableObject letterDisplay = new RenderableObject(new SpritesheetObject((int)Character, Spritesheets.CharacterSheetSDF).CreateObjectDefinition(ObjectIDs.CHARACTER), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
             Animation Idle = new Animation()
             {

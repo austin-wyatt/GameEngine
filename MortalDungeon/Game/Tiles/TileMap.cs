@@ -192,9 +192,9 @@ namespace Empyrean.Game.Tiles
             return TileChunks[x * ChunksPerTileMap.Y + y];
         }
 
-        public void UpdateChunks(TileUpdateType tileUpdateType) 
+        public void UpdateChunks(TileUpdateType tileUpdateType, bool overrideTileMapLoadBlock = false) 
         {
-            if (!TileMapManager.Scene.ContextManager.GetFlag(Engine_Classes.Scenes.GeneralContextFlags.TileMapManagerLoading))
+            if (!(TileMapManager.Scene.ContextManager.GetFlag(Engine_Classes.Scenes.GeneralContextFlags.TileMapManagerLoading) && !overrideTileMapLoadBlock))
             {
                 for (int i = 0; i < TileChunks.Count; i++)
                 {
@@ -469,6 +469,20 @@ namespace Empyrean.Game.Tiles
                         tileList.Add(neighbors[j]);
                     }
                 }
+            }
+
+            return tileList;
+        }
+
+        public List<Tile> GetTilesInRadius(Tile tile, int radius)
+        {
+            List<Tile> tileList = new List<Tile>();
+
+            tileList.Add(tile);
+
+            for(int i = 1; i <= radius; i++)
+            {
+                GetRingOfTiles(tile, tileList, i);
             }
 
             return tileList;
@@ -1138,6 +1152,10 @@ namespace Empyrean.Game.Tiles
             return new FeaturePoint(X * TileMapManager.TILE_MAP_DIMENSIONS.X, Y * TileMapManager.TILE_MAP_DIMENSIONS.Y);
         }
 
+        public Vector2i ToVector2i()
+        {
+            return new Vector2i(X, Y);
+        }
         public override string ToString()
         {
             return "TileMapPoint {" + X + ", " + Y + "}";

@@ -1,5 +1,4 @@
-﻿using Empyrean.Game.GameObjects;
-using Empyrean.Game.Objects;
+﻿using Empyrean.Game.Objects;
 using Empyrean.Game.Tiles;
 using Empyrean.Game.UI;
 using Empyrean.Game.Units;
@@ -17,6 +16,7 @@ namespace Empyrean.Engine_Classes.Rendering
     {
         public static float TextAlphaThreshold = 0.5f;
         public static float DefaultAlphaThreshold = 0.15f;
+        //public static float DefaultAlphaThreshold = 0.3f;
         public static Vector3 LightPosition = new Vector3();
         public static Vector4 LightColor = new Vector4();
     }
@@ -56,6 +56,8 @@ namespace Empyrean.Engine_Classes.Rendering
         public static FrameBufferObject StageTwoFBO;
 
         public static List<FrameBufferObject> _fbos = new List<FrameBufferObject>();
+
+        public static GBuffer GBuffer;
 
         public static int DrawCount = 0;
         public static int FPSCount = 0;
@@ -144,7 +146,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
 
             //set the texture uniform locations
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shaders.FAST_DEFAULT_SHADER_DEFERRED.Use();
             //int tex0Location = GL.GetUniformLocation(Shaders.FAST_DEFAULT_SHADER.Handle, "texture0");
             //int tex1Location = GL.GetUniformLocation(Shaders.FAST_DEFAULT_SHADER.Handle, "texture1");
             //int tex2Location = GL.GetUniformLocation(Shaders.FAST_DEFAULT_SHADER.Handle, "texture2");
@@ -162,6 +164,8 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.Uniform1(uniformLocation, 0);
 
             Shaders.PARTICLE_SHADER.Use();
+
+            GBuffer = new GBuffer();
         }
 
         public static void RenderObject(BaseObject obj, bool setVertexData = true, bool setTextureData = true, bool setCam = true, bool setColor = true)
@@ -251,17 +255,18 @@ namespace Empyrean.Engine_Classes.Rendering
 
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Display.Stride, 0); //vertex data
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, Display.Stride, 3 * FLOAT_SIZE); //Texture coordinate data
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Display.Stride, 5 * FLOAT_SIZE); //Normal coordinate data
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instancedArrayBuffer);
 
-            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, particleDataLength, 0);                  //| Transformation matrix data
-            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, particleDataLength, 4 * FLOAT_SIZE);  //|
-            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, particleDataLength, 8 * FLOAT_SIZE);  //|
-            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, particleDataLength, 12 * FLOAT_SIZE); //|
+            GL.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, particleDataLength, 0);                  //| Transformation matrix data
+            GL.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, particleDataLength, 4 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, particleDataLength, 8 * FLOAT_SIZE);  //|
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, particleDataLength, 12 * FLOAT_SIZE); //|
 
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, particleDataLength, 16 * FLOAT_SIZE); //Color data
-            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, particleDataLength, 20 * FLOAT_SIZE); //empty + spritesheet position + side lengths X and Y
-            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, particleDataLength, 24 * FLOAT_SIZE); //Spritesheet X + Spritesheet Y
+            GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, particleDataLength, 16 * FLOAT_SIZE); //Color data
+            GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, particleDataLength, 20 * FLOAT_SIZE); //empty + spritesheet position + side lengths X and Y
+            GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, particleDataLength, 24 * FLOAT_SIZE); //Spritesheet X + Spritesheet Y
         }
 
         public static void InsertDataIntoInstancedRenderArray(BaseObject obj, MultiTextureData renderingData, ref float[] _instancedRenderArray, ref int currIndex, int textureTarget)
@@ -303,7 +308,8 @@ namespace Empyrean.Engine_Classes.Rendering
 
         private static ObjectPool<Dictionary<int, TextureUnit>> _usedTexturesPool = new ObjectPool<Dictionary<int, TextureUnit>>();
         private static ObjectPool<Dictionary<Texture, TextureUnit>> _textureReferencesPool = new ObjectPool<Dictionary<Texture, TextureUnit>>();
-        public static void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true) where T : GameObject
+        public static void RenderObjectsInstancedGeneric<T>(List<T> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, 
+            bool enableLighting = true, bool deferredShading = true) where T : GameObject
         {
             if (objects.Count == 0)
                 return;
@@ -311,7 +317,18 @@ namespace Empyrean.Engine_Classes.Rendering
             if (objects[0] == null)
                 return;
 
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shader shader;
+
+            if (deferredShading)
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_DEFERRED;
+            }
+            else
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_IMMEDIATE;
+            }
+
+            shader.Use();
 
             RenderableObject Display = null;
 
@@ -336,9 +353,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            shader.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
 
             //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
@@ -396,7 +413,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         textureReferences.Clear();
                         usedTextures.Clear();
 
-                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting, deferredShading: deferredShading);
 
                         currentTextureUnit = TextureUnit.Texture0;
                         currTexture = int.MaxValue;
@@ -453,9 +470,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
                                             int texIndex = (int)currentTextureUnit - 33984;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            shader.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                             currentTextureUnit++;
                                         }
@@ -485,7 +502,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting, deferredShading: deferredShading);
             }
 
             usedTextures.Clear();
@@ -498,7 +515,8 @@ namespace Empyrean.Engine_Classes.Rendering
         #region render objects instanced generic copies
         #region game object
         private static ObjectPool<List<GameObject>> _gameObjectListPool = new ObjectPool<List<GameObject>>();
-        public static void RenderObjectsInstancedGeneric(List<GameObject> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        public static void RenderObjectsInstancedGeneric(List<GameObject> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, 
+            bool enableLighting = true, bool deferredShading = true)
         {
             if (objects.Count == 0)
                 return;
@@ -506,7 +524,18 @@ namespace Empyrean.Engine_Classes.Rendering
             if (objects[0] == null)
                 return;
 
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shader shader;
+
+            if (deferredShading)
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_DEFERRED;
+            }
+            else
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_IMMEDIATE;
+            }
+
+            shader.Use();
 
             RenderableObject Display = null;
 
@@ -531,9 +560,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            shader.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
 
             //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
@@ -591,7 +620,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         textureReferences.Clear();
                         usedTextures.Clear();
 
-                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting, deferredShading: deferredShading);
 
                         currentTextureUnit = TextureUnit.Texture0;
                         currTexture = int.MaxValue;
@@ -648,9 +677,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
                                             int texIndex = (int)currentTextureUnit - 33984;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            shader.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                             currentTextureUnit++;
                                         }
@@ -680,7 +709,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting, deferredShading: deferredShading);
             }
 
             usedTextures.Clear();
@@ -699,7 +728,8 @@ namespace Empyrean.Engine_Classes.Rendering
 
         #region UI object
         private static ObjectPool<List<UIObject>> _uiObjectListPool = new ObjectPool<List<UIObject>>();
-        public static void RenderObjectsInstancedGeneric(List<UIObject> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        public static void RenderObjectsInstancedGeneric(List<UIObject> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, 
+            bool enableLighting = true, bool deferredShading = true)
         {
             if (objects.Count == 0)
                 return;
@@ -707,7 +737,18 @@ namespace Empyrean.Engine_Classes.Rendering
             if (objects[0] == null)
                 return;
 
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shader shader;
+
+            if (deferredShading)
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_DEFERRED;
+            }
+            else
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_IMMEDIATE;
+            }
+
+            shader.Use();
 
             RenderableObject Display = null;
 
@@ -732,9 +773,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            shader.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
 
             //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
@@ -792,7 +833,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         textureReferences.Clear();
                         usedTextures.Clear();
 
-                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting, deferredShading: deferredShading);
 
                         currentTextureUnit = TextureUnit.Texture0;
                         currTexture = int.MaxValue;
@@ -849,9 +890,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
                                             int texIndex = (int)currentTextureUnit - 33984;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            shader.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                             currentTextureUnit++;
                                         }
@@ -881,7 +922,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting, deferredShading: deferredShading);
             }
 
             usedTextures.Clear();
@@ -900,7 +941,8 @@ namespace Empyrean.Engine_Classes.Rendering
 
         #region base tile
         private static ObjectPool<List<BaseTile>> _baseTileListPool = new ObjectPool<List<BaseTile>>();
-        public static void RenderObjectsInstancedGeneric(List<BaseTile> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        public static void RenderObjectsInstancedGeneric(List<BaseTile> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, 
+            bool enableLighting = true, bool deferredShading = true)
         {
             if (objects.Count == 0)
                 return;
@@ -908,7 +950,18 @@ namespace Empyrean.Engine_Classes.Rendering
             if (objects[0] == null)
                 return;
 
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shader shader;
+
+            if (deferredShading)
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_DEFERRED;
+            }
+            else
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_IMMEDIATE;
+            }
+
+            shader.Use();
 
             RenderableObject Display = null;
 
@@ -933,9 +986,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            shader.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
 
             //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
@@ -993,7 +1046,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         textureReferences.Clear();
                         usedTextures.Clear();
 
-                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting, deferredShading: deferredShading);
 
                         currentTextureUnit = TextureUnit.Texture0;
                         currTexture = int.MaxValue;
@@ -1050,9 +1103,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
                                             int texIndex = (int)currentTextureUnit - 33984;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            shader.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                             currentTextureUnit++;
                                         }
@@ -1082,7 +1135,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting, deferredShading: deferredShading);
             }
 
             usedTextures.Clear();
@@ -1101,7 +1154,8 @@ namespace Empyrean.Engine_Classes.Rendering
 
         #region unit
         private static ObjectPool<List<Unit>> _unitListPool = new ObjectPool<List<Unit>>();
-        public static void RenderObjectsInstancedGeneric(List<Unit> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, bool enableLighting = true)
+        public static void RenderObjectsInstancedGeneric(List<Unit> objects, ref float[] _instancedRenderDataArray, RenderableObject display = null, bool instantiateRenderFunc = true, 
+            bool enableLighting = true, bool deferredShading = true)
         {
             if (objects.Count == 0)
                 return;
@@ -1109,7 +1163,18 @@ namespace Empyrean.Engine_Classes.Rendering
             if (objects[0] == null)
                 return;
 
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shader shader;
+
+            if (deferredShading)
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_DEFERRED;
+            }
+            else
+            {
+                shader = Shaders.FAST_DEFAULT_SHADER_IMMEDIATE;
+            }
+
+            shader.Use();
 
             RenderableObject Display = null;
 
@@ -1134,9 +1199,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
             int currTexture = Display.Textures.TextureIds[0];
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
-            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[0], 0);
+            shader.SetInt(MATERIAL_SHADER_STRINGS[1], 0);
+            shader.SetFloat(MATERIAL_SHADER_STRINGS[2], 16);
 
             //Shaders.FAST_DEFAULT_SHADER.SetInt("texture1", 1);
 
@@ -1194,7 +1259,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         textureReferences.Clear();
                         usedTextures.Clear();
 
-                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting);
+                        RenderObjectsInstancedGeneric(scissorCallList, ref _instancedRenderDataArray, null, false, enableLighting, deferredShading: deferredShading);
 
                         currentTextureUnit = TextureUnit.Texture0;
                         currTexture = int.MaxValue;
@@ -1251,9 +1316,9 @@ namespace Empyrean.Engine_Classes.Rendering
 
                                             int texIndex = (int)currentTextureUnit - 33984;
 
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
-                                            Shaders.FAST_DEFAULT_SHADER.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3], texIndex);
+                                            shader.SetInt(MATERIAL_SHADER_STRINGS[texIndex * 3 + 1], texIndex);
+                                            shader.SetFloat(MATERIAL_SHADER_STRINGS[texIndex * 3 + 2], 16);
 
                                             currentTextureUnit++;
                                         }
@@ -1283,7 +1348,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             if (recursiveCallList.Count > 0)
             {
-                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting);
+                RenderObjectsInstancedGeneric(recursiveCallList, ref _instancedRenderDataArray, enableLighting: enableLighting, deferredShading: deferredShading);
             }
 
             usedTextures.Clear();
@@ -1351,7 +1416,7 @@ namespace Empyrean.Engine_Classes.Rendering
             if (objects.Count == 0)
                 return;
 
-            Shaders.FAST_DEFAULT_SHADER.Use();
+            Shaders.FAST_DEFAULT_SHADER_DEFERRED.Use();
 
             RenderableObject Display;
 
@@ -1508,6 +1573,58 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
+        public static void RenderGBuffer(GBuffer frameBuffer)
+        {
+            frameBuffer.BindForReading();
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+
+            Shaders.DEFERRED_LIGHTING_SHADER.Use();
+
+            //Bind the texture that the objects were rendered on to
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, frameBuffer.ColorTextureHandle);
+
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.Texture2D, frameBuffer.PositionTextureHandle);
+
+            GL.ActiveTexture(TextureUnit.Texture2);
+            GL.BindTexture(TextureTarget.Texture2D, frameBuffer.NormalTextureHandle);
+
+            Shaders.DEFERRED_LIGHTING_SHADER.SetInt("gColor", 0);
+            Shaders.DEFERRED_LIGHTING_SHADER.SetInt("gPosition", 1);
+            Shaders.DEFERRED_LIGHTING_SHADER.SetInt("gNormal", 2);
+
+            //empty out the depth buffer for when we reuse this frame buffer
+            //frameBuffer.ClearBuffers();
+
+            //bind the current frame buffer to either the destination buffer if passed or the default buffer if not
+
+            #region Render quad with the frame buffer texture
+            GL.EnableVertexAttribArray(0);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, FLOAT_SIZE * g_quad_vertex_buffer_data.Length, g_quad_vertex_buffer_data, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * FLOAT_SIZE, 0);
+            GL.EnableVertexAttribArray(0);
+
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            #endregion
+
+            FramebufferErrorCode errorTest = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+
+            if (errorTest != FramebufferErrorCode.FramebufferComplete)
+            {
+                Console.WriteLine("Error in RenderFrameBuffer: " + errorTest);
+            }
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+        }
+
         public static void DrawToFrameBuffer(FrameBufferObject frameBuffer) 
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer.FrameBuffer);
@@ -1526,9 +1643,11 @@ namespace Empyrean.Engine_Classes.Rendering
 
             RenderableObject Display = generator.ParticleDisplay;
 
+            PrepareParticleRenderFunc(Display);
+
             Display.Material.Diffuse.Use(TextureUnit.Texture0);
 
-            PrepareParticleRenderFunc(Display);
+            Shaders.PARTICLE_SHADER.SetInt("tex", 0);
 
             int currIndex = 0;
 
@@ -1967,7 +2086,8 @@ namespace Empyrean.Engine_Classes.Rendering
             {
                 if (!_loadedTextures.TryGetValue(simp.TextureId, out int handle))
                 {
-                    Texture newTexture = Texture.LoadFromFile(simp.FileName, nearest: simp.Nearest, generateMipMaps: simp.GenerateMipMaps);
+                    Texture newTexture = Texture.LoadFromFile(simp.FileName, nearest: simp.Nearest, generateMipMaps: simp.GenerateMipMaps, 
+                        wrapType: simp.WrapType);
                     newTexture.TextureId = simp.TextureId;
 
                     _textures.Add(newTexture);
@@ -2083,6 +2203,7 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.EnableVertexAttribArray(6);
             GL.EnableVertexAttribArray(7);
             GL.EnableVertexAttribArray(8);
+            GL.EnableVertexAttribArray(9);
             GL.VertexAttribDivisor(1, 0);
             GL.VertexAttribDivisor(2, 1);
             GL.VertexAttribDivisor(3, 1);
@@ -2091,6 +2212,7 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.VertexAttribDivisor(6, 1);
             GL.VertexAttribDivisor(7, 1);
             GL.VertexAttribDivisor(8, 1);
+            GL.VertexAttribDivisor(9, 1);
         }
         public static void DisableParticleShaderAttributes()
         {
@@ -2101,6 +2223,7 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.DisableVertexAttribArray(6);
             GL.DisableVertexAttribArray(7);
             GL.DisableVertexAttribArray(8);
+            GL.DisableVertexAttribArray(9);
             GL.VertexAttribDivisor(2, 0);
             GL.VertexAttribDivisor(3, 0);
             GL.VertexAttribDivisor(4, 0);
@@ -2108,6 +2231,7 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.VertexAttribDivisor(6, 0);
             GL.VertexAttribDivisor(7, 0);
             GL.VertexAttribDivisor(8, 0);
+            GL.VertexAttribDivisor(9, 0);
         }
 
         public static void InsertMatrixDataIntoArray(ref float[] arr, ref Matrix4 mat, int currIndex)

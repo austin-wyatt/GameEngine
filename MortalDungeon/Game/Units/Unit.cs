@@ -6,7 +6,6 @@ using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Abilities;
 using Empyrean.Game.Entities;
 using Empyrean.Game.Events;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Items;
 using Empyrean.Game.Ledger;
 using Empyrean.Game.Ledger.Units;
@@ -62,7 +61,7 @@ namespace Empyrean.Game.Units
         public Vector3 TileOffset = new Vector3();
         public Vector3 SelectionTileOffset = new Vector3();
 
-        public UnitSelectionTile SelectionTile;
+        public IndividualMesh SelectionIndicator;
 
         public bool _createStatusBar = false;
         public int _xRotation = 25;
@@ -120,7 +119,7 @@ namespace Empyrean.Game.Units
         /// <summary>
         /// The calculated tile offset of the unit to place its bottom center point in a tile
         /// </summary>
-        private Vector3 _innateTileOffset = new Vector3();
+        public Vector3 _innateTileOffset = new Vector3();
 
         /// <summary>
         /// Create and add the base object to the unit
@@ -133,7 +132,8 @@ namespace Empyrean.Game.Units
             BaseObject obj = CreateBaseObject();
             obj.BaseFrame.CameraPerspective = true;
             obj.BaseFrame.ScaleAll(_scale);
-            obj.BaseFrame.RotateX(_xRotation);
+            //obj.BaseFrame.RotateX(_xRotation);
+            obj.BaseFrame.RotateX(50);
             //obj.BaseFrame.RotateZ(MathHelper.RadiansToDegrees(Scene._camera.CameraAngle));
 
             AddBaseObject(obj);
@@ -171,7 +171,6 @@ namespace Empyrean.Game.Units
             //TEMP
             //_innateTileOffset.Z += 0.01f;
 
-            CalculateSelectionTileOffset();
             SetPositionOffset(_actualPosition);
         }
 
@@ -184,17 +183,10 @@ namespace Empyrean.Game.Units
             Position = new Vector3();
 
             
-            SelectionTile = new UnitSelectionTile(this, new Vector3(0, 0, 0));
-            SetSelectionTileColor();
-
-            SelectionTile.SetRender(false);
-
             if (VisionGenerator.Team != UnitTeam.Unknown && !Scene.UnitVisionGenerators.Contains(VisionGenerator)) 
             {
                 Scene.AddVisionGenerator(VisionGenerator);
             }
-
-            Scene._genericObjects.Add(SelectionTile);
 
             InitializeVisualComponent();
 
@@ -214,14 +206,13 @@ namespace Empyrean.Game.Units
 
             if (placeOnTileMap)
             {
-                SetTileMapPosition(TileMapHelpers.GetTile(position));
-
-                SetPositionOffset(Info.TileMapPosition.Position);
+                var tile = TileMapHelpers.GetTile(position);
+                SetPositionOffset(tile.Position);
+                SetTileMapPosition(tile);
             }
 
             ApplyAbilityLoadout();
 
-            CalculateSelectionTileOffset();
 
             if (Info.Dead)
             {
@@ -232,7 +223,7 @@ namespace Empyrean.Game.Units
 
             if (PermanentId.Id != 0)
             {
-                PermanentUnitInfoLedger.SetParameterValue(PermanentId.Id, PermanentUnitInfoParameter.Loaded, 0);
+                PermanentUnitInfoLedger.SetParameterValue(PermanentId.Id, PermanentUnitInfoParameter.Loaded, 1);
 
                 if (Info.Dead)
                 {
@@ -245,25 +236,6 @@ namespace Empyrean.Game.Units
             }
         }
 
-        private void CalculateSelectionTileOffset()
-        {
-            if (SelectionTileOffset == null || SelectionTile == null)
-                return;
-
-            SelectionTile.UnitOffset.X = 0;
-            SelectionTile.UnitOffset.Y = 0;
-            SelectionTile.UnitOffset.Z = 0;
-
-            if (SelectionTileOffset.Z != 0)
-            {
-                SelectionTile.UnitOffset = SelectionTileOffset;
-            }
-
-            SelectionTile.UnitOffset.Y -= _innateTileOffset.Y;
-            SelectionTile.UnitOffset.Z -= _innateTileOffset.Z - 0.005f;
-
-            SelectionTile.SetPosition(Position);
-        }
 
         public virtual void EntityUnload() 
         {
@@ -415,13 +387,14 @@ namespace Empyrean.Game.Units
             Scene.Tick -= Tick;
 
             //remove the objects that are related to the unit but not created by the unit
-            Scene._genericObjects.Remove(SelectionTile);
             Scene._unitStatusBlock.RemoveChild(StatusBarComp);
 
-            SelectionTile?.CleanUp();
+            if(SelectionIndicator != null)
+            {
+                SelectionIndicatorManager.DeselectUnit(this);
+            }
 
             StatusBarComp = null;
-            SelectionTile = null;
 
             RemoveFromTile();
 
@@ -500,18 +473,21 @@ namespace Empyrean.Game.Units
 
         public void SetPositionOffset(Vector3 position)
         {
-            SetPosition(position + TileOffset + _innateTileOffset);
+            //_actualPosition = position;
+            position.X += TileOffset.X + _innateTileOffset.X;
+            position.Y += TileOffset.Y + _innateTileOffset.Y;
+            position.Z += TileOffset.Z + _innateTileOffset.Z;
 
-            _actualPosition = position;
+            SetPosition(position);
         }
 
         public void SetPositionOffset(float x, float y, float z)
         {
-            SetPosition(x + TileOffset.X + _innateTileOffset.X, y + TileOffset.Y + _innateTileOffset.Y, z + TileOffset.Z + _innateTileOffset.Z);
+            //_actualPosition.X = x;
+            //_actualPosition.Y = y;
+            //_actualPosition.Z = z;
 
-            _actualPosition.X = x;
-            _actualPosition.Y = y;
-            _actualPosition.Z = z;
+            SetPosition(x + TileOffset.X + _innateTileOffset.X, y + TileOffset.Y + _innateTileOffset.Y, z + TileOffset.Z + _innateTileOffset.Z);
         }
 
 
@@ -521,15 +497,19 @@ namespace Empyrean.Game.Units
         {
             base.SetPosition(position);
 
+            _actualPosition.X = position.X - (TileOffset.X + _innateTileOffset.X);
+            _actualPosition.Y = position.Y - (TileOffset.Y + _innateTileOffset.Y);
+            _actualPosition.Z = position.Z - (TileOffset.Z + _innateTileOffset.Z);
+
             if (StatusBarComp != null) 
             {
                 Scene.RenderDispatcher.DispatchAction(_statusBarBatchObj, () => StatusBarComp.UpdateUnitStatusPosition());
                 //StatusBarComp.UpdateUnitStatusPosition();
             }
 
-            if (SelectionTile != null) 
+            if(SelectionIndicator != null)
             {
-                SelectionTile.SetPosition(position);
+                SelectionIndicatorManager.UpdateIndicatorPosition(this);
             }
         }
 
@@ -537,40 +517,46 @@ namespace Empyrean.Game.Units
         {
             base.SetPosition(x, y, z);
 
+            _actualPosition.X = x - (TileOffset.X + _innateTileOffset.X);
+            _actualPosition.Y = y - (TileOffset.Y + _innateTileOffset.Y);
+            _actualPosition.Z = z - (TileOffset.Z + _innateTileOffset.Z);
+
             if (StatusBarComp != null)
             {
                 Scene.RenderDispatcher.DispatchAction(_statusBarBatchObj, () => StatusBarComp.UpdateUnitStatusPosition());
                 //StatusBarComp.UpdateUnitStatusPosition();
             }
 
-            if (SelectionTile != null)
+            if (SelectionIndicator != null)
             {
-                SelectionTile.SetPosition(x, y, z);
+                SelectionIndicatorManager.UpdateIndicatorPosition(this);
             }
         }
 
         public override void SetRender(bool render)
         {
+            bool prev = Render;
+
             base.SetRender(render);
 
-            if (StatusBarComp != null) 
+            if(prev != render)
             {
-                StatusBarComp.SetWillDisplay(render && !Info.Dead && Scene.DisplayUnitStatuses);
-            }
+                if (StatusBarComp != null)
+                {
+                    StatusBarComp.SetWillDisplay(render && !Info.Dead && Scene.DisplayUnitStatuses);
+                }
 
-            if (SelectionTile != null)
-            {
                 if (Targeted && render)
                 {
-                    SelectionTile.Target();
+                    SelectionIndicatorManager.TargetUnit(this);
                 }
                 else if (Selected && render)
                 {
-                    SelectionTile.Select();
+                    SelectionIndicatorManager.SelectUnit(this);
                 }
-                else
+                else if (SelectionIndicator != null && !Render)
                 {
-                    SelectionTile.SetRender(false);
+                    SelectionIndicatorManager.DeselectUnit(this);
                 }
             }
         }
@@ -588,6 +574,11 @@ namespace Empyrean.Game.Units
             UnitPositionManager.SetUnitPosition(this, tile);
 
             Info.TileMapPosition = tile;
+
+            if (SelectionIndicator != null)
+            {
+                SelectionIndicatorManager.UpdateIndicatorTilePosition(this);
+            }
 
             VisionGenerator.SetPosition(tile.TilePoint);
 
@@ -753,9 +744,12 @@ namespace Empyrean.Game.Units
         {
             AI.Team = team;
 
-            SetSelectionTileColor();
-
             UpdateStatusBarInfo();
+
+            if(SelectionIndicator != null)
+            {
+                SelectionIndicatorManager.UpdateIndicatorColor(this);
+            }
 
             VisionGenerator.Team = team;
         }
@@ -785,28 +779,6 @@ namespace Empyrean.Game.Units
         public void OnAbilitiesUpdated()
         {
             AbilitiesUpdated?.Invoke(this);
-        }
-
-        public void SetSelectionTileColor() 
-        {
-            if (SelectionTile == null)
-                return;
-
-            switch (UnitTeam.PlayerUnits.GetRelation(AI.Team))
-            {
-                case Relation.Friendly:
-                    SelectionTile.SetColor(new Vector4(0, 0.75f, 0, 1));
-                    break;
-                case Relation.Hostile:
-                    SelectionTile.SetColor(new Vector4(0.75f, 0, 0, 1));
-                    break;
-                case Relation.Neutral:
-                    SelectionTile.SetColor(_Colors.Tan);
-                    break;
-                default:
-                    SelectionTile.SetColor(new Vector4(0, 0, 0.75f, 1));
-                    break;
-            }
         }
 
         public virtual void SetShields(int shields) 
@@ -1243,19 +1215,14 @@ namespace Empyrean.Game.Units
 
         public void Select() 
         {
-            if (SelectionTile == null)
-                return;
+            SelectionIndicatorManager.SelectUnit(this);
 
-            SelectionTile.Select();
             Selected = true;
         }
 
         public void Deselect()
         {
-            if (SelectionTile == null)
-                return;
-
-            SelectionTile.Deselect();
+            SelectionIndicatorManager.DeselectUnit(this);
             Selected = false;
 
             if (Targeted)
@@ -1266,19 +1233,13 @@ namespace Empyrean.Game.Units
 
         public void Target() 
         {
-            if (SelectionTile == null)
-                return;
-
-            SelectionTile.Target();
+            SelectionIndicatorManager.TargetUnit(this);
             Targeted = true;
         }
 
         public void Untarget() 
         {
-            if (SelectionTile == null)
-                return;
-
-            SelectionTile.Untarget();
+            SelectionIndicatorManager.UntargetUnit(this);
             Targeted = false;
 
             if (Selected)

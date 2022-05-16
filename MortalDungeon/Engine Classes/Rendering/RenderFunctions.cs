@@ -136,16 +136,40 @@ namespace Empyrean.Engine_Classes.Rendering
 
         public static void DrawGame()
         {
-            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            Renderer.GBuffer.BindForWriting();
+            Renderer.GBuffer.BindForReading();
+            Renderer.GBuffer.Clear();
+
+
+            //GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
 
             //RenderingQueue.RenderTileQuadQueue();
             RenderingQueue.RenderInstancedTileData();
             //DrawFog();
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             
-            RenderingQueue.RenderQueuedObjects();
-            
             DrawUnits();
+
+            //GL.Disable(EnableCap.Blend);
+
+            Renderer.RenderGBuffer(Renderer.GBuffer);
+
+
+            Renderer.GBuffer.BindForReading();
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+
+            GL.Disable(EnableCap.FramebufferSrgb);
+            //copy depth and stencil values from GBuffer
+            GL.BlitFramebuffer(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y,
+                0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y,
+                ClearBufferMask.StencilBufferBit | ClearBufferMask.DepthBufferBit, BlitFramebufferFilter.Nearest);
+            GL.Enable(EnableCap.FramebufferSrgb);
+
+            Renderer.GBuffer.Unbind();
+
+            //GL.Enable(EnableCap.Blend);
+
+            RenderingQueue.RenderQueuedObjects();
 
             RenderingQueue.RenderTileQueue();
 
@@ -154,51 +178,58 @@ namespace Empyrean.Engine_Classes.Rendering
             RenderingQueue.RenderQueuedParticles();
 
             DrawFog();
+            //RenderingQueue.ClearFogQuad();
+
+            //Span<int> x = stackalloc int[10];
         }
 
 
         public static void DrawUnits() 
         {
-            GL.StencilOp(StencilOp.Keep, StencilOp.Incr, StencilOp.Keep);
+            //GL.StencilOp(StencilOp.Keep, StencilOp.Replace, StencilOp.Keep);
 
-            GL.Enable(EnableCap.StencilTest);
-            GL.StencilFunc(StencilFunction.Equal, 3, 0xFF);
+            //GL.Enable(EnableCap.StencilTest);
+            //GL.StencilFunc(StencilFunction.Equal, 7, 3);
 
+            //RenderingQueue.RenderQueuedUnits();
 
+            //GL.Disable(EnableCap.StencilTest);
             RenderingQueue.RenderQueuedUnits();
+            //GL.Enable(EnableCap.StencilTest);
 
+            //GL.Disable(EnableCap.DepthTest);
 
-            GL.Disable(EnableCap.StencilTest);
-            RenderingQueue.RenderQueuedUnits();
-            GL.Enable(EnableCap.StencilTest);
+            //GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+            //GL.StencilFunc(StencilFunction.Equal, 4, 4);
 
-            GL.Disable(EnableCap.DepthTest);
+            //RenderingQueue.RenderFogQuad();
 
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
-            GL.StencilFunc(StencilFunction.Equal, 4, 0xFF);
-
-            RenderingQueue.RenderFogQuad();
-
-            GL.Enable(EnableCap.DepthTest);
+            //GL.Enable(EnableCap.DepthTest);
             RenderingQueue.ClearUnitQueue();
 
-            GL.Disable(EnableCap.StencilTest);
+            //GL.Disable(EnableCap.StencilTest);
         }
 
         public static void DrawFog()
         {
+            //Renderer.GBuffer.BindForReading();
+            //GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+
             GL.Enable(EnableCap.StencilTest);
-            GL.StencilMask(3);
+            //GL.StencilMask(3);
             GL.StencilFunc(StencilFunction.Notequal, 1, 1);
 
             GL.Disable(EnableCap.DepthTest);
 
             RenderingQueue.RenderFogQuad();
+
             RenderingQueue.ClearFogQuad();
             GL.Disable(EnableCap.StencilTest);
 
 
             GL.Enable(EnableCap.DepthTest);
+
+            //GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
         }
 
         public static void DrawSkybox()

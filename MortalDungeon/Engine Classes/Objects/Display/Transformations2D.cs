@@ -14,12 +14,18 @@ namespace Empyrean.Engine_Classes
         public Matrix3 Scale = Matrix3.Identity;
         public Matrix3 Shear = Matrix3.Identity;
 
+        public Vector2 CurrentTranslation = new Vector2();
+
         public float CurrentRotation = 0;
+
 
         public void TranslateBy(Vector2 amount)
         {
             Translation.Row0.Z += amount.X;
             Translation.Row1.Z += amount.Y;
+
+            CurrentTranslation.X = Translation.Row0.Z;
+            CurrentTranslation.Y = Translation.Row1.Z;
 
             CalculateMatrix();
         }
@@ -28,6 +34,9 @@ namespace Empyrean.Engine_Classes
         {
             Translation.Row0.Z = amount.X;
             Translation.Row1.Z = amount.Y;
+
+            CurrentTranslation.X = Translation.Row0.Z;
+            CurrentTranslation.Y = Translation.Row1.Z;
 
             CalculateMatrix();
         }
@@ -51,18 +60,42 @@ namespace Empyrean.Engine_Classes
             CalculateMatrix();
         }
 
-        public void ScaleBy(Vector2 scale)
+        public void ScaleBy(Vector2 scale, Vector2 centerPoint = default)
         {
+            Matrix3 tempMatrix = Matrix3.Identity;
+
+            if (centerPoint.X != 0 || centerPoint.Y != 0)
+            {
+                tempMatrix.Row0.Z = centerPoint.X;
+                tempMatrix.Row1.Z = centerPoint.Y;
+                Scale.MultInPlace(ref tempMatrix);
+            }
+
             Scale.Row0.X += scale.X;
             Scale.Row1.Y += scale.Y;
 
+            if (centerPoint.X != 0 || centerPoint.Y != 0)
+            {
+                tempMatrix.Row0.Z = -centerPoint.X;
+                tempMatrix.Row1.Z = -centerPoint.Y;
+                Scale.MultInPlace(ref tempMatrix);
+            }
             CalculateMatrix();
         }
 
-        public void SetScale(Vector2 scale)
+        public void SetScale(Vector2 scale, Vector2 centerPoint = default)
         {
+            Matrix3 tempMatrix = Matrix3.Identity;
+            tempMatrix.Row0.Z = centerPoint.X;
+            tempMatrix.Row1.Z = centerPoint.Y;
+            Scale.MultInPlace(ref tempMatrix);
+
             Scale.Row0.X = scale.X;
             Scale.Row1.Y = scale.Y;
+
+            tempMatrix.Row0.Z = -centerPoint.X;
+            tempMatrix.Row1.Z = -centerPoint.Y;
+            Scale.MultInPlace(ref tempMatrix);
 
             CalculateMatrix();
         }
@@ -101,10 +134,16 @@ namespace Empyrean.Engine_Classes
 
         public void CalculateMatrix()
         {
-            Transformations = Translation * Shear * Scale * Rotation;
-            //Transformations = Translation;
+            Transformations = Matrix3.Identity;
+            Transformations.MultInPlace(ref Scale);
 
-            //Multiply order = translation * shear * scaling * rotation
+            Transformations.MultInPlace(ref Rotation);
+
+            Transformations.MultInPlace(ref Shear);
+
+            Transformations.MultInPlace(ref Translation);
+
+            //Multiply order = scaling * rotation * shear * translation
         }
     }
 }

@@ -241,5 +241,18 @@ namespace Empyrean.Game.Tiles
                 });
             }
         }
+
+        /// <summary>
+        /// Calculates of the global coordinates of the chunk
+        /// </summary>
+        /// <returns></returns>
+        public Vector2i GetGlobalChunkPoint()
+        {
+            Vector2i chunkPos = TileMap.TileMapCoords.ToVector2i() * TileMap.ChunksPerTileMap;
+            chunkPos.X += ChunkPosition.X;
+            chunkPos.Y += ChunkPosition.Y;
+
+            return chunkPos;
+        }
     }
 }

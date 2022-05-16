@@ -123,8 +123,8 @@ namespace Empyrean.Engine_Classes.Scenes
         {
             _fogQuad = new GameObject(Textures.GEN_AMBIENT_MAP, 0);
             _fogQuad.BaseObject.BaseFrame.CameraPerspective = false;
-            //_fogQuad.SetColor(new Vector4(0.25f, 0.25f, 0.3f, 0.5f));
-            _fogQuad.SetColor(new Vector4(0.25f, 0.25f, 0.3f, 0.5f));
+            _fogQuad.BaseObject.EnableLighting = true;
+            _fogQuad.SetColor(new Vector4(0.1f, 0.1f, 0.2f, 0.3f));
             _fogQuad.SetScale(3);
 
             _fogQuad.BaseObject.RenderData.AlphaThreshold = 0;
@@ -175,6 +175,8 @@ namespace Empyrean.Engine_Classes.Scenes
             //1200 ms per step puts us at around 10 minutse per day/night cycle
             DayNightCycle = new DayNightCycle(TimePassageRate, DayNightCycle.MiddayStart, this);
             TimedTickableObjects.Add(DayNightCycle);
+
+            Window.Scene = this;
         }
 
         public void SetTime(int time)

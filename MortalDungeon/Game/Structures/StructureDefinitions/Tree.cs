@@ -31,6 +31,8 @@ namespace Empyrean.Game.Structures
 
             Info.Height = 2;
 
+            BaseObject.RenderData.AlphaThreshold = 0.95f;
+
             tile.Properties.BlockingTypes.Add(BlockingType.Vision | BlockingType.Abilities);
         }
 

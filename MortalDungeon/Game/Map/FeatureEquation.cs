@@ -172,7 +172,6 @@ namespace Empyrean.Game.Map
                         }
 
                         building.SetPositionOffset(tile.Position + posDiff);
-
                         building.SetTileMapPosition(tile);
                         //}
                     }
@@ -205,8 +204,10 @@ namespace Empyrean.Game.Map
 
                 bool unitLoaded = PermanentUnitInfoLedger.GetParameterValue(featureUnit.PermanentId, PermanentUnitInfoParameter.Loaded) == 1;
 
+                bool unitLedgered = UnitPositionLedger.IsUnitLedgered(featureUnit.PermanentId);
+
                 #region Units
-                if (freshGeneration && unitAlive && !unitLoaded)
+                if (freshGeneration && unitAlive && !unitLoaded && !unitLedgered)
                 {
                     var unitInfo = UnitInfoBlockManager.GetUnit(featureUnit.UnitId);
 

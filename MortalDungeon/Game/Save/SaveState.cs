@@ -404,6 +404,19 @@ namespace Empyrean.Game.Save
             }
         }
 
+        public DeserializableDictionary(DeserializableDictionary<T, Y> dict)
+        {
+            for(int i = 0; i < dict.Keys.Count; i++)
+            {
+                Keys.Add(dict.Keys[i]);
+            }
+
+            for (int i = 0; i < dict.Values.Count; i++)
+            {
+                Values.Add(dict.Values[i]);
+            }
+        }
+
         public void FillDictionary(Dictionary<T, Y> dict)
         {
             for(int i = 0; i < Keys.Count; i++)

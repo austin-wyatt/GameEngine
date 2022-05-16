@@ -20,6 +20,8 @@ namespace Empyrean.Game.Abilities.AbilityDefinitions
 
             SelectedGroup = unitGroup;
 
+            SelectionInfo = new SelectionInfo(this);
+
             SelectionInfo.CanSelectTiles = true;
             SelectionInfo.UnitTargetParams.Self = UnitCheckEnum.False;
 
@@ -98,9 +100,8 @@ namespace Empyrean.Game.Abilities.AbilityDefinitions
                         void teleportAction()
                         {
                             //add an animation here?
-
-                            unitsToMove[capturedIndex].unitToMove.SetTileMapPosition(unitsToMove[capturedIndex].destination);
                             unitsToMove[capturedIndex].unitToMove.SetPositionOffset(unitsToMove[capturedIndex].destination._position);
+                            unitsToMove[capturedIndex].unitToMove.SetTileMapPosition(unitsToMove[capturedIndex].destination);
 
                             SelectedGroup.Leader.Info._movementAbility.EffectEndedAction -= teleportAction;
                         };

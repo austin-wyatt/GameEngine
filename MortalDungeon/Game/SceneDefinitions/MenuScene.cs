@@ -1,7 +1,6 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Game.Abilities;
-using Empyrean.Game.GameObjects;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Units;
 using Empyrean.Objects;
@@ -528,7 +527,55 @@ namespace Empyrean.Game.SceneDefinitions
             var units = UnitPositionManager.GetUnitsOnTilePoint(tile);
             if (units.Count > 0)
             {
-                foreach(var unit in units)
+                if (KeyboardState.IsKeyDown(Keys.Period))
+                {
+                    SelectionIndicatorManager.SelectUnit(units.First());
+                    return;
+                }
+                else if (KeyboardState.IsKeyDown(Keys.Backslash))
+                {
+                    SelectionIndicatorManager.DeselectUnit(units.First());
+                    return;
+                }
+                else if (KeyboardState.IsKeyDown(Keys.Slash))
+                {
+                    IndividualMesh selectionIndicator = SelectionIndicatorManager.SelectedUnits[units.First()];
+
+                    PropertyAnimation test = new PropertyAnimation();
+
+                    Vector2 center = new Vector2(0.5f, 0.5f);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        int capturedIndex = i;
+
+                        Keyframe temp = new Keyframe(capturedIndex * 8, () =>
+                        {
+                            if(capturedIndex < 5)
+                            {
+                                selectionIndicator.TextureTransformations.ScaleBy(new Vector2(0.01f, 0.01f), center);
+                            }
+                            else
+                            {
+                                selectionIndicator.TextureTransformations.ScaleBy(new Vector2(-0.01f, -0.01f), center);
+                            }
+                        });
+
+                        test.Keyframes.Add(temp);
+                    }
+
+                    test.Play();
+                    test.Repeat = true;
+
+                    Tick += test.Tick;
+
+                    Task.Run(() =>
+                    {
+                        Task.Delay(20000).Wait();
+                        Tick -= test.Tick;
+                    });
+                }
+
+                foreach (var unit in units)
                 {
                     OnUnitClicked(unit, button);
                 }
@@ -570,171 +617,7 @@ namespace Empyrean.Game.SceneDefinitions
                         }
                     }
 
-                    if (KeyboardState.IsKeyDown(Keys.Slash))
-                    {
-                        Console.WriteLine($"Origin: {tile.Chunk.MeshChunk.Origin}");
-
-
-                        Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
-                        Vector2 max = new Vector2(float.MinValue, float.MinValue);
-
-                        float[] vertices = tile.Chunk.MeshChunk.Mesh.Vertices;
-
-                        for (int i = 0; i < vertices.Length; i += MeshTile.VERTEX_OFFSET)
-                        {
-                            if(vertices[i] > max.X) max.X = vertices[i];
-                            if(vertices[i + 1] > max.Y) max.Y = vertices[i + 1];
-                            if (vertices[i] < min.X) min.X = vertices[i];
-                            if (vertices[i + 1] < min.Y) min.Y = vertices[i + 1];
-                        }
-                        Console.WriteLine($"Min: {min}");
-                        Console.WriteLine($"Max: {max}");
-
-
-                        float xOffset = 0 - min.X;
-                        float yOffset = 0 - min.Y;
-
-                        float xScale = BlendMap.WIDTH / (max.X - min.X);
-                        float yScale = BlendMap.HEIGHT / (max.Y - min.Y);
-
-
-                        for (int i = 0; i < BlendMap.WIDTH; i++)
-                        {
-                            for (int j = 0; j < BlendMap.HEIGHT; j++)
-                            {
-                                tile.Chunk.BlendMap.DirectBitmap.SetPixel(i, j, Color.Green);
-                            }
-                        }
-
-                        Graphics g = Graphics.FromImage(tile.Chunk.BlendMap.DirectBitmap.Bitmap);
-                        Pen pen = new Pen(Brushes.Black);
-                        pen.Width = 1;
-
-                        List<PointF> points = new List<PointF>();
-
-                        int count = 0;
-                        for(int i = 0; i < vertices.Length; i += MeshTile.VERTEX_OFFSET)
-                        {
-                            points.Add(new PointF((vertices[i] + xOffset) * xScale, BlendMap.HEIGHT - (vertices[i + 1] + yOffset) * yScale));
-                            count++;
-
-                            if(count == 25)
-                            {
-                                points.Add(new PointF((vertices[i - 24 * MeshTile.VERTEX_OFFSET] + xOffset) * xScale, 
-                                    BlendMap.HEIGHT - (vertices[i - 24 * MeshTile.VERTEX_OFFSET + 1] + yOffset) * yScale));
-                                points.Add(new PointF((vertices[i - 13 * MeshTile.VERTEX_OFFSET] + xOffset) * xScale,
-                                    BlendMap.HEIGHT - (vertices[i - 13 * MeshTile.VERTEX_OFFSET + 1] + yOffset) * yScale));
-
-                                g.DrawLines(pen, points.ToArray());
-                                points.Clear();
-                                count = 0;
-                            }
-                        }
-
-                        using (var m = new MemoryStream())
-                        {
-                            tile.Chunk.BlendMap.DirectBitmap.Bitmap.Save(m, System.Drawing.Imaging.ImageFormat.Png);
-
-                            var img = System.Drawing.Image.FromStream(m);
-
-                            img.Save("Z:\\test.png");
-                        }
-
-                        Window.QueueToRenderCycle(() => tile.Chunk.BlendMap.Texture.UpdateFromBitmap(tile.Chunk.BlendMap.DirectBitmap.Bitmap));
-                        return;
-                    }
-
-                    if (KeyboardState.IsKeyDown(Keys.Period))
-                    {
-                        var globalPoint = BlendHelper.GetBlendPointFromFeaturePoint(tile.ToFeaturePoint());
-                        var localPoint = BlendHelper.ConvertGlobalToLocalBlendPoint(globalPoint, tile.Chunk);
-
-                        TileChunk chunk = tile.Chunk;
-
-                        HashSet<TileChunk> usedChunks = new HashSet<TileChunk>() { chunk };
-
-                        HashSet<BlendPoint> walls = new HashSet<BlendPoint>();
-
-                        BlendPoint curr = new BlendPoint(200, 0);
-
-                        for(int i = 0; i < 100; i++)
-                        {
-                            walls.Add(new BlendPoint(curr.X, curr.Y));
-                            curr.X++;
-                        }
-
-                        for (int i = 0; i < 100; i++)
-                        {
-                            walls.Add(new BlendPoint(curr.X, curr.Y));
-                            curr.Y++;
-                        }
-
-                        for (int i = 0; i < 100; i++)
-                        {
-                            walls.Add(new BlendPoint(curr.X, curr.Y));
-                            curr.X--;
-                        }
-
-                        for (int i = 0; i < 100; i++)
-                        {
-                            walls.Add(new BlendPoint(curr.X, curr.Y));
-                            curr.Y--;
-                        }
-
-                        walls.Add(new BlendPoint(curr.X, curr.Y));
-
-                        HashSet<BlendPoint> foundPoints = new HashSet<BlendPoint>();
-
-                        BlendHelper.FloodFill(walls, ref foundPoints, new BlendPoint(201, 1));
-
-                        HashSet<TileChunk> chunks = new HashSet<TileChunk>();
-
-                        Color color = Color.FromArgb(255, 0, 0, 255);
-
-                        foreach(var point in foundPoints)
-                        {
-                            chunks.Clear();
-
-                            BlendHelper.GetChunksFromBlendPoint(point, chunks);
-
-                            foreach(var foundChunk in chunks)
-                            {
-                                localPoint = BlendHelper.ConvertGlobalToLocalBlendPoint(point, foundChunk);
-
-                                if (localPoint.IsValidBoundsOnly())
-                                {
-                                    foundChunk.BlendMap.DirectBitmap.SetPixel(localPoint.X, localPoint.Y, color);
-                                    usedChunks.Add(foundChunk);
-                                }
-                            }
-                        }
-
-
-                        foreach (var usedChunk in usedChunks)
-                        {
-                            usedChunk.BlendMap.UpdateTexture();
-                        }
-                    }
-
-                    DeselectUnits();
-
-                    if (KeyboardState.IsKeyDown(Keys.LeftAlt))
-                    {
-                        _counter++;
-
-                        ImageBlendControl testControl = new ImageBlendControl()
-                        {
-                            ImagePath = "Z:\\puddle.png",
-                            ScaleFactor = _counter,
-                            Red = TileType.Dirt,
-                            Blue = TileType.Stone_1
-                        };
-
-                        testControl.Origin = tile.ToFeaturePoint();
-
-                        testControl.ApplyControl();
-                    }
-                    else if (KeyboardState.IsKeyDown(Keys.P))
+                    if (KeyboardState.IsKeyDown(Keys.P))
                     {
                         PlayerParty.PlaceUnits(tile);
                     }
@@ -899,13 +782,16 @@ namespace Empyrean.Game.SceneDefinitions
                     else if (KeyboardState.IsKeyDown(Keys.C))
                     {
                         IndividualMesh mesh = new IndividualMesh();
-                        mesh.FillFromMeshTile(tile.MeshTileHandle);
 
-                        mesh.Texture = new SimpleTexture("Resources/Textures/Spiderweb.png", 50000);
+                        List<Tile> tileList = tile.TileMap.GetTilesInRadius(tile, 1);
+
+                        mesh.FillFromTiles(tileList, quadTexCoords: true);
+
+                        mesh.Texture = new SimpleTexture("Resources/Textures/Spiderweb.png", 50000) { WrapType = TextureWrapType.ClampToEdge };
                         mesh.LoadTexture();
 
                         Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(tile._position);
-                        pos.Z += 0.001f;
+                        pos.Z += 0.01f;
                         mesh.SetTranslation(pos);
 
                         IndividualMeshes.Add(mesh);
@@ -917,44 +803,16 @@ namespace Empyrean.Game.SceneDefinitions
                         //TEMP_MESH.TextureTransformations.TranslateBy(new Vector2(0.1f, 0.1f));
                         //TEMP_MESH.TextureTransformations.SetShear(new Vector2(0f, 0));
                         //TEMP_MESH.TextureTransformations.SetScale(new Vector2(1f, 1f));
-                        TEMP_MESH.TextureTransformations.RotateBy(0.1f);
+                        //TEMP_MESH.TextureTransformations.RotateBy(0.1f);
+                        TEMP_MESH.TextureTransformations.ScaleBy(new Vector2(0.9f, 0.9f), new Vector2(0.5f, 0.5f));
+                        //TEMP_MESH.TextureTransformations.SetTranslation(new Vector2(-0.5f, -0.5f));
+                        //TEMP_MESH.TextureTransformations.SetScale(new Vector2(2.5f, 2.5f));
 
                         //Console.WriteLine(TEMP_MESH.TextureTransformations.Transformations * new Vector3(1, 1, 1));
                     }
                     else if (KeyboardState.IsKeyDown(Keys.B))
                     {
-                        Dictionary<int, UIObject> textureHandles = new Dictionary<int, UIObject>();
-
-                        void handleObject(UIObject obj)
-                        {
-                            foreach (var item in obj.Children)
-                            {
-                                handleObject(item);
-                            }
-
-                            foreach (var item in obj.BaseObjects)
-                            {
-                                if (item._currentAnimation.CurrentFrame.Material.Diffuse == null)
-                                    continue;
-
-                                int texId = item._currentAnimation.CurrentFrame.Material.Diffuse.Handle;
-                                int texName = item._currentAnimation.CurrentFrame.Textures.TextureIds[0];
-
-                                if (textureHandles.ContainsKey(texId) && texName < 0)
-                                {
-
-                                }
-                                else
-                                {
-                                    textureHandles.TryAdd(texId, obj);
-                                }
-                            }
-                        }
-
-                        foreach (var item in UIManager.TopLevelObjects)
-                        {
-                            handleObject(item);
-                        }
+                        TEMP_MESH.TextureTransformations.TranslateBy(new Vector2(0, -0.1f));
                     }
                     else if (KeyboardState.IsKeyDown(Keys.Comma))
                     {
