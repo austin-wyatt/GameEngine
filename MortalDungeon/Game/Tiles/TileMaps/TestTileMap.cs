@@ -1,4 +1,5 @@
 ﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Engine_Classes.Rendering;
 using Empyrean.Game.Map;
 using Empyrean.Game.Objects;
@@ -16,8 +17,6 @@ namespace Empyrean.Game.Tiles.TileMaps
 {
     class TestTileMap : TileMap
     {
-        private int[] _grassTiles = new int[] {166, 167, 168, 169, 186, 187, 188, 189, 206, 207, 208, 209, 226, 227, 228, 229 };
-
         public TestTileMap(Vector3 position, TileMapPoint point, TileMapController controller) : base(position, point, controller, "TestTileMap")
         {
 
@@ -50,6 +49,17 @@ namespace Empyrean.Game.Tiles.TileMaps
 
                     Tiles.Add(tile);
 
+                    FeaturePoint featPoint = tile.ToFeaturePoint();
+
+
+                    const int FIXED_PERLIN_OFFSET = 10000;
+                    Vector2 cellValue = new Vector2(Math.Abs((float)featPoint.X / 75) + FIXED_PERLIN_OFFSET, Math.Abs((float)featPoint.Y / 75) + FIXED_PERLIN_OFFSET);
+
+                    float heightMagnitude = 5;
+                    float height = Noise2d.Noise(cellValue.X, cellValue.Y) * heightMagnitude;
+
+                    tile.SetHeight(height);
+
                     //checkerboard pattern
                     //if((i % 2 == 0) && (o % 2 == 0))
                     //{
@@ -69,8 +79,12 @@ namespace Empyrean.Game.Tiles.TileMaps
                     //float val = GlobalRandom.NextFloat() / 30f;
                     //baseTile.SetColor(_Colors.GrassGreen - new Vector4(val, val, 0, 0));
 
-                    float val = GlobalRandom.NextFloat() / 15f;
-                    tile.SetColor(_Colors.White - new Vector4(val, val, val, 0));
+                    float heightColorInfluence = -height / 20;
+
+                    float randomCol = GlobalRandom.NextFloat() / 15f;
+                    tile.SetColor(_Colors.White - new Vector4(randomCol + heightColorInfluence, 
+                        randomCol + heightColorInfluence, 
+                        randomCol + heightColorInfluence, 0));
 
                     tilePosition.Y += tileDim.Y;
 

@@ -45,7 +45,7 @@ namespace Empyrean.Game.Abilities
                 Spritesheet = (int)TextureName.CharacterSpritesheet
             });
 
-            AbilityClass = AbilityClass.Bandit;
+            AbilityClass = AbilityClass.Roguery;
 
             WeightParams.WeightModifications.Add((weight, ability, morsel) =>
             {

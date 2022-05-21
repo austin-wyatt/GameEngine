@@ -29,6 +29,7 @@ namespace Empyrean.Game.Abilities
             Species,
             UnitContext,
             Team,
+            BaseTeam,
             VisibleBy
         }
 
@@ -55,6 +56,8 @@ namespace Empyrean.Game.Abilities
                 case UnitCategory.UnitContext:
                     return unit.Info.Context.GetFlag((UnitContext)Enum.Parse(typeof(UnitContext), elements[2])) ? 1 : 0;
                 case UnitCategory.Team:
+                    return (float)unit.AI.GetTeam();
+                case UnitCategory.BaseTeam:
                     return (float)unit.AI.Team;
                 case UnitCategory.VisibleBy:
                     return unit.Info.Visible((UnitTeam)float.Parse(elements[2])) ? 1 : 0;

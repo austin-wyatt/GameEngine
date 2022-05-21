@@ -13,7 +13,8 @@ namespace Empyrean.Game.Abilities
         DamageResisted,
         DamageBlockedByShields,
         UnitKilled,
-        PotentialDamageBeforeModifications
+        PotentialDamageBeforeModifications,
+        AmountOfTilesMoved
     }
 
     public class AbilityEffectResults
@@ -119,6 +120,8 @@ namespace Empyrean.Game.Abilities
 
         public AbilityAnimation Animation = null;
 
+        public event Action EffectEnacted;
+
         public AbilityEffect(TargetInformation info)
         {
             TargetInformation = info;
@@ -150,7 +153,14 @@ namespace Empyrean.Game.Abilities
         {
             await AwaitAnimation();
 
+            OnEffectEnacted();
+
             return new AbilityEffectResults(ability);
+        }
+
+        protected void OnEffectEnacted()
+        {
+            EffectEnacted?.Invoke();
         }
 
         protected async Task AwaitAnimation()

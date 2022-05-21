@@ -25,6 +25,8 @@ namespace Empyrean.Game.Abilities.AbilityEffects
 
         protected override async Task<AbilityEffectResults> DoEffect(Ability ability)
         {
+            OnEffectEnacted();
+
             AbilityEffectResults results = new AbilityEffectResults(ability);
 
             List<Unit> units = TargetInformation.GetTargets(ability);

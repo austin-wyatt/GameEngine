@@ -446,7 +446,7 @@ namespace Empyrean.Engine_Classes
             Matrix4 rotationMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(degrees));
             RotationInfo.X += degrees;
 
-            Rotation *= rotationMatrix;
+            Rotation.MultInPlace(ref rotationMatrix);
 
             CalculateTransformationMatrix();
         }
@@ -455,16 +455,18 @@ namespace Empyrean.Engine_Classes
             Matrix4 rotationMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(degrees));
             RotationInfo.Y += degrees;
 
-            Rotation *= rotationMatrix;
+            Rotation.MultInPlace(ref rotationMatrix);
 
             CalculateTransformationMatrix();
         }
         public void RotateZ(float degrees)
         {
             Matrix4 rotationMatrix = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(degrees));
+
             RotationInfo.Z += degrees;
 
-            Rotation *= rotationMatrix;
+            Rotation.MultInPlace(ref rotationMatrix);
+            
 
             CalculateTransformationMatrix();
         }
@@ -491,6 +493,9 @@ namespace Empyrean.Engine_Classes
         public void ResetRotation()
         {
             Rotation = Matrix4.Identity;
+            RotationInfo.X = 0;
+            RotationInfo.Y = 0;
+            RotationInfo.Z = 0;
 
             CalculateTransformationMatrix();
         }

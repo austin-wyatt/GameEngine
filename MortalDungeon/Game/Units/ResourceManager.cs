@@ -109,13 +109,21 @@ namespace Empyrean.Game.Units
         public void SetResource(ResI resource, int value)
         {
             if (value == 0) ResourceI.Remove(resource);
-            else ResourceI.AddOrSet(resource, value);
+            else
+            {
+                value = BoundResource(resource, value);
+                ResourceI.AddOrSet(resource, value);
+            }
         }
 
         public void SetResource(ResF resource, float value)
         {
             if (value == 0) ResourceF.Remove(resource);
-            else ResourceF.AddOrSet(resource, value);
+            else
+            {
+                value = BoundResource(resource, value);
+                ResourceF.AddOrSet(resource, value);
+            }
         }
 
         public void AddResource(ResF resource, float value)
@@ -175,6 +183,51 @@ namespace Empyrean.Game.Units
                     return value;
             }
         }
+
+        /// <summary>
+        /// Keeps resource values from being set to a value outside of their possible range.
+        /// Typically this means keeping certain values from dropping below 0 or 1.
+        /// </summary>
+        private float BoundResource(ResF resource, float value)
+        {
+            switch (resource)
+            {
+                case ResF.ShieldBlock:
+                    return Math.Max(value, 0);
+                case ResF.MaxHealth:
+                    return Math.Max(value, 1);
+                case ResF.MaxMovementEnergy:
+                    return Math.Max(value, 1);
+                case ResF.MaxActionEnergy:
+                    return Math.Max(value, 1);
+                case ResF.ActionEnergy:
+                    return Math.Max(value, 0);
+                case ResF.MovementEnergy:
+                    return Math.Max(value, 0);
+                default:
+                    return value;
+            }
+        }
+
+        /// <summary>
+        /// Keeps resource values from being set to a value outside of their possible range.
+        /// Typically this means keeping certain values from dropping below 0 or 1.
+        /// </summary>
+        private int BoundResource(ResI resource, int value)
+        {
+            switch (resource)
+            {
+                case ResI.Stamina:
+                    return Math.Max(value, 0);
+                case ResI.MaxStamina:
+                    return Math.Max(value, 1);
+                case ResI.FireAffinity:
+                    return Math.Max(value, 0);
+                default:
+                    return value;
+            }
+        }
+
 
         public void PrepareForSerialization()
         {

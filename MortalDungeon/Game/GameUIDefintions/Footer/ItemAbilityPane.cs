@@ -95,7 +95,7 @@ namespace Empyrean.Game.UI
             if (primaryWeapon.ItemAbility != null)
             {
                 primaryIcon = primaryWeapon.ItemAbility.GenerateIcon(primaryIconSize, true,
-                    CurrentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
+                    CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
                     false, null, primaryHotkey, showCharges: true, hotkeyTextScale: 0.07f);
 
                 InitializeBasicIconInfo(primaryIcon, primaryWeapon.ItemAbility, isPlayerUnitTakingTurn, primaryHotkey);
@@ -109,10 +109,10 @@ namespace Empyrean.Game.UI
             UIScale secondaryIconSize = new UIScale(0.075f, 0.075f);
 
             if (secondaryWeapon?.ItemAbility != null && !(secondaryWeapon.Tags.HasFlag(ItemTag.Weapon_Concealed) && 
-                (CurrentUnit.AI.Team != UnitTeam.PlayerUnits) && !isPlayerUnitTakingTurn))
+                (CurrentUnit.AI.GetTeam() != UnitTeam.PlayerUnits) && !isPlayerUnitTakingTurn))
             {
                 secondaryIcon = secondaryWeapon.ItemAbility.GenerateIcon(secondaryIconSize, true,
-                    CurrentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
+                    CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
                     false, null, null, showCharges: false, hotkeyTextScale: 0.07f);
 
                 InitializeBasicIconInfo(secondaryIcon, secondaryWeapon.ItemAbility, isPlayerUnitTakingTurn, null, canCastOverride: false);
@@ -154,7 +154,7 @@ namespace Empyrean.Game.UI
             foreach ((Ability ability, string hotkey) in abilities)
             {
                 Icon abilityIcon = ability.GenerateIcon(iconSize, true,
-                    CurrentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
+                    CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
                     false, null, hotkey, showCharges: true, hotkeyTextScale: 0.07f);
 
                 int currIndex = count;

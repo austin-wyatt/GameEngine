@@ -253,15 +253,18 @@ namespace Empyrean.Definitions.BlendControls
 
                 //currentPoints.Clear();
 
+                HashSet<BlendPoint> wallSetRef = wallSet;
+                HashSet<BlendPoint> currPointsRef = currentPoints;
+
                 var task = Task.Run(() =>
                 {
                     HashSet<TileChunk> taskChunkList = new HashSet<TileChunk>();
 
-                    if (BlendHelper.FloodFill(wallSet, currentPoints, seedPoint))
+                    if (BlendHelper.FloodFill(wallSetRef, currentPoints, seedPoint))
                     {
                         Color dirt = Color.FromArgb(255, 0, 0, 255);
 
-                        foreach (var point in currentPoints)
+                        foreach (var point in currPointsRef)
                         {
                             BlendHelper.GetChunksFromBlendPoint(point, in taskChunkList);
 

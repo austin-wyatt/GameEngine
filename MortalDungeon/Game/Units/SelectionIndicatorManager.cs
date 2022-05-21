@@ -80,6 +80,8 @@ namespace Empyrean.Game.Units
                 SelectedUnits.Remove(unit);
                 unit.SelectionIndicator = null;
 
+                mesh.TextureTransformations.ResetTransformations();
+                mesh.ResetTransformations();
                 _indicatorPool.FreeObject(mesh);
 
                 if(_indicatorPropertyAnimations.TryGetValue(mesh, out var animations))
@@ -133,7 +135,7 @@ namespace Empyrean.Game.Units
 
         private static Vector4 GetTeamColorFromUnit(Unit unit)
         {
-            Relation relation = unit.AI.Team.GetRelation(UnitTeam.PlayerUnits);
+            Relation relation = unit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits);
             switch (relation)
             {
                 case Relation.Friendly:

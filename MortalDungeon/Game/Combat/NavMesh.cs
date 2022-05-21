@@ -14,6 +14,13 @@ using System.Text;
 
 namespace Empyrean.Game.Combat
 {
+    public enum PathingResult
+    {
+        Failed,
+        Succeeded,
+        Partial
+    }
+
     public class NavMesh
     {
         public NavTile[] NavTilesArr = new NavTile[TileMapManager.LOAD_DIAMETER * TileMapManager.LOAD_DIAMETER 
@@ -184,6 +191,8 @@ namespace Empyrean.Game.Combat
                 NavTile destinationTile = GetNavTileAtFeaturePoint(ref destination);
                 NavTile startTile = GetNavTileAtFeaturePoint(ref start);
 
+                if (destinationTile == null || startTile == null)
+                    return false;
 
                 if (UnitPositionManager.TilePointHasUnits(destinationTile.Tile) && !allowEndInUnit)
                 {
@@ -428,6 +437,86 @@ namespace Empyrean.Game.Combat
 
                 FeaturePoint.FeaturePointPool.FreeObject(ref placeholderPoint);
                 FeaturePoint.FeaturePointPool.FreeObject(ref currentFeaturePoint);
+            }
+        }
+
+        private static ObjectPool<List<Vector3i>> _vector3iListPool = new ObjectPool<List<Vector3i>>();
+        public PathingResult GetLineToPoint(FeaturePoint start, FeaturePoint destination, NavType navType, out List<Tile> returnList, Unit pathingUnit = null)
+        {
+            List<Vector3i> cubeList = _vector3iListPool.GetObject();
+            returnList = Tile.TileListPool.GetObject();
+
+            Vector3i cubeStart = CubeMethods.OffsetToCube(start);
+            Vector3i cubeDest = CubeMethods.OffsetToCube(destination);
+
+            Vector3i tempCube = new Vector3i();
+
+            NavTile currNavTile;
+
+            Direction dir;
+
+            bool addTileAndReturnPartial = false;
+
+            try
+            {
+                CubeMethods.GetLineLerp(cubeStart, cubeDest, cubeList);
+
+                for(int i = 0; i < cubeList.Count; i++)
+                {
+                    FeaturePoint currFeaturePoint = CubeMethods.CubeToFeaturePoint(cubeList[i]);
+
+                    currNavTile = GetNavTileAtFeaturePoint(ref currFeaturePoint);
+
+                    if (i < cubeList.Count - 1)
+                    {
+                        tempCube.X = cubeList[i + 1].X - cubeList[i].X;
+                        tempCube.Y = cubeList[i + 1].Y - cubeList[i].Y;
+                        tempCube.Z = cubeList[i + 1].Z - cubeList[i].Z;
+
+                        dir = CubeMethods.CubeDirectionsInverted[tempCube];
+                        if ((currNavTile.NavDirectionMask & NavTile.GetNavDirection(navType, dir)) == 0)
+                        {
+                            addTileAndReturnPartial = true;
+                        }
+                    }
+
+                    if(i > 0)
+                    {
+                        var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(currNavTile.Tile.TilePoint);
+
+                        if (unitsOnPoint.Count > 0 && !(pathingUnit?.Info.PhasedMovement == true)) //special cases for ability targeting should go here
+                        {
+                            foreach (var unit in unitsOnPoint)
+                            {
+                                if (unit.Info.BlocksSpace)
+                                {
+                                    return PathingResult.Partial;
+                                }
+                            }
+                        }
+
+                        //var tileEffectsOnPoint = TileEffectManager.GetTileEffectsOnTilePoint(currNavTile.Tile.TilePoint);
+
+                        //foreach (var tileEffect in tileEffectsOnPoint)
+                        //{
+                        //    //if tile effects can block the path then check that here
+                        //}
+                    }
+
+                    returnList.Add(currNavTile.Tile);
+
+                    if (addTileAndReturnPartial)
+                    {
+                        return PathingResult.Partial;
+                    }
+                }
+
+                return PathingResult.Succeeded;
+            }
+            finally
+            {
+                cubeList.Clear();
+                _vector3iListPool.FreeObject(cubeList);
             }
         }
 

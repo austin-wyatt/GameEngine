@@ -59,7 +59,7 @@ namespace Empyrean.Game.UI
 
             HealthBar = new HealthBar(new Vector3(), scale);
             HealthBar.SetPositionFromAnchor(BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft), UIAnchorPosition.TopLeft);
-            HealthBar.SetHealthPercent(1, unit.AI.Team);
+            HealthBar.SetHealthPercent(1, unit.AI.GetTeam());
 
             BaseComponent.AddChild(HealthBar);
 
@@ -227,7 +227,7 @@ namespace Empyrean.Game.UI
 
         public void UpdateInfo() 
         {
-            HealthBar.SetHealthPercent(_unit.GetResF(ResF.Health) / _unit.GetResF(ResF.MaxHealth), _unit.AI.Team);
+            HealthBar.SetHealthPercent(_unit.GetResF(ResF.Health) / _unit.GetResF(ResF.MaxHealth), _unit.AI.GetTeam());
             ShieldBar.SetCurrentShields(_unit.GetResI(ResI.Shields));
 
             if(_nameBox.TextString != _unit.Name)

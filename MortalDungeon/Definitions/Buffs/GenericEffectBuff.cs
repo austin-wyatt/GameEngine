@@ -37,5 +37,7 @@ namespace Empyrean.Definitions.Buffs
                 RemoveBuffEffect((BuffEffect)effect);
             }
         }
+
+        
     }
 }

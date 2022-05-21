@@ -145,5 +145,14 @@ namespace Empyrean.Engine_Classes
 
             //Multiply order = scaling * rotation * shear * translation
         }
+
+        public void ResetTransformations()
+        {
+            Transformations = Matrix3.Identity;
+            Scale = Matrix3.Identity;
+            Rotation = Matrix3.Identity;
+            Shear = Matrix3.Identity;
+            Translation = Matrix3.Identity;
+        }
     }
 }

@@ -8,11 +8,6 @@ using System.Text;
 
 namespace Empyrean.Game.Abilities
 {
-    public enum SelectionType
-    {
-        UseOnValidTargetSelected,
-    }
-
     public enum SelectionInfoContext
     {
         LineRequiredToTarget
@@ -24,25 +19,42 @@ namespace Empyrean.Game.Abilities
 
         public CombatScene Scene { get => TileMapManager.Scene; }
 
-        public List<Unit> SelectedUnits = new List<Unit>();
-        public List<Tile> SelectedTiles = new List<Tile>();
+        public virtual List<Unit> SelectedUnits { get; set; } = new List<Unit>();
+        public virtual List<Tile> SelectedTiles { get; set; } = new List<Tile>();
 
         public Unit SelectedUnit => SelectedUnits[0];
 
-        public HashSet<Unit> TargetedUnits = new HashSet<Unit>();
-        public HashSet<Tile> TargetedTiles = new HashSet<Tile>();
+        public virtual HashSet<Unit> TargetedUnits { get; set; } = new HashSet<Unit>();
+        public virtual HashSet<Tile> TargetedTiles { get; set; } = new HashSet<Tile>();
 
         /// <summary>
         /// Represents tiles that are being used by the selection process but are neither targeted nor selected
         /// </summary>
-        public List<Tile> TileBuffer = new List<Tile>();
+        public virtual List<Tile> TileBuffer { get; set; } = new List<Tile>();
 
-        public SelectionType TargetSelectionType;
 
-        public bool CanSelectUnits = true;
-        public bool CanSelectTiles = false;
+        public virtual bool CanSelectUnits { get; set; } = true;
+        public virtual bool CanSelectTiles { get; set; } = false;
 
-        public Tile SourceTile = null;
+        public virtual Tile SourceTile { get; set; }
+
+        /// <summary>
+        /// Determines whether the ability will be enacted when the selection completes or if the 
+        /// ConditionsMet event will be fired.
+        /// </summary>
+        public virtual bool UseAbility { get; set; } = true;
+
+        public virtual bool CreateVisuals { get; set; } = true;
+
+        public event Action ConditionsMet;
+
+        /// <summary>
+        /// Use to initialize special case data in cases where the SelectionInfo instance is not being
+        /// used normally. (Ex, in MultiSelectionType when data from the previous SelectionInfo instance
+        /// needs to be used in the current SelectionInfo instance)
+        /// </summary>
+        public event Action Selected;
+        public event Action Deselected;
 
         public ContextManager<SelectionInfoContext> Context = new ContextManager<SelectionInfoContext>();
 
@@ -60,19 +72,32 @@ namespace Empyrean.Game.Abilities
             Ability = ability;
         }
 
-        public void SelectAbility()
+
+        public virtual void SelectAbility()
         {
             SourceTile = Ability.CastingUnit.Info.TileMapPosition;
 
+            Selected?.Invoke();
+
             FindTargets();
-            CreateVisualIndicators();
+
+            if (CreateVisuals)
+            {
+                CreateVisualIndicators();
+            }
         }
 
-        public void DeselectAbility()
+        public virtual void DeselectAbility()
         {
+            Deselected?.Invoke();
+
             SourceTile = null;
 
-            RemoveVisualIndicators();
+            if (CreateVisuals)
+            {
+                RemoveVisualIndicators();
+            }
+            
             ClearTargets();
         }
 
@@ -152,12 +177,12 @@ namespace Empyrean.Game.Abilities
             TargetedUnits.Clear();
         }
 
-        protected virtual void CreateVisualIndicators()
+        public virtual void CreateVisualIndicators()
         {
 
         }
 
-        protected virtual void RemoveVisualIndicators()
+        public virtual void RemoveVisualIndicators()
         {
 
         }
@@ -165,6 +190,16 @@ namespace Empyrean.Game.Abilities
         public virtual void OnRightClick()
         {
             Scene.DeselectAbility();
+        }
+
+        protected void OnConditionsMet()
+        {
+            ConditionsMet?.Invoke();
+        }
+
+        public void ClearConditionsEvent()
+        {
+            ConditionsMet = null;
         }
     }
 }

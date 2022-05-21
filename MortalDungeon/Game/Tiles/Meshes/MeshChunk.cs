@@ -3,6 +3,7 @@ using Empyrean.Game.Tiles;
 using Empyrean.Game.Units;
 using OpenTK.Mathematics;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -38,7 +39,7 @@ namespace Empyrean.Game.Tiles.Meshes
         public List<List<MeshTile>> MeshTiles = new List<List<MeshTile>>();
 
         //public SortedDictionary<int, Vertex> VertexMap = new SortedDictionary<int, Vertex>();
-        public static Dictionary<int, List<Face>> FaceMap = new Dictionary<int, List<Face>>();
+        public static ConcurrentDictionary<int, List<Face>> FaceMap = new ConcurrentDictionary<int, List<Face>>();
         public static List<TileFaceGroup> FaceList = new List<TileFaceGroup>();
         private static bool _staticDataInitialized = false;
 
@@ -185,7 +186,7 @@ namespace Empyrean.Game.Tiles.Meshes
                                 }
                                 else
                                 {
-                                    FaceMap.Add(id, new List<Face>() { face });
+                                    FaceMap.TryAdd(id, new List<Face>() { face });
                                 }
                             }
                         }
@@ -400,21 +401,6 @@ namespace Empyrean.Game.Tiles.Meshes
         public void BlendVertices()
         {
 
-        }
-
-
-        public void tempRaiseTile()
-        {
-            Random rand = new Random();
-
-            int tileToRaise = rand.Next(Width * Height);
-            //int tileToRaise = 70;
-
-            float height = (float)rand.NextDouble();
-
-            MeshTile tile = MeshTiles[tileToRaise / Height][tileToRaise % Height];
-
-            tile.SetHeight(height);
         }
     }
 }

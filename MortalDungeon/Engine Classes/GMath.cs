@@ -62,6 +62,61 @@ namespace Empyrean.Engine_Classes
     /// </summary>
     public static class GMath
     {
+        private static Vector3 RADIAN_0_VEC = new Vector3(1, 0, 0);
+
+        public static float AngleOfPoints(Vector3 source, Vector3 destination)
+        {
+            Vector3 lineToDest = source - destination;
+            lineToDest.Normalize();
+
+            //source.Normalize();
+            //destination.Normalize();
+
+            Vector3.Dot(in lineToDest, in RADIAN_0_VEC, out float dot);
+            //float direction = Vector3.Dot(Vector3.Cross(RADIAN_0_VEC, lineToDest), new Vector3(0, 0, 1));
+            float det = lineToDest.X * RADIAN_0_VEC.Y - lineToDest.Y * RADIAN_0_VEC.X;
+
+            //Vector3.Dot(in source, in destination, out float dot);
+            ////float direction = Vector3.Dot(Vector3.Cross(RADIAN_0_VEC, lineToDest), new Vector3(0, 0, 1));
+            //float det = source.X * destination.Y - source.Y * destination.X;
+
+            return (float)MathHelper.Atan2(det, dot);
+        }
+
+        /// <summary>
+        /// Checks if the testAngle is inside of angle1 and angle2 <para/>
+        /// Checks counter clockwise
+        /// </summary>
+        /// <param name="testAngle"></param>
+        /// <param name="angle1"></param>
+        /// <param name="angle2"></param>
+        /// <returns></returns>
+        public static bool IsAngleBetween(float testAngle, float angle1, float angle2)
+        {
+            testAngle = NormalizeAngle(testAngle); //normalize angles to be 1-360 degrees
+            angle1 = NormalizeAngle(angle1);
+            angle2 = NormalizeAngle(angle2);
+
+            if(angle2 > angle1)
+            {
+                return InsideBounds(testAngle, 0, angle1) || InsideBounds(testAngle, angle2, MathHelper.TwoPi);
+            }
+
+            return InsideBounds(testAngle, angle2, angle1);
+
+            //if (angle1 < angle2)
+            //    return angle1 <= testAngle && testAngle <= angle2;
+            //return angle1 <= testAngle || testAngle <= angle2;
+        }
+
+        public static float NormalizeAngle(float angle)
+        {
+            if (angle < 0)
+                angle += MathHelper.TwoPi;
+
+            return angle;
+        }
+
         /// <summary>
         /// Performs a modulo operation on a negative value as if it were an offset from the modTarget. <para/>
         /// Ex. NegMod(-1, 20) is equivalent to 18 % 20
@@ -238,5 +293,15 @@ namespace Empyrean.Engine_Classes
             return a + t * (b - a);
         }
 
+
+        public static float GradualSlowDownLerp(float a, float b, float t)
+        {
+            const float INNER_OFFSET = 0.05161f;
+            const float OUTER_OFFSET = 0.9838f;
+
+            t = (float)(MathHelper.Log(t + INNER_OFFSET) * 0.33333f + OUTER_OFFSET);
+
+            return a + t * (b - a);
+        }
     }
 }

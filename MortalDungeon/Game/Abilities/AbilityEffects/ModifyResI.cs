@@ -32,6 +32,8 @@ namespace Empyrean.Game.Abilities.AbilityEffects
 
         protected override async Task<AbilityEffectResults> DoEffect(Ability ability)
         {
+            OnEffectEnacted();
+
             var units = TargetInformation.GetTargets(ability);
             
             foreach(var unit in units)

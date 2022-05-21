@@ -231,6 +231,11 @@ namespace Empyrean.Game.Tiles.Meshes
                 offset += VERTEX_OFFSET;
             }
 
+            if(TileHandle.Properties.Height != 0)
+            {
+                SetHeight(TileHandle.Properties.Height);
+            }
+
             UpdateTextureInfo();
         }
 

@@ -1,5 +1,6 @@
 ﻿using Empyrean.Game.Map;
 using Empyrean.Game.Tiles;
+using Empyrean.Game.Tiles.Meshes;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,18 @@ namespace Empyrean.Engine_Classes.MiscOperations
             { Direction.NorthWest, new Vector3i(-1, 1, 0) },
             { Direction.None, new Vector3i(0, 0, 0) },
         };
+
+        public static Dictionary<Vector3i, Direction> CubeDirectionsInverted = new Dictionary<Vector3i, Direction>
+        {
+            { new Vector3i(-1, 0, 1), Direction.SouthWest },
+            { new Vector3i(0, -1, 1), Direction.South },
+            { new Vector3i(1, -1, 0), Direction.SouthEast },
+            { new Vector3i(1, 0, -1), Direction.NorthEast },
+            { new Vector3i(0, 1, -1), Direction.North },
+            { new Vector3i(-1, 1, 0), Direction.NorthWest },
+            { new Vector3i(0, 0, 0), Direction.None },
+        };
+
         public static float Lerp(float a, float b, float t)
         {
             return a + (b - a) * t;
@@ -172,6 +185,38 @@ namespace Empyrean.Engine_Classes.MiscOperations
             return rotatedCube;
         }
 
+
+        private const float SQRT_3_OVER_3 = 0.57736f;
+        public static Vector3i PixelToCube(Vector2 point)
+        {
+            float q = 0.6667f * point.X * 4;
+            float r = (-0.3333f * point.X + SQRT_3_OVER_3 * point.Y) * 4;
+
+            Vector3 cube = new Vector3(q, -q - r, r);
+
+            return CubeRound(ref cube);
+        }
+
+        public static Vector3i PixelToCube(ref Vector2 point)
+        {
+            float q = 0.6667f * point.X * 4;
+            float r = (-0.3333f * point.X + SQRT_3_OVER_3 * point.Y) * 4;
+
+            Vector3 cube = new Vector3(q, -q - r, r);
+
+            return CubeRound(ref cube);
+        }
+
+        public static Vector3i GetCubeInDirection(float direction, float magnitude)
+        {
+            Vector2 point = new Vector2();
+
+            point.X = magnitude * (float)MathHelper.Cos(direction) * MeshTile.TILE_WIDTH;
+            point.Y = magnitude * (float)MathHelper.Sin(direction) * MeshTile.TILE_HEIGHT;
+
+            return PixelToCube(ref point);
+        }
+
         public static bool FloodFill(HashSet<Cube> walls, Cube anchor, in HashSet<Cube> filledPoints, int maxTiles)
         {
             Cube currentPoint = new Cube(anchor.Point);
@@ -211,101 +256,7 @@ namespace Empyrean.Engine_Classes.MiscOperations
             return neighbors.Count == 0;
         }
 
-        /// <summary>
-        /// This doesn't really work.
-        /// </summary>
-        public static void ScanFill(HashSet<Cube> walls, in HashSet<Cube> filledPoints)
-        {
-            Vector2i max = new Vector2i(int.MinValue, int.MinValue);
-            Vector2i min = new Vector2i(int.MaxValue, int.MaxValue);
-
-            foreach(var cube in walls)
-            {
-                if (cube.Point.X > max.X) max.X = cube.Point.X;
-                if (cube.Point.Y > max.Y) max.Y = cube.Point.Y;
-                if (cube.Point.X < min.X) min.X = cube.Point.X;
-                if (cube.Point.Y < min.Y) min.Y = cube.Point.Y;
-            }
-
-            max.X++;
-            max.Y++;
-            min.X--;
-            min.Y--;
-
-            Cube tempCube = new Cube();
-
-            List<Vector3i> currentLineListOdd = new List<Vector3i>();
-            List<Vector3i> currentLineListEven = new List<Vector3i>();
-
-            int passes;
-            bool adjacent;
-
-            for (int i = min.X; i <= max.X; i++)
-            {
-                tempCube.Point.X = i;
-                passes = 0;
-                adjacent = false;
-
-                for (int j = min.Y; j <= max.Y; j++)
-                {
-                    tempCube.Point.Y = j;
-                    tempCube.Point.Z = -(i + j);
-
-                    if (walls.Contains(tempCube))
-                    {
-                        if (!adjacent)
-                        {
-                            passes++;
-                        }
-                        else if (adjacent)
-                        {
-
-                        }
-                        
-                        adjacent = true;
-                    }
-                    else
-                    {
-                        adjacent = false;
-                    }
-
-                    if(passes % 2 == 1)
-                    {
-                        currentLineListOdd.Add(tempCube.Point);
-                    }
-                    else if(passes % 2 == 0 && passes > 0)
-                    {
-                        currentLineListEven.Add(tempCube.Point);
-                    }
-                }
-
-                if(passes <= 1)
-                {
-                    currentLineListOdd.Clear();
-                    currentLineListEven.Clear();
-                }
-                else
-                {
-                    if(passes % 2 == 0)
-                    {
-                        for (int k = 0; k < currentLineListOdd.Count; k++)
-                        {
-                            filledPoints.Add(new Cube(currentLineListOdd[k]));
-                        }
-                    }
-                    else
-                    {
-                        for (int k = 0; k < currentLineListEven.Count; k++)
-                        {
-                            filledPoints.Add(new Cube(currentLineListEven[k]));
-                        }
-                    }
-
-                    currentLineListOdd.Clear();
-                    currentLineListEven.Clear();
-                }
-            }
-        }
+        
 
         private const float LINE_DISTANCE_FLEX = 1.5f;
         public static void GetLineLerp(Vector3i startPoint, Vector3i endPoint, in ICollection<Vector3i> outputList)
@@ -573,6 +524,13 @@ namespace Empyrean.Engine_Classes.MiscOperations
             Point = point;
         }
 
+        public Cube(Axial axial)
+        {
+            Point.X = axial.q;
+            Point.Y = axial.s;
+            Point.Z = axial.r;
+        }
+
         public override bool Equals(object obj)
         {
             return obj is Cube cube &&
@@ -583,5 +541,34 @@ namespace Empyrean.Engine_Classes.MiscOperations
         {
             return HashCode.Combine(Point);
         }
+
+        public override string ToString()
+        {
+            return Point.ToString();
+        }
+    }
+
+    public struct Axial
+    {
+        public int q;
+        public int r;
+        public int s => -q - r;
+
+        public Axial(int Q, int R)
+        {
+            q = Q;
+            r = R;
+        }
+
+        public Axial(Cube cube)
+        {
+            q = cube.Point.X;
+            r = cube.Point.Z;
+        }
+
+        public static Axial operator +(Axial a, Axial b) => new Axial(a.q + b.q, a.r + b.r);
+        public static Axial operator -(Axial a, Axial b) => new Axial(a.q - b.q, a.r - b.r);
+        public static Axial operator *(Axial a, Axial b) => new Axial(a.q * b.q, a.r * b.r);
+        public static Axial operator /(Axial a, Axial b) => new Axial(a.q / b.q, a.r / b.r);
     }
 }

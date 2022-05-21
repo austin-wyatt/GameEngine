@@ -4,6 +4,7 @@ using Empyrean.Game.Objects.PropertyAnimations;
 using Empyrean.Game.SceneHelpers;
 using Empyrean.Game.Structures;
 using Empyrean.Game.Tiles;
+using Empyrean.Game.Tiles.Meshes;
 using Empyrean.Game.Units;
 using Empyrean.Objects;
 using OpenTK.Mathematics;
@@ -63,7 +64,7 @@ namespace Empyrean.Engine_Classes.Scenes
         public ContentContext SceneContext = ContentContext.Game;
 
 
-        public QueuedObjectList<GameObject> _genericObjects = new QueuedObjectList<GameObject>(); //GameObjects that are not Units and are being rendered independently
+        public LockedList<GameObject> _genericObjects = new LockedList<GameObject>(Window._renderLock); //GameObjects that are not Units and are being rendered independently
         public List<_Text> _text = new List<_Text>();
         public TileMapController _tileMapController = null;
         public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
@@ -146,7 +147,6 @@ namespace Empyrean.Engine_Classes.Scenes
 
         protected virtual void InitializeFields()
         {
-            _genericObjects = new QueuedObjectList<GameObject>();
             _text = new List<_Text>();
             _units = new QueuedObjectList<Unit>(); //The units to render
             _tileMapController = new TileMapController();
@@ -280,6 +280,7 @@ namespace Empyrean.Engine_Classes.Scenes
                 ActiveTeams.Clear();
                 foreach (var unit in _units)
                 {
+                    ActiveTeams.Add(unit.AI.GetTeam());
                     ActiveTeams.Add(unit.AI.Team);
                 }
             }
@@ -289,7 +290,6 @@ namespace Empyrean.Engine_Classes.Scenes
 
         public virtual void OnRender()
         {
-            _genericObjects.HandleQueuedItems();
             if (_units.HasQueuedItems()) 
             {
                 _units.HandleQueuedItems();
@@ -778,6 +778,44 @@ namespace Empyrean.Engine_Classes.Scenes
                         case Keys.D0:
                             NumberPressed(new SceneEventArgs(this, EventHandlerAction.NumberKeyDown, 0));
                             break;
+                        case Keys.LeftBracket:
+                            Vector2 point = new Vector2();
+
+                            float direction = MathHelper.PiOver2;
+                            //float direction = 0;
+
+                            point.X = 10 * (float)Math.Cos(direction);
+                            point.Y = 10 * (float)Math.Sin(direction);
+
+                            //Console.WriteLine(Vector3.CalculateAngle(new Vector3(0, 0, 0), new Vector3(point.X, point.Y, 0)));
+                            Console.WriteLine(GMath.AngleOfPoints(new Vector3(0, 0, 0), new Vector3(point.X, point.Y, 0)));
+                            Console.WriteLine(direction);
+
+                            float magnitude = -0.5f;
+
+                            Cube lastCube = new Cube();
+
+
+                            //for(float i = -0.5f; i < 5.5f; i+= 0.01f)
+                            //{
+                            //    magnitude = i;
+
+                            //    point.X = magnitude * (float)MathHelper.Cos(direction) * MeshTile.TILE_WIDTH;
+                            //    point.Y = magnitude * (float)MathHelper.Sin(direction) * MeshTile.TILE_HEIGHT;
+
+                            //    Cube cube = CubeMethods.PixelToCube(point);
+
+                            //    if(cube.Point != lastCube.Point)
+                            //    {
+                            //        Console.WriteLine("CUBE: " + cube.Point);
+                            //        Console.WriteLine("Magnitude: " + magnitude);
+                            //    }
+
+                            //    lastCube.Point = cube.Point;
+                            //}
+
+                            //Console.WriteLine(CubeMethods.PixelToCube(point));
+                            break;
                     }
                 }
             }
@@ -1104,7 +1142,7 @@ namespace Empyrean.Engine_Classes.Scenes
                 ObjectType.Tile => TileMapManager.ActiveMaps as List<T>,
                 ObjectType.Unit => _collatedUnits as List<T>,
                 ObjectType.Text => _text as List<T>,
-                ObjectType.GenericObject => _genericObjects as List<T>,
+                ObjectType.GenericObject => _genericObjects.GetList() as List<T>,
                 ObjectType.LowPriorityObject => _lowPriorityObjects as List<T>,
                 _ => new List<T>(),
             };

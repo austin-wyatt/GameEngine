@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Empyrean.Game.Tiles.Meshes
 {
@@ -39,6 +41,7 @@ namespace Empyrean.Game.Tiles.Meshes
 
         private static HashSet<TileChunk> ChunksToUpdate = new HashSet<TileChunk>();
         private static HashSet<Tile> NormalTilesToUpdate = new HashSet<Tile>();
+        private static object _blendPassLock = new object();
 
         /// <summary>
         /// Called when maps are loaded. This will find and blend all tiles that need it in the whole 
@@ -47,6 +50,8 @@ namespace Empyrean.Game.Tiles.Meshes
         /// </summary>
         public static void MajorBlendPass()
         {
+            Monitor.Enter(_blendPassLock);
+
             ChunksToUpdate.Clear();
             NormalTilesToUpdate.Clear();
 
@@ -244,15 +249,22 @@ namespace Empyrean.Game.Tiles.Meshes
                 chunk.Update(TileUpdateType.Vertex);
             }
 
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
+            Monitor.Exit(_blendPassLock);
 
-            foreach(var tile in NormalTilesToUpdate)
+            Task.Run(() =>
             {
-                tile.MeshTileHandle.CalculateNormal();
-            }
+                Stopwatch timer = new Stopwatch();
+                timer.Start();
 
-            Console.Write($"Normals calculated in {timer.ElapsedMilliseconds}ms");
+                Monitor.Enter(_blendPassLock);
+                foreach (var tile in NormalTilesToUpdate)
+                {
+                    tile.MeshTileHandle.CalculateNormal();
+                };
+
+                Console.WriteLine($"Normals calculated in {timer.ElapsedMilliseconds}ms");
+                Monitor.Exit(_blendPassLock);
+            });
         }
 
         private static Tile GetTileInDirection(Direction direction, ref Vector2i centerCoords)

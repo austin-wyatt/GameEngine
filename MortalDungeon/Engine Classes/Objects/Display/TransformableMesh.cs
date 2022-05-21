@@ -155,7 +155,14 @@ namespace Empyrean.Engine_Classes
         protected void CalculateTransformations()
         {
             Transformations = Scale * Rotation * Translation;
-            //Transformations = Translation * Scale * Rotation;
+        }
+
+        public void ResetTransformations()
+        {
+            Transformations = Matrix4.Identity;
+            Scale = Matrix4.Identity;
+            Rotation = Matrix4.Identity;
+            Translation = Matrix4.Identity;
         }
     }
 }

@@ -84,7 +84,7 @@ namespace Empyrean.Game.Units.AIFunctions
                 {
                     foreach(var morsel in morsels)
                     {
-                        if (morsel.Unit.Info.Visible(CurrentUnit.AI.Team))
+                        if (morsel.Unit.Info.Visible(CurrentUnit.AI.GetTeam()))
                         {
                             unitInVision = true;
                             return;

@@ -45,7 +45,7 @@ namespace Empyrean.Game.Abilities
     {
         Unknown,
         Skeleton,
-        Bandit,
+        Roguery,
         Spider,
 
 
@@ -403,8 +403,6 @@ namespace Empyrean.Game.Abilities
 
         public virtual void OnSelect(CombatScene scene, TileMap currentMap)
         {
-            SelectionInfo.SelectAbility();
-
             if (CanCast())
             {
                 SelectionInfo.SelectAbility();
@@ -488,7 +486,7 @@ namespace Empyrean.Game.Abilities
                 return;
             }
 
-            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            if (CastingUnit.AI.GetControlType() == ControlType.Controlled)
             {
                 Scene.EnergyDisplayBar.HoverAmount(0);
                 Scene.ActionEnergyBar.HoverAmount(0);
@@ -598,7 +596,7 @@ namespace Empyrean.Game.Abilities
 
         public void Casted()
         {
-            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            if (CastingUnit.AI.GetControlType() == ControlType.Controlled)
             {
                 OnCast();
             }
@@ -632,7 +630,7 @@ namespace Empyrean.Game.Abilities
 
                 vision.TargetUnit = CastingUnit;
                 vision.TickTarget = TickDurationTarget.OnUnitTurnStart;
-                vision.Team = SelectionInfo.SelectedUnits[j].AI.Team;
+                vision.Team = SelectionInfo.SelectedUnits[j].AI.GetTeam();
                 vision.TilesToReveal = SelectionInfo.SelectedUnits[j].Info.TileMapPosition.TileMap.GetVisionInRadius(CastingUnit.Info.Point, 1);
                 vision.Duration = 1;
 
@@ -664,7 +662,7 @@ namespace Empyrean.Game.Abilities
 
             Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground;
 
-            switch (CastingUnit.AI.Team)
+            switch (CastingUnit.AI.GetTeam())
             {
                 case UnitTeam.PlayerUnits:
                     backgroundType = Icon.BackgroundType.BuffBackground;
@@ -701,7 +699,7 @@ namespace Empyrean.Game.Abilities
             //since this method can be called from the main thread via a ticking property animation we need to spawn a task to avoid sleeping the main thread
             Task.Run(() =>
             {
-                if (CastingUnit.AI.ControlType != ControlType.Controlled && Type != AbilityTypes.Move)
+                if (CastingUnit.AI.GetControlType() != ControlType.Controlled && Type != AbilityTypes.Move)
                 {
                     Thread.Sleep(200);
                 }

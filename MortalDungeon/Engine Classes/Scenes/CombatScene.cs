@@ -347,7 +347,7 @@ namespace Empyrean.Engine_Classes.Scenes
             }
             else
             {
-                prevTeam = CurrentUnit.AI.Team;
+                prevTeam = CurrentUnit.AI.GetTeam();
             }
 
             CurrentUnit = InitiativeOrder[UnitTakingTurn];
@@ -370,7 +370,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
             //max energy displayed is the larger between current energy with buffs and default max energy.
             //If buffs are reducing energy the max will still be the default max for the unit.
-            if (CurrentUnit.AI.ControlType == ControlType.Controlled)
+            if (CurrentUnit.AI.GetControlType() == ControlType.Controlled)
             {
                 ShowEnergyDisplayBars(true);
                 SetCurrentUnitEnergy();
@@ -398,7 +398,7 @@ namespace Empyrean.Engine_Classes.Scenes
             TurnDisplay.SetCurrentUnit(UnitTakingTurn);
 
 
-            if (CurrentUnit.AI.ControlType == ControlType.Controlled)
+            if (CurrentUnit.AI.GetControlType() == ControlType.Controlled)
             {
                 Footer.UpdateFooterInfo(CurrentUnit);
             }
@@ -446,7 +446,7 @@ namespace Empyrean.Engine_Classes.Scenes
         {
             if (CurrentUnit != null) 
             {
-                if (CurrentUnit.AI.ControlType == ControlType.Controlled && InCombat)
+                if (CurrentUnit.AI.GetControlType() == ControlType.Controlled && InCombat)
                 {
                     Footer.EndTurnButton.SetRender(false);
                     await UnitAnimations.CreateStaminaRefillAnimation(CurrentUnit);
@@ -508,10 +508,10 @@ namespace Empyrean.Engine_Classes.Scenes
             TurnDisplay.SetUnits(InitiativeOrder, this);
 
 
-            Unit enemy = InitiativeOrder.Find(u => u.AI.Team.GetRelation(UnitTeam.PlayerUnits) == Relation.Hostile);
+            Unit enemy = InitiativeOrder.Find(u => u.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Hostile);
             if(enemy != null)
             {
-                EventLog.AddEvent("You've been accosted by a group of " + enemy.AI.Team.Name());
+                EventLog.AddEvent("You've been accosted by a group of " + enemy.AI.GetTeam().Name());
             }
             else 
             {
@@ -560,7 +560,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
         public virtual void SelectAbility(Ability ability, Unit unit)
         {
-            if (unit.AI.ControlType != ControlType.Controlled || (AbilityInProgress && !ability.MustCast) || ability.Type == AbilityTypes.Passive)
+            if (unit.AI.GetControlType() != ControlType.Controlled || (AbilityInProgress && !ability.MustCast) || ability.Type == AbilityTypes.Passive)
                 return;
 
             if (unit.Info.Dead)
@@ -573,7 +573,6 @@ namespace Empyrean.Engine_Classes.Scenes
             {
                 DeselectAbility();
             }
-
 
             ContextManager.SetFlag(GeneralContextFlags.AbilitySelected, true);
 
@@ -648,7 +647,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
             if (_selectedUnits.Count > 0 && KeyboardState.IsKeyDown(Keys.LeftShift)) 
             {
-                if (unit.AI.ControlType == ControlType.Controlled)
+                if (unit.AI.GetControlType() == ControlType.Controlled)
                 {
                     _selectedUnits.Add(unit);
                     unit.Select();
@@ -665,7 +664,7 @@ namespace Empyrean.Engine_Classes.Scenes
             }
             
 
-            if (!InCombat && unit.AI.ControlType == ControlType.Controlled && _selectedUnits.Count == 1)
+            if (!InCombat && unit.AI.GetControlType() == ControlType.Controlled && _selectedUnits.Count == 1)
             {
                 CurrentUnit = unit;
             }
@@ -779,7 +778,7 @@ namespace Empyrean.Engine_Classes.Scenes
                 foreach (UnitTeam team in ActiveTeams) 
                 {
                     //we don't need to check the unit's team
-                    if (team == _units[i].AI.Team)
+                    if (team == _units[i].AI.GetTeam())
                         continue;
 
                     //if the unit's position is in fog for a team then we can assume that it's hidden
@@ -793,7 +792,7 @@ namespace Empyrean.Engine_Classes.Scenes
                     bool couldSee = false;
                     _units.ForEach(u =>
                     {
-                        if (u.AI.Team == team) 
+                        if (u.AI.GetTeam() == team) 
                         {
                             if (u.Info.Scouting.CouldSeeUnit(_units[i], TileMap.GetDistanceBetweenPoints(u.Info.Point, _units[i].Info.Point))) 
                             {
@@ -805,7 +804,7 @@ namespace Empyrean.Engine_Classes.Scenes
                     //if a unit is being revealed from stealth then we want to stop the current movement ability
                     if (team == CurrentTeam && !_units[i].Info.Stealth.Revealed[team] && couldSee) 
                     {
-                        if (CurrentUnit.AI.ControlType == ControlType.Controlled && CurrentUnit.Info._movementAbility.Moving) 
+                        if (CurrentUnit.AI.GetControlType() == ControlType.Controlled && CurrentUnit.Info._movementAbility.Moving) 
                         {
                             CurrentUnit.Info._movementAbility.CancelMovement();
                         }
@@ -870,14 +869,14 @@ namespace Empyrean.Engine_Classes.Scenes
             {
                 foreach (var unit in _units) 
                 {
-                    if (unit.AI.Team != teamToEvaluate)
+                    if (unit.AI.GetTeam() != teamToEvaluate)
                         continue;
 
                     lock (_activeTeamsLock)
                     {
                         foreach (UnitTeam team in ActiveTeams)
                         {
-                            if (unit.AI.Team.GetRelation(team) == Relation.Hostile)
+                            if (unit.AI.GetTeam().GetRelation(team) == Relation.Hostile)
                             {
                                 if (unit.Info.Visible(team) || InCombat)
                                 {
@@ -998,7 +997,7 @@ namespace Empyrean.Engine_Classes.Scenes
                             (TileMap.GetDistanceBetweenPoints(u.Info.TileMapPosition, unitsToCheck[i].Info.TileMapPosition) <= radius 
                             || packs.Contains(u.pack_name)))
                         {
-                            Relation unitRelation = u.AI.Team.GetRelation(unitsToCheck[i].AI.Team);
+                            Relation unitRelation = u.AI.GetTeam().GetRelation(unitsToCheck[i].AI.GetTeam());
 
                             if(unitRelation == Relation.Hostile)
                             {
@@ -1068,7 +1067,7 @@ namespace Empyrean.Engine_Classes.Scenes
                 Footer.EndTurnButton.SetRender(true);
                 _endTurnButtonShouldDisplayAfterAbility = false;
             }
-            else if (InCombat && !AbilityInProgress && CurrentUnit.AI.ControlType == ControlType.Controlled) 
+            else if (InCombat && !AbilityInProgress && CurrentUnit.AI.GetControlType() == ControlType.Controlled) 
             {
                 Footer.EndTurnButton.SetRender(true);
             }
@@ -1407,11 +1406,11 @@ namespace Empyrean.Engine_Classes.Scenes
                         {
                             UIForceClose(new SceneEventArgs(this, EventHandlerAction.CloseTooltip));
                         }
-                        else if (Footer.CurrentUnit != null && Footer.CurrentUnit.AI.ControlType != ControlType.Controlled)
+                        else if (Footer.CurrentUnit != null && Footer.CurrentUnit.AI.GetControlType() != ControlType.Controlled)
                         {
                             DeselectUnits();
 
-                            Unit firstControlledUnit = _units.Find(u => u.AI.ControlType == ControlType.Controlled);
+                            Unit firstControlledUnit = _units.Find(u => u.AI.GetControlType() == ControlType.Controlled);
                             if (firstControlledUnit != null) 
                             {
                                 firstControlledUnit.Select();
@@ -1444,7 +1443,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
         public virtual void OnUnitKilled(Unit unit) 
         {
-            Relation unitRelation = unit.AI.Team.GetRelation(UnitTeam.PlayerUnits);
+            Relation unitRelation = unit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits);
             if (unitRelation == Relation.Friendly) 
             {
                 EventLog.AddEvent(unit.Name + " has perished.", EventSeverity.Severe);
@@ -1478,11 +1477,11 @@ namespace Empyrean.Engine_Classes.Scenes
             EvaluatePacksInCombat();
             TurnDisplay.SetUnits(InitiativeOrder, this);
 
-            if (InitiativeOrder.Count <= 1 || InitiativeOrder.All(unit => unit.AI.Team.GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly || !unit.AI.Fighting))
+            if (InitiativeOrder.Count <= 1 || InitiativeOrder.All(unit => unit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly || !unit.AI.Fighting))
             {
                 EndCombat();
             }
-            else if (InitiativeOrder.All(unit => unit.AI.Team.GetRelation(UnitTeam.PlayerUnits) != Relation.Friendly))
+            else if (InitiativeOrder.All(unit => unit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) != Relation.Friendly))
             {
                 EndCombat();
             }
@@ -1508,7 +1507,7 @@ namespace Empyrean.Engine_Classes.Scenes
                         }
                     }
                 }
-                else
+                else if(!AbilityInProgress)
                 {
                     _selectedAbility.OnUnitClicked(unit);
                 }

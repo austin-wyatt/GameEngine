@@ -563,6 +563,9 @@ namespace Empyrean.Game.Units
 
         public virtual void SetTileMapPosition(Tile tile) 
         {
+            if (Info.TileMapPosition == tile)
+                return;
+
             Tile prevTile = null;
 
             if (Info.TileMapPosition != null)
@@ -570,7 +573,7 @@ namespace Empyrean.Game.Units
                 prevTile = Info.TileMapPosition;
                 UnitPositionManager.RemoveUnitPosition(this, Info.TileMapPosition);
             }
-                
+            
             UnitPositionManager.SetUnitPosition(this, tile);
 
             Info.TileMapPosition = tile;
@@ -588,6 +591,7 @@ namespace Empyrean.Game.Units
             Scene.OnUnitMoved(this, prevTile);
 
             UnitMoved?.Invoke(this, prevTile, tile);
+            
             StateChanged?.Invoke(this);
         }
 
@@ -698,7 +702,7 @@ namespace Empyrean.Game.Units
             TurnStart?.Invoke(this);
 
 
-            if (AI.ControlType != ControlType.Controlled && Scene.InCombat)
+            if (AI.GetControlType() != ControlType.Controlled && Scene.InCombat)
             {
                 AIBrain.TakeAITurn(this);
             }
@@ -795,24 +799,24 @@ namespace Empyrean.Game.Units
                 Scene.Footer.RefreshFooterInfo();
             }
 
-            if (Scene.SideBar.PartyWindow != null && Scene.SideBar.PartyWindow.Parent != null && AI.ControlType == ControlType.Controlled && AI.Team == UnitTeam.PlayerUnits)
-            {
-                Scene.SideBar.CreatePartyWindowList();
-            }
+            //if (Scene.SideBar.PartyWindow != null && Scene.SideBar.PartyWindow.Parent != null && AI.ControlType == ControlType.Controlled && AI.Team == UnitTeam.PlayerUnits)
+            //{
+            //    Scene.SideBar.CreatePartyWindowList();
+            //}
         }
 
         public void SetHealth(float health) 
         {
             SetResF(ResF.Health, health);
 
-            StatusBarComp.HealthBar.SetHealthPercent(GetResF(ResF.Health) / GetResF(ResF.MaxHealth), AI.Team);
+            StatusBarComp.HealthBar.SetHealthPercent(GetResF(ResF.Health) / GetResF(ResF.MaxHealth), AI.GetTeam());
 
             Scene.Footer.RefreshFooterInfo();
 
-            if (Scene.SideBar.PartyWindow != null && Scene.SideBar.PartyWindow.Parent != null && AI.ControlType == ControlType.Controlled && AI.Team == UnitTeam.PlayerUnits)
-            {
-                Scene.SideBar.CreatePartyWindowList();
-            }
+            //if (Scene.SideBar.PartyWindow != null && Scene.SideBar.PartyWindow.Parent != null && AI.ControlType == ControlType.Controlled && AI.Team == UnitTeam.PlayerUnits)
+            //{
+            //    Scene.SideBar.CreatePartyWindowList();
+            //}
         }
 
         public void SetPermanentId(int id)

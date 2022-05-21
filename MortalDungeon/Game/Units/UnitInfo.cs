@@ -283,7 +283,7 @@ namespace Empyrean.Game.Units
                 Revealed[team] = revealed;
             }
 
-            Revealed[Unit.AI.Team] = true;
+            Revealed[Unit.AI.GetTeam()] = true;
         }
 
         public void SetRevealed(UnitTeam team, bool revealed)
@@ -301,7 +301,7 @@ namespace Empyrean.Game.Units
 
             foreach (UnitTeam team in Enum.GetValues(typeof(UnitTeam)))
             {
-                if (team != Unit.AI.Team && !Unit.Info.TileMapPosition.InFog(team))
+                if (team != Unit.AI.GetTeam() && !Unit.Info.TileMapPosition.InFog(team))
                 {
                     hasVision = true;
                 }
@@ -314,7 +314,7 @@ namespace Empyrean.Game.Units
         {
             bool inFog = true;
 
-            if (team != Unit.AI.Team && !Unit.Info.TileMapPosition.InFog(team))
+            if (team != Unit.AI.GetTeam() && !Unit.Info.TileMapPosition.InFog(team))
             {
                 inFog = false;
             }

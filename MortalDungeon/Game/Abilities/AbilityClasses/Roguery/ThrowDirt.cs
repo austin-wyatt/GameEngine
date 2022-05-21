@@ -39,7 +39,7 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Bandit
                 Spritesheet = (int)TextureName.CharacterSpritesheet
             });
 
-            AbilityClass = AbilityClass.Bandit;
+            AbilityClass = AbilityClass.Roguery;
 
             CastRequirements.AddResourceCost(ResF.ActionEnergy, 2, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 

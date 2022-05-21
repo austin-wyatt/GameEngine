@@ -323,7 +323,7 @@ namespace Empyrean.Game.Abilities
             if (!Scene.InCombat)
                 return true;
 
-            if (CastingUnit.AI.ControlType == ControlType.Controlled)
+            if (CastingUnit.AI.GetControlType() == ControlType.Controlled)
             {
                 Scene.EnergyDisplayBar.HoverAmount(0);
 

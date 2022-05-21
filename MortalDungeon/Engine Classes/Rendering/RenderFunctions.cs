@@ -169,7 +169,10 @@ namespace Empyrean.Engine_Classes.Rendering
 
             //GL.Enable(EnableCap.Blend);
 
+            //GL.Disable(EnableCap.DepthTest);
             RenderingQueue.RenderQueuedObjects();
+            //GL.Enable(EnableCap.DepthTest);
+
 
             RenderingQueue.RenderTileQueue();
 

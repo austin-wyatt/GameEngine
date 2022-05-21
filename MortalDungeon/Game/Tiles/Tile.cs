@@ -354,7 +354,7 @@ namespace Empyrean.Game.Tiles
             if (scene.CurrentUnit != null)
             {
                 int distance = TileMap.GetDistanceBetweenPoints(scene.CurrentUnit.Info.Point, TilePoint);
-                isCurrentUnit = scene.CurrentUnit.AI.ControlType == ControlType.Controlled;
+                isCurrentUnit = scene.CurrentUnit.AI.GetControlType() == ControlType.Controlled;
 
                 int interactDistance = 5;
                 int inspectDistance = 10;
@@ -384,7 +384,7 @@ namespace Empyrean.Game.Tiles
             #region right click movement
             if (scene._selectedUnits.Count > 1)
             {
-                var mainUnit = scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
+                var mainUnit = scene._selectedUnits.Find(u => u.AI.GetControlType() == ControlType.Controlled);
 
                 //if (mainUnit != null)
                 //{

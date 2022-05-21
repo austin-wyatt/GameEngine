@@ -127,7 +127,7 @@ namespace Empyrean.Game.Units
             foreach (var unit in units)
             {
                 CalculateVision(unit.VisionGenerator);
-                unitTeams.Add(unit.AI.Team);
+                unitTeams.Add(unit.AI.GetTeam());
             }
 
             foreach (var team in unitTeams)
@@ -140,7 +140,7 @@ namespace Empyrean.Game.Units
         {
             CalculateVision(unit.VisionGenerator);
 
-            ConsolidateVision(unit.AI.Team);
+            ConsolidateVision(unit.AI.GetTeam());
         }
 
 

@@ -16,6 +16,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Empyrean.Game.Items;
 using Empyrean.Game.Abilities.SelectionTypes;
+using Empyrean.Game.Abilities.AbilityEffects;
+using Empyrean.Game.Movement;
 
 namespace Empyrean.Game.Abilities
 {
@@ -52,25 +54,84 @@ namespace Empyrean.Game.Abilities
                 FrameIndices = { (int)IconSheetIcons.Circle },
                 Spritesheet = (int)TextureName.IconSpritesheet
             });
+
+            HasHoverEffect = true;
+            MultiSelectionType multi = new MultiSelectionType(this);
+            SelectionInfo = multi;
+
+            SingleTarget singleTarget = new SingleTarget(this);
+            singleTarget.UnitTargetParams = new UnitSearchParams()
+            {
+                Dead = UnitCheckEnum.False,
+                IsFriendly = UnitCheckEnum.SoftTrue,
+                IsHostile = UnitCheckEnum.SoftTrue,
+                IsNeutral = UnitCheckEnum.SoftTrue,
+                Self = UnitCheckEnum.False,
+                InVision = UnitCheckEnum.True,
+            };
+
+            multi.AddChainedSelectionInfo(singleTarget);
+
+            RadialSelection radial = new RadialSelection(this);
+
+            radial.Selected += () =>
+            {
+                radial.SourceTile = singleTarget.SelectedUnits[0].Info.TileMapPosition;
+                radial.SelectedUnits.Add(singleTarget.SelectedUnits[0]);
+
+                radial.Direction = GMath.AngleOfPoints(radial.SourceTile._position, CastingUnit.Info.TileMapPosition._position);
+            };
+
+            multi.AddChainedSelectionInfo(radial);
+
+
+            TargetInformation targetInfo = new TargetInformation(AbilityUnitTarget.SelectedUnit);
+            ApplyDamage applyDamageEffect = new ApplyDamage(targetInfo);
+            applyDamageEffect.CreateDamageInstance = () =>
+            {
+                DamageInstance damageInstance = new DamageInstance();
+                //damageInstance.Damage.Add(DamageType.HealthRemoval, 1000);
+                damageInstance.Damage.Add(DamageType.HealthRemoval, 1);
+
+                return damageInstance;
+            };
+
+            EffectManager.Effects.Add(applyDamageEffect);
+
+            MoveEffect forcedMoveEffect = new MoveEffect(targetInfo);
+
+            forcedMoveEffect.EffectEnacted += () =>
+            {
+                radial.RemoveVisualIndicators();
+            };
+
+            forcedMoveEffect.GetMoveContract = () =>
+            {
+                return MovementHelper.CalculateForcedMovement(radial.SourceTile, radial.CurrAngle, radial.CurrMagnitude);
+            };
+
+            EffectManager.Effects.Add(forcedMoveEffect);
         }
 
         public override void EnactEffect()
         {
-            BeginEffect();
+            base.EnactEffect();
 
-            Task.Run(() =>
-            {
-                var dam = new Dictionary<DamageType, float>();
-                dam.Add(DamageType.HealthRemoval, 1000);
+            //BeginEffect();
 
-                SelectionInfo.SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance()
-                {
-                    Damage = dam,
-                }, ability: this));
+            //Task.Run(() =>
+            //{
+            //    var dam = new Dictionary<DamageType, float>();
+            //    dam.Add(DamageType.HealthRemoval, 1000);
 
-                Casted();
-                EffectEnded();
-            });
+            //    SelectionInfo.SelectedUnit.ApplyDamage(new DamageParams(new DamageInstance()
+            //    {
+            //        Damage = dam,
+            //    }, ability: this));
+
+            //    Casted();
+            //    EffectEnded();
+            //});
         }
 
     }

@@ -305,11 +305,11 @@ namespace Empyrean.Game.Abilities
 
         public virtual void AddEventListeners() 
         {
-            Unit.TurnStart += CheckDuration;
+            Unit.TurnEnd += CheckDuration;
         }
         public virtual void RemoveEventListeners() 
         {
-            Unit.TurnStart -= CheckDuration;
+            Unit.TurnEnd -= CheckDuration;
         }
 
         public virtual async Task AddStack()
@@ -347,7 +347,7 @@ namespace Empyrean.Game.Abilities
             {
                 Duration--;
 
-                if (Duration < 0)
+                if (Duration <= 0)
                 {
                     Unit?.Info.BuffManager.RemoveBuff(this);
                 }

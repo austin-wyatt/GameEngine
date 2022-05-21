@@ -144,7 +144,7 @@ namespace Empyrean.Game.Serializers
                         }
 
                         //first check if the unit is controlled by the player and the player is not in combat
-                        if (unit.AI.ControlType == ControlType.Controlled && !unit.Scene.InCombat)
+                        if (unit.AI.GetControlType() == ControlType.Controlled && !unit.Scene.InCombat)
                         {
                             bool unitIsInside = FeaturePoint.PointInPolygon(bound.BoundingSquare, unitPos) 
                                 && FeaturePoint.PointInPolygon(bound.OffsetPoints, unitPos);

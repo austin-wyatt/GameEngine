@@ -200,7 +200,7 @@ namespace Empyrean.Game.UI
 
             UIList list = new UIList(default, new UIScale(0.3f, 0.13f), 0.075f);
 
-            var unitList = Scene._units.FindAll(u => u.AI.ControlType == ControlType.Controlled && u.AI.Team == UnitTeam.PlayerUnits);
+            var unitList = Scene._units.FindAll(u => u.AI.GetControlType() == ControlType.Controlled && u.AI.Team == UnitTeam.PlayerUnits);
 
             //if(Scene.UnitGroup != null) 
             //{

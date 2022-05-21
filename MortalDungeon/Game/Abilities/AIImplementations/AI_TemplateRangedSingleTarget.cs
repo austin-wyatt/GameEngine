@@ -149,7 +149,7 @@ namespace Empyrean.Game.Abilities
                     return;
                 }
 
-                var relation = Morsel.Team.GetRelation(Ability.CastingUnit.AI.Team);
+                var relation = Morsel.Team.GetRelation(Ability.CastingUnit.AI.GetTeam());
 
                 Weight = WeightParams.BaseWeight;
 

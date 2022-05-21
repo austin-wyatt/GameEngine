@@ -60,7 +60,7 @@ namespace Empyrean.Game.SceneDefinitions
 
             foreach(var chunk in newMap.TileChunks)
             {
-                chunk.MeshChunk.tempRaiseTile();
+                //chunk.MeshChunk.tempRaiseTile();
                 chunk.Update(TileUpdateType.Vertex);
             }
 

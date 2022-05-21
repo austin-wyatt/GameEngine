@@ -42,6 +42,9 @@ namespace Empyrean.Game.Units
         public UnitTeam Team = UnitTeam.Unknown;
         public ControlType ControlType = ControlType.Controlled;
 
+        public OverrideContainer<UnitTeam> TeamOverride = new OverrideContainer<UnitTeam>();
+        public OverrideContainer<ControlType> ControlTypeOverride = new OverrideContainer<ControlType>();
+
         //public Dispositions Dispositions;
 
         [XmlIgnore]
@@ -76,51 +79,6 @@ namespace Empyrean.Game.Units
             Feelings = new Feelings(unit);
         }
 
-
-        public void TakeTurn() 
-        {
-            //List<BaseTile> tilesInVision = Scene.GetTeamVision(_unit.AI.Team);
-
-            if (Scene.CurrentUnit != _unit)
-                return;
-
-            //foreach (var disp in Dispositions.DispositionList) 
-            //{
-            //    disp.TurnFatigue = 0;
-            //}
-
-            _depth = 0;
-            BeginNextAction();
-        }
-
-        [XmlIgnore]
-        private int _depth = 0;
-        public void BeginNextAction() 
-        {
-            if (_depth > 1000)
-            {
-                Console.WriteLine("UnitAI infinite loop broken.");
-                Scene.CompleteTurn();
-            }
-            else 
-            {
-                Task.Run(() =>
-                {
-                    //Stopwatch timer = new Stopwatch();
-                    //timer.Start();
-
-                    GetAction().EnactEffect();
-
-                    //Console.WriteLine($"AI effect completed in {timer.ElapsedMilliseconds}ms");
-                });
-                _depth++;
-            }
-        }
-
-        public void EndTurn() 
-        {
-            new AI.EndTurn(_unit).EnactEffect();
-        }
 
 
         public float GetPathMovementCost(List<Tile> tiles)
@@ -159,43 +117,24 @@ namespace Empyrean.Game.Units
             return returnList;
         }
 
-
-        public UnitAIAction GetAction()
+        public UnitTeam GetTeam()
         {
-            //go through each ability and check their weight. 
-            //each action will be composed of a movement step then an ability usage, just an ability usage, or just a movement step
-            //actions where something that isn't movement occurs get extra weight. This extra weight is dimished by an amount relative to
-            //how much the unit has to move
-
-            List<UnitAIAction> abilityActions = new List<UnitAIAction>();
-
-            foreach(var ability in _unit.Info.Abilities)
+            if(TeamOverride.TryGetValue(out var team))
             {
-                //var action = ability.GetAction(Scene.InitiativeOrder);
-
-
-                //if(action.Weight >= 1)
-                //{
-                //    abilityActions.Add(action);
-                //}
+                return team;
             }
 
-            UnitAIAction selectedAction = new AI.EndTurn(_unit) { Weight = 1 };
+            return Team;
+        }
 
-            foreach(var action in abilityActions)
+        public ControlType GetControlType()
+        {
+            if (ControlTypeOverride.TryGetValue(out var controlType))
             {
-                if(action.Weight > selectedAction.Weight)
-                {
-                    selectedAction = action;
-                }
+                return controlType;
             }
 
-
-            Console.WriteLine($"{_unit.Name} chose action {selectedAction.GetType().Name} with weight {selectedAction.Weight}. " +
-                $"{_unit.GetResF(ResF.MovementEnergy)} Movement remaining. {_unit.GetResF(ResF.ActionEnergy)} Actions remaining.");
-
-
-            return selectedAction;
+            return ControlType;
         }
 
         private static Dictionary<long, Relation> TeamRelations = new Dictionary<long, Relation>();
@@ -510,7 +449,7 @@ namespace Empyrean.Game.Units
                 softCheckUsed = true;
             }
 
-            Relation relation = unit.AI.Team.GetRelation(castingUnit.AI.Team);
+            Relation relation = unit.AI.GetTeam().GetRelation(castingUnit.AI.GetTeam());
             #endregion
 
             #region Hostile Check
@@ -617,14 +556,14 @@ namespace Empyrean.Game.Units
             #region Controlled Check
             if (IsControlled != UnitCheckEnum.NotSet && !IsControlled.IsSoft())
             {
-                if (unit.AI.ControlType == ControlType.Controlled != IsControlled.BoolValue())
+                if (unit.AI.GetControlType() == ControlType.Controlled != IsControlled.BoolValue())
                 {
                     return false;
                 }
             }
             else if (IsControlled.IsSoft())
             {
-                if (unit.AI.ControlType == ControlType.Controlled == IsControlled.BoolValue())
+                if (unit.AI.GetControlType() == ControlType.Controlled == IsControlled.BoolValue())
                 {
                     softCheck = true;
                 }
@@ -636,14 +575,14 @@ namespace Empyrean.Game.Units
             #region Vision Check
             if (InVision != UnitCheckEnum.NotSet && !InVision.IsSoft())
             {
-                if (unit.Info.Visible(castingUnit.AI.Team) != InVision.BoolValue())
+                if (unit.Info.Visible(castingUnit.AI.GetTeam()) != InVision.BoolValue())
                 {
                     return false;
                 }
             }
             else if (InVision.IsSoft())
             {
-                if (unit.Info.Visible(castingUnit.AI.Team) == InVision.BoolValue())
+                if (unit.Info.Visible(castingUnit.AI.GetTeam()) == InVision.BoolValue())
                 {
                     softCheck = true;
                 }

@@ -77,6 +77,7 @@ namespace Empyrean.Game.Combat
 
         public bool Alive = true;
         public UnitTeam Team;
+        public UnitTeam BaseTeam;
 
         public InformationMorsel(Unit unit)
         {
@@ -99,7 +100,8 @@ namespace Empyrean.Game.Combat
             Health = unit.GetResF(ResF.Health);
             Shields = unit.GetResI(ResI.Shields);
             Alive = !unit.Info.Dead;
-            Team = unit.AI.Team;
+            Team = unit.AI.GetTeam();
+            BaseTeam = unit.AI.Team;
         }
     }
 

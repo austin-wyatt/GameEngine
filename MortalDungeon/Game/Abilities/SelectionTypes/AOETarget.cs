@@ -80,11 +80,16 @@ namespace Empyrean.Game.Abilities.SelectionTypes
         {
             if (SelectedUnits.Count > 0 || SelectedTiles.Count > 0)
             {
-                Ability.EnactEffect();
+                OnConditionsMet();
+
+                if (UseAbility)
+                {
+                    Ability.EnactEffect();
+                }
             }
         }
 
-        protected override void CreateVisualIndicators()
+        public override void CreateVisualIndicators()
         {
             base.CreateVisualIndicators();
 
@@ -100,7 +105,7 @@ namespace Empyrean.Game.Abilities.SelectionTypes
             }
         }
 
-        protected override void RemoveVisualIndicators()
+        public override void RemoveVisualIndicators()
         {
             base.RemoveVisualIndicators();
 

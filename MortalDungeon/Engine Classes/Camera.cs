@@ -107,7 +107,7 @@ namespace Empyrean.Engine_Classes
 
 
         private int _lateralRotations = 4; //start in the positive Y direction
-        private int _verticalSteps = 3;
+        private int _verticalSteps = 2;
         public float CameraAngle = 0;
         public void RotateByAmount(int lateralStep = 0, int verticalStep = 0)
         {

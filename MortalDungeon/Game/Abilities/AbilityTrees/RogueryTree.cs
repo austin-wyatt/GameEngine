@@ -1,4 +1,5 @@
 ﻿using Empyrean.Game.Abilities.AbilityClasses.Bandit;
+using Empyrean.Game.Abilities.AbilityClasses.Roguery;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
@@ -6,11 +7,11 @@ using System.Text;
 
 namespace Empyrean.Game.Abilities
 {
-    public static class BanditTree
+    public static class RogueryTree
     {
         public static void Initialize()
         {
-            AbilityTreeType type = AbilityTreeType.Bandit;
+            AbilityTreeType type = AbilityTreeType.Roguery;
 
             AbilityTree banditTree = new AbilityTree() { TreeType = type };
 
@@ -44,6 +45,18 @@ namespace Empyrean.Game.Abilities
             };
 
             suckerPunch.AddConnection(throwDirt);
+
+
+            var shove = new AbilityTreeNode()
+            {
+                ID = 2,
+                Name = "Shove",
+                AbilityType = typeof(Roguery_Shove),
+                RelativePosition = new Vector2(0.51635115f, 0.88735596f),
+                TreeType = type
+            };
+
+            suckerPunch.AddConnection(shove);
 
             AbilityTrees.AddTree(banditTree);
         }

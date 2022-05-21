@@ -393,7 +393,7 @@ namespace Empyrean.Game.UI.Dev
                     PopulateEntityList();
                 });
 
-                if (controlType == entity.Handle.AI.ControlType)
+                if (controlType == entity.Handle.AI.GetControlType())
                 {
                     aiSelect.ItemSelected(item);
                 }

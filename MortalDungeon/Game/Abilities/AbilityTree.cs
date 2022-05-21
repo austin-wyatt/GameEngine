@@ -13,7 +13,7 @@ namespace Empyrean.Game.Abilities
         None,
         Skeleton,
         Dev,
-        Bandit,
+        Roguery,
         Spider
     }
     public static class AbilityTrees
@@ -24,7 +24,7 @@ namespace Empyrean.Game.Abilities
         {
             SkeletonTree.Initialize();
             DevTree.Initialize();
-            BanditTree.Initialize();
+            RogueryTree.Initialize();
             SpiderTree.Initialize();
         }
 

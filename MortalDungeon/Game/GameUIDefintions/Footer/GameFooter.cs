@@ -287,7 +287,7 @@ namespace Empyrean.Game.UI
                     footerMode = FooterMode.SingleUnit;
 
 
-                if (CurrentUnit.AI.ControlType == ControlType.Controlled)
+                if (CurrentUnit.AI.GetControlType() == ControlType.Controlled)
                 {
                     LastSelectedControllableUnit = CurrentUnit;
                 }
@@ -321,7 +321,7 @@ namespace Empyrean.Game.UI
         {
             ToggleUnitInfo(true);
 
-            bool isPlayerUnitTakingTurn = CurrentUnit.AI.ControlType == ControlType.Controlled && (Scene.InCombat ? CurrentUnit == Scene.CurrentUnit : true);
+            bool isPlayerUnitTakingTurn = CurrentUnit.AI.GetControlType() == ControlType.Controlled && (Scene.InCombat ? CurrentUnit == Scene.CurrentUnit : true);
 
             #region unit status box
 
@@ -337,7 +337,7 @@ namespace Empyrean.Game.UI
             _unitHealthBar.SetRender(true);
             //_unitHealthBar.SetPositionFromAnchor(_generalBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(25, -9, 0), UIAnchorPosition.BottomLeft);
             _unitHealthBar.SetPositionFromAnchor(_generalBlock.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(25, -24, 0), UIAnchorPosition.BottomLeft);
-            _unitHealthBar.SetHealthPercent(CurrentUnit.GetResF(ResF.Health) / CurrentUnit.GetResF(ResF.MaxHealth), CurrentUnit.AI.Team);
+            _unitHealthBar.SetHealthPercent(CurrentUnit.GetResF(ResF.Health) / CurrentUnit.GetResF(ResF.MaxHealth), CurrentUnit.AI.GetTeam());
 
             _unitShieldBar.SetRender(true);
             _unitShieldBar.SetPositionFromAnchor(_unitHealthBar.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(5, 0, 0), UIAnchorPosition.LeftCenter);
@@ -402,7 +402,7 @@ namespace Empyrean.Game.UI
 
         public void PopulateMultiUnitFooter()
         {
-            var castingUnit = Scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
+            var castingUnit = Scene._selectedUnits.Find(u => u.AI.GetControlType() == ControlType.Controlled);
 
             if (castingUnit != null)
             {
@@ -414,7 +414,7 @@ namespace Empyrean.Game.UI
                 bool allControllable = true;
                 foreach (var unit in Scene._selectedUnits)
                 {
-                    if(unit.AI.ControlType != ControlType.Controlled) 
+                    if(unit.AI.GetControlType() != ControlType.Controlled) 
                     {
                         allControllable = false;
                         break;
@@ -435,7 +435,7 @@ namespace Empyrean.Game.UI
 
         public void PopulateGroupFooter()
         {
-            var castingUnit = Scene._selectedUnits.Find(u => u.AI.ControlType == ControlType.Controlled);
+            var castingUnit = Scene._selectedUnits.Find(u => u.AI.GetControlType() == ControlType.Controlled);
 
             if (castingUnit != null && castingUnit.Info.Group != null)
             {
@@ -530,13 +530,13 @@ namespace Empyrean.Game.UI
             {
                 _currentAbilities.Add(ability);
                 string hotkey = null;
-                if (CurrentUnit.AI.ControlType == ControlType.Controlled)
+                if (CurrentUnit.AI.GetControlType() == ControlType.Controlled)
                 {
                     hotkey = (count + 2).ToString();
                 }
 
                 Icon abilityIcon = ability.GenerateIcon(iconSize, true,
-                    CurrentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
+                    CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
                     false, null, isPlayerUnitTakingTurn && ability.CanCast() ? hotkey : null, showCharges: true);
 
                 int currIndex = count;
@@ -693,9 +693,9 @@ namespace Empyrean.Game.UI
             {
                 _selectAbilityByHotkeyList[keyVal]?.Invoke(keyVal);
             }
-            else if (HotkeyStrings.Contains(keyVal) && (CurrentUnit == null || CurrentUnit.AI.ControlType != ControlType.Controlled))
+            else if (HotkeyStrings.Contains(keyVal) && (CurrentUnit == null || CurrentUnit.AI.GetControlType() != ControlType.Controlled))
             {
-                if(Scene.InCombat && CurrentUnit != Scene.CurrentUnit && Scene.CurrentUnit.AI.ControlType == ControlType.Controlled)
+                if(Scene.InCombat && CurrentUnit != Scene.CurrentUnit && Scene.CurrentUnit.AI.GetControlType() == ControlType.Controlled)
                 {
                     Scene.SelectUnit(Scene.CurrentUnit);
                     //UpdateFooterInfo(Scene.CurrentUnit, forceUpdate: true);

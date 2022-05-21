@@ -582,7 +582,7 @@ namespace Empyrean.Game.SceneDefinitions
             }
             else if (button == MouseButton.Left)
             {
-                if (_selectedAbility != null)
+                if (_selectedAbility != null && !AbilityInProgress)
                 {
                     Task.Run(() =>
                     {

@@ -46,7 +46,7 @@ namespace Empyrean.Game.UI
             foreach ((Ability ability, string hotkey) in abilities)
             {
                 Icon abilityIcon = ability.GenerateIcon(iconSize, true,
-                    CurrentUnit.AI.Team == UnitTeam.PlayerUnits ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
+                    CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
                     false, null, hotkey, showCharges: true, hotkeyTextScale: 0.07f);
 
                 int currIndex = count;

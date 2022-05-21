@@ -27,6 +27,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Empyrean.Engine_Classes.Lighting;
+using Monitor = System.Threading.Monitor;
 
 namespace Empyrean
 {
@@ -1074,6 +1075,7 @@ namespace Empyrean
         }
         #endregion
 
+        private const int ACTION_QUEUE_TIMEOUT_MS = 100;
         private static object _renderActionQueueLock = new object();
         private static Queue<Action> _renderActionQueue = new Queue<Action>();
         public static void QueueToRenderCycle(Action action)
@@ -1090,9 +1092,10 @@ namespace Empyrean
             //    }
             //}
 
-            lock (_renderActionQueueLock)
+            if(Monitor.TryEnter(_renderActionQueueLock, ACTION_QUEUE_TIMEOUT_MS))
             {
                 _renderActionQueue.Enqueue(action);
+                Monitor.Exit(_renderActionQueueLock);
             }
         }
 
@@ -1100,7 +1103,7 @@ namespace Empyrean
         {
             if (_renderActionQueue.Count > 0)
             {
-                lock (_renderActionQueueLock)
+                if (Monitor.TryEnter(_renderActionQueueLock, ACTION_QUEUE_TIMEOUT_MS))
                 {
                     int count = _renderActionQueue.Count;
 
@@ -1108,6 +1111,8 @@ namespace Empyrean
                     {
                         _renderActionQueue.Dequeue().Invoke();
                     }
+
+                    Monitor.Exit(_renderActionQueueLock);
                 }
             }
         }
