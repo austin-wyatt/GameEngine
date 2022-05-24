@@ -446,10 +446,14 @@ namespace Empyrean.Game.Abilities
 
         public string Condition;
 
+        public Func<AbilityEffectResults, bool> ConditionFunc;
+
         public ChainCondition(string condition)
         {
             Condition = condition;
         }
+
+        public ChainCondition() { }
 
         public async Task ContinueEffect(AbilityEffectResults effectResults, CombinedAbilityEffectResults combinedResults)
         {
@@ -461,6 +465,11 @@ namespace Empyrean.Game.Abilities
 
         public virtual bool CheckCondition(AbilityEffectResults effectResults)
         {
+            if(ConditionFunc != null)
+            {
+                return ConditionFunc.Invoke(effectResults);
+            }
+
             return ConditionParser.ParseCondition(Condition, effectResults);
         }
     }

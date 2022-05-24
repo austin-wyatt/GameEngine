@@ -72,6 +72,9 @@ namespace Empyrean.Definitions.Items
     {
         public Stab(Unit unit) : base(null, AbilityClass.Item_Normal, 1)
         {
+            Name = new TextInfo(27, 3);
+            Description = new TextInfo(28, 3);
+
             CastingUnit = unit;
 
             DamageType = DamageType.Piercing;

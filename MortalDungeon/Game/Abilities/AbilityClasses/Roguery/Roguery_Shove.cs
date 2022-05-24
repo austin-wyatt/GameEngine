@@ -32,6 +32,9 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Roguery
             Charges = 0;
             ChargeRechargeCost = 0;
 
+            Name = new TextInfo(23, 3);
+            Description = new TextInfo(24, 3);
+
 
             //Name = new Serializers.TextInfo(9, 3);
             //Description = new Serializers.TextInfo(10, 3);
@@ -86,7 +89,11 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Roguery
             #region Effect
             EffectManager = new EffectManager(this);
 
-            ChainCondition shieldsCheck = new ChainCondition("{TargetUnit[0] ResI Stamina} <= {CastingUnit ResI Stamina}");
+            ChainCondition staminaCheck = new ChainCondition();
+            staminaCheck.ConditionFunc = (effectResults) =>
+            {
+                return SelectionInfo.SelectedUnit.GetResI(ResI.Stamina) <= CastingUnit.GetResI(ResI.Stamina);
+            };
 
             TargetInformation targetInfo = new TargetInformation(AbilityUnitTarget.SelectedUnit);
 
@@ -102,9 +109,9 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Roguery
                 return MovementHelper.CalculateForcedMovement(radial.SourceTile, radial.CurrAngle, radial.CurrMagnitude);
             };
 
-            shieldsCheck.ChainedEffect = forcedMoveEffect;
+            staminaCheck.ChainedEffect = forcedMoveEffect;
 
-            EffectManager.ChainConditions.Add(shieldsCheck);
+            EffectManager.ChainConditions.Add(staminaCheck);
 
             const int STAMINA_REDUCTION = 1;
             ModifyResI reduceStaminaEffect = new ModifyResI(ResOperation.Subtract, ResI.Stamina, targetInfo,

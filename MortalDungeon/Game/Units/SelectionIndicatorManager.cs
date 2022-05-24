@@ -30,6 +30,8 @@ namespace Empyrean.Game.Units
             { _targetFilePath, 20001},
         };
 
+        private const float HEIGHT_OFFSET = 0.01f;
+
         public static void SelectUnit(Unit unit, string filePath = _selectionFilePath)
         {
             IndividualMesh indicator = _indicatorPool.GetObject();
@@ -39,7 +41,7 @@ namespace Empyrean.Game.Units
             indicator.FillFromTiles(tiles);
 
             Vector3 localPos = WindowConstants.ConvertGlobalToLocalCoordinates(unit._actualPosition);
-            localPos.Z = unit.Info.TileMapPosition.Properties.Height + 0.001f;
+            localPos.Z = unit.Info.TileMapPosition.Properties.Height + HEIGHT_OFFSET;
 
             indicator.SetTranslation(localPos);
 
@@ -127,7 +129,7 @@ namespace Empyrean.Game.Units
 
             unit.SelectionIndicator.FillFromTiles(tiles);
             Vector3 localPos = WindowConstants.ConvertGlobalToLocalCoordinates(unit._actualPosition);
-            localPos.Z = unit.Info.TileMapPosition.Properties.Height + 0.01f;
+            localPos.Z = unit.Info.TileMapPosition.Properties.Height + HEIGHT_OFFSET;
 
             unit.SelectionIndicator.SetTranslation(localPos);
             UpdateIndicatorPosition(unit);

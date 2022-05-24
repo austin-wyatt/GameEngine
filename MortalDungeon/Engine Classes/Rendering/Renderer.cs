@@ -14,7 +14,7 @@ namespace Empyrean.Engine_Classes.Rendering
 {
     public static class RenderingConstants 
     {
-        public static float TextAlphaThreshold = 0.5f;
+        public static float TextAlphaThreshold = 0.0001f;
         public static float DefaultAlphaThreshold = 0.15f;
         //public static float DefaultAlphaThreshold = 0.3f;
         public static Vector3 LightPosition = new Vector3();

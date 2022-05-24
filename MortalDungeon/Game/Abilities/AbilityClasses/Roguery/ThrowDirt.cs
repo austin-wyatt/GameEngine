@@ -24,6 +24,9 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Bandit
             CastingUnit = castingUnit;
             //CastRequirements.AddResourceCost(ResF.ActionEnergy, 1, Comparison.GreaterThanOrEqual, ExpendBehavior.Expend);
 
+            Name = new TextInfo(25, 3);
+            Description = new TextInfo(26, 3);
+
             CastingMethod |= CastingMethod.PhysicalDexterity;
 
             Grade = 1;

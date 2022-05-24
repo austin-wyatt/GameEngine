@@ -70,6 +70,9 @@ namespace Empyrean.Definitions.Items
         {
             public Club(Unit unit) : base(null, AbilityClass.Item_Normal, 1)
             {
+                Name = new TextInfo(4, 1);
+                Description = new TextInfo(5, 1);
+
                 CastingUnit = unit;
                 CastingMethod = CastingMethod.Base | CastingMethod.BruteForce | CastingMethod.Weapon;
 

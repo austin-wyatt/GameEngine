@@ -24,7 +24,7 @@ namespace Empyrean.Game.UI
         public ScrollableArea LogArea;
         public List<UIObject> Events = new List<UIObject>();
 
-        public float TextScale = 0.05f;
+        public float TextScale = 1f;
 
         public CombatScene Scene;
 
@@ -74,7 +74,7 @@ namespace Empyrean.Game.UI
             };
         }
 
-        private const int maxEventWidth = 40;
+        private const int maxEventWidth = 35;
         private const int maxEvents = 30;
         public void AddEvent(string eventText, EventSeverity severity = EventSeverity.Info)
         {
@@ -102,7 +102,7 @@ namespace Empyrean.Game.UI
                     break;
             }
 
-            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 16, brush);
+            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 12, brush, Color.FromArgb(84, 84, 64), lineHeightMult: 0.75f);
             textComponent.SetTextScale(TextScale);
 
 

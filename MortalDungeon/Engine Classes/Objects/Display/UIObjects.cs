@@ -246,11 +246,6 @@ namespace Empyrean.Engine_Classes
                 });
             }
 
-            foreach(var text in TextObjects)
-            {
-                text.SetTextScale(text.TextScale);
-            }
-
             Size = size;
             SetOrigin(aspectRatio, Size);
 

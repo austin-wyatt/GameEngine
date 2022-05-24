@@ -61,16 +61,9 @@ namespace Empyrean.Game.UI
             Typeable = true;
 
             #region end turn button
-            Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", 0.375f, default, default, false);
+            Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", centerText: true, fontSize: 28);
 
             EndTurnButton = endTurnButton;
-
-            UIDimensions textOffset = new UIDimensions(80, 100);
-            //textOffset.Y = 0;
-
-            //UIScale textScale = endTurnButton.TextBox.TextField.GetDimensions() * WindowConstants.AspectRatio * 2 + textOffset * 3;
-            //textScale.Y *= -1;
-            endTurnButton.SetSize(endTurnButton.TextBox.Size + textOffset.ToScale());
 
             endTurnButton.SetPositionFromAnchor(GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(-10, -8, 0), UIAnchorPosition.BottomRight);
 
@@ -125,10 +118,8 @@ namespace Empyrean.Game.UI
             #region name box
             Vector3 nameBoxPos = _generalBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
             nameBoxPos.X = nameBoxPos.X + containingBlockDimensions.X / 6;
-
-            _unitNameTextBox = new Text("", Text.DEFAULT_FONT, 64, Brushes.Black);
+            _unitNameTextBox = new Text("", Text.DEFAULT_FONT, 18, Brushes.Black, Color.FromArgb(114, 130, 163));
             _unitNameTextBox.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
-            _unitNameTextBox.SetTextScale(0.1f);
 
             _infoBlock.AddChild(_unitNameTextBox, 100);
             #endregion

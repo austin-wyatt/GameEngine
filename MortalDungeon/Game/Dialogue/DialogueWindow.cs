@@ -282,7 +282,7 @@ namespace Empyrean.Game
 
                     string responseString = UIHelpers.WrapString(res.ToString(), textWrapLength);
 
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.1f, _Colors.UILightGray, _Colors.UITextBlack);
+                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString);
                     button.BaseComponent.MultiTextureData.MixTexture = false;
 
                     button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));
@@ -356,7 +356,7 @@ namespace Empyrean.Game
                 {
                     string responseString = "...";
 
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString, 0.1f, _Colors.UILightGray, _Colors.UITextBlack);
+                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString);
                     button.BaseComponent.MultiTextureData.MixTexture = false;
 
                     button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));

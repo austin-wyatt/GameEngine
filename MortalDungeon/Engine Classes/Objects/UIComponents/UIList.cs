@@ -23,11 +23,11 @@ namespace Empyrean.Engine_Classes.UIComponents
         public Vector4 _textColor = _Colors.UITextBlack;
         public Vector4 _itemColor = _Colors.UILightGray;
 
-        public UIList(Vector3 position, UIScale listItemSize, float textScale = 0.075f, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
+        public UIList(Vector3 position, UIScale listItemSize, float textScale = 1, Vector4 boxColor = default, Vector4 textColor = default, Vector4 itemColor = default, bool ascending = false, bool outline = false)
         {
             Position = position;
             ListItemSize = listItemSize;
-            TextScale = textScale;
+            //TextScale = textScale;
             Ascending = ascending;
             Outline = outline;
 
@@ -220,11 +220,13 @@ namespace Empyrean.Engine_Classes.UIComponents
             Vector4 textColor, Vector4 itemColor, bool outline = false, bool scaleAspectRatio = true) 
         {
             //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
-            Text textBox = new Text(text, Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text textBox = new Text(text, Text.DEFAULT_FONT, 14, Brushes.Black);
             textBox.SetTextScale(textScale);
 
             _textBox = textBox;
-            
+
+            _textBox.HoverColor = new Vector4(0.8f, 0.8f, 0.8f, 1);
+
 
             //BaseComponent = textBox;
 
@@ -283,7 +285,7 @@ namespace Empyrean.Engine_Classes.UIComponents
                 //_textBox.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
                 //_textBox.SetTextColor(_textColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
 
-                _textBox.SetColor(_textColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
+                _textBox.OnHover();
                 _backdrop.SetColor(_itemColor - new Vector4(0.1f, 0.1f, 0.1f, 0));
 
                 HoverEvent(this);
@@ -297,8 +299,7 @@ namespace Empyrean.Engine_Classes.UIComponents
                 Hovered = false;
                 //_textBox.SetColor(_itemColor);
                 //_textBox.SetTextColor(_textColor);
-
-                _textBox.SetColor(_textColor);
+                _textBox.OnHoverEnd();
                 _backdrop.SetColor(_itemColor);
 
                 HoverEndEvent(this);

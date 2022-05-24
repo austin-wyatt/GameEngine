@@ -19,17 +19,26 @@ namespace Empyrean.Engine_Classes.TextHandling
         private int _fontSize;
         private Brush _fontColor;
 
-        private UIScale _fontBaseScale = new UIScale();
         /// <summary>
         /// Scales the text object from it's default size
         /// </summary>
         public float TextScale = 1;
 
-        //public static string DEFAULT_FONT = "Moshita Mono";
-        public static string DEFAULT_FONT = "Arial";
+        public float LineHeightMultiplier = 1;
 
-        public Text(string text, string font, int fontSize, Brush fontColor)
+        //public static string DEFAULT_FONT = "Moshita Mono";
+        public static string DEFAULT_FONT = "Segoe UI";
+        //public static string DEFAULT_FONT = "Arial";
+
+        public Color BackgroundClearColor = Color.White;
+
+        public Text(string text, string font, int fontSize, Brush fontColor, Color clearColor = default, float lineHeightMult = 1)
         {
+            if (clearColor != default)
+            {
+                BackgroundClearColor = clearColor;
+            }
+
             TextString = text;
 
             _font = font;
@@ -38,17 +47,18 @@ namespace Empyrean.Engine_Classes.TextHandling
 
             _canLoadTexture = false;
 
+            LineHeightMultiplier = lineHeightMult;
+
             _baseObject = CreateBaseObject();
             AddBaseObject(_baseObject);
 
             int newLines = text.Split("\n").Length;
 
-            _fontBaseScale = new UIScale(TextDimensions.X / (TextDimensions.Y / newLines), newLines);
             SetSize(new UIScale(1, 1));
 
             //RenderAfterParent = true;
 
-            _baseObject.RenderData.AlphaThreshold = 0.7f;
+            _baseObject.RenderData.AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold;
 
             ValidateObject(this);
         }
@@ -64,13 +74,12 @@ namespace Empyrean.Engine_Classes.TextHandling
             {
                 TextString = text;
 
-                var oldScale = _fontBaseScale;
                 var oldTexture = _texture;
 
                 var baseObj = CreateBaseObject();
                 baseObj.SetPosition(Position);
                 _baseObject = baseObj;
-                _baseObject.RenderData.AlphaThreshold = 0.7f;
+                _baseObject.RenderData.AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold;
 
                 AddBaseObject(baseObj);
 
@@ -82,8 +91,7 @@ namespace Empyrean.Engine_Classes.TextHandling
 
                 int newLines = text.Split("\n").Length;
 
-                _fontBaseScale = new UIScale(TextDimensions.X / (TextDimensions.Y / newLines), newLines);
-                SetSize(new UIScale(Size.X / oldScale.X, Size.Y / oldScale.Y));
+                SetTextScale(TextScale);
 
                 //ForceTreeRegeneration();
             }
@@ -99,15 +107,15 @@ namespace Empyrean.Engine_Classes.TextHandling
         {
             UIScale temp = new UIScale(size);
 
-            temp.X *= _fontBaseScale.X;
-            temp.Y *= _fontBaseScale.Y;
+            temp.X *= TextDimensions.X * 2 / WindowConstants.ClientSize.Y;
+            temp.Y *= TextDimensions.Y * 2 / WindowConstants.ClientSize.Y;
 
             base.SetSize(temp);
         }
 
         public override void OnResize()
         {
-            SetSize(new UIScale(Size.X / _fontBaseScale.X, Size.Y / _fontBaseScale.Y));
+            SetTextScale(TextScale);
         }
 
         private object _textLoadLock = new object();
@@ -118,10 +126,12 @@ namespace Empyrean.Engine_Classes.TextHandling
             var baseObj = CreateBaseObjectFromSpritesheet(temp, 0);
             baseObj.BaseFrame.CameraPerspective = false;
 
+            baseObj.RenderData.AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold;
+
             //TextureLoaded = false;
             //SetRender(false);
 
-            if(_texture == null)
+            if (_texture == null)
             {
                 TextureLoaded = false;
                 SetRender(false);
@@ -152,7 +162,7 @@ namespace Empyrean.Engine_Classes.TextHandling
 
                     _texture = null;
                 }
-            });
+            }, BackgroundClearColor, LineHeightMultiplier);
 
             TextDimensions = dimensions;
 

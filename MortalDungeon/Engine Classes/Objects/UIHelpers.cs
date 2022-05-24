@@ -95,6 +95,8 @@ namespace Empyrean.Engine_Classes
 
             public bool EnforceScreenBounds;
 
+            public int CharactersPerLine;
+
             public StringTooltipParameters(CombatScene scene, string text, GameObject hoverParent, UIObject baseObject) 
             {
                 Scene = scene;
@@ -109,10 +111,29 @@ namespace Empyrean.Engine_Classes
                 TextScale = 0.1f;
 
                 EnforceScreenBounds = true;
+                CharactersPerLine = 50;
             }
         }
         public static void CreateToolTip(StringTooltipParameters param)
         {
+            if(param.CharactersPerLine > 0)
+            {
+                var lines = param.Text.Split('\n');
+                StringBuilder builder = new StringBuilder();
+
+                for(int i = 0; i < lines.Length; i++)
+                {
+                    if(lines[i].Length > 0)
+                    {
+                        builder.Append(WrapString(lines[i], param.CharactersPerLine));
+                    }
+                    
+                    builder.Append('\n');
+                }
+
+                param.Text = builder.ToString();
+            }
+
             string tooltipName = "Tooltip" + param.TooltipFlag;
 
             if (param.Scene.ContextManager.GetFlag(param.TooltipFlag)) 
@@ -262,12 +283,11 @@ namespace Empyrean.Engine_Classes
         {
             Tooltip tooltip = new Tooltip();
 
-            Text header = new Text(headerText, Text.DEFAULT_FONT, 64, Brushes.Black);
-            header.SetTextScale(0.1f);
+            Text header = new Text(headerText, Text.DEFAULT_FONT, 32, Brushes.Black);
+            header.SetTextScale(1);
 
-            Text description = new Text(bodyText, Text.DEFAULT_FONT, 64, Brushes.Black);
-            description.SetTextScale(0.075f);
-            description.SetColor(_Colors.UITextBlack);
+            Text description = new Text(bodyText, Text.DEFAULT_FONT, 16, Brushes.Black, Color.White);
+            //description.SetTextScale(1.389f);
 
             tooltip.AddChild(header);
             tooltip.AddChild(description);
@@ -279,6 +299,7 @@ namespace Empyrean.Engine_Classes
 
             tooltip.FitContents();
             tooltip.BaseComponent.SetPosition(tooltip.Position);
+            tooltip.BaseComponent.SetColor(new Vector4(1, 1, 1, 1));
 
             header.SetPositionFromAnchor(tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
             description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
@@ -396,6 +417,12 @@ namespace Empyrean.Engine_Classes
             else if (right)
             {
                 tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.BottomRight);
+                topLeft = tooltip.GetAnchorPosition(UIAnchorPosition.TopLeft);
+
+                if(topLeft.X < 0)
+                {
+                    tooltip.SetPositionFromAnchor(mousePos, UIAnchorPosition.BottomCenter);
+                }
             }
         }
 

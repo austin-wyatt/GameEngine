@@ -20,6 +20,9 @@ namespace Empyrean.Definitions.Items
             ItemType = ItemType.Gloves;
 
             Tags = ItemTag.Armor_Light;
+
+            Name = new TextInfo(8, 1);
+            Description = new TextInfo(9, 1);
         }
 
         public override void InitializeAbility()
@@ -33,7 +36,9 @@ namespace Empyrean.Definitions.Items
                         { (int)BuffEffect.DAMAGE_TYPE_ADDITIVE + (int)DamageType.Slashing, 1 },
                         { (int)BuffEffect.DAMAGE_TYPE_ADDITIVE + (int)DamageType.Blunt, 1 },
                     },
-                PassiveName = "Tattered_Leather_Gloves_Passive"
+                PassiveName = "Tattered_Leather_Gloves_Passive",
+                Name = new TextInfo(8, 1),
+                Description = new TextInfo(9, 1)
             };
 
             base.InitializeAbility();

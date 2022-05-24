@@ -63,7 +63,11 @@ namespace Empyrean.Game.Abilities
 
             EffectManager = new EffectManager(this);
 
-            ChainCondition shieldsCheck = new ChainCondition("{TargetUnit[0] ResI Shields} <= 0");
+            ChainCondition shieldsCheck = new ChainCondition();
+            shieldsCheck.ConditionFunc = (effectResults) =>
+            {
+                return SelectionInfo.SelectedUnit.GetResI(ResI.Shields) <= 0;
+            };
 
             StunDebuff stunDebuff = new StunDebuff(2);
 

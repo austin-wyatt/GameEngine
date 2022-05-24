@@ -235,7 +235,7 @@ namespace Empyrean.Game.Abilities
         }
 
         public Icon GenerateIcon(UIScale scale, bool withBackground = false, Icon.BackgroundType backgroundType = Icon.BackgroundType.NeutralBackground,
-            bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null, bool showCharges = false, float hotkeyTextScale = 0.07f)
+            bool showEnergyCost = false, Icon passedIcon = null, string hotkey = null, bool showCharges = false, float hotkeyTextScale = 1f)
         {
             Icon icon;
             if (passedIcon == null)
@@ -257,7 +257,7 @@ namespace Empyrean.Game.Abilities
 
                 string energyString = (actionCost >= energyCost ? actionCost : energyCost).ToString("n1").Replace(".0", "");
 
-                float textScale = 0.05f;
+                float textScale = 1f;
 
 
                 Text energyCostBox = new Text(energyString, Text.DEFAULT_FONT, 16, Brushes.White);
@@ -324,12 +324,12 @@ namespace Empyrean.Game.Abilities
 
             if (hotkey != null && Type != AbilityTypes.Passive)
             {
-                UIScale textBoxSize = new UIScale(hotkeyTextScale * 0.7f, hotkeyTextScale * 0.7f);
+                UIScale textBoxSize = new UIScale(hotkeyTextScale * 0.05f, hotkeyTextScale * 0.05f);
 
                 float textScale = hotkeyTextScale;
 
 
-                Text hotkeyBox = new Text(hotkey, Text.DEFAULT_FONT, 16, Brushes.White);
+                Text hotkeyBox = new Text(hotkey, Text.DEFAULT_FONT, 12, Brushes.White, Color.Black);
                 hotkeyBox.SetTextScale(textScale);
 
                 UIScale textDimensions = hotkeyBox.GetDimensions();
@@ -728,7 +728,20 @@ namespace Empyrean.Game.Abilities
 
         public virtual Tooltip GenerateTooltip()
         {
-            string body = Description.ToString();
+            var lines = Description.ToString().Split('\n');
+            StringBuilder builder = new StringBuilder();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Length > 0)
+                {
+                    builder.Append(UIHelpers.WrapString(lines[i], 50));
+                }
+
+                builder.Append('\n');
+            }
+
+            string body = builder.ToString();
 
             body += $"\n\n";
 

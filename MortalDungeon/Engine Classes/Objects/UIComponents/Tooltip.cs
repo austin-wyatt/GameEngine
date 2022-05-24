@@ -76,10 +76,10 @@ namespace Empyrean.Engine_Classes.UIComponents
 
                 UIDimensions tooltipDim = dimBottomRight - dimTopLeft;
 
+                tooltipDim += Margins * 2;
+
                 tooltipDim.X *= 2 * WindowConstants.AspectRatio;
                 tooltipDim.Y *= 2;
-
-                tooltipDim += Margins;
 
                 SetSize(tooltipDim);
             }

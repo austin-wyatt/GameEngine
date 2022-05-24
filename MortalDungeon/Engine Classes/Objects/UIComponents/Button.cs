@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using Empyrean.Engine_Classes.TextHandling;
+using OpenTK.Mathematics;
 using System;
 using System.Drawing;
 
@@ -7,10 +8,22 @@ namespace Empyrean.Engine_Classes.UIComponents
     public class Button : UIObject
     {
         public TextHandling.Text TextBox;
-        public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
+        //public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
+        public Vector4 BaseColor = _Colors.UILightGray;
+        public static Color BaseBoxColor = Color.FromArgb(216, 216, 216);
 
-        public Button(Vector3 position, UIScale size, string text = "", float textScale = 0.5f, Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
+        public Button(Vector3 position, UIScale size, string text = "", float textScale = 1f, int fontSize = 14, Vector4 boxColor = default, Brush textColor = null, Color clearColor = default, bool centerText = true)
         {
+            if(textColor == null)
+            {
+                textColor = Brushes.Black;
+            }
+
+            if(clearColor == default)
+            {
+                clearColor = BaseBoxColor;
+            }
+
             Position = position;
             Size = size;
 
@@ -34,11 +47,11 @@ namespace Empyrean.Engine_Classes.UIComponents
             //textBox.SetText(text);
             //textBox.SetTextScale(textScale);
 
-            var textBox = new TextHandling.Text(text, TextHandling.Text.DEFAULT_FONT, 64, Brushes.Black);
+            var textBox = new Text(text, Text.DEFAULT_FONT, fontSize, textColor, clearColor);
 
             float ratio = size.X / size.Y;
 
-            textBox.SetTextScale(textScale / ratio);
+            //textBox.SetTextScale(textScale / ratio);
 
             TextBox = textBox;
             
@@ -62,11 +75,6 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             SetColor(BaseColor);
             HoverColor = new Vector4(Math.Clamp(BaseColor.X - 0.1f, 0, 1), Math.Clamp(BaseColor.Y - 0.1f, 0, 1), Math.Clamp(BaseColor.Z - 0.1f, 0, 1), BaseColor.W);
-
-            if (textColor != default)
-            {
-                textBox.SetColor(textColor);
-            }
 
             ValidateObject(this);
         }
@@ -92,6 +100,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
         //    base.OnHoverEnd();
         //}
+
 
         public override void OnMouseDown()
         {

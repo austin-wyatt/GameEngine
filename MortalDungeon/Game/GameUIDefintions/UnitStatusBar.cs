@@ -25,6 +25,9 @@ namespace Empyrean.Game.UI
 
         public bool WillDisplay = true;
 
+        //public static Vector4 BaseComponentColor = new Vector4(0.33f, 0.33f, 0.25f, 0.25f);
+        public static Vector4 BaseComponentColor = _Colors.Transparent;
+
         public UnitStatusBar(Unit unit, Camera camera) 
         {
             Vector4 unitPos = new Vector4(unit.Position, 1) * unit.GetDisplay().Transformations * camera.GetViewMatrix() * camera.ProjectionMatrix;
@@ -40,13 +43,13 @@ namespace Empyrean.Game.UI
 
             BaseComponent.MultiTextureData.MixTexture = false;
             //BaseComponent.SetColor(_Colors.UILightGray);
-            BaseComponent.SetColor(_Colors.Transparent);
+            BaseComponent.SetColor(BaseComponentColor);
+            BaseComponent.SetAllInline(0);
 
             Name = "UnitStatusBar";
 
-            Text nameBox = new Text(unit.Name, Text.DEFAULT_FONT, 32, Brushes.White);
+            Text nameBox = new Text(unit.Name, Text.DEFAULT_FONT, 12, Brushes.Black, Color.FromArgb(30, 30, 30));
             nameBox.SetPositionFromAnchor(BaseComponent.Position, UIAnchorPosition.Center);
-            nameBox.SetColor(_Colors.Black);
 
             _nameBox = nameBox;
 
@@ -115,9 +118,8 @@ namespace Empyrean.Game.UI
                 if (WillDisplay)
                 {
                     _nameBox.SetRender(true);
-                    //BaseComponent.SetColor(_Colors.UILightGray);
-                    BaseComponent.SetColor(_Colors.Transparent);
-                    //BaseComponent.SetAllInline(2);
+                    BaseComponent.SetColor(BaseComponentColor);
+                    //BaseComponent.SetAllInline(1);
                     BaseComponent.SetAllInline(0);
 
                     if (_camera.Position.Z < 2)
@@ -139,7 +141,7 @@ namespace Empyrean.Game.UI
 
                         unitPos.Y += 0.25f;
                         SetSize(zoomScale);
-                        _nameBox.SetTextScale(0.065f);
+                        _nameBox.SetTextScale(1f);
                         UpdateInfoBarScales(zoomScale);
                     }
                     else if (_camera.Position.Z >= 4 && _camera.Position.Z < 8)
@@ -148,7 +150,7 @@ namespace Empyrean.Game.UI
                         unitPos.Y += 0.17f;
 
                         SetSize(zoomScale);
-                        _nameBox.SetTextScale(0.055f);
+                        _nameBox.SetTextScale(0.85f);
                         UpdateInfoBarScales(zoomScale);
                     }
                     else if (_camera.Position.Z >= 8 && _camera.Position.Z < 10)
@@ -157,7 +159,7 @@ namespace Empyrean.Game.UI
                         unitPos.Y += 0.12f;
 
                         SetSize(zoomScale);
-                        _nameBox.SetTextScale(0.045f);
+                        _nameBox.SetTextScale(0.75f);
                     }
                     else if (_camera.Position.Z >= 10)
                     {

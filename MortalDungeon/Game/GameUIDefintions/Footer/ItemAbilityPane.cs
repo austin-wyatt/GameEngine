@@ -96,7 +96,7 @@ namespace Empyrean.Game.UI
             {
                 primaryIcon = primaryWeapon.ItemAbility.GenerateIcon(primaryIconSize, true,
                     CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
-                    false, null, primaryHotkey, showCharges: true, hotkeyTextScale: 0.07f);
+                    false, null, primaryHotkey, showCharges: true);
 
                 InitializeBasicIconInfo(primaryIcon, primaryWeapon.ItemAbility, isPlayerUnitTakingTurn, primaryHotkey);
 
@@ -113,7 +113,7 @@ namespace Empyrean.Game.UI
             {
                 secondaryIcon = secondaryWeapon.ItemAbility.GenerateIcon(secondaryIconSize, true,
                     CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
-                    false, null, null, showCharges: false, hotkeyTextScale: 0.07f);
+                    false, null, null, showCharges: false);
 
                 InitializeBasicIconInfo(secondaryIcon, secondaryWeapon.ItemAbility, isPlayerUnitTakingTurn, null, canCastOverride: false);
 
@@ -155,7 +155,7 @@ namespace Empyrean.Game.UI
             {
                 Icon abilityIcon = ability.GenerateIcon(iconSize, true,
                     CurrentUnit.AI.GetTeam().GetRelation(UnitTeam.PlayerUnits) == Relation.Friendly ? Icon.BackgroundType.BuffBackground : Icon.BackgroundType.DebuffBackground,
-                    false, null, hotkey, showCharges: true, hotkeyTextScale: 0.07f);
+                    false, null, hotkey, showCharges: true);
 
                 int currIndex = count;
 

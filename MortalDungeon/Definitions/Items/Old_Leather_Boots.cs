@@ -23,6 +23,9 @@ namespace Empyrean.Definitions.Items
             ItemType = ItemType.Boots;
 
             Tags = ItemTag.Armor_Light;
+
+            Name = new TextInfo(6, 1);
+            Description = new TextInfo(7, 1);
         }
 
         public override void InitializeAbility()
@@ -34,7 +37,9 @@ namespace Empyrean.Definitions.Items
                     {
                         { (int)BuffEffect.MaxMovementEnergyAdditive, 1 }
                     },
-                PassiveName = "Old_Leather_Boots_Passive"
+                PassiveName = "Old_Leather_Boots_Passive",
+                Name = new TextInfo(6, 1),
+                Description = new TextInfo(7, 1)
             };
 
             base.InitializeAbility();
