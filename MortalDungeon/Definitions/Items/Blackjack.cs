@@ -1,9 +1,12 @@
 ﻿using Empyrean.Definitions.Buffs;
+using Empyrean.Game;
 using Empyrean.Game.Abilities;
 using Empyrean.Game.Abilities.AbilityEffects;
+using Empyrean.Game.Abilities.SelectionTypes;
 using Empyrean.Game.Items;
 using Empyrean.Game.Serializers;
 using Empyrean.Game.Units;
+using Empyrean.Game.Units.AIFunctions;
 using Empyrean.Objects;
 using System;
 using System.Collections.Generic;
@@ -42,14 +45,14 @@ namespace Empyrean.Definitions.Items
 
         }
 
-        public override void InitializeAbility()
+        public override void InitializeAbility(bool fromLoad = false, Action initializeCallback = null)
         {
             ItemAbility = new Club(EquipmentHandle.Unit)
             {
                 AnimationSet = AnimationSet,
             };
 
-            base.InitializeAbility();
+            base.InitializeAbility(fromLoad, initializeCallback);
         }
 
         public override void BuildAnimationSet()
@@ -68,6 +71,8 @@ namespace Empyrean.Definitions.Items
 
         private class Club : TemplateRangedSingleTarget
         {
+            private string _buffIdentifier;
+
             public Club(Unit unit) : base(null, AbilityClass.Item_Normal, 1)
             {
                 Name = new TextInfo(4, 1);
@@ -86,12 +91,14 @@ namespace Empyrean.Definitions.Items
                     CreateDamageInstance = CreateDamageInstance
                 };
 
+                _buffIdentifier = "blackjack_slow_debuff";
+
                 StackingDebuff slowDebuff = new StackingDebuff()
                 {
                     StackDuration = 3,
                     Duration = -1,
                     OwnerId = CastingUnit.PermanentId,
-                    Identifier = "blackjack_slow_debuff",
+                    Identifier = _buffIdentifier,
                     RemoveOnZeroStacks = true,
                     Behavior = StackBehavior.TrackStackDurationSeparately,
                     AnimationSetId = 51,
@@ -113,6 +120,8 @@ namespace Empyrean.Definitions.Items
 
                 EffectManager.Effects.Add(initialDamage);
                 EffectManager.Effects.Add(stackingSlowDebuff);
+
+                InitializeAIValues();
             }
 
             private DamageInstance CreateDamageInstance()
@@ -121,6 +130,48 @@ namespace Empyrean.Definitions.Items
                 instance.Damage.Add(DamageType.Blunt, 4);
 
                 return instance;
+            }
+
+            private void InitializeAIValues()
+            {
+                SingleTarget.GenerateDefaultTargetInfoForAbility(this);
+
+                AITargetSelection.EvaluateSimpleWeight = (morsel) =>
+                {
+                    if (!SelectionInfo.UnitTargetParams.CheckUnit(morsel.Unit, CastingUnit))
+                    {
+                        return 0;
+                    }
+
+                    var relation = morsel.Team.GetRelation(CastingUnit.AI.GetTeam());
+                    float weight = 1.5f;
+                    //To avoid a hardcoded weight value, an ability summary class should be created that gets manually filled with 
+                    //the effects of the ability and provides general numbers based on intrinsic weights. Ie doing 1 damage is 0.1 weight,
+                    //adding a slow would be 0.05 weight * duration * intensity, etc
+
+                    //Then costs would add negative weight. Stamina would be major, action points would be minor, and movement energy would be negligible
+
+                    //This more in-depth weight evaluation should happen in the feasibility check since that will always happen assuming targets are valid
+
+                    switch (relation)
+                    {
+                        case Relation.Hostile:
+                            break;
+                        default:
+                            return 0;
+                    }
+
+                    Buff foundBuff = morsel.Unit.Info.BuffManager.Buffs.Find(b => b.Identifier == _buffIdentifier);
+
+                    if (foundBuff != null)
+                    {
+                        weight += foundBuff.Stacks * 0.05f;
+                    }
+
+                    weight *= 1 + CastingUnit.AI.Feelings.GetFeelingValue(FeelingType.Bloodthirst, morsel);
+
+                    return weight;
+                };
             }
         }
     }

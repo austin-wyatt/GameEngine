@@ -106,9 +106,17 @@ namespace Empyrean.Engine_Classes.MiscOperations
             cubeCoord.Y = -cubeCoord.X - cubeCoord.Z;
         }
 
-        public static int GetDistanceBetweenPoints(ref Vector3i a, ref Vector3i b)
+        public static int GetDistanceBetweenPoints(Vector3i a, Vector3i b)
         {
-            return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
+            return (int)((Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) * 0.5);
+        }
+
+        public static int GetDistanceBetweenPoints(Tile tileA, Tile tileB)
+        {
+            Vector3i a = OffsetToCube(tileA.ToFeaturePoint());
+            Vector3i b = OffsetToCube(tileB.ToFeaturePoint());
+
+            return (int)((Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) * 0.5);
         }
 
         public static Vector2i CubeToOffset(Vector3i cube)
@@ -116,7 +124,7 @@ namespace Empyrean.Engine_Classes.MiscOperations
             Vector2i offsetCoord = new Vector2i
             {
                 X = cube.X,
-                Y = cube.Z + (cube.X + (cube.X & 1)) / 2
+                Y = (int)(cube.Z + (cube.X + (cube.X & 1)) * 0.5)
             };
 
             return offsetCoord;
@@ -262,7 +270,7 @@ namespace Empyrean.Engine_Classes.MiscOperations
         public static void GetLineLerp(Vector3i startPoint, Vector3i endPoint, in ICollection<Vector3i> outputList)
         {
             //int N = (int)(GetDistanceBetweenPoints(ref startPoint, ref endPoint) * LINE_DISTANCE_FLEX);
-            int N = GetDistanceBetweenPoints(ref startPoint, ref endPoint);
+            int N = GetDistanceBetweenPoints(startPoint, endPoint);
             float n = 1f / N;
 
             Vector3 currentCube;
@@ -283,7 +291,7 @@ namespace Empyrean.Engine_Classes.MiscOperations
         public static void GetLineLerp(Vector3i startPoint, Vector3i endPoint, in ICollection<Cube> outputList)
         {
             //int N = (int)(GetDistanceBetweenPoints(ref startPoint, ref endPoint) * LINE_DISTANCE_FLEX);
-            int N = GetDistanceBetweenPoints(ref startPoint, ref endPoint);
+            int N = GetDistanceBetweenPoints(startPoint, endPoint);
             float n = 1f / N;
 
             Vector3 currentCube;
@@ -325,15 +333,15 @@ namespace Empyrean.Engine_Classes.MiscOperations
                     return;
 
 
-                if (GetDistanceBetweenPoints(ref start, ref destination) > maximumDepth * 1.5f)
+                if (GetDistanceBetweenPoints(start, destination) > maximumDepth * 1.5f)
                 {
                     return;
                 }
 
                 currentTile = CubeWithParent.Pool.GetObject();
                 currentTile.Initialize(start);
-                currentTile.PathCost = GetDistanceBetweenPoints(ref start, ref start);
-                currentTile.DistanceToEnd = GetDistanceBetweenPoints(ref start, ref destination);
+                currentTile.PathCost = GetDistanceBetweenPoints(start, start);
+                currentTile.DistanceToEnd = GetDistanceBetweenPoints(start, destination);
 
                 visitedTiles.Add(start);
 
@@ -393,7 +401,7 @@ namespace Empyrean.Engine_Classes.MiscOperations
                             placeholder.Z = neighbor.Z;
 
                             pathCost = currentTile.PathCost + 1;
-                            distanceToEnd = GetDistanceBetweenPoints(ref placeholder, ref destination);
+                            distanceToEnd = GetDistanceBetweenPoints(placeholder, destination);
 
                             if (pathCost + distanceToEnd <= maximumDepth)
                             {

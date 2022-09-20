@@ -213,7 +213,7 @@ namespace Empyrean.Game.Map
 
                     if (unitInfo != null)
                     {
-                        Unit unit = unitInfo.CreateUnit(TileMapManager.Scene);
+                        Unit unit = unitInfo.CreateUnit(TileMapManager.Scene, firstLoad: true);
 
                         if (Parameters.TryGetValue(affectedPoint, out var parameters))
                         {
@@ -535,7 +535,7 @@ namespace Empyrean.Game.Map
             Vector3i startCube = CubeMethods.OffsetToCube(startPoint);
             Vector3i endCube = CubeMethods.OffsetToCube(endPoint);
 
-            int N = CubeMethods.GetDistanceBetweenPoints(ref startCube, ref endCube);
+            int N = CubeMethods.GetDistanceBetweenPoints(startCube, endCube);
             float n = 1f / N;
 
             Vector3 currentCube;
@@ -644,23 +644,12 @@ namespace Empyrean.Game.Map
             return angle;
         }
 
-        private static ObjectPool<Vector3i> _vector3iPool = new ObjectPool<Vector3i>();
         public static int GetDistanceBetweenPoints(FeaturePoint pointA, FeaturePoint pointB)
         {
-            Vector3i a = _vector3iPool.GetObject();
-            CubeMethods.OffsetToCube(pointA, ref a);
-            Vector3i b = _vector3iPool.GetObject();
-            CubeMethods.OffsetToCube(pointB, ref b);
+            Vector3i a = CubeMethods.OffsetToCube(pointA);
+            Vector3i b = CubeMethods.OffsetToCube(pointB);
 
-            try
-            {
-                return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
-            }
-            finally
-            {
-                _vector3iPool.FreeObject(ref a);
-                _vector3iPool.FreeObject(ref b);
-            }
+            return (Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z)) / 2;
         }
 
         public static int AngleOfDirection(Direction dir)

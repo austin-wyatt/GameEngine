@@ -22,7 +22,7 @@ namespace Empyrean.Game.Ledger.Units
 
         public LedgeredUnit(Unit unit)
         {
-            UnitInfo = new UnitSaveInfo(unit);
+            UnitInfo = new UnitSaveInfo(unit, unloadingUnit: true);
         }
 
         public override bool Equals(object obj)

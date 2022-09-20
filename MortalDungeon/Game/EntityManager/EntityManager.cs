@@ -32,6 +32,18 @@ namespace Empyrean.Game.Entities
         {
             return HashCode.Combine(Id);
         }
+
+        public bool TryGetUnit(out Unit unit)
+        {
+            if(EntityManager.EntitiesById.TryGetValue(this, out var entity))
+            {
+                unit = entity.Handle;
+                return true;
+            }
+
+            unit = null;
+            return false;
+        }
     }
     public static class EntityManager
     {

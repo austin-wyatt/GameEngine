@@ -56,7 +56,9 @@ namespace Empyrean.Engine_Classes.Scenes
 
         ClearingTeamVision,
 
-        EditingFeature
+        EditingFeature,
+
+        DisallowFooterUpdate
     }
     public class CombatScene : Scene
     {
@@ -881,7 +883,7 @@ namespace Empyrean.Engine_Classes.Scenes
                                 if (unit.Info.Visible(team) || InCombat)
                                 {
                                     //Check if an enemy is present 
-                                    var unitCombatInfo = EvaluateUnitsInCombat(unit, 10);
+                                    var unitCombatInfo = EvaluateUnitsInCombat(unit, 6);
 
                                     if (!InCombat)
                                     {
@@ -1093,7 +1095,13 @@ namespace Empyrean.Engine_Classes.Scenes
 
 
             if (Footer != null)
-                Footer.RefreshFooterInfo();
+            {
+                if (Footer.CurrentUnit == unit)
+                {
+                    Footer.UpdateFooterInfo(setNull: true);
+                }
+            }
+                
         }
 
         #region Event handlers

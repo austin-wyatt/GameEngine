@@ -92,14 +92,16 @@ namespace Empyrean.Game.Units
                     {
                         Sound sound;
 
-                        if(rng.NextDouble() > 0.5)
-                        {
-                            sound = new Sound(Sounds.Pop1) { Gain = 0.05f };
-                        }
-                        else
-                        {
-                            sound = new Sound(Sounds.Pop2) { Gain = 0.05f };
-                        }
+                        sound = new Sound(Sounds.Pop1) { Gain = 0.05f, Pitch = (float)rng.NextDouble() / 10 + 1 };
+
+                        //if (rng.NextDouble() > 0.5)
+                        //{
+                        //    sound = new Sound(Sounds.Pop1) { Gain = 0.05f };
+                        //}
+                        //else
+                        //{
+                        //    sound = new Sound(Sounds.Pop2) { Gain = 0.05f };
+                        //}
 
                         sound.Play();
 
@@ -178,14 +180,16 @@ namespace Empyrean.Game.Units
                     {
                         Sound sound;
 
-                        if (rng.NextDouble() > 0.5)
-                        {
-                            sound = new Sound(Sounds.Pop1) { Gain = 0.05f };
-                        }
-                        else
-                        {
-                            sound = new Sound(Sounds.Pop2) { Gain = 0.05f };
-                        }
+                        sound = new Sound(Sounds.Pop1) { Gain = 0.05f, Pitch = (float)rng.NextDouble() / 10 + 0.95f };
+
+                        //if (rng.NextDouble() > 0.5)
+                        //{
+                        //    sound = new Sound(Sounds.Pop1) { Gain = 0.05f };
+                        //}
+                        //else
+                        //{
+                        //    sound = new Sound(Sounds.Pop2) { Gain = 0.05f };
+                        //}
 
                         sound.Play();
 

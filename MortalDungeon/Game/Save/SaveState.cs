@@ -76,7 +76,7 @@ namespace Empyrean.Game.Save
             {
                 if (!playerPartySet.Contains(unit))
                 {
-                    returnState.UnitSaveInfo.Add(new UnitSaveInfo(unit));
+                    returnState.UnitSaveInfo.Add(new UnitSaveInfo(unit, unloadingUnit: false));
                 }
             }
             #endregion
@@ -135,7 +135,7 @@ namespace Empyrean.Game.Save
             returnState.PlayerPartySaveInfo = new List<UnitSaveInfo>();
             foreach (var unit in PlayerParty.UnitsInParty)
             {
-                returnState.PlayerPartySaveInfo.Add(new UnitSaveInfo(unit));
+                returnState.PlayerPartySaveInfo.Add(new UnitSaveInfo(unit, unloadingUnit: false));
             }
             returnState.PartyGrouped = PlayerParty.Grouped;
             returnState.PartyInventory = PlayerParty.Inventory;
@@ -246,7 +246,7 @@ namespace Empyrean.Game.Save
                 if (info == null)
                     continue;
 
-                Unit unit = info.CreateUnit(scene);
+                Unit unit = info.CreateUnit(scene, firstLoad: false);
 
                 item.ApplyUnitInfoToUnit(unit);
 
@@ -289,7 +289,7 @@ namespace Empyrean.Game.Save
                 if (info == null)
                     continue;
 
-                Unit unit = info.CreateUnit(scene);
+                Unit unit = info.CreateUnit(scene, firstLoad: false);
 
                 unitInfo.ApplyUnitInfoToUnit(unit);
 

@@ -488,6 +488,21 @@ namespace Empyrean.Game.Tiles
             return tileList;
         }
 
+        public void GetTilesInRadius(Tile tile, int radius, ICollection<Tile> tileList, TileRingConstraints constraints = null)
+        {
+            tileList.Add(tile);
+
+            int minRadius = constraints == null ? TileRingConstraints.DEFAULT_MIN_RADIUS : constraints.MinRadius;
+            int maxRadius = constraints == null ? TileRingConstraints.DEFAULT_MAX_RADIUS : constraints.MaxRadius;
+
+            maxRadius = maxRadius == TileRingConstraints.DEFAULT_MAX_RADIUS ? radius : maxRadius;
+
+            for (int i = minRadius; i <= maxRadius; i++)
+            {
+                GetRingOfTiles(tile, tileList, i);
+            }
+        }
+
         /// <summary>
         /// Gets a line of tiles that begins at the startIndex and ends and the endIndex
         /// </summary>
@@ -521,6 +536,41 @@ namespace Empyrean.Game.Tiles
             }
 
             return tileList;
+        }
+
+        /// <summary>
+        /// Gets a line of tiles that begins at the startIndex and ends and the endIndex
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="endPoint"></param>
+        /// <returns></returns>
+        public void GetLineOfTiles(TilePoint startPoint, TilePoint endPoint, List<Tile> tileList)
+        {
+            Vector3i startCube = OffsetToCube(startPoint);
+            Vector3i endCube = OffsetToCube(endPoint);
+
+            int N = GetDistanceBetweenPoints(startCube, endCube);
+            float n = 1f / N;
+
+            Vector3 currentCube;
+            Vector2i currentOffset;
+
+            Vector3 startVec3 = new Vector3(startCube);
+            Vector3 endVec3 = new Vector3(endCube);
+
+            for (int i = 0; i <= N; i++)
+            {
+                currentCube = CubeMethods.CubeLerp(ref startVec3, ref endVec3, n * i);
+
+                currentOffset = CubeMethods.CubeToOffset(CubeMethods.CubeRound(ref currentCube));
+
+                Tile tile = TileMapHelpers.GetTile(currentOffset.X, currentOffset.Y, this);
+
+                if (tile != null)
+                {
+                    tileList.Add(tile);
+                }
+            }
         }
 
 
@@ -557,7 +607,7 @@ namespace Empyrean.Game.Tiles
         /// <param name="start"></param>
         /// <param name="radius"></param>
         /// <returns></returns>
-        public void GetRingOfTiles(TilePoint startPoint, List<Tile> outputList, int radius = 1, bool includeEdges = true)
+        public void GetRingOfTiles(TilePoint startPoint, ICollection<Tile> outputList, int radius = 1, bool includeEdges = true)
         {
             Vector3i cubePosition = OffsetToCube(startPoint);
 
@@ -1176,11 +1226,5 @@ namespace Empyrean.Game.Tiles
         {
             return HashCode.Combine(X, Y);
         }
-    }
-
-    public class DynamicTextureInfo 
-    {
-        public bool TextureChanged = false;
-        public bool Initialize = true;
     }
 }

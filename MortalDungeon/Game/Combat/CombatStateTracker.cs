@@ -1,4 +1,5 @@
-﻿using Empyrean.Engine_Classes.Scenes;
+﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Game.Tiles;
 using Empyrean.Game.Units;
 using System;
@@ -32,11 +33,11 @@ namespace Empyrean.Game.Combat
 
             foreach(var unit in Scene.UnitsInCombat)
             {
-                await CalculateUnimpededSightlinesForUnit(unit);
+                await CalculateUnimpededLinesToUnit(unit);
             }
 
-            Scene.UnitMoved += CalculateUnimpededSightlinesForUnit;
-            Scene.UnitAddedToCombat += CalculateUnimpededSightlinesForUnit;
+            Scene.UnitMoved += CalculateUnimpededLinesToUnit;
+            Scene.UnitAddedToCombat += CalculateUnimpededLinesToUnit;
         }
 
         public void EndCombat()
@@ -44,8 +45,8 @@ namespace Empyrean.Game.Combat
             UnitInformation.Clear();
             UnimpededUnitSightlines.Clear();
 
-            Scene.UnitMoved -= CalculateUnimpededSightlinesForUnit;
-            Scene.UnitAddedToCombat -= CalculateUnimpededSightlinesForUnit;
+            Scene.UnitMoved -= CalculateUnimpededLinesToUnit;
+            Scene.UnitAddedToCombat -= CalculateUnimpededLinesToUnit;
         }
 
         public void AddMorselForAll()
@@ -109,26 +110,55 @@ namespace Empyrean.Game.Combat
             }
         }
 
-        public async Task CalculateUnimpededSightlinesForUnit(Unit unit)
+        public static int UNIT_SIGHTLINE_LENGTH = 10;
+        private static ObjectPool<List<LineOfTiles>> _lineOfTileListPool = new ObjectPool<List<LineOfTiles>>();
+        public async Task CalculateUnimpededLinesToUnit(Unit unit)
         {
-            UnimpededUnitSightlines.Remove(unit);
+            if(UnimpededUnitSightlines.TryGetValue(unit, out var list))
+            {
+                for(int i = 0; i < list.Count; i++)
+                {
+                    list[i].Tiles.Clear();
+                    Tile.TileListPool.FreeObject(list[i].Tiles);
+                }
 
-            var lineOfTilesList = new List<LineOfTiles>();
+                list.Clear();
+                _lineOfTileListPool.FreeObject(list);
+                UnimpededUnitSightlines.Remove(unit);
+            }
+
+            var lineOfTilesList = _lineOfTileListPool.GetObject();
 
             UnimpededUnitSightlines.Add(unit, lineOfTilesList);
 
-            VisionGenerator gen = new VisionGenerator()
-            {
-                Position = Map.FeatureEquation.PointToMapCoords(unit.Info.TileMapPosition),
-                Radius = 10
-            };
+            var ringOfTiles = Tile.TileListPool.GetObject();
 
-            var visionLines = VisionManager.CalculateVisionLinesToGenerator(gen);
+            TileMap map = unit.Info.TileMapPosition.TileMap;
+            map.GetRingOfTiles(unit.Info.TileMapPosition, ringOfTiles, UNIT_SIGHTLINE_LENGTH);
 
-            for(int i = 0; i < visionLines.Count; i++)
+            
+
+            for (int i = 0; i < ringOfTiles.Count; i++)
             {
-                lineOfTilesList.Add(new LineOfTiles(visionLines[i]));
+                var lineOfTiles = Tile.TileListPool.GetObject();
+
+                map.GetLineOfTiles(ringOfTiles[i], unit.Info.TileMapPosition.TilePoint, lineOfTiles);
+
+                LineOfTiles filledLine = new LineOfTiles(lineOfTiles);
+                filledLine.CalculateLineIndices();
+                lineOfTilesList.Add(filledLine);
+
+                //for(int j = 0; j < filledLine.Tiles.Count; j++)
+                //{
+                //    if(j >= filledLine.AbilityLineNoHeightIndex)
+                //    {
+                //        filledLine.Tiles[j].SetColor(_Colors.Blue);
+                //    }
+                //}
             }
+
+            ringOfTiles.Clear();
+            Tile.TileListPool.FreeObject(ringOfTiles);
         }
     }
 
@@ -136,9 +166,67 @@ namespace Empyrean.Game.Combat
     {
         public List<Tile> Tiles = new List<Tile>();
 
+        /// <summary>
+        /// The index that the ability line begins at <para/>
+        /// Specifies a line where the heights are never too great to break a direct line
+        /// </summary>
+        public int AbilityLineHeightIndex = -1;
+
+        /// <summary>
+        /// The index that the ability line begins at <para/>
+        /// Specifies a line where the heights are ignored.
+        /// </summary>
+        public int AbilityLineNoHeightIndex = -1;
+
+
+        /// <summary>
+        /// The index that the vision line begins at
+        /// </summary>
+        public int VisionLineIndex = -1;
+
         public LineOfTiles(List<Tile> tiles)
         {
             Tiles = tiles;
+        }
+
+        public void CalculateLineIndices()
+        {
+            if (Tiles.Count < 2)
+                return;
+
+            float baseHeight = Tiles[Tiles.Count - 1].GetVisionHeight();
+
+            Tile currentTile;
+
+            for(int i = Tiles.Count - 2; i >= 0; i--)
+            {
+                currentTile = Tiles[i];
+
+                bool currTileHigher = (baseHeight - currentTile.GetVisionHeight()) <= -VisionManager.HEIGHT_VISION_CUTOFF;
+                //bool currTileLower = (baseHeight - currentTile.GetVisionHeight()) >= VisionManager.HEIGHT_VISION_CUTOFF * 0.5f;
+
+                bool blocksAbility = currentTile.BlocksType(BlockingType.Abilities);
+                bool blocksVision = currentTile.BlocksType(BlockingType.Vision);
+
+                if (AbilityLineHeightIndex == -1 && (currTileHigher || blocksAbility)) 
+                {
+                    AbilityLineHeightIndex = i + 1;
+                }
+
+                if (AbilityLineNoHeightIndex == -1 && blocksAbility)
+                {
+                    AbilityLineNoHeightIndex = i + 1;
+                }
+
+                if (VisionLineIndex == -1 && (currTileHigher || blocksVision))
+                {
+                    VisionLineIndex = i + 1;
+                }
+            }
+
+            AbilityLineHeightIndex = AbilityLineHeightIndex == -1 ? 0 : AbilityLineHeightIndex;
+            AbilityLineNoHeightIndex = AbilityLineNoHeightIndex == -1 ? 0 : AbilityLineNoHeightIndex;
+            VisionLineIndex = VisionLineIndex == -1 ? 0 : VisionLineIndex;
         }
     }
 }

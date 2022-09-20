@@ -9,6 +9,7 @@ using Empyrean.Game.Objects;
 using Empyrean.Game.Serializers;
 using Empyrean.Game.Tiles.Meshes;
 using Empyrean.Game.Tiles.TileMaps;
+using Empyrean.Game.Units;
 using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -71,6 +72,8 @@ namespace Empyrean.Game.Tiles
 
                 Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, true);
                 Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
+                Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowFooterUpdate, true);
                 
 
                 ActiveMaps.Clear();
@@ -217,6 +220,10 @@ namespace Empyrean.Game.Tiles
 
                     Scene.ContextManager.SetFlag(GeneralContextFlags.TileMapManagerLoading, false);
                     Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, false);
+                    Scene.ContextManager.SetFlag(GeneralContextFlags.DisallowFooterUpdate, false);
+                    Scene.Footer?.RefreshFooterInfo();
+
+                    VisionManager.CalculateVisionForUnits(Scene._units);
                 });
 
                 Console.WriteLine("Flag 6: " + stopwatch.ElapsedMilliseconds + "ms");

@@ -21,7 +21,7 @@ namespace Empyrean.Game.Abilities.SelectionTypes
             TilePattern = tilePattern;
         }
 
-        protected override void FindTargets()
+        public override void FindTargets()
         {
             TargetedTiles.Clear();
             TargetedUnits.Clear();

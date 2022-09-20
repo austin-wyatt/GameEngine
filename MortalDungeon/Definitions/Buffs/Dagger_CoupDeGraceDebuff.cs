@@ -57,6 +57,7 @@ namespace Empyrean.Definitions.Buffs
                     DamageInstance coupDeGraceDamage = new DamageInstance();
                     coupDeGraceDamage.Damage.Add(DamageType.Piercing, 1);
                     coupDeGraceDamage.PiercingPercent = 0;
+                    coupDeGraceDamage.AmplifiedByNegativeShields = false;
 
                     DamageParams damageParams = new DamageParams(coupDeGraceDamage, buff: this);
 

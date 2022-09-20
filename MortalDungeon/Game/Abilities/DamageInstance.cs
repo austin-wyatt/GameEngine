@@ -11,6 +11,8 @@ namespace Empyrean.Game.Abilities
 
         public float PiercingPercent = 0.5f;
 
+        public bool AmplifiedByNegativeShields = true;
+
         public AbilityClass AbilityClass = AbilityClass.Unknown;
 
         public string GetTooltipStrings(Unit sourceUnit) 

@@ -49,13 +49,43 @@ namespace Empyrean.Game.Save
 
         public UnitSaveInfo() { }
 
-        public UnitSaveInfo(Unit unit)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="unit"></param>
+        /// <param name="unloadingUnit">
+        /// Whether the unit will be unloaded after this snapshot is created <para/>
+        /// If they aren't being unloaded, the abilities and items that were removed 
+        /// during the save process are readded to the unit
+        /// </param>
+        public UnitSaveInfo(Unit unit, bool unloadingUnit)
         {
             Name = unit.Name;
 
+            //These need to be deep copies
             UnitAI = unit.AI;
-
             UnitInfo = unit.Info;
+
+            AbilityLoadout = unit.AbilityLoadout;
+            UnitCreationInfoId = unit.UnitCreationInfoId;
+
+            foreach (var ability in unit.Info.Abilities)
+            {
+                var loadout = AbilityLoadout.GetLoadout(unit.Info.AbilityVariation).Find(a => a.NodeID == ability.NodeID
+                    && a.AbilityTreeType == ability.AbilityTreeType);
+
+                if (loadout != null)
+                {
+                    loadout.CurrentCharges = ability.Charges < ability.MaxCharges ? ability.Charges : -1;
+                }
+
+                ability.RemoveAbilityFromUnit(fromLoad: true);
+            }
+
+            foreach (var itemEntry in unit.Info.Equipment.EquippedItems)
+            {
+                itemEntry.Value.OnUnequipped(fromLoad: true);
+            }
 
             UnitInfo.PrepareForSerialization();
             UnitAI.PrepareForSerialization();
@@ -79,25 +109,24 @@ namespace Empyrean.Game.Save
 
             PermanentId = unit.PermanentId.Id;
 
-            AbilityLoadout = unit.AbilityLoadout;
-            UnitCreationInfoId = unit.UnitCreationInfoId;
-
-            foreach (var ability in unit.Info.Abilities)
-            {
-                var loadout = AbilityLoadout.GetLoadout(unit.Info.AbilityVariation).Find(a => a.NodeID == ability.NodeID 
-                    && a.AbilityTreeType == ability.AbilityTreeType);
-
-                if(loadout != null)
-                {
-                    loadout.CurrentCharges = ability.Charges < ability.MaxCharges ? ability.Charges : -1;
-                }
-            }
-
             Color = unit.Color;
 
             UnitParameters = unit.UnitParameters;
 
             PrepareForSerialization();
+
+            if (!unloadingUnit)
+            {
+                foreach (var ability in unit.Info.Abilities)
+                {
+                    ability.AddAbilityToUnit(fromLoad: true);
+                }
+
+                foreach (var itemEntry in unit.Info.Equipment.EquippedItems)
+                {
+                    itemEntry.Value.OnEquipped(fromLoad: true);
+                }
+            }
         }
 
         public void ApplyUnitInfoToUnit(Unit unit)

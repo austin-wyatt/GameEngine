@@ -26,6 +26,9 @@ namespace Empyrean.Game.Abilities
         public Tile _immediateHoverTile = null;
 
         public float EnergyCost = 1;
+
+        public override float Range { get => CastingUnit.GetResF(ResF.MovementEnergy) / GetEnergyCost(); }
+
         public Move(Unit castingUnit, int range = 6)
         {
             Type = AbilityTypes.Move;
@@ -60,8 +63,6 @@ namespace Empyrean.Game.Abilities
 
         public override void OnSelect(CombatScene scene, TileMap currentMap)
         {
-            Range = CastingUnit.GetResF(ResF.MovementEnergy) / GetEnergyCost(); //special case for general move ability
-            
             if(_immediateHoverTile != null)
             {
                 EvaluateHoverPath(_immediateHoverTile, _immediateHoverTile.TileMap);

@@ -176,28 +176,6 @@ namespace Empyrean.Game.Units
         }
     }
 
-
-    public enum AIAction 
-    {
-        MoveCloser,
-        MoveFarther,
-        
-
-        AttackEnemyMelee,
-        AttackEnemyRanged,
-        KillEnemy,
-        DebuffEnemy,
-
-        HealAlly,
-        BuffAlly,
-
-        HoldPosition,
-        MoveOutOfVision,
-        Hide,
-
-        EndTurn
-    }
-
     /// <summary>
     /// Determines the preferred strategy of the AI controlled unit
     /// </summary>
@@ -273,144 +251,6 @@ namespace Empyrean.Game.Units
         {
             _unit = unit;
         }
-
-        public virtual UnitAIAction GetAction(AIAction action) 
-        {
-            return null;
-        }
-
-        public virtual void OnActionSelected(AIAction action) 
-        {
-
-        }
-
-        public static Ability GetBestAbility(List<Ability> abilities, Unit unit)
-        {
-            Ability ability = null;
-
-            abilities.ForEach(a =>
-            {
-                if (ability == null && a.CanCast())
-                    ability = a;
-
-                if (ability != null && a.Grade > ability.Grade && a.CanCast())
-                {
-                    ability = a;
-                }
-            });
-
-            return ability;
-        }
-
-        /// <summary>
-        /// All hard params must be satisfied and (if present) at least one soft param must be satisfied
-        /// </summary>
-        
-
-
-
-
-        public static Unit GetClosestUnit(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
-        {
-            Unit unit = null;
-
-            if (searchParams == null) 
-            {
-                searchParams = UnitSearchParams._;
-            }
-
-            castingUnit.Scene._units.ForEach(u =>
-            {
-                if (searchParams.CheckUnit(u, castingUnit))
-                {
-                    (float moveCost, int moves) = castingUnit.Info._movementAbility.GetCostToPoint(u.Info.TileMapPosition.TilePoint, seekRange);
-
-                    if (moveCost != 0)
-                    {
-                        if (unit != null)
-                        {
-                            (float unitMoveCost, int unitMoves) = castingUnit.Info._movementAbility.GetCostToPoint(unit.Info.TileMapPosition.TilePoint, seekRange);
-                            if (unitMoveCost > moveCost && unitMoves != 0)
-                            {
-                                unit = u;
-                            }
-                        }
-                        else
-                        {
-                            if (moves > 0)
-                            {
-                                unit = u;
-                            }
-                        }
-                    }
-                }
-            });
-
-            return unit;
-        }
-
-        public static List<Unit> GetReasonablyCloseUnits(Unit castingUnit, float seekRange = -1, UnitSearchParams searchParams = null)
-        {
-            List<Unit> units = new List<Unit>();
-
-            if (searchParams == null)
-            {
-                searchParams = UnitSearchParams._;
-            }
-
-            castingUnit.Scene._units.ForEach(u =>
-            {
-                if (searchParams.CheckUnit(u, castingUnit))
-                {
-                    (float moveCost, int moves) = castingUnit.Info._movementAbility.GetCostToPoint(u.Info.TileMapPosition.TilePoint, seekRange);
-
-                    if (moves != 0)
-                    {
-                        units.Add(u);
-                    }
-                }
-            });
-
-            return units;
-        }
-    }
-
-    public class UnitAIAction 
-    {
-        public Tile TargetedTile;
-        public Unit TargetedUnit;
-        public Unit CastingUnit;
-        public Ability Ability;
-
-        public AIAction ActionType;
-
-        public float Weight = 0;
-
-        public bool HasAction = false;
-        public float PathCost = 0;
-
-        public Action EffectAction = null;
-
-        protected CombatScene Scene => CastingUnit.Scene;
-        protected TileMap Map => CastingUnit.GetTileMap();
-        protected TilePoint TilePosition => CastingUnit.Info.TileMapPosition.TilePoint;
-        protected Tile Tile => CastingUnit.Info.TileMapPosition;
-
-        public UnitAIAction(Unit castingUnit, AIAction actionType, Ability ability = null, Tile tile = null, Unit unit = null) 
-        {
-            CastingUnit = castingUnit;
-
-            TargetedTile = tile;
-            TargetedUnit = unit;
-
-            Ability = ability;
-
-            ActionType = actionType;
-        }
-        public virtual void EnactEffect() 
-        {
-            EffectAction?.Invoke();
-        }
     }
 
     public class UnitSearchParams
@@ -425,7 +265,7 @@ namespace Empyrean.Game.Units
 
         public UnitSearchParams() { }
 
-        public bool CheckUnit(Unit unit, Unit castingUnit)
+        public bool CheckUnit(Unit unit, Unit castingUnit, bool ignoreVision = false)
         {
             bool softCheck = false;
 
@@ -573,21 +413,24 @@ namespace Empyrean.Game.Units
             #endregion
 
             #region Vision Check
-            if (InVision != UnitCheckEnum.NotSet && !InVision.IsSoft())
+            if (!ignoreVision)
             {
-                if (unit.Info.Visible(castingUnit.AI.GetTeam()) != InVision.BoolValue())
+                if (InVision != UnitCheckEnum.NotSet && !InVision.IsSoft())
                 {
-                    return false;
+                    if (unit.Info.Visible(castingUnit.AI.GetTeam()) != InVision.BoolValue())
+                    {
+                        return false;
+                    }
                 }
-            }
-            else if (InVision.IsSoft())
-            {
-                if (unit.Info.Visible(castingUnit.AI.GetTeam()) == InVision.BoolValue())
+                else if (InVision.IsSoft())
                 {
-                    softCheck = true;
-                }
+                    if (unit.Info.Visible(castingUnit.AI.GetTeam()) == InVision.BoolValue())
+                    {
+                        softCheck = true;
+                    }
 
-                softCheckUsed = true;
+                    softCheckUsed = true;
+                }
             }
             #endregion
 

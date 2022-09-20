@@ -27,7 +27,7 @@ namespace Empyrean.Game.Abilities
             Ability = ability;
         }
 
-        public void ApplyUnitDamageReturnValues(Units.Unit.AppliedDamageReturnValues vals)
+        public void ApplyUnitDamageReturnValues(Units.AppliedDamageReturnValues vals)
         {
             ResultValues.AddOrSet(AbilityEffectResult.HealthRemoved, vals.ActualDamageDealt);
             ResultValues.AddOrSet(AbilityEffectResult.ShieldsRemoved, vals.AttackBrokeShield ? 1 : 0);
@@ -37,7 +37,7 @@ namespace Empyrean.Game.Abilities
             ResultValues.AddOrSet(AbilityEffectResult.PotentialDamageBeforeModifications, vals.PotentialDamageBeforeModifications);
         }
 
-        public void AddUnitDamageReturnValues(Units.Unit.AppliedDamageReturnValues vals)
+        public void AddUnitDamageReturnValues(Units.AppliedDamageReturnValues vals)
         {
             if (ResultValues.Count == 0)
             {

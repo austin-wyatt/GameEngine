@@ -36,10 +36,13 @@ namespace Empyrean.Game.Units
         PanToOnLoad = 501,
     }
 
-    public class Unit : GameObject, ILoadableEntity, IEventTarget
+    public class Unit : GameObject, ILoadableEntity, IEventTarget, IUnit
     {
-        public UnitAI AI;
-        public UnitInfo Info;
+        private UnitAI _ai;
+        private UnitInfo _info;
+
+        public UnitAI AI { get => _ai; set => _ai = value; }
+        public UnitInfo Info { get => _info; set => _info = value; }
 
         public AbilityLoadout AbilityLoadout;
 
@@ -59,7 +62,6 @@ namespace Empyrean.Game.Units
         public Entity EntityHandle;
 
         public Vector3 TileOffset = new Vector3();
-        public Vector3 SelectionTileOffset = new Vector3();
 
         public IndividualMesh SelectionIndicator;
 
@@ -212,7 +214,7 @@ namespace Empyrean.Game.Units
             }
 
             ApplyAbilityLoadout();
-
+            _info.OnEntityLoad();
 
             if (Info.Dead)
             {
@@ -239,9 +241,10 @@ namespace Empyrean.Game.Units
 
         public virtual void EntityUnload() 
         {
-            CleanUp();
-
             Scene.RemoveUnit(this);
+
+            CleanUp();
+            
 
             StateChanged -= CreateMorsel;
 
@@ -267,7 +270,7 @@ namespace Empyrean.Game.Units
             Move movement = new Move(this);
             movement.EnergyCost = 0.3f;
             //Info.Abilities.Add(movement);
-            movement.AddAbilityToUnit();
+            movement.AddAbilityToUnit(fromLoad: true);
 
             Info._movementAbility = movement;
 
@@ -334,28 +337,28 @@ namespace Empyrean.Game.Units
             OnAbilitiesUpdated();
         }
 
-        public void ApplyStateValue(StateIDValuePair state)
-        {
-            switch (state.Instruction)
-            {
-                case (int)UnitStateInstructions.GeneratePackName:
-                    pack_name = new Random(state.Data).Next().ToString();
-                    break;
-                case (int)UnitStateInstructions.PanToOnLoad:
-                    Scene.SmoothPanCameraToUnit(this, 1);
-                    break;
-            }
+        //public void ApplyStateValue(StateIDValuePair state)
+        //{
+        //    switch (state.Instruction)
+        //    {
+        //        case (int)UnitStateInstructions.GeneratePackName:
+        //            pack_name = new Random(state.Data).Next().ToString();
+        //            break;
+        //        case (int)UnitStateInstructions.PanToOnLoad:
+        //            Scene.SmoothPanCameraToUnit(this, 1);
+        //            break;
+        //    }
 
 
 
-            if (state.Values.Count > 0)
-            {
-                foreach (var value in state.Values)
-                {
-                    ApplyStateValue(value);
-                }
-            }
-        }
+        //    if (state.Values.Count > 0)
+        //    {
+        //        foreach (var value in state.Values)
+        //        {
+        //            ApplyStateValue(value);
+        //        }
+        //    }
+        //}
 
         public void ApplyUnitParameters(Dictionary<string, string> parameters)
         {
@@ -416,40 +419,6 @@ namespace Empyrean.Game.Units
             base.AddBaseObject(obj);
         }
 
-        public Ability GetFirstAbilityOfType(AbilityTypes type)
-        {
-            foreach (Ability ability in Info.Abilities) 
-            {
-                if (ability.Type == type)
-                    return ability;
-            }
-
-            return new Ability();
-        }
-
-        public List<Ability> GetAbilitiesOfType(AbilityTypes type)
-        {
-            List<Ability> abilities = new List<Ability>();
-
-            foreach (Ability ability in Info.Abilities) 
-            {
-                if (ability.Type == type)
-                    abilities.Add(ability);
-            }
-
-            return abilities;
-        }
-
-        public bool HasAbilityOfType(AbilityTypes type) 
-        {
-            foreach (Ability ability in Info.Abilities)
-            {
-                if (ability.Type == type)
-                    return true;
-            }
-
-            return false;
-        }
 
         public TileMap GetTileMap() 
         {
@@ -473,7 +442,6 @@ namespace Empyrean.Game.Units
 
         public void SetPositionOffset(Vector3 position)
         {
-            //_actualPosition = position;
             position.X += TileOffset.X + _innateTileOffset.X;
             position.Y += TileOffset.Y + _innateTileOffset.Y;
             position.Z += TileOffset.Z + _innateTileOffset.Z;
@@ -483,10 +451,6 @@ namespace Empyrean.Game.Units
 
         public void SetPositionOffset(float x, float y, float z)
         {
-            //_actualPosition.X = x;
-            //_actualPosition.Y = y;
-            //_actualPosition.Z = z;
-
             SetPosition(x + TileOffset.X + _innateTileOffset.X, y + TileOffset.Y + _innateTileOffset.Y, z + TileOffset.Z + _innateTileOffset.Z);
         }
 
@@ -524,7 +488,6 @@ namespace Empyrean.Game.Units
             if (StatusBarComp != null)
             {
                 Scene.RenderDispatcher.DispatchAction(_statusBarBatchObj, () => StatusBarComp.UpdateUnitStatusPosition());
-                //StatusBarComp.UpdateUnitStatusPosition();
             }
 
             if (SelectionIndicator != null)
@@ -830,16 +793,6 @@ namespace Empyrean.Game.Units
             SetHealth(GetResF(ResF.MaxHealth));
             SetResI(ResI.Stamina, GetResI(ResI.MaxStamina));
         }
-
-        public struct AppliedDamageReturnValues
-        {
-            public float DamageBlockedByShields;
-            public float ActualDamageDealt;
-            public bool KilledEnemy;
-            public bool AttackBrokeShield;
-            public float DamageResisted;
-            public float PotentialDamageBeforeModifications;
-        }
         
 
         public delegate void DamageInstanceEventHandler(Unit unit, DamageInstance instance);
@@ -851,20 +804,44 @@ namespace Empyrean.Game.Units
             PreDamageInstanceAppliedSource?.Invoke(this, instance);
         }
 
-        public virtual AppliedDamageReturnValues ApplyDamage(DamageParams damageParams)
+
+        /// <summary>
+        /// Apply damage to the unit
+        /// </summary>
+        /// <param name="damageParams"></param>
+        /// <param name="spoofDamage">
+        /// Whether or not this set of damage should apply to the unit or be spoofed. <para/>
+        /// When spoofed, the AppliedDamageReturnValues return value will contain the same information 
+        /// as if the damage had been applied.
+        /// </param>
+        /// <returns></returns>
+        public virtual AppliedDamageReturnValues ApplyDamage(DamageParams damageParams, bool spoofDamage = false)
         {
+            //from abilities, add an "expected results" class that takes the ability effects and chain conditions and 
+            //a summary of what the ability is expected to do to a target
+
+            //for specific ability effects, weights can be made for whether its a good or bad thing that an ally was targeted
+            //that was the ai can decide if it's a good idea to do a move in a specific location before doing it
+
             AppliedDamageReturnValues returnVals = new AppliedDamageReturnValues();
 
             float preShieldDamage = 0;
             float finalDamage = 0;
 
             DamageInstance instance = damageParams.Instance;
-            instance.ApplyDamageBonuses(damageParams.SourceUnit);
 
-            damageParams.SourceUnit?.OnPreDamageInstanceAppliedSource(instance);
+            Unit sourceUnit = damageParams.SourceUnit;
+
+            if(sourceUnit != null)
+            {
+                instance.ApplyDamageBonuses(damageParams.SourceUnit);
+
+                damageParams.SourceUnit?.OnPreDamageInstanceAppliedSource(instance);
+            }
+            
             PreDamageInstanceAppliedDestination?.Invoke(this, instance);
 
-            if(!Scene.InCombat && damageParams.SourceUnit.AI.Team.GetRelation(AI.Team) == Relation.Hostile)
+            if(!Scene.InCombat && sourceUnit != null && sourceUnit.AI.Team.GetRelation(AI.Team) == Relation.Hostile && !spoofDamage)
             {
                 Scene.UnitsInCombat.Add(this);
                 Scene.UnitsInCombat.Add(damageParams.SourceUnit);
@@ -894,6 +871,8 @@ namespace Empyrean.Game.Units
 
                 preShieldDamage += actualDamage;
 
+                float damageBlockedByShields = GetResF(ResF.DamageBlockedByShields);
+
                 //shield piercing exceptions should go here
                 if (GetPierceShields(type))
                 {
@@ -915,18 +894,30 @@ namespace Empyrean.Game.Units
 
                     float shieldDamageBlocked;
 
-                    SetResF(ResF.DamageBlockedByShields, GetResF(ResF.DamageBlockedByShields) + actualDamage);
+                    damageBlockedByShields += actualDamage;
+
+                    if (!spoofDamage) 
+                    {
+                        SetResF(ResF.DamageBlockedByShields, damageBlockedByShields);
+                    }
 
                     //If shields are empty or negative then piercing damage should also contribute to further reducing shields
                     if(currentShields <= 0)
                     {
-                        SetResF(ResF.DamageBlockedByShields, GetResF(ResF.DamageBlockedByShields) + piercingDamage);
+                        damageBlockedByShields += piercingDamage;
+                        if (!spoofDamage) 
+                        {
+                            SetResF(ResF.DamageBlockedByShields, damageBlockedByShields);
+                        }
                     }
 
                     if (currentShields < 0 && GetAmplifiedByNegativeShields(type))
                     {
-                        actualDamage *= 1 + (0.25f * Math.Abs(currentShields));
-                        piercingDamage *= 1 + (0.25f * Math.Abs(currentShields));
+                        if (instance.AmplifiedByNegativeShields)
+                        {
+                            actualDamage *= 1 + (0.25f * Math.Abs(currentShields));
+                            piercingDamage *= 1 + (0.25f * Math.Abs(currentShields));
+                        }
                     }
                     else if (currentShields > 0)
                     {
@@ -947,80 +938,86 @@ namespace Empyrean.Game.Units
                         {
                             actualDamage = 0;
 
-                            OnShieldsHit();
+                            if (!spoofDamage) 
+                            {
+                                OnShieldsHit();
+                            }
                         }
                     }
 
                     finalDamage += piercingDamage;
 
-                    if (GetResF(ResF.DamageBlockedByShields) > shieldBlock)
+
+                    if (damageBlockedByShields > shieldBlock)
                     {
-                        SetResI(ResI.Shields, currentShields - 1);
-                        SetResF(ResF.DamageBlockedByShields, 0);
+                        if (!spoofDamage)
+                        {
+                            SetResI(ResI.Shields, currentShields - 1);
+                            SetResF(ResF.DamageBlockedByShields, 0);
+                        }
 
                         returnVals.AttackBrokeShield = true;
                     }
                 }
 
-                //if (type == DamageType.Piercing)
-                //{
-                //    float piercingDamage = damageParams.Instance.PierceAmount;
-                //    //if (damageParams.Ability != null)
-                //    //{
-                //    //    piercingDamage += damageParams.Ability.Grade;
-                //    //}
-
-                //    //if (damageParams.Buff != null)
-                //    //{
-                //    //    piercingDamage += damageParams.Buff.Grade;
-                //    //}
-
-                //    actualDamage += piercingDamage;
-                //}
-
                 finalDamage += actualDamage;
             }
 
-            if (preShieldDamage > Info.Stealth.Skill && Info.Stealth.Hiding)
+            if (preShieldDamage > Info.Stealth.Skill && Info.Stealth.Hiding && !spoofDamage)
             {
                 Info.Stealth.SetHiding(false);
             }
 
             float health = GetResF(ResF.Health) - finalDamage;
-            SetResF(ResF.Health, health);
+
+            if (!spoofDamage) 
+            {
+                SetResF(ResF.Health, health);
+            }
 
 
             returnVals.ActualDamageDealt = finalDamage;
 
-            if (finalDamage > 0) 
+            if (!spoofDamage) 
             {
-                OnHurt(finalDamage);
+                if (finalDamage > 0)
+                {
+                    OnHurt(finalDamage);
 
-                Scene.EventLog.AddEvent(Name + " has taken " + finalDamage + " damage.", EventSeverity.Info);
+                    Scene.EventLog.AddEvent(Name + " has taken " + finalDamage + " damage.", EventSeverity.Info);
+                }
+                if (finalDamage < 0)
+                {
+                    OnHealed();
+
+                    Scene.EventLog.AddEvent(Name + " has healed for " + -finalDamage + " health.", EventSeverity.Info);
+                }
+
+                float maxHealth = GetResF(ResF.MaxHealth);
+
+                if (GetResF(ResF.Health) > maxHealth)
+                {
+                    SetResF(ResF.Health, GetResF(ResF.MaxHealth));
+                }
+
+                SetHealth(GetResF(ResF.Health));
+                SetShields(GetResI(ResI.Shields));
             }
-            if(finalDamage < 0)
-            {
-                OnHealed();
 
-                Scene.EventLog.AddEvent(Name + " has healed for " + -finalDamage + " health.", EventSeverity.Info);
+            if (!spoofDamage) 
+            {
+                //When we aren't spoofing the damage we want to account for any potential OnHurt triggers affecting the current health.
+                //When we are spoofing we're fine just taking the damage dealt at face value.
+                health = GetResF(ResF.Health);
             }
 
-            float maxHealth = GetResF(ResF.MaxHealth);
-
-            if (GetResF(ResF.Health) > maxHealth) 
+            if (health <= 0) 
             {
-                SetResF(ResF.Health, GetResF(ResF.MaxHealth));
-            }
-
-
-            
-            SetHealth(GetResF(ResF.Health));
-            SetShields(GetResI(ResI.Shields));
-            
-
-            if (GetResF(ResF.Health) <= 0) 
-            {
-                Kill();
+                if (!spoofDamage) 
+                {
+                    Kill();
+                }
+                
                 returnVals.KilledEnemy = true;
             }
 
@@ -1257,11 +1254,6 @@ namespace Empyrean.Game.Units
             base.Tick();
         }
 
-        public bool OnTileMap(TileMap map) 
-        {
-            return Info != null && Info.TileMapPosition != null && Info.TileMapPosition.TileMap == map;
-        }
-
         public virtual BaseObject CreateBaseObject() 
         {
             BaseObject obj = new BaseObject(AnimationSet.BuildAnimationsFromSet(), ObjectID, "", new Vector3(), EnvironmentObjects.BASE_TILE.Bounds);
@@ -1277,7 +1269,32 @@ namespace Empyrean.Game.Units
         public Ability Ability;
         public Buff Buff;
 
-        public Unit SourceUnit => Buff != null ? Buff.Unit : Ability != null ? Ability.CastingUnit : null;
+        public Unit SourceUnit
+        {
+            get
+            {
+                if(Buff != null)
+                {
+                    if(Buff.OwnerId.Id != 0)
+                    {
+                        if (Buff.OwnerId.TryGetUnit(out var unit))
+                            return unit;
+                        else
+                            return null;
+                    }
+                    else
+                    {
+                        return Buff.Unit;
+                    }
+                }
+                else if(Ability != null)
+                {
+                    return Ability.CastingUnit;
+                }
+
+                return null;
+            }
+        }
 
         public DamageParams(DamageInstance instance, Ability ability = null, Buff buff = null)
         {

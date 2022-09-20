@@ -1,4 +1,5 @@
 ﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Game.Map;
 using OpenTK.Mathematics;
 using System;
@@ -295,5 +296,14 @@ namespace Empyrean.Game.Tiles
             return currPos.X != (int)Math.Floor(offsetX / dim.X) + map.TileMapCoords.X 
                 || currPos.Y != (int)Math.Floor(offsetY / dim.Y) + map.TileMapCoords.Y;
         }
+    }
+
+    public class TileRingConstraints 
+    {
+        public int MinRadius = int.MinValue;
+        public int MaxRadius = int.MinValue;
+
+        public const int DEFAULT_MIN_RADIUS = 1;
+        public const int DEFAULT_MAX_RADIUS = int.MinValue;
     }
 }

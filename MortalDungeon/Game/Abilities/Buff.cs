@@ -202,6 +202,7 @@ namespace Empyrean.Game.Abilities
             RemoveOnZeroStacks = buff.RemoveOnZeroStacks;
 
             Initialized = buff.Initialized;
+            OwnerId = buff.OwnerId;
 
             AssignAnimationSet();
         }

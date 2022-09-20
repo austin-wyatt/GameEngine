@@ -209,8 +209,13 @@ namespace Empyrean.Engine_Classes.Audio
 
             if (source.ActiveSound != null)
             {
+                object soundLock = source.ActiveSound._operationLock;
+                Monitor.Enter(soundLock);
+
                 source.ActiveSound.Source = null;
                 source.ActiveSound = null;
+
+                Monitor.Exit(soundLock);
             }
         }
 

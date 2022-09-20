@@ -57,11 +57,11 @@ namespace Empyrean.Game.Combat
                         //base offset
                         //tileOffset = firstTileOffset.X * COLUMN_SIZE + firstTileOffset.Y;
 
-                        TileMapManager.ActiveMaps[i].Tiles[j].ToFeaturePoint(ref point);
+                        point.Initialize(TileMapManager.ActiveMaps[i].Tiles[j]);
 
                         NavTile navTile = new NavTile(TileMapManager.ActiveMaps[i].Tiles[j]);
 
-                        offset = GetOffsetFromFeaturePoint(ref point);
+                        offset = GetOffsetFromFeaturePoint(point);
 
                         NavTilesArr[offset] = navTile;
                     }
@@ -73,7 +73,7 @@ namespace Empyrean.Game.Combat
 
 
         private Vector2i _offsetInfo = new Vector2i();
-        public int GetOffsetFromFeaturePoint(ref FeaturePoint point)
+        public int GetOffsetFromFeaturePoint(FeaturePoint point)
         {
             _offsetInfo.X = point.X - TileMapHelpers._topLeftMap.TileMapCoords.X * TileMapManager.TILE_MAP_DIMENSIONS.X;
             _offsetInfo.Y = point.Y - TileMapHelpers._topLeftMap.TileMapCoords.Y * TileMapManager.TILE_MAP_DIMENSIONS.Y;
@@ -81,12 +81,12 @@ namespace Empyrean.Game.Combat
             return _offsetInfo.X * COLUMN_SIZE + _offsetInfo.Y;
         }
 
-        public NavTile GetNavTileAtFeaturePoint(ref FeaturePoint point)
+        public NavTile GetNavTileAtFeaturePoint(FeaturePoint point)
         {
-            return NavTilesArr[GetOffsetFromFeaturePoint(ref point)];
+            return NavTilesArr[GetOffsetFromFeaturePoint(point)];
         }
 
-        public bool CheckFeaturePointInBounds(ref FeaturePoint point)
+        public bool CheckFeaturePointInBounds(FeaturePoint point)
         {
             return !((point.X < TileMapHelpers._topLeftMap.TileMapCoords.X * TileMapManager.TILE_MAP_DIMENSIONS.X) ||
                 (point.X > TileMapHelpers._topLeftMap.TileMapCoords.X * TileMapManager.TILE_MAP_DIMENSIONS.X + TileMapManager.LOAD_DIAMETER * TileMapManager.TILE_MAP_DIMENSIONS.X) ||
@@ -102,9 +102,9 @@ namespace Empyrean.Game.Combat
 
                 for (int j = 0; j < map.Tiles.Count; j++)
                 {
-                    map.Tiles[j].ToFeaturePoint(ref point);
+                    point.Initialize(map.Tiles[j]);
 
-                    NavTile navTile = GetNavTileAtFeaturePoint(ref point);
+                    NavTile navTile = GetNavTileAtFeaturePoint(point);
 
                     if (navTile != null)
                     {
@@ -117,13 +117,11 @@ namespace Empyrean.Game.Combat
         public void UpdateNavMeshForTile(Tile tile)
         {
             FeaturePoint point = new FeaturePoint();
-            tile.ToFeaturePoint(ref point);
-
-            FeaturePoint featurePoint = FeaturePoint.FeaturePointPool.GetObject();
+            point.Initialize(tile);
 
             Direction dir;
 
-            NavTile navTile = GetNavTileAtFeaturePoint(ref point);
+            NavTile navTile = GetNavTileAtFeaturePoint(point);
 
             if (navTile != null)
             {
@@ -133,19 +131,18 @@ namespace Empyrean.Game.Combat
                 {
                     dir = (Direction)i;
 
-                    if (GetNeighboringNavTile(ref point, ref dir, ref featurePoint, out var neighborNavTile))
+                    if (GetNeighboringNavTile(point, dir, out var neighborNavTile))
                     {
                         neighborNavTile.CalculateNavDirectionMask();
                     }
                 }
             }
-
-            FeaturePoint.FeaturePointPool.FreeObject(ref featurePoint);
         }
 
 
         private static ObjectPool<HashSet<NavTileWithParent>> _navTileWParentSetPool = new ObjectPool<HashSet<NavTileWithParent>>();
         private static ObjectPool<HashSet<NavTile>> _navTileSetPool = new ObjectPool<HashSet<NavTile>>();
+        private static ObjectPool<List<NavTile>> _navTileListPool = new ObjectPool<List<NavTile>>();
 
         /// <summary>
         /// Attempts to find a path from the start point to the destination point. This is intended specifically for movement. <para/>
@@ -165,12 +162,14 @@ namespace Empyrean.Game.Combat
             returnList = Tile.TileListPool.GetObject();
 
             HashSet<NavTile> visitedTiles = _navTileSetPool.GetObject();
-            HashSet<NavTile> newNeighbors = _navTileSetPool.GetObject();
+            List<NavTile> newNeighbors = _navTileListPool.GetObject();
 
-            FeaturePoint placeholderPoint = FeaturePoint.FeaturePointPool.GetObject();
-            FeaturePoint currentFeaturePoint = FeaturePoint.FeaturePointPool.GetObject();
+            FeaturePoint placeholderPoint = new FeaturePoint();
+            FeaturePoint currentFeaturePoint = new FeaturePoint();
 
             NavTileWithParent currentTile;
+
+            Stopwatch timer = Stopwatch.StartNew();
 
             List<Direction> directions = new List<Direction>()
             { 
@@ -178,18 +177,20 @@ namespace Empyrean.Game.Combat
                 Direction.NorthEast, Direction.NorthWest, Direction.North
             };
 
+            NavTileWithParent placeholderNavTile = new NavTileWithParent();
+
             try
             {
                 if (maximumDepth <= 0)
                     return false;
 
-                if (!CheckFeaturePointInBounds(ref start) || !CheckFeaturePointInBounds(ref destination))
+                if (!CheckFeaturePointInBounds(start) || !CheckFeaturePointInBounds(destination))
                 {
                     return false;
                 }
 
-                NavTile destinationTile = GetNavTileAtFeaturePoint(ref destination);
-                NavTile startTile = GetNavTileAtFeaturePoint(ref start);
+                NavTile destinationTile = GetNavTileAtFeaturePoint(destination);
+                NavTile startTile = GetNavTileAtFeaturePoint(start);
 
                 if (destinationTile == null || startTile == null)
                     return false;
@@ -256,7 +257,7 @@ namespace Empyrean.Game.Combat
 
                     newNeighbors.Clear();
 
-                    currentTile.NavTile.Tile.ToFeaturePoint(ref currentFeaturePoint);
+                    currentFeaturePoint.Initialize(currentTile.NavTile.Tile);
 
                     directions.Randomize();
 
@@ -266,7 +267,7 @@ namespace Empyrean.Game.Combat
 
                         if ((currentTile.NavTile.NavDirectionMask & NavTile.GetNavDirection(navType, dir)) > 0)
                         {
-                            if (GetNeighboringNavTile(ref currentFeaturePoint, ref dir, ref placeholderPoint, out NavTile neighborTile))
+                            if (GetNeighboringNavTile(currentFeaturePoint, dir, out NavTile neighborTile))
                             {
                                 newNeighbors.Add(neighborTile);
                             }
@@ -338,17 +339,26 @@ namespace Empyrean.Game.Combat
                             continue;
                         }
 
+                        placeholderPoint.Initialize(neighbor.Tile);
+                        pathCost = currentTile.PathCost + neighbor.Tile.Properties.MovementCost;
+                        distanceToEnd = FeatureEquation.GetDistanceBetweenPoints(placeholderPoint, destination);
+
                         if (visitedTiles.Contains(neighbor))
                         {
+                            placeholderNavTile.NavTile = neighbor;
+
+                            if (tileList.TryGetValue(placeholderNavTile, out var foundTileWithParent) &&
+                                foundTileWithParent.PathCost > pathCost && foundTileWithParent.DistanceToEnd >= distanceToEnd)
+                            {
+                                foundTileWithParent.PathCost = pathCost;
+                                foundTileWithParent.DistanceToEnd = distanceToEnd;
+                                foundTileWithParent.Initialize(neighbor, currentTile);
+                            }
+
                             continue;
                         }
                         else
                         {
-                            neighbor.Tile.ToFeaturePoint(ref placeholderPoint);
-
-                            pathCost = currentTile.PathCost + neighbor.Tile.Properties.MovementCost;
-                            distanceToEnd = FeatureEquation.GetDistanceBetweenPoints(placeholderPoint, destination);
-
                             if (pathCost + distanceToEnd <= maximumDepth)
                             {
                                 NavTileWithParent tile = NavTileWithParent.Pool.GetObject();
@@ -422,6 +432,8 @@ namespace Empyrean.Game.Combat
             {
                 foreach(var tile in tileList)
                 {
+                    //tile.NavTile.Tile.SetColor(_Colors.Red);
+
                     currentTile = tile;
                     NavTileWithParent.Pool.FreeObject(ref currentTile);
                 }
@@ -433,10 +445,9 @@ namespace Empyrean.Game.Combat
                 _navTileSetPool.FreeObject(ref visitedTiles);
 
                 newNeighbors.Clear();
-                _navTileSetPool.FreeObject(ref newNeighbors);
+                _navTileListPool.FreeObject(ref newNeighbors);
 
-                FeaturePoint.FeaturePointPool.FreeObject(ref placeholderPoint);
-                FeaturePoint.FeaturePointPool.FreeObject(ref currentFeaturePoint);
+                Console.WriteLine("Pathing completed in " + timer.Elapsed.TotalMilliseconds + "ms");
             }
         }
 
@@ -465,7 +476,7 @@ namespace Empyrean.Game.Combat
                 {
                     FeaturePoint currFeaturePoint = CubeMethods.CubeToFeaturePoint(cubeList[i]);
 
-                    currNavTile = GetNavTileAtFeaturePoint(ref currFeaturePoint);
+                    currNavTile = GetNavTileAtFeaturePoint(currFeaturePoint);
 
                     if (i < cubeList.Count - 1)
                     {
@@ -520,471 +531,177 @@ namespace Empyrean.Game.Combat
             }
         }
 
+
+
+        //private static ObjectPool<List<List<Tile>>> _tileListListPool = new ObjectPool<List<List<Tile>>>();
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="sampleCenter">The center point of the radius to sample</param>
+        ///// <param name="startPoint">The point from which the sample pathing will begin</param>
+        //public void SamplePathsInRadiusAroundPoint(Tile sampleCenter, Tile startPoint, float maximumDepth, float radius, Unit pathingUnit = null)
+        //{
+        //    HashSet<Tile> tilesInRadius = Tile.TileSetPool.GetObject();
+        //    sampleCenter.TileMap.GetTilesInRadius(sampleCenter, (int)radius, tilesInRadius);
+
+        //    List<List<Tile>> paths = _tileListListPool.GetObject();
+
+        //    //sample random points from the tiles in radius. Attempt to path to each of those points and save it to the paths list
+
+        //    tilesInRadius.Clear();
+        //    Tile.TileSetPool.FreeObject(tilesInRadius);
+
+        //    paths.Clear();
+        //    _tileListListPool.FreeObject(paths);
+        //}
+
         private static ObjectPool<Vector3i> _vector3iPool = new ObjectPool<Vector3i>();
-        public bool GetNeighboringNavTile(ref FeaturePoint point, ref Direction direction, ref FeaturePoint neighborPoint, out NavTile neighborTile)
+        public bool GetNeighboringNavTile(FeaturePoint point, Direction direction, out NavTile neighborTile)
         {
             var cube = _vector3iPool.GetObject();
             CubeMethods.OffsetToCube(point, ref cube);
 
             CubeMethods.CubeNeighborInPlace(ref cube, direction);
 
-            CubeMethods.CubeToFeaturePoint(cube, ref neighborPoint);
+            FeaturePoint neighborPoint = CubeMethods.CubeToFeaturePoint(cube);
 
             _vector3iPool.FreeObject(ref cube);
 
-            if (!CheckFeaturePointInBounds(ref neighborPoint))
+            if (!CheckFeaturePointInBounds(neighborPoint))
             {
                 neighborTile = null;
                 return false;
             }
 
-            NavTile navTile = GetNavTileAtFeaturePoint(ref neighborPoint);
+            NavTile navTile = GetNavTileAtFeaturePoint(neighborPoint);
 
             neighborTile = navTile;
             return navTile != null;
         }
-    }
 
-    public enum NavDirections
-    {
-        None = 0,
-
-        //-------Base-------
-        Base_SouthWest = 1,
-        Base_South = 2,
-        Base_SouthEast = 4,
-        Base_NorthEast = 8,
-        Base_North = 16,
-        Base_NorthWest = 32,
-
-        //------Flying------
-        Flying_SouthWest = 64,
-        Flying_South = 128,
-        Flying_SouthEast = 256,
-        Flying_NorthEast = 512,
-        Flying_North = 1024,
-        Flying_NorthWest = 2048,
-
-        //-----Aquatic------
-        Aquatic_SouthWest = 4096,
-        Aquatic_South = 8192,
-        Aquatic_SouthEast = 16384,
-        Aquatic_NorthEast = 32768,
-        Aquatic_North = 65536,
-        Aquatic_NorthWest = 131072,
-
-        //---Semi-Aquatic---
-        SemiAquatic_SouthWest = 262144,
-        SemiAquatic_South = 524288,
-        SemiAquatic_SouthEast = 1048576,
-        SemiAquatic_NorthEast = 2097152,
-        SemiAquatic_North = 4194304,
-        SemiAquatic_NorthWest = 8388608,
-    }
-
-    public enum NavType
-    {
-        Base,
-        Flying,
-        Aquatic,
-        Semi_Aquatic
-    }
-
-    public class NavTile
-    {
-        public Tile Tile;
-        public NavDirections NavDirectionMask = NavDirections.None;
-        public NavTile(Tile tile)
+        public void NavFloodFill(FeaturePoint start, NavType navType, ref HashSet<NavTileWithParent> returnList, float maximumDepth = 10, Unit pathingUnit = null)
         {
-            Tile = tile;
+            Queue<NavTileWithParent> tilesToCheck = new Queue<NavTileWithParent>();
 
-            CalculateNavDirectionMask();
-        }
+            //a placeholder NavTileWithParent that can be used to search the returnList
+            NavTileWithParent placeholder = new NavTileWithParent();
 
-        public HashSet<TileEffect> GetTileEffects()
-        {
-            return TileEffectManager.GetTileEffectsOnTilePoint(Tile.TilePoint);
-        }
+            FeaturePoint placeholderPoint = new FeaturePoint();
 
-        public static NavDirections GetNavDirection(NavType type, Direction direction)
-        {
-            switch (direction)
+            NavTile navTile = GetNavTileAtFeaturePoint(start);
+            tilesToCheck.Enqueue(new NavTileWithParent(navTile) { PathCost = 0 });
+            returnList.Add(tilesToCheck.Peek());
+
+
+            Direction dir;
+
+            NavTileWithParent currentTile;
+
+            float pathCost;
+            bool unitOnSpace;
+            bool skipNeighbor;
+
+            while (tilesToCheck.Count > 0)
             {
-                case Direction.North:
-                    switch (type)
-                    {
-                        case NavType.Base:
-                            return NavDirections.Base_North;
-                        case NavType.Flying:
-                            return NavDirections.Flying_North;
-                        case NavType.Aquatic:
-                            return NavDirections.Aquatic_North;
-                        case NavType.Semi_Aquatic:
-                            return NavDirections.SemiAquatic_North;
-                    }
-                    break;
-                case Direction.NorthWest:
-                    switch (type)
-                    {
-                        case NavType.Base:
-                            return NavDirections.Base_NorthWest;
-                        case NavType.Flying:
-                            return NavDirections.Flying_NorthWest;
-                        case NavType.Aquatic:
-                            return NavDirections.Aquatic_NorthWest;
-                        case NavType.Semi_Aquatic:
-                            return NavDirections.SemiAquatic_NorthWest;
-                    }
-                    break;
-                case Direction.NorthEast:
-                    switch (type)
-                    {
-                        case NavType.Base:
-                            return NavDirections.Base_NorthEast;
-                        case NavType.Flying:
-                            return NavDirections.Flying_NorthEast;
-                        case NavType.Aquatic:
-                            return NavDirections.Aquatic_NorthEast;
-                        case NavType.Semi_Aquatic:
-                            return NavDirections.SemiAquatic_NorthEast;
-                    }
-                    break;
-                case Direction.SouthWest:
-                    switch (type)
-                    {
-                        case NavType.Base:
-                            return NavDirections.Base_SouthWest;
-                        case NavType.Flying:
-                            return NavDirections.Flying_SouthWest;
-                        case NavType.Aquatic:
-                            return NavDirections.Aquatic_SouthWest;
-                        case NavType.Semi_Aquatic:
-                            return NavDirections.SemiAquatic_SouthWest;
-                    }
-                    break;
-                case Direction.South:
-                    switch (type)
-                    {
-                        case NavType.Base:
-                            return NavDirections.Base_South;
-                        case NavType.Flying:
-                            return NavDirections.Flying_South;
-                        case NavType.Aquatic:
-                            return NavDirections.Aquatic_South;
-                        case NavType.Semi_Aquatic:
-                            return NavDirections.SemiAquatic_South;
-                    }
-                    break;
-                case Direction.SouthEast:
-                    switch (type)
-                    {
-                        case NavType.Base:
-                            return NavDirections.Base_SouthEast;
-                        case NavType.Flying:
-                            return NavDirections.Flying_SouthEast;
-                        case NavType.Aquatic:
-                            return NavDirections.Aquatic_SouthEast;
-                        case NavType.Semi_Aquatic:
-                            return NavDirections.SemiAquatic_SouthEast;
-                    }
-                    break;
-            }
+                currentTile = tilesToCheck.Dequeue();
 
-            return NavDirections.None;
-        }
-
-        public void CalculateNavDirectionMask()
-        {
-            NavDirectionMask = NavDirections.None;
-
-            var tilePosCube = CubeMethods.OffsetToCube(Tile.ToFeaturePoint());
-
-            List<FeaturePoint> neighbors = FeaturePoint.FeaturePointListPool.GetObject();
-
-            for(int i = 0; i < 6; i++)
-            {
-                neighbors.Add(CubeMethods.CubeToFeaturePoint(CubeMethods.CubeNeighbor(ref tilePosCube, (Direction)i)));
-            }
-
-            for(int i = 0; i < neighbors.Count; i++)
-            {
-                if (TileMapHelpers.IsValidTile(neighbors[i]))
+                for (int i = 0; i < 6; i++)
                 {
-                    var tile = TileMapHelpers.GetTile(neighbors[i]);
-                    if(tile != null)
+                    dir = (Direction)i;
+
+                    if ((currentTile.NavTile.NavDirectionMask & NavTile.GetNavDirection(navType, dir)) > 0)
                     {
-                        //check if it's valid and for which types
+                        placeholderPoint.Initialize(currentTile.NavTile.Tile);
 
-                        bool validGround = CheckTileGround(Tile, tile);
-                        bool validAir = CheckTileFlying(Tile, tile);
-                        bool validAquatic = CheckTileAquatic(Tile, tile);
-                        bool validSemiAquatic = CheckTileSemiAquatic(Tile, tile);
-
-                        switch (i)
+                        if (!GetNeighboringNavTile(placeholderPoint, dir, out NavTile neighbor))
                         {
-                            case (int)Direction.SouthWest:
-                                #region SouthWest
-                                if (validGround)
-                                {
-                                    NavDirectionMask |= NavDirections.Base_SouthWest;
-                                }
+                            continue;
+                        }
 
-                                if (validAir)
-                                {
-                                    NavDirectionMask |= NavDirections.Flying_SouthWest;
-                                }
+                        placeholder.NavTile = neighbor;
+                        placeholder.Parent = currentTile;
 
-                                if (validAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.Aquatic_SouthWest;
-                                }
+                        var unitsOnPoint = UnitPositionManager.GetUnitsOnTilePoint(neighbor.Tile.TilePoint);
 
-                                if (validSemiAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.SemiAquatic_SouthWest;
-                                }
-                                #endregion
-                                break;
-                            case (int)Direction.South:
-                                #region South
-                                if (validGround)
-                                {
-                                    NavDirectionMask |= NavDirections.Base_South;
-                                }
+                        if (unitsOnPoint.Count > 0 && !(pathingUnit?.Info.PhasedMovement == true))
+                        {
+                            unitOnSpace = false;
 
-                                if (validAir)
+                            foreach (var unit in unitsOnPoint)
+                            {
+                                if (unit.Info.BlocksSpace)
                                 {
-                                    NavDirectionMask |= NavDirections.Flying_South;
+                                    unitOnSpace = true;
+                                    break;
                                 }
+                            }
 
-                                if (validAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.Aquatic_South;
-                                }
+                            if (unitOnSpace)
+                                continue;
+                        }
 
-                                if (validSemiAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.SemiAquatic_South;
-                                }
-                                #endregion
-                                break;
-                            case (int)Direction.SouthEast:
-                                #region SouthEast
-                                if (validGround)
-                                {
-                                    NavDirectionMask |= NavDirections.Base_SouthEast;
-                                }
+                        //var tileEffectsOnPoint = TileEffectManager.GetTileEffectsOnTilePoint(neighbor.Tile.TilePoint);
 
-                                if (validAir)
-                                {
-                                    NavDirectionMask |= NavDirections.Flying_SouthEast;
-                                }
+                        //skipNeighbor = false;
 
-                                if (validAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.Aquatic_SouthEast;
-                                }
+                        //foreach (var tileEffect in tileEffectsOnPoint)
+                        //{
+                        //    if (pathingUnit != null)
+                        //    {
+                        //        //if the unit isn't immune then we check their caution
+                        //        immunityExists = false;
+                        //        for (int i = 0; i < tileEffect.Immunities.Count; i++)
+                        //        {
+                        //            if (pathingUnit.Info.StatusManager.CheckCondition(tileEffect.Immunities[i]))
+                        //            {
+                        //                immunityExists = true;
+                        //                break;
+                        //            }
+                        //        }
 
-                                if (validSemiAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.SemiAquatic_SouthEast;
-                                }
-                                #endregion
-                                break;
-                            case (int)Direction.NorthEast:
-                                #region NorthEast
-                                if (validGround)
-                                {
-                                    NavDirectionMask |= NavDirections.Base_NorthEast;
-                                }
+                        //        if (!immunityExists)
+                        //        {
+                        //            if (unitCaution > (1 - tileEffect.Danger))
+                        //            {
+                        //                skipNeighbor = true;
+                        //                break;
+                        //            }
+                        //        }
+                        //    }
+                        //}
 
-                                if (validAir)
-                                {
-                                    NavDirectionMask |= NavDirections.Flying_NorthEast;
-                                }
+                        //if (skipNeighbor)
+                        //{
+                        //    continue;
+                        //}
 
-                                if (validAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.Aquatic_NorthEast;
-                                }
+                        pathCost = currentTile.PathCost + neighbor.Tile.Properties.MovementCost;
 
-                                if (validSemiAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.SemiAquatic_NorthEast;
-                                }
-                                #endregion
-                                break;
-                            case (int)Direction.North:
-                                #region North
-                                if (validGround)
-                                {
-                                    NavDirectionMask |= NavDirections.Base_North;
-                                }
+                        if (returnList.TryGetValue(placeholder, out NavTileWithParent foundVal))
+                        {
+                            if(pathCost < foundVal.PathCost)
+                            {
+                                foundVal.PathCost = pathCost;
+                                foundVal.Initialize(neighbor, currentTile);
+                            }
 
-                                if (validAir)
-                                {
-                                    NavDirectionMask |= NavDirections.Flying_North;
-                                }
+                            continue;
+                        }
+                        else
+                        {
+                            if (pathCost <= maximumDepth)
+                            {
+                                NavTileWithParent tileWithParent = new NavTileWithParent();
+                                tileWithParent.Initialize(neighbor, currentTile);
+                                tileWithParent.PathCost = pathCost;
 
-                                if (validAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.Aquatic_North;
-                                }
-
-                                if (validSemiAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.SemiAquatic_North;
-                                }
-                                #endregion
-                                break;
-                            case (int)Direction.NorthWest:
-                                #region NorthWest
-                                if (validGround)
-                                {
-                                    NavDirectionMask |= NavDirections.Base_NorthWest;
-                                }
-
-                                if (validAir)
-                                {
-                                    NavDirectionMask |= NavDirections.Flying_NorthWest;
-                                }
-
-                                if (validAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.Aquatic_NorthWest;
-                                }
-
-                                if (validSemiAquatic)
-                                {
-                                    NavDirectionMask |= NavDirections.SemiAquatic_NorthWest;
-                                }
-                                #endregion
-                                break;
+                                tilesToCheck.Enqueue(tileWithParent);
+                                returnList.Add(tileWithParent);
+                            }
                         }
                     }
                 }
             }
-
-            neighbors.Clear();
-            FeaturePoint.FeaturePointListPool.FreeObject(ref neighbors);
-        }
-
-        private bool CheckTileGround(Tile source, Tile destination)
-        {
-            if(Math.Abs(source.GetPathableHeight() - destination.GetPathableHeight()) > 1)
-            {
-                return false;
-            }
-
-            if (destination.Properties.Classification != TileClassification.Ground)
-            {
-                return false;
-            }
-
-            if(destination.Structure != null && !destination.Structure.Pathable)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckTileFlying(Tile source, Tile destination)
-        {
-            if (Math.Abs(source.GetPathableHeight() - destination.GetPathableHeight()) > 5)
-            {
-                return false;
-            }
-
-            if (destination.Properties.Classification == TileClassification.ImpassableAir)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckTileAquatic(Tile source, Tile destination)
-        {
-            if (Math.Abs(source.GetPathableHeight() - destination.GetPathableHeight()) > 1)
-            {
-                return false;
-            }
-
-            if (destination.Properties.Classification != TileClassification.Water)
-            {
-                return false;
-            }
-
-            if (destination.Structure != null && !destination.Structure.Pathable)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckTileSemiAquatic(Tile source, Tile destination)
-        {
-            if (Math.Abs(source.GetPathableHeight() - destination.GetPathableHeight()) > 1)
-            {
-                return false;
-            }
-
-            if (!(destination.Properties.Classification == TileClassification.Water ||
-                destination.Properties.Classification == TileClassification.Ground))
-            {
-                return false;
-            }
-
-            if (destination.Structure != null && !destination.Structure.Pathable)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is NavTile tile &&
-                   EqualityComparer<Tile>.Default.Equals(Tile, tile.Tile);
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Tile);
-        }
-    }
-
-    public class NavTileWithParent
-    {
-        public NavTileWithParent Parent = null;
-        public NavTile NavTile;
-        public float PathCost = 0; //Path cost
-        public float DistanceToEnd = 0; //Distance to end
-        public bool Visited = false;
-
-        public static ObjectPool<NavTileWithParent> Pool = new ObjectPool<NavTileWithParent>();
-        //Add an aversion field here and include it in the algorithm
-
-        public NavTileWithParent() { }
-        public NavTileWithParent(NavTile navTile, NavTileWithParent parent = null)
-        {
-            Parent = parent;
-            NavTile = navTile;
-        }
-
-        public void Initialize(NavTile navTile, NavTileWithParent parent = null)
-        {
-            Parent = parent;
-            NavTile = navTile;
-            Visited = false;
-        }
-
-        public float GetCurrentMinimumDepth()
-        {
-            return PathCost + DistanceToEnd;
         }
     }
 }

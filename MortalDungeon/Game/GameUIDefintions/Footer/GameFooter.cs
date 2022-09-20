@@ -211,6 +211,7 @@ namespace Empyrean.Game.UI
             UpdateFooterInfo(CurrentUnit, forceUpdate: forceUpdate, footerMode: CurrentFooterMode);
         }
 
+
         private List<Ability> _currentAbilities = new List<Ability>();
         private List<Buff> _currentBuffs = new List<Buff>();
 
@@ -219,6 +220,9 @@ namespace Empyrean.Game.UI
         private Action _updateAction = null;
         public void UpdateFooterInfo(Unit unit = null, bool setNull = false, bool forceUpdate = false, FooterMode footerMode = FooterMode.SingleUnit) 
         {
+            if (Scene.ContextManager.GetFlag(GeneralContextFlags.DisallowFooterUpdate))
+                return;
+
             if (_updatingFooterInfo) 
             {
                 _updateAction = () => 
@@ -235,6 +239,9 @@ namespace Empyrean.Game.UI
 
             Scene.QueueToRenderCycle(() =>
             {
+                if (Scene.ContextManager.GetFlag(GeneralContextFlags.DisallowFooterUpdate))
+                    return;
+
                 _updatingFooterInfo = true;
 
                 CurrentFooterMode = footerMode;
@@ -242,6 +249,11 @@ namespace Empyrean.Game.UI
                 if (unit != null)
                 {
                     CurrentUnit = unit;
+                }
+
+                if(unit != null && !unit.EntityHandle.Loaded || (CurrentUnit != null && !CurrentUnit.EntityHandle.Loaded))
+                {
+                    setNull = true;
                 }
 
                 if (CurrentUnit == null && !setNull)
@@ -295,8 +307,6 @@ namespace Empyrean.Game.UI
                         PopulateGroupFooter();
                         break;
                 }
-
-
 
                 ForceTreeRegeneration();
 
@@ -740,8 +750,7 @@ namespace Empyrean.Game.UI
                     {
                         UIScale stackSize = new UIScale(buffSize.X * 0.333f, buffSize.Y * 0.333f);
 
-                        Text text = new Text(buff.Stacks.ToString(), Text.DEFAULT_FONT, 16, Brushes.Black);
-                        text.SetTextScale(0.075f);
+                        Text text = new Text(buff.Stacks.ToString(), Text.DEFAULT_FONT, 16, Brushes.Black, Color.DarkBlue);
 
                         text.SAP(icon.GAP(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
 
@@ -753,6 +762,9 @@ namespace Empyrean.Game.UI
                     icon.OnCleanUp += (_) =>
                     {
                         Scene.Tick -= icon.Tick;
+
+                        icon.Hovered = true;
+                        icon.OnHoverEnd();
                     };
 
                     //if (icon.GetAnchorPosition(UIAnchorPosition.RightCenter).X > _scrollableAreaBuff.VisibleArea.GetAnchorPosition(UIAnchorPosition.RightCenter).X)

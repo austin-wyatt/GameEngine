@@ -816,6 +816,12 @@ namespace Empyrean.Engine_Classes.Scenes
 
                             //Console.WriteLine(CubeMethods.PixelToCube(point));
                             break;
+                        case Keys.KeyPadSubtract:
+                            Window.GameSpeed++;
+                            break;
+                        case Keys.KeyPadAdd:
+                            Window.GameSpeed = Window.GameSpeed == 1 ? 1 : Window.GameSpeed - 1;
+                            break;
                     }
                 }
             }

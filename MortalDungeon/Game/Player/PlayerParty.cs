@@ -59,7 +59,7 @@ namespace Empyrean.Game.Player
             {
                 var creationInfo = UnitInfoBlockManager.GetUnit(item);
 
-                var unit = creationInfo.CreateUnit(Scene);
+                var unit = creationInfo.CreateUnit(Scene, firstLoad: true);
 
                 unit.Info.PartyMember = true;
 

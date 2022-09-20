@@ -15,18 +15,12 @@ namespace Empyrean.Game.Map
         public int X;
         public int Y;
 
-        [XmlIgnore]
-        public bool _visited;
-
         public static ObjectPool<List<FeaturePoint>> FeaturePointListPool = new ObjectPool<List<FeaturePoint>>();
-        public static ObjectPool<FeaturePoint> FeaturePointPool = new ObjectPool<FeaturePoint>(500);
 
         public FeaturePoint(int x, int y)
         {
             X = x;
             Y = y;
-
-            _visited = false;
         }
 
         public FeaturePoint(TilePoint tilePoint)
@@ -35,8 +29,6 @@ namespace Empyrean.Game.Map
             Y = 0;
 
             FeatureEquation.PointToMapCoords(tilePoint, ref X, ref Y);
-
-            _visited = false;
         }
 
         public FeaturePoint(Tile tile)
@@ -45,8 +37,6 @@ namespace Empyrean.Game.Map
             Y = 0;
 
             FeatureEquation.PointToMapCoords(tile.TilePoint, ref X, ref Y);
-
-            _visited = false;
         }
 
         public FeaturePoint(BaseTile tile)
@@ -55,24 +45,18 @@ namespace Empyrean.Game.Map
             Y = 0;
 
             FeatureEquation.PointToMapCoords(tile.TilePoint, ref X, ref Y);
-
-            _visited = false;
         }
 
         public FeaturePoint(Vector2i coords)
         {
             X = coords.X;
             Y = coords.Y;
-
-            _visited = false;
         }
 
         public FeaturePoint(FeaturePoint coords)
         {
             X = coords.X;
             Y = coords.Y;
-
-            _visited = false;
         }
 
         public static bool operator ==(FeaturePoint a, FeaturePoint b) => a.X == b.X && a.Y == b.Y;
@@ -84,8 +68,6 @@ namespace Empyrean.Game.Map
         public void Initialize(Tile tile)
         {
             FeatureEquation.PointToMapCoords(tile.TilePoint, ref X, ref Y);
-
-            _visited = false;
         }
 
         public override bool Equals(object obj)

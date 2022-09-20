@@ -227,6 +227,8 @@ namespace Empyrean.Engine_Classes
             {
                 if (_hoverableObjects.Remove(obj))
                 {
+                    obj.OnHoverEnd();
+
                     RemakeHoverableObjectList();
                 }
             }
@@ -287,6 +289,8 @@ namespace Empyrean.Engine_Classes
             {
                 if (_focusableObjects.Remove(obj))
                 {
+                    obj.OnFocusEnd();
+
                     RemakeFocusableObjectList();
                 }
             }

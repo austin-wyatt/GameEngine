@@ -25,7 +25,7 @@ namespace Empyrean.Definitions.Items
             Description = new TextInfo(9, 1);
         }
 
-        public override void InitializeAbility()
+        public override void InitializeAbility(bool fromLoad = false, Action initializeCallback = null)
         {
             ItemAbility = new Item_Passive_Ability()
             {
@@ -41,7 +41,7 @@ namespace Empyrean.Definitions.Items
                 Description = new TextInfo(9, 1)
             };
 
-            base.InitializeAbility();
+            base.InitializeAbility(fromLoad, initializeCallback);
         }
 
         public override void BuildAnimationSet()

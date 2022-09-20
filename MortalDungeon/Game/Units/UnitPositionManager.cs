@@ -34,7 +34,7 @@ namespace Empyrean.Game.Units
             {
                 HashSet<Unit> unitSet = new HashSet<Unit>();
                 unitSet.Add(unit);
-
+                
                 UnitPositions.Add(position, unitSet);
             }
         }

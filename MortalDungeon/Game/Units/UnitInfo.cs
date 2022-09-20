@@ -193,6 +193,14 @@ namespace Empyrean.Game.Units
             return !Context.GetFlag(UnitContext.WeaponSwappedThisTurn);
         }
 
+        public void OnEntityLoad()
+        {
+            //foreach(var item in Inventory.Items)
+            //{
+
+            //}
+        }
+
         public void PrepareForSerialization()
         {
             Stealth.PrepareForSerialization();

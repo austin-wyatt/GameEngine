@@ -87,6 +87,13 @@ namespace Empyrean.Game.Abilities
             }
         }
 
+        public virtual void SelectAbilityAI()
+        {
+            SourceTile = Ability.CastingUnit.Info.TileMapPosition;
+
+            Selected?.Invoke();
+        }
+
         public virtual void DeselectAbility()
         {
             Deselected?.Invoke();
@@ -98,6 +105,15 @@ namespace Empyrean.Game.Abilities
                 RemoveVisualIndicators();
             }
             
+            ClearTargets();
+        }
+
+        public virtual void DeselectAbilityAI()
+        {
+            Deselected?.Invoke();
+
+            SourceTile = null;
+
             ClearTargets();
         }
 
@@ -163,7 +179,7 @@ namespace Empyrean.Game.Abilities
 
         }
 
-        protected virtual void FindTargets()
+        public virtual void FindTargets()
         {
             
         }

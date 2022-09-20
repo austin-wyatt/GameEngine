@@ -529,12 +529,13 @@ namespace Empyrean.Game.Tiles
             return new FeaturePoint(this);
         }
 
-        public void ToFeaturePoint(ref FeaturePoint featurePoint)
-        {
-            featurePoint.Initialize(this);
-        }
+        //public void ToFeaturePoint(FeaturePoint featurePoint)
+        //{
+        //    featurePoint.Initialize(this);
+        //}
 
         public static ObjectPool<List<Tile>> TileListPool = new ObjectPool<List<Tile>>();
+        public static ObjectPool<HashSet<Tile>> TileSetPool = new ObjectPool<HashSet<Tile>>();
     }
 
     public class TileProperties

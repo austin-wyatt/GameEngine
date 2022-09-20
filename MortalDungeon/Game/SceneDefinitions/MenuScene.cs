@@ -529,50 +529,59 @@ namespace Empyrean.Game.SceneDefinitions
             {
                 if (KeyboardState.IsKeyDown(Keys.Period))
                 {
-                    SelectionIndicatorManager.SelectUnit(units.First());
-                    return;
+                    var timer = Stopwatch.StartNew();
+
+                    HashSet<NavTileWithParent> floodFillSet = new HashSet<NavTileWithParent>();
+                    TileMapManager.NavMesh.NavFloodFill(tile.ToFeaturePoint(), NavType.Base, ref floodFillSet,
+                        units.First().Info._movementAbility.Range, units.First());
+
+                    Console.WriteLine("Flood fill completed in " + timer.Elapsed.TotalMilliseconds + "ms");
+
+                    float range = units.First().Info._movementAbility.Range;
+
+                    foreach (var floodTile in floodFillSet)
+                    {
+                        floodTile.NavTile.Tile.SetColor(new Vector4(1, floodTile.PathCost / range, 0, 1));
+                    }
+
+                    for(int i = 0; i < 1; i++)
+                    {
+                        var tempTile = floodFillSet.ElementAt(GlobalRandom.Next(floodFillSet.Count - 1));
+                        while (tempTile.Parent != null)
+                        {
+                            tempTile.NavTile.Tile.SetColor(new Vector4(tempTile.PathCost / range, 1, 0, 1));
+                            tempTile = tempTile.Parent;
+                        }
+                    }
                 }
                 else if (KeyboardState.IsKeyDown(Keys.Backslash))
                 {
-                    SelectionIndicatorManager.DeselectUnit(units.First());
-                    return;
+                    Unit unit = units.First();
+                    VisionManager.CalculateVisionForUnit(unit);
                 }
                 else if (KeyboardState.IsKeyDown(Keys.Slash))
                 {
-                    IndividualMesh selectionIndicator = SelectionIndicatorManager.SelectedUnits[units.First()];
+                    Unit unit = units.First();
+                    Stopwatch timer = Stopwatch.StartNew();
 
-                    PropertyAnimation test = new PropertyAnimation();
+                    CombatState.CalculateUnimpededLinesToUnit(unit).Wait();
 
-                    Vector2 center = new Vector2(0.5f, 0.5f);
-                    for (int i = 0; i < 10; i++)
+                    if(CombatState.UnimpededUnitSightlines.TryGetValue(unit, out var lineOfTiles))
                     {
-                        int capturedIndex = i;
-
-                        Keyframe temp = new Keyframe(capturedIndex * 8, () =>
+                        foreach(var line in lineOfTiles)
                         {
-                            if(capturedIndex < 5)
+                            for(int i = 0; i < line.Tiles.Count; i++)
                             {
-                                selectionIndicator.TextureTransformations.ScaleBy(new Vector2(0.01f, 0.01f), center);
+                                if(i >= line.AbilityLineHeightIndex)
+                                {
+                                    line.Tiles[i].SetColor(new Vector4((float)i / line.Tiles.Count, 0, 1, 1));
+                                }
                             }
-                            else
-                            {
-                                selectionIndicator.TextureTransformations.ScaleBy(new Vector2(-0.01f, -0.01f), center);
-                            }
-                        });
-
-                        test.Keyframes.Add(temp);
+                        }
                     }
 
-                    test.Play();
-                    test.Repeat = true;
 
-                    Tick += test.Tick;
-
-                    Task.Run(() =>
-                    {
-                        Task.Delay(20000).Wait();
-                        Tick -= test.Tick;
-                    });
+                    Console.WriteLine("Ring calculated in " + timer.Elapsed.TotalMilliseconds + "ms");
                 }
 
                 foreach (var unit in units)
@@ -584,9 +593,10 @@ namespace Empyrean.Game.SceneDefinitions
             {
                 if (_selectedAbility != null && !AbilityInProgress)
                 {
+                    Ability ability = _selectedAbility;
                     Task.Run(() =>
                     {
-                        _selectedAbility.OnTileClicked(map, tile);
+                        ability.OnTileClicked(map, tile);
                     });
                 }
                 else

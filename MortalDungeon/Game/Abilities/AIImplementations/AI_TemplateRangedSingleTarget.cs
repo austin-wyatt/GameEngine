@@ -177,9 +177,6 @@ namespace Empyrean.Game.Abilities
         {
             List<IAIAction> targets = new List<IAIAction>();
 
-            if (!CanCast())
-                return targets;
-
             foreach (var morselKVP in TileMapManager.Scene.CombatState.UnitInformation)
             {
                 foreach(var morsel in morselKVP.Value)

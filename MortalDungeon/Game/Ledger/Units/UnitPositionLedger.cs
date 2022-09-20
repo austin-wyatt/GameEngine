@@ -133,7 +133,9 @@ namespace Empyrean.Game.Ledger.Units
             if (info == null)
                 return null;
 
-            Unit newUnit = info.CreateUnit(TileMapManager.Scene);
+            
+
+            Unit newUnit = info.CreateUnit(TileMapManager.Scene, firstLoad: false);
 
             unit.UnitInfo.ApplyUnitInfoToUnit(newUnit);
 

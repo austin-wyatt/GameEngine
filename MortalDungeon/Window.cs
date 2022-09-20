@@ -263,6 +263,11 @@ namespace Empyrean
 
         public static CombatScene Scene;
 
+        /// <summary>
+        /// Dictates how man high frequency ticks are made for each normal game tick
+        /// </summary>
+        public static int GameSpeed = 3;
+
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
         {  }
 
@@ -379,9 +384,23 @@ namespace Empyrean
             {
                 double timeValue;
 
+                List<double> times = new List<double>(1000);
+
                 while (true)
                 {
                     timeValue = _gameTimer.Elapsed.TotalSeconds;
+
+                    //times.Add(timeValue);
+
+                    //if (times.Count > 500)
+                    //{
+                    //    for (int i = 0; i < times.Count; i++)
+                    //    {
+                    //        Console.WriteLine(times[i]);
+                    //    }
+
+                    //    times.Clear();
+                    //}
 
                     if (timeValue > highFreqTickRate)
                     {
@@ -396,7 +415,7 @@ namespace Empyrean
                             }
                         }
 
-                        if (highFreqTick % 3 == 0)
+                        if (highFreqTick % GameSpeed == 0)
                         {
                             tick++;
                         }
@@ -410,8 +429,7 @@ namespace Empyrean
                     //    tick++;
                     //}
 
-
-                    Thread.Sleep(3);
+                    Thread.Sleep(1);
                 }
             }, TaskCreationOptions.LongRunning);
 
@@ -421,7 +439,7 @@ namespace Empyrean
         public static object _renderLock = new object();
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            System.Threading.Monitor.Enter(_renderLock);
+            Monitor.Enter(_renderLock);
 
             base.OnRenderFrame(args);
 
@@ -465,7 +483,7 @@ namespace Empyrean
                         Console.Write("   Culled Chunks: " + ObjectCulling._culledChunks);
                     }
 
-                    if (WindowConstants.ShowTicksPerSecond)
+                    if (WindowConstants.ShowTicksPerSecond || true)
                     {
                         Console.Write("   High freq ticks: " + _highFreqTickCounter);
                         _highFreqTickCounter = 0;

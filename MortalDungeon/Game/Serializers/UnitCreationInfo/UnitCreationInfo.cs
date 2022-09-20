@@ -101,44 +101,57 @@ namespace Empyrean.Game.Serializers
             
         }
 
-        public Unit CreateUnit(CombatScene scene) 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="scene"></param>
+        /// <param name="firstLoad">
+        /// Whether this is the first time this unit is being created. <para/>
+        /// If this is not the first time it is being created then abilities,
+        /// inventory, and anything info or AI related should not be updated
+        /// </param>
+        /// <returns></returns>
+        public Unit CreateUnit(CombatScene scene, bool firstLoad) 
         {
             Unit unit = new Unit(scene);
 
             unit.UnitCreationInfoId = Id;
-
-            unit.AbilityLoadout = new AbilityLoadout(AbilityLoadout);
             unit.AnimationSet = AnimationSetManager.GetAnimationSet(AnimationSetId); //Check to see if this has already been loaded
 
-            foreach(var entry in UnitItems)
+            if (firstLoad)
             {
-                var item = entry.ItemEntry.GetItemFromEntry();
+                unit.AbilityLoadout = new AbilityLoadout(AbilityLoadout);
 
-                if(entry.Location == ItemLocation.Equipment)
+                foreach (var entry in UnitItems)
                 {
-                    unit.Info.Equipment.EquipItem(item, entry.EquipmentSlot);
+                    var item = entry.ItemEntry.GetItemFromEntry();
+
+                    if (entry.Location == ItemLocation.Equipment)
+                    {
+                        unit.Info.Equipment.EquipItem(item, entry.EquipmentSlot);
+                    }
+                    else
+                    {
+                        unit.Info.Inventory.AddItemToInventory(item);
+                    }
                 }
-                else
-                {
-                    unit.Info.Inventory.AddItemToInventory(item);
-                }
+
+                unit.Info.Inventory.Gold = Gold;
+
+                unit.Name = Name;
+
+                unit.SetTeam(Team);
+                unit.AI.ControlType = ControlType;
+
+                unit.Info.ResourceManager = new ResourceManager(ResourceManager);
+                unit.Info.ResourceManager.Unit = unit;
+
+                unit.Info.Species = Species;
+
+                unit.Info.NonCombatant = NonCombatant > 0;
+                unit.Info.BlocksSpace = BlocksSpace > 0;
+                unit.Info.PhasedMovement = PhasedMovement > 0;
             }
-
-            unit.Info.Inventory.Gold = Gold;
-
-            unit.Name = Name;
-
-            unit.SetTeam(Team);
-            unit.AI.ControlType = ControlType;
-
-            unit.Info.ResourceManager = new ResourceManager(ResourceManager);
-            unit.Info.ResourceManager.Unit = unit;
-
-            unit.Info.Species = Species;
-
-            unit.Info.NonCombatant = NonCombatant > 0;
-            unit.Info.BlocksSpace = BlocksSpace > 0;
-            unit.Info.PhasedMovement = PhasedMovement > 0;
 
             Color = Color.Replace(" ", "").Replace("f", "");
             string[] colorVals = Color.Split(",");
@@ -169,16 +182,6 @@ namespace Empyrean.Game.Serializers
                 catch { }
             }
 
-            SelectionTileOffset = SelectionTileOffset.Replace(" ", "").Replace("f", "");
-            string[] selectionTileOffsetVals = SelectionTileOffset.Split(",");
-            if (selectionTileOffsetVals.Length == 3)
-            {
-                try
-                {
-                    unit.SelectionTileOffset = new Vector3(float.Parse(selectionTileOffsetVals[0]), float.Parse(selectionTileOffsetVals[1]), float.Parse(selectionTileOffsetVals[2]));
-                }
-                catch { }
-            }
 
             foreach(var eventActionBuilder in EventActionBuilders)
             {

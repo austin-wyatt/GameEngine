@@ -217,37 +217,45 @@ namespace Empyrean.Game.Items
 
         }
 
-        public virtual void OnEquipped()
+        public virtual void OnEquipped(bool fromLoad = false)
         {
             if(EquipmentHandle.Unit.PermanentId.Id != 0)
             {
-                InitializeAbility();
+                InitializeAbility(fromLoad);
             }
             else
             {
-                EquipmentHandle.Unit.PermanentIdInitialized += InitializeAbility;
+                //A permanent Id is required for a handful of ability types so
+                //we need to ensure we are creating the item ability after the unit
+                //gets assigned their permanent Id
+                void initAbility() 
+                {
+                    InitializeAbility(fromLoad, () =>
+                    {
+                        EquipmentHandle.Unit.PermanentIdInitialized -= initAbility;
+                    });
+                }
+
+                EquipmentHandle.Unit.PermanentIdInitialized += initAbility;
             }
         }
 
-        public virtual void InitializeAbility()
+        public virtual void InitializeAbility(bool fromLoad = false, Action initializeCallback = null)
         {
             if (ItemAbility != null)
             {
                 ItemAbility.CastingUnit = EquipmentHandle.Unit;
-                ItemAbility.AddAbilityToUnit();
+                ItemAbility.AddAbilityToUnit(fromLoad);
             }
 
-            if (EquipmentHandle != null && EquipmentHandle.Unit != null)
-            {
-                EquipmentHandle.Unit.PermanentIdInitialized -= InitializeAbility;
-            }
+            initializeCallback?.Invoke();
         }
 
-        public virtual void OnUnequipped()
+        public virtual void OnUnequipped(bool fromLoad = false)
         {
             if (ItemAbility != null)
             {
-                ItemAbility.RemoveAbilityFromUnit();
+                ItemAbility.RemoveAbilityFromUnit(fromLoad);
                 ItemAbility.CastingUnit = null;
             }
         }

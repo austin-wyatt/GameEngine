@@ -100,15 +100,20 @@ namespace Empyrean.Engine_Classes.TextHandling
 
             Graphics graphics = Graphics.FromImage(map);
             graphics.Clear(clearColor);
+            //graphics.Clear(Color.Empty);
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             //graphics.SmoothingMode = SmoothingMode.HighQuality;
+
+            //graphics.SmoothingMode = SmoothingMode.HighQuality;
             //graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
             //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
             graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
@@ -149,9 +154,6 @@ namespace Empyrean.Engine_Classes.TextHandling
                     if (a == clearA && r == clearR && g == clearG && b == clearB)
                     {
                         *(val + 3) = 0;
-                        //*(val + 2) = 0;
-                        //*(val + 1) = 0;
-                        //*(val + 0) = 0;
                     }
 
                     val += 4;

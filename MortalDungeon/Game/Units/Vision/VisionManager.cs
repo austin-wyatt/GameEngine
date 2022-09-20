@@ -21,6 +21,8 @@ namespace Empyrean.Game.Units
 
         public static bool RevealAll = true;
 
+        public const float HEIGHT_VISION_CUTOFF = 0.5f;
+
         static VisionManager()
         {
 
@@ -202,6 +204,8 @@ namespace Empyrean.Game.Units
             int j;
             Tile currentTile;
 
+            float baseHeight = tile.GetVisionHeight();
+
             for (int i = 0; i < 6; i++)
             {
                 for (j = 0; j < digitalLines.Count; j++)
@@ -225,9 +229,9 @@ namespace Empyrean.Game.Units
                         }
                         generator.AffectedMaps.Add(currentTile.TileMap);
 
-                        bool currTileHigher = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) <= -2;
-                        bool currTileLower = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) >= 1;
-                        if ((currentTile.BlocksType(BlockingType.Vision) && !currTileLower) || currTileHigher)
+                        bool currTileHigher = (baseHeight - currentTile.GetVisionHeight()) <= -HEIGHT_VISION_CUTOFF;
+                        bool currTileLower = (baseHeight - currentTile.GetVisionHeight()) >= HEIGHT_VISION_CUTOFF * 0.5f;
+                        if (currentTile.BlocksType(BlockingType.Vision) || currTileHigher)
                         {
                             break;
                         }
@@ -277,81 +281,6 @@ namespace Empyrean.Game.Units
             _digitalLineListPool.FreeObject(ref digitalLines);
         }
 
-        /// <summary>
-        /// Calculates what can see the passed VisionGenerator in a given radius.
-        /// (ie the height calculation is reversed as the edges of the radius -> center is what we care about)
-        /// </summary>
-        public static List<List<Tile>> CalculateVisionLinesToGenerator(VisionGenerator generator)
-        {
-            List<List<Tile>> visionLines = new List<List<Tile>>();
-
-            Tile tile = TileMapHelpers.GetTile(new FeaturePoint(generator.Position));
-
-            List<Tile> tileList = new List<Tile>();
-
-            tile.TileMap.GetRingOfTiles(tile, tileList, (int)generator.Radius);
-
-            #region precalculate this later
-            List<List<Direction>> digitalLines = new List<List<Direction>>();
-
-            for (int i = 0; i < tileList.Count / 6; i++)
-            {
-                if (tileList[i] == null)
-                    continue;
-
-                var line = tile.TileMap.GetLineOfTiles(tile, tileList[i]);
-
-                List<Direction> digitalLine = new List<Direction>();
-
-                Tile prev = null;
-
-                foreach (var t in line)
-                {
-                    if (prev != null)
-                    {
-                        digitalLine.Add(FeatureEquation.DirectionBetweenTiles(prev, t));
-                    }
-
-                    prev = t;
-                }
-                digitalLines.Add(digitalLine);
-            }
-            #endregion
-
-            for (int i = 0; i < 6; i++)
-            {
-                for (int j = 0; j < digitalLines.Count; j++)
-                {
-                    var visionLine = new List<Tile>();
-                    visionLines.Add(visionLine);
-
-                    var line = digitalLines[j];
-
-                    Tile currentTile = tile;
-
-                    for (int k = 0; k < line.Count; k++)
-                    {
-                        var dir = line[k];
-
-                        currentTile = tile.TileMap.GetNeighboringTile(currentTile, (Direction)((int)(dir + i) % 6));
-
-                        if (currentTile == null)
-                            break;
-
-                        visionLine.Add(currentTile);
-
-                        bool currTileHigher = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) <= -2;
-                        bool currTileLower = (tile.GetVisionHeight() - currentTile.GetVisionHeight()) >= 2;
-                        if ((currentTile.BlocksType(BlockingType.Vision) && !currTileHigher) || currTileLower)
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return visionLines;
-        } 
 
         public static void SetRevealAll(bool revealAll)
         {

@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using System;
+using System.Threading;
 
 namespace Empyrean.Engine_Classes.Audio
 {
@@ -19,6 +20,8 @@ namespace Empyrean.Engine_Classes.Audio
         public float Pitch = 1;
         public bool Loop = false;
         public float EndTime = -1;
+
+        public object _operationLock = new object();
 
         public Sound(AudioBuffer buffer)
         {
@@ -122,6 +125,8 @@ namespace Empyrean.Engine_Classes.Audio
 
         public void Play()
         {
+            Monitor.Enter(_operationLock);
+
             if (Valid) 
             {
                 Source.Play();
@@ -130,24 +135,34 @@ namespace Empyrean.Engine_Classes.Audio
             {
                 Prepare(Play);
             }
+
+            Monitor.Exit(_operationLock);
         }
 
         public void Pause()
         {
+            Monitor.Enter(_operationLock);
+
             if (Valid) Source.Pause();
             else 
             {
                 Prepare(Pause);
             }
+
+            Monitor.Exit(_operationLock);
         }
 
         public void Stop()
         {
+            Monitor.Enter(_operationLock);
+
             if (Valid) Source.Stop();
             else
             {
                 Prepare(Stop);
             }
+
+            Monitor.Exit(_operationLock);
         }
 
         public void SetPosition(float x, float y, float z)

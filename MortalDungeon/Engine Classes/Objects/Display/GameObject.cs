@@ -479,6 +479,12 @@ namespace Empyrean.Engine_Classes
         public virtual void CleanUp() 
         {
             OnCleanUp?.Invoke(this);
+
+            TimedHover = null;
+            Hover = null;
+
+            OnHoverEnd();
+            HoverEnd = null;
         }
 
         #region Event actions
@@ -508,7 +514,6 @@ namespace Empyrean.Engine_Classes
         {
             TimedHover?.Invoke(obj);
         }
-
         #endregion
 
 

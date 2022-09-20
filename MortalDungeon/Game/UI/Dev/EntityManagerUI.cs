@@ -275,7 +275,7 @@ namespace Empyrean.Game.UI.Dev
 
             foreach (UnitCreationInfo info in unitInfo) 
             {
-                Unit u = info.CreateUnit(Scene);
+                Unit u = info.CreateUnit(Scene, firstLoad: true);
 
                 BaseObject obj = u.CreateBaseObject();
 
@@ -300,7 +300,7 @@ namespace Empyrean.Game.UI.Dev
 
                 block.Click += (s, e) =>
                 {
-                    Entity newEntity = new Entity(info.CreateUnit(Scene));
+                    Entity newEntity = new Entity(info.CreateUnit(Scene, firstLoad: true));
 
                     newEntity.Handle.Name = $"{info.Name} {newEntity.EntityID}";
 

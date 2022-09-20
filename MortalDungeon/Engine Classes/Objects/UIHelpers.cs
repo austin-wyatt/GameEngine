@@ -128,7 +128,10 @@ namespace Empyrean.Engine_Classes
                         builder.Append(WrapString(lines[i], param.CharactersPerLine));
                     }
                     
-                    builder.Append('\n');
+                    if(i != lines.Length - 1)
+                    {
+                        builder.Append('\n');
+                    }
                 }
 
                 param.Text = builder.ToString();
@@ -152,8 +155,8 @@ namespace Empyrean.Engine_Classes
 
             Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
-            Text tooltip = new Text(param.Text, Text.DEFAULT_FONT, 32, Brushes.Black);
-            tooltip.SetTextScale(param.TextScale);
+            Text tooltip = new Text(param.Text, Text.DEFAULT_FONT, 24, Brushes.Black);
+            //tooltip.SetTextScale(param.TextScale);
             tooltip.Hoverable = true;
 
             //tooltip.RenderAfterParent = true;
@@ -283,10 +286,10 @@ namespace Empyrean.Engine_Classes
         {
             Tooltip tooltip = new Tooltip();
 
-            Text header = new Text(headerText, Text.DEFAULT_FONT, 32, Brushes.Black);
+            Text header = new Text(headerText, Text.DEFAULT_FONT, 24, Brushes.Black);
             header.SetTextScale(1);
 
-            Text description = new Text(bodyText, Text.DEFAULT_FONT, 16, Brushes.Black, Color.White);
+            Text description = new Text(bodyText, Text.DEFAULT_FONT, 12, Brushes.Black, Color.White);
             //description.SetTextScale(1.389f);
 
             tooltip.AddChild(header);

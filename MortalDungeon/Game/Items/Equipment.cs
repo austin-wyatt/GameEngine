@@ -105,7 +105,7 @@ namespace Empyrean.Game.Items
             Unit = unit;
         }
 
-        public EquipItemError EquipItem(Item item, EquipmentSlot slot)
+        public EquipItemError EquipItem(Item item, EquipmentSlot slot, bool equippedDuringLoad = false)
         {
             Item removedItem;
 
@@ -122,9 +122,9 @@ namespace Empyrean.Game.Items
                 EquippedItems.TryGetValue(slot, out removedItem);
 
                 EquippedItems.AddOrSet(slot, item);
-                item.OnEquipped();
+                item.OnEquipped(equippedDuringLoad);
 
-                if (Unit.Info.PartyMember)
+                if (Unit.Info.PartyMember && !equippedDuringLoad)
                 {
                     PlayerParty.Inventory.RemoveItemFromInventory(item);
                 }
@@ -255,7 +255,7 @@ namespace Empyrean.Game.Items
             {
                 Item item = _equippedItems.Values[i].GetItemFromEntry();
 
-                EquippedItems.Add(_equippedItems.Keys[i], item);
+                EquipItem(item, _equippedItems.Keys[i], equippedDuringLoad: true);
             }
 
             CollateItemTags();

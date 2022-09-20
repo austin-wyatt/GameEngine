@@ -27,7 +27,7 @@ namespace Empyrean.Game.Movement
             Vector3i destCube = CubeMethods.PixelToCube(destPoint);
 
             Vector3i empty = new Vector3i(0, 0, 0);
-            float distance = CubeMethods.GetDistanceBetweenPoints(ref empty, ref destCube);
+            float distance = CubeMethods.GetDistanceBetweenPoints(empty, destCube);
 
             FeaturePoint sourceFeaturePoint = source.ToFeaturePoint();
 

@@ -2,6 +2,7 @@
 using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Engine_Classes.TextHandling;
 using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Abilities.AIImplementations;
 using Empyrean.Game.Map;
 using Empyrean.Game.Serializers;
 using Empyrean.Game.Tiles;
@@ -122,6 +123,7 @@ namespace Empyrean.Game.Abilities
 
         public EffectManager EffectManager;
         public SelectionInfo SelectionInfo;
+        public AITargetSelection AITargetSelection = new AITargetSelection();
 
         #region Combo ability variables
         public bool IsComboAbility = false;
@@ -149,7 +151,7 @@ namespace Empyrean.Game.Abilities
         /// Indicates that this ability is for movement and shouldn't be considered for general
         /// use during a turn.
         /// </summary>
-        public bool HasMovementParams = false;
+        public bool IsForMovement = false;
 
         public CombatScene Scene => CastingUnit.Scene;
 
@@ -170,7 +172,7 @@ namespace Empyrean.Game.Abilities
 
         public CastRequirements CastRequirements = new CastRequirements();
 
-        public float Range = 0;
+        public virtual float Range { get; set; }
         public int MinRange;
         public int CurrentRange = 0;
         public float Sound = 0;
@@ -207,12 +209,12 @@ namespace Empyrean.Game.Abilities
             return null;
         }
 
-        public virtual void AddAbilityToUnit()
+        public virtual void AddAbilityToUnit(bool fromLoad = false)
         {
             ApplyPassives();
         }
 
-        public virtual void RemoveAbilityFromUnit()
+        public virtual void RemoveAbilityFromUnit(bool fromLoad = false)
         {
             RemovePassives();
         }
@@ -426,7 +428,8 @@ namespace Empyrean.Game.Abilities
         public bool CanCast() 
         {
             return CastRequirements.CheckUnit(CastingUnit) && HasSufficientCharges() && 
-                CastingUnit.Info.CanUseAbility(this) && !(Scene.InCombat && UsedThisTurn);
+                CastingUnit.Info.CanUseAbility(this) && !(Scene.InCombat && UsedThisTurn) && 
+                Type != AbilityTypes.Passive;
         }
 
 
