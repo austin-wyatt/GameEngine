@@ -3,7 +3,7 @@ This is a custom game engine I developed for fun.
 
 It's baseline functional but anyone consuming this engine will need to create their own external tooling. 
 
-Included in the Game directory is the skeleton of a game I was developing with this engine. (Data files 
+Included in the Game directory is the skeleton of a game I was developing with this engine. (Data files not included, sorry)
 
 Although I've never checked specifically, there shouldn't be too many/any dependencies in the Engine Classes directory for items defined in the Game directory 
 (so with minor adjustments you can strip out the game code and implement your own if you so wish).
