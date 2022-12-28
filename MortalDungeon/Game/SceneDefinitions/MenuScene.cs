@@ -66,6 +66,8 @@ namespace Empyrean.Game.SceneDefinitions
 
             GlobalInfo.LoadDefaultGlobalInfo();
 
+            DataObjects.DataManagerInitializer.Initialize("default_save");
+
             _camera.RotateByAmount(0);
 
             UIBlock inputCapture = new UIBlock(WindowConstants.CenterScreen, new UIScale(10, 10));

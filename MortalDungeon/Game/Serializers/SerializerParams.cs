@@ -13,11 +13,12 @@ namespace Empyrean.Game.Serializers
     public static class SerializerParams
     {
         public static string DATA_BASE_PATH = "Data/";
+        public static string SAVE_BASE_PATH = "Save/";
         static SerializerParams()
         {
-#if DEBUG
+//#if DEBUG
             DATA_BASE_PATH = "Z:/repos/EngineToolsGUI/EngineToolsGUI/bin/Debug/net6.0-windows/Data/";
-#endif
+//#endif
         }
     }
 }

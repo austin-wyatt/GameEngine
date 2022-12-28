@@ -7,6 +7,7 @@ using Microsoft.ClearScript;
 using Empyrean.Game.Ledger;
 using Empyrean.Game.Serializers;
 using Empyrean.Game.Player;
+using Empyrean.Game.Units;
 
 namespace Empyrean.Game.Scripting
 {
@@ -25,10 +26,14 @@ namespace Empyrean.Game.Scripting
             Engine.AddHostType("StateSubscriber", typeof(StateSubscriber));
             Engine.AddHostType("PlayerParty", typeof(PlayerParty));
 
+            //temp
+            //Engine.AddHostType("UnitInfo", typeof(UnitInfo));
+
             Engine.AddHostObject("mscorlib", new HostTypeCollection("mscorlib"));
 
             Engine.Evaluate(File.ReadAllText("Game/Scripting/init.js"));
 
+            
 
             //Engine.Evaluate("Empyrean.Game.Player.PlayerParty.Inventory.AddGold(500)");
         }
@@ -36,6 +41,22 @@ namespace Empyrean.Game.Scripting
         public static object ApplyScript(string script)
         {
             return Engine.Evaluate(script);
+        }
+
+        /// <summary>
+        /// Expose object to the script environment with the given name
+        /// </summary>
+        public static void ExposeObject(string name, object obj)
+        {
+            Engine.Script[name] = obj;
+        }
+
+        /// <summary>
+        /// Remove a previously exposed object from the script environment
+        /// </summary>
+        public static void RemoveObject(string name)
+        {
+            Engine.Execute("delete " + name);
         }
     }
 }
