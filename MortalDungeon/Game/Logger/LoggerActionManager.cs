@@ -72,105 +72,13 @@ namespace Empyrean.Game.Logger
 
         public static T EvaluateScript<T>(LoggerPacket packet, Dictionary<string, object> loggerAction, string scriptKey)
         {
-            //format strings:
-            //from packet !< >! 
-            //from data object @< >@
-            //no formatting required for global objects
-
             string rawScript = loggerAction.GetValueOrDefault(scriptKey) as string;
 
             if (rawScript == null)
                 throw new Exception("Invalid script with id " + loggerAction.GetValueOrDefault(_strings[(int)STRINGS.Id]) + " attempted execution");
 
-            //stores pairs indices in the form (start index, end index, start index, end index)
-            //in the case of a malformed format string the system will fail at a later step
-            List<int> packetIndices = new List<int>();
-            List<int> localIndices = new List<int>();
-            
-            for(int i = 0; i < rawScript.Length - 1; i++)
-            {
-                //Check for the packet and local format string indicators 
-                if (rawScript[i] == _strings[(int)STRINGS.PacketStart][0] && rawScript[i + 1] == _strings[(int)STRINGS.PacketStart][1]
-                    || rawScript[i] == _strings[(int)STRINGS.PacketEnd][0] && rawScript[i + 1] == _strings[(int)STRINGS.PacketEnd][1])
-                {
-                    packetIndices.Add(i);
-                }
-                else if (rawScript[i] == _strings[(int)STRINGS.LocalStart][0] && rawScript[i + 1] == _strings[(int)STRINGS.LocalStart][1] 
-                         || rawScript[i] == _strings[(int)STRINGS.LocalEnd][0] && rawScript[i + 1] == _strings[(int)STRINGS.LocalEnd][1])
-                {
-                    localIndices.Add(i);
-                }
-            }
-
-            //if we have a mismatch of packet and local indices there is no point attempting to execute the string
-            if (packetIndices.Count % 2 == 1 || localIndices.Count % 2 == 1)
-                throw new Exception("Invalid script with id " + loggerAction.GetValueOrDefault(_strings[(int)STRINGS.Id]) + " attempted execution");
-
-            //use StringBuilder and spans (as opposed to concantenation and substrings) to reduce allocations
-            StringBuilder scriptString = new StringBuilder(rawScript.Length);
-
-            int packetIndex = 0;
-            int localIndex = 0;
-            int len;
-
-            int startIndex;
-            int endIndex = 0;
-            string formatSubstr;
-
-            List<string> exposedObjects = new List<string>();
-
-            //Build the formatted script string
-            for (int i = 0; i < packetIndices.Count + localIndices.Count; i += 2)
-            {
-                if (packetIndices[packetIndex] < localIndices[localIndex])
-                {
-                    //append the string between the format indicators
-                    len = packetIndices[packetIndex] - endIndex;
-                    scriptString.Append(rawScript.AsSpan(endIndex, len));
-
-                    startIndex = packetIndices[packetIndex] + 2; //add the length of the format indicator
-                    len = packetIndices[packetIndex + 1] - startIndex;
-
-                    packetIndex += 2;
-
-                    formatSubstr = _strings[(int)STRINGS.PacketPrefix] + rawScript.AsSpan(startIndex, len).ToString();
-
-                    if (packet.TryGetValue(rawScript.AsSpan(startIndex, len).ToString(), out object value))
-                    {
-                        JSManager.ExposeObject(formatSubstr, value);
-                        exposedObjects.Add(formatSubstr);
-                    }
-                }
-                else
-                {
-                    //append the substring between the format indicators
-                    len = localIndices[localIndex] - endIndex;
-                    scriptString.Append(rawScript.AsSpan(endIndex, len));
-
-                    startIndex = localIndices[localIndex] + 2; //add the length of the format indicator
-                    len = localIndices[localIndex + 1] - startIndex;
-
-                    localIndex += 2;
-
-                    formatSubstr = _strings[(int)STRINGS.LocalPrefix] + rawScript.AsSpan(startIndex, len).ToString();
-
-                    if (loggerAction.TryGetValue(rawScript.AsSpan(startIndex, len).ToString(), out object value))
-                    {
-                        JSManager.ExposeObject(formatSubstr, value);
-                        exposedObjects.Add(formatSubstr);
-                    }
-                }
-
-                //append the object string without format indicators now that the object has been exposed to the script
-                scriptString.Append(formatSubstr);
-
-                endIndex = startIndex + len + 2;
-            }
-
-            //append the final unformatted section of the raw script string
-            scriptString.Append(rawScript.AsSpan(endIndex, rawScript.Length - endIndex));
-
-
+            HashSet<string> exposedObjects = new HashSet<string>();
+            string scriptString = ScriptFormat.FormatString(rawScript.AsSpan(), packet, loggerAction, ref exposedObjects);
 
             object evaluatedOutput;
 
@@ -185,9 +93,9 @@ namespace Empyrean.Game.Logger
             }
             finally
             {
-                for (int i = 0; i < exposedObjects.Count; i++)
+                foreach(string exposedObject in exposedObjects)
                 {
-                    JSManager.RemoveObject(exposedObjects[i]);
+                    JSManager.RemoveObject(exposedObject);
                 }
             }
 
@@ -201,6 +109,9 @@ namespace Empyrean.Game.Logger
             Monitor.Enter(_actionsToAdd);
             Monitor.Enter(_actionsToRemove);
             Monitor.Enter(_loggerActionLock);
+
+            if (!(_actionsToAdd.Count > 0 || _actionsToRemove.Count > 0))
+                return;
 
             HashSet<Dictionary<string, object>> storedActions;
 
@@ -279,7 +190,42 @@ namespace Empyrean.Game.Logger
 
             return null;
         }
-        
+
+        private class ScriptFormatIndex
+        {
+            public FormatType Type;
+            public int Start;
+            public int End;
+            public bool ExposeObject = true;
+
+            public ScriptFormatIndex(FormatType type, int start)
+            {
+                Type = type;
+                Start = start;
+            }
+        }
+
+        private enum FormatType
+        {
+            Packet,
+            Local,
+            DataObject,
+            DataObjectInt,
+            DataObjectFloat,
+            DataObjectString,
+            DataObjectDouble,
+            DataObjectLong,
+            DataObjectBool
+        }
+
+        private enum FormatState
+        {
+            Clear,
+            PacketStart,
+            LocalStart,
+            DOStart,
+        }
+
         private enum STRINGS
         {
             Persistent,
@@ -294,8 +240,8 @@ namespace Empyrean.Game.Logger
             PacketEnd,
             LocalStart,
             LocalEnd,
-            PacketPrefix,
-            LocalPrefix
+            DOStart,
+            DOEnd
         }
 
         //Since this class will be called frequently during gameplay it's worth statically defining common strings to reduce allocations
@@ -313,8 +259,8 @@ namespace Empyrean.Game.Logger
             ">!",
             "@<",
             ">@",
-            "P_",
-            "L_"
+            "@@",
+            "@@"
         };
     }
 }

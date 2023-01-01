@@ -1,4 +1,5 @@
-﻿using Empyrean.Game.Map;
+﻿using Empyrean.Game.Abilities;
+using Empyrean.Game.Map;
 using Empyrean.Game.Units;
 using System;
 using System.Collections.Generic;
@@ -56,6 +57,16 @@ namespace Empyrean.Game.Logger
                 { "Unit", movedUnit },
                 { "SourcePoint", source },
                 { "Cause", cause }
+            };
+        }
+
+        public static LoggerPacket BuildPacket_UnitKilled(Unit killedUnit, Unit killingUnit)
+        {
+            return new LoggerPacket()
+            {
+                { "id", LoggerEventType.UnitKilled },
+                { "killedUnit", killedUnit },
+                { "killingUnit", killingUnit },
             };
         }
     }

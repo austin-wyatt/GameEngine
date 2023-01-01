@@ -49,8 +49,6 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             var textBox = new Text(text, Text.DEFAULT_FONT, fontSize, textColor, clearColor);
 
-            float ratio = size.X / size.Y;
-
             //textBox.SetTextScale(textScale / ratio);
 
             TextBox = textBox;

@@ -239,21 +239,6 @@ namespace Empyrean.Game.Serializers
                         addBool(false);
                         break;
                     case "_Q":
-                        if(int.TryParse(blocks[i + 1], out int questId))
-                        {
-                            if (blocks[i + 2] == "_q")
-                            {
-                                addBool(QuestManager.GetQuestCompleted(questId));
-                            }
-                            else if(blocks[i + 2] == "_qp")
-                            {
-                                addBool(QuestManager.Quests.Exists(q => q.ID == questId));
-                            }
-                            else if (blocks[i + 2] == "_qa")
-                            {
-                                addBool(QuestManager.QuestAvailable(questId));
-                            }
-                        }
 
                         i += 2;
                         break;
@@ -324,13 +309,7 @@ namespace Empyrean.Game.Serializers
                         i += 2;
                         break;
                     case "_D":
-                        if (int.TryParse(blocks[i + 1], out int dialogueId))
-                        {
-                            if(blocks[i + 2] == "_d" && int.TryParse(blocks[i + 3], out int outcome))
-                            {
-                                addBool(DialogueLedger.GetStateValue(dialogueId, outcome));
-                            }
-                        }
+                        
                         i += 3;
                         break;
                 }

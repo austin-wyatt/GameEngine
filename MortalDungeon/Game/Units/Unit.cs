@@ -9,6 +9,7 @@ using Empyrean.Game.Events;
 using Empyrean.Game.Items;
 using Empyrean.Game.Ledger;
 using Empyrean.Game.Ledger.Units;
+using Empyrean.Game.Logger;
 using Empyrean.Game.Map;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Objects.PropertyAnimations;
@@ -1016,6 +1017,8 @@ namespace Empyrean.Game.Units
                 if (!spoofDamage) 
                 {
                     Kill();
+
+                    LoggerHub.ProcessPacket(LoggerPacket.BuildPacket_UnitKilled(this, sourceUnit));
                 }
                 
                 returnVals.KilledEnemy = true;
@@ -1056,7 +1059,6 @@ namespace Empyrean.Game.Units
             sound.SetPosition(BaseObject.BaseFrame._position.X, BaseObject.BaseFrame._position.Y, BaseObject.BaseFrame._position.Z);
             sound.Play();
 
-            Ledgers.OnUnitKilled(this);
 
             Killed?.Invoke(this);
             StateChanged?.Invoke(this);
@@ -1066,7 +1068,6 @@ namespace Empyrean.Game.Units
         {
             BaseObject.SetAnimation(0);
 
-            Ledgers.OnUnitRevived(this);
             StateChanged?.Invoke(this);
         }
 

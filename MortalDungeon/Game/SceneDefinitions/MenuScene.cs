@@ -66,8 +66,6 @@ namespace Empyrean.Game.SceneDefinitions
 
             GlobalInfo.LoadDefaultGlobalInfo();
 
-            DataObjects.DataManagerInitializer.Initialize("default_save");
-
             _camera.RotateByAmount(0);
 
             UIBlock inputCapture = new UIBlock(WindowConstants.CenterScreen, new UIScale(10, 10));
@@ -258,10 +256,25 @@ namespace Empyrean.Game.SceneDefinitions
                 return false;
             }
 
+            if (_focusedObj != null && _focusedObj.Typeable)
+                return false;
+
             switch (e.Key) 
             {
                 case Keys.F11:
-                    _3DObjects.PrintObjectVertices(_3DObjects.Cube);
+                    _console.ToggleVisibility();
+
+                    if (_console.Visible)
+                    {
+                        _focusedObj = _console.InputComponent;
+                        _console.InputComponent.OnFocus();
+                    }
+                    else if(_focusedObj == _console.InputComponent)
+                    {
+                        _focusedObj = null;
+                        _console.InputComponent.OnFocusEnd();
+                    }
+                    
                     break;
                 case Keys.F1:
                     if (_entityManager.Displayed)
@@ -991,9 +1004,10 @@ namespace Empyrean.Game.SceneDefinitions
                 //ContextManager.SetFlag(GeneralContextFlags.DisallowCameraMovement, true);
                 _cameraPos = newPos;
 
-                var maps = TileMapManager.GetTileMapsInDiameter(_cameraPos, 5);
+                var maps = TileMapManager.GetTileMapsInDiameter(_cameraPos, TileMapManager.VISIBLE_TILE_MAPS);
 
-                if (maps.Count < 5 * 5 && !InCombat &&
+                if (maps.Count < TileMapManager.VISIBLE_TILE_MAPS * TileMapManager.VISIBLE_TILE_MAPS 
+                    && !InCombat &&
                    !ContextManager.GetFlag(GeneralContextFlags.CameraPanning) &&
                    !ContextManager.GetFlag(GeneralContextFlags.TileMapManagerLoading) &&
                    !PlayerParty.CheckPartyMemberWillBeUnloaded())
@@ -1006,7 +1020,7 @@ namespace Empyrean.Game.SceneDefinitions
                     {
                         TileMapManager.SetCenter(_cameraPos);
                         TileMapManager.LoadMapsAroundCenter();
-                        maps = TileMapManager.GetTileMapsInDiameter(_cameraPos, 5);
+                        maps = TileMapManager.GetTileMapsInDiameter(_cameraPos, TileMapManager.VISIBLE_TILE_MAPS);
 
                         //do a synchronous merge + normals pass on visible maps here
                         //other maps should be queued/calculated asynchronously unless they 
@@ -1035,6 +1049,5 @@ namespace Empyrean.Game.SceneDefinitions
         }
 
         private TilePoint _wallTemp = null;
-        private int temp = 0;
     }
 }

@@ -227,175 +227,170 @@ namespace Empyrean.Game
 
         public void CreateResponses(Dialogue dialogue)
         {
-            //if(_currentNode.Responses.Count == 0)
+            //if (_currentNode.Responses.Count > 0 && _currentNode.Responses[0].ResponseType == ResponseType.None)
             //{
-            //    EndDialogue();
+            //    if (_currentNode.Responses[0].Outcome > 0)
+            //    {
+            //        StateIDValuePair updatedState = new StateIDValuePair()
+            //        {
+            //            Type = (int)LedgerUpdateType.Dialogue,
+            //            StateID = dialogue.ID,
+            //            ObjectHash = 0,
+            //            Data = _currentNode.Responses[0].Outcome,
+            //        };
+
+            //        DialogueLedger.SetStateValue(updatedState);
+            //    }
+
+            //    if (_currentNode.Responses[0].Instructions.Count > 0)
+            //    {
+            //        Ledgers.EvaluateInstructions(_currentNode.Responses[0].Instructions);
+            //    }
+
+            //    dialogue.DialogueOutcome = _currentNode.Responses[0].Outcome;
+
+
+            //    if (_currentNode.Responses[0].Next == null)
+            //    {
+            //        EndDialogue();
+            //        return;
+            //    }
+
+            //    _currentNode = _currentNode.Responses[0].Next;
+
+            //    Thread.Sleep(1000);
+
+            //    AdvanceDialogueText(dialogue);
+            //    return;
             //}
+            //else
+            //{
+            //    int responseCount = 0;
 
-            if (_currentNode.Responses.Count > 0 && _currentNode.Responses[0].ResponseType == ResponseType.None)
-            {
-                if (_currentNode.Responses[0].Outcome > 0)
-                {
-                    StateIDValuePair updatedState = new StateIDValuePair()
-                    {
-                        Type = (int)LedgerUpdateType.Dialogue,
-                        StateID = dialogue.ID,
-                        ObjectHash = 0,
-                        Data = _currentNode.Responses[0].Outcome,
-                    };
+            //    //create buttons
+            //    foreach (var res in _currentNode.Responses)
+            //    {
+            //        if (!res.Conditional.Check())
+            //            continue;
 
-                    DialogueLedger.SetStateValue(updatedState);
-                }
+            //        responseCount++;
 
-                if (_currentNode.Responses[0].Instructions.Count > 0)
-                {
-                    Ledgers.EvaluateInstructions(_currentNode.Responses[0].Instructions);
-                }
+            //        string responseString = UIHelpers.WrapString(res.ToString(), textWrapLength);
 
-                dialogue.DialogueOutcome = _currentNode.Responses[0].Outcome;
+            //        Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString);
+            //        button.BaseComponent.MultiTextureData.MixTexture = false;
 
+            //        button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));
+            //        button.BaseComponent.SetPosition(button.TextBox.GetAnchorPosition(UIAnchorPosition.Center));
 
-                if (_currentNode.Responses[0].Next == null)
-                {
-                    EndDialogue();
-                    return;
-                }
+            //        button.Click += (s, e) =>
+            //        {
+            //            _buttonParent.RemoveChildren();
 
-                _currentNode = _currentNode.Responses[0].Next;
+            //            if (res.Outcome > 0)
+            //            {
+            //                StateIDValuePair updatedState = new StateIDValuePair()
+            //                {
+            //                    Type = (int)LedgerUpdateType.Dialogue,
+            //                    StateID = dialogue.ID,
+            //                    ObjectHash = 0,
+            //                    Data = res.Outcome,
+            //                };
 
-                Thread.Sleep(1000);
+            //                DialogueLedger.SetStateValue(updatedState);
+            //            }
 
-                AdvanceDialogueText(dialogue);
-                return;
-            }
-            else
-            {
-                int responseCount = 0;
+            //            if (res.Instructions.Count > 0)
+            //            {
+            //                Ledgers.EvaluateInstructions(res.Instructions);
+            //            }
 
-                //create buttons
-                foreach (var res in _currentNode.Responses)
-                {
-                    if (!res.Conditional.Check())
-                        continue;
-
-                    responseCount++;
-
-                    string responseString = UIHelpers.WrapString(res.ToString(), textWrapLength);
-
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString);
-                    button.BaseComponent.MultiTextureData.MixTexture = false;
-
-                    button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));
-                    button.BaseComponent.SetPosition(button.TextBox.GetAnchorPosition(UIAnchorPosition.Center));
-
-                    button.Click += (s, e) =>
-                    {
-                        _buttonParent.RemoveChildren();
-
-                        if (res.Outcome > 0)
-                        {
-                            StateIDValuePair updatedState = new StateIDValuePair()
-                            {
-                                Type = (int)LedgerUpdateType.Dialogue,
-                                StateID = dialogue.ID,
-                                ObjectHash = 0,
-                                Data = res.Outcome,
-                            };
-
-                            DialogueLedger.SetStateValue(updatedState);
-                        }
-
-                        if (res.Instructions.Count > 0)
-                        {
-                            Ledgers.EvaluateInstructions(res.Instructions);
-                        }
-
-                        dialogue.DialogueOutcome = res.Outcome;
+            //            dialogue.DialogueOutcome = res.Outcome;
 
 
-                        if (res.Next == null)
-                        {
-                            EndDialogue();
-                            return;
-                        }
-                        else
-                        {
-                            _currentNode = res.Next;
-                            AddResponseText(dialogue, res.ToString());
-                            return;
-                        }
-                    };
+            //            if (res.Next == null)
+            //            {
+            //                EndDialogue();
+            //                return;
+            //            }
+            //            else
+            //            {
+            //                _currentNode = res.Next;
+            //                AddResponseText(dialogue, res.ToString());
+            //                return;
+            //            }
+            //        };
 
-                    Vector3 windowPosition = Window.GetAnchorPosition(UIAnchorPosition.TopCenter);
+            //        Vector3 windowPosition = Window.GetAnchorPosition(UIAnchorPosition.TopCenter);
 
-                    Vector3 pos = new Vector3();
+            //        Vector3 pos = new Vector3();
 
-                    if (_buttonParent.Children.Count == 0)
-                    {
-                        pos = _prevDialogueText.GetAnchorPosition(UIAnchorPosition.BottomLeft);
-                        pos.X = windowPosition.X;
-                        pos.Y += 10;
+            //        if (_buttonParent.Children.Count == 0)
+            //        {
+            //            pos = _prevDialogueText.GetAnchorPosition(UIAnchorPosition.BottomLeft);
+            //            pos.X = windowPosition.X;
+            //            pos.Y += 10;
 
-                        button.SetPositionFromAnchor(pos, UIAnchorPosition.TopCenter);
-                    }
-                    else
-                    {
-                        button.SetPositionFromAnchor(
-                            _buttonParent.Children[^1].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
-                    }
+            //            button.SetPositionFromAnchor(pos, UIAnchorPosition.TopCenter);
+            //        }
+            //        else
+            //        {
+            //            button.SetPositionFromAnchor(
+            //                _buttonParent.Children[^1].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+            //        }
 
-                    foreach (var text in button.TextBox.TextObjects)
-                    {
-                        text.SetScissorData(_scrollableArea.BaseComponent.ScissorData);
-                    }
+            //        foreach (var text in button.TextBox.TextObjects)
+            //        {
+            //            text.SetScissorData(_scrollableArea.BaseComponent.ScissorData);
+            //        }
 
-                    _buttonParent.AddChild(button);
-                }
+            //        _buttonParent.AddChild(button);
+            //    }
 
-                if(responseCount == 0)
-                {
-                    string responseString = "...";
+            //    if(responseCount == 0)
+            //    {
+            //        string responseString = "...";
 
-                    Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString);
-                    button.BaseComponent.MultiTextureData.MixTexture = false;
+            //        Button button = new Button(default, new UIScale(0.2f, 0.1f), responseString);
+            //        button.BaseComponent.MultiTextureData.MixTexture = false;
 
-                    button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));
-                    button.BaseComponent.SetPosition(button.TextBox.GetAnchorPosition(UIAnchorPosition.Center));
+            //        button.BaseComponent.SetSize(button.TextBox.Size + new UIScale(0.05f, 0.05f));
+            //        button.BaseComponent.SetPosition(button.TextBox.GetAnchorPosition(UIAnchorPosition.Center));
 
-                    button.Click += (s, e) =>
-                    {
-                        _buttonParent.RemoveChildren();
-                            EndDialogue();
-                    };
+            //        button.Click += (s, e) =>
+            //        {
+            //            _buttonParent.RemoveChildren();
+            //                EndDialogue();
+            //        };
 
-                    Vector3 windowPosition = Window.GetAnchorPosition(UIAnchorPosition.TopCenter);
+            //        Vector3 windowPosition = Window.GetAnchorPosition(UIAnchorPosition.TopCenter);
 
-                    Vector3 pos = new Vector3();
+            //        Vector3 pos = new Vector3();
 
-                    if (_buttonParent.Children.Count == 0)
-                    {
-                        pos = _prevDialogueText.GetAnchorPosition(UIAnchorPosition.BottomLeft);
-                        pos.X = windowPosition.X;
-                        pos.Y += 10;
+            //        if (_buttonParent.Children.Count == 0)
+            //        {
+            //            pos = _prevDialogueText.GetAnchorPosition(UIAnchorPosition.BottomLeft);
+            //            pos.X = windowPosition.X;
+            //            pos.Y += 10;
 
-                        button.SetPositionFromAnchor(pos, UIAnchorPosition.TopCenter);
-                    }
-                    else
-                    {
-                        button.SetPositionFromAnchor(
-                            _buttonParent.Children[^1].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
-                    }
+            //            button.SetPositionFromAnchor(pos, UIAnchorPosition.TopCenter);
+            //        }
+            //        else
+            //        {
+            //            button.SetPositionFromAnchor(
+            //                _buttonParent.Children[^1].GetAnchorPosition(UIAnchorPosition.BottomCenter) + new Vector3(0, 10, 0), UIAnchorPosition.TopCenter);
+            //        }
 
-                    foreach (var text in button.TextBox.TextObjects)
-                    {
-                        text.SetScissorData(_scrollableArea.BaseComponent.ScissorData);
-                    }
+            //        foreach (var text in button.TextBox.TextObjects)
+            //        {
+            //            text.SetScissorData(_scrollableArea.BaseComponent.ScissorData);
+            //        }
 
-                    _buttonParent.AddChild(button);
-                }
+            //        _buttonParent.AddChild(button);
+            //    }
 
-                CheckTextPlacement();
-            }
+            //    CheckTextPlacement();
+            //}
         }
 
         private const int textWrapLength = 25;
@@ -404,7 +399,6 @@ namespace Empyrean.Game
             string dialogueMessage = UIHelpers.WrapString(response, textWrapLength);
 
             Text dialogueText = new Text(dialogueMessage, Text.DEFAULT_FONT, 32, Brushes.LightGreen);
-            dialogueText.SetTextScale(0.075f);
 
 
             if (_prevDialogueText == null)

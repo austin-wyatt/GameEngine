@@ -20,6 +20,7 @@ using Empyrean.Game.Abilities.TileEffects;
 using Empyrean.Game.Ledger.Units;
 using System.Numerics;
 using Vector3 = OpenTK.Mathematics.Vector3;
+using DataObjects;
 
 namespace Empyrean.Game.Save
 {
@@ -36,20 +37,13 @@ namespace Empyrean.Game.Save
         public Vector2i TileMapCoords;
 
         [XmlElement(Namespace = "relations")]
-        public DeserializableDictionary<long, Relation> UnitRelations;
+        public Dictionary<long, Relation> UnitRelations;
 
         public List<QuestSaveInfo> QuestSaveInfo;
         public List<DialogueSaveInfo> DialogueSaveInfo;
 
-        public List<Quest> ActiveQuests = new List<Quest>();
-        public List<Quest> CompletedQuests = new List<Quest>();
-        public List<StateSubscriber> StateSubscribers = new List<StateSubscriber>();
-
         //these will actually evaluate a bool based on current state values instead of trying to exactly match a passed value
         public List<Instructions> SubscribedInstructions = new List<Instructions>();
-
-        [XmlElement(Namespace = "gledgerinfo")]
-        public DeserializableDictionary<BigInteger, GeneralLedgerNode> GeneralLedgerInfo = new DeserializableDictionary<BigInteger, GeneralLedgerNode>();
 
         public List<UnitSaveInfo> PlayerPartySaveInfo = new List<UnitSaveInfo>();
         public bool PartyGrouped = false;
@@ -65,6 +59,9 @@ namespace Empyrean.Game.Save
 
         public static SaveState CreateSaveState(CombatScene scene) 
         {
+            //TODO: QUESTS
+
+
             SaveState returnState = new SaveState();
 
             returnState.OverwrittenGlobalInfo = GlobalInfo.PlayerInfo;
@@ -92,44 +89,11 @@ namespace Empyrean.Game.Save
 
             returnState.TileMapCoords = new Vector2i(TileMapManager.LoadedCenter.X, TileMapManager.LoadedCenter.Y);
 
-            returnState.UnitRelations = new DeserializableDictionary<long, Relation>(UnitAI.GetTeamRelationsDictionary());
+            returnState.UnitRelations = new Dictionary<long,Relation>(UnitAI.GetTeamRelationsDictionary());
 
-            #region Quest ledger
-            returnState.QuestSaveInfo = new List<QuestSaveInfo>();
-            foreach (var q in QuestLedger.LedgeredQuests)
-            {
-                QuestSaveInfo info = new QuestSaveInfo()
-                {
-                    ID = q.Value.ID,
-                    QuestState = new DeserializableHashset<int>(q.Value.QuestState)
-                };
 
-                returnState.QuestSaveInfo.Add(info);
-            }
-            #endregion
+            DataSourceManager.SaveSources();
 
-            #region Dialogue ledger
-            returnState.DialogueSaveInfo = new List<DialogueSaveInfo>();
-            foreach (var d in DialogueLedger.LedgeredDialogues)
-            {
-                DialogueSaveInfo info = new DialogueSaveInfo()
-                {
-                    ID = d.Value.ID,
-                    RecievedOutcomes = new DeserializableHashset<int>(d.Value.RecievedOutcomes)
-                };
-
-                returnState.DialogueSaveInfo.Add(info);
-            }
-            #endregion
-
-            #region General ledger
-            foreach (var g in GeneralLedger.LedgeredGeneralState)
-            {
-                g.Value._stateValues = new DeserializableDictionary<BigInteger, int>(g.Value.StateValues);
-            }
-
-            returnState.GeneralLedgerInfo = new DeserializableDictionary<BigInteger, GeneralLedgerNode>(GeneralLedger.LedgeredGeneralState);
-            #endregion
 
             #region Player party
             returnState.PlayerPartySaveInfo = new List<UnitSaveInfo>();
@@ -142,11 +106,6 @@ namespace Empyrean.Game.Save
 
             returnState.PartyInventory.PrepareForSerialization();
             #endregion
-
-            returnState.ActiveQuests = QuestManager.Quests;
-            returnState.CompletedQuests = QuestManager.CompletedQuests;
-
-            returnState.StateSubscribers = Ledgers.StateSubscribers;
 
             returnState.TileEffectsSaveInfo = new TileEffectsSaveInfo();
             returnState.TileEffectsSaveInfo.PrepareForSerialization();
@@ -164,69 +123,14 @@ namespace Empyrean.Game.Save
             state.OverwrittenGlobalInfo.CompleteDeserialization();
             GlobalInfo.PlayerInfo = state.OverwrittenGlobalInfo;
 
-            QuestManager.Quests = state.ActiveQuests;
-            QuestManager.CompletedQuests = state.CompletedQuests;
+            DataSourceManager.LoadSources();
 
-            Ledgers.StateSubscribers = state.StateSubscribers;
+            
 
             for (int i = EntityManager.Entities.Count - 1; i >= 0; i--)
             {
                 EntityManager.RemoveEntity(EntityManager.Entities.First());
             }
-
-            #region Dialogue ledger
-            DialogueLedger.LedgeredDialogues.Clear();
-            foreach (var info in state.DialogueSaveInfo)
-            {
-                DialogueLedgerNode node;
-
-                if (DialogueLedger.LedgeredDialogues.TryGetValue(info.ID, out var n))
-                {
-                    node = n;
-                }
-                else
-                {
-                    node = new DialogueLedgerNode();
-                    DialogueLedger.LedgeredDialogues.Add(info.ID, node);
-                }
-
-                node.ID = info.ID;
-                info.RecievedOutcomes.FillHashSet(node.RecievedOutcomes);
-            }
-            #endregion
-
-            #region Quest ledger
-            QuestLedger.LedgeredQuests.Clear();
-            foreach (var info in state.QuestSaveInfo)
-            {
-                QuestLedgerNode node;
-
-                if (QuestLedger.LedgeredQuests.TryGetValue(info.ID, out var n))
-                {
-                    node = n;
-                }
-                else
-                {
-                    node = new QuestLedgerNode();
-                    QuestLedger.LedgeredQuests.Add(info.ID, node);
-                }
-
-                node.ID = info.ID;
-                info.QuestState.FillHashSet(node.QuestState);
-            }
-            #endregion
-
-            #region General ledger
-            GeneralLedger.LedgeredGeneralState.Clear();
-            
-            foreach(var g in state.GeneralLedgerInfo.Values)
-            {
-                g._stateValues.FillDictionary(g.StateValues);
-                g._stateValues = null;
-            }
-
-            state.GeneralLedgerInfo.FillDictionary(GeneralLedger.LedgeredGeneralState);
-            #endregion
 
             #region Map load
             TileMapManager.SetCenter(new TileMapPoint(state.TileMapCoords));
@@ -280,7 +184,7 @@ namespace Empyrean.Game.Save
             //scene._tileMapController.LoadSurroundingTileMaps(new TileMapPoint(state.TileMapCoords), applyFeatures: false, forceMapRegeneration: true);
 
             #region Loaded units
-            state.UnitRelations.FillDictionary(UnitAI.GetTeamRelationsDictionary());
+            UnitAI.SetTeamRelationsDictionary(state.UnitRelations);
 
             foreach(var unitInfo in state.UnitSaveInfo)
             {

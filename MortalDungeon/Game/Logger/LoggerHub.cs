@@ -5,9 +5,9 @@ using DataObjects;
 
 namespace Empyrean.Game.Logger
 {
-    public static class Logger
+    public static class LoggerHub
     {
-        public static void RecievePacket(LoggerPacket packet)
+        public static void ProcessPacket(LoggerPacket packet)
         {
             if (!packet.TryGetValue("id", out object id))
                 return;
@@ -21,6 +21,8 @@ namespace Empyrean.Game.Logger
                 //update standard :user values based packet information
                 switch (standardType)
                 {
+                    case LoggerEventType.UnitKilled:
+
                     default:
                         break;
                 }

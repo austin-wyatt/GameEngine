@@ -5,10 +5,12 @@ using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game;
 using Empyrean.Game.Abilities;
 using Empyrean.Game.Combat;
+using Empyrean.Game.DataObjects;
 using Empyrean.Game.Events;
 using Empyrean.Game.Objects.PropertyAnimations;
 using Empyrean.Game.Player;
 using Empyrean.Game.Serializers;
+using Empyrean.Game.Settings;
 using Empyrean.Game.Structures;
 using Empyrean.Game.Tiles;
 using Empyrean.Game.UI;
@@ -120,6 +122,8 @@ namespace Empyrean.Engine_Classes.Scenes
 
         public GameObject _fogQuad = null;
 
+        public DevConsole _console;
+
 
         public CombatScene() 
         {
@@ -132,6 +136,9 @@ namespace Empyrean.Engine_Classes.Scenes
             _fogQuad.BaseObject.RenderData.AlphaThreshold = 0;
 
             _fogQuad.SetPosition(WindowConstants.CenterScreen + new Vector3(0, 0, 1));
+
+            _console = new DevConsole(this);
+            _console.ToggleVisibility();
         }
 
         protected override void InitializeFields()
@@ -140,6 +147,9 @@ namespace Empyrean.Engine_Classes.Scenes
 
             BoxSelectHelper = new Game.SceneHelpers.BoxSelectHelper(this);
             CombatStateTracker.Scene = this;
+
+            DataManagerInitializer.Initialize("default_save");
+            SettingsManager.Initialize();
 
             _tileMapController = new TileMapController(this);
 
@@ -1266,7 +1276,7 @@ namespace Empyrean.Engine_Classes.Scenes
                             _selectedAbility.OnHover(foundTiles[0], foundTiles[0].TileMap);
                         }
 
-                        if (Game.Settings.EnableTileTooltips)
+                        if (SettingsManager.GetSetting<bool>(Setting.EnableTileTooltips))
                         {
                             //UIHelpers.StringTooltipParameters param = new UIHelpers.StringTooltipParameters(this, Tile.GetTooltipString(foundTiles[0], this), foundTiles[0], _tooltipBlock)
                             //{

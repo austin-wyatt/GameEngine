@@ -34,6 +34,7 @@ namespace Empyrean.Game.Tiles
         public static TileMapPoint LoadedCenter = new TileMapPoint(0, 0);
 
         public static int LOAD_DIAMETER = 15;
+        public static int VISIBLE_TILE_MAPS = 5;
 
         public static CombatScene Scene;
 

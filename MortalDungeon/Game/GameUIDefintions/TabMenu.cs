@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Empyrean.Engine_Classes.Rendering;
 using OpenTK.Windowing.Common;
 using OpenTK.Graphics.OpenGL4;
+using Empyrean.Game.Settings;
 
 namespace Empyrean.Game.UI
 {
@@ -218,14 +219,14 @@ namespace Empyrean.Game.UI
             {
                 Window.QueueToRenderCycle(() =>
                 {
-                    if (Settings.VsyncEnabled)
+                    if (SettingsManager.GetSetting<bool>(Setting.VsyncEnabled))
                     {
-                        Settings.VsyncEnabled = false;
+                        SettingsManager.SetSetting(Setting.VsyncEnabled, false);
                         Program.Window.VSync = VSyncMode.Off;
                     }
                     else
                     {
-                        Settings.VsyncEnabled = true;
+                        SettingsManager.SetSetting(Setting.VsyncEnabled, true);
                         Program.Window.VSync = VSyncMode.On;
                     }
                 });
@@ -235,7 +236,8 @@ namespace Empyrean.Game.UI
             Button turboButton = null;
             turboButton = CreateButton("Enable Turbo", () =>
             {
-                if (!Settings.MovementTurbo)
+                bool turbo = SettingsManager.GetSetting<bool>(Setting.MovementTurbo);
+                if (!turbo)
                 {
                     turboButton.TextBox.SetText("Disable Turbo");
                 }
@@ -243,7 +245,8 @@ namespace Empyrean.Game.UI
                 {
                     turboButton.TextBox.SetText("Enable Turbo");
                 }
-                Settings.MovementTurbo = !Settings.MovementTurbo;
+
+                SettingsManager.SetSetting(Setting.MovementTurbo, !turbo);
             }, updateMaps.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0));
 
 

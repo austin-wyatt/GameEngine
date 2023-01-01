@@ -160,6 +160,11 @@ namespace Empyrean.Game.Units
             return TeamRelations;
         }
 
+        public static void SetTeamRelationsDictionary(Dictionary<long, Relation> dict)
+        {
+            TeamRelations = dict;
+        }
+
         public void PrepareForSerialization()
         {
 

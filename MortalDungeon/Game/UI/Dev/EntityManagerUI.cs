@@ -346,7 +346,7 @@ namespace Empyrean.Game.UI.Dev
             EntityPropertiesWindow.AddChild(exit);
 
 
-            Input nameField = new Input(default, new UIScale(0.8f, 0.1f), entity.Handle.Name, 0.075f);
+            Input nameField = new Input(default, new UIScale(0.8f, 0.1f), entity.Handle.Name, 14);
             //nameField._textBox.SetTextColor(_Colors.UITextBlack);
 
             nameField.OnTypeAction = (name) =>

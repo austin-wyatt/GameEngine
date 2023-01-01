@@ -522,7 +522,14 @@ namespace Empyrean.Engine_Classes.Scenes
 
                             if (_focusedObj == null)
                             {
-                                _focusedObj = tempFocusedObj;
+                                if(tempFocusedObj.FocusHandle == null)
+                                    _focusedObj = tempFocusedObj;
+                                else
+                                {
+                                    _focusedObj = tempFocusedObj.FocusHandle;
+                                    tempFocusedObj = tempFocusedObj.FocusHandle;
+                                }
+                                    
                             }
                             OnObjectFocused();
 
@@ -733,16 +740,18 @@ namespace Empyrean.Engine_Classes.Scenes
                 //    obj.OnKeyDown(e);
                 //});
 
-                foreach(var obj in UIManager.KeyDownObjects)
-                {
-                    obj.OnKeyDown(e);
-                }
-
-                if(_focusedObj != null)
+                if (_focusedObj != null)
                 {
                     _focusedObj.OnKeyDown(e);
                 }
-                
+                else
+                {
+                    foreach (var obj in UIManager.KeyDownObjects)
+                    {
+                        if(!obj.Focusable)
+                            obj.OnKeyDown(e);
+                    }
+                }
 
                 if (!e.IsRepeat)
                 {

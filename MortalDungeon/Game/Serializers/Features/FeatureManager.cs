@@ -93,7 +93,7 @@ namespace Empyrean.Game.Serializers
 
                             if (equation.Instructions.Count > 0)
                             {
-                                Ledgers.EvaluateInstructions(equation.Instructions);
+                                //Ledgers.EvaluateInstructions(equation.Instructions);
                             }
 
                             LoadedFeatures.Add(AllFeatures.Features[i].Id, equation);

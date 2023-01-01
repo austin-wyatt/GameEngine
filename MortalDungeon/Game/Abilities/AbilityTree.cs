@@ -171,11 +171,7 @@ namespace Empyrean.Game.Abilities
         /// </summary>
         public Vector2 RelativePosition = new Vector2(0.5f, 0.5f);
 
-        public int MaxVariantUnlocked
-        {
-            get => GeneralLedger.GetStateValue((int)TreeType, ID);
-            set => GeneralLedger.SetStateValue((int)TreeType, ID, value);
-        }
+        public int MaxVariantUnlocked;
 
         public void AddConnection(AbilityTreeNode node)
         {

@@ -199,6 +199,11 @@ namespace Empyrean.Engine_Classes
 
         public UIManager ManagerHandle = null;
 
+        /// <summary>
+        /// If this object is focusable, the scene's focused object will be made the FocusHandle instead
+        /// </summary>
+        public UIObject FocusHandle = null;
+
         public UIObject() { }
 
         public void SetOrigin(float aspectRatio, UIScale ScaleFactor) 
@@ -349,9 +354,13 @@ namespace Empyrean.Engine_Classes
                             {
                                 if (!Focused)
                                 {
-                                    OnFocus();
+                                    if (FocusHandle == null)
+                                        OnFocus();
+                                    else
+                                        FocusHandle.OnFocus();
                                 }
-                                optionalAction?.Invoke(this);
+
+                                optionalAction?.Invoke(FocusHandle == null ? this : FocusHandle);
                             });
                             return;
                         //case UIEventType.Scroll:

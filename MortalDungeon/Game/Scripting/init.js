@@ -1,92 +1,49 @@
 ﻿
-let LONG_MAX_VALUE = BigInt("9223372036854775807")
-
 let Print = str => mscorlib.System.Console.WriteLine(str);
 
+var Int32T = host.type("System.Int32");
+var StringT = host.type("System.String");
+var FloatT = host.type("System.Single");
+var DoubleT = host.type("System.Double");
+var LongT = host.type("System.Int64");
+var BoolT = host.type("System.Boolean");
 
-let SetStateValue = (type, id, hash, data, instruction) =>
-{
-    Print(LONG_MAX_VALUE)
-
-    stateValue = new StateIDValuePair()
-    stateValue.Type = type
-    stateValue.StateID = BigInt(id)
-    stateValue.ObjectHash = BigInt(hash)
-    stateValue.Data = data
-    stateValue.Instruction = instruction
-
-    Ledgers.ApplyStateValue(stateValue)
+let cast = (type, obj) => {
+    return host.cast(type, obj);
 }
 
-let SubscribeToFeatureTrigger = (id, type, callback) =>
-{
-    stateValue = new StateIDValuePair()
+let DO = (searchString) => {
+    let searchRequest = new DataSearchRequest(searchString);
 
-    stateValue.Type = 1
-    stateValue.StateID = BigInt(id)
-    if (type == "Clear")
-    {
-        stateValue.ObjectHash = LONG_MAX_VALUE //cleared
-    }
-    else if(type == "PlayerInside")
-    {
-        stateValue.ObjectHash = LONG_MAX_VALUE - 200 //player inside
-    }
-    else if(type == "Explored")
-    {
-        stateValue.ObjectHash = LONG_MAX_VALUE - 26 //explored
-    }
-    else if(type == "Discovered")
-    {
-        stateValue.ObjectHash = LONG_MAX_VALUE - 25 //discovered
-    }
-    else if(type == "Loaded")
-    {
-        stateValue.ObjectHash = LONG_MAX_VALUE - 500 //loaded
+    var foundValue = host.newVar(DataObjectEntry);
+
+    if (searchRequest.GetEntry(foundValue.out)) {
+        var entryVal = host.newVar(object);
+        if (foundValue.TryGetValue(entryVal.out))
+            return entryVal;
     }
 
-    stateValue.Data = 1
-    stateValue.Instruction = 1 //subscribe
-
-    subscriber = new StateSubscriber()
-    subscriber.TriggerValue = stateValue
-    subscriber.Script = callback
-
-    Ledgers.AddSubscriber(subscriber)
+    return null;
 }
 
+let SetDO = (searchString, value) => {
+    let searchRequest = new DataSearchRequest(searchString);
 
-let StartQuest = (questId) =>
-{
-    QuestLedger.StartQuest(questId);
-}
+    var foundValue = host.newVar(DataObjectEntry);
 
-
-let CompleteQuestObjective = (questId, stateIndex, objectiveIndex) =>
-{
-    QuestLedger.CompleteQuestObjective(questId, stateIndex, objectiveIndex);
-}
-
-let CQ_c = (id, callback) =>
-{
-    if (QuestManager.QuestAvailable(id))
-    {
-        eval(callback);
+    if (searchRequest.GetOrCreateEntry(foundValue.out, value)) {
+        foundValue.SetValue(value);
     }
 }
 
-let CQ = (id) =>
-{
-    return QuestManager.QuestAvailable(id);
-}
-
-let UnlockAbility = (treeId, abilityId, variant) =>
-{
-    SetStateValue(3, treeId, abilityId, variant)
-}
 
 
 let AddGold = (gold) =>
 {
     PlayerParty.Inventory.AddGold(gold)
+}
+
+let SaveSource = (src) =>
+{
+    DataSourceManager.GetSource(src).SaveAllPendingBlocks();
 }

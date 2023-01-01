@@ -4,6 +4,7 @@ using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Combat;
 using Empyrean.Game.Map;
+using Empyrean.Game.Settings;
 using Empyrean.Game.Tiles;
 using Empyrean.Game.Units;
 using Empyrean.Objects;
@@ -228,7 +229,7 @@ namespace Empyrean.Game.Abilities
                         moveAnimation.Keyframes.Add(endOfTileMoveKeyframe);
 
 
-                        if (Settings.MovementTurbo && i == tiles.Count - 1)
+                        if (SettingsManager.GetSetting<bool>(Setting.MovementTurbo) && i == tiles.Count - 1)
                         {
                             moveAnimation.Keyframes.RemoveRange(0, moveAnimation.Keyframes.Count - 1);
                             moveAnimation.Keyframes[0].ActivationTick = 5;

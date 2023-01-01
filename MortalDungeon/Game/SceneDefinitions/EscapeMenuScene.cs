@@ -3,6 +3,7 @@ using Empyrean.Engine_Classes.Audio;
 using Empyrean.Engine_Classes.MiscOperations;
 using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Settings;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -46,14 +47,14 @@ namespace Empyrean.Game.SceneDefinitions
             {
                 void toggleVsync(SceneEventArgs args)
                 {
-                    if (Settings.VsyncEnabled)
+                    if (SettingsManager.GetSetting<bool>(Setting.VsyncEnabled))
                     {
-                        Settings.VsyncEnabled = false;
+                        SettingsManager.SetSetting(Setting.VsyncEnabled, false);
                         Program.Window.VSync = VSyncMode.Off;
                     }
                     else
                     {
-                        Settings.VsyncEnabled = true;
+                        SettingsManager.SetSetting(Setting.VsyncEnabled, true);
                         Program.Window.VSync = VSyncMode.On;
                     }
 
