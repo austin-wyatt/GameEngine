@@ -1,4 +1,4 @@
-# MortalDungeon
+# Game Engine
 This is a custom game engine I developed for fun.
 
 It's baseline functional but anyone consuming this engine will need to create their own external tooling. 
