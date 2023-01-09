@@ -13,7 +13,8 @@ namespace Empyrean.Game.Settings
         MovementTurbo,
         VsyncEnabled,
         TileMapLoadDiameter,
-        VisibleTileMaps
+        VisibleTileMaps,
+        DisableMapLoad
     }
 
     public static class SettingsManager
@@ -25,6 +26,7 @@ namespace Empyrean.Game.Settings
             {Setting.VsyncEnabled, "VsyncEnabled" },
             {Setting.TileMapLoadDiameter, "TileMapLoadDiameter" },
             {Setting.VisibleTileMaps, "VisibleTileMaps" },
+            {Setting.DisableMapLoad, "DisableMapLoad" },
         };
 
         private static Dictionary<string, Setting> _reverseName = new Dictionary<string, Setting>();

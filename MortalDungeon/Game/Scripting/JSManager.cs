@@ -10,6 +10,8 @@ using Empyrean.Game.Player;
 using Empyrean.Game.Units;
 using DataObjects;
 using Empyrean.Game.Settings;
+using Empyrean.Game.Quests;
+using Empyrean.Game.Logger;
 
 namespace Empyrean.Game.Scripting
 {
@@ -30,13 +32,17 @@ namespace Empyrean.Game.Scripting
 
             Engine.AddHostType("DataSourceManager", typeof(DataSourceManager));
             Engine.AddHostType("SettingsManager", typeof(SettingsManager));
+            Engine.AddHostType("QuestManager", typeof(QuestManager));
+            Engine.AddHostType("LoggerActionManager", typeof(LoggerActionManager));
+            Engine.AddHostType("GenericStatus", typeof(GenericStatus));
+            Engine.AddHostType("EXTENSIONS", typeof(Engine_Classes.Extensions));
+
+            Engine.AddHostType("DictT", typeof(Dictionary<string, object>));
 
             Engine.AddHostObject("mscorlib", new HostTypeCollection("mscorlib"));
             Engine.AddHostObject("host", new ExtendedHostFunctions());
 
             Engine.Evaluate(File.ReadAllText("Game/Scripting/init.js"));
-
-            
 
             //Engine.Evaluate("Empyrean.Game.Player.PlayerParty.Inventory.AddGold(500)");
         }
@@ -62,20 +68,20 @@ namespace Empyrean.Game.Scripting
             Engine.Execute("delete " + name);
         }
 
-        public static T EvaluateScript<T>(string rawScript)
+        public static T EvaluateScript<T>(string rawScript, Dictionary<string, object> localObject = null, Dictionary<string, object> externalObject = null)
         {
             if (rawScript == null)
                 throw new Exception("Invalid script attempted execution");
 
             HashSet<string> exposedObjects = new HashSet<string>();
-            string scriptString = ScriptFormat.FormatString(rawScript.AsSpan(), null, null, ref exposedObjects);
+            string scriptString = ScriptFormat.FormatString(rawScript.AsSpan(), externalObject, localObject, ref exposedObjects);
 
             object evaluatedOutput;
 
             //Evaluate the script and receive the output
             try
             {
-                evaluatedOutput = JSManager.ApplyScript(scriptString.ToString());
+                evaluatedOutput = ApplyScript(scriptString.ToString());
             }
             catch (Exception ex)
             {
@@ -86,7 +92,7 @@ namespace Empyrean.Game.Scripting
             {
                 foreach (string exposedObject in exposedObjects)
                 {
-                    JSManager.RemoveObject(exposedObject);
+                    RemoveObject(exposedObject);
                 }
             }
 

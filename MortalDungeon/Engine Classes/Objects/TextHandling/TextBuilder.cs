@@ -39,6 +39,14 @@ namespace Empyrean.Engine_Classes.TextHandling
 
             g.CompositingQuality = CompositingQuality.HighQuality;
             g.TextContrast = 4;
+
+            //g.SmoothingMode = SmoothingMode.AntiAlias;
+            //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            //g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            ////g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+            //g.CompositingQuality = CompositingQuality.HighQuality;
         }
 
         private static object _gLock = new object();
@@ -65,8 +73,10 @@ namespace Empyrean.Engine_Classes.TextHandling
             }
 
 
-            StringFormat format = new StringFormat();
+            //StringFormat format = new StringFormat();
+            StringFormat format = StringFormat.GenericTypographic;
             format.FormatFlags = StringFormatFlags.MeasureTrailingSpaces;
+            
 
             SizeF dim = new SizeF();
 
@@ -94,7 +104,7 @@ namespace Empyrean.Engine_Classes.TextHandling
             //dim.Width = (int)dim.Width;
             //dim.Height = (int)dim.Height;
 
-            Bitmap map = new Bitmap((int)dim.Width, (int)dim.Height);
+            Bitmap map = new Bitmap((int)dim.Width + 1, (int)dim.Height + 1);
 
             //RectangleF rect = new RectangleF(0, 0, dim.Width, dim.Height);
 
@@ -105,17 +115,13 @@ namespace Empyrean.Engine_Classes.TextHandling
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             //graphics.SmoothingMode = SmoothingMode.HighQuality;
-
-            //graphics.SmoothingMode = SmoothingMode.HighQuality;
-            //graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
             //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
-            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             graphics.CompositingQuality = CompositingQuality.HighQuality;
 
@@ -154,7 +160,10 @@ namespace Empyrean.Engine_Classes.TextHandling
                     if (a == clearA && r == clearR && g == clearG && b == clearB)
                     {
                         *(val + 3) = 0;
+                        //*(val + 0) = 255;
                     }
+
+                    //*(val + 2) = 255;
 
                     val += 4;
                 }
@@ -164,6 +173,7 @@ namespace Empyrean.Engine_Classes.TextHandling
             map.UnlockBits(data);
 
             Texture tex = null;
+            //Vector2 dimensions = new Vector2(dim.Width, dim.Height);
             Vector2 dimensions = new Vector2(dim.Width, dim.Height);
 
             //Stopwatch timer = new Stopwatch();

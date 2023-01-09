@@ -235,7 +235,9 @@ namespace Empyrean.Engine_Classes
             Vector2 ScaleFactor = new Vector2(size.X, size.Y);
             GetBaseObject(this).BaseFrame.SetScaleAll(1);
 
-            GetBaseObject(this).BaseFrame.ScaleX(aspectRatio);
+            if(aspectRatio != 1)
+                GetBaseObject(this).BaseFrame.ScaleX(aspectRatio);
+
             GetBaseObject(this).BaseFrame.ScaleX(ScaleFactor.X);
             GetBaseObject(this).BaseFrame.ScaleY(ScaleFactor.Y);
 
@@ -244,7 +246,9 @@ namespace Empyrean.Engine_Classes
                 BaseObjects.ForEach(obj =>
                 {
                     obj.BaseFrame.SetScaleAll(1);
-                    obj.BaseFrame.ScaleX(aspectRatio);
+
+                    if(aspectRatio != 1)
+                        obj.BaseFrame.ScaleX(aspectRatio);
 
                     obj.BaseFrame.ScaleX(ScaleFactor.X);
                     obj.BaseFrame.ScaleY(ScaleFactor.Y);

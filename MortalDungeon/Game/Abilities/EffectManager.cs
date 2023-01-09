@@ -41,7 +41,6 @@ namespace Empyrean.Game.Abilities
                 {
                     await ChainConditions[i].ContinueEffect(new AbilityEffectResults(Ability), combinedResults);
                 }
-
                 Casted();
                 EffectEnded();
             }

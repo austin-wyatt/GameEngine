@@ -1,0 +1,43 @@
+{
+	"0": {
+		"name": "QUEST",
+		"+objective": {
+			"endScript": "//complete quest or begin the next objective\r\nUpdateQuestInfo(0, GenericStatus.Complete);",
+			"activationScript": "AddLoggerAction(@<+loggerAction>@)",
+			"title": "",
+			"logText": "",
+			"+loggerAction": {
+				"id": "id_debug_description",
+				"type": "UnitDamaged",
+				"script": "$$~questdata.0.tracked_value = @@~questdata.0.tracked_value@I + 1; \r\nif(@@~questdata.0.tracked_value@I == 5)\r\n{\r\n    RemoveLoggerAction(@<this>@);\r\n    //if multiple logger actions are active at the same time, do an extra check here to see which one should complete the objective\r\n    CompleteObjective(0, \"+objective\");\r\n}",
+				"parameters": "//this must evaluate to a boolean\r\n//if this returns true, the main script will be run\r\n//check data here\r\n!<hurtUnit>!.Name == \"Ranger\""
+			}
+		},
+		"-logText": "",
+		"-title": "",
+		"startScript": "UpdateQuestInfo(0, GenericStatus.Active); \r\nActivateObjective(0, \"+objective\");",
+		"endScript": "Print(\"Quest 0 completed\")",
+		"failScript": "//optional"
+	},
+	"-1": {},
+	"1": {
+		"id": "id_debug_description",
+		"type": "UnitDamaged",
+		"script": "$$~questdata.0.tracked_value = @@~questdata.0.tracked_value@I + 1; \r\nif(@@~questdata.0.tracked_value@I == 5)\r\n{\r\n    RemoveLoggerAction(@<this>@);\r\n    CompleteObjective(0, \"+objective\");\r\n}",
+		"parameters": "//this must evaluate to a boolean\r\n//if this returns true, the main script will be run\r\n//check data here\r\nreturn true;",
+		"name": "LOGGER ACTION"
+	},
+	"2": {
+		"endScript": "//complete quest or begin the next objective\r\nUpdateQuestInfo(0, GenericStatus.Complete);",
+		"activationScript": "AddLoggerAction(@<+loggerAction>@)",
+		"title": "",
+		"logText": "",
+		"+loggerAction": {
+			"id": "id_debug_description",
+			"type": "UnitDamaged",
+			"script": "$$~questdata.0.tracked_value = @@~questdata.0.tracked_value@I + 1; \r\nif(@@~questdata.0.tracked_value@I == 5)\r\n{\r\n    RemoveLoggerAction(@<this>@);\r\n    //if multiple logger actions are active at the same time, do an extra check here to see which one should complete the objective\r\n    CompleteObjective(0, \"+objective\");\r\n}",
+			"parameters": "//this must evaluate to a boolean\r\n//if this returns true, the main script will be run\r\n//check data here\r\nreturn true;"
+		},
+		"name": "QUEST OBJECTIVE"
+	}
+}

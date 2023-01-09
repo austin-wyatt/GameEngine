@@ -7,6 +7,7 @@ using Empyrean.Game.Ledger.Units;
 using Empyrean.Game.Map;
 using Empyrean.Game.Objects;
 using Empyrean.Game.Serializers;
+using Empyrean.Game.Settings;
 using Empyrean.Game.Tiles.Meshes;
 using Empyrean.Game.Tiles.TileMaps;
 using Empyrean.Game.Units;
@@ -66,6 +67,9 @@ namespace Empyrean.Game.Tiles
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
+
+            if (SettingsManager.GetSetting<bool>(SettingsManager.Names[Setting.DisableMapLoad]))
+                return;
 
             lock (_loadLock)
             {

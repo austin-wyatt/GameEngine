@@ -83,6 +83,38 @@ namespace Empyrean.Engine_Classes
             return (TValue)GetDefaultValue(typeof(TValue));
         }
 
+        public static TValue Get<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key)
+        {
+            if (dict.TryGetValue(key, out TValue data))
+                return data;
+
+            return default(TValue);
+        }
+
+        public static object Get(this Dictionary<string, object> dict, int key)
+        {
+            if (dict.TryGetValue(key.ToString(), out object data))
+                return data;
+
+            return default(object);
+        }
+
+        public static void PrintKeys<TKey, TValue>(this Dictionary<TKey, TValue> dict)
+        {
+            foreach(var key in dict.Keys)
+            {
+                Console.WriteLine(key);
+            }
+        }
+
+        /// <summary>
+        /// PrintKeys alias
+        /// </summary>
+        public static void PK<TKey, TValue>(this Dictionary<TKey, TValue> dict)
+        {
+            PrintKeys(dict);
+        }
+
         public static object GetDefaultValue(Type t)
         {
             return Activator.CreateInstance(t);

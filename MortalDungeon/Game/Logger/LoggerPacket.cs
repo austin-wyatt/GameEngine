@@ -49,11 +49,13 @@ namespace Empyrean.Game.Logger
     /// </summary>
     public class LoggerPacket : Dictionary<string, object>
     {
+        const string ID_STRING = "id";
+
         public static LoggerPacket BuildPacket_UnitMove(UnitInfo movedUnit, FeaturePoint source, string cause) 
         {
             return new LoggerPacket()
             {
-                { "id", LoggerEventType.UnitMove },
+                { ID_STRING, LoggerEventType.UnitMove },
                 { "Unit", movedUnit },
                 { "SourcePoint", source },
                 { "Cause", cause }
@@ -64,9 +66,19 @@ namespace Empyrean.Game.Logger
         {
             return new LoggerPacket()
             {
-                { "id", LoggerEventType.UnitKilled },
+                { ID_STRING, LoggerEventType.UnitKilled },
                 { "killedUnit", killedUnit },
                 { "killingUnit", killingUnit },
+            };
+        }
+
+        public static LoggerPacket BuildPacket_UnitHurt(Unit hurtUnit, float damageTaken)
+        {
+            return new LoggerPacket()
+            {
+                { ID_STRING, LoggerEventType.UnitDamaged },
+                { "damageTaken", damageTaken },
+                { "hurtUnit", hurtUnit },
             };
         }
     }

@@ -541,7 +541,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
                 if (_focusedObj != null && (tempFocusedObj == null || tempFocusedObj.ObjectID != _focusedObj.ObjectID))
                 {
-                    EndObjectFocus(_focusedObj, tempFocusedObj);
+                    EndObjectFocus(tempFocusedObj);
                 }
 
                 if(!handled && TileMapsFocused && BoxSelectHelper.AllowSelection)
@@ -946,8 +946,11 @@ namespace Empyrean.Engine_Classes.Scenes
 
         }
 
-        public void EndObjectFocus(UIObject obj, UIObject newObj)
+        public void EndObjectFocus(UIObject newObj)
         {
+            if (_focusedObj == null)
+                return;
+
             _focusedObj.OnFocusEnd();
             _focusedObj = newObj;
             OnObjectFocusEnd();

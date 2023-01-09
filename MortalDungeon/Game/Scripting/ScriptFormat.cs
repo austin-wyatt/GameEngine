@@ -9,8 +9,8 @@ namespace Empyrean.Game.Scripting
     public enum ScriptTokenType
     {
         None = -1,
-        Packet,
-        Local,
+        ExternalObject,
+        LocalObject,
         GetDataObject,
         SetDataObject,
         Cast,
@@ -108,8 +108,8 @@ namespace Empyrean.Game.Scripting
             }
         }
 
-        public static string FormatString(ReadOnlySpan<char> str, Dictionary<string, object> packet,
-            Dictionary<string, object> loggerAction, ref HashSet<string> exposedObjects)
+        public static string FormatString(ReadOnlySpan<char> str, Dictionary<string, object> externalObject,
+            Dictionary<string, object> localObject, ref HashSet<string> exposedObjects)
         {
             List<ScriptToken> tokens = WalkString(str);
 
@@ -144,7 +144,7 @@ namespace Empyrean.Game.Scripting
             {
                 ScriptToken token = parentlessTokens[i];
 
-                FormatToken(str, token, packet, loggerAction, ref exposedObjects);
+                FormatToken(str, token, externalObject, localObject, ref exposedObjects);
 
                 end = token.BaseBegin - begin;
 
@@ -226,10 +226,12 @@ namespace Empyrean.Game.Scripting
         }
 
         public static void FormatToken(ReadOnlySpan<char> str, ScriptToken token, Dictionary<string, object> packet,
-            Dictionary<string, object> loggerAction, ref HashSet<string> exposedObjects)
+            Dictionary<string, object> localObject, ref HashSet<string> exposedObjects)
         {
             int begin = token.BeginIndex;
             int end;
+
+            const string _thisStr = "this";
 
             //allocate a minimum buffer of 2 times the string's length to hopefully avoid some reallocations when appending and replacing
             StringBuilder unformattedString = new StringBuilder(str.Length * 2);
@@ -238,7 +240,7 @@ namespace Empyrean.Game.Scripting
             {
                 ScriptToken requiredToken = token.RequiredTokens[i];
 
-                FormatToken(str, requiredToken, packet, loggerAction, ref exposedObjects);
+                FormatToken(str, requiredToken, packet, localObject, ref exposedObjects);
 
                 end = requiredToken.BaseBegin - begin;
 
@@ -259,9 +261,21 @@ namespace Empyrean.Game.Scripting
             //format here
             switch (token.Type)
             {
-                case ScriptTokenType.Local:
-                    if (loggerAction.TryGetValue(unformattedString.ToString(), out value))
+                case ScriptTokenType.LocalObject:
+                    if (unformattedString.ToString() == _thisStr) 
                     {
+                        unformattedString.Insert(0, "L_");
+                        formatSubstr = unformattedString.ToString();
+
+                        JSManager.ExposeObject(formatSubstr, localObject);
+                        exposedObjects.Add(formatSubstr);
+                    }
+                    else if (localObject.TryGetValue(unformattedString.ToString(), out value))
+                    {
+                        //Allow only the first character of a passed object's name to be a symbol
+                        if (char.IsSymbol(unformattedString[0]))
+                            unformattedString.Remove(0, 1);
+
                         unformattedString.Insert(0, "L_");
                         formatSubstr = unformattedString.ToString();
 
@@ -269,10 +283,23 @@ namespace Empyrean.Game.Scripting
                         exposedObjects.Add(formatSubstr);
                     }
                     break;
-                case ScriptTokenType.Packet:
+                case ScriptTokenType.ExternalObject:
                     formatSubstr = unformattedString.ToString();
-                    if (packet.TryGetValue(formatSubstr, out value))
+
+                    if (formatSubstr == _thisStr)
                     {
+                        unformattedString.Insert(0, "P_");
+                        formatSubstr = unformattedString.ToString();
+
+                        JSManager.ExposeObject(formatSubstr, packet);
+                        exposedObjects.Add(formatSubstr);
+                    }
+                    else if (packet.TryGetValue(formatSubstr, out value))
+                    {
+                        //Allow only the first character of a passed object's name to be a symbol
+                        if (char.IsSymbol(unformattedString[0]))
+                            unformattedString.Remove(0, 1);
+
                         unformattedString.Insert(0, "P_");
                         formatSubstr = unformattedString.ToString();
 
@@ -310,6 +337,11 @@ namespace Empyrean.Game.Scripting
                             unformattedString.Insert(0, "host.cast(LongT, DO('");
                             unformattedString.Append("')?? 0)");
                             break;
+
+                        case 'd':
+                            unformattedString.Insert(0, "host.cast(DictT,DO('");
+                            unformattedString.Append("')?? null)");
+                            break;
                         default:
                             unformattedString.Insert(0, "DO('");
                             unformattedString.Append("')");
@@ -338,13 +370,18 @@ namespace Empyrean.Game.Scripting
                         case 'S':
                             //unformattedString.Insert(0, "host.cast(StringT,");
                             //unformattedString.Append(")");
-                            unformattedString.Insert(0, "DO('");
-                            unformattedString.Append("').ToString()");
+                            unformattedString.Insert(0, "(");
+                            unformattedString.Append(").toString()");
                             break;
                         case 'L':
                             unformattedString.Insert(0, "host.cast(LongT,");
                             unformattedString.Append("?? 0)");
                             break;
+                        case 'd':
+                            unformattedString.Insert(0, "host.cast(DictT,");
+                            unformattedString.Append("?? null)");
+                            break;
+
                     }
                     break;
                 case ScriptTokenType.SetDataObject:
@@ -421,8 +458,8 @@ namespace Empyrean.Game.Scripting
 
         public static readonly ScriptTokenType[] TOKEN_TYPES = new ScriptTokenType[]
         {
-            ScriptTokenType.Packet,
-            ScriptTokenType.Local,
+            ScriptTokenType.ExternalObject,
+            ScriptTokenType.LocalObject,
             ScriptTokenType.GetDataObject,
             ScriptTokenType.SetDataObject,
             ScriptTokenType.Cast,

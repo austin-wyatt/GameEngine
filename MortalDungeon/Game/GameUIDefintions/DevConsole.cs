@@ -34,7 +34,7 @@ namespace Empyrean.Game.UI
         {
             UIScale consoleSize = new UIScale(2 * WindowConstants.AspectRatio - 0.1f, 0.1f);
 
-            InputComponent = new Input(default, consoleSize, "");
+            InputComponent = new Input(default, consoleSize, "", textColor: Brushes.Wheat);
             _background = new UIBlock(default, consoleSize);
 
             Color col = Color.DarkSlateGray;
@@ -76,8 +76,16 @@ namespace Empyrean.Game.UI
 
         public void OnSubmit(object source, EventArgs e)
         {
-            Console.WriteLine(JSManager.EvaluateScript<object>(InputComponent._textBox.TextString));
+            object item = JSManager.EvaluateScript<object>(InputComponent._textBox.TextString);
+            string output = item != null ? item.ToString() : "";
 
+            Console.WriteLine(output);
+
+            if(output != "")
+            {
+                _scene.EventLog.AddEvent(output);
+            }
+            
             AddToBackwardStack(InputComponent._textBox.TextString);
             //_historyForwardStack.Clear();
 
@@ -86,27 +94,33 @@ namespace Empyrean.Game.UI
 
         public void InputKeyDown(object source, KeyboardKeyEventArgs e)
         {
-            Vector3 topLeftPos;
+            Vector3 leftCenterPos;
 
             switch (e.Key)
             {
+                case Keys.F11:
+                    ToggleVisibility();
+                    InputComponent.OnFocusEnd();
+
+                    Window.QueueToRenderCycle(() => _scene.EndObjectFocus(null));
+                    break;
                 case Keys.Up:
                     if(_historyBackStack.Count > 0)
                     {
-                        topLeftPos = InputComponent._textBox.GAP(UIAnchorPosition.TopLeft);
+                        leftCenterPos = _background.GAP(UIAnchorPosition.LeftCenter) + Vector3.UnitX * 5;
 
                         AddToForwardStack(InputComponent._textBox.TextString);
 
                         InputComponent._textBox.SetText(_historyBackStack[^1]);
                         _historyBackStack.RemoveAt(_historyBackStack.Count - 1);
 
-                        InputComponent._textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
+                        InputComponent._textBox.SAP(leftCenterPos, UIAnchorPosition.LeftCenter);
                     }
                     break;
                 case Keys.Down:
-                    topLeftPos = InputComponent._textBox.GAP(UIAnchorPosition.TopLeft);
+                    leftCenterPos = _background.GAP(UIAnchorPosition.LeftCenter) + Vector3.UnitX * 5;
 
-                    if(InputComponent._textBox.TextString != "")
+                    if (InputComponent._textBox.TextString != "")
                     {
                         AddToBackwardStack(InputComponent._textBox.TextString);
                     }
@@ -122,7 +136,7 @@ namespace Empyrean.Game.UI
                         InputComponent._textBox.SetText("");
                     }
 
-                    InputComponent._textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
+                    InputComponent._textBox.SAP(leftCenterPos, UIAnchorPosition.LeftCenter);
 
                     break;
             }

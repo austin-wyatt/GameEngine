@@ -1,4 +1,5 @@
 ﻿using Empyrean.Engine_Classes.UIComponents;
+using Empyrean.Game.Objects;
 using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;
@@ -38,6 +39,8 @@ namespace Empyrean.Engine_Classes.TextHandling
             {
                 BackgroundClearColor = clearColor;
             }
+
+            _scaleAspectRatio = false;
 
             TextString = text;
 
@@ -107,8 +110,8 @@ namespace Empyrean.Engine_Classes.TextHandling
         {
             UIScale temp = new UIScale(size);
 
-            temp.X *= TextDimensions.X * 2 / WindowConstants.ClientSize.Y;
-            temp.Y *= TextDimensions.Y * 2 / WindowConstants.ClientSize.Y;
+            temp.X *= TextDimensions.X / WindowConstants.ClientSize.X * 2;
+            temp.Y *= TextDimensions.Y / WindowConstants.ClientSize.Y * 2;
 
             base.SetSize(temp);
         }
@@ -123,7 +126,7 @@ namespace Empyrean.Engine_Classes.TextHandling
         {
             Spritesheet temp = new Spritesheet() { Columns = 1, Rows = 1 };
 
-            var baseObj = CreateBaseObjectFromSpritesheet(temp, 0);
+            var baseObj = CreateBaseObjectFromSpritesheet(temp, 0, EnvironmentObjects.UIBlockBounds);
             baseObj.BaseFrame.CameraPerspective = false;
 
             baseObj.RenderData.AlphaThreshold = Rendering.RenderingConstants.TextAlphaThreshold;
@@ -136,7 +139,6 @@ namespace Empyrean.Engine_Classes.TextHandling
                 TextureLoaded = false;
                 SetRender(false);
             }
-
 
             var dimensions = TextBuilder.DrawString(TextString, _font, _fontSize, _fontColor, (texture) =>
             {
@@ -165,7 +167,7 @@ namespace Empyrean.Engine_Classes.TextHandling
             }, BackgroundClearColor, LineHeightMultiplier);
 
             TextDimensions = dimensions;
-
+            //baseObj.Dimensions = new Vector3(dimensions.X / WindowConstants.AspectRatio, dimensions.Y / WindowConstants.AspectRatio, 0);
 
             return baseObj;
         }
@@ -187,5 +189,10 @@ namespace Empyrean.Engine_Classes.TextHandling
             }
         }
 
+    }
+
+    public static class FONTS
+    {
+        public static string CascadiaMono = "Cascadia Mono";
     }
 }

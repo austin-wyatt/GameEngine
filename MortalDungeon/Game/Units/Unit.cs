@@ -1099,6 +1099,8 @@ namespace Empyrean.Game.Units
 
             Hurt?.Invoke(this);
             StateChanged?.Invoke(this);
+
+            LoggerHub.ProcessPacket(LoggerPacket.BuildPacket_UnitHurt(this, damageTaken));
         }
 
         public virtual void OnHealed()

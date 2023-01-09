@@ -19,12 +19,15 @@ namespace Empyrean.Game.Logger
         /// </summary>
         public static void ProcessLoggerActions(LoggerPacket packet, string packetType) 
         {
+            ProcessAdditionsAndRemovals();
+
             lock (_loggerActionLock)
             {
                 if (LoggerActions.TryGetValue(packetType, out var actions))
                 {
                     foreach (Dictionary<string, object> loggerAction in actions)
                     {
+                        //evaluate the "parameters" script of the logger action to see if the packet applies
                         if (EvaluateActionParameters(packet, loggerAction))
                         {
                             ExecuteAction(packet, loggerAction);
@@ -32,8 +35,6 @@ namespace Empyrean.Game.Logger
                     }
                 }
             }
-
-            ProcessAdditionsAndRemovals();
         }
 
         private static bool EvaluateActionParameters(LoggerPacket packet, Dictionary<string, object> loggerAction) 
@@ -56,7 +57,7 @@ namespace Empyrean.Game.Logger
 
             if (loggerAction.ContainsKey(_strings[(int)STRINGS.Script]))
             {
-                EvaluateScript<bool>(packet, loggerAction, _strings[(int)STRINGS.Script]);
+                EvaluateScript<object>(packet, loggerAction, _strings[(int)STRINGS.Script]);
             }
 
             //Check "persistent" field for value "f". If "f", make the action invalid and add it to _actionsToRemove

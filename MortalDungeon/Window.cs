@@ -1055,22 +1055,22 @@ namespace Empyrean
             switch (obj.Key)
             {
                 case Keys.Home:
-                    CurrentContext = CurrentContext == ContentContext.Game ? ContentContext.Tools : ContentContext.Game;
+                    //CurrentContext = CurrentContext == ContentContext.Game ? ContentContext.Tools : ContentContext.Game;
                     break;
                 case Keys.PageUp:
-                    float width = (float)WindowConstants.ClientSize.X / 1.5f;
-                    float height = (float)WindowConstants.ClientSize.Y / 1.5f;
+                    //float width = (float)WindowConstants.ClientSize.X / 1.5f;
+                    //float height = (float)WindowConstants.ClientSize.Y / 1.5f;
 
-                    CurrentContext = ContentContext.Tools;
-                    WindowConstants.GameViewport.X = WindowConstants.ClientSize.X - (int)width - 10;
-                    WindowConstants.GameViewport.Y = 10;
-                    WindowConstants.GameViewport.Width = (int)width;
-                    WindowConstants.GameViewport.Height = (int)height;
+                    //CurrentContext = ContentContext.Tools;
+                    //WindowConstants.GameViewport.X = WindowConstants.ClientSize.X - (int)width - 10;
+                    //WindowConstants.GameViewport.Y = 10;
+                    //WindowConstants.GameViewport.Width = (int)width;
+                    //WindowConstants.GameViewport.Height = (int)height;
 
-                    //Scene toolScene = new ToolScene();
+                    ////Scene toolScene = new ToolScene();
 
-                    //int toolSceneID = _sceneController.AddScene(toolScene, 1);
-                    //_sceneController.LoadScene(toolSceneID, _camera, _mouseRay);
+                    ////int toolSceneID = _sceneController.AddScene(toolScene, 1);
+                    ////_sceneController.LoadScene(toolSceneID, _camera, _mouseRay);
 
                     //open tools
                     break;

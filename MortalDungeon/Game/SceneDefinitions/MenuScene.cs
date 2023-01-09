@@ -102,6 +102,8 @@ namespace Empyrean.Game.SceneDefinitions
 
             UIManager.AddUIObject(inputCapture, -10000);
 
+            //UIBlock testBlock = new UIBlock(WindowConstants.CenterScreen, new UIScale(2, 2), scaleAspectRatio:false);
+            //UIManager.AddUIObject(testBlock, 10000);
 
             _entityManager = new EntityManagerUI(this);
 
@@ -113,7 +115,6 @@ namespace Empyrean.Game.SceneDefinitions
             FeaturePoint campsiteOrigin = GlobalInfo.GetPOI(4).Origin;
 
             TileMapManager.SetCenter(campsiteOrigin.ToTileMapPoint());
-            //_tileMapController.LoadSurroundingTileMaps(new TileMapPoint(0, 0));
             TileMapManager.LoadMapsAroundCenter();
 
             PlayerParty.InitializeParty();
@@ -248,7 +249,38 @@ namespace Empyrean.Game.SceneDefinitions
             base.OnMouseDown(e);
         }
 
-        
+        public override bool OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            if (!base.OnKeyDown(e))
+            {
+                return false;
+            }
+
+            if (_focusedObj != null && _focusedObj.Typeable)
+                return false;
+
+            switch (e.Key)
+            {
+                case Keys.F11:
+                    _console.ToggleVisibility();
+
+                    if (_console.Visible)
+                    {
+                        _focusedObj = _console.InputComponent;
+                        _console.InputComponent.OnFocus();
+                    }
+                    else if (_focusedObj == _console.InputComponent)
+                    {
+                        _focusedObj = null;
+                        _console.InputComponent.OnFocusEnd();
+                    }
+
+                    break;
+            }
+
+            return true;
+        }
+
         public override bool OnKeyUp(KeyboardKeyEventArgs e)
         {
             if (!base.OnKeyUp(e)) 
@@ -261,21 +293,6 @@ namespace Empyrean.Game.SceneDefinitions
 
             switch (e.Key) 
             {
-                case Keys.F11:
-                    _console.ToggleVisibility();
-
-                    if (_console.Visible)
-                    {
-                        _focusedObj = _console.InputComponent;
-                        _console.InputComponent.OnFocus();
-                    }
-                    else if(_focusedObj == _console.InputComponent)
-                    {
-                        _focusedObj = null;
-                        _console.InputComponent.OnFocusEnd();
-                    }
-                    
-                    break;
                 case Keys.F1:
                     if (_entityManager.Displayed)
                     {

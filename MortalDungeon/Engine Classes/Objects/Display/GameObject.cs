@@ -90,9 +90,19 @@ namespace Empyrean.Engine_Classes
             LoadTexture(this);
         }
 
-        public BaseObject CreateBaseObjectFromSpritesheet(Spritesheet spritesheet, int spritesheetPos) 
+        public BaseObject CreateBaseObjectFromSpritesheet(Spritesheet spritesheet, int spritesheetPos, float[] bounds = null) 
         {
-            RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+            RenderableObject renderableObj;
+
+            if (bounds != null) 
+            {
+                renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, bounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+            }
+            else
+            {
+                renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+            }
+            
 
             Animation anim = new Animation()
             {
@@ -102,7 +112,18 @@ namespace Empyrean.Engine_Classes
                 GenericType = 0
             };
 
-            BaseObject baseObj = new BaseObject(new List<Animation>() { anim }, ObjectID, "Game object " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
+            BaseObject baseObj;
+
+            if (bounds != null)
+            {
+                baseObj = new BaseObject(new List<Animation>() { anim }, ObjectID, "Game object " + ObjectID, default, bounds);
+            }
+            else
+            {
+                baseObj = new BaseObject(new List<Animation>() { anim }, ObjectID, "Game object " + ObjectID, default, EnvironmentObjects.BASE_TILE.Bounds);
+            }
+
+                
             baseObj.BaseFrame.CameraPerspective = true;
 
             return baseObj;

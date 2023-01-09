@@ -27,7 +27,8 @@ namespace Empyrean.Engine_Classes.UIComponents
 
         public Action<string> OnTypeAction = null;
 
-        public Input(Vector3 position, UIScale size, string text, int textScale = 16, bool centerText = false, UIDimensions textOffset = default)
+        public Input(Vector3 position, UIScale size, string text, int textScale = 16, bool centerText = false, UIDimensions textOffset = default, 
+            Brush textColor = null)
         {
             TextScale = textScale;
             Size = size;
@@ -46,8 +47,9 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             Typeable = true;
 
+            textColor = textColor != null ? textColor : Brushes.Black;
 
-            Text textBox = new Text(text, Text.DEFAULT_FONT, textScale, Brushes.Black);
+            Text textBox = new Text(text, FONTS.CascadiaMono, textScale, textColor);
             BaseComponent = textBox;
             _textBox = textBox;
 
@@ -95,6 +97,23 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             if (typedLetter.Length > 0)
             {
+                if (e.Control)
+                {
+                    switch (e.Key)
+                    {
+                        case Keys.V:
+                            string clipboardText = ClipboardHelper.GetText();
+
+                            _textBox.SetText(currString.Substring(0, _cursorIndex) + clipboardText + currString.Substring(_cursorIndex));
+                            _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
+                            return;
+                        case Keys.C:
+                            ClipboardHelper.SetText(currString);
+                            return;
+                    }
+                }
+
+
                 if (currString.Length <= Columns * Lines)
                 {
                     if (typedLetter == "\n")
@@ -186,7 +205,6 @@ namespace Empyrean.Engine_Classes.UIComponents
 
                 SetCursorPosition();
             }
-                
         }
 
         public void SetCursorPosition() 
@@ -203,8 +221,9 @@ namespace Empyrean.Engine_Classes.UIComponents
                 //}
                 //else
                 //{
-                    _cursorObject.SAP(new Vector3(textBoxLeftCenter.X + (float)_cursorIndex / _textBox.TextString.Length * 
-                       _textBox.Size.ToDimensions().X * 0.25f, Position.Y, Position.Z), UIAnchorPosition.LeftCenter);
+                    _cursorObject.SAP(new Vector3(textBoxLeftCenter.X + (float)_cursorIndex / _textBox.TextString.Length *
+                       _textBox.TextDimensions.X / WindowConstants.ClientSize.X * WindowConstants.ScreenUnits.X
+                       , Position.Y, Position.Z), UIAnchorPosition.LeftCenter);
                 //}
             }
             else

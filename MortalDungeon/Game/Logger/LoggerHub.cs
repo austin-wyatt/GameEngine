@@ -9,6 +9,11 @@ namespace Empyrean.Game.Logger
     {
         public static void ProcessPacket(LoggerPacket packet)
         {
+            Window.QueueToRenderCycle(() => _processPacket(packet));
+        }
+
+        private static void _processPacket(LoggerPacket packet)
+        {
             if (!packet.TryGetValue("id", out object id))
                 return;
 
