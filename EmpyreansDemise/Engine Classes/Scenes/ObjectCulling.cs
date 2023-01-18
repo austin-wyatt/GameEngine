@@ -45,7 +45,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
                 scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjuntion with the scale 
 
-                WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+                WindowConstants.ConvertScreenSpaceToLocalCoordinatesInPlace(ref _localPos);
                 if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
                 {
                     obj.Cull = false;
@@ -87,7 +87,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
                 scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjunction with the scale 
 
-                WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+                WindowConstants.ConvertScreenSpaceToLocalCoordinatesInPlace(ref _localPos);
                 if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
                 {
                     objList[i].Cull = false;
@@ -127,7 +127,7 @@ namespace Empyrean.Engine_Classes.Scenes
 
             scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjunction with the scale 
 
-            WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+            WindowConstants.ConvertScreenSpaceToLocalCoordinatesInPlace(ref _localPos);
             if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
             {
                 obj.Cull = false;
@@ -205,7 +205,7 @@ namespace Empyrean.Engine_Classes.Scenes
                     scaleMax *= 0.333f; //magic number that seems to pretty accurately determine the edges of a quad in conjuntion with the scale 
 
 
-                    WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref _localPos);
+                    WindowConstants.ConvertScreenSpaceToLocalCoordinatesInPlace(ref _localPos);
 
                     if (Frustum.TestSphere(_localPos.X, _localPos.Y, _localPos.Z, scaleMax))
                     {

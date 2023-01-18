@@ -180,7 +180,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, InstancedDataBuffer);
             
-            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, _dataLength, 0);                  //| Transformation matrix data
+            GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, _dataLength, 0);               //| Transformation matrix data
             GL.VertexAttribPointer(7, 4, VertexAttribPointerType.Float, false, _dataLength, 4 * FLOAT_SIZE);  //|
             GL.VertexAttribPointer(8, 4, VertexAttribPointerType.Float, false, _dataLength, 8 * FLOAT_SIZE);  //|
             GL.VertexAttribPointer(9, 4, VertexAttribPointerType.Float, false, _dataLength, 12 * FLOAT_SIZE); //|
@@ -200,7 +200,7 @@ namespace Empyrean.Engine_Classes.Rendering
         }
         public override void DisableInstancedShaderAttributes()
         {
-            for (int i = 2; i <= 9; i++)
+            for (int i = 0; i <= 9; i++)
             {
                 GL.DisableVertexAttribArray(i);
             }

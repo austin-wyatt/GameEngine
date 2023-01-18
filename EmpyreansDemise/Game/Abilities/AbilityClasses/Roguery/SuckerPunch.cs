@@ -10,6 +10,7 @@ using Empyrean.Objects;
 using Empyrean.Engine_Classes;
 using Empyrean.Definitions.Buffs;
 using Empyrean.Game.Abilities.AbilityEffects;
+using Empyrean.Game.Serializers;
 
 namespace Empyrean.Game.Abilities
 {
@@ -35,8 +36,8 @@ namespace Empyrean.Game.Abilities
             WeightParams.EnemyWeight = 1;
 
 
-            Name = new Serializers.TextInfo(9, 3);
-            Description = new Serializers.TextInfo(10, 3);
+            Name = TextEntry.GetTextEntry(9); //9  3 
+            Description = TextEntry.GetTextEntry(10); //10  3 
 
             AnimationSet = new Serializers.AnimationSet();
             AnimationSet.Animations.Add(new Serializers.Animation()

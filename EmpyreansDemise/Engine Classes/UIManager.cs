@@ -1,4 +1,5 @@
 ﻿using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Engine_Classes.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,23 @@ namespace Empyrean.Engine_Classes
 {
     public class UIManager
     {
+        public static LoadedFont DEFAULT_FONT_64;
+        public static LoadedFont DEFAULT_FONT_16;
+        public static FontInfo DEFAULT_FONT_INFO_64 = new FontInfo()
+        {
+            FontName = "Cascadia Code",
+            FontPath = "cascadiacode.ttf",
+            FontSize = 64
+        };
+
+        public static FontInfo DEFAULT_FONT_INFO_16 = new FontInfo()
+        {
+            FontName = "Cascadia Code",
+            FontPath = "cascadiacode.ttf",
+            FontSize = 8
+        };
+
+
         public List<UIObject> TopLevelObjects = new List<UIObject>();
         public object _UILock = new object();
 
@@ -45,6 +63,11 @@ namespace Empyrean.Engine_Classes
 
         public List<UIRenderGroup> UIRenderGroups = new List<UIRenderGroup>();
         public object _renderGroupLock = new object();
+
+        static UIManager()
+        {
+            InitializeFonts();
+        }
 
         public void AddUIObject(UIObject obj, int zIndex)
         {
@@ -548,5 +571,22 @@ namespace Empyrean.Engine_Classes
             return ExclusiveFocusSet.Count == 0 || ExclusiveFocusSet.Contains(obj);
         }
         #endregion
+
+        public static void InitializeFonts()
+        {
+            if (!FontManager.FontLoaded(DEFAULT_FONT_INFO_64.GetName()))
+            {
+                FontManager.LoadFont(DEFAULT_FONT_INFO_64.FontPath, FontManager.DEFAULT_FONT_SIZE);
+            }
+
+            DEFAULT_FONT_64 = FontManager.GetFont(DEFAULT_FONT_INFO_64.GetName());
+
+            if (!FontManager.FontLoaded(DEFAULT_FONT_INFO_16.GetName()))
+            {
+                FontManager.LoadFont(DEFAULT_FONT_INFO_16.FontPath, DEFAULT_FONT_INFO_16.FontSize);
+            }
+
+            DEFAULT_FONT_16 = FontManager.GetFont(DEFAULT_FONT_INFO_16.GetName());
+        }
     }
 }

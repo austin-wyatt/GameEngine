@@ -15,7 +15,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
         public int _cursorIndex = 0;
 
-        public Text _textBox;
+        public Text_Drawing _textBox;
 
         public Cursor _cursorObject;
 
@@ -49,7 +49,8 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             textColor = textColor != null ? textColor : Brushes.Black;
 
-            Text textBox = new Text(text, FONTS.CascadiaMono, textScale, textColor);
+            Text_Drawing textBox = new Text_Drawing(text, FONTS.CascadiaMono, textScale, textColor);
+
             BaseComponent = textBox;
             _textBox = textBox;
 
@@ -94,6 +95,12 @@ namespace Empyrean.Engine_Classes.UIComponents
             Vector3 topLeftPos = _textBox.GAP(UIAnchorPosition.TopLeft);
 
             bool change = false;
+
+            if (_cursorIndex > currString.Length)
+            {
+                change = true;
+                _cursorIndex = 0;
+            }
 
             if (typedLetter.Length > 0)
             {

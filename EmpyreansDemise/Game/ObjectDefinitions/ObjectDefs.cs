@@ -100,6 +100,8 @@ namespace Empyrean.Game.Objects
             0.5f, 0.5f, 0.0f,
             0.5f, -0.5f, 0.0f,
         };
+
+        public static readonly float[] QuadBounds = UIBlockBounds;
     }
 
     public static class _3DObjects 
@@ -216,67 +218,55 @@ namespace Empyrean.Game.Objects
         {
             return CreateObjectDefinition(ID, bounds, fastRendering);
         }
-        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true, bool invertTexture = false)
-        {
 
-            float[] defaultBounds = new float[]{
+        public static float[] QuadVertices = 
+            new float[] {
+                0.5f, 0.5f, 0.0f,
+                    1f, 1f, // tex coords top right
+                    0, 0, 1, // normal (facing up)
+                0.5f, -0.5f, 0.0f,
+                    1f, 0.0f, // tex coords bottom right
+                    0, 0, 1, // normal
+                -0.5f, -0.5f, 0.0f,
+                    0.0f, 0.0f, // tex coords bottom left
+                    0, 0, 1, // normal
+                -0.5f, 0.5f, 0.0f,
+                    0.0f, 1f, // tex coords top left
+                    0, 0, 1, // normal
+            };
+
+        public static float[] QuadVerticesBase =
+            new float[] {
                 0.5f, 0.5f, 0.0f,
                 0.5f, -0.5f, 0.0f,
                 -0.5f, -0.5f, 0.0f,
                 -0.5f, 0.5f, 0.0f,
             };
 
-            //float aspectRatio = SideLengths.X / SideLengths.Y;
-            float aspectRatio = 1;
+        public static uint[] VertexDrawOrder = 
+            new uint[]{
+                0, 1, 3,
+                1, 2, 3,
+            };
 
-            float[] vertices;
+        public static float[] DefaultBounds = 
+            new float[]{
+                0.5f, 0.5f, 0.0f,
+                0.5f, -0.5f, 0.0f,
+                -0.5f, -0.5f, 0.0f,
+                -0.5f, 0.5f, 0.0f,
+            };
 
-            if (invertTexture)
-            {
-                vertices = new float[] {
-                0.5f * aspectRatio, 0.5f, 0.0f, 
-                    1f, 0.0f, // tex coords top right
-                    0, 0, 1, // normal (facing up)
-                0.5f * aspectRatio, -0.5f, 0.0f, 
-                    1f, 1f, // tex coords bottom right
-                    0, 0, 1, // normal (facing up)
-                -0.5f * aspectRatio, -0.5f, 0.0f, 
-                    0.0f, 1f, // tex coords  bottom left
-                    0, 0, 1, // normal (facing up)
-                -0.5f * aspectRatio, 0.5f, 0.0f, 
-                    0.0f, 0.0f, // tex coords  top left
-                    0, 0, 1, // normal (facing up)
-                };
-            }
-            else 
-            {
-                vertices = new float[] {
-                0.5f * aspectRatio, 0.5f, 0.0f, 
-                    1f, 1f, // tex coords top right
-                    0, 0, 1, // normal (facing up)
-                0.5f * aspectRatio, -0.5f, 0.0f, 
-                    1f, 0.0f, // tex coords bottom right
-                    0, 0, 1, // normal
-                -0.5f * aspectRatio, -0.5f, 0.0f, 
-                    0.0f, 0.0f, // tex coords bottom left
-                    0, 0, 1, // normal
-                -0.5f * aspectRatio, 0.5f, 0.0f, 
-                    0.0f, 1f, // tex coords top left
-                    0, 0, 1, // normal
-                };
-            }
-
+        public ObjectDefinition CreateObjectDefinition(ObjectIDs ID = ObjectIDs.Unknown, float[] bounds = null, bool fastRendering = true)
+        {
 
             ObjectDefinition returnDef = new ObjectDefinition(
-                vertices,
-                new uint[]{
-                    0, 1, 3,
-                    1, 2, 3,
-                },
+                QuadVertices,
+                VertexDrawOrder,
                 4,
                 new TextureInfo(Spritesheet, new int[] { SpritesheetPosition }),
                 default,
-                bounds != null ? bounds : defaultBounds,
+                bounds != null ? bounds : DefaultBounds,
                 false
             );
 
@@ -284,7 +274,7 @@ namespace Empyrean.Game.Objects
             returnDef.SpritesheetPosition = SpritesheetPosition;
             returnDef.SideLengths = new Vector2(SideLengths.X, SideLengths.Y);
 
-            returnDef.VerticeType = -aspectRatio;
+            returnDef.VerticeType = -1;
 
             return returnDef;
         }

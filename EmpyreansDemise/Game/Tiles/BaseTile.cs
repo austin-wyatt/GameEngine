@@ -346,38 +346,39 @@ namespace Empyrean.Game.Tiles
 
         public override Tooltip CreateContextMenu()
         {
-            Tooltip menu = new Tooltip();
+            //Tooltip menu = new Tooltip();
 
-            TextComponent header = new TextComponent();
-            header.SetTextScale(0.1f);
-            header.SetColor(_Colors.UITextBlack);
-            header.SetText("Tile " + ObjectID);
+            //TextComponent header = new TextComponent();
+            //header.SetTextScale(0.1f);
+            //header.SetColor(_Colors.UITextBlack);
+            //header.SetText("Tile " + ObjectID);
 
-            TextComponent description = new TextComponent();
-            description.SetTextScale(0.05f);
-            description.SetColor(_Colors.UITextBlack);
-            description.SetText(GetTooltipString(this, TileMapManager.Scene));
+            //TextComponent description = new TextComponent();
+            //description.SetTextScale(0.05f);
+            //description.SetColor(_Colors.UITextBlack);
+            //description.SetText(GetTooltipString(this, TileMapManager.Scene));
 
-            menu.AddChild(header);
-            menu.AddChild(description);
+            //menu.AddChild(header);
+            //menu.AddChild(description);
 
-            UIDimensions letterScale = header._textField.Letters[0].GetDimensions();
+            //UIDimensions letterScale = header._textField.Letters[0].GetDimensions();
 
-            //initially position the objects so that the tooltip can be fitted
-            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
-            description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+            ////initially position the objects so that the tooltip can be fitted
+            //header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            //description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
 
-            menu.Margins = new UIDimensions(0, 60);
+            //menu.Margins = new UIDimensions(0, 60);
 
-            menu.FitContents();
+            //menu.FitContents();
 
-            //position the objects again once the menu has been fitted to the correct size
-            header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
-            description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
+            ////position the objects again once the menu has been fitted to the correct size
+            //header.SetPositionFromAnchor(menu.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10 + letterScale.Y / 2, 0), UIAnchorPosition.TopLeft);
+            //description.SetPositionFromAnchor(header.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 20, 0), UIAnchorPosition.TopLeft);
 
-            menu.Clickable = true;
+            //menu.Clickable = true;
 
-            return menu;
+            //return menu;
+            return null;
         }
 
         public FeaturePoint ToFeaturePoint()

@@ -65,7 +65,6 @@ namespace Empyrean.Engine_Classes.Scenes
 
 
         public LockedList<GameObject> _genericObjects = new LockedList<GameObject>(Window._renderLock); //GameObjects that are not Units and are being rendered independently
-        public List<_Text> _text = new List<_Text>();
         public TileMapController _tileMapController = null;
         public QueuedObjectList<Unit> _units = new QueuedObjectList<Unit>(); //The units to render
         //public QueuedUIList<UIObject> _UI = new QueuedUIList<UIObject>();
@@ -147,7 +146,6 @@ namespace Empyrean.Engine_Classes.Scenes
 
         protected virtual void InitializeFields()
         {
-            _text = new List<_Text>();
             _units = new QueuedObjectList<Unit>(); //The units to render
             _tileMapController = new TileMapController();
 
@@ -1159,7 +1157,7 @@ namespace Empyrean.Engine_Classes.Scenes
                 ObjectType.UI => UIManager.TopLevelObjects as List<T>,
                 ObjectType.Tile => TileMapManager.ActiveMaps as List<T>,
                 ObjectType.Unit => _collatedUnits as List<T>,
-                ObjectType.Text => _text as List<T>,
+                ObjectType.Text => null,
                 ObjectType.GenericObject => _genericObjects.GetList() as List<T>,
                 ObjectType.LowPriorityObject => _lowPriorityObjects as List<T>,
                 _ => new List<T>(),

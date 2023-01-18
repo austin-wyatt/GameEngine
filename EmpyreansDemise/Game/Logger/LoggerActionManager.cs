@@ -47,8 +47,11 @@ namespace Empyrean.Game.Logger
             {
                 return EvaluateScript<bool>(packet, loggerAction, _strings[(int)STRINGS.Parameters]);
             }
-
-            return false;
+            else
+            {
+                //if there is no parameter script, always return true
+                return true;
+            }
         }
 
         private static void ExecuteAction(LoggerPacket packet, Dictionary<string, object> loggerAction) 
@@ -58,6 +61,15 @@ namespace Empyrean.Game.Logger
             if (loggerAction.ContainsKey(_strings[(int)STRINGS.Script]))
             {
                 EvaluateScript<object>(packet, loggerAction, _strings[(int)STRINGS.Script]);
+            }
+
+            if(loggerAction.TryGetValue(_strings[(int)STRINGS.Callback], out object callback))
+            {
+                Action callbackAction = callback as Action;
+                if(callbackAction != null)
+                {
+                    callbackAction.Invoke();
+                }
             }
 
             //Check "persistent" field for value "f". If "f", make the action invalid and add it to _actionsToRemove
@@ -236,6 +248,7 @@ namespace Empyrean.Game.Logger
             Id,
             Parameters,
             Script,
+            Callback,
 
             PacketStart,
             PacketEnd,
@@ -255,6 +268,7 @@ namespace Empyrean.Game.Logger
             "id",
             "parameters",
             "script",
+            "callback",
 
             "!<",
             ">!",

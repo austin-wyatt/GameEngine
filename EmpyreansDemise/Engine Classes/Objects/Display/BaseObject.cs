@@ -49,7 +49,7 @@ namespace Empyrean.Engine_Classes
             }
         }
 
-        public BaseObject(List<Animation> animations, int id, string name, Vector3 position, float[] bounds = null) 
+        public BaseObject(List<Animation> animations, int id, string name, Vector3 position, float[] bounds) 
         {
             ID = id;
             Name = name;
@@ -63,14 +63,7 @@ namespace Empyrean.Engine_Classes
             _currentAnimation = Animations[AnimationType.Idle];
             BaseFrame = _currentAnimation.Frames[0];
 
-            if (bounds == null)
-            {
-                Bounds = new Bounds(BaseFrame.GetPureVertexData(), BaseFrame);
-            }
-            else
-            {
-                Bounds = new Bounds(bounds, BaseFrame);
-            }
+            Bounds = new Bounds(bounds, BaseFrame);
 
             _dimensions = Bounds.GetDimensionData();
 
@@ -119,7 +112,7 @@ namespace Empyrean.Engine_Classes
             //Position = new Vector3(Math.Clamp(position.X, 0, _windowSize.X), Math.Clamp(position.Y, 0, _windowSize.Y), 0);
             Position = new Vector3(position.X, position.Y, position.Z) + PositionalOffset;
 
-            position = WindowConstants.ConvertGlobalToLocalCoordinates(position);
+            position = WindowConstants.ConvertScreenSpaceToLocalCoordinates(position);
 
             if (LockToWindow)
             {
@@ -138,7 +131,7 @@ namespace Empyrean.Engine_Classes
             Position.Z = z + PositionalOffset.X;
 
             Vector3 position = new Vector3(x, y, z);
-            WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref position);
+            WindowConstants.ConvertScreenSpaceToLocalCoordinatesInPlace(ref position);
 
             if (LockToWindow)
             {

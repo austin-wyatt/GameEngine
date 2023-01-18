@@ -139,7 +139,7 @@ namespace Empyrean.Game.UI.Dev
             }
 
             _featureList.ForceTreeRegeneration();
-            _tableArea.PropagateScissorData(_featureList);
+            //_tableArea.PropagateScissorData(_featureList);
         }
 
         public void BuildAllFeaturesList()
@@ -202,7 +202,6 @@ namespace Empyrean.Game.UI.Dev
             }
 
             _featureList.ForceTreeRegeneration();
-            _tableArea.PropagateScissorData(_featureList);
         }
     }
 }

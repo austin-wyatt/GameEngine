@@ -14,7 +14,7 @@ namespace Empyrean.Definitions.EventActions
     /// </summary>
     internal class AddMenuItem : EventAction
     {
-        TextInfo MenuText = new TextInfo();
+        TextEntry MenuText;
         EventAction MenuClickAction;
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Empyrean.Definitions.EventActions
 
         public override void BuildEvent(List<dynamic> parameters)
         {
-            MenuText = parameters[0];
+            //MenuText = parameters[0];
             EventActionBuilder action = (EventActionBuilder)parameters[1];
 
             MenuClickAction = action.BuildAction();

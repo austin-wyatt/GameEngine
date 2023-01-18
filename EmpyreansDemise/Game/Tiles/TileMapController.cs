@@ -170,14 +170,14 @@ namespace Empyrean.Game.Tiles
             if (TargetedTiles.TryGetValue(tile, out var mesh))
             {
                 mesh.FillFromMeshTile(tile.MeshTileHandle);
-                mesh.SetTranslation(WindowConstants.ConvertGlobalToLocalCoordinates(tile._position) + new Vector3(0, 0, 0.001f));
+                mesh.SetTranslation(WindowConstants.ConvertScreenSpaceToLocalCoordinates(tile._position) + new Vector3(0, 0, 0.001f));
                 return mesh;
             }
 
             IndividualMesh tileIndicator = TargetIndicatorPool.GetObject();
 
             tileIndicator.FillFromMeshTile(tile.MeshTileHandle);
-            tileIndicator.SetTranslation(WindowConstants.ConvertGlobalToLocalCoordinates(tile._position) + new Vector3(0, 0, 0.001f));
+            tileIndicator.SetTranslation(WindowConstants.ConvertScreenSpaceToLocalCoordinates(tile._position) + new Vector3(0, 0, 0.001f));
 
             if (tileIndicator.Texture == null)
             {

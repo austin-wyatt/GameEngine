@@ -83,14 +83,6 @@ namespace Empyrean.Engine_Classes.Scenes
                     //    });
                     //}
 
-                    Scenes[u]._text.ForEach(text => //Load Text textures
-                    {
-                        if (text.Letters.Count > 0)
-                        {
-                            Renderer.LoadTextureFromBaseObject(text.Letters[0].BaseObjects[0], false);
-                        }
-                    });
-
                     Scenes[u]._units.ForEach(obj =>
                     {
                         Renderer.LoadTextureFromGameObj(obj);

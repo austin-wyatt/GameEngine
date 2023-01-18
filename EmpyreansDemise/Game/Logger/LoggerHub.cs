@@ -19,7 +19,7 @@ namespace Empyrean.Game.Logger
 
             string packetType;
 
-            if(id.GetType() == typeof(LoggerEventType))
+            if (id.GetType() == typeof(LoggerEventType))
             {
                 LoggerEventType standardType = (LoggerEventType)id;
 
@@ -40,6 +40,12 @@ namespace Empyrean.Game.Logger
             }
 
             LoggerActionManager.ProcessLoggerActions(packet, packetType);
+
+            //DataObjectChanged packet
+            if (packet.ContainsKey(LoggerPacket.DATA_OBJECT_CHANGED_IDENT))
+            {
+                LoggerPacket.ReturnPacket_DataObjectChanged(packet);
+            }
         }
 
 

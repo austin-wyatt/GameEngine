@@ -24,8 +24,8 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Spider
 
             SelectionInfo.CanSelectUnits = false;
 
-            Name = new TextInfo(13, 3);
-            Description = new TextInfo(14, 3);
+            Name = TextEntry.GetTextEntry(13); //13  3
+            Description = TextEntry.GetTextEntry(14); //14  3
 
             AnimationSet = AnimationSetManager.GetAnimationSet(70);
         }

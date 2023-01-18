@@ -46,6 +46,10 @@
 	<None Remove="Shaders\immediateShader.frag" />
 	<None Remove="Shaders\IndividualMesh\individualMeshShader.frag" />
 	<None Remove="Shaders\IndividualMesh\individualMeshShader.vert" />
+	<None Remove="Shaders\Text\textShader.frag" />
+	<None Remove="Shaders\Text\textShader.vert" />
+	<None Remove="Shaders\UI\scissorStencil.frag" />
+	<None Remove="Shaders\UI\scissorStencil.vert" />
 	<None Update="Game\Scripting\init.js">
 	<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</None>
@@ -145,12 +149,6 @@
     <None Update="Shaders\particleShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\Text\textShader.frag">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Shaders\Text\textShader.vert">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Shaders\simpleShader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -223,6 +221,9 @@
     <Reference Include="DataObject">
       <HintPath>..\..\AuxilliaryGameAssemblies\DataObject\DataObject\bin\Debug\netcoreapp3.1\DataObject.dll</HintPath>
     </Reference>
+    <Reference Include="SharpFont">
+      <HintPath>..\..\EXTERNAL LIBRARIES\SharpFont\Binaries\SharpFont\Release\SharpFont.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -245,5 +246,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;Z:\repos\EXTERNAL LIBRARIES\FreeType\freetype-2.12.1\objs\x64\Release\freetype6.dll&quot; &quot;$(OutDir)&quot; /Y" />
+  </Target>
 
 </Project>

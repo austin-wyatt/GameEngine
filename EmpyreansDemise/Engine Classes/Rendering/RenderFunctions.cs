@@ -140,17 +140,9 @@ namespace Empyrean.Engine_Classes.Rendering
             Renderer.GBuffer.BindForReading();
             Renderer.GBuffer.Clear();
 
-
-            //GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
-
-            //RenderingQueue.RenderTileQuadQueue();
             RenderingQueue.RenderInstancedTileData();
-            //DrawFog();
-            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             
             DrawUnits();
-
-            //GL.Disable(EnableCap.Blend);
 
             Renderer.RenderGBuffer(Renderer.GBuffer);
 
@@ -159,7 +151,7 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
 
             GL.Disable(EnableCap.FramebufferSrgb);
-            //copy depth and stencil values from GBuffer
+            //copy depth and stencil values from GBuffer to the default framebuffer
             GL.BlitFramebuffer(0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y,
                 0, 0, WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y,
                 ClearBufferMask.StencilBufferBit | ClearBufferMask.DepthBufferBit, BlitFramebufferFilter.Nearest);
@@ -167,12 +159,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
             Renderer.GBuffer.Unbind();
 
-            //GL.Enable(EnableCap.Blend);
-
-            //GL.Disable(EnableCap.DepthTest);
             RenderingQueue.RenderQueuedObjects();
-            //GL.Enable(EnableCap.DepthTest);
-
 
             RenderingQueue.RenderTileQueue();
 
@@ -181,9 +168,6 @@ namespace Empyrean.Engine_Classes.Rendering
             RenderingQueue.RenderQueuedParticles();
 
             DrawFog();
-            //RenderingQueue.ClearFogQuad();
-
-            //Span<int> x = stackalloc int[10];
         }
 
 

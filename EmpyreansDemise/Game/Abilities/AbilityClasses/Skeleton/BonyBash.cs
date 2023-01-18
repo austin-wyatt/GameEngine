@@ -9,6 +9,7 @@ using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Objects;
 using Empyrean.Engine_Classes;
 using Empyrean.Game.Units.AIFunctions;
+using Empyrean.Game.Serializers;
 
 namespace Empyrean.Game.Abilities
 {
@@ -33,8 +34,8 @@ namespace Empyrean.Game.Abilities
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            Name = new Serializers.TextInfo(3, 3);
-            Description = new Serializers.TextInfo(4, 3);
+            Name = TextEntry.GetTextEntry(3); //3  3 
+            Description = TextEntry.GetTextEntry(4); //4  3 
 
             AnimationSet = new Serializers.AnimationSet();
             AnimationSet.Animations.Add(new Serializers.Animation()

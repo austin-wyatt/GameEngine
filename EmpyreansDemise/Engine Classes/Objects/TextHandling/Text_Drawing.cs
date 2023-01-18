@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Empyrean.Engine_Classes.TextHandling
 {
-    public class Text : UIObject
+    public class Text_Drawing : UIObject
     {
         public string TextString = "";
         private Texture _texture;
@@ -33,7 +33,7 @@ namespace Empyrean.Engine_Classes.TextHandling
 
         public Color BackgroundClearColor = Color.White;
 
-        public Text(string text, string font, int fontSize, Brush fontColor, Color clearColor = default, float lineHeightMult = 1)
+        public Text_Drawing(string text, string font, int fontSize, Brush fontColor, Color clearColor = default, float lineHeightMult = 1)
         {
             if (clearColor != default)
             {

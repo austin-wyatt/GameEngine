@@ -27,8 +27,8 @@ namespace Empyrean.Game.Abilities
 
             Grade = 1;
 
-            Name = new Serializers.TextInfo(7, 3);
-            Description = new Serializers.TextInfo(8, 3);
+            Name = TextEntry.GetTextEntry(7); //7  3
+            Description = TextEntry.GetTextEntry(8); //8  3
 
             AnimationSet = new Serializers.AnimationSet();
             AnimationSet.Animations.Add(new Serializers.Animation()

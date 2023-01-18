@@ -147,8 +147,8 @@ namespace Empyrean.Game.Abilities
 
         public string _typeName = "";
 
-        public TextInfo Name = new TextInfo();
-        public TextInfo Description = new TextInfo();
+        public TextEntry Name = TextEntry.EMPTY_ENTRY;
+        public TextEntry Description = TextEntry.EMPTY_ENTRY;
 
         public bool Initialized = false;
 

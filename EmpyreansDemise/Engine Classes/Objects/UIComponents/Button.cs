@@ -7,7 +7,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 {
     public class Button : UIObject
     {
-        public TextHandling.Text TextBox;
+        public TextHandling.Text_Drawing TextBox;
         //public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
         public Vector4 BaseColor = _Colors.UILightGray;
         public static Color BaseBoxColor = Color.FromArgb(216, 216, 216);
@@ -47,7 +47,7 @@ namespace Empyrean.Engine_Classes.UIComponents
             //textBox.SetText(text);
             //textBox.SetTextScale(textScale);
 
-            var textBox = new Text(text, Text.DEFAULT_FONT, fontSize, textColor, clearColor);
+            var textBox = new Text_Drawing(text, Text_Drawing.DEFAULT_FONT, fontSize, textColor, clearColor);
 
             //textBox.SetTextScale(textScale / ratio);
 

@@ -8,19 +8,20 @@ namespace Empyrean.Engine_Classes
     {
         public int Capacity = 100;
 
-        private Stack<T> PooledObjects = new Stack<T>();
+        private Stack<T> PooledObjects;
 
         public int Count { get { return PooledObjects.Count; } }
 
         private object _lock = new object();
         public ObjectPool()
         {
-
+            PooledObjects = new Stack<T>(Capacity);
         }
 
         public ObjectPool(int capacity)
         {
             Capacity = capacity;
+            PooledObjects = new Stack<T>(Capacity);
         }
 
         public T GetObject()

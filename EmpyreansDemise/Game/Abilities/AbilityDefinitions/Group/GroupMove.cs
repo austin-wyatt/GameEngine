@@ -1,6 +1,7 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
 using Empyrean.Game.Tiles;
 using Empyrean.Game.Units;
 using Empyrean.Objects;
@@ -33,8 +34,8 @@ namespace Empyrean.Game.Abilities.AbilityDefinitions
                 Spritesheet = (int)TextureName.UIControlsSpritesheet
             });
 
-            Name = new Serializers.TextInfo(21, 3);
-            Description = new Serializers.TextInfo(22, 3);
+            Name = TextEntry.GetTextEntry(21); //21  3
+            Description = TextEntry.GetTextEntry(22); //22  3
         }
 
         protected Tile _selectedTile = null;

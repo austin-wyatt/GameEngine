@@ -150,7 +150,7 @@ namespace Empyrean.Engine_Classes
     {
         public UIInstancedRenderData RenderData;
 
-        public ScissorData ScissorData = new ScissorData();
+        public ScissorData ScissorData = ScissorData.Empty;
 
         public List<UIObject> ObjectsToRender = new List<UIObject>();
         public HashSet<int> TextureHandles = new HashSet<int>();

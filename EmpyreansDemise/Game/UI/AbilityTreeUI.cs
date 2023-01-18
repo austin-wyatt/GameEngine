@@ -74,7 +74,7 @@ namespace Empyrean.Game.UI
 
         public void PopulateData()
         {
-            Text activeQuestsLabel = new Text("Ability Trees", Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text_Drawing activeQuestsLabel = new Text_Drawing("Ability Trees", Text_Drawing.DEFAULT_FONT, 48, Brushes.Black);
             activeQuestsLabel.SetTextScale(0.1f);
 
             activeQuestsLabel.SetPositionFromAnchor(Window.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);

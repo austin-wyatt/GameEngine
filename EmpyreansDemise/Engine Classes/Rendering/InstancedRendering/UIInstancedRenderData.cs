@@ -210,7 +210,7 @@ namespace Empyrean.Engine_Classes.Rendering
         }
         public override void DisableInstancedShaderAttributes()
         {
-            for (int i = 2; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 GL.DisableVertexAttribArray(i);
             }

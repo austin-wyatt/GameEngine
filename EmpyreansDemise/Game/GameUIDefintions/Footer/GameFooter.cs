@@ -34,7 +34,7 @@ namespace Empyrean.Game.UI
 
         public Unit LastSelectedControllableUnit = null;
 
-        private Text _unitNameTextBox;
+        private Text_Drawing _unitNameTextBox;
         private HealthBar _unitHealthBar;
         private UIBlock _generalBlock;
         private UIBlock _itemBlock;
@@ -118,7 +118,7 @@ namespace Empyrean.Game.UI
             #region name box
             Vector3 nameBoxPos = _generalBlock.GetAnchorPosition(UIAnchorPosition.LeftCenter);
             nameBoxPos.X = nameBoxPos.X + containingBlockDimensions.X / 6;
-            _unitNameTextBox = new Text("", Text.DEFAULT_FONT, 18, Brushes.Black, Color.FromArgb(114, 130, 163));
+            _unitNameTextBox = new Text_Drawing("", Text_Drawing.DEFAULT_FONT, 18, Brushes.Black, Color.FromArgb(114, 130, 163));
             _unitNameTextBox.SetPositionFromAnchor(nameBoxPos, UIAnchorPosition.Center);
 
             _infoBlock.AddChild(_unitNameTextBox, 100);
@@ -750,7 +750,7 @@ namespace Empyrean.Game.UI
                     {
                         UIScale stackSize = new UIScale(buffSize.X * 0.333f, buffSize.Y * 0.333f);
 
-                        Text text = new Text(buff.Stacks.ToString(), Text.DEFAULT_FONT, 16, Brushes.Black, Color.DarkBlue);
+                        Text_Drawing text = new Text_Drawing(buff.Stacks.ToString(), Text_Drawing.DEFAULT_FONT, 16, Brushes.Black, Color.DarkBlue);
 
                         text.SAP(icon.GAP(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
 

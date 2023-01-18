@@ -117,22 +117,21 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             visibleDeltaPos = VisibleArea.Position - visibleDeltaPos;
 
-            Vector3 globalCoord = WindowConstants.ConvertScreenSpaceToGlobalCoordinates(VisibleArea.GetAnchorPosition(UIAnchorPosition.BottomLeft));
-            Vector3 globalCoordTopRight = WindowConstants.ConvertScreenSpaceToGlobalCoordinates(VisibleArea.GetAnchorPosition(UIAnchorPosition.TopRight));
-            ScissorData scissor = new ScissorData()
+            Vector3 scissorAreaPos = VisibleArea.Position;
+
+            if (BaseComponent.ScissorData.ScissoredArea == null)
             {
-                Scissor = true,
-                X = (int)globalCoord.X,
-                Y = (int)(WindowConstants.ClientSize.Y - globalCoord.Y),
-                Width = (int)(globalCoordTopRight.X - globalCoord.X),
-                Height = (int)(globalCoord.Y - globalCoordTopRight.Y),
-                Depth = 1000
-            };
+                ScissorData scissor = new ScissorData()
+                {
+                    Scissor = true,
+                };
 
-            BaseComponent.ScissorData = scissor;
+                BaseComponent.ScissorData = scissor;
+            }
 
+            BaseComponent.ScissorData.ScissoredArea.SetPosition(scissorAreaPos);
+            BaseComponent.ScissorData.ScissoredArea.SetSize(VisibleArea.GetDimensions(), scaleAspectRatio: false);
 
-            PropagateScissorData(BaseComponent);
 
             UpdateScrollableAreaBounds();
 
@@ -147,23 +146,6 @@ namespace Empyrean.Engine_Classes.UIComponents
 
 
             InitializeScrollbar(_scrollPercent);
-        }
-
-        public void PropagateScissorData(UIObject obj)
-        {
-            foreach (var text in obj.TextObjects)
-            {
-                text.ScissorData.X = BaseComponent.ScissorData.X;
-                text.ScissorData.Y = BaseComponent.ScissorData.Y;
-                text.ScissorData.Height = BaseComponent.ScissorData.Height;
-                text.ScissorData.Width = BaseComponent.ScissorData.Width;
-                text.ScissorData.Depth = BaseComponent.ScissorData.Depth;
-            }
-
-            foreach (var child in obj.Children)
-            {
-                PropagateScissorData(child);
-            }
         }
 
         public void SetVisibleAreaSize(UIScale size) 

@@ -93,8 +93,8 @@ namespace Empyrean.Game.Save
         public POIType Type;
         public int Id;
         public FeaturePoint Origin = new FeaturePoint();
-        public TextInfo Title = new TextInfo();
-        public TextInfo Description = new TextInfo();
+        public TextId Title = new TextId();
+        public TextId Description = new TextId();
         public HashSet<POIParameter> Parameters = new HashSet<POIParameter>(0);
         public bool IsDefault = true;
         public string Name = "";
@@ -111,8 +111,8 @@ namespace Empyrean.Game.Save
             Type = entry.Type;
             Id = entry.Id;
             Origin = entry.Origin;
-            Title = new TextInfo(ref entry.Title);
-            Description = new TextInfo(ref entry.Description);
+            Title = entry.Title;
+            Description = entry.Description;
             foreach(var item in entry.Parameters)
             {
                 Parameters.Add(item);
@@ -206,8 +206,8 @@ namespace Empyrean.Game.Save
                    Type == entry.Type &&
                    Id == entry.Id &&
                    EqualityComparer<FeaturePoint>.Default.Equals(Origin, entry.Origin) &&
-                   EqualityComparer<TextInfo>.Default.Equals(Title, entry.Title) &&
-                   EqualityComparer<TextInfo>.Default.Equals(Description, entry.Description) &&
+                   EqualityComparer<TextId>.Default.Equals(Title, entry.Title) &&
+                   EqualityComparer<TextId>.Default.Equals(Description, entry.Description) &&
                    EqualityComparer<HashSet<POIParameter>>.Default.Equals(Parameters, entry.Parameters);
         }
 

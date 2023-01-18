@@ -209,7 +209,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
     public class ListItem : UIObject 
     {
-        public Text _textBox;
+        public Text_Drawing _textBox;
         public UIBlock _backdrop;
         public int Index = -1;
 
@@ -220,7 +220,7 @@ namespace Empyrean.Engine_Classes.UIComponents
             Vector4 textColor, Vector4 itemColor, bool outline = false, bool scaleAspectRatio = true) 
         {
             //TextBox textBox = new TextBox(position, listItemSize, text, textScale, false, new UIDimensions(20, 50));
-            Text textBox = new Text(text, Text.DEFAULT_FONT, 14, Brushes.Black);
+            Text_Drawing textBox = new Text_Drawing(text, Text_Drawing.DEFAULT_FONT, 14, Brushes.Black);
             textBox.SetTextScale(textScale);
 
             _textBox = textBox;

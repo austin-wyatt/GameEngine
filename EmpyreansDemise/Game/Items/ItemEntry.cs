@@ -13,10 +13,10 @@ namespace Empyrean.Game.Items
     {
         public int Id;
 
-        public TextInfo Name = new TextInfo();
+        public TextId Name = new TextId();
 
         [XmlElement("IEd")]
-        public TextInfo Description = new TextInfo();
+        public TextId Description = new TextId();
 
         [XmlElement("IEss")]
         public int StackSize = 1;
@@ -35,8 +35,10 @@ namespace Empyrean.Game.Items
         public ItemEntry(Item item)
         {
             Id = item.Id;
-            Name = item.Name;
-            Description = item.Description;
+
+            Name = new TextId(item.Name.Id);
+            Description = new TextId(item.Description.Id);
+
             StackSize = item.StackSize;
             Charges = item.Charges;
             Modifier = item.Modifier;

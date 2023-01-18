@@ -121,7 +121,7 @@ namespace Empyrean.Game.SceneDefinitions
             Tile tile = TileMapHelpers.GetTile(campsiteOrigin);
             if (tile != null)
             {
-                _camera.SetPosition(WindowConstants.ConvertGlobalToLocalCoordinates(tile._position));
+                _camera.SetPosition(WindowConstants.ConvertScreenSpaceToLocalCoordinates(tile._position));
                 PlayerParty.PlaceUnits(tile);
             }
 
@@ -832,7 +832,7 @@ namespace Empyrean.Game.SceneDefinitions
                         mesh.Texture = new SimpleTexture("Resources/Textures/Spiderweb.png", 50000) { WrapType = TextureWrapType.ClampToEdge };
                         mesh.LoadTexture();
 
-                        Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(tile._position);
+                        Vector3 pos = WindowConstants.ConvertScreenSpaceToLocalCoordinates(tile._position);
                         pos.Z += 0.01f;
                         mesh.SetTranslation(pos);
 

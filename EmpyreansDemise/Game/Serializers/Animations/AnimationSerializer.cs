@@ -10,9 +10,6 @@ namespace Empyrean.Game.Serializers
 {
     public static class AnimationSerializer
     {
-        private static string _animationCharSet = "DKLMNabfCHTikGvIJstezABUopgmncdwxyPhqEFuOQlrRSV";
-        private static int _fileNameLength = 10;
-
         public static Dictionary<string, AnimationSet> AllAnimationSets = new Dictionary<string, AnimationSet>();
 
         public static AnimationSet LoadAnimationFromFileWithName(string name)

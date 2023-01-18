@@ -14,7 +14,7 @@ namespace Empyrean.Engine_Classes
     /// This class is intended to be a barebones (and more updated) version of RenderableObject which should
     /// hopefully provide some more flexibility for non-standard objects (such as code generated meshes and whatnot)
     /// </summary>
-    public class TransformableMesh : TransformationBase
+    public class TransformableMesh : Transformations3D
     {
         public float[] Vertices;
 
@@ -29,140 +29,12 @@ namespace Empyrean.Engine_Classes
         /// </summary>
         public int Stride;
 
-        protected Matrix4 Translation = Matrix4.Identity;
-        protected Matrix4 Rotation = Matrix4.Identity;
-        protected Matrix4 Scale = Matrix4.Identity;
+        public TransformableMesh() { }
 
-        public Vector3 CurrentScale = new Vector3(1, 1, 1);
-        public Vector3 Position = new Vector3();
-
-        public TransformableMesh()
+        public TransformableMesh(float[] vertices, uint[] vertexDrawOrder)
         {
-
-        }
-
-        #region Translations
-        public void Translate(Vector3 translation)
-        {
-            Vector3 currentTranslation = Translation.ExtractTranslation();
-            currentTranslation.X += translation.X;
-            currentTranslation.Y += translation.Y;
-            currentTranslation.Z += translation.Z;
-
-            Translation = Matrix4.CreateTranslation(currentTranslation);
-
-            Position = currentTranslation;
-
-            CalculateTransformations();
-        }
-
-        public void SetTranslation(Vector3 translation)
-        {
-            Translation = Matrix4.CreateTranslation(translation);
-
-            Position = translation;
-
-            CalculateTransformations();
-        }
-        #endregion
-
-        #region Scale
-        public void ScaleAll(float f)
-        {
-            CurrentScale.X *= f;
-            CurrentScale.Y *= f;
-            CurrentScale.Z *= f;
-
-            SetScale(CurrentScale);
-        }
-        public void SetScaleAll(float f)
-        {
-            Vector3 currentScale = new Vector3(f, f, f);
-
-            SetScale(currentScale);
-        }
-
-        public void SetScale(float x, float y, float z)
-        {
-            Vector3 currentScale = new Vector3(x, y, z);
-
-            SetScale(currentScale);
-        }
-
-        public void ScaleAddition(float f)
-        {
-            CurrentScale.X += f;
-            CurrentScale.Y += f;
-            CurrentScale.Z += f;
-
-            SetScale(CurrentScale);
-        }
-        public void ScaleX(float f)
-        {
-            CurrentScale[0] *= f;
-
-            SetScale(CurrentScale);
-        }
-        public void ScaleY(float f)
-        {
-            CurrentScale[1] *= f;
-
-            SetScale(CurrentScale);
-        }
-        public void ScaleZ(float f)
-        {
-            CurrentScale[2] *= f;
-
-            SetScale(CurrentScale);
-        }
-
-        public void SetScale(Vector3 scale)
-        {
-            Scale = Matrix4.CreateScale(scale);
-            CurrentScale = scale;
-
-            CalculateTransformations();
-        }
-        #endregion
-
-        #region Rotations
-        public void RotateX(float degrees)
-        {
-            Matrix4 rotationMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(degrees));
-
-            Rotation *= rotationMatrix;
-
-            CalculateTransformations();
-        }
-        public void RotateY(float degrees)
-        {
-            Matrix4 rotationMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(degrees));
-
-            Rotation *= rotationMatrix;
-
-            CalculateTransformations();
-        }
-        public void RotateZ(float degrees)
-        {
-            Matrix4 rotationMatrix = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(degrees));
-
-            Rotation *= rotationMatrix;
-
-            CalculateTransformations();
-        }
-        #endregion
-
-        protected void CalculateTransformations()
-        {
-            Transformations = Scale * Rotation * Translation;
-        }
-
-        public void ResetTransformations()
-        {
-            Transformations = Matrix4.Identity;
-            Scale = Matrix4.Identity;
-            Rotation = Matrix4.Identity;
-            Translation = Matrix4.Identity;
+            Vertices = vertices;
+            VertexDrawOrder = vertexDrawOrder;
         }
     }
 }

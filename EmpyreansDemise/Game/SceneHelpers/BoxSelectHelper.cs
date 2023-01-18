@@ -147,7 +147,7 @@ namespace Empyrean.Game.SceneHelpers
             for (int i = 0; i < Scene._units.Count; i++)
             {
                 unitPos = new Vector3(Scene._units[i].Position);
-                WindowConstants.ConvertGlobalToLocalCoordinatesInPlace(ref unitPos);
+                WindowConstants.ConvertScreenSpaceToLocalCoordinatesInPlace(ref unitPos);
 
                 if (CheckRange(unitPos.X, anchorPointAtZ.X, currentPointAtZ.X) && CheckRange(unitPos.Y, anchorPointAtZ.Y, currentPointAtZ.Y))
                 {

@@ -18,6 +18,7 @@ using Empyrean.Game.Items;
 using Empyrean.Game.Abilities.SelectionTypes;
 using Empyrean.Game.Abilities.AbilityEffects;
 using Empyrean.Game.Movement;
+using Empyrean.Game.Serializers;
 
 namespace Empyrean.Game.Abilities
 {
@@ -44,8 +45,8 @@ namespace Empyrean.Game.Abilities
             CastRequirements.EquipmentRequirement.RequiredTag |= ItemTag.Weapon_Melee;
 
 
-            Name = new Serializers.TextInfo(11, 3);
-            Description = new Serializers.TextInfo(12, 3);
+            Name = TextEntry.GetTextEntry(11); //11  3
+            Description = TextEntry.GetTextEntry(12); //12  3
 
 
             AnimationSet = new Serializers.AnimationSet();

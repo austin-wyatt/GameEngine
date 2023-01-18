@@ -203,7 +203,7 @@ namespace Empyrean.Engine_Classes.UIComponents
             float textScale = 0.05f;
 
 
-            Text energyCostBox = new Text(energyString, Text.DEFAULT_FONT, 16, Brushes.Black);
+            Text_Drawing energyCostBox = new Text_Drawing(energyString, Text_Drawing.DEFAULT_FONT, 16, Brushes.Black);
             energyCostBox.SetTextScale(textScale);
 
             UIScale textDimensions = energyCostBox.GetDimensions();

@@ -15,8 +15,10 @@ namespace Empyrean.Engine_Classes
 
         public Shader() { }
 
-        public Shader(string vertPath, string fragPath)
+        public Shader(string vertPath, string fragPath, string geoPath = "")
         {
+            bool hasGeometryShader = geoPath != "";
+
             var shaderSource = File.ReadAllText(vertPath);
 
             var vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -30,11 +32,23 @@ namespace Empyrean.Engine_Classes
             GL.ShaderSource(fragmentShader, shaderSource);
             CompileShader(fragmentShader);
 
+            int geometryShader = 0;
+            if (hasGeometryShader)
+            {
+                shaderSource = File.ReadAllText(geoPath);
+                geometryShader = GL.CreateShader(ShaderType.GeometryShader);
+                GL.ShaderSource(geometryShader, shaderSource);
+                CompileShader(geometryShader);
+            }
+
 
             Handle = GL.CreateProgram();
 
             GL.AttachShader(Handle, vertexShader);
             GL.AttachShader(Handle, fragmentShader);
+
+            if(hasGeometryShader)
+                GL.AttachShader(Handle, geometryShader);
 
             LinkProgram(Handle);
 
@@ -43,6 +57,11 @@ namespace Empyrean.Engine_Classes
             GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
 
+            if (hasGeometryShader)
+            {
+                GL.DetachShader(Handle, geometryShader);
+                GL.DeleteShader(geometryShader);
+            }
 
             GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 

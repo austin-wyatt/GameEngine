@@ -209,13 +209,15 @@ namespace Empyrean.Game.Abilities
 
                             CastingUnit.SetPositionOffset(currentTile._position);
                             CastingUnit.SetTileMapPosition(currentTile);
-
+                            
                             Sound sound = currentTile.Properties.Type.SimplifiedType().FootstepSound();
                             sound.SetPosition(CastingUnit.BaseObject.BaseFrame._position.X, 
                                 CastingUnit.BaseObject.BaseFrame._position.Y, 
                                 CastingUnit.BaseObject.BaseFrame._position.Z);
 
-                            CalculationThread.AddCalculation(sound.Play);
+                            //CalculationThread.AddCalculation(sound.Play);
+
+                            sound.Play();
 
                             if (_moveCanceled)
                             {

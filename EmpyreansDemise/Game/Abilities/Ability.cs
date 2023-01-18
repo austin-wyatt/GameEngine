@@ -155,8 +155,8 @@ namespace Empyrean.Game.Abilities
 
         public CombatScene Scene => CastingUnit.Scene;
 
-        public TextInfo Name = new TextInfo();
-        public TextInfo Description = new TextInfo();
+        public TextEntry Name = TextEntry.EMPTY_ENTRY;
+        public TextEntry Description = TextEntry.EMPTY_ENTRY;
 
         public bool Castable = true; //determines whether this is a behind the scenes ability or a usable ability
         public bool MustCast = false;
@@ -262,7 +262,7 @@ namespace Empyrean.Game.Abilities
                 float textScale = 1f;
 
 
-                Text energyCostBox = new Text(energyString, Text.DEFAULT_FONT, 16, Brushes.White);
+                Text_Drawing energyCostBox = new Text_Drawing(energyString, Text_Drawing.DEFAULT_FONT, 16, Brushes.White);
                 energyCostBox.SetTextScale(textScale);
                 
 
@@ -331,7 +331,7 @@ namespace Empyrean.Game.Abilities
                 float textScale = hotkeyTextScale;
 
 
-                Text hotkeyBox = new Text(hotkey, Text.DEFAULT_FONT, 12, Brushes.White, Color.Black);
+                Text_Drawing hotkeyBox = new Text_Drawing(hotkey, Text_Drawing.DEFAULT_FONT, 12, Brushes.White, Color.Black);
                 hotkeyBox.SetTextScale(textScale);
 
                 UIScale textDimensions = hotkeyBox.GetDimensions();

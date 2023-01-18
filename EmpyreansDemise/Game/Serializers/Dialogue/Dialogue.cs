@@ -70,7 +70,7 @@ namespace Empyrean.Game.Serializers
         /// </summary>
         public int Speaker = 0;
         [XmlElement("m")]
-        public TextInfo TextInfo = new TextInfo();
+        public TextId TextInfo = new TextId();
 
         [XmlElement("d")]
         /// <summary>
@@ -131,7 +131,7 @@ namespace Empyrean.Game.Serializers
     public class Response : ISerializable
     {
         [XmlElement("rm")]
-        public TextInfo TextInfo = new TextInfo();
+        public TextId TextInfo = new TextId();
 
         [XmlElement("out")]
         /// <summary>

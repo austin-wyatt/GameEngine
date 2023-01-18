@@ -17,7 +17,7 @@ namespace Empyrean.Game.UI
         public Camera _camera;
         public Unit _unit;
 
-        public Text _nameBox;
+        public Text_Drawing _nameBox;
         public HealthBar HealthBar;
         public ShieldBar ShieldBar;
 
@@ -48,7 +48,7 @@ namespace Empyrean.Game.UI
 
             Name = "UnitStatusBar";
 
-            Text nameBox = new Text(unit.Name, Text.DEFAULT_FONT, 12, Brushes.Black, Color.FromArgb(30, 30, 30));
+            Text_Drawing nameBox = new Text_Drawing(unit.Name, Text_Drawing.DEFAULT_FONT, 12, Brushes.Black, Color.FromArgb(30, 30, 30));
             nameBox.SetPositionFromAnchor(BaseComponent.Position, UIAnchorPosition.Center);
 
             _nameBox = nameBox;

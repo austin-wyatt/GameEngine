@@ -45,7 +45,7 @@ namespace Empyrean.Definitions.TileEffects
                 _spiderWebVisual.Texture = new SimpleTexture(SpritesheetManager.GetSpritesheet(50009));
                 _spiderWebVisual.LoadTexture();
 
-                Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(tile._position);
+                Vector3 pos = WindowConstants.ConvertScreenSpaceToLocalCoordinates(tile._position);
                 pos.Z += 0.003f;
                 _spiderWebVisual.SetTranslation(pos);
 

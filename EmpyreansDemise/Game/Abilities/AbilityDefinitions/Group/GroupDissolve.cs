@@ -2,6 +2,7 @@
 using Empyrean.Engine_Classes.Scenes;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Player;
+using Empyrean.Game.Serializers;
 using Empyrean.Game.Tiles;
 using Empyrean.Objects;
 using System;
@@ -36,8 +37,8 @@ namespace Empyrean.Game.Abilities.AbilityDefinitions
                 Spritesheet = (int)TextureName.UIControlsSpritesheet
             });
 
-            Name = new Serializers.TextInfo(19, 3);
-            Description = new Serializers.TextInfo(20, 3);
+            Name = TextEntry.GetTextEntry(19); //19  3
+            Description = TextEntry.GetTextEntry(20); //20  3
         }
 
         public override void EnactEffect()

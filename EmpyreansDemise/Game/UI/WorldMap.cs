@@ -186,7 +186,7 @@ namespace Empyrean.Game.UI
 
                 featureDisplay.SetPosition(globalOrigin + MapArea.BaseComponent.Position);
 
-                UIHelpers.AddTimedHoverTooltip(featureDisplay, TextTableManager.GetTextEntry(0, item.NameTextEntry), Scene);
+                //UIHelpers.AddTimedHoverTooltip(featureDisplay, TextTableManager.GetTextEntry(0, item.NameTextEntry), Scene);
 
                 MapArea.BaseComponent.AddChild(featureDisplay);
             }

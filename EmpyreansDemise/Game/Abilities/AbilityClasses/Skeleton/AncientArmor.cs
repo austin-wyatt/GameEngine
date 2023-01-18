@@ -12,6 +12,7 @@ using Empyrean.Game.Map;
 using System.Diagnostics;
 using Empyrean.Engine_Classes.Audio;
 using Empyrean.Engine_Classes;
+using Empyrean.Game.Serializers;
 
 namespace Empyrean.Game.Abilities
 {
@@ -43,8 +44,8 @@ namespace Empyrean.Game.Abilities
 
             AbilityClass = AbilityClass.Skeleton;
 
-            Name = new Serializers.TextInfo(1, 3);
-            Description = new Serializers.TextInfo(2, 3);
+            Name = TextEntry.GetTextEntry(1); //1  3 
+            Description = TextEntry.GetTextEntry(2); //2  3 
 
             AnimationSet = new Serializers.AnimationSet();
             AnimationSet.Animations.Add(new Serializers.Animation()

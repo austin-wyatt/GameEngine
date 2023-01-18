@@ -30,7 +30,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
         public Dictionary<Texture, TextureUnit> Textures = new Dictionary<Texture, TextureUnit>();
 
-        public ScissorData ScissorData = new ScissorData();
+        public ScissorData ScissorData = ScissorData.Empty;
 
         public bool IsValid = false;
 
@@ -289,7 +289,7 @@ namespace Empyrean.Engine_Classes.Rendering
         }
         public virtual void DisableInstancedShaderAttributes()
         {
-            for (int i = 2; i < 13; i++)
+            for (int i = 0; i < 13; i++)
             {
                 GL.DisableVertexAttribArray(i);
             }

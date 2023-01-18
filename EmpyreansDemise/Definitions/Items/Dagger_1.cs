@@ -32,18 +32,9 @@ namespace Empyrean.Definitions.Items
 
             Tags = ItemTag.Weapon_OneHanded | ItemTag.Weapon_Melee | ItemTag.Weapon_Concealed | ItemTag.Weapon_Slashing | ItemTag.Weapon_Thrusting;
 
-            Name = new TextInfo(1, 1);
-            Description = new TextInfo(3, 1)
-            {
-                TextReplacementParameters = new TextReplacementParameter[]
-                {
-                    new TextReplacementParameter()
-                    {
-                        Key = "damage",
-                        Value = () => 1.ToString()
-                    }
-                }
-            };
+            Name = TextEntry.GetTextEntry(1); //1, 1
+            Description = TextEntry.GetTextEntry(2, getUnique: true); //3, 1
+            Description.AddFunctionFormatString(() => 1.ToString(), insertIndex: 0);
         }
 
         public Dagger_1(Item item) : base(item) 
@@ -82,8 +73,8 @@ namespace Empyrean.Definitions.Items
 
         public Stab(Unit unit) : base(null, AbilityClass.Item_Normal, 1)
         {
-            Name = new TextInfo(27, 3);
-            Description = new TextInfo(28, 3);
+            Name = TextEntry.GetTextEntry(3); //27, 3
+            Description = TextEntry.GetTextEntry(4); //28, 3
 
             CastingUnit = unit;
 

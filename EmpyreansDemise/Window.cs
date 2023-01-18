@@ -28,9 +28,17 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Empyrean.Engine_Classes.Lighting;
 using Monitor = System.Threading.Monitor;
+using System.Runtime.InteropServices;
+using Empyrean.Engine_Classes.Text;
 
 namespace Empyrean
 {
+    public enum OSType
+    {
+        Windows,
+        Linux,
+        OSX
+    }
     public static class GlobalRandom 
     {
         private static Random _random = new ConsistentRandom();
@@ -100,12 +108,18 @@ namespace Empyrean
 
         public static bool DrawTools = false;
 
+        public static float HorizontalDPI = 96;
+        public static float VerticalDPI = 96;
 
-        //Global position = position of objects in the world
+        public static Window CurrentWindow;
+
+        public static OSType CurrentOS;
+
+        //Global position = position in terms of ClientSize pixels
         //Local position = [-1:1] opengl coordinates
         //Screen space = [0:ScreenUnits]
 
-        public static Vector3 ConvertGlobalToLocalCoordinates(Vector3 position)
+        public static Vector3 ConvertScreenSpaceToLocalCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position)
             {
@@ -117,31 +131,24 @@ namespace Empyrean
             return returnVec;
         }
 
-        public static Vector3 ConvertScreenSpaceToLocalCoordinates(Vector3 position)
-        {
-            Vector3 returnVec = new Vector3(position)
-            {
-                X = (position.X / ScreenUnits.X),
-                Y = (position.Y / ScreenUnits.Y) -1,
-                Z = position.Z
-            };
-
-            return returnVec;
-        }
-
-        public static void ConvertGlobalToLocalCoordinatesInPlace(ref Vector3 position)
+        public static void ConvertScreenSpaceToLocalCoordinatesInPlace(ref Vector3 position)
         {
             position.X = (position.X / ScreenUnits.X) * 2 - 1;
             position.Y = ((position.Y / ScreenUnits.Y) * 2 - 1) * -1;
         }
 
+        /// <summary>
+        /// I'm not sure exactly what conversion this function does but I'm going to leave it
+        /// </summary>
         public static Vector3 ConvertLocalToGlobalCoordinates(Vector3 position)
         {
             return new Vector3(position.X * ScreenUnits.X, -position.Y * ScreenUnits.Y, position.Z);
         }
 
-        //Ie convert mouse coordinates to workable screen coordinates
-        public static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector3 position) 
+        /// <summary>
+        /// Converts pixel values into ScreenUnits values. (ie x = 1024 would become x = 1000)
+        /// </summary>
+        public static Vector3 ConvertGlobalToScreenSpaceCoordinates(Vector3 position)
         {
             Vector3 returnVec = new Vector3(position)
             {
@@ -149,6 +156,15 @@ namespace Empyrean
                 Y = position.Y / ClientSize.Y * ScreenUnits.Y,
                 Z = position.Z
             };
+
+            return returnVec;
+        }
+
+        public static Vector2 ConvertGlobalToScreenSpaceCoordinates(Vector2 position)
+        {
+            Vector2 returnVec = new Vector2(
+                position.X / ClientSize.X * ScreenUnits.X, 
+                position.Y / ClientSize.Y * ScreenUnits.Y);
 
             return returnVec;
         }
@@ -208,6 +224,11 @@ namespace Empyrean
         public static bool InMainThread(Thread currThread)
         {
             return currThread.ManagedThreadId == MainThreadId;
+        }
+
+        public static bool InMainThread()
+        {
+            return InMainThread(Thread.CurrentThread);
         }
     }
 
@@ -283,7 +304,26 @@ namespace Empyrean
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
             WindowConstants.MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
+            WindowConstants.CurrentWindow = this;
+
+            //Load default font
+            FontManager.LoadFont("arial.ttf", 64);
+
             CloseWindow = () => Close();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                WindowConstants.CurrentOS = OSType.Windows;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                WindowConstants.CurrentOS = OSType.Linux;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                WindowConstants.CurrentOS = OSType.OSX;
+            }
+            //TryGetCurrentMonitorDpiRaw(out float horizontal, out float vertical);
 
             //Set listeners
             MouseDown += Window_MouseDown;
@@ -293,6 +333,8 @@ namespace Empyrean
             KeyDown += Window_KeyDown;
 
             Renderer.Initialize();
+            TextRenderer.Initialize();
+
             CalculationThread.Initialize();
 
             FeatureManager.Initialize();
@@ -434,7 +476,15 @@ namespace Empyrean
             }, TaskCreationOptions.LongRunning);
 
             GameLoop.Start();
+
+
+            _TEST_STRING = new TextString(UIManager.DEFAULT_FONT_16);
+            _TEST_STRING.SetPosition(new Vector3(75, 600, 0));
+
+            _TEST_STRING.SetText("asdfghjkl");
         }
+
+        public static TextString _TEST_STRING;
 
         public static object _renderLock = new object();
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -658,8 +708,20 @@ namespace Empyrean
 
 
                 RenderingQueue.RenderQueue();
-            }
 
+                if(_TEST_STRING != null)
+                {
+                    GL.Disable(EnableCap.DepthTest);
+
+                    RenderBatch batch = RenderBatch.Get();
+                    batch.Items.Add(_TEST_STRING);
+
+                    TextRenderer.RenderString(batch);
+
+                    batch.Free();
+                    GL.Enable(EnableCap.DepthTest);
+                }
+            }
 
 
             if(CurrentContext == ContentContext.Tools)
@@ -936,7 +998,7 @@ namespace Empyrean
 
             
             //RenderableObject testLine = new RenderableObject(lineObj.CreateLineDefinition(), color, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
-            BaseObject lineObject = new BaseObject(new LINE_ANIMATION(lineObj).List, 999, "line", line1);
+            BaseObject lineObject = new BaseObject(new LINE_ANIMATION(lineObj).List, 999, "line", line1, EnvironmentObjects.QuadBounds);
             //lineObject.BaseFrame.ColorProportion = 1.0f;
             lineObject.BaseFrame.CameraPerspective = camPerspective;
             lineObject.BaseFrame.SetBaseColor(color);
@@ -1098,22 +1160,22 @@ namespace Empyrean
         private static Queue<Action> _renderActionQueue = new Queue<Action>();
         public static void QueueToRenderCycle(Action action)
         {
-            //if(Thread.CurrentThread.ManagedThreadId == WindowConstants.MainThreadId)
-            //{
-            //    action.Invoke();
-            //}
-            //else
-            //{
-            //    lock (_renderActionQueueLock)
-            //    {
-            //        _renderActionQueue.Enqueue(action);
-            //    }
-            //}
-
             if(Monitor.TryEnter(_renderActionQueueLock, ACTION_QUEUE_TIMEOUT_MS))
             {
                 _renderActionQueue.Enqueue(action);
                 Monitor.Exit(_renderActionQueueLock);
+            }
+        }
+
+        public static void InvokeOnMainThread(Action action)
+        {
+            if (Thread.CurrentThread.ManagedThreadId == WindowConstants.MainThreadId)
+            {
+                action.Invoke();
+            }
+            else
+            {
+                QueueToRenderCycle(action);
             }
         }
 

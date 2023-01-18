@@ -59,7 +59,7 @@ namespace Empyrean.Engine_Classes
 
         public MultiTextureData MultiTextureData = new MultiTextureData();
 
-        public ScissorData ScissorData = new ScissorData();
+        public ScissorData ScissorData = ScissorData.Empty;
 
         public ObjectType ObjectType = ObjectType.GenericObject;
 
@@ -70,7 +70,7 @@ namespace Empyrean.Engine_Classes
 
         public GameObject(Spritesheet spritesheet, int spritesheetPos, Vector3 position = default) 
         {
-            RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+            RenderableObject renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.QuadBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
 
             Animation anim = new Animation()
             {
@@ -96,11 +96,11 @@ namespace Empyrean.Engine_Classes
 
             if (bounds != null) 
             {
-                renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, bounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+                renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, bounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
             }
             else
             {
-                renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true, false), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
+                renderableObj = new RenderableObject(new SpritesheetObject(spritesheetPos, spritesheet).CreateObjectDefinition(ObjectIDs.Unknown, EnvironmentObjects.BaseTileBounds, true), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.DEFAULT_SHADER);
             }
             
 
@@ -606,15 +606,19 @@ namespace Empyrean.Engine_Classes
 
     public class ScissorData
     {
-        public int X = 0;
-        public int Y = 0;
-        public int Width = 0;
-        public int Height = 0;
-        public int Depth = 0;
+        public TransformableMesh ScissoredArea;
+
+        public ScissorData()
+        {
+            ScissoredArea = new TransformableMesh(StaticObjects.QUAD_VERTICES, null);
+        }
+
+        private ScissorData(int _) { }
 
         public bool Scissor = false;
 
         public bool _scissorFlag = false;
-        public int _startingDepth = 0;
+
+        public static ScissorData Empty = new ScissorData(0);
     }
 }

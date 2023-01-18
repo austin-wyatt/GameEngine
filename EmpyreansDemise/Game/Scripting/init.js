@@ -7,6 +7,7 @@ var FloatT = host.type("System.Single");
 var DoubleT = host.type("System.Double");
 var LongT = host.type("System.Int64");
 var BoolT = host.type("System.Boolean");
+var CharT = host.type("System.Char");
 
 var INT_MAX_VALUE = Math.pow(2, 31) - 1;
 
@@ -47,6 +48,13 @@ let SaveSource = (src) =>
 {
     DataSourceManager.GetSource(src).SaveAllPendingBlocks();
 }
+
+let SaveSources = () =>
+{
+    DataSourceManager.SaveSources();
+}
+
+
 
 let GetD = (dict, key) =>
 {
@@ -113,4 +121,24 @@ let AddLoggerAction = (loggerActionDict) =>
 {
     LoggerActionManager.AddLoggerAction(loggerActionDict);
 }
-  
+
+
+//let TestDPI = () =>
+//{
+//    var horizontal = host.newVar(FloatT);
+//    var vertical = host.newVar(FloatT);
+
+//    WindowConstants.CurrentWindow.TryGetCurrentMonitorDpiRaw(horizontal.out, vertical.out);
+
+//    Print(horizontal.ToString() + ", " + vertical.ToString());
+//}
+
+let SetText = (val) =>
+{
+    Window._TEST_STRING.SetText(val);
+}
+
+let SetTextScale = (x, y) =>
+{
+    Window._TEST_STRING.SetTextScale(cast(FloatT, x), cast(FloatT, y));
+}

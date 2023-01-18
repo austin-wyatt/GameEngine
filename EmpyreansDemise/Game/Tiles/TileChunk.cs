@@ -170,7 +170,7 @@ namespace Empyrean.Game.Tiles
         private const float MESH_HEIGHT = 9.093267f;
         public void PositionMesh()
         {
-            Vector3 pos = WindowConstants.ConvertGlobalToLocalCoordinates(Tiles[0].Position);
+            Vector3 pos = WindowConstants.ConvertScreenSpaceToLocalCoordinates(Tiles[0].Position);
             pos.X -= 0.5f;
             pos.Y -= 0.5f;
             pos.Z = 0;

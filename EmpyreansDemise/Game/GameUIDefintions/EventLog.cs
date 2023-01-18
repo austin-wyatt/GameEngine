@@ -35,6 +35,7 @@ namespace Empyrean.Game.UI
             LogArea = new ScrollableArea(default, new UIScale(0.75f, 0.5f), default, new UIScale(0.75f, 2f), 
                 scrollbarWidth: 0.05f, scrollSide: ScrollbarSide.Left);
             LogArea.BaseComponent.SetColor(new Vector4(0.33f, 0.33f, 0.25f, 0.5f));
+            //LogArea.BaseComponent.SetColor(new Vector4(0.15f, 0.15f, 0.1f, 1f));
 
             LogArea.Scrollbar.ScrollByPercentage(1f);
 
@@ -61,14 +62,14 @@ namespace Empyrean.Game.UI
 
             FeatureManager.FeatureEnter += (feature, unit) =>
             {
-                string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
+                string text = TextEntry.GetTextEntry(feature.NameTextEntry).ToString();
 
                 AddEvent("Entering " + text);
             };
 
             FeatureManager.FeatureExit += (feature, unit) =>
             {
-                string text = TextTableManager.GetTextEntry(0, feature.NameTextEntry);
+                string text = TextEntry.GetTextEntry(feature.NameTextEntry).ToString();
 
                 AddEvent("Leaving " + text);
             };
@@ -102,7 +103,7 @@ namespace Empyrean.Game.UI
                     break;
             }
 
-            Text textComponent = new Text(eventText, Text.DEFAULT_FONT, 12, brush, Color.FromArgb(84, 84, 64), lineHeightMult: 0.75f);
+            Text_Drawing textComponent = new Text_Drawing(eventText, Text_Drawing.DEFAULT_FONT, 12, brush, Color.FromArgb(84, 84, 64), lineHeightMult: 0.75f);
             textComponent.SetTextScale(TextScale);
 
 

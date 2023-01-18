@@ -155,7 +155,7 @@ namespace Empyrean.Engine_Classes
 
             Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
-            Text tooltip = new Text(param.Text, Text.DEFAULT_FONT, 24, Brushes.Black);
+            Text_Drawing tooltip = new Text_Drawing(param.Text, Text_Drawing.DEFAULT_FONT, 24, Brushes.Black);
             //tooltip.SetTextScale(param.TextScale);
             tooltip.Hoverable = true;
 
@@ -286,10 +286,10 @@ namespace Empyrean.Engine_Classes
         {
             Tooltip tooltip = new Tooltip();
 
-            Text header = new Text(headerText, Text.DEFAULT_FONT, 24, Brushes.Black);
+            Text_Drawing header = new Text_Drawing(headerText, Text_Drawing.DEFAULT_FONT, 24, Brushes.Black);
             header.SetTextScale(1);
 
-            Text description = new Text(bodyText, Text.DEFAULT_FONT, 12, Brushes.Black, Color.White);
+            Text_Drawing description = new Text_Drawing(bodyText, Text_Drawing.DEFAULT_FONT, 12, Brushes.Black, Color.White);
             //description.SetTextScale(1.389f);
 
             tooltip.AddChild(header);
@@ -343,7 +343,7 @@ namespace Empyrean.Engine_Classes
         {
             Tooltip menu = new Tooltip();
 
-            Text header = new Text(headerText, Text.DEFAULT_FONT, 64, Brushes.Black);
+            Text_Drawing header = new Text_Drawing(headerText, Text_Drawing.DEFAULT_FONT, 64, Brushes.Black);
             header.SetTextScale(0.1f);
 
             menu.AddChild(header);
@@ -579,7 +579,7 @@ namespace Empyrean.Engine_Classes
         }
         public static void CreateFocusedPopup(string text, CombatScene scene, FocusedPopupOptions options, Action okYes, Action no = null, Action cancel = null)
         {
-            Text message = new Text(WrapString(text, 50), Text.DEFAULT_FONT, 32, Brushes.Black);
+            Text_Drawing message = new Text_Drawing(WrapString(text, 50), Text_Drawing.DEFAULT_FONT, 32, Brushes.Black);
             message.SetTextScale(0.075f);
 
             UIBlock window = new UIBlock(default, new UIScale(message.Size.X + 0.1f, message.Size.Y + 0.15f));

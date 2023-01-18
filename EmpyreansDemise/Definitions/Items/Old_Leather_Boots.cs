@@ -24,8 +24,8 @@ namespace Empyrean.Definitions.Items
 
             Tags = ItemTag.Armor_Light;
 
-            Name = new TextInfo(6, 1);
-            Description = new TextInfo(7, 1);
+            Name = TextEntry.GetTextEntry(6); //6, 1
+            Description = TextEntry.GetTextEntry(7); //7, 1
         }
 
         public override void InitializeAbility(bool fromLoad = false, Action initializeCallback = null)
@@ -38,8 +38,8 @@ namespace Empyrean.Definitions.Items
                         { (int)BuffEffect.MaxMovementEnergyAdditive, 1 }
                     },
                 PassiveName = "Old_Leather_Boots_Passive",
-                Name = new TextInfo(6, 1),
-                Description = new TextInfo(7, 1)
+                Name = TextEntry.GetTextEntry(6), //6, 1
+                Description = TextEntry.GetTextEntry(7) //7, 1
             };
 
             base.InitializeAbility(fromLoad, initializeCallback);
@@ -58,5 +58,5 @@ namespace Empyrean.Definitions.Items
 
             AnimationSet.Animations.Add(anim);
         }
-    }
+    } 
 }

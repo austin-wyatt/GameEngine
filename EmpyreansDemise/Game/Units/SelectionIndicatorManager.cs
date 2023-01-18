@@ -40,7 +40,7 @@ namespace Empyrean.Game.Units
 
             indicator.FillFromTiles(tiles);
 
-            Vector3 localPos = WindowConstants.ConvertGlobalToLocalCoordinates(unit._actualPosition);
+            Vector3 localPos = WindowConstants.ConvertScreenSpaceToLocalCoordinates(unit._actualPosition);
             localPos.Z = unit.Info.TileMapPosition.Properties.Height + HEIGHT_OFFSET;
 
             indicator.SetTranslation(localPos);
@@ -128,7 +128,7 @@ namespace Empyrean.Game.Units
             List<Tile> tiles = unit.Info.TileMapPosition.TileMap.GetTilesInRadius(unit.Info.TileMapPosition, 1);
 
             unit.SelectionIndicator.FillFromTiles(tiles);
-            Vector3 localPos = WindowConstants.ConvertGlobalToLocalCoordinates(unit._actualPosition);
+            Vector3 localPos = WindowConstants.ConvertScreenSpaceToLocalCoordinates(unit._actualPosition);
             localPos.Z = unit.Info.TileMapPosition.Properties.Height + HEIGHT_OFFSET;
 
             unit.SelectionIndicator.SetTranslation(localPos);

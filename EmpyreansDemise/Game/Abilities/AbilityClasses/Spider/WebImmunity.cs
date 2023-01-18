@@ -23,8 +23,8 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Spider
                 Spritesheet = (int)TextureName.CharacterSpritesheet
             });
 
-            Name = new TextInfo(15, 3);
-            Description = new TextInfo(16, 3);
+            Name = TextEntry.GetTextEntry(15); //15  3
+            Description = TextEntry.GetTextEntry(16); //16  3
 
             AbilityClass = AbilityClass.Spider;
         }

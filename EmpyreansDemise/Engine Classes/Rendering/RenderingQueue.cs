@@ -16,8 +16,7 @@ namespace Empyrean.Engine_Classes.Rendering
     }
     public static class RenderingQueue
     {
-        private static readonly List<Letter> _LettersToRender = new List<Letter>();
-        private static readonly List<GameObject> _UIToRender = new List<GameObject>();
+        private static readonly List<RenderBatch> _UIToRender = new List<RenderBatch>();
         private static readonly List<List<GameObject>> _ObjectsToRender = new List<List<GameObject>>();
 
         private static readonly List<List<Unit>> _UnitsToRender = new List<List<Unit>>();
@@ -30,16 +29,12 @@ namespace Empyrean.Engine_Classes.Rendering
 
         private static readonly List<List<GameObject>> _LowPriorityQueue = new List<List<GameObject>>();
 
-        private static readonly List<GameObject> _LightQueue = new List<GameObject>();
-
         private static List<IndividualMesh> _IndividualMeshsToRender = new List<IndividualMesh>();
 
         public static ContextManager<RenderingStates> RenderStateManager = new ContextManager<RenderingStates>();
 
         public static List<InstancedRenderData> StructureRenderData = new List<InstancedRenderData>();
         public static List<InstancedRenderData> FogStructureRenderData = new List<InstancedRenderData>();
-
-
 
         /// <summary>
         /// Render all queued objects
@@ -77,7 +72,6 @@ namespace Empyrean.Engine_Classes.Rendering
             //    Renderer.MainFBO.UnbindFrameBuffer();
             //}
 
-
             GL.Clear(ClearBufferMask.DepthBufferBit);
             //RenderQueuedLetters();
 
@@ -107,43 +101,16 @@ namespace Empyrean.Engine_Classes.Rendering
         }
         #endregion
 
-        #region Text queue
-        public static void QueueLettersForRender(List<Letter> letters)
-        {
-            for (int i = 0; i < letters.Count; i++)
-            {
-                _LettersToRender.Add(letters[i]);
-            }
-        }
-        public static void QueueTextForRender(List<_Text> text)
-        {
-            for (int i = 0;i < text.Count; i++)
-            {
-                if (text[i].Render)
-                    QueueLettersForRender(text[i].Letters);
-            }
-        }
-        #endregion
-
         #region UI queue
-        public static void QueueUITextForRender(List<_Text> text, bool scissorFlag = false)
-        {
-            for (int i = 0; i < text.Count; i++)
-            {
-                //if (text[i].Render)
-                //    QueueUIForRender(text[i].Letters, scissorFlag);
-                if (text[i].Render)
-                    QueueLettersForRender(text[i].Letters);
-            }
-        }
-        public static void RenderQueuedLetters()
-        {
-            Renderer.RenderTextInstanced(_LettersToRender, ref Renderer._instancedRenderArray);
-            _LettersToRender.Clear();
-        }
 
-        public static void QueueNestedUI(List<UIObject> uiObjects, int depth = 0, ScissorData scissorData = null, bool overrideRender = false)
+        public static void QueueNestedUI(List<UIObject> uiObjects, RenderBatch currentBatch = null)
         {
+            if(currentBatch == null)
+            {
+                currentBatch = RenderBatch.Get();
+                _UIToRender.Add(currentBatch);
+            }
+
             try //This is a lazy solution for a random crash. If I can figure out why it's happening then I'll come back to this
             {
                 if (uiObjects.Count > 0)
@@ -152,36 +119,44 @@ namespace Empyrean.Engine_Classes.Rendering
                     {
                         if (uiObjects[i].Render && !uiObjects[i].Cull)
                         {
-                            //if (uiObjects[i].RenderAfterParent && renderAfterParent != null && !overrideRender)
-                            //{
-                            //    renderAfterParentList.Add(uiObjects[i]);
-                            //    continue;
-                            //}
+                            if (currentBatch.Items.Count == RenderBatch.BATCH_SIZE)
+                            {
+                                RenderBatch newBatch = RenderBatch.Get();
+                                newBatch.CopyParameters(currentBatch);
 
+                                _UIToRender.Add(newBatch);
+                                currentBatch = newBatch;
+                            }
+
+                            //start scissor
                             if (uiObjects[i].ScissorData.Scissor == true)
                             {
-                                scissorData = uiObjects[i].ScissorData;
-                                scissorData._startingDepth = depth;
-                            }
+                                RenderBatch scissorBatch = RenderBatch.Get();
+                                scissorBatch.RenderBatchType = RenderBatchType.Scissor;
+                                scissorBatch.ScissorData = uiObjects[i].ScissorData;
 
-                            bool scissorFlag = false;
-                            if (scissorData != null && depth - scissorData._startingDepth <= scissorData.Depth && depth != scissorData._startingDepth)
-                            {
-                                scissorFlag = true;
-                            }
-                            else
-                            {
-                                scissorData = null;
-                            }
+                                if(currentBatch.RenderBatchType == RenderBatchType.Scissor)
+                                    scissorBatch.DependentBatches.Add(currentBatch);
 
-                            QueueUITextForRender(uiObjects[i].TextObjects, scissorFlag || uiObjects[i].ScissorData.Scissor);
+                                _UIToRender.Add(scissorBatch);
+
+                                currentBatch = scissorBatch;
+                                //push a new scissor batch to the stack
+                                //all child UI from this object will now be part of this scissor batch
+
+                                //If multiple scissored areas are nested within any given scissor batch, 
+                                //the topmost scissor should be completely resolved and then the next nested scissor area should be
+                                //intersected with the current stencil buffer.
+                                //If multiple scissors occur in the same layer of a nested scissor batch, the stencil buffer will need to be 
+                                //saved and reestablished before each batch is completed
+                            }
 
                             if (uiObjects[i].Children.Count > 0)
                             {
-                                QueueNestedUI(uiObjects[i].Children, depth + 1, uiObjects[i].ScissorData.Scissor ? uiObjects[i].ScissorData : scissorData);
+                                QueueNestedUI(uiObjects[i].Children, currentBatch);
                             }
 
-                            QueueUIForRender(uiObjects[i], scissorFlag || uiObjects[i].ScissorData.Scissor);
+                            currentBatch.Items.Add(uiObjects[i]);
                         }
                     }
                 }
@@ -192,24 +167,56 @@ namespace Empyrean.Engine_Classes.Rendering
             }
         }
 
-        public static void QueueUIForRender<T>(List<T> objList, bool scissorFlag = false) where T : GameObject
-        {
-            for (int i = 0; i < objList.Count; i++)
-            {
-                objList[i].ScissorData._scissorFlag = scissorFlag;
-
-                _UIToRender.Add(objList[i]);
-            }
-        }
-        public static void QueueUIForRender(UIObject obj, bool scissorFlag = false)
-        {
-            obj.ScissorData._scissorFlag = scissorFlag;
-
-            _UIToRender.Add(obj);
-        }
         public static void RenderQueuedUI()
         {
-            Renderer.RenderObjectsInstancedGeneric(_UIToRender, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
+            for(int i = 0; i < _UIToRender.Count; i++)
+            {
+                if (_UIToRender[i].Items.Count == 0)
+                {
+                    _UIToRender[i].Free();
+                    continue;
+                }
+
+                if(_UIToRender[i].RenderBatchType == RenderBatchType.Default)
+                {
+                    Renderer.RenderObjectsInstancedGeneric(_UIToRender[i].Items, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
+                    _UIToRender[i].Free();
+                }
+                else if(_UIToRender[i].RenderBatchType == RenderBatchType.Scissor)
+                {
+                    int stencilVal = 1;
+
+                    GL.Clear(ClearBufferMask.StencilBufferBit);
+
+                    GL.Enable(EnableCap.StencilTest);
+                    GL.StencilFunc(StencilFunction.Always, stencilVal, 0xFF);
+                    GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+                    GL.StencilMask(0xFF);
+
+                    for (int j = 0; j < _UIToRender[i].DependentBatches.Count; j++)
+                    {
+                        throw new NotImplementedException();
+                        if (j == 1)
+                        {
+                            //intersect each nested scissor area together
+                            GL.StencilFunc(StencilFunction.Equal, stencilVal, 0xFF);
+                            GL.StencilOp(StencilOp.Incr, StencilOp.Incr, StencilOp.Incr);
+                        }
+                        _UIToRender[i].DependentBatches[j].DrawScissorQuad();
+                    }
+
+                    _UIToRender[i].DrawScissorQuad();
+
+                    GL.StencilFunc(StencilFunction.Equal, stencilVal, 0xFF);
+                    GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
+
+                    Renderer.RenderObjectsInstancedGeneric(_UIToRender[i].Items, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
+
+                    GL.Disable(EnableCap.StencilTest);
+
+                    _UIToRender[i].Free();
+                }
+            }
             _UIToRender.Clear();
         }
 
@@ -359,7 +366,8 @@ namespace Empyrean.Engine_Classes.Rendering
             //The mask value gets anded with the ref value and the stencil value and the comparison takes place between those values
             //Ex. StencilFunction.Greater means (3 & 0xFF > [stencil_value] & 0xFF)
             GL.StencilFunc(StencilFunction.Always, 3, 0xFF);
-            //The stencil mask limits which values can be drawn into the stencil buffer
+            //The stencil mask limits which values can be drawn into the stencil buffer, 0xFF means all values can be written
+            //ie the mask is &'d with the value you are attempting to write
             GL.StencilMask(0xFF);
 
             //GL.DepthMask(false);

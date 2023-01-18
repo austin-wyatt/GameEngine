@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using DataObjects;
+using Empyrean.Game.Logger;
 
 namespace Empyrean.Game.DataObjects
 {
@@ -37,6 +38,7 @@ namespace Empyrean.Game.DataObjects
         
         private const int USER_BLOCK_SIZE = 1000;
         private const int DATA_BLOCK_SIZE = 1000;
+        private const int TEXT_BLOCK_SIZE = 10000;
         private const int SETTINGS_BLOCK_SIZE = 10;
 
         public static void Initialize(string saveName) 
@@ -52,14 +54,19 @@ namespace Empyrean.Game.DataObjects
 #if DEBUG
             WriteDataBlockManager staticDataSource = new WriteDataBlockManager(DATA_BLOCK_SIZE, "data_", 
                 Serializers.SerializerParams.DATA_BASE_PATH, writeEnabled: true);
+            WriteDataBlockManager textSource = new WriteDataBlockManager(TEXT_BLOCK_SIZE, "text_",
+                Serializers.SerializerParams.DATA_BASE_PATH, writeEnabled: true);
 #else
             WriteDataBlockManager staticDataSource = new WriteDataBlockManager(DATA_BLOCK_SIZE, "data_", 
+                Serializers.SerializerParams.DATA_BASE_PATH, writeEnabled: false);
+            WriteDataBlockManager textSource = new WriteDataBlockManager(TEXT_BLOCK_SIZE, "text_",
                 Serializers.SerializerParams.DATA_BASE_PATH, writeEnabled: false);
 #endif
 
             DataSourceManager.AddDataSource(userSource, "user");
             DataSourceManager.AddDataSource(staticDataSource, "static");
             DataSourceManager.AddDataSource(settingSource, "settings");
+            DataSourceManager.AddDataSource(textSource, "text");
 
             DataSourceManager.PathAliases.Add("~unit", ":user.20");
             DataSourceManager.PathAliases.Add("~loc", ":user.16");
@@ -71,6 +78,12 @@ namespace Empyrean.Game.DataObjects
             DataSourceManager.PathAliases.Add("~questdata", ":user.1000");
 
             DataSourceManager.PathAliases.Add("~settings", ":settings.0");
+
+            DataSourceManager.EntryModified += (path) =>
+            {
+                LoggerPacket packet = LoggerPacket.BuildPacket_DataObjectChanged(path);
+                LoggerHub.ProcessPacket(packet);
+            };
 
             InitializeSave();
         }

@@ -34,8 +34,11 @@ namespace Empyrean.Objects
         public static readonly Shader PARTICLE_SHADER = new Shader("Shaders/particleShader.vert", "Shaders/particleShader.frag");
 
         public static readonly Shader TEXT_SHADER = new Shader("Shaders/Text/textShader.vert", "Shaders/Text/textShader.frag");
+        
         public static readonly Shader TILE_SHADER = new Shader("Shaders/Tiles/tileShader.vert", "Shaders/Tiles/tileShader.frag");
+
         public static readonly Shader UI_SHADER = new Shader("Shaders/UI/uiShader.vert", "Shaders/UI/uiShader.frag");
+        public static readonly Shader UI_SCISSOR_SHADER = new Shader("Shaders/UI/scissorStencil.vert", "Shaders/UI/scissorStencil.frag");
 
         public static readonly Shader CHUNK_SHADER = new Shader("Shaders/Tiles/chunkShader.vert", "Shaders/Tiles/chunkShader.frag");
         public static readonly Shader INDIVIDUAL_MESH_SHADER = new Shader("Shaders/IndividualMesh/individualMeshShader.vert", 

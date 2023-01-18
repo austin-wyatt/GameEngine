@@ -32,8 +32,8 @@ namespace Empyrean.Game.Abilities.AbilityClasses.Roguery
             Charges = 0;
             ChargeRechargeCost = 0;
 
-            Name = new TextInfo(23, 3);
-            Description = new TextInfo(24, 3);
+            Name = TextEntry.GetTextEntry(23); //23  3 
+            Description = TextEntry.GetTextEntry(24); //24  3 
 
 
             //Name = new Serializers.TextInfo(9, 3);

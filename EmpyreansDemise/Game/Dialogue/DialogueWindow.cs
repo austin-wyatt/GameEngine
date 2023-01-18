@@ -37,7 +37,7 @@ namespace Empyrean.Game
 
         private DialogueNode _currentNode;
         private DialogueNode _prevNode;
-        private Text _prevDialogueText;
+        private Text_Drawing _prevDialogueText;
         private UIObject _buttonParent;
         private UIObject _dialogueParent;
         private UIObject _speakerParent;
@@ -162,7 +162,7 @@ namespace Empyrean.Game
             uiObj.SetAllInline(0);
 
             string dialogueMessage = UIHelpers.WrapString(_currentNode.GetMessage(), textWrapLength);
-            Text dialogueText = new Text(dialogueMessage, Text.DEFAULT_FONT, 32, Brushes.Tan);
+            Text_Drawing dialogueText = new Text_Drawing(dialogueMessage, Text_Drawing.DEFAULT_FONT, 32, Brushes.Tan);
             //dialogueText.SetColor(_Colors.Tan);
             dialogueText.SetTextScale(0.075f);
 
@@ -211,11 +211,6 @@ namespace Empyrean.Game
                 _speakerParent.AddChild(uiObj);
             }
             #endregion
-
-            foreach (var text in dialogueText.TextObjects)
-            {
-                text.SetScissorData(_scrollableArea.BaseComponent.ScissorData);
-            }
 
             CheckTextPlacement();
 
@@ -398,7 +393,7 @@ namespace Empyrean.Game
         {
             string dialogueMessage = UIHelpers.WrapString(response, textWrapLength);
 
-            Text dialogueText = new Text(dialogueMessage, Text.DEFAULT_FONT, 32, Brushes.LightGreen);
+            Text_Drawing dialogueText = new Text_Drawing(dialogueMessage, Text_Drawing.DEFAULT_FONT, 32, Brushes.LightGreen);
 
 
             if (_prevDialogueText == null)
@@ -414,11 +409,6 @@ namespace Empyrean.Game
 
             _prevDialogueText = dialogueText;
             _dialogueParent.AddChild(dialogueText);
-
-            foreach(var text in dialogueText.TextObjects)
-            {
-                text.SetScissorData(_scrollableArea.BaseComponent.ScissorData);
-            }
 
             CheckTextPlacement();
 

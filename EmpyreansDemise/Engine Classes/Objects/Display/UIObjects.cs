@@ -39,7 +39,6 @@ namespace Empyrean.Engine_Classes
     public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
-        public List<_Text> TextObjects = new List<_Text>();
         public Vector3 Origin = default; //this will be the top left of the UIBlock
         public UIScale Size = new UIScale(1, 1);
         public bool CameraPerspective = false;
@@ -510,13 +509,6 @@ namespace Empyrean.Engine_Classes
                 {
                     ManagerHandle.AddScrollableObject(this);
                 }
-            }
-
-            foreach (var text in TextObjects)
-            {
-                Vector3 pos = text.Position;
-                pos.Z = zPos;
-                text.SetPosition(pos);
             }
         }
 

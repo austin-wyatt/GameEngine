@@ -109,8 +109,6 @@ namespace Empyrean.Objects
         public float[] Bounds;
         public float[] fastVertices;
 
-        private bool _centerVertices;
-
         public float VerticeType = 0;
 
         public float SpritesheetPosition = 0;
@@ -121,12 +119,7 @@ namespace Empyrean.Objects
             Points = points;
             Textures = textures;
             Center = center;
-            if(centerVertices)
-                Vertices = CenterVertices(vertices);
-            else
-                Vertices = vertices;
-
-            _centerVertices = centerVertices;
+            Vertices = vertices;
 
             if (bounds == null) 
             {
@@ -148,42 +141,5 @@ namespace Empyrean.Objects
 
         }
         public ObjectDefinition() { }
-        //Centers the vertices of the renderable object when defined (might want to move this to a different area at some point)
-        public float[] CenterVertices(float[] vertices)
-        {
-            //vertices will be stored in [x, y, z, textureX, textureY] format
-            int stride = vertices.Length / Points;
-
-            float centerX = Center.X;
-            float centerY = Center.Y;
-            float centerZ = Center.Z;
-
-
-
-            for (int i = 0; i < Points; i++)
-            {
-                centerX += vertices[i * stride + 0];
-                centerY += vertices[i * stride + 1];
-                centerZ += vertices[i * stride + 2];
-            }
-
-            centerX /= Points;
-            centerY /= Points;
-            centerZ /= Points;
-
-            for (int i = 0; i < Points; i++)
-            {
-                vertices[i * stride + 0] -= centerX;
-                vertices[i * stride + 1] -= centerY;
-                vertices[i * stride + 2] -= centerZ;
-            }
-
-            return vertices;
-        }
-
-        public bool ShouldCenter() 
-        {
-            return _centerVertices;
-        }
     }
 }

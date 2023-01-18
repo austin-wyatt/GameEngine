@@ -137,7 +137,7 @@ namespace Empyrean.Engine_Classes
         {
             Position = position;
 
-            _positionHelper = WindowConstants.ConvertGlobalToLocalCoordinates(position);
+            _positionHelper = WindowConstants.ConvertScreenSpaceToLocalCoordinates(position);
             
             Translation.M41 = _positionHelper.X;
             Translation.M42 = _positionHelper.Y;

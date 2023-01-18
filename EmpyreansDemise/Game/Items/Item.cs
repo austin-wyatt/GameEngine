@@ -87,8 +87,8 @@ namespace Empyrean.Game.Items
     public class Item
     {
         public int Id;
-        public TextInfo Name;
-        public TextInfo Description;
+        public TextEntry Name;
+        public TextEntry Description;
 
         /// <summary>
         /// The modifier tag will allow items to have alternate stats/functions depending on the value of the tag
@@ -269,13 +269,6 @@ namespace Empyrean.Game.Items
         {
             //Instantiate the item's animation set here.
             //Items can have different animations for different modifiers, internal states, etc
-        }
-
-        public BaseObject CreateBaseObject()
-        {
-            BaseObject obj = new BaseObject(AnimationSet.BuildAnimationsFromSet(), 0, "", default);
-
-            return obj;
         }
 
         public Icon Generate(UIScale size)

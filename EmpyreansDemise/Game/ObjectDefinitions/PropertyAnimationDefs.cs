@@ -99,7 +99,7 @@ namespace Empyrean.Game.Objects
                 OnFinish += () =>
                 {
                     baseFrame.RotateZ(rotateAmount);
-                    baseFrame.CalculateTransformationMatrix();
+                    baseFrame.CalculateTransformations();
                 };
             }
         }

@@ -104,26 +104,32 @@ namespace Empyrean.Engine_Classes.TextHandling
             //dim.Width = (int)dim.Width;
             //dim.Height = (int)dim.Height;
 
-            Bitmap map = new Bitmap((int)dim.Width + 1, (int)dim.Height + 1);
+            Bitmap map = new Bitmap((int)dim.Width + 1, (int)dim.Height + 2);
 
+            
             //RectangleF rect = new RectangleF(0, 0, dim.Width, dim.Height);
 
             Graphics graphics = Graphics.FromImage(map);
             graphics.Clear(clearColor);
-            //graphics.Clear(Color.Empty);
+            //graphics.Clear(Color.Transparent);
+            //graphics.Clear(Color.Black);
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
             //graphics.SmoothingMode = SmoothingMode.HighQuality;
-            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
-            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            ////graphics.SmoothingMode = SmoothingMode.HighQuality;
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            //graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+            ////graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
-            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            ////graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
+            ////graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             graphics.CompositingQuality = CompositingQuality.HighQuality;
+
+            graphics.TextContrast = 0;
 
             for (int i = 0; i < textArr.Length; i++)
             {
@@ -185,7 +191,7 @@ namespace Empyrean.Engine_Classes.TextHandling
 
                 try
                 {
-                    tex = Texture.LoadFromBitmap(map, true, --_textureType, generateMipMaps: false);
+                    tex = Texture.LoadFromBitmap(map, nearest: true, --_textureType, generateMipMaps: false);
                     setTexture(tex);
                 }
                 catch { }

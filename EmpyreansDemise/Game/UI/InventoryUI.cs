@@ -62,7 +62,7 @@ namespace Empyrean.Game.UI
         private ScrollableArea _itemsScrollableArea;
         public void PopulateData()
         {
-            Text inventoryLabel = new Text("Inventory", Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text_Drawing inventoryLabel = new Text_Drawing("Inventory", Text_Drawing.DEFAULT_FONT, 48, Brushes.Black);
             inventoryLabel.SetTextScale(0.1f);
 
             inventoryLabel.SetPositionFromAnchor(Window.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
@@ -73,7 +73,7 @@ namespace Empyrean.Game.UI
             Window.AddChild(goldIcon);
 
 
-            Text goldLabel = new Text($"{PlayerParty.Inventory.Gold}", Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text_Drawing goldLabel = new Text_Drawing($"{PlayerParty.Inventory.Gold}", Text_Drawing.DEFAULT_FONT, 48, Brushes.Black);
             goldLabel.SetTextScale(0.075f);
 
             goldLabel.SetPositionFromAnchor(goldIcon.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
@@ -161,13 +161,13 @@ namespace Empyrean.Game.UI
             _selectedItemArea.RemoveChildren();
             _selectedItem = item;
 
-            Text itemLabel = new Text(item.Name.ToString(), Text.DEFAULT_FONT, 48, Brushes.Black);
+            Text_Drawing itemLabel = new Text_Drawing(item.Name.ToString(), Text_Drawing.DEFAULT_FONT, 48, Brushes.Black);
             itemLabel.SetTextScale(0.1f);
 
             itemLabel.SetPositionFromAnchor(_selectedItemArea.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
             _selectedItemArea.AddChild(itemLabel);
 
-            Text descriptionLabel = new Text(UIHelpers.WrapString(item.Description.ToString(), 30), Text.DEFAULT_FONT, 32, Brushes.Black);
+            Text_Drawing descriptionLabel = new Text_Drawing(UIHelpers.WrapString(item.Description.ToString(), 30), Text_Drawing.DEFAULT_FONT, 32, Brushes.Black);
             descriptionLabel.SetTextScale(0.075f);
 
             descriptionLabel.SetPositionFromAnchor(itemLabel.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);
@@ -182,7 +182,7 @@ namespace Empyrean.Game.UI
                 info += $"Stack size: {item.StackSize}\n";
             }
 
-            Text infoLabel = new Text(info, Text.DEFAULT_FONT, 32, Brushes.Black);
+            Text_Drawing infoLabel = new Text_Drawing(info, Text_Drawing.DEFAULT_FONT, 32, Brushes.Black);
             infoLabel.SetTextScale(0.075f);
 
             infoLabel.SetPositionFromAnchor(_selectedItemArea.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(10, 10, 0), UIAnchorPosition.BottomLeft);

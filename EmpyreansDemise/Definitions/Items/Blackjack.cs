@@ -26,6 +26,8 @@ namespace Empyrean.Definitions.Items
 
             Tags = ItemTag.Weapon_OneHanded | ItemTag.Weapon_Melee | ItemTag.Weapon_Concealed | ItemTag.Weapon_Blunt;
 
+            Name = TextEntry.GetTextEntry(1); //1, 1
+            Description = TextEntry.GetTextEntry(3); //3, 1
             //Name = new TextInfo(1, 1);
             //Description = new TextInfo(3, 1)
             //{
@@ -75,8 +77,8 @@ namespace Empyrean.Definitions.Items
 
             public Club(Unit unit) : base(null, AbilityClass.Item_Normal, 1)
             {
-                Name = new TextInfo(4, 1);
-                Description = new TextInfo(5, 1);
+                Name = TextEntry.GetTextEntry(4); //4, 1
+                Description = TextEntry.GetTextEntry(5); //5, 1
 
                 CastingUnit = unit;
                 CastingMethod = CastingMethod.Base | CastingMethod.BruteForce | CastingMethod.Weapon;
