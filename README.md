@@ -13,6 +13,6 @@ Most required dependencies are included in the visual studio solution file so th
 
 SharpFont must be compiled from source and included as a reference. 
 
-Additionally, FreeType must be compiled from source and copied to the project's output directory. If compiling for Win64, FreeType must be patched according to the directions here: https://github.com/Robmaister/SharpFont.Dependencies/tree/master/freetype2
+Additionally, FreeType must be compiled from source to freetype6.dll and copied to the project's output directory. If compiling for Win64, FreeType must be patched according to the directions here: https://github.com/Robmaister/SharpFont.Dependencies/tree/master/freetype2
 
 Microsoft Visual C++ and OpenAL redistributables are also required.
