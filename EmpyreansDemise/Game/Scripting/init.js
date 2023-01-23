@@ -142,3 +142,13 @@ let SetTextScale = (x, y) =>
 {
     Window._TEST_STRING.SetTextScale(cast(FloatT, x), cast(FloatT, y));
 }
+
+let ST = () =>
+{
+    Window._TEST_STRING.SetTextScale(cast(FloatT, 1), cast(FloatT, 1));
+}
+
+let SetTextColor = (x, y, z, w) =>
+{
+    Window._TEST_STRING.SetTextColor(cast(FloatT, x), cast(FloatT, y), cast(FloatT, z), cast(FloatT, w));
+}

@@ -1,4 +1,5 @@
-﻿using Empyrean.Engine_Classes.TextHandling;
+﻿using Empyrean.Engine_Classes.Text;
+using Empyrean.Engine_Classes.TextHandling;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -9,13 +10,13 @@ namespace Empyrean.Engine_Classes.UIComponents
 {
     public class Input : UIObject
     {
-        public float TextScale = 1f;
+        public FontInfo FontInfo = UIManager.DEFAULT_FONT_INFO_16;
         public UIDimensions TextOffset = new UIDimensions(20, 30);
         public bool CenterText = false;
 
         public int _cursorIndex = 0;
 
-        public Text_Drawing _textBox;
+        public TextString _textBox;
 
         public Cursor _cursorObject;
 
@@ -27,14 +28,19 @@ namespace Empyrean.Engine_Classes.UIComponents
 
         public Action<string> OnTypeAction = null;
 
-        public Input(Vector3 position, UIScale size, string text, int textScale = 16, bool centerText = false, UIDimensions textOffset = default, 
-            Brush textColor = null)
+        public Input(Vector3 position, UIScale size, string text, FontInfo fontInfo, bool centerText = false, UIDimensions textOffset = default, 
+            Vector4 textColor = default)
         {
-            TextScale = textScale;
+            FontInfo = fontInfo;
             Size = size;
             Position = position;
             Name = "Input";
             CenterText = centerText;
+
+            if(textColor == default)
+            {
+                textColor = _Colors.White;
+            }
 
             if (textOffset != default)
             {
@@ -47,16 +53,26 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             Typeable = true;
 
-            textColor = textColor != null ? textColor : Brushes.Black;
+            UIBlock block = new UIBlock(position, size);
+            block.SetRender(false);
 
-            Text_Drawing textBox = new Text_Drawing(text, FONTS.CascadiaMono, textScale, textColor);
+            TextString textString = new TextString(fontInfo)
+            {
+                TextColor = textColor,
+                VerticalAlignment = VerticalAlignment.Top
+            };
 
-            BaseComponent = textBox;
-            _textBox = textBox;
+            BaseComponent = block;
+            _textBox = textString;
 
-            AddChild(textBox);
+            AddChild(block);
 
-            _cursorObject = new Cursor(textBox.Position, size.Y / 2);
+            TextStrings.Add(textString);
+            textString.SetText(text);
+
+            _textBox.SetPosition(GAP(UIAnchorPosition.BottomLeft) + new Vector3(0, -15, 0));
+
+            _cursorObject = new Cursor(textString.Position, size.Y / 2);
 
             AddChild(_cursorObject, 100);
 
@@ -73,10 +89,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
         public void Clear()
         {
-            Vector3 topLeftPos = _textBox.GAP(UIAnchorPosition.TopLeft);
-
             _textBox.SetText("");
-            _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
 
             _cursorIndex = 0;
             SetCursorPosition();
@@ -87,12 +100,10 @@ namespace Empyrean.Engine_Classes.UIComponents
             base.OnKeyDown(e);
 
             string typedLetter = TextHelper.KeyStrokeToString(e);
-            string currString = _textBox.TextString;
+            string currString = _textBox.Text;
 
             _cursorObject.SetRender(true);
             _cursorObject.PropertyAnimations[0].Restart();
-
-            Vector3 topLeftPos = _textBox.GAP(UIAnchorPosition.TopLeft);
 
             bool change = false;
 
@@ -112,7 +123,6 @@ namespace Empyrean.Engine_Classes.UIComponents
                             string clipboardText = ClipboardHelper.GetText();
 
                             _textBox.SetText(currString.Substring(0, _cursorIndex) + clipboardText + currString.Substring(_cursorIndex));
-                            _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
                             return;
                         case Keys.C:
                             ClipboardHelper.SetText(currString);
@@ -130,7 +140,6 @@ namespace Empyrean.Engine_Classes.UIComponents
                             _textBox.SetText(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
                             _cursorIndex++;
                             _lineCount++;
-                            _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
                             change = true;
                         }
                         else
@@ -142,7 +151,6 @@ namespace Empyrean.Engine_Classes.UIComponents
                     {
                         _textBox.SetText(currString.Substring(0, _cursorIndex) + typedLetter + currString.Substring(_cursorIndex, currString.Length - _cursorIndex));
                         _cursorIndex++;
-                        _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
                         change = true;
                     }
                 }
@@ -161,7 +169,6 @@ namespace Empyrean.Engine_Classes.UIComponents
 
                             _textBox.SetText(currString.Remove(_cursorIndex - 1, 1));
                             _cursorIndex--;
-                            _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
 
                             change = true;
                         }
@@ -170,7 +177,6 @@ namespace Empyrean.Engine_Classes.UIComponents
                         if (_cursorIndex < currString.Length)
                         {
                             _textBox.SetText(currString.Remove(_cursorIndex, 1));
-                            _textBox.SAP(topLeftPos, UIAnchorPosition.TopLeft);
 
                             change = true;
                         }
@@ -190,7 +196,7 @@ namespace Empyrean.Engine_Classes.UIComponents
                         change = true;
                         break;
                     case Keys.End:
-                        _cursorIndex = _textBox.TextString.Length;
+                        _cursorIndex = _textBox.Text.Length;
                         change = true;
                         break;
                     case Keys.Escape:
@@ -205,7 +211,7 @@ namespace Empyrean.Engine_Classes.UIComponents
                 {
                     _cursorIndex = 0;
                 }
-                else if (_cursorIndex > _textBox.TextString.Length)
+                else if (_cursorIndex > _textBox.Text.Length)
                 {
                     _cursorIndex = currString.Length;
                 }
@@ -216,32 +222,22 @@ namespace Empyrean.Engine_Classes.UIComponents
 
         public void SetCursorPosition() 
         {
-            Vector3 textBoxLeftCenter = _textBox.GetAnchorPosition(UIAnchorPosition.LeftCenter);
-
-            if (_textBox.TextString.Length > 0 && _cursorIndex != 0)
+            if (_textBox.Text.Length > 0 && _cursorIndex != 0)
             {
-                //Vector3 textDimensions = _textBox.TextField._textField.Letters[_cursorIndex - 1].GetDimensions();
+                Vector3 pos = new Vector3(_textBox.Characters[_cursorIndex - 1].NextCharXPosition(),
+                    _textBox.Position.Y - _textBox.Characters[_cursorIndex - 1].Glyph.Descender, 
+                    _textBox.Position.Z);
 
-                //if (_textBox.TextField._textField.Letters[_cursorIndex - 1].Character == Character.NewLine)
-                //{
-                //    _cursorObject.SetPosition(_textBox.TextField._textField.Letters[_cursorIndex - 1].Position - textDimensions.X / 1.95f * Vector3.UnitX);
-                //}
-                //else
-                //{
-                    _cursorObject.SAP(new Vector3(textBoxLeftCenter.X + (float)_cursorIndex / _textBox.TextString.Length *
-                       _textBox.TextDimensions.X / WindowConstants.ClientSize.X * WindowConstants.ScreenUnits.X
-                       , Position.Y, Position.Z), UIAnchorPosition.LeftCenter);
-                //}
+                _cursorObject.SAP(pos, UIAnchorPosition.BottomRight);
             }
             else
             {
-                _cursorObject.SetPosition(textBoxLeftCenter);
+                float descender = _textBox.GetDescender();
+                _cursorObject.SAP(_textBox.Position - new Vector3(0, descender, 0), UIAnchorPosition.BottomLeft);
             }
 
             if (!ScissorBounds.InBoundingArea(_cursorObject.Position))
             {
-
-                //_textBox.SetPosition(_cursorObject.Position);
                 UpdateScissorBounds();
             }
         }

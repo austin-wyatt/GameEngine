@@ -56,7 +56,7 @@ namespace Empyrean.Game.Scripting
 
         private static void AddTestHostTypes()
         {
-            Engine.AddHostType("FontManager", typeof(FontManager));
+            Engine.AddHostType("GlyphLoader", typeof(GlyphLoader));
         }
 
         public static object ApplyScript(string script)

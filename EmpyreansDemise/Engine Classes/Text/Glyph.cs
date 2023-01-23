@@ -8,7 +8,12 @@ namespace Empyrean.Engine_Classes.Text
     public class Glyph
     {
         public readonly int CharacterValue = '~';
-        public int GlyphIndex;
+        public int GlyphSSBOIndex;
+
+        /// <summary>
+        /// The glyph index as retrieved by the FreeType face
+        /// </summary>
+        public uint FreeTypeGlyphIndex;
 
         //All dimension properties are stored as Global coordinates
         //ie [0, ClientSize]
@@ -16,29 +21,34 @@ namespace Empyrean.Engine_Classes.Text
         /// <summary>
         /// Size of the glyph in pixels
         /// </summary>
-        public readonly Vector2 Size;
+        public Vector2 Size;
 
         /// <summary>
         /// The left and top offset of the glyph in pixels
         /// </summary>
-        public readonly Vector2 Bearing;
+        public Vector2 Bearing;
 
         /// <summary>
         /// The width of the glyph in pixels
         /// </summary>
-        public readonly int Advance;
-        public readonly LoadedFont Font;
+        public int Advance;
+
+        public float LineHeight;
+        public float Descender;
 
         public bool Render = true;
 
-        public Glyph(int characterValue, int glyphIndex, Vector2 size, Vector2 bearing, int advance, LoadedFont font)
+        public FontInfo FontInfo;
+
+        public Glyph(int characterValue, int glyphIndex, Vector2 size, Vector2 bearing, int advance, uint freeTypeGlyphIndex, FontInfo fontInfo)
         {
             CharacterValue = characterValue;
-            GlyphIndex = glyphIndex;
+            GlyphSSBOIndex = glyphIndex;
             Size = size;
             Bearing = bearing;
             Advance = advance;
-            Font = font;
+            FreeTypeGlyphIndex = freeTypeGlyphIndex;
+            FontInfo = fontInfo;
         }
     }
 

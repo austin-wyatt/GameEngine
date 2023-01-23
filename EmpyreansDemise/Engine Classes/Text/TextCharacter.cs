@@ -18,9 +18,9 @@ namespace Empyrean.Engine_Classes.Text
             Glyph = glyph;
         }
 
-        public void SetCharacter(int newCharacter)
+        public void SetCharacter(int newCharacter, FontInfo font)
         {
-            Glyph = Glyph.Font.GetGlyph(newCharacter);
+            Glyph = GlyphLoader.GetGlyph(newCharacter, font);
         }
 
         public UIDimensions GetDimensions()
@@ -107,28 +107,34 @@ namespace Empyrean.Engine_Classes.Text
             const float oneOverThree = 1f / 3;
             const float twoOverThree = 2f / 3;
 
-            if (floorDif >= 0.5f)
-            {
-                if (floorDif >= fiveOverSix)
-                {
-                    bottomLeft.X = (int)bottomLeft.X + 1;
-                }
-                else
-                {
-                    bottomLeft.X = (int)bottomLeft.X + twoOverThree;
-                }
-            }
-            else
-            {
-                if (floorDif <= oneOverSix)
-                {
-                    bottomLeft.X = (int)bottomLeft.X;
-                }
-                else
-                {
-                    bottomLeft.X = (int)bottomLeft.X + oneOverThree;
-                }
-            }
+            //if (floorDif >= 0.5f)
+            //{
+            //    //if (floorDif >= fiveOverSix)
+            //    //{
+            //    //    bottomLeft.X = (int)bottomLeft.X + 1;
+            //    //}
+            //    //else
+            //    //{
+            //    //    bottomLeft.X = (int)bottomLeft.X + twoOverThree;
+            //    //}
+
+            //    bottomLeft.X = (int)bottomLeft.X + 1;
+            //}
+            //else
+            //{
+            //    //if (floorDif <= oneOverSix)
+            //    //{
+            //    //    bottomLeft.X = (int)bottomLeft.X;
+            //    //}
+            //    //else
+            //    //{
+            //    //    bottomLeft.X = (int)bottomLeft.X + oneOverThree;
+            //    //}
+
+            //    bottomLeft.X = (int)bottomLeft.X;
+            //}
+
+            bottomLeft.X = (int)bottomLeft.X;
 
             floorDif = bottomLeft.Y - (int)bottomLeft.Y;
 
@@ -205,6 +211,16 @@ namespace Empyrean.Engine_Classes.Text
             }
 
             return anchorPos;
+        }
+
+        public float NextCharXPosition()
+        {
+            Vector3 leftCenter = GAP(UIAnchorPosition.LeftCenter);
+
+            float screenAdvance = (float)Glyph.Advance / WindowConstants.ClientSize.Y *
+                    WindowConstants.ScreenUnits.Y * CurrentScale.X / WindowConstants.AspectRatio;
+
+            return leftCenter.X + screenAdvance;
         }
     }
 }

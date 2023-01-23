@@ -1,6 +1,7 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.Rendering;
 using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.Text;
 using Empyrean.Game.Objects;
 using Empyrean.Objects;
 using OpenTK.Mathematics;
@@ -39,6 +40,8 @@ namespace Empyrean.Engine_Classes
     public class UIObject : GameObject, IComparable<UIObject>
     {
         public List<UIObject> Children = new List<UIObject>(); //nested objects will be placed based off of their positional offset from the parent
+        public List<TextString> TextStrings = new List<TextString>();
+
         public Vector3 Origin = default; //this will be the top left of the UIBlock
         public UIScale Size = new UIScale(1, 1);
         public bool CameraPerspective = false;
@@ -279,6 +282,11 @@ namespace Empyrean.Engine_Classes
                 obj.ScaleAllRecursive(obj, f);
             });
 
+            foreach(var text in uiObj.TextStrings)
+            {
+                text.SetTextScale(f, f);
+            }
+
             Update();
         }
 
@@ -301,6 +309,11 @@ namespace Empyrean.Engine_Classes
             {
                 obj.ScaleAdditionRecursive(obj, f);
             });
+
+            foreach (var text in uiObj.TextStrings)
+            {
+                text.SetTextScale(text.TextScale.X + f, text.TextScale.Y + f);
+            }
 
             Update();
         }
@@ -471,6 +484,13 @@ namespace Empyrean.Engine_Classes
                 Vector3 childPos = Children[i].Position;
 
                 Children[i].SetPosition(childPos - deltaPos);
+            }
+
+            for(int i = 0; i < TextStrings.Count; i++)
+            {
+                Vector3 childPos = TextStrings[i].Position;
+
+                TextStrings[i].SetPosition(childPos - deltaPos);
             }
 
             Update();
@@ -654,7 +674,7 @@ namespace Empyrean.Engine_Classes
         }
 
         /// <summary>
-        /// Actually a preorder search now but I'm leaving the breadth first search code commented out
+        /// Actually a preorder search but I'm leaving the breadth first search code commented out
         /// </summary>
         public List<UIObject> BreadthFirstSearch(UIManager handle) 
         {

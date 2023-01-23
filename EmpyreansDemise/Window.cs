@@ -30,6 +30,7 @@ using Empyrean.Engine_Classes.Lighting;
 using Monitor = System.Threading.Monitor;
 using System.Runtime.InteropServices;
 using Empyrean.Engine_Classes.Text;
+using System.IO;
 
 namespace Empyrean
 {
@@ -306,8 +307,6 @@ namespace Empyrean
 
             WindowConstants.CurrentWindow = this;
 
-            //Load default font
-            FontManager.LoadFont("arial.ttf", 64);
 
             CloseWindow = () => Close();
 
@@ -476,12 +475,6 @@ namespace Empyrean
             }, TaskCreationOptions.LongRunning);
 
             GameLoop.Start();
-
-
-            _TEST_STRING = new TextString(UIManager.DEFAULT_FONT_16);
-            _TEST_STRING.SetPosition(new Vector3(75, 600, 0));
-
-            _TEST_STRING.SetText("asdfghjkl");
         }
 
         public static TextString _TEST_STRING;
@@ -708,19 +701,6 @@ namespace Empyrean
 
 
                 RenderingQueue.RenderQueue();
-
-                if(_TEST_STRING != null)
-                {
-                    GL.Disable(EnableCap.DepthTest);
-
-                    RenderBatch batch = RenderBatch.Get();
-                    batch.Items.Add(_TEST_STRING);
-
-                    TextRenderer.RenderString(batch);
-
-                    batch.Free();
-                    GL.Enable(EnableCap.DepthTest);
-                }
             }
 
 

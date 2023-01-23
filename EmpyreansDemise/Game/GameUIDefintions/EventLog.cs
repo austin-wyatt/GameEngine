@@ -32,8 +32,9 @@ namespace Empyrean.Game.UI
         {
             Scene = scene;
 
-            LogArea = new ScrollableArea(default, new UIScale(0.75f, 0.5f), default, new UIScale(0.75f, 2f), 
+            LogArea = new ScrollableArea(default, new UIScale(0.75f, 0.5f), default, new UIScale(0.75f, 2f),
                 scrollbarWidth: 0.05f, scrollSide: ScrollbarSide.Left);
+
             LogArea.BaseComponent.SetColor(new Vector4(0.33f, 0.33f, 0.25f, 0.5f));
             //LogArea.BaseComponent.SetColor(new Vector4(0.15f, 0.15f, 0.1f, 1f));
 

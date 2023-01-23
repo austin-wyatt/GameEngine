@@ -1,4 +1,5 @@
-﻿using Empyrean.Objects;
+﻿using Empyrean.Engine_Classes.Text;
+using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,8 @@ namespace Empyrean.Engine_Classes.Rendering
         public List<RenderBatch> DependentBatches = new List<RenderBatch>();
         public ScissorData ScissorData;
 
+        public List<TextString> TextStrings = new List<TextString>();
+
         //Render batches should be created in place of the List<GameObject> handling that is being done in render queue
         //What constitutes a render batch would be determined per type that is being batched (for example, UI can be scissored)
 
@@ -56,9 +59,11 @@ namespace Empyrean.Engine_Classes.Rendering
         public void Free()
         {
             Items.Clear();
+            TextStrings.Clear();
             ScissorData = null;
             RenderBatchType = RenderBatchType.Default;
             DependentBatches.Clear();
+            
             Pool.FreeObject(this);
         }
 

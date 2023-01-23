@@ -30,7 +30,6 @@ namespace Empyrean
                 //WindowBorder = OpenTK.Windowing.Common.WindowBorder.Fixed,
                 WindowBorder = OpenTK.Windowing.Common.WindowBorder.Resizable,
                 StartFocused = false,
-
                 NumberOfSamples = 4,
                 //WindowState = OpenTK.Windowing.Common.WindowState.Fullscreen
             };

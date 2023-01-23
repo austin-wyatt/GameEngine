@@ -12,10 +12,8 @@ void main(void)
 {
 	vec4 sampledColor = texture(glyphTextureAtlas[int(atlasIndex)], texCoord);
 
-	outputColor = sampledColor * appliedColor;
+	//premultiplied alpha
+	sampledColor.rgb *= appliedColor.rgb;
 
-//	outputColor = vec4(1, 0, 0, 1);
-
-	if(outputColor.w < 0.05)
-		discard;
+	outputColor = sampledColor * appliedColor.w;
 }

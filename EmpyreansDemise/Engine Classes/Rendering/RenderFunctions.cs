@@ -128,8 +128,8 @@ namespace Empyrean.Engine_Classes.Rendering
 
             GL.Disable(EnableCap.FramebufferSrgb);
 
-            //RenderingQueue.RenderQueuedUI();
-            RenderingQueue.RenderInstancedUIData();
+            RenderingQueue.RenderQueuedUI();
+            //RenderingQueue.RenderInstancedUIData();
 
             RenderingQueue.RenderLowPriorityQueue();
         }

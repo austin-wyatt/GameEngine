@@ -141,19 +141,16 @@ namespace Empyrean.Engine_Classes.Rendering
                                 _UIToRender.Add(scissorBatch);
 
                                 currentBatch = scissorBatch;
-                                //push a new scissor batch to the stack
-                                //all child UI from this object will now be part of this scissor batch
-
-                                //If multiple scissored areas are nested within any given scissor batch, 
-                                //the topmost scissor should be completely resolved and then the next nested scissor area should be
-                                //intersected with the current stencil buffer.
-                                //If multiple scissors occur in the same layer of a nested scissor batch, the stencil buffer will need to be 
-                                //saved and reestablished before each batch is completed
                             }
 
                             if (uiObjects[i].Children.Count > 0)
                             {
                                 QueueNestedUI(uiObjects[i].Children, currentBatch);
+                            }
+
+                            for(int j = 0; j < uiObjects[i].TextStrings.Count; j++)
+                            {
+                                currentBatch.TextStrings.Add(uiObjects[i].TextStrings[j]);
                             }
 
                             currentBatch.Items.Add(uiObjects[i]);
@@ -180,6 +177,12 @@ namespace Empyrean.Engine_Classes.Rendering
                 if(_UIToRender[i].RenderBatchType == RenderBatchType.Default)
                 {
                     Renderer.RenderObjectsInstancedGeneric(_UIToRender[i].Items, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
+
+                    if(_UIToRender[i].TextStrings.Count > 0)
+                    {
+                        TextRenderer.RenderTextStrings(_UIToRender[i].TextStrings);
+                    }
+
                     _UIToRender[i].Free();
                 }
                 else if(_UIToRender[i].RenderBatchType == RenderBatchType.Scissor)
@@ -211,6 +214,11 @@ namespace Empyrean.Engine_Classes.Rendering
                     GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Keep);
 
                     Renderer.RenderObjectsInstancedGeneric(_UIToRender[i].Items, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
+
+                    if (_UIToRender[i].TextStrings.Count > 0)
+                    {
+                        TextRenderer.RenderTextStrings(_UIToRender[i].TextStrings);
+                    }
 
                     GL.Disable(EnableCap.StencilTest);
 

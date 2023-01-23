@@ -29,21 +29,24 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             PropertyAnimation animation = new PropertyAnimation(block._baseObject.BaseFrame);
 
-            Keyframe onFrame = new Keyframe(25, () =>
+            Keyframe onFrame = new Keyframe(0, () =>
             {
                 BaseComponent.SetRender(true);
-                //SetRender(false);
             });
-            Keyframe offFrame = new Keyframe(50, () =>
+            Keyframe offFrame = new Keyframe(25, () =>
             {
                 BaseComponent.SetRender(false);
-                //SetRender(false);
             });
-            
+            Keyframe endFrame = new Keyframe(50, () =>
+            {
+                BaseComponent.SetRender(true);
+            });
+
             animation.Repeat = true;
 
             animation.Keyframes.Add(onFrame);
             animation.Keyframes.Add(offFrame);
+            animation.Keyframes.Add(endFrame);
 
             animation.DEBUG_ID = 1;
 
