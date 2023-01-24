@@ -67,7 +67,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             AddChild(block);
 
-            TextStrings.Add(textString);
+            AddTextString(textString);
             textString.SetText(text);
 
             _textBox.SetPosition(GAP(UIAnchorPosition.BottomLeft) + new Vector3(0, -15, 0));
@@ -230,7 +230,15 @@ namespace Empyrean.Engine_Classes.UIComponents
 
                 _cursorObject.SAP(pos, UIAnchorPosition.BottomRight);
             }
-            else
+            else if(_textBox.Text.Length > 0 && _cursorIndex == 0)
+            {
+                Vector3 pos = new Vector3(_textBox.Characters[0].PrevCharXPosition(),
+                    _textBox.Position.Y - _textBox.Characters[0].Glyph.Descender,
+                    _textBox.Position.Z);
+
+                _cursorObject.SAP(pos, UIAnchorPosition.BottomRight);
+            }
+            else 
             {
                 float descender = _textBox.GetDescender();
                 _cursorObject.SAP(_textBox.Position - new Vector3(0, descender, 0), UIAnchorPosition.BottomLeft);

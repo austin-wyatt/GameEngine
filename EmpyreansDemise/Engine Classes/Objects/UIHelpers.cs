@@ -591,7 +591,7 @@ namespace Empyrean.Engine_Classes
 
             Button createOkButton()
             {
-                Button okButton = new Button(default, new UIScale(0.2f, 0.075f), "Ok", 0.2f);
+                Button okButton = new Button(default, new UIScale(0.2f, 0.075f), UIManager.DEFAULT_FONT_INFO_16, "Ok");
                 okButton.Click += (s, e) =>
                 {
                     onClose();
@@ -606,7 +606,7 @@ namespace Empyrean.Engine_Classes
 
             Button createCancelButton()
             {
-                Button cancelButton = new Button(default, new UIScale(0.2f, 0.075f), "Cancel", 0.19f);
+                Button cancelButton = new Button(default, new UIScale(0.2f, 0.075f), UIManager.DEFAULT_FONT_INFO_16, "Cancel");
                 cancelButton.Click += (s, e) =>
                 {
                     onClose();
@@ -650,7 +650,7 @@ namespace Empyrean.Engine_Classes
 
             string returnString = "";
 
-            char[] testChars = new char[] { ' ', '"', '@' };
+            char[] testChars = new char[] { ' ', '"', '@', '\n' };
 
             //search for space
             bool matchFound = false;
@@ -669,6 +669,9 @@ namespace Empyrean.Engine_Classes
                         case ' ':
                             foundChar = line[i] == ' ';
                             break;
+                        case '\n':
+                            foundChar = line[i] == '\n';
+                            break;
                         case '"':
                             foundChar = line[i] == '"' || line[i] == '\'' || line[i] == '.' || line[i] == ',' || line[i] == '!' ||
                                         line[i] == ':' || line[i] == ';' || line[i] == '?';
@@ -676,7 +679,7 @@ namespace Empyrean.Engine_Classes
                         case '@':
                             foundChar = line[i] == '@' || line[i] == '#' || line[i] == '$' || line[i] == '%' || line[i] == '^' ||
                                         line[i] == '&' || line[i] == '*' || line[i] == '(' || line[i] == ')' || line[i] == '{' ||
-                                        line[i] == '}' || line[i] == '[' || line[i] == ']' || line[i] == '/' || line[i] == '\\' ||
+                                        line[i] == '}' || line[i] == '[' || line[i] == ']' || line[i] == '/' ||
                                         line[i] == '|' || line[i] == '<' || line[i] == '>';
                             break;
                     }
@@ -686,6 +689,11 @@ namespace Empyrean.Engine_Classes
                         if (c == ' ')
                         {
                             returnString = line.Substring(0, i) + "\n";
+                            line = line.Substring(i + 1);
+                        }
+                        else if(c == '\n')
+                        {
+                            returnString = line.Substring(0, i);
                             line = line.Substring(i + 1);
                         }
                         else

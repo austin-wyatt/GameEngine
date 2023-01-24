@@ -1,6 +1,7 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.Audio;
 using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.Text;
 using Empyrean.Engine_Classes.TextHandling;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Abilities;
@@ -61,7 +62,7 @@ namespace Empyrean.Game.UI
             Typeable = true;
 
             #region end turn button
-            Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), "End Turn", centerText: true, fontSize: 28);
+            Button endTurnButton = new Button(new Vector3(), new UIScale(0.5f, 0.15f), new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 28), "End Turn", centerText: true);
 
             EndTurnButton = endTurnButton;
 
@@ -228,7 +229,7 @@ namespace Empyrean.Game.UI
                 _updateAction = () => 
                 {
                     _updateAction = null;
-                    Scene.QueueToRenderCycle(() =>
+                    Window.QueueToRenderCycle(() =>
                     {
                         UpdateFooterInfo(unit, setNull, forceUpdate, footerMode);
                     });
@@ -237,7 +238,7 @@ namespace Empyrean.Game.UI
             }
             
 
-            Scene.QueueToRenderCycle(() =>
+            Window.QueueToRenderCycle(() =>
             {
                 if (Scene.ContextManager.GetFlag(GeneralContextFlags.DisallowFooterUpdate))
                     return;

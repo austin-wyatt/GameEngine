@@ -35,6 +35,7 @@ namespace Empyrean.Engine_Classes.Text
 
         public float LineHeight;
         public float Descender;
+        public float Ascender;
 
         public bool Render = true;
 

@@ -553,6 +553,7 @@ namespace Empyrean
             //GL.Viewport(WindowConstants.GameViewport.X, WindowConstants.GameViewport.Y, WindowConstants.GameViewport.Width, WindowConstants.GameViewport.Height);
             //Renderer.ViewportRectangle = WindowConstants.GameViewport;
 
+
             Matrix4 viewMatrix = _camera.GetViewMatrix();
             Matrix4 projectionMatrix = _camera.ProjectionMatrix;
             Matrix4.Mult(viewMatrix, projectionMatrix, out Matrix4 cameraMatrix);
@@ -730,7 +731,6 @@ namespace Empyrean
             for (int i = 0; i < _sceneController.Scenes.Count; i++)
             {
                 _sceneController.Scenes[i].OnRenderEnd();
-                _sceneController.Scenes[i].InvokeQueuedRenderAction();
             }
 
             OnRenderEnd();
@@ -809,7 +809,8 @@ namespace Empyrean
 
             var coords = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(new Vector3(_cursorCoords));
 
-            CursorObj.SetZPosition(-0.99f);
+            CursorObj.SetZPosition(-1f);
+            //CursorObj.SetZPosition(-0.99f);
             CursorObj.SetPositionFromAnchor(coords, UIAnchorPosition.TopLeft);
 
             if (_firstMove)
@@ -914,7 +915,7 @@ namespace Empyrean
 
             SetWindowSize();
 
-            Renderer.ResizeFBOs(WindowConstants.ClientSize);
+            //Renderer.ResizeFBOs(WindowConstants.ClientSize);
 
             _sceneController.Scenes.ForEach(scene =>
             {
@@ -1158,6 +1159,7 @@ namespace Empyrean
                 QueueToRenderCycle(action);
             }
         }
+
 
         public static void InvokeQueuedRenderAction()
         {

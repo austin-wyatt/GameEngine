@@ -816,13 +816,22 @@ namespace Empyrean.Engine_Classes
 
             float currVal = baseZVal;
 
+            const float STEP = 0.00000015f;
+
             lock (_reverseTreeLock)
             {
                 for(int i = 0; i < ReverseTree.Count; i++)
                 {
                     ReverseTree[i].SetZPosition(currVal);
 
-                    currVal -= 0.00000015f;
+                    for (int j = 0; j < ReverseTree[i].TextStrings.Count; j++)
+                    {
+                        //ReverseTree[i].TextStrings[j].SetZPosition(currVal.GetPrevious());
+                        ReverseTree[i].TextStrings[j].SetZPosition(currVal - STEP);
+                    }
+
+                    currVal -= STEP;
+                    //currVal = currVal.GetPrevious();
                 }
 
                 //for(int i = ReverseTree.Count - 1; i >= 0; i--)
@@ -991,6 +1000,40 @@ namespace Empyrean.Engine_Classes
                 //{
                 //    ForceTreeRegeneration();
                 //}
+
+                ForceTreeRegeneration();
+            }
+        }
+
+        public void AddTextString(TextString textString)
+        {
+            object lockObj = new object();
+
+            if (ManagerHandle != null)
+            {
+                lockObj = ManagerHandle._UILock;
+            }
+
+            lock (lockObj)
+            {
+                TextStrings.Add(textString);
+
+                ForceTreeRegeneration();
+            }
+        }
+
+        public void RemoveTextString(TextString textString)
+        {
+            object lockObj = new object();
+
+            if (ManagerHandle != null)
+            {
+                lockObj = ManagerHandle._UILock;
+            }
+
+            lock (lockObj)
+            {
+                TextStrings.Remove(textString);
 
                 ForceTreeRegeneration();
             }

@@ -10,6 +10,7 @@ using Empyrean.Game.Scripting;
 using System.Linq;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Threading.Tasks;
 
 namespace Empyrean.Game.UI
 {

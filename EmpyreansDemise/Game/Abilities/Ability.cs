@@ -1,5 +1,6 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.Text;
 using Empyrean.Engine_Classes.TextHandling;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Abilities.AIImplementations;
@@ -300,7 +301,6 @@ namespace Empyrean.Game.Abilities
 
                 icon.AddChild(energyCostBackground, 49);
 
-                energyCostBackground.RenderAfterParent = true;
                 Vector3 newPos = new Vector3(energyCostBackground.Position.X, energyCostBackground.Position.Y, icon.Position.Z);
                 energyCostBackground.SetPosition(newPos);
                 //energyCostBackground.SetAllInline(0);
@@ -328,18 +328,12 @@ namespace Empyrean.Game.Abilities
             {
                 UIScale textBoxSize = new UIScale(hotkeyTextScale * 0.05f, hotkeyTextScale * 0.05f);
 
-                float textScale = hotkeyTextScale;
-
-
-                Text_Drawing hotkeyBox = new Text_Drawing(hotkey, Text_Drawing.DEFAULT_FONT, 12, Brushes.White, Color.Black);
-                hotkeyBox.SetTextScale(textScale);
-
-                UIScale textDimensions = hotkeyBox.GetDimensions();
-
-                if (textDimensions.X > textDimensions.Y)
+                TextString hotkeyBox = new TextString(new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 10), TextAlignment.Center)
                 {
-                    hotkeyBox.SetTextScale((textScale - 0.004f) * textDimensions.Y / textDimensions.X);
-                }
+                    TextColor = _Colors.White,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                hotkeyBox.SetText(hotkey);
 
                 UIBlock hotkeyBackground = new UIBlock();
                 hotkeyBackground.SetColor(_Colors.UITextBlack);
@@ -348,12 +342,10 @@ namespace Empyrean.Game.Abilities
                 hotkeyBackground.SetSize(textBoxSize);
 
                 hotkeyBackground.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.TopLeft), UIAnchorPosition.TopLeft);
-                hotkeyBox.SetPositionFromAnchor(hotkeyBackground.GetAnchorPosition(UIAnchorPosition.Center), UIAnchorPosition.Center);
+                hotkeyBox.SetPosition(hotkeyBackground.GetAnchorPosition(UIAnchorPosition.Center));
 
-                //energyCostBox.SetPositionFromAnchor(icon.GetAnchorPosition(UIAnchorPosition.BottomRight), UIAnchorPosition.BottomRight);
-
-                icon.AddChild(hotkeyBox, 50);
-                icon.AddChild(hotkeyBackground, 49);
+                hotkeyBackground.AddTextString(hotkeyBox);
+                icon.BaseComponent.AddChild(hotkeyBackground, 49);
             }
 
             return icon;

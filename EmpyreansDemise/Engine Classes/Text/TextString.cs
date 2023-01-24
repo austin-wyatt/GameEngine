@@ -42,6 +42,7 @@ namespace Empyrean.Engine_Classes.Text
         private object _textEditLock = new object();
 
         private UIDimensions _dimensions = new UIDimensions();
+        private float _heightLine1 = 0;
 
         public TextString(FontInfo font, TextAlignment horizontalAlignment = TextAlignment.LeftAlign)
         {
@@ -92,6 +93,12 @@ namespace Empyrean.Engine_Classes.Text
             PositionCharacters();
         }
 
+        public void SetZPosition(float zPos)
+        {
+            //ZPos = zPos;
+
+            SetPosition(new Vector3(Position.X, Position.Y, zPos));
+        }
         public void SetTextScale(float x, float y)
         {
             TextScale.X = x;
@@ -152,15 +159,22 @@ namespace Empyrean.Engine_Classes.Text
             int start = 0;
             for(int i = 0; i < Characters.Count; i++)
             {
+                lineHeight = Characters[i].Glyph.LineHeight > lineHeight ? 
+                    Characters[i].Glyph.LineHeight : 
+                    lineHeight;
+
+                if (i == 0)
+                    _heightLine1 = lineHeight;
+
                 if (Characters[i].Glyph.CharacterValue == '\n')
                 {
                     lines.Add(new Range(start, i));
 
-                    lineHeight = Characters[i].Glyph.LineHeight;
-
                     lineHeights.Add(lineHeight);
                     start = i + 1;
                     totalHeight += lineHeight;
+
+                    lineHeight = 0;
                 }
             }
 
@@ -184,7 +198,15 @@ namespace Empyrean.Engine_Classes.Text
                 switch (VerticalAlignment)
                 {
                     case VerticalAlignment.Center:
-                        baseLinePosition.Y += totalHeight / 2;
+                        if(lines.Count == 1)
+                        {
+                            baseLinePosition.Y = baseLinePosition.Y + 
+                                Characters[lines[i].Start.Value].Glyph.Descender + lineHeight / 2;
+                        }
+                        else
+                        {
+                            baseLinePosition.Y += totalHeight / 2;
+                        }
                         break;
                 }
 
@@ -205,13 +227,11 @@ namespace Empyrean.Engine_Classes.Text
 
                 //min
                 bounds.X = newBounds.X < bounds.X ? newBounds.X : bounds.X;
-                bounds.Y = newBounds.Y < bounds.Y ? newBounds.Y : bounds.Y;
                 //max
-                bounds.Z = newBounds.X > bounds.Z ? newBounds.X : bounds.X;
-                bounds.W = newBounds.Y > bounds.W ? newBounds.Y : bounds.Y;
+                bounds.Z = newBounds.Z > bounds.Z ? newBounds.Z : bounds.Z;
             }
 
-            _dimensions = new UIDimensions(bounds.Z - bounds.X, bounds.W - bounds.Y);
+            _dimensions = new UIDimensions(bounds.Z - bounds.X, totalHeight);
 
             Monitor.Exit(_textEditLock);
         }
@@ -229,12 +249,12 @@ namespace Empyrean.Engine_Classes.Text
 
                 Vector2 kerning = new Vector2();
 
-                if (i < range.End.Value - 1)
+                if (i > 0)
                 {
                     if (kerningEnabled)
                     {
-                        FTVector26Dot6 rawKerning = face.GetKerning(character.Glyph.FreeTypeGlyphIndex,
-                        Characters[i + 1].Glyph.FreeTypeGlyphIndex, KerningMode.Default);
+                        FTVector26Dot6 rawKerning = face.GetKerning(Characters[i - 1].Glyph.FreeTypeGlyphIndex,
+                        character.Glyph.FreeTypeGlyphIndex, KerningMode.Default);
 
                         kerning.X = (float)rawKerning.X.ToDouble();
                         kerning.Y = (float)rawKerning.Y.ToDouble();
@@ -254,16 +274,14 @@ namespace Empyrean.Engine_Classes.Text
                 character.SAP(currPosition, UIAnchorPosition.BottomLeft);
 
                 //min
-                bounds.X = currPosition.X < bounds.X ? currPosition.X : bounds.X;
-                bounds.Y = currPosition.Y < bounds.Y ? currPosition.Y : bounds.Y;
+                bounds.X = currPosition.X - dim.X / 2 < bounds.X ? currPosition.X - dim.X / 2 : bounds.X;
                 //max
-                bounds.Z = currPosition.X > bounds.Z ? currPosition.X : bounds.X;
-                bounds.W = currPosition.Y > bounds.W ? currPosition.Y : bounds.Y;
+                bounds.Z = currPosition.X + dim.X / 2 > bounds.Z ? currPosition.X + dim.X / 2 : bounds.Z;
 
                 float screenAdvance = (float)character.Glyph.Advance / WindowConstants.ClientSize.Y *
                     WindowConstants.ScreenUnits.Y * character.CurrentScale.X / WindowConstants.AspectRatio;
 
-                basePosition.X += screenAdvance;
+                basePosition.X += screenAdvance + kerning.X;
             }
         }
 
@@ -310,13 +328,10 @@ namespace Empyrean.Engine_Classes.Text
 
                 calculatedPositions.Add(currPosition);
 
-                //character.SAP(currPosition, UIAnchorPosition.BottomLeft);
-
-
                 float screenAdvance = (float)character.Glyph.Advance / WindowConstants.ClientSize.Y *
                     WindowConstants.ScreenUnits.Y * character.CurrentScale.X / WindowConstants.AspectRatio;
 
-                basePosition.X += screenAdvance;
+                basePosition.X += screenAdvance + kerning.X;
             }
 
             posOffset.X = (basePosition.X - initialPos.X) / 2;
@@ -326,15 +341,218 @@ namespace Empyrean.Engine_Classes.Text
                 TextCharacter character = Characters[i];
                 currPosition = calculatedPositions[i - range.Start.Value] - posOffset;
 
+                UIDimensions dim = character.GetDimensions();
+
                 character.SAP(currPosition, UIAnchorPosition.BottomLeft);
 
                 //min
                 bounds.X = currPosition.X < bounds.X ? currPosition.X : bounds.X;
-                bounds.Y = currPosition.Y < bounds.Y ? currPosition.Y : bounds.Y;
                 //max
-                bounds.Z = currPosition.X > bounds.Z ? currPosition.X : bounds.X;
-                bounds.W = currPosition.Y > bounds.W ? currPosition.Y : bounds.Y;
+                bounds.Z = currPosition.X + dim.X > bounds.Z ? currPosition.X + dim.X : bounds.Z;
             }
         }
+
+        #region Anchor positioning functions
+        /// <summary>
+        /// Shorthand for GetAnchorPosition
+        /// </summary>
+        public Vector3 GAP(UIAnchorPosition anchorPosition)
+        {
+            return GetAnchorPosition(anchorPosition);
+        }
+
+        /// <summary>
+        /// Shorthand for GetAnchorPosition
+        /// </summary>
+        public Vector3 GAP(UIAnchorPosition anchorPosition, Vector3 position)
+        {
+            return GetAnchorPosition(anchorPosition, position);
+        }
+
+        public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition)
+        {
+            return GetAnchorPosition(anchorPosition, Position);
+        }
+        public Vector3 GetAnchorPosition(UIAnchorPosition anchorPosition, Vector3 position)
+        {
+            UIDimensions dimensions = GetDimensions();
+            Vector3 anchorPos = new Vector3(position);
+
+            if(TextAlignment == TextAlignment.Center)
+                switch (anchorPosition)
+                {
+                    case UIAnchorPosition.TopCenter:
+                        anchorPos.Y -= dimensions.Y / 2;
+                        break;
+                    case UIAnchorPosition.TopLeft:
+                        anchorPos.Y -= dimensions.Y / 2;
+                        anchorPos.X -= dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.TopRight:
+                        anchorPos.Y -= dimensions.Y / 2;
+                        anchorPos.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.LeftCenter:
+                        anchorPos.X -= dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.RightCenter:
+                        anchorPos.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.BottomCenter:
+                        anchorPos.Y += dimensions.Y / 2;
+                        break;
+                    case UIAnchorPosition.BottomLeft:
+                        anchorPos.Y += dimensions.Y / 2;
+                        anchorPos.X -= dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.BottomRight:
+                        anchorPos.Y += dimensions.Y / 2;
+                        anchorPos.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.Center:
+                    default:
+                        break;
+                }
+            else if(TextAlignment == TextAlignment.LeftAlign)
+                switch (anchorPosition)
+                {
+                    case UIAnchorPosition.TopCenter:
+                        anchorPos.Y -= _heightLine1;
+                        anchorPos.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.TopLeft:
+                        anchorPos.Y -= _heightLine1;
+                        break;
+                    case UIAnchorPosition.TopRight:
+                        anchorPos.Y -= _heightLine1;
+                        anchorPos.X += dimensions.X;
+                        break;
+                    case UIAnchorPosition.LeftCenter:
+                        anchorPos.Y += dimensions.Y / 2 - _heightLine1;
+                        break;
+                    case UIAnchorPosition.RightCenter:
+                        anchorPos.X += dimensions.X;
+                        anchorPos.Y += dimensions.Y / 2 - _heightLine1;
+                        break;
+                    case UIAnchorPosition.BottomCenter:
+                        anchorPos.X += dimensions.X / 2;
+                        anchorPos.Y += dimensions.Y - _heightLine1;
+                        break;
+                    case UIAnchorPosition.BottomLeft:
+                        anchorPos.Y += dimensions.Y - _heightLine1;
+                        break;
+                    case UIAnchorPosition.BottomRight:
+                        anchorPos.X += dimensions.X;
+                        anchorPos.Y += dimensions.Y - _heightLine1;
+                        break;
+                    case UIAnchorPosition.Center:
+                        anchorPos.X += dimensions.X / 2;
+                        anchorPos.Y += dimensions.Y / 2 - _heightLine1;
+                        break;
+                    default:
+                        break;
+                }
+
+            return anchorPos;
+        }
+
+        public UIDimensions GetAnchorOffset(UIAnchorPosition anchorPosition)
+        {
+            UIDimensions dimensions = GetDimensions();
+            UIDimensions returnDim = new UIDimensions();
+
+            if (TextAlignment == TextAlignment.Center)
+                switch (anchorPosition)
+                {
+                    case UIAnchorPosition.TopCenter:
+                        returnDim.Y -= dimensions.Y / 2;
+                        break;
+                    case UIAnchorPosition.TopLeft:
+                        returnDim.Y -= dimensions.Y / 2;
+                        returnDim.X -= dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.TopRight:
+                        returnDim.Y -= dimensions.Y / 2;
+                        returnDim.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.LeftCenter:
+                        returnDim.X -= dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.RightCenter:
+                        returnDim.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.BottomCenter:
+                        returnDim.Y += dimensions.Y / 2;
+                        break;
+                    case UIAnchorPosition.BottomLeft:
+                        returnDim.Y += dimensions.Y / 2;
+                        returnDim.X -= dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.BottomRight:
+                        returnDim.Y += dimensions.Y / 2;
+                        returnDim.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.Center:
+                    default:
+                        break;
+                }
+            else if (TextAlignment == TextAlignment.LeftAlign)
+                switch (anchorPosition)
+                {
+                    case UIAnchorPosition.TopCenter:
+                        returnDim.Y -= _heightLine1;
+                        returnDim.X += dimensions.X / 2;
+                        break;
+                    case UIAnchorPosition.TopLeft:
+                        returnDim.Y -= _heightLine1;
+                        break;
+                    case UIAnchorPosition.TopRight:
+                        returnDim.Y -= _heightLine1;
+                        returnDim.X += dimensions.X;
+                        break;
+                    case UIAnchorPosition.LeftCenter:
+                        returnDim.Y += dimensions.Y / 2 - _heightLine1;
+                        break;
+                    case UIAnchorPosition.RightCenter:
+                        returnDim.X += dimensions.X;
+                        returnDim.Y += dimensions.Y / 2 - _heightLine1;
+                        break;
+                    case UIAnchorPosition.BottomCenter:
+                        returnDim.X += dimensions.X / 2;
+                        returnDim.Y += dimensions.Y - _heightLine1;
+                        break;
+                    case UIAnchorPosition.BottomLeft:
+                        returnDim.Y += dimensions.Y - _heightLine1;
+                        break;
+                    case UIAnchorPosition.BottomRight:
+                        returnDim.X += dimensions.X;
+                        returnDim.Y += dimensions.Y - _heightLine1;
+                        break;
+                    case UIAnchorPosition.Center:
+                        returnDim.X += dimensions.X / 2;
+                        returnDim.Y += dimensions.Y / 2 - _heightLine1;
+                        break;
+                    default:
+                        break;
+                }
+
+
+            return returnDim;
+        }
+
+        public void SetPositionFromAnchor(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center)
+        {
+            UIDimensions anchorOffset = GetAnchorOffset(anchor);
+
+            SetPosition(position - anchorOffset);
+        }
+        /// <summary>
+        /// Shorthand for SetPositionFromAnchor
+        /// </summary>
+        public void SAP(Vector3 position, UIAnchorPosition anchor = UIAnchorPosition.Center)
+        {
+            SetPositionFromAnchor(position, anchor);
+        }
+        #endregion
     }
 }

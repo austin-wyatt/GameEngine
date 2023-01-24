@@ -41,7 +41,7 @@ namespace Empyrean.Engine_Classes.Rendering
         /// </summary>
         public static void RenderQueue()
         {
-            if(Window.SkyBox != null)
+            if (Window.SkyBox != null)
             {
                 RenderFunctions.DrawSkybox();
             }
@@ -59,7 +59,6 @@ namespace Empyrean.Engine_Classes.Rendering
             //}
 
             GL.Enable(EnableCap.FramebufferSrgb);
-
 
             RenderFunctions.DrawGame();
 
@@ -115,7 +114,8 @@ namespace Empyrean.Engine_Classes.Rendering
             {
                 if (uiObjects.Count > 0)
                 {
-                    for (int i = 0; i < uiObjects.Count; i++)
+                    //for (int i = 0; i < uiObjects.Count; i++)
+                    for (int i = uiObjects.Count - 1; i >= 0; i--)
                     {
                         if (uiObjects[i].Render && !uiObjects[i].Cull)
                         {
@@ -143,17 +143,19 @@ namespace Empyrean.Engine_Classes.Rendering
                                 currentBatch = scissorBatch;
                             }
 
+                            currentBatch.Items.Add(uiObjects[i]);
+
                             if (uiObjects[i].Children.Count > 0)
                             {
                                 QueueNestedUI(uiObjects[i].Children, currentBatch);
                             }
 
-                            for(int j = 0; j < uiObjects[i].TextStrings.Count; j++)
+                            for (int j = 0; j < uiObjects[i].TextStrings.Count; j++)
                             {
                                 currentBatch.TextStrings.Add(uiObjects[i].TextStrings[j]);
                             }
 
-                            currentBatch.Items.Add(uiObjects[i]);
+                            //currentBatch.Items.Add(uiObjects[i]);
                         }
                     }
                 }
@@ -166,7 +168,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
         public static void RenderQueuedUI()
         {
-            for(int i = 0; i < _UIToRender.Count; i++)
+            for (int i = 0; i < _UIToRender.Count; i++)
             {
                 if (_UIToRender[i].Items.Count == 0)
                 {
@@ -178,7 +180,7 @@ namespace Empyrean.Engine_Classes.Rendering
                 {
                     Renderer.RenderObjectsInstancedGeneric(_UIToRender[i].Items, ref Renderer._instancedRenderArray, null, true, false, deferredShading: false);
 
-                    if(_UIToRender[i].TextStrings.Count > 0)
+                    if (_UIToRender[i].TextStrings.Count > 0)
                     {
                         TextRenderer.RenderTextStrings(_UIToRender[i].TextStrings);
                     }
@@ -220,6 +222,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         TextRenderer.RenderTextStrings(_UIToRender[i].TextStrings);
                     }
 
+                    GL.Clear(ClearBufferMask.StencilBufferBit);
                     GL.Disable(EnableCap.StencilTest);
 
                     _UIToRender[i].Free();

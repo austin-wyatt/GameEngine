@@ -121,9 +121,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             UIBlock block = new UIBlock(animations, default, size);
             block.SetAllInline(0);
-
-            BaseComponent = block;
-            AddChild(block, -10);
+            //block.SetColor(new Vector4(0, 0, 1, 1f));
 
             //BaseObject windowObj = new BaseObject(animations, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
             //windowObj.BaseFrame.CameraPerspective = CameraPerspective;
@@ -131,11 +129,13 @@ namespace Empyrean.Engine_Classes.UIComponents
             //AddBaseObject(windowObj);
             //_baseObject = windowObj;
 
+            BaseComponent = block;
+            AddChild(block, -10);
+
             if (withBackground)
             {
                 RenderableObject background = new RenderableObject(new SpritesheetObject(Convert.ToInt32(backgroundType), Spritesheets.IconSheet, 2, 2).CreateObjectDefinition(), WindowConstants.FullColor, ObjectRenderType.Texture, Shaders.FAST_DEFAULT_SHADER_DEFERRED);
 
-                //window.Color = new Vector4(0.5f, 0.5f, 0.5f, 1);
                 tempAnimation = new Animation()
                 {
                     Frames = new List<RenderableObject>() { background },
@@ -146,11 +146,12 @@ namespace Empyrean.Engine_Classes.UIComponents
                 UIBlock backgroundBlock = new UIBlock(new List<Animation>() { tempAnimation }, default, size);
                 backgroundBlock.SetAllInline(0);
 
+                //BaseComponent = backgroundBlock;
+                //AddChild(backgroundBlock, 0);
+
                 AddChild(backgroundBlock, -20);
                 _background = backgroundBlock;
-
-                //BaseObject backgroundObj = new BaseObject(new List<Animation>() { tempAnimation }, 0, "", new Vector3(), EnvironmentObjects.UIBlockBounds);
-                //AddBaseObject(backgroundObj);
+                //backgroundBlock.AddChild(block, 0);
             }
 
             SetSize(Size);
@@ -272,7 +273,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
             energyCostBackground.AddChild(energyCostBox);
 
-            AddChild(energyCostBackground, 50);
+            BaseComponent.AddChild(energyCostBackground, 50);
 
             ChargeDisplay = energyCostBox;
         }
@@ -285,7 +286,7 @@ namespace Empyrean.Engine_Classes.UIComponents
             UIScale textBoxSize = new UIScale(Size);
             textBoxSize *= 0.16f;
 
-            Vector3 pos = GetAnchorPosition(UIAnchorPosition.BottomRight) + new Vector3(-5, -10, -0.001f);
+            Vector3 pos = GetAnchorPosition(UIAnchorPosition.BottomRight) + new Vector3(-5, -10, 0);
 
             for (int i = 0; i < ability.GetCost(ResF.ActionEnergy); i++) 
             {
@@ -301,11 +302,9 @@ namespace Empyrean.Engine_Classes.UIComponents
 
                 actionCost.SetAllInline(1);
 
-                actionCost.RenderAfterParent = true;
+                AddChild(actionCost, 100);
 
-                AddChild(actionCost, 49);
-
-                pos = actionCost.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(0, -2, -0.001f);
+                pos = actionCost.GetAnchorPosition(UIAnchorPosition.TopRight) + new Vector3(0, -2, 0);
             }
         }
 

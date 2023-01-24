@@ -217,10 +217,31 @@ namespace Empyrean.Engine_Classes.Text
         {
             Vector3 leftCenter = GAP(UIAnchorPosition.LeftCenter);
 
+            Vector2 bearing = new Vector2();
+
+            if(Glyph.Bearing.X != 0)
+            {
+                bearing = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(Glyph.Bearing);
+            }
+
             float screenAdvance = (float)Glyph.Advance / WindowConstants.ClientSize.Y *
                     WindowConstants.ScreenUnits.Y * CurrentScale.X / WindowConstants.AspectRatio;
 
-            return leftCenter.X + screenAdvance;
+            return leftCenter.X + screenAdvance - bearing.X;
+        }
+
+        public float PrevCharXPosition()
+        {
+            Vector3 leftCenter = GAP(UIAnchorPosition.LeftCenter);
+
+            Vector2 bearing = new Vector2();
+
+            if (Glyph.Bearing.X != 0)
+            {
+                bearing = WindowConstants.ConvertGlobalToScreenSpaceCoordinates(Glyph.Bearing);
+            }
+
+            return leftCenter.X - bearing.X;
         }
     }
 }

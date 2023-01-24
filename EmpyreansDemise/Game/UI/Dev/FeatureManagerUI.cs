@@ -76,7 +76,7 @@ namespace Empyrean.Game.UI.Dev
 
         public void CreateTabAccessButton(int tab, string name)
         {
-            Button button = new Button(default, new UIScale(0.6f, 0.1f), name);
+            Button button = new Button(default, new UIScale(0.6f, 0.1f), UIManager.DEFAULT_FONT_INFO_16, name);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>

@@ -17,6 +17,7 @@ using Empyrean.Engine_Classes.Rendering;
 using OpenTK.Windowing.Common;
 using OpenTK.Graphics.OpenGL4;
 using Empyrean.Game.Settings;
+using Empyrean.Engine_Classes.Text;
 
 namespace Empyrean.Game.UI
 {
@@ -80,7 +81,7 @@ namespace Empyrean.Game.UI
 
         public void CreateTabAccessButton(int tab, string name) 
         {
-            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.24f, BaseComponent.Size.Y / 15), name, fontSize: 16);
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.24f, BaseComponent.Size.Y / 15), UIManager.DEFAULT_FONT_INFO_16, name);
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>
@@ -144,7 +145,7 @@ namespace Empyrean.Game.UI
 
         private void PopulateMenus() 
         {
-            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle combat", fontSize: 14);
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 14), "Toggle combat");
             button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>
@@ -159,7 +160,7 @@ namespace Empyrean.Game.UI
 
             Tabs[0].BaseComponent.AddChild(button);
 
-            Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle Wireframe", fontSize: 14);
+            Button unitButton = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 14), "Toggle Wireframe");
             unitButton.BaseComponent.MultiTextureData.MixTexture = false;
 
             bool wireframe = false;
@@ -182,7 +183,7 @@ namespace Empyrean.Game.UI
 
             Tabs[0].BaseComponent.AddChild(unitButton);
 
-            Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "(-)Pattern Tool", fontSize: 14);
+            Button unitButton2 = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 14), "(-)Pattern Tool");
             unitButton2.BaseComponent.MultiTextureData.MixTexture = false;
 
             unitButton2.Click += (s, e) =>
@@ -202,7 +203,7 @@ namespace Empyrean.Game.UI
 
             Tabs[0].BaseComponent.AddChild(unitButton2);
 
-            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), "Toggle frame limit", fontSize: 14);
+            Button toggleAI = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 14), "Toggle frame limit");
             toggleAI.BaseComponent.MultiTextureData.MixTexture = false;
 
 
@@ -305,7 +306,7 @@ namespace Empyrean.Game.UI
 
         private Button CreateButton(string text, Action action, Vector3 prevButtonPos) 
         {
-            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), text, fontSize: 14);
+            Button button = new Button(default, new UIScale(BaseComponent.Size.X * 0.4f, BaseComponent.Size.Y / 15), new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 14), text);
             //button.BaseComponent.MultiTextureData.MixTexture = false;
 
             button.Click += (s, e) =>

@@ -137,8 +137,8 @@ namespace Empyrean.Engine_Classes.Rendering
             Renderer.ObjectsDrawn += count;
             Renderer.DrawCount++;
 
-            //GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, 0);
-            //GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, 0);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, 0);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, 0);
 
             GL.BlendFunc((BlendingFactor)BlendingFactorSrc.SrcAlpha, (BlendingFactor)BlendingFactorDest.OneMinusSrcAlpha);
         }

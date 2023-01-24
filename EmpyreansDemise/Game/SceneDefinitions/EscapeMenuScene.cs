@@ -28,7 +28,7 @@ namespace Empyrean.Game.SceneDefinitions
             UIBlock escapeMenu = new UIBlock(WindowConstants.CenterScreen) { Clickable = true, Hoverable = true };
             UIDimensions menuDimensions = escapeMenu.GetDimensions();
 
-            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), "EXIT");
+            Button exitButton = new Button(escapeMenu.Origin + new Vector3(menuDimensions.X / 2, menuDimensions.Y / 4, 0), new UIScale(0.5f, 0.15f), UIManager.DEFAULT_FONT_INFO_16, "EXIT");
 
             exitButton.Click += (s, e) =>
             {
@@ -41,7 +41,7 @@ namespace Empyrean.Game.SceneDefinitions
 
             escapeMenu.AddChild(exitButton);
 
-            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), "Toggle Vsync", 0.4f);
+            Button testButton = new Button(exitButton.Position + new Vector3(0, exitButton.GetDimensions().Y * 2, 0), new UIScale(0.5f, 0.15f), UIManager.DEFAULT_FONT_INFO_16, "Toggle Vsync");
 
             testButton.Click += (s, e) =>
             {
@@ -67,7 +67,7 @@ namespace Empyrean.Game.SceneDefinitions
             escapeMenu.AddChild(testButton);
 
 
-            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Load Audio", 0.4f);
+            Button loadButton = new Button(testButton.Position + new Vector3(0, testButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), UIManager.DEFAULT_FONT_INFO_16, "Load Audio");
 
             loadButton.Click += (s, e) =>
             {
@@ -76,7 +76,7 @@ namespace Empyrean.Game.SceneDefinitions
 
             escapeMenu.AddChild(loadButton);
 
-            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Play", 0.4f);
+            Button playButton = new Button(loadButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), UIManager.DEFAULT_FONT_INFO_16, "Play");
 
             playButton.Click += (s, e) =>
             {
@@ -87,7 +87,7 @@ namespace Empyrean.Game.SceneDefinitions
 
             escapeMenu.AddChild(playButton);
 
-            Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), "Dispose", 0.4f);
+            Button disposeButton = new Button(playButton.Position + new Vector3(0, loadButton.GetDimensions().Y + 10, 0), new UIScale(0.5f, 0.15f), UIManager.DEFAULT_FONT_INFO_16, "Dispose");
 
             disposeButton.Click += (s, e) =>
             {

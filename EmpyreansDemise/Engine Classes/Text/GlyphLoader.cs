@@ -198,15 +198,39 @@ namespace Empyrean.Engine_Classes.Text
 
                 int ssboIndex = GetAvailableGlyphIndex();
 
-                Glyph newGlyph = new Glyph(character, ssboIndex, default, default, 0, 0, font);
+
+                Monitor.Enter(_faceLock);
+
+                LoadTarget fontLoadTarget = LoadTarget.Normal;
+                int lcdExtension = fontLoadTarget == LoadTarget.Lcd ? 3 : 1;
+
+                SharpFont.Face face = font.GetFace();
+
+                uint charIndex = face.GetCharIndex((uint)character);
+                face.LoadGlyph(charIndex, LoadFlags.AdvanceFlagFastOnly, fontLoadTarget);
+
+                Glyph newGlyph = new Glyph(character, ssboIndex,
+                    new Vector2(
+                        face.Glyph.Bitmap.Width * lcdExtension,
+                        face.Glyph.Bitmap.Rows),
+                    new Vector2(face.Glyph.BitmapLeft, face.Glyph.BitmapTop),
+                    face.Glyph.Advance.X.ToInt32(),
+                    charIndex,
+                    font);
+
+                newGlyph.LineHeight = (float)face.Size.Metrics.Height.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
+                newGlyph.Descender = (float)face.Size.Metrics.Descender.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
+                newGlyph.Ascender = (float)face.Size.Metrics.Ascender.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
+
+                Monitor.Exit(_faceLock);
 
                 if (WindowConstants.InMainThread(Thread.CurrentThread))
                 {
-                    LoadGlyph(newGlyph, font);
+                    LoadGlyph(newGlyph, font, fontLoadTarget);
                 }
                 else
                 {
-                    Window.QueueToRenderCycle(() => LoadGlyph(newGlyph, font));
+                    Window.QueueToRenderCycle(() => LoadGlyph(newGlyph, font, fontLoadTarget));
                 }
 
                 return newGlyph;
@@ -221,24 +245,24 @@ namespace Empyrean.Engine_Classes.Text
         }
 
 
+        private static object _faceLock = new object();
 
         private static float[] _interleavedArray = new float[StaticObjects.QUAD_VERTICES.Length + StaticObjects.TEXTURE_COORDS.Length];
         private static float[] _clonedVertexData = new float[StaticObjects.QUAD_VERTICES.Length];
         private static float[] _clonedTextureData = new float[StaticObjects.TEXTURE_COORDS.Length];
-        private static void LoadGlyph(Glyph glyph, FontInfo font)
+        private static void LoadGlyph(Glyph glyph, FontInfo font, LoadTarget fontLoadTarget)
         {
             int atlasPadding = 2;
 
             float horizontalOversample = 1;
             float verticalOversample = 1;
-            LoadTarget fontLoadTarget = LoadTarget.Normal;
 
             int lcdExtension = fontLoadTarget == LoadTarget.Lcd ? 3 : 1;
 
             const int COLORS_COUNT = 4;
 
+            Monitor.Enter(_faceLock);
             SharpFont.Face face = font.GetFace();
-            //face.SetCharSize(font.FontSize * horizontalOversample, font.FontSize * verticalOversample, 0, SCREEN_DPI);
 
             uint charIndex = face.GetCharIndex((uint)glyph.CharacterValue);
             face.LoadGlyph(charIndex, LoadFlags.AdvanceFlagFastOnly, fontLoadTarget);
@@ -265,14 +289,15 @@ namespace Empyrean.Engine_Classes.Text
             bitmapWidth = face.Glyph.Bitmap.Width;
             bitmapHeight = face.Glyph.Bitmap.Rows;
 
-            glyph.Size = new Vector2(
-                bitmapWidth / (horizontalOversample * lcdExtension), 
-                bitmapHeight / verticalOversample);
-            glyph.Bearing = new Vector2(face.Glyph.BitmapLeft, face.Glyph.BitmapTop);
-            glyph.Advance = (int)(face.Glyph.Advance.X.ToInt32() / (horizontalOversample));
-            glyph.FreeTypeGlyphIndex = charIndex;
-            glyph.LineHeight = (float)face.Size.Metrics.Height.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
-            glyph.Descender = (float)face.Size.Metrics.Descender.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
+            //glyph.Size = new Vector2(
+            //    bitmapWidth / (horizontalOversample * lcdExtension), 
+            //    bitmapHeight / verticalOversample);
+            //glyph.Bearing = new Vector2(face.Glyph.BitmapLeft, face.Glyph.BitmapTop);
+            //glyph.Advance = (int)(face.Glyph.Advance.X.ToInt32() / (horizontalOversample));
+            //glyph.FreeTypeGlyphIndex = charIndex;
+            //glyph.LineHeight = (float)face.Size.Metrics.Height.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
+            //glyph.Descender = (float)face.Size.Metrics.Descender.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
+            //glyph.Ascender = (float)face.Size.Metrics.Ascender.ToInt32() / WindowConstants.ClientSize.Y * WindowConstants.ScreenUnits.Y;
 
             if (glyph.CharacterValue == '\n')
             {
@@ -303,6 +328,8 @@ namespace Empyrean.Engine_Classes.Text
                 glyphBufferData = face.Glyph.Bitmap.BufferData;
                 glyphPitch = face.Glyph.Bitmap.Pitch;
             }
+
+            Monitor.Exit(_faceLock);
 
             if (fontLoadTarget == LoadTarget.Lcd)
             {

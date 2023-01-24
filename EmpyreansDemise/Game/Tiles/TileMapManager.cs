@@ -200,7 +200,7 @@ namespace Empyrean.Game.Tiles
 
                 GC.Collect();
 
-                Scene.QueueToRenderCycle(() =>
+                Window.QueueToRenderCycle(() =>
                 {
                     Scene.OnStructureMoved();
 

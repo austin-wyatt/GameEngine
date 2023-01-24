@@ -9,11 +9,11 @@ namespace Empyrean.Engine_Classes
 {
     public class UIManager
     {
-        public static FontInfo DEFAULT_FONT_INFO_64 = new FontInfo("arial.ttf", 64);
+        public static FontInfo DEFAULT_FONT_INFO_64 = new FontInfo("segoeui.ttf", 64);
 
 
-        public static FontInfo DEFAULT_FONT_INFO_16 = new FontInfo("cascadiacode.ttf", 16);
-        public static FontInfo DEFAULT_FONT_INFO_8 = new FontInfo("cascadiacode.ttf", 8);
+        public static FontInfo DEFAULT_FONT_INFO_16 = new FontInfo("segoeui.ttf", 16);
+        public static FontInfo DEFAULT_FONT_INFO_8 = new FontInfo("segoeui.ttf", 8);
 
         public List<UIObject> TopLevelObjects = new List<UIObject>();
         public object _UILock = new object();
@@ -114,10 +114,12 @@ namespace Empyrean.Engine_Classes
 
             obj.GenerateReverseTree(this);
 
+            const float BASE_VALUE = 0.001f;
             if (index != -1)
             {
                 //obj.GenerateZPositions(0.0001f * index);
-                obj.GenerateZPositions(0.001f * index);
+                //obj.GenerateZPositions(-1f + BASE_VALUE * index);
+                obj.GenerateZPositions(BASE_VALUE * index);
                 //obj.GenerateZPositions(1 * index);
             }
 

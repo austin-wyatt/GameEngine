@@ -1,4 +1,5 @@
-﻿using Empyrean.Game.Tiles;
+﻿using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.Tiles;
 using Empyrean.Game.Tiles.Meshes;
 using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
@@ -58,6 +59,8 @@ namespace Empyrean.Engine_Classes
                 ElementBuffer = GL.GenBuffer();
 
                 _initialized = true;
+                if(VertexAttributeArray == 0)
+                    InitializeVertexAttributeArray();
             }
             else
             {
@@ -70,6 +73,9 @@ namespace Empyrean.Engine_Classes
                     ElementBuffer = GL.GenBuffer();
 
                     _initialized = true;
+
+                    if (VertexAttributeArray == 0)
+                        InitializeVertexAttributeArray();
                 });
             }
         }
@@ -96,19 +102,38 @@ namespace Empyrean.Engine_Classes
             }
         }
 
+        private static void InitializeVertexAttributeArray()
+        {
+            VertexAttributeArray = GL.GenVertexArray();
+            GL.BindVertexArray(VertexAttributeArray);
+            GL.EnableVertexAttribArray(0);
+            GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
+
+            GL.BindVertexArray(Renderer._vertexArrayObject);
+        }
+
         private int VertexBuffer;
         private int ElementBuffer;
+        private static int VertexAttributeArray;
 
         private const int _vertexDataLength = 8;
         private const int FLOAT_SIZE = 4;
         public void StageBuffers()
         {
+            GL.BindVertexArray(VertexAttributeArray);
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBuffer);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, _vertexDataLength * FLOAT_SIZE, 0); //vertex
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, _vertexDataLength * FLOAT_SIZE, 3 * FLOAT_SIZE); //texture coordinates
             GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, _vertexDataLength * FLOAT_SIZE, 5 * FLOAT_SIZE); //normal
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBuffer);
+        }
+
+        public void UnstageBuffers()
+        {
+            GL.BindVertexArray(Renderer._vertexArrayObject);
         }
 
         public void FillVertexBuffer()
@@ -133,8 +158,9 @@ namespace Empyrean.Engine_Classes
                 return;
 
             Shader.Use();
-            StageBuffers();
             Texture.Texture.Use(TextureUnit.Texture0);
+
+            StageBuffers();
 
             Shader.SetInt(_textureUniform, 0);
             Shader.SetMatrix4(_transformationUniform, ref Transformations);
@@ -142,6 +168,8 @@ namespace Empyrean.Engine_Classes
             Shader.SetVector4(_colorUniform, ref Color);
 
             GL.DrawElements(PrimitiveType.Triangles, VertexDrawOrder.Length, DrawElementsType.UnsignedInt, 0);
+
+            UnstageBuffers();
         }
 
         public void FillFromMeshTile(MeshTile meshTile)

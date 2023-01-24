@@ -1,5 +1,6 @@
 ﻿using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.Text;
 using Empyrean.Engine_Classes.TextHandling;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Serializers;
@@ -22,9 +23,7 @@ namespace Empyrean.Game.UI
     public class EventLog
     {
         public ScrollableArea LogArea;
-        public List<UIObject> Events = new List<UIObject>();
-
-        public float TextScale = 1f;
+        public List<TextString> Events = new List<TextString>();
 
         public CombatScene Scene;
 
@@ -36,7 +35,6 @@ namespace Empyrean.Game.UI
                 scrollbarWidth: 0.05f, scrollSide: ScrollbarSide.Left);
 
             LogArea.BaseComponent.SetColor(new Vector4(0.33f, 0.33f, 0.25f, 0.5f));
-            //LogArea.BaseComponent.SetColor(new Vector4(0.15f, 0.15f, 0.1f, 1f));
 
             LogArea.Scrollbar.ScrollByPercentage(1f);
 
@@ -85,61 +83,58 @@ namespace Empyrean.Game.UI
                 eventText = UIHelpers.WrapString(eventText, maxEventWidth);
             }
 
-            Brush brush;
-
+            Vector4 color;
 
             switch (severity)
             {
                 case EventSeverity.Caution:
-                    brush = Brushes.LightGoldenrodYellow;
+                    color = new Vector4(250f / 256, 250f / 256, 210f / 256, 1);
                     break;
                 case EventSeverity.Severe:
-                    brush = Brushes.IndianRed;
+                    color = new Vector4(153f / 256, 64f / 256, 35f / 256, 1);
                     break;
                 case EventSeverity.Positive:
-                    brush = Brushes.LimeGreen;
+                    color = new Vector4(28f / 256, 249f / 256, 19f / 256, 1);
                     break;
                 default:
-                    brush = Brushes.LightPink;
+                    color = new Vector4(248f / 256, 136f / 256, 209f / 256, 1);
                     break;
             }
 
-            Text_Drawing textComponent = new Text_Drawing(eventText, Text_Drawing.DEFAULT_FONT, 12, brush, Color.FromArgb(84, 84, 64), lineHeightMult: 0.75f);
-            textComponent.SetTextScale(TextScale);
-
-
-            //textComponent.BaseComponent.SetColor(new Vector4(1, 0, 0, 1));
+            TextString textComponent = new TextString(new FontInfo(UIManager.DEFAULT_FONT_INFO_16, 12))
+            {
+                TextColor = color
+            };
+            textComponent.SetText(eventText);
 
             //textComponent.Hoverable = true;
             //textComponent.HoverColor = new Vector4(0.16f, 0.55f, 0.55f, 1);
 
-            
 
             Events.Add(textComponent);
 
-            
-
+            Vector3 botLeft = LogArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft);
             for (int i = Events.Count - 1; i >= 0; i--)
             {
-                if(i == Events.Count - 1) 
+                if (i == Events.Count - 1)
                 {
-                    Events[i].SetPositionFromAnchor(LogArea.BaseComponent.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(5, 0, 0), UIAnchorPosition.BottomLeft);
+                    Events[i].SetPositionFromAnchor(botLeft + new Vector3(5, -15, 0), UIAnchorPosition.BottomLeft);
                 }
-                else 
+                else
                 {
                     Events[i].SetPositionFromAnchor(Events[i + 1].GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(0, 0, 0), UIAnchorPosition.BottomLeft);
                 }
             }
 
-            LogArea.Scrollbar.ScrollByPercentage(1f);
+            LogArea.BaseComponent.AddTextString(textComponent);
 
-            LogArea.BaseComponent.AddChild(textComponent);
+            LogArea.Scrollbar.ScrollByPercentage(1f);
 
             if(Events.Count > maxEvents)
             {
                 for(int i = 0;i < Events.Count - maxEvents; i++)
                 {
-                    LogArea.BaseComponent.RemoveChild(Events[i]);
+                    LogArea.BaseComponent.RemoveTextString(Events[i]);
                 }
             }
         }

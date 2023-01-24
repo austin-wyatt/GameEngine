@@ -30,11 +30,9 @@ out float enableLighting;
 out vec3 Normal;
 out vec3 FragPos;
 
-
 uniform mat4 camera;
 
 flat out int InstanceID; 
-
 
 vec2 setTexCoord(vec2 texCoord, float columns, float rows, float column, float row);
 

@@ -27,7 +27,7 @@ namespace Empyrean.Engine_Classes.Rendering
 
         public readonly int DepthTextureHandle;
 
-        public GBuffer()
+        public GBuffer(int depthBufferBits = 24)
         {
             FramebufferHandle = GL.GenFramebuffer();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, FramebufferHandle);
@@ -63,9 +63,19 @@ namespace Empyrean.Engine_Classes.Rendering
 
             DepthTextureHandle = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, DepthTextureHandle);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth24Stencil8,
-                WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y, 0, PixelFormat.DepthStencil, PixelType.UnsignedInt248, new IntPtr());
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, DepthTextureHandle, 0);
+            if(depthBufferBits == 32)
+            {
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth32fStencil8,
+                WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y, 0, PixelFormat.DepthStencil, PixelType.Float32UnsignedInt248Rev, new IntPtr());
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, DepthTextureHandle, 0);
+            }
+            else
+            {
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth24Stencil8,
+                    WindowConstants.ClientSize.X, WindowConstants.ClientSize.Y, 0, PixelFormat.DepthStencil, PixelType.UnsignedInt248, new IntPtr());
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, DepthTextureHandle, 0);
+            }
+
 
             GL.ClearStencil(0x00);
             GL.ClearDepth(1);

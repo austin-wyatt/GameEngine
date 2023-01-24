@@ -1,4 +1,5 @@
-﻿using Empyrean.Engine_Classes.TextHandling;
+﻿using Empyrean.Engine_Classes.Text;
+using Empyrean.Engine_Classes.TextHandling;
 using OpenTK.Mathematics;
 using System;
 using System.Drawing;
@@ -7,21 +8,16 @@ namespace Empyrean.Engine_Classes.UIComponents
 {
     public class Button : UIObject
     {
-        public TextHandling.Text_Drawing TextBox;
+        public TextString TextBox;
         //public Vector4 BaseColor = new Vector4(0.78f, 0.60f, 0.34f, 1);
         public Vector4 BaseColor = _Colors.UILightGray;
         public static Color BaseBoxColor = Color.FromArgb(216, 216, 216);
 
-        public Button(Vector3 position, UIScale size, string text = "", float textScale = 1f, int fontSize = 14, Vector4 boxColor = default, Brush textColor = null, Color clearColor = default, bool centerText = true)
+        public Button(Vector3 position, UIScale size, FontInfo font, string text = "", Vector4 boxColor = default, Vector4 textColor = default, bool centerText = true)
         {
-            if(textColor == null)
+            if(textColor == default)
             {
-                textColor = Brushes.Black;
-            }
-
-            if(clearColor == default)
-            {
-                clearColor = BaseBoxColor;
+                textColor = _Colors.UITextBlack;
             }
 
             Position = position;
@@ -47,18 +43,21 @@ namespace Empyrean.Engine_Classes.UIComponents
             //textBox.SetText(text);
             //textBox.SetTextScale(textScale);
 
-            var textBox = new Text_Drawing(text, Text_Drawing.DEFAULT_FONT, fontSize, textColor, clearColor);
+            var textBox = new TextString(font, centerText ? TextAlignment.Center : TextAlignment.LeftAlign)
+            {
+                TextColor = textColor
+            };
 
-            //textBox.SetTextScale(textScale / ratio);
+            textBox.SetText(text);
 
             TextBox = textBox;
-            
 
-            AddChild(textBox, 50);
+            BaseComponent.AddTextString(textBox);
+            
             AddChild(BaseComponent, 49);
 
 
-            textBox.SetPositionFromAnchor(Position, UIAnchorPosition.Center);
+            textBox.SetPosition(Position - new Vector3(0, textBox.GetDescender(), 0));
 
 
             if (boxColor != default)

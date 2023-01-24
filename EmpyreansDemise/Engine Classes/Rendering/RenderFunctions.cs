@@ -146,7 +146,6 @@ namespace Empyrean.Engine_Classes.Rendering
 
             Renderer.RenderGBuffer(Renderer.GBuffer);
 
-
             Renderer.GBuffer.BindForReading();
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
 

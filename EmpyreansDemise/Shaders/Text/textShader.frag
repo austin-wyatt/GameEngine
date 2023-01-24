@@ -16,4 +16,7 @@ void main(void)
 	sampledColor.rgb *= appliedColor.rgb;
 
 	outputColor = sampledColor * appliedColor.w;
+
+	if(outputColor.w == 0)
+		discard;
 }

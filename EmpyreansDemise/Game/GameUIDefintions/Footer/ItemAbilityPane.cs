@@ -134,6 +134,7 @@ namespace Empyrean.Game.UI
                 weaponSwapButton.Click += (s, e) =>
                 {
                     CurrentUnit.Info.Equipment.SwapWeapons();
+
                     Footer.CreateItemIcons(isPlayerUnitTakingTurn);
                 };
 

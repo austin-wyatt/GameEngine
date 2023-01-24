@@ -130,7 +130,6 @@ namespace Empyrean.Engine_Classes.Rendering
             GL.EnableVertexAttribArray(0);
             GL.EnableVertexAttribArray(1);
 
-
             MainFBO = new FrameBufferObject(WindowConstants.ClientSize);
 
             _fbos.Add(MainFBO);
@@ -547,7 +546,6 @@ namespace Empyrean.Engine_Classes.Rendering
                 gameObject = (GameObject)objects[i];
                 if (gameObject != null && gameObject.TextureLoaded && gameObject.Render && !gameObject.Cull)
                 {
-
                     bool multipleBaseObjects = gameObject.BaseObjects.Count > 1;
 
                     if (multipleBaseObjects)

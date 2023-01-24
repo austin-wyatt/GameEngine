@@ -246,7 +246,7 @@ namespace Empyrean.Engine_Classes.UIComponents
 
                 Scrollbar.OnScrollAction = OnScroll;
 
-                AddChild(Scrollbar, 10000);
+                VisibleArea.AddChild(Scrollbar, 10000);
             }
             else
             {

@@ -1201,26 +1201,6 @@ namespace Empyrean.Engine_Classes.Scenes
         }
 
 
-        private object _renderActionQueueLock = new object();
-        private  Queue<Action> _renderActionQueue = new Queue<Action>();
-        public void QueueToRenderCycle(Action action)
-        {
-            lock (_renderActionQueueLock)
-            {
-                _renderActionQueue.Enqueue(action);
-            }
-        }
-
-        public void InvokeQueuedRenderAction()
-        {
-            if (_renderActionQueue.Count > 0)
-            {
-                lock (_renderActionQueueLock)
-                {
-                    _renderActionQueue.Dequeue().Invoke();
-                }
-            }
-        }
         #endregion
 
         protected void _onCameraMove(Camera cam)
