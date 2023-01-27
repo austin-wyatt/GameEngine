@@ -49,10 +49,6 @@ namespace Empyrean.Engine_Classes
         public HashSet<UIObject> ExclusiveFocusSet = new HashSet<UIObject>();
         public object _exclusiveFocusLock = new object();
 
-
-        public List<UIRenderGroup> UIRenderGroups = new List<UIRenderGroup>();
-        public object _renderGroupLock = new object();
-
         public void AddUIObject(UIObject obj, int zIndex)
         {
             obj.ZIndex = zIndex;
@@ -72,16 +68,6 @@ namespace Empyrean.Engine_Classes
             {
                 TopLevelObjects.Remove(obj);
                 obj.CleanUp();
-
-                lock (_renderGroupLock)
-                {
-                    var batch = UIRenderGroups.Find(g => g.Root == obj);
-                    if (batch != null)
-                    {
-                        UIRenderGroups.Remove(batch);
-                        batch.CleanUp();
-                    }
-                }
             }
         }
 

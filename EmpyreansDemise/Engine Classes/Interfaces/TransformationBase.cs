@@ -39,7 +39,7 @@ namespace Empyrean.Engine_Classes
         public abstract void ResetScale();
         public abstract void ResetTranslation();
 
-        public void CalculateTransformations()
+        public virtual void CalculateTransformations()
         {
             Transformations = Scale * Rotation * Translation;
         }

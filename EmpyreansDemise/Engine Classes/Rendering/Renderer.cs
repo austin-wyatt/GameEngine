@@ -6,6 +6,7 @@ using Empyrean.Objects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -52,7 +53,7 @@ namespace Empyrean.Engine_Classes.Rendering
         private const int particleDataOffset = 28;
         private const int particleDataLength = particleDataOffset * FLOAT_SIZE;
 
-        public static readonly List<Texture> _textures = new List<Texture>();
+        public static readonly ConcurrentDictionary<int, Texture> _textures = new ConcurrentDictionary<int,Texture>();
         public static readonly Dictionary<int, int> _loadedTextures = new Dictionary<int, int>();
 
 
@@ -970,7 +971,7 @@ namespace Empyrean.Engine_Classes.Rendering
                                     Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest, generateMipMaps: generateMipMaps);
                                     newTexture.TextureId = entry.Value.Frames[o].Textures.TextureIds[p];
 
-                                    _textures.Add(newTexture);
+                                    _textures.TryAdd(newTexture.TextureId, newTexture);
                                     _loadedTextures.Add(entry.Value.Frames[o].Textures.TextureIds[p], newTexture.Handle);
 
                                     entry.Value.Frames[o].Material.Diffuse = newTexture;
@@ -1006,7 +1007,7 @@ namespace Empyrean.Engine_Classes.Rendering
                                 Texture newTexture = Texture.LoadFromFile(entry.Value.Frames[o].Textures.TextureFilenames[p], nearest, default, generateMipMaps);
                                 newTexture.TextureId = entry.Value.Frames[o].Textures.TextureIds[p];
 
-                                _textures.Add(newTexture);
+                                _textures.TryAdd(newTexture.TextureId, newTexture);
                                 _loadedTextures.Add(entry.Value.Frames[o].Textures.TextureIds[p], newTexture.Handle);
 
                                 entry.Value.Frames[o].Material.Diffuse = newTexture;
@@ -1031,7 +1032,7 @@ namespace Empyrean.Engine_Classes.Rendering
                     Texture newTexture = Texture.LoadFromFile(obj.Textures.TextureFilenames[0], nearest);
                     newTexture.TextureId = obj.Textures.TextureIds[0];
 
-                    _textures.Add(newTexture);
+                    _textures.TryAdd(newTexture.TextureId, newTexture);
                     _loadedTextures.Add(obj.Textures.TextureIds[0], newTexture.Handle);
 
                     obj.Material.Diffuse = newTexture;
@@ -1052,7 +1053,7 @@ namespace Empyrean.Engine_Classes.Rendering
                     Texture newTexture = Texture.LoadFromFile(generator.ParticleDisplay.Textures.TextureFilenames[p]);
                     newTexture.TextureId = generator.ParticleDisplay.Textures.TextureIds[p];
 
-                    _textures.Add(newTexture);
+                    _textures.TryAdd(newTexture.TextureId, newTexture);
                     _loadedTextures.Add(generator.ParticleDisplay.Textures.TextureIds[p], newTexture.Handle);
 
                     generator.ParticleDisplay.Material.Diffuse = newTexture;
@@ -1094,15 +1095,6 @@ namespace Empyrean.Engine_Classes.Rendering
             }
         }
 
-        public static void LoadTextureFromTextureObj(Texture texture, int textureName) 
-        {
-            if (!_loadedTextures.TryGetValue(textureName, out _))
-            {
-                _textures.Add(texture);
-                _loadedTextures.Add(textureName, texture.Handle);
-            }
-        }
-
         public static void LoadTextureFromSimple(SimpleTexture simp)
         {
             if (!simp.TextureLoaded)
@@ -1113,7 +1105,7 @@ namespace Empyrean.Engine_Classes.Rendering
                         wrapType: simp.WrapType);
                     newTexture.TextureId = simp.TextureId;
 
-                    _textures.Add(newTexture);
+                    _textures.TryAdd(newTexture.TextureId, newTexture);
                     _loadedTextures.Add(simp.TextureId, newTexture.Handle);
 
                     simp.Texture = newTexture;
@@ -1125,6 +1117,17 @@ namespace Empyrean.Engine_Classes.Rendering
 
                 simp.TextureLoaded = true;
             }
+        }
+
+        public static Texture LoadTextureFromSpritesheet(Spritesheet spritesheet)
+        {
+            if(_textures.TryGetValue(spritesheet.TextureId, out var tex))
+                return tex;
+
+            Texture newTex = Texture.LoadFromFile(spritesheet.File);
+            _textures.TryAdd(tex.TextureId, newTex);
+
+            return newTex;
         }
         #endregion
 

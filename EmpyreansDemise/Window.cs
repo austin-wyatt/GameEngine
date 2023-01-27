@@ -464,13 +464,9 @@ namespace Empyrean
                         TickAllObjects();
                     }
 
-                    //if (timeValue > tickRate)
-                    //{
-                    //    _gameTimer.Restart();
-                    //    tick++;
-                    //}
+                    const int SLEEP_MS = (int)(highFreqTickRate * 1000) + 1;
 
-                    Thread.Sleep(1);
+                    Thread.Sleep(SLEEP_MS);
                 }
             }, TaskCreationOptions.LongRunning);
 

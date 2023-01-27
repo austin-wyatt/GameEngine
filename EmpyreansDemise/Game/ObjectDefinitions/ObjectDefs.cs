@@ -1,4 +1,5 @@
 ﻿using Empyrean.Engine_Classes;
+using Empyrean.Engine_Classes.Rendering;
 using Empyrean.Objects;
 using OpenTK.Mathematics;
 using System;

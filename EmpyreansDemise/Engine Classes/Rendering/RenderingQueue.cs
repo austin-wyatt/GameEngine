@@ -434,28 +434,6 @@ namespace Empyrean.Engine_Classes.Rendering
 
         #endregion
 
-        #region UI instanced render data
-        private static List<UIInstancedRenderData> _uiRenderData = new List<UIInstancedRenderData>();
-        public static void QueueUIInstancedRenderData(UIManager manager)
-        {
-            for(int i = 0; i < manager.UIRenderGroups.Count; i++)
-            {
-                for(int j = 0; j < manager.UIRenderGroups[i].RenderBatches.Count; j++)
-                {
-                    _uiRenderData.Add(manager.UIRenderGroups[i].RenderBatches[j].RenderData);
-                }
-            }
-        }
-
-        public static void RenderInstancedUIData()
-        {
-            Renderer.RenderInstancedRenderData(_uiRenderData);
-
-            _uiRenderData.Clear();
-        }
-
-        #endregion
-
         #region Fog render data
         private static List<GameObject> _fogQuad = new List<GameObject>();
 
