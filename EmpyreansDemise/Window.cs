@@ -85,7 +85,7 @@ namespace Empyrean
     }
     public static class WindowConstants
     {
-        public static readonly Vector2 ScreenUnits = new Vector2(1000, 1000);
+        public static Vector2 ScreenUnits = new Vector2(1000, 1000);
         public static Vector3 CenterScreen = new Vector3(ScreenUnits.X / 2, ScreenUnits.Y / 2, 0); //use to outline bounds;
         public static readonly Vector4 FullColor = new Vector4(1, 1, 1, 1);
         public const int TickDenominator = 45; // 1 divided by this determines the tick rate.
@@ -298,6 +298,9 @@ namespace Empyrean
         {
             WindowConstants.ClientSize.X = ClientSize.X;
             WindowConstants.ClientSize.Y = ClientSize.Y;
+
+            WindowConstants.ScreenUnits.X = 1000 * WindowConstants.AspectRatio;
+            WindowConstants.CenterScreen.X = WindowConstants.ScreenUnits.X / 2;
 
             WindowConstants.GameViewport.Width = ClientSize.X;
             WindowConstants.GameViewport.Height = ClientSize.Y;
@@ -905,6 +908,9 @@ namespace Empyrean
 
             WindowConstants.ClientSize.X = ClientSize.X;
             WindowConstants.ClientSize.Y = ClientSize.Y;
+
+            WindowConstants.ScreenUnits.X = 1000 * WindowConstants.AspectRatio;
+            WindowConstants.CenterScreen.X = WindowConstants.ScreenUnits.X / 2;
 
             WindowConstants.GameViewport.Width = ClientSize.X;
             WindowConstants.GameViewport.Height = ClientSize.Y;

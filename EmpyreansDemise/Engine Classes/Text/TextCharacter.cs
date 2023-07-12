@@ -225,7 +225,7 @@ namespace Empyrean.Engine_Classes.Text
             }
 
             float screenAdvance = (float)Glyph.Advance / WindowConstants.ClientSize.Y *
-                    WindowConstants.ScreenUnits.Y * CurrentScale.X / WindowConstants.AspectRatio;
+                    WindowConstants.ScreenUnits.Y * CurrentScale.X;
 
             return leftCenter.X + screenAdvance - bearing.X;
         }

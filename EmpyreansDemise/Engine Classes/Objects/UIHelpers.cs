@@ -155,8 +155,7 @@ namespace Empyrean.Engine_Classes
 
             Vector3 backgroundOffset = new Vector3(-5, -10, -0.001f);
 
-            Text_Drawing tooltip = new Text_Drawing(param.Text, Text_Drawing.DEFAULT_FONT, 24, Brushes.Black);
-            //tooltip.SetTextScale(param.TextScale);
+            Text_Drawing tooltip = new Text_Drawing(param.Text, Text_Drawing.DEFAULT_FONT, 12, Brushes.Black);
             tooltip.Hoverable = true;
 
             //tooltip.RenderAfterParent = true;
@@ -286,8 +285,8 @@ namespace Empyrean.Engine_Classes
         {
             Tooltip tooltip = new Tooltip();
 
-            Text_Drawing header = new Text_Drawing(headerText, Text_Drawing.DEFAULT_FONT, 24, Brushes.Black);
-            header.SetTextScale(1);
+            Text_Drawing header = new Text_Drawing(headerText, Text_Drawing.DEFAULT_FONT, 12, Brushes.Black);
+            //header.SetTextScale(1);
 
             Text_Drawing description = new Text_Drawing(bodyText, Text_Drawing.DEFAULT_FONT, 12, Brushes.Black, Color.White);
             //description.SetTextScale(1.389f);

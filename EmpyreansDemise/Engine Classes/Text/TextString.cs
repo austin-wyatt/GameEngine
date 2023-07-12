@@ -279,7 +279,7 @@ namespace Empyrean.Engine_Classes.Text
                 bounds.Z = currPosition.X + dim.X / 2 > bounds.Z ? currPosition.X + dim.X / 2 : bounds.Z;
 
                 float screenAdvance = (float)character.Glyph.Advance / WindowConstants.ClientSize.Y *
-                    WindowConstants.ScreenUnits.Y * character.CurrentScale.X / WindowConstants.AspectRatio;
+                    WindowConstants.ScreenUnits.Y * character.CurrentScale.X;
 
                 basePosition.X += screenAdvance + kerning.X;
             }
@@ -329,7 +329,7 @@ namespace Empyrean.Engine_Classes.Text
                 calculatedPositions.Add(currPosition);
 
                 float screenAdvance = (float)character.Glyph.Advance / WindowConstants.ClientSize.Y *
-                    WindowConstants.ScreenUnits.Y * character.CurrentScale.X / WindowConstants.AspectRatio;
+                    WindowConstants.ScreenUnits.Y * character.CurrentScale.X;
 
                 basePosition.X += screenAdvance + kerning.X;
             }

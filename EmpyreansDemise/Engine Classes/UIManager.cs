@@ -11,7 +11,6 @@ namespace Empyrean.Engine_Classes
     {
         public static FontInfo DEFAULT_FONT_INFO_64 = new FontInfo("segoeui.ttf", 64);
 
-
         public static FontInfo DEFAULT_FONT_INFO_16 = new FontInfo("segoeui.ttf", 16);
         public static FontInfo DEFAULT_FONT_INFO_8 = new FontInfo("segoeui.ttf", 8);
 

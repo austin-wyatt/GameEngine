@@ -70,7 +70,7 @@ namespace Empyrean.Definitions.EventActions
 
             list.AddItem(MenuText.ToString(), (_) =>
             {
-                MenuClickAction.Invoke(target);
+                MenuClickAction?.Invoke(target);
             });
         }
     }
