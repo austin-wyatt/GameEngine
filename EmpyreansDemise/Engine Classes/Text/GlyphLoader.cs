@@ -1,4 +1,5 @@
 ﻿using Empyrean.Engine_Classes.Rendering;
+using Empyrean.Game.UI;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SharpFont;
@@ -176,6 +177,8 @@ namespace Empyrean.Engine_Classes.Text
                 if (offset >= TextRenderer.SUPPORTED_GLYPHS)
                 {
                     //a glyph cell should be freed and any current references to glyphs in that cell should be resolved
+                    TestPrint();
+                    Window.Scene.EventLog.AddEvent("Glyph free error", EventSeverity.Caution);
                     throw new NotImplementedException();
                 }
 

@@ -1,6 +1,7 @@
 ﻿using Empyrean.Definitions;
 using Empyrean.Engine_Classes;
 using Empyrean.Engine_Classes.Scenes;
+using Empyrean.Engine_Classes.Text;
 using Empyrean.Engine_Classes.TextHandling;
 using Empyrean.Engine_Classes.UIComponents;
 using Empyrean.Game.Items;
@@ -62,22 +63,32 @@ namespace Empyrean.Game.UI
         private ScrollableArea _itemsScrollableArea;
         public void PopulateData()
         {
-            Text_Drawing inventoryLabel = new Text_Drawing("Inventory", Text_Drawing.DEFAULT_FONT, 48, Brushes.Black);
-            inventoryLabel.SetTextScale(0.1f);
+            TextString inventoryLabel = new TextString(UIManager.DEFAULT_FONT_INFO_16)
+            {
+                VerticalAlignment = VerticalAlignment.Top,
+                TextAlignment = TextAlignment.LeftAlign,
+            };
+            inventoryLabel.SetText("Inventory");
 
             inventoryLabel.SetPositionFromAnchor(Window.GetAnchorPosition(UIAnchorPosition.TopLeft) + new Vector3(10, 10, 0), UIAnchorPosition.TopLeft);
-            Window.AddChild(inventoryLabel);
+            //Window.AddChild(inventoryLabel);
+            Window.AddTextString(inventoryLabel);
 
             Icon goldIcon = new Icon(new UIScale(0.1f, 0.1f), UIControls.Gold, Spritesheets.UIControlsSpritesheet);
             goldIcon.SetPositionFromAnchor(inventoryLabel.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(25, 0, 0), UIAnchorPosition.LeftCenter);
             Window.AddChild(goldIcon);
 
 
-            Text_Drawing goldLabel = new Text_Drawing($"{PlayerParty.Inventory.Gold}", Text_Drawing.DEFAULT_FONT, 48, Brushes.Black);
-            goldLabel.SetTextScale(0.075f);
+            TextString goldLabel = new TextString(UIManager.DEFAULT_FONT_INFO_16)
+            {
+                VerticalAlignment = VerticalAlignment.Top,
+                TextAlignment = TextAlignment.LeftAlign,
+            };
+            goldLabel.SetText($"{PlayerParty.Inventory.Gold}");
 
             goldLabel.SetPositionFromAnchor(goldIcon.GetAnchorPosition(UIAnchorPosition.RightCenter) + new Vector3(10, 0, 0), UIAnchorPosition.LeftCenter);
-            Window.AddChild(goldLabel);
+            //Window.AddChild(goldLabel);
+            Window.AddTextString(goldLabel);
 
             _itemsScrollableArea = new ScrollableArea(default, new UIScale(2, 1.5f), default, new UIScale(2, 1.5f), enableScrollbar: false);
             _itemsScrollableArea.SetVisibleAreaPosition(inventoryLabel.GetAnchorPosition(UIAnchorPosition.BottomLeft) + new Vector3(0, 10, 0), UIAnchorPosition.TopLeft);

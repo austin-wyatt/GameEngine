@@ -117,7 +117,8 @@ namespace Empyrean.Game.Units
             //posOffset.X *= X_FACTOR;
             //posOffset.Y *= Y_FACTOR;
 
-            posOffset.X *= -0.0008f;
+            posOffset.X *= -0.00039f;
+            //posOffset.X *= -0.0008f;
             posOffset.Y *= 0.00078f;
 
             unit.SelectionIndicator.TextureTransformations.SetTranslation(posOffset.Xy);

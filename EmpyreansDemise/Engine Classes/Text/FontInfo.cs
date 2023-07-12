@@ -96,5 +96,17 @@ namespace Empyrean.Engine_Classes.Text
 
             return baseFontPath + fontName;
         }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(BasePath, FontSize);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is FontInfo info &&
+                   BasePath == info.BasePath &&
+                   FontSize == info.FontSize;
+        }
     }
 }
